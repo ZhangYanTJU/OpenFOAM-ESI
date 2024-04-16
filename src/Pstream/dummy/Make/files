@@ -1,6 +1,7 @@
 UPstream.C
 UPstreamAllToAll.C
 UPstreamBroadcast.C
+UPstreamCommunicator.C
 UPstreamGatherScatter.C
 UPstreamReduce.C
 UPstreamRequest.C

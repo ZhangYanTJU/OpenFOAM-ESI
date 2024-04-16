@@ -56,6 +56,9 @@ namespace Foam
 //- Implementation details for UPstream/Pstream/MPI etc.
 namespace PstreamDetail {}
 
+//- Interface handling for UPstream/Pstream/MPI etc.
+namespace PstreamUtils {}
+
 /*---------------------------------------------------------------------------*\
                           Class UPstream Declaration
 \*---------------------------------------------------------------------------*/
@@ -87,6 +90,9 @@ public:
 
 
     // Public Classes
+
+        //- Wrapper for MPI_Comm
+        class Communicator;  // Forward Declaration
 
         //- Wrapper for MPI_Request
         class Request;  // Forward Declaration
@@ -1219,11 +1225,118 @@ public:
 
 
 /*---------------------------------------------------------------------------*\
+                   Class UPstream::Communicator Declaration
+\*---------------------------------------------------------------------------*/
+
+//- An opaque wrapper for MPI_Comm with a vendor-independent
+//- representation without any \c <mpi.h> header.
+//  The MPI standard states that MPI_Comm is always an opaque object.
+//  Generally it is either an integer (eg, mpich) or a pointer (eg, openmpi).
+class UPstream::Communicator
+{
+public:
+
+    // Public Types
+
+        //- Storage for MPI_Comm (as integer or pointer)
+        typedef std::intptr_t value_type;
+
+
+private:
+
+    // Private Data
+
+        //- The MPI_Comm (as wrapped value)
+        value_type value_;
+
+public:
+
+    // Generated Methods
+
+        //- Copy construct
+        Communicator(const Communicator&) noexcept = default;
+
+        //- Move construct
+        Communicator(Communicator&&) noexcept = default;
+
+        //- Copy assignment
+        Communicator& operator=(const Communicator&) noexcept = default;
+
+        //- Move assignment
+        Communicator& operator=(Communicator&&) noexcept = default;
+
+
+    // Member Operators
+
+        //- Test for equality
+        bool operator==(const Communicator& rhs) const noexcept
+        {
+            return (value_ == rhs.value_);
+        }
+
+        //- Test for inequality
+        bool operator!=(const Communicator& rhs) const noexcept
+        {
+            return (value_ != rhs.value_);
+        }
+
+
+    // Constructors
+
+        //- Default construct as MPI_COMM_NULL
+        Communicator() noexcept;
+
+        //- Construct from MPI_Comm (as pointer type)
+        explicit Communicator(const void* p) noexcept
+        :
+            value_(reinterpret_cast<value_type>(p))
+        {}
+
+        //- Construct from MPI_Comm (as integer type)
+        explicit Communicator(value_type val) noexcept
+        :
+            value_(val)
+        {}
+
+
+    // Factory Methods
+
+        //- Transcribe internally indexed communicator to wrapped value.
+        //  Example,
+        //  \code
+        //  PstreamUtils::Cast::to_mpi
+        //  (
+        //      UPstream::Communicator::lookup(UPstream::commWorld())
+        //  )
+        //  \endcode
+        static Communicator lookup(const label comm);
+
+
+    // Member Functions
+
+        //- Return raw value
+        value_type value() const noexcept { return value_; }
+
+        //- Return as pointer value
+        const void* pointer() const noexcept
+        {
+            return reinterpret_cast<const void*>(value_);
+        }
+
+        //- True if not equal to MPI_COMM_NULL
+        bool good() const noexcept;
+
+        //- Reset to default constructed value (MPI_COMM_NULL)
+        void reset() noexcept;
+};
+
+
+/*---------------------------------------------------------------------------*\
                       Class UPstream::Request Declaration
 \*---------------------------------------------------------------------------*/
 
 //- An opaque wrapper for MPI_Request with a vendor-independent
-//- representation independent of any \c <mpi.h> header
+//- representation without any \c <mpi.h> header.
 //  The MPI standard states that MPI_Request is always an opaque object.
 //  Generally it is either an integer (eg, mpich) or a pointer (eg, openmpi).
 class UPstream::Request

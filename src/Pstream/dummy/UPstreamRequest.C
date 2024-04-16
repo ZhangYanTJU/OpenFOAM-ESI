@@ -47,6 +47,15 @@ void Foam::UPstream::Request::reset() noexcept
 {}
 
 
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+// Foam::UPstream::Request
+// Foam::UPstream::Request::lookup(const label req)
+// {
+//     return UPstream::Request(nullptr);
+// }
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::label Foam::UPstream::nRequests() noexcept { return 0; }

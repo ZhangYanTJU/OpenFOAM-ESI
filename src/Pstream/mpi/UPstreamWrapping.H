@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,16 +38,7 @@ SourceFiles
 #ifndef Foam_UPstreamWrapping_H
 #define Foam_UPstreamWrapping_H
 
-#include "UPstream.H"
-
-// Include MPI without any C++ bindings
-#ifndef MPICH_SKIP_MPICXX
-#define MPICH_SKIP_MPICXX
-#endif
-#ifndef OMPI_SKIP_MPICXX
-#define OMPI_SKIP_MPICXX
-#endif
-#include <mpi.h>
+#include "openfoam_mpi.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,27 +46,6 @@ namespace Foam
 {
 namespace PstreamDetail
 {
-
-// Helper for casting to MPI_Request
-struct Request
-{
-    // To pointer
-    template<typename Type = MPI_Request>
-    static typename std::enable_if<std::is_pointer<Type>::value, Type>::type
-    get(const UPstream::Request& req) noexcept
-    {
-        return reinterpret_cast<Type>(req.value());
-    }
-
-    // To integer
-    template<typename Type = MPI_Request>
-    static typename std::enable_if<std::is_integral<Type>::value, Type>::type
-    get(const UPstream::Request& req) noexcept
-    {
-        return static_cast<Type>(req.value());
-    }
-};
-
 
 // MPI_Bcast, using root=0
 template<class Type>
