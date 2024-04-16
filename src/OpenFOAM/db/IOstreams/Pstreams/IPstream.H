@@ -143,6 +143,24 @@ public:
             const label comm = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
+
+
+    // Static Functions
+
+        //- Receive (from broadcast, root == UPstream::masterNo())
+        //- and deserialize a value.
+        //- Uses \c operator>> for de-serialization
+        template<class Type>
+        static void recv
+        (
+            Type& value,
+            const label comm = UPstream::worldComm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        {
+            IPBstream is(comm, fmt);
+            is >> value;
+        }
 };
 
 

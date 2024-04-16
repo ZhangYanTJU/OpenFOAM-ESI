@@ -348,6 +348,13 @@ public:
 
     // Token Access
 
+        //- The token contents (read-only access)
+        const tokenList& tokens() const noexcept { return *this; }
+
+        //- The token contents (read/write access)
+        tokenList& tokens() noexcept { return *this; }
+
+
         //- True if putback token is in use
         bool hasPutback() const noexcept { return Istream::hasPutback(); }
 

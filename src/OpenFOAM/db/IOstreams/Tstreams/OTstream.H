@@ -101,16 +101,10 @@ public:
     // Member Functions
 
         //- The tokens
-        const DynamicList<token>& tokens() const noexcept
-        {
-            return *this;
-        }
+        const DynamicList<token>& tokens() const noexcept { return *this; }
 
         //- The tokens
-        DynamicList<token>& tokens() noexcept
-        {
-            return *this;
-        }
+        DynamicList<token>& tokens() noexcept { return *this; }
 
 
     // Write

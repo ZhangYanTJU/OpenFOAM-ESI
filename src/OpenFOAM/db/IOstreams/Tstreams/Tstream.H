@@ -4,8 +4,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Tstream_H
-#define Tstream_H
+#ifndef Foam_Tstream_H
+#define Foam_Tstream_H
 
 #include "ITstream.H"
 #include "OTstream.H"

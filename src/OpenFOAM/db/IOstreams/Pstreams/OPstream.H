@@ -160,6 +160,23 @@ public:
             const label comm = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
+
+
+    // Static Functions
+
+        //- Serialize a value and broadcast (root == UPstream::masterNo()).
+        //- Uses \c operator<< for serialization
+        template<class Type>
+        static void send
+        (
+            const Type& value,
+            const label comm = UPstream::worldComm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        {
+            OPBstream os(comm, fmt);
+            os << value;
+        }
 };
 
 
