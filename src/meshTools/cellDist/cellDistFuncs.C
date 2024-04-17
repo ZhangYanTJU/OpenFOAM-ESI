@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,6 +29,7 @@ License
 #include "cellDistFuncs.H"
 #include "polyMesh.H"
 #include "polyBoundaryMesh.H"
+#include "cyclicACMIPolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -235,22 +236,48 @@ void Foam::cellDistFuncs::correctBoundaryFaceCells
     Map<label>& nearestFace
 ) const
 {
+    const auto& pbm = mesh().boundaryMesh();
+
     // Size neighbours array for maximum possible (= size of largest patch)
     DynamicList<label> neighbours(maxPatchSize(patchIDs));
+
+    // Make non-overlap-patch back to cyclicACMI
+    labelList patchToCyclic(pbm.size(), -1);
+    for (const auto& pp : pbm)
+    {
+        const auto* cycPtr = isA<cyclicACMIPolyPatch>(pp);
+        if (cycPtr)
+        {
+            patchToCyclic[cycPtr->nonOverlapPatchID()] = cycPtr->index();
+        }
+    }
 
     // Correct all cells with face on wall
     const vectorField& cellCentres = mesh().cellCentres();
     const labelList& faceOwner = mesh().faceOwner();
 
-    forAll(mesh().boundaryMesh(), patchi)
+    forAll(pbm, patchi)
     {
         if (patchIDs.found(patchi))
         {
-            const polyPatch& patch = mesh().boundaryMesh()[patchi];
+            const polyPatch& patch = pbm[patchi];
+            const label cycPatchi = patchToCyclic[patchi];
+            const auto& mask
+            (
+                cycPatchi == -1
+              ? scalarField::null()
+              : refCast<const cyclicACMIPolyPatch>(pbm[cycPatchi]).mask()
+            );
 
             // Check cells with face on wall
             forAll(patch, patchFacei)
             {
+                if (mask != scalarField::null() && (mask[patchFacei] > 0.5))
+                {
+                    // is mostly coupled
+                    continue;
+                }
+
                 getPointNeighbours(patch, patchFacei, neighbours);
 
                 label celli = faceOwner[patch.start() + patchFacei];
@@ -283,20 +310,55 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
 {
     // Correct all (non-visited) cells with point on wall
 
+    const auto& pbm = mesh().boundaryMesh();
+
+    // Make non-overlap-patch back to cyclicACMI
+    labelList patchToCyclic(pbm.size(), -1);
+    for (const auto& pp : pbm)
+    {
+        const auto* cycPtr = isA<cyclicACMIPolyPatch>(pp);
+        if (cycPtr)
+        {
+            patchToCyclic[cycPtr->nonOverlapPatchID()] = cycPtr->index();
+        }
+    }
+
     const vectorField& cellCentres = mesh().cellCentres();
 
-    forAll(mesh().boundaryMesh(), patchi)
+    forAll(pbm, patchi)
     {
         if (patchIDs.found(patchi))
         {
-            const polyPatch& patch = mesh().boundaryMesh()[patchi];
-
+            const polyPatch& patch = pbm[patchi];
+            const auto& localFaces = patch.localFaces();
             const labelList& meshPoints = patch.meshPoints();
             const labelListList& pointFaces = patch.pointFaces();
 
-            forAll(meshPoints, meshPointi)
+            bitSet isWallPoint(meshPoints.size(), true);
+            const label cycPatchi = patchToCyclic[patchi];
+            if (cycPatchi != -1)
             {
-                const label vertI = meshPoints[meshPointi];
+                const auto& mask =
+                    refCast<const cyclicACMIPolyPatch>(pbm[cycPatchi]).mask();
+                forAll(mask, i)
+                {
+                    if (mask[i] > 0.5)
+                    {
+                        // Face mostly coupled
+                        isWallPoint.unset(localFaces[i]);
+                    }
+                }
+            }
+
+
+            forAll(meshPoints, patchPointi)
+            {
+                const label vertI = meshPoints[patchPointi];
+
+                if (!isWallPoint[patchPointi])
+                {
+                    continue;
+                }
 
                 const labelList& neighbours = mesh().pointCells(vertI);
 
@@ -304,7 +366,7 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
                 {
                     if (!nearestFace.found(celli))
                     {
-                        const labelList& wallFaces = pointFaces[meshPointi];
+                        const labelList& wallFaces = pointFaces[patchPointi];
 
                         label minFacei = -1;
 

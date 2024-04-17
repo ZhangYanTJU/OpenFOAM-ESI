@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +33,7 @@ License
 #include "wallPolyPatch.H"
 #include "patchDistMethod.H"
 #include "OBJstream.H"
+#include "cyclicACMIPolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -146,29 +147,60 @@ void Foam::wallDistAddressing::correct(volScalarField& y)
     globalWallsPtr_.reset(new globalIndex(nWalls));
     const globalIndex& globalWalls = globalWallsPtr_();
 
-    labelList seedFaces(nWalls);
-    List<wallPointAddressing> seedInfo(nWalls);
+    DynamicList<label> seedFaces(nWalls);
+    DynamicList<wallPointAddressing> seedInfo(nWalls);
+
+
+    // Make non-overlap-patch back to cyclicACMI
+    labelList patchToCyclic(mesh_.boundaryMesh().size(), -1);
+    for (const auto& pp : mesh_.boundaryMesh())
+    {
+        const auto* cycPtr = isA<cyclicACMIPolyPatch>(pp);
+        if (cycPtr)
+        {
+            patchToCyclic[cycPtr->nonOverlapPatchID()] = cycPtr->index();
+        }
+    }
 
 
     nWalls = 0;
     for (const label patchi : patchIDs_)
     {
         const auto& fc = C.boundaryField()[patchi];
-
+        const label cycPatchi = patchToCyclic[patchi];
+        const auto& mask
+        (
+            cycPatchi == -1
+          ? scalarField::null()
+          : refCast<const cyclicACMIPolyPatch>
+            (
+                C.boundaryField()[cycPatchi].patch().patch()
+            ).mask()
+        );
         forAll(fc, patchFacei)
         {
-            seedFaces[nWalls] = fc.patch().start()+patchFacei;
-            seedInfo[nWalls] = wallPointAddressing
+            if
             (
-                fc[patchFacei],
-                gt.encode
+                mask == scalarField::null()
+             || (mask[patchFacei] < 0.5)
+            )
+            {
+                seedFaces.append(fc.patch().start()+patchFacei);
+                seedInfo.append
                 (
-                    Pstream::myProcNo(),
-                    nWalls,
-                    gt.nullTransformIndex()
-                ),
-                scalar(0.0)
-            );
+                    wallPointAddressing
+                    (
+                        fc[patchFacei],
+                        gt.encode
+                        (
+                            Pstream::myProcNo(),
+                            nWalls,
+                            gt.nullTransformIndex()
+                        ),
+                        scalar(0.0)
+                    )
+                );
+            }
             nWalls++;
         }
     }
