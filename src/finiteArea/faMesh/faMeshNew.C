@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,11 +31,34 @@ License
 
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
 
-bool Foam::faMesh::hasSystemFiles(const polyMesh& pMesh)
+bool Foam::faMesh::hasSystemFiles
+(
+    const word& meshName,
+    const polyMesh& pMesh
+)
 {
     // Expect
-    // - system/faSchemes
-    // - system/faSolution
+    // - system/finite-area/<region>/faSchemes
+    // - system/finite-area/<region>/faSolution
+
+    // The directory relative to polyMesh (not Time)
+    const fileName relativeDir
+    (
+        faMesh::prefix() / polyMesh::regionName(meshName)
+    );
+
+    DebugInfo<< "check system files: " << relativeDir << nl;
+
+    IOobject systemIOobject
+    (
+        "any-name",
+        pMesh.time().system(),
+        relativeDir,
+        pMesh,
+        IOobject::MUST_READ,
+        IOobject::NO_WRITE,
+        IOobject::NO_REGISTER
+    );
 
     const fileOperation& fp = Foam::fileHandler();
 
@@ -52,20 +75,14 @@ bool Foam::faMesh::hasSystemFiles(const polyMesh& pMesh)
         })
     )
     {
+        systemIOobject.resetHeader(expect);
+
         fileName found
         (
             fp.filePath
             (
                 true,  // global
-                IOobject
-                (
-                    expect,
-                    pMesh.time().system(),
-                    pMesh,
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
+                systemIOobject,
                 expect // typeName (ununsed?)
             )
         );
@@ -83,18 +100,34 @@ bool Foam::faMesh::hasSystemFiles(const polyMesh& pMesh)
 }
 
 
-bool Foam::faMesh::hasFiles(const polyMesh& pMesh)
+bool Foam::faMesh::hasMeshFiles
+(
+    const word& meshName,
+    const polyMesh& pMesh
+)
 {
-    // As well as system/{faSchemes,faSolution}
+    // As well as system/finite-area/{faSchemes,faSolution}
     //
     // expect these:
-    // - instance/faMesh/faceLabels
-    // - instance/faMesh/faBoundary
+    // - instance/finite-area/<region>/faMesh/faceLabels
+    // - instance/finite-area/<region>/faMesh/faBoundary
 
-    bool looksValid = hasSystemFiles(pMesh);
+
+    // Not required...
+    // bool looksValid = hasSystemFiles(meshName, pMesh);
+
+    bool looksValid = true;
+
+    // The mesh directory relative to polyMesh (not Time)
+    const fileName relativeDir
+    (
+        faMesh::meshDir(word::null, meshName)
+    );
 
     if (looksValid)
     {
+        DebugInfo<< "check mesh files: " << relativeDir << nl;
+
         const fileOperation& fp = Foam::fileHandler();
 
         // The geometry instance for faMesh/faceLabels
@@ -102,9 +135,21 @@ bool Foam::faMesh::hasFiles(const polyMesh& pMesh)
 
         const word instance = pMesh.time().findInstance
         (
-            pMesh.dbDir()/faMesh::meshSubDir,
+            // Searching from Time, so need polyMesh region too
+            pMesh.regionName()/relativeDir,
             "faceLabels",
             IOobject::READ_IF_PRESENT
+        );
+
+        IOobject meshIOobject
+        (
+            "any-name",
+            instance,
+            relativeDir,
+            pMesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
         );
 
         for
@@ -120,21 +165,14 @@ bool Foam::faMesh::hasFiles(const polyMesh& pMesh)
             const word& dataFile = expect.first();
             const word& dataClass = expect.second();
 
+            meshIOobject.resetHeader(dataFile);
+
             fileName found
             (
                 fp.filePath
                 (
                     false,      // non-global
-                    IOobject
-                    (
-                        dataFile,
-                        instance,
-                        faMesh::meshSubDir,
-                        pMesh,
-                        IOobject::READ_IF_PRESENT,
-                        IOobject::NO_WRITE,
-                        IOobject::NO_REGISTER
-                    ),
+                    meshIOobject,
                     dataClass   // typeName (ununsed?)
                 )
             );
@@ -153,14 +191,27 @@ bool Foam::faMesh::hasFiles(const polyMesh& pMesh)
 }
 
 
-Foam::autoPtr<Foam::faMesh> Foam::faMesh::TryNew(const polyMesh& pMesh)
+Foam::autoPtr<Foam::faMesh> Foam::faMesh::TryNew
+(
+    const word& meshName,
+    const polyMesh& pMesh
+)
 {
-    if (faMesh::hasFiles(pMesh))
+    if (faMesh::hasMeshFiles(meshName, pMesh))
     {
-        return autoPtr<faMesh>::New(pMesh);
+        return autoPtr<faMesh>::New(meshName, pMesh);
     }
 
     return nullptr;
+}
+
+
+Foam::autoPtr<Foam::faMesh> Foam::faMesh::TryNew
+(
+    const polyMesh& pMesh
+)
+{
+    return TryNew(polyMesh::defaultRegion, pMesh);
 }
 
 

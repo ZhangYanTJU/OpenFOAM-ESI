@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -781,20 +781,33 @@ int main(int argc, char *argv[])
             }
 
             IOobjectList objects;
+            IOobjectList faObjects;
 
             if (doConvertFields)
             {
-                // List of objects for this time
+                // List of volume mesh objects for this instance
                 objects =
                     IOobjectList(meshProxy.baseMesh(), runTime.timeName());
+
+                // List of area mesh objects (assuming single region)
+                faObjects =
+                    IOobjectList
+                    (
+                        runTime,
+                        runTime.timeName(),
+                        faMesh::dbDir(meshProxy.baseMesh(), word::null),
+                        IOobjectOption::NO_REGISTER
+                    );
 
                 if (fieldSelector && !fieldSelector().empty())
                 {
                     objects.filterObjects(fieldSelector());
+                    faObjects.filterObjects(fieldSelector());
                 }
 
                 // Remove "*_0" restart fields
                 objects.prune_0();
+                faObjects.prune_0();
 
                 if (!doPointValues)
                 {

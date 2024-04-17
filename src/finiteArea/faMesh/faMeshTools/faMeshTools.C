@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,12 +77,10 @@ Foam::faMeshTools::newMesh
     const bool verbose
 )
 {
-    // Region name
-    // ~~~~~~~~~~~
-
+    // The mesh directory (assuming single area region), relative to Time
     const fileName meshSubDir
     (
-        pMesh.regionName() / faMesh::meshSubDir
+        faMesh::meshDir(pMesh, word::null)
     );
 
 
@@ -111,7 +109,7 @@ Foam::faMeshTools::newMesh
                 "faBoundary",
                 facesInstance,
                 meshSubDir,
-                io.db(),
+                io.time(),
                 IOobject::MUST_READ,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER
@@ -133,15 +131,15 @@ Foam::faMeshTools::newMesh
     // Dummy meshes
     // ~~~~~~~~~~~~
 
-    // Set up to read-if-present. Note: does not search for mesh so set
-    // instance explicitly
+    // Fake read-if-present behaviour to obtain the faceLabels
 
     IOobject meshIO(io);
     meshIO.instance() = facesInstance;
     meshIO.readOpt(IOobject::READ_IF_PRESENT);
 
     // For mesh components (faceLabels, ...)
-    IOobject cmptIO(meshIO, "faceLabels", meshSubDir);
+    IOobject cmptIO(io.time(), "faceLabels", meshSubDir);
+    cmptIO.instance() = facesInstance;
     cmptIO.readOpt(IOobject::MUST_READ);
     cmptIO.writeOpt(IOobject::NO_WRITE);
     cmptIO.registerObject(IOobject::NO_REGISTER);
@@ -261,12 +259,10 @@ Foam::faMeshTools::loadOrCreateMeshImpl
     const bool verbose
 )
 {
-    // Region name
-    // ~~~~~~~~~~~
-
+    // The mesh directory (assuming single area region), relative to Time
     const fileName meshSubDir
     (
-        pMesh.regionName() / faMesh::meshSubDir
+        faMesh::meshDir(pMesh, word::null)
     );
 
 
@@ -288,7 +284,7 @@ Foam::faMeshTools::loadOrCreateMeshImpl
                 "faBoundary",
                 io.instance(),
                 meshSubDir,
-                io.db(),
+                io.time(),
                 IOobject::MUST_READ,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER
@@ -359,7 +355,7 @@ Foam::faMeshTools::loadOrCreateMeshImpl
             new faMesh
             (
                 pMesh,
-                labelList(),
+                labelList(),  // Similar to Foam::zero{}
                 IOobject(io, IOobject::NO_READ, IOobject::AUTO_WRITE)
             )
         );

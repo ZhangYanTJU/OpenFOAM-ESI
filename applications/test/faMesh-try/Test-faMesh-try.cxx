@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,61 +23,40 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Application
+    Test-faMesh-try
+
+Description
+    Test for loading of faMesh
+
 \*---------------------------------------------------------------------------*/
 
-#include "readFields.H"
-#include "volFields.H"
+#include "argList.H"
+#include "faMesh.H"
+#include "polyMesh.H"
 
-// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+using namespace Foam;
 
-Foam::label Foam::checkData
-(
-    const objectRegistry& obr,
-    const instantList& timeDirs,
-    wordList& objectNames,
-    const fileName& local
-)
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+int main(int argc, char *argv[])
 {
-    // Assume prune_0() was used prior to calling this
+    #include "addRegionOption.H"
+    #include "addFaRegionOption.H"
+    #include "setRootCase.H"
 
-    wordHashSet goodFields;
+    #include "createTime.H"
+    #include "createNamedPolyMesh.H"
 
-    for (const word& fieldName : objectNames)
-    {
-        // // If prune_0() not previously used...
-        // if (objectNames.ends_with("_0")) continue;
+    #include "getFaRegionOption.H"
 
-        bool good = false;
+    autoPtr<faMesh> aMeshPtr = faMesh::TryNew(areaRegionName, mesh);
 
-        for (const instant& inst : timeDirs)
-        {
-            good =
-                IOobject
-                (
-                    fieldName,
-                    inst.name(),
-                    local,
-                    obr,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ).typeHeaderOk<volScalarField>(false, false);
+    Info<< "area-mesh: " << Switch::name(aMeshPtr) << nl;
 
-            if (!good)
-            {
-                break;
-            }
-        }
+    Info<< "\nEnd\n" << nl;
 
-        if (returnReduceAnd(good))
-        {
-            goodFields.insert(fieldName);
-        }
-    }
-
-    objectNames = goodFields.sortedToc();
-
-    return objectNames.size();
+    return 0;
 }
 
 

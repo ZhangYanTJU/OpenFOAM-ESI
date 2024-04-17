@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -13,6 +13,8 @@ License
 Description
     Code chunk for converting area fields
     included by foamToEnsight.
+
+    Possible objects to convert are given in faObjects
 
 \*---------------------------------------------------------------------------*/
 
@@ -23,7 +25,7 @@ if (doFiniteArea && ensFaCasePtr && ensFaMeshPtr)
 {
     Info<< "    area   field (";
 
-    writeAllAreaFields(*ensFaCasePtr, *ensFaMeshPtr, objects);
+    writeAllAreaFields(*ensFaCasePtr, *ensFaMeshPtr, faObjects);
 
     Info<< " )" << nl;
 }

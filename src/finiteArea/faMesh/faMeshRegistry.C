@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,59 +25,51 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "readFields.H"
-#include "volFields.H"
+#include "faMesh.H"
+#include "faMeshesRegistry.H"
+#include "Time.H"
+#include "polyMesh.H"
 
-// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::label Foam::checkData
+Foam::faMeshRegistry::faMeshRegistry
 (
-    const objectRegistry& obr,
-    const instantList& timeDirs,
-    wordList& objectNames,
-    const fileName& local
+    const word& areaRegion,
+    const polyMesh& mesh
 )
+:
+    objectRegistry
+    (
+        IOobject
+        (
+            areaRegion,
+            faMeshesRegistry::New(mesh).thisDb(),
+            IOobjectOption::NO_READ,
+            IOobjectOption::AUTO_WRITE,
+            IOobjectOption::REGISTER
+        )
+    )
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+const Foam::fileName& Foam::faMeshRegistry::dbDir() const
 {
-    // Assume prune_0() was used prior to calling this
+    // In the usual case, the objectRegistry::dbDir() will be something
+    // like finite-area/{region0,film} etc with the "finite-area/"
+    // prefix coming from the enclosing registry of registries.
+    //
+    // So always check the name() portion, not the dbDir() itself
+    // - either,    objectRegistry::dbDir().name()
+    // - or (same), objectRegistry::name()
 
-    wordHashSet goodFields;
-
-    for (const word& fieldName : objectNames)
+    if (objectRegistry::name() == polyMesh::defaultRegion)
     {
-        // // If prune_0() not previously used...
-        // if (objectNames.ends_with("_0")) continue;
-
-        bool good = false;
-
-        for (const instant& inst : timeDirs)
-        {
-            good =
-                IOobject
-                (
-                    fieldName,
-                    inst.name(),
-                    local,
-                    obr,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ).typeHeaderOk<volScalarField>(false, false);
-
-            if (!good)
-            {
-                break;
-            }
-        }
-
-        if (returnReduceAnd(good))
-        {
-            goodFields.insert(fieldName);
-        }
+        return objectRegistry::parent().dbDir();
     }
 
-    objectNames = goodFields.sortedToc();
-
-    return objectNames.size();
+    return objectRegistry::dbDir();
 }
 
 

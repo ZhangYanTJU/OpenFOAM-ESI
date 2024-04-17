@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,7 +56,6 @@ Author
 #ifndef Foam_faMesh_H
 #define Foam_faMesh_H
 
-#include "MeshObject.H"
 #include "polyMesh.H"
 #include "lduMesh.H"
 #include "faBoundaryMesh.H"
@@ -86,16 +85,51 @@ class faMeshMapper;
 class faPatchData;
 
 /*---------------------------------------------------------------------------*\
+                       Class faMeshRegistry Declaration
+\*---------------------------------------------------------------------------*/
+
+//- The objectRegistry for faMesh.
+//  This is a separate class to ensure it will be fully constructed before
+//  other data members use it, which ensures that its virtual methods are
+//  callable during construction (gcc).
+class faMeshRegistry
+:
+    public objectRegistry
+{
+public:
+
+    // Constructors
+
+        //- Construct an objectRegistry for given area region name.
+        //  Uses faMeshesRegistry internally
+        faMeshRegistry(const word& areaRegion, const polyMesh& mesh);
+
+
+    // Member Functions
+
+        //- True - thisDb() is a valid registry
+        virtual bool hasDb() const { return true; }
+
+        //- Reference to the mesh database
+        virtual const objectRegistry& thisDb() const { return *this; }
+
+        //- Local directory path of the objectRegistry relative to Time
+        //- with override for the single-region case
+        virtual const fileName& dbDir() const;
+};
+
+
+/*---------------------------------------------------------------------------*\
                            Class faMesh Declaration
 \*---------------------------------------------------------------------------*/
 
 class faMesh
 :
-    public MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>,
+    public faMeshRegistry,
     public lduMesh,
     public faSchemes,
-    public edgeInterpolation,  // may need input from faSchemes
-    public faSolution
+    public faSolution,
+    public edgeInterpolation  // may need input from faSchemes
 {
     // Private (internal) classes/structures
 
@@ -327,6 +361,9 @@ class faMesh
 
     // Static Private Data
 
+        //- The prefix to local: %finite-area
+        static const word prefix_;
+
         //- Quadrics fit for pointAreaNormals (experimental)
         static const int quadricsFit_;
 
@@ -356,7 +393,7 @@ class faMesh
         ) const;
 
 
-        // Private member functions to calculate demand driven data
+        // Private Member Functions to calculate demand driven data
 
             //- Calculate ldu addressing
             void calcLduAddressing() const;
@@ -486,11 +523,18 @@ class faMesh
     // Static Functions
 
         //- Test if faSchemes/faSolution files are available
-        static bool hasSystemFiles(const polyMesh& pMesh);
+        static bool hasSystemFiles
+        (
+            const word& meshName,
+            const polyMesh& pMesh
+        );
 
-        //- Test if all files needed for read construction are available
-        static bool hasFiles(const polyMesh& pMesh);
-
+        //- Test if mesh files needed for read construction are available
+        static bool hasMeshFiles
+        (
+            const word& meshName,
+            const polyMesh& pMesh
+        );
 
 public:
 
@@ -512,8 +556,8 @@ public:
     //- Runtime type information
     TypeName("faMesh");
 
-        //- The prefix to local: %finite-area
-        static const word prefix;
+        //- The prefix to the parent registry name: %finite-area
+        static const word& prefix() noexcept;
 
         //- The mesh sub-directory name (usually "faMesh")
         static word meshSubDir;
@@ -530,29 +574,27 @@ public:
 
     // Constructors
 
-        //- Read construct from polyMesh, using its IOobject properties
-        explicit faMesh(const polyMesh& pMesh, const bool doInit = true);
+        //- Construct zero-sized from polyMesh
+        //  Boundary is added using addFaPatches() member function
+        faMesh(const word& meshName, const polyMesh&, Foam::zero);
 
         //- Construct zero-sized from polyMesh
         //  Boundary is added using addFaPatches() member function
-        faMesh(const polyMesh& pMesh, const Foam::zero);
+        faMesh(const polyMesh&, Foam::zero);
 
-        //- Construct as copy (for dictionaries) and zero-sized
-        //- without boundary.
-        //  Boundary is added using addFaPatches() member function
-        faMesh(const faMesh& baseMesh, const Foam::zero);
+        //- Read construct from polyMesh, using its IOobject properties
+        faMesh(const word& meshName, const polyMesh&, const bool doInit = true);
 
-        //- Construct as copy (for dictionaries) and faceLabels
-        //- without boundary, using read properties from baseMesh.
-        //  Boundary is added using addFaPatches() member function
-        faMesh(const faMesh& baseMesh, labelList&& faceLabels);
+        //- Read construct from polyMesh, using its IOobject properties
+        explicit faMesh(const polyMesh&, const bool doInit = true);
 
-        //- Construct as copy (for dictionaries) and faceLabels
-        //- without boundary, using specified read properties.
+        //- Construct from components (face labels) without boundary,
+        //- using specified read properties.
         //  Boundary is added using addFaPatches() member function.
         faMesh
         (
-            const faMesh& baseMesh,
+            const word& meshName,
+            const polyMesh& pMesh,
             labelList&& faceLabels,
             IOobjectOption ioOpt
         );
@@ -560,20 +602,83 @@ public:
         //- Construct from components (face labels) without boundary,
         //- using IOobject properties from polyMesh.
         //  Boundary is added using addFaPatches() member function.
-        faMesh(const polyMesh& pMesh, labelList&& faceLabels);
+        faMesh(const word& meshName, const polyMesh&, labelList&& faceLabels);
 
         //- Construct from components (face labels) without boundary,
         //- using specified read properties.
         //  Boundary is added using addFaPatches() member function.
+        faMesh(const polyMesh&, labelList&& faceLabels, IOobjectOption ioOpt);
+
+        //- Construct from components (face labels) without boundary,
+        //- using IOobject properties from polyMesh.
+        //  Boundary is added using addFaPatches() member function.
+        faMesh(const polyMesh&, labelList&& faceLabels);
+
+        //- Construct as copy (for dictionaries) and zero-sized
+        //- without boundary.
+        //  Boundary is added using addFaPatches() member function
+        faMesh(const word& meshName, const faMesh& baseMesh, Foam::zero);
+
+        //- Construct as copy (for dictionaries) and zero-sized
+        //- without boundary, using IOobject properties from polyMesh.
+        //  Boundary is added using addFaPatches() member function
+        faMesh(const faMesh& baseMesh, Foam::zero);
+
+        //- Construct as copy (for dictionaries) and faceLabels
+        //- without boundary, using specified read properties.
+        //  Boundary is added using addFaPatches() member function
         faMesh
         (
-            const polyMesh& pMesh,
+            const word& meshName,
+            const faMesh& baseMesh,
             labelList&& faceLabels,
             IOobjectOption ioOpt
         );
 
+        //- Construct as copy (for dictionaries) and faceLabels
+        //- without boundary, using specified read properties.
+        //  Boundary is added using addFaPatches() member function
+        faMesh
+        (
+            const faMesh& baseMesh,
+            labelList&& faceLabels,
+            IOobjectOption ioOpt
+        );
+
+        //- Construct as copy (for dictionaries) and faceLabels
+        //- without boundary, using IOobject properties from polyMesh.
+        //  Boundary is added using addFaPatches() member function
+        faMesh
+        (
+            const word& meshName,
+            const faMesh& baseMesh,
+            labelList&& faceLabels
+        );
+
+        //- Construct as copy (for dictionaries) and faceLabels
+        //- without boundary, using read properties from baseMesh.
+        //  Boundary is added using addFaPatches() member function
+        faMesh(const faMesh& baseMesh, labelList&& faceLabels);
+
+        //- Construct from single polyPatch
+        faMesh
+        (
+            const word& meshName,
+            const polyPatch& pp,
+            const bool doInit = true
+        );
+
         //- Construct from single polyPatch
         explicit faMesh(const polyPatch& pp, const bool doInit = true);
+
+        //- Construct from definition
+        faMesh
+        (
+            const word& meshName,
+            const polyMesh& pMesh,
+            const dictionary& faMeshDefinition,
+            const bool doInit = true
+        );
 
         //- Construct from definition
         faMesh
@@ -605,6 +710,13 @@ public:
             geometryOrder_ = order;
             return old;
         }
+
+        //- Read construction from polyMesh if all files are available
+        static autoPtr<faMesh> TryNew
+        (
+            const word& meshName,
+            const polyMesh& pMesh
+        );
 
         //- Read construction from polyMesh if all files are available
         static autoPtr<faMesh> TryNew(const polyMesh& pMesh);
@@ -646,8 +758,12 @@ public:
         //- Uses lookupObject semantics - Fatal if non-existent
         static const faMesh& mesh(const polyMesh& pMesh);
 
+        //- The single-region or specified finite-area region on the polyMesh.
+        //- Uses lookupObject semantics - Fatal if non-existent
+        static const faMesh& mesh(const polyMesh&, const word& areaRegion);
+
         //- Return access to polyMesh
-        inline const polyMesh& mesh() const;
+        const polyMesh& mesh() const;
 
         //- Return the local mesh directory (dbDir()/meshSubDir)
         fileName meshDir() const;
@@ -751,21 +867,63 @@ public:
 
     // Database
 
-        //- Return true if thisDb() is a valid DB
-        virtual bool hasDb() const;
+        //- True - thisDb() is a valid registry
+        virtual bool hasDb() const { return true; }
 
-        //- Return reference to the mesh database
-        virtual const objectRegistry& thisDb() const;
+        //- Reference to the mesh database
+        virtual const objectRegistry& thisDb() const
+        {
+            return faMeshRegistry::thisDb();
+        }
+
+        //- Local directory path of the objectRegistry relative to Time
+        //- with override for the single-region case
+        virtual const fileName& dbDir() const
+        {
+            return faMeshRegistry::dbDir();
+        }
 
         //- Name function is needed to disambiguate those inherited
         //- from base classes
         const word& name() const
         {
-            return thisDb().name();
+            return faMeshRegistry::thisDb().name();
         }
 
 
     // Regions
+
+        //- Local registry directory path (relative to Time) for specified
+        //- area mesh (of a single-region volume mesh)
+        static fileName dbDir(const word& areaRegion);
+
+        //- Local registry directory path (relative to Time) for specified
+        //- volume mesh and area mesh combination
+        static fileName dbDir(const word& volRegion, const word& areaRegion);
+
+        //- Local registry directory path (relative to Time) for specified
+        //- volume mesh and area mesh combination
+        static fileName dbDir
+        (
+            const polyMesh& pMesh,
+            const word& areaRegion = word::null
+        );
+
+        //- The local mesh directory name (eg, "faMesh") for specified
+        //- area mesh (of a single-region volume mesh)
+        static fileName meshDir(const word& areaRegion);
+
+        //- The local mesh directory name (eg, "faMesh") for specified
+        //- volume mesh and area mesh combination
+        static fileName meshDir(const word& volRegion, const word& areaRegion);
+
+        //- The local mesh directory name (eg, "faMesh") for specified
+        //- volume mesh and area mesh combination
+        static fileName meshDir
+        (
+            const polyMesh& pMesh,
+            const word& areaRegion = word::null
+        );
 
         //- The mesh region name or word::null if polyMesh::defaultRegion
         const word& regionName() const;

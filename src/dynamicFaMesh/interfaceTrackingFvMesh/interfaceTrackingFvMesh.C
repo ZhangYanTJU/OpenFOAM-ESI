@@ -512,7 +512,7 @@ void Foam::interfaceTrackingFvMesh::makeBulkSurfactConc() const
                 mesh().time().startTime().value()
             ),
             // mesh().time().timeName(),
-            aMesh().thisDb(),
+            mesh(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),

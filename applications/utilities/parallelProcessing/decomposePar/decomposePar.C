@@ -173,7 +173,7 @@ namespace Foam
 // Uses polyMesh/fvMesh meshSubDir by default
 autoPtr<labelIOList> procAddressing
 (
-    const fvMesh& procMesh,
+    const objectRegistry& procRegistry,
     const word& name,
     const word& instance,
     const word& local = fvMesh::meshSubDir
@@ -186,7 +186,7 @@ autoPtr<labelIOList> procAddressing
             name,
             instance,
             local,
-            procMesh,
+            procRegistry,
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER
@@ -199,13 +199,13 @@ autoPtr<labelIOList> procAddressing
 // Uses the finiteArea meshSubDir
 autoPtr<labelIOList> faProcAddressing
 (
-    const fvMesh& procMesh,
+    const objectRegistry& procRegistry,
     const word& name,
     const word& instance,
     const word& local = faMesh::meshSubDir
 )
 {
-    return procAddressing(procMesh, name, instance, local);
+    return procAddressing(procRegistry, name, instance, local);
 }
 
 
@@ -797,10 +797,21 @@ int main(int argc, char *argv[])
 
                 // Field objects at this time
                 IOobjectList objects;
+                IOobjectList faObjects;
 
                 if (doDecompFields)
                 {
+                    // List of volume mesh objects for this instance
                     objects = IOobjectList(mesh, runTime.timeName());
+
+                    // List of area mesh objects (assuming single region)
+                    faObjects = IOobjectList
+                    (
+                        mesh.time(),
+                        runTime.timeName(),
+                        faMesh::dbDir(mesh, word::null),
+                        IOobjectOption::NO_REGISTER
+                    );
 
                     // Ignore generated fields: (cellDist)
                     objects.remove("cellDist");
@@ -810,12 +821,15 @@ int main(int argc, char *argv[])
                 autoPtr<faMeshDecomposition> faMeshDecompPtr;
                 if (doFiniteArea)
                 {
+                    const word boundaryInst =
+                        mesh.time().findInstance(mesh.meshDir(), "boundary");
+
                     IOobject io
                     (
                         "faBoundary",
-                        mesh.time().findInstance(mesh.meshDir(), "boundary"),
-                        faMesh::meshSubDir,
-                        mesh,
+                        boundaryInst,
+                        faMesh::meshDir(mesh, word::null),
+                        mesh.time(),
                         IOobject::READ_IF_PRESENT,
                         IOobject::NO_WRITE,
                         IOobject::NO_REGISTER
@@ -1225,7 +1239,7 @@ int main(int argc, char *argv[])
 
                     if (doDecompFields)
                     {
-                        areaFieldCache.readAllFields(aMesh, objects);
+                        areaFieldCache.readAllFields(aMesh, faObjects);
                     }
 
                     const label nAreaFields = areaFieldCache.size();
@@ -1293,7 +1307,7 @@ int main(int argc, char *argv[])
                         autoPtr<labelIOList> tfaceProcAddr =
                             faProcAddressing
                             (
-                                procFvMesh,
+                                procMesh,
                                 "faceProcAddressing",
                                 runTime.constant()
                             );
@@ -1302,7 +1316,7 @@ int main(int argc, char *argv[])
                         autoPtr<labelIOList> tboundaryProcAddr =
                             faProcAddressing
                             (
-                                procFvMesh,
+                                procMesh,
                                 "boundaryProcAddressing",
                                 runTime.constant()
                             );
@@ -1311,7 +1325,7 @@ int main(int argc, char *argv[])
                         autoPtr<labelIOList> tedgeProcAddr =
                             faProcAddressing
                             (
-                                procFvMesh,
+                                procMesh,
                                 "edgeProcAddressing",
                                 runTime.constant()
                             );
