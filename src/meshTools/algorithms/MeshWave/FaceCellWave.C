@@ -30,7 +30,7 @@ License
 #include "polyMesh.H"
 #include "processorPolyPatch.H"
 #include "cyclicPolyPatch.H"
-#include "cyclicACMIPolyPatch.H"
+#include "cyclicAMIPolyPatch.H"
 #include "UIPstream.H"
 #include "UOPstream.H"
 #include "PstreamReduceOps.H"
@@ -822,20 +822,22 @@ void Foam::FaceCellWave<Type, TrackingData>::handleAMICyclicPatches()
 
             // Merge into global storage
 
-            const cyclicACMIPolyPatch* ACMIptr =
-                isA<cyclicACMIPolyPatch>(patch);
-            const auto& mask
-            (
-                ACMIptr
-              ? ACMIptr->mask()
-              : scalarField::null()
-            );
+            //const cyclicACMIPolyPatch* ACMIptr =
+            //    isA<cyclicACMIPolyPatch>(patch);
+            //const auto& mask
+            //(
+            //    ACMIptr
+            //  ? ACMIptr->mask()
+            //  : scalarField::null()
+            //);
+            const tmp<scalarField> areaFraction(patch.areaFraction());
 
             forAll(receiveInfo, i)
             {
-                if (mask != scalarField::null() && (mask[i] < 0.5))
+                //if (mask != scalarField::null() && (mask[i] < 0.5))
+                if (areaFraction && areaFraction()[i] <= 0.5)
                 {
-                    // wall, not coupled
+                    // not coupled
                     continue;
                 }
 

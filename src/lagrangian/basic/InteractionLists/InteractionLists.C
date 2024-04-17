@@ -299,11 +299,11 @@ void Foam::InteractionLists<ParticleType>::buildInteractionLists()
     {
         if (isA<wallPolyPatch>(patch))
         {
-            const scalarField areaFraction(patch.areaFraction());
+            const tmp<scalarField> areaFraction(patch.areaFraction());
 
-            forAll(areaFraction, facei)
+            forAll(patch, facei)
             {
-                if (areaFraction[facei] > 0.5)
+                if (!areaFraction || areaFraction()[facei] > 0.5)
                 {
                     localWallFaces.append(facei + patch.start());
                 }

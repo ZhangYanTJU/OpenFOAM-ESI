@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,13 +41,11 @@ template<class TransferType, class TrackingData>
 void Foam::patchDataWave<TransferType, TrackingData>::setChangedFaces
 (
     const labelHashSet& patchIDs,
-    labelList& changedFaces,
-    List<TransferType>& faceDist
+    DynamicList<label>& changedFaces,
+    DynamicList<TransferType>& faceDist
 ) const
 {
     const polyMesh& mesh = cellDistFuncs::mesh();
-
-    label nChangedFaces = 0;
 
     forAll(mesh.boundaryMesh(), patchi)
     {
@@ -55,23 +53,33 @@ void Foam::patchDataWave<TransferType, TrackingData>::setChangedFaces
         {
             const polyPatch& patch = mesh.boundaryMesh()[patchi];
 
+            const tmp<scalarField> areaFraction(patch.areaFraction());
+
+            const auto faceCentres(patch.faceCentres());
+
             const Field<Type>& patchField = initialPatchValuePtrs_[patchi];
 
-            forAll(patch.faceCentres(), patchFacei)
+            forAll(faceCentres, patchFacei)
             {
-                label meshFacei = patch.start() + patchFacei;
+                if
+                (
+                    !areaFraction
+                 || (areaFraction()[patchFacei] > 0.5)    // mostly wall
+                )
+                {
+                    label meshFacei = patch.start() + patchFacei;
+                    changedFaces.append(meshFacei);
 
-                changedFaces[nChangedFaces] = meshFacei;
-
-                faceDist[nChangedFaces] =
-                    TransferType
+                    faceDist.append
                     (
-                        patch.faceCentres()[patchFacei],
-                        patchField[patchFacei],
-                        0.0
+                        TransferType
+                        (
+                            faceCentres[patchFacei],
+                            patchField[patchFacei],
+                            0.0
+                        )
                     );
-
-                nChangedFaces++;
+                }
             }
         }
     }
@@ -222,8 +230,8 @@ void Foam::patchDataWave<TransferType, TrackingData>::correct()
     // Count walls
     label nWalls = sumPatchSize(patchIDs_);
 
-    List<TransferType> faceDist(nWalls);
-    labelList changedFaces(nWalls);
+    DynamicList<TransferType> faceDist(nWalls);
+    DynamicList<label> changedFaces(nWalls);
 
     setChangedFaces(patchIDs_, changedFaces, faceDist);
 

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,13 +36,11 @@ License
 void Foam::patchWave::setChangedFaces
 (
     const labelHashSet& patchIDs,
-    labelList& changedFaces,
-    List<wallPoint>& faceDist
+    DynamicList<label>& changedFaces,
+    DynamicList<wallPoint>& faceDist
 ) const
 {
     const polyMesh& mesh = cellDistFuncs::mesh();
-
-    label nChangedFaces = 0;
 
     forAll(mesh.boundaryMesh(), patchi)
     {
@@ -49,36 +48,37 @@ void Foam::patchWave::setChangedFaces
         {
             const polyPatch& patch = mesh.boundaryMesh()[patchi];
 
-            forAll(patch.faceCentres(), patchFacei)
+            const tmp<scalarField> areaFraction(patch.areaFraction());
+
+            const auto faceCentres(patch.faceCentres());
+
+            forAll(faceCentres, patchFacei)
             {
-                label meshFacei = patch.start() + patchFacei;
-
-                changedFaces[nChangedFaces] = meshFacei;
-
-                faceDist[nChangedFaces] =
-                    wallPoint
-                    (
-                        patch.faceCentres()[patchFacei],
-                        0.0
-                    );
-
-                nChangedFaces++;
+                if
+                (
+                    !areaFraction
+                 || (areaFraction()[patchFacei] > 0.5)    // mostly wall
+                )
+                {
+                    changedFaces.append(patch.start() + patchFacei);
+                    faceDist.append(wallPoint(faceCentres[patchFacei], 0.0));
+                }
             }
         }
     }
 
     for (const label facei : sourceIDs_)
     {
-        changedFaces[nChangedFaces] = facei;
+        changedFaces.append(facei);
 
-        faceDist[nChangedFaces] =
+        faceDist.append
+        (
             wallPoint
             (
                 mesh.faceCentres()[facei],
                 0.0
-            );
-
-        nChangedFaces++;
+            )
+        );
     }
 }
 
@@ -181,8 +181,8 @@ void Foam::patchWave::correct()
 
     label nPatch = sumPatchSize(patchIDs_) + sourceIDs_.size();
 
-    List<wallPoint> faceDist(nPatch);
-    labelList changedFaces(nPatch);
+    DynamicList<wallPoint> faceDist(nPatch);
+    DynamicList<label> changedFaces(nPatch);
 
     // Set to faceDist information to facecentre on walls.
     setChangedFaces(patchIDs_, changedFaces, faceDist);

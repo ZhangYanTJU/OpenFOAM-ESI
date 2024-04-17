@@ -241,16 +241,16 @@ void Foam::cellDistFuncs::correctBoundaryFaceCells
     // Size neighbours array for maximum possible (= size of largest patch)
     DynamicList<label> neighbours(maxPatchSize(patchIDs));
 
-    // Make non-overlap-patch back to cyclicACMI
-    labelList patchToCyclic(pbm.size(), -1);
-    for (const auto& pp : pbm)
-    {
-        const auto* cycPtr = isA<cyclicACMIPolyPatch>(pp);
-        if (cycPtr)
-        {
-            patchToCyclic[cycPtr->nonOverlapPatchID()] = cycPtr->index();
-        }
-    }
+    //// Make non-overlap-patch back to cyclicACMI
+    //labelList patchToCyclic(pbm.size(), -1);
+    //for (const auto& pp : pbm)
+    //{
+    //    const auto* cycPtr = isA<cyclicACMIPolyPatch>(pp);
+    //    if (cycPtr)
+    //    {
+    //        patchToCyclic[cycPtr->nonOverlapPatchID()] = cycPtr->index();
+    //    }
+    //}
 
     // Correct all cells with face on wall
     const vectorField& cellCentres = mesh().cellCentres();
@@ -261,18 +261,19 @@ void Foam::cellDistFuncs::correctBoundaryFaceCells
         if (patchIDs.found(patchi))
         {
             const polyPatch& patch = pbm[patchi];
-            const label cycPatchi = patchToCyclic[patchi];
-            const auto& mask
-            (
-                cycPatchi == -1
-              ? scalarField::null()
-              : refCast<const cyclicACMIPolyPatch>(pbm[cycPatchi]).mask()
-            );
+            //const label cycPatchi = patchToCyclic[patchi];
+            //const auto& mask
+            //(
+            //    cycPatchi == -1
+            //  ? scalarField::null()
+            //  : refCast<const cyclicACMIPolyPatch>(pbm[cycPatchi]).mask()
+            //);
+            const tmp<scalarField> areaFraction(patch.areaFraction());
 
             // Check cells with face on wall
             forAll(patch, patchFacei)
             {
-                if (mask != scalarField::null() && (mask[patchFacei] > 0.5))
+                if (areaFraction && (areaFraction()[patchFacei] <= 0.5))
                 {
                     // is mostly coupled
                     continue;
@@ -312,16 +313,16 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
 
     const auto& pbm = mesh().boundaryMesh();
 
-    // Make non-overlap-patch back to cyclicACMI
-    labelList patchToCyclic(pbm.size(), -1);
-    for (const auto& pp : pbm)
-    {
-        const auto* cycPtr = isA<cyclicACMIPolyPatch>(pp);
-        if (cycPtr)
-        {
-            patchToCyclic[cycPtr->nonOverlapPatchID()] = cycPtr->index();
-        }
-    }
+    //// Make non-overlap-patch back to cyclicACMI
+    //labelList patchToCyclic(pbm.size(), -1);
+    //for (const auto& pp : pbm)
+    //{
+    //    const auto* cycPtr = isA<cyclicACMIPolyPatch>(pp);
+    //    if (cycPtr)
+    //    {
+    //        patchToCyclic[cycPtr->nonOverlapPatchID()] = cycPtr->index();
+    //    }
+    //}
 
     const vectorField& cellCentres = mesh().cellCentres();
 
@@ -335,17 +336,32 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
             const labelListList& pointFaces = patch.pointFaces();
 
             bitSet isWallPoint(meshPoints.size(), true);
-            const label cycPatchi = patchToCyclic[patchi];
-            if (cycPatchi != -1)
             {
-                const auto& mask =
-                    refCast<const cyclicACMIPolyPatch>(pbm[cycPatchi]).mask();
-                forAll(mask, i)
+                //const label cycPatchi = patchToCyclic[patchi];
+                //if (cycPatchi != -1)
+                //{
+                //    const auto& mask = refCast<const cyclicACMIPolyPatch>
+                //    (
+                //        pbm[cycPatchi]
+                //    ).mask();
+                //    forAll(mask, i)
+                //    {
+                //        if (mask[i] > 0.5)
+                //        {
+                //            // Face mostly coupled
+                //            isWallPoint.unset(localFaces[i]);
+                //        }
+                //    }
+                //}
+                const tmp<scalarField> areaFraction(patch.areaFraction());
+
+                // Check cells with face on wall
+                forAll(patch, patchFacei)
                 {
-                    if (mask[i] > 0.5)
+                    if (!areaFraction || (areaFraction()[patchFacei] <= 0.5))
                     {
-                        // Face mostly coupled
-                        isWallPoint.unset(localFaces[i]);
+                        // face mostly coupled
+                        isWallPoint.unset(localFaces[patchFacei]);
                     }
                 }
             }
