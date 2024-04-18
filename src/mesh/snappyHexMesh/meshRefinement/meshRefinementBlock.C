@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -455,17 +455,14 @@ void Foam::meshRefinement::growSet
 //}
 
 
-/*
-Foam::label Foam::meshRefinement::markProximityRefinementWave
+void Foam::meshRefinement::markProximityCandidateFaces
 (
-    const scalar planarCos,
     const labelList& blockedSurfaces,
-    const label nAllowRefine,
+    const List<scalarList>& regionToBlockSize,
     const labelList& neiLevel,
     const pointField& neiCc,
 
-    labelList& refineCell,
-    label& nRefine
+    labelList& testFaces
 ) const
 {
     labelListList faceZones(surfaces_.surfaces().size());
@@ -499,35 +496,6 @@ Foam::label Foam::meshRefinement::markProximityRefinementWave
     }
 
 
-    // Re-work the blockLevel of the blockedSurfaces into a length scale
-    // and a number of cells to cross
-    List<scalarList> regionToBlockSize(surfaces_.surfaces().size());
-    for (const label surfi : blockedSurfaces)
-    {
-        const label geomi = surfaces_.surfaces()[surfi];
-        const searchableSurface& s = surfaces_.geometry()[geomi];
-        const label nRegions = s.regions().size();
-        regionToBlockSize[surfi].setSize(nRegions);
-        for (label regioni = 0; regioni < nRegions; regioni++)
-        {
-            const label globalRegioni = surfaces_.globalRegion(surfi, regioni);
-            const label bLevel = surfaces_.blockLevel()[globalRegioni];
-            regionToBlockSize[surfi][regioni] =
-                meshCutter_.level0EdgeLength()/pow(2.0, bLevel);
-
-            //const label mLevel = surfaces_.maxLevel()[globalRegioni];
-            //// TBD: check for higher cached level of surface due to vol
-            ////      refinement. Problem: might still miss refinement bubble
-            ////      fully inside thin channel
-            //if (isA<triSurfaceMesh>(s) && !isA<distributedTriSurfaceMesh>(s))
-            //{
-            //    const triSurfaceMesh& surf = refCast<const triSurfaceMesh>(s);
-            //}
-
-            //nIters = max(nIters, (2<<(mLevel-bLevel)));
-        }
-    }
-
     // Clever limiting of the number of iterations (= max cells in the channel)
     // since it has too many problematic issues, e.g. with volume refinement
     // and the real check uses the proper distance anyway just disable.
@@ -536,7 +504,7 @@ Foam::label Foam::meshRefinement::markProximityRefinementWave
 
     // Collect candidate faces (i.e. intersecting any surface and
     // owner/neighbour not yet refined)
-    const labelList testFaces(getRefineCandidateFaces(refineCell));
+    //const labelList testFaces(getRefineCandidateFaces(refineCell));
 
     // Collect segments
     pointField start(testFaces.size());
@@ -730,6 +698,31 @@ Foam::label Foam::meshRefinement::markProximityRefinementWave
     wallDistCalc.iterate(nIters);
 
 
+    // Extract faces of visited cells
+
+    bitSet isProximityFace(mesh_.nFaces(), false);
+
+    // Make sure to include initial intersected ones
+    isProximityFace.set(testFaces);
+
+    forAll(allCellInfo, celli)
+    {
+        if (allCellInfo[celli].valid(wallDistCalc.data()))
+        {
+            isProximityFace.set(mesh_.cells()[celli]);
+        }
+    }
+
+    syncTools::syncFaceList
+    (
+        mesh_,
+        isProximityFace,
+        orEqOp<unsigned int>(),
+        0u
+    );
+
+    testFaces = isProximityFace.toc();
+/*
     if (debug&meshRefinement::MESH)
     {
         // Dump current nearest opposite surfaces
@@ -787,167 +780,8 @@ Foam::label Foam::meshRefinement::markProximityRefinementWave
         Info<< "Writing measured gap distance to "
             << distance.name() << endl;
         distance.write();
-    }
-
-
-
-    // Detect tight gaps:
-    // - cell is inbetween the two surfaces
-    // - two surfaces are planarish
-    // - two surfaces are not too far apart
-    //   (number of walking iterations is a too-coarse measure)
-
-    scalarField smallGapDistance(mesh_.nCells(), 0.0);
-    label nMulti = 0;
-    label nSmallGap = 0;
-
-    //OBJstream str(mesh_.time().timePath()/"multiRegion.obj");
-
-
-    forAll(allCellInfo, celli)
-    {
-        if (allCellInfo[celli].valid(wallDistCalc.data()))
-        {
-            const point& cc = mesh_.cellCentres()[celli];
-
-            const List<point>& origin = allCellInfo[celli].origin();
-            const List<FixedList<label, 3>>& surface =
-                allCellInfo[celli].surface();
-
-            // Find pair with minimum distance
-            for (label i = 0; i < origin.size(); i++)
-            {
-                for (label j = i + 1; j < origin.size(); j++)
-                {
-                    //if (isMultiRegion[celli])
-                    //{
-                    //    // The intersection locations are too inaccurate
-                    //    // (since not proper nearest, just a cell-cell ray
-                    //    //  intersection) so include always
-                    //
-                    //    smallGapDistance[celli] =
-                    //        max(smallGapDistance[celli], maxDist);
-                    //
-                    //
-                    //    str.writeLine(cc, origin[i]);
-                    //    str.writeLine(cc, origin[j]);
-                    //
-                    //    nMulti++;
-                    //}
-                    //else
-                    if (((cc-origin[i]) & (cc-origin[j])) < 0)
-                    {
-                        const label surfi = surface[i][0];
-                        const label regioni = surface[i][1];
-
-                        const label surfj = surface[j][0];
-                        const label regionj = surface[j][1];
-
-                        const scalar maxSize = max
-                        (
-                            regionToBlockSize[surfi][regioni],
-                            regionToBlockSize[surfj][regionj]
-                        );
-
-                        if
-                        (
-                            magSqr(origin[i]-origin[j])
-                          < Foam::sqr(2*maxSize)
-                        )
-                        {
-                            const scalar maxDist
-                            (
-                                max
-                                (
-                                    mag(cc-origin[i]),
-                                    mag(cc-origin[j])
-                                )
-                            );
-
-                            smallGapDistance[celli] =
-                                max(smallGapDistance[celli], maxDist);
-                            nSmallGap++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    if (debug)
-    {
-        Info<< "Marked for blocking due to intersecting multiple surfaces  : "
-            << returnReduce(nMulti, sumOp<label>()) << " cells." << endl;
-        Info<< "Marked for blocking due to close opposite surfaces         : "
-            << returnReduce(nSmallGap, sumOp<label>()) << " cells." << endl;
-    }
-
-    if (debug&meshRefinement::MESH)
-    {
-        volScalarField distance
-        (
-            IOobject
-            (
-                "smallGapDistance",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimLength, Zero)
-        );
-        distance.field() = smallGapDistance;
-        distance.correctBoundaryConditions();
-
-        Info<< "Writing all small-gap cells to "
-            << distance.name() << endl;
-        distance.write();
-    }
-
-
-    // Mark refinement
-    const label oldNRefine = nRefine;
-    forAll(smallGapDistance, celli)
-    {
-        if (smallGapDistance[celli] > SMALL)
-        {
-            if
-            (
-                !markForRefine
-                (
-                    0,                      // mark level
-                    nAllowRefine,
-                    refineCell[celli],
-                    nRefine
-                )
-            )
-            {
-                if (debug)
-                {
-                    Pout<< "Stopped refining since reaching my cell"
-                        << " limit of " << mesh_.nCells()+7*nRefine
-                        << endl;
-                }
-                break;
-            }
-        }
-    }
-
-    if
-    (
-        returnReduce(nRefine, sumOp<label>())
-      > returnReduce(nAllowRefine, sumOp<label>())
-    )
-    {
-        Info<< "Reached refinement limit." << endl;
-    }
-
-    return returnReduce(nRefine-oldNRefine, sumOp<label>());
+    }*/
 }
-*/
 
 
 Foam::label Foam::meshRefinement::markFakeGapRefinement
@@ -1002,7 +836,19 @@ Foam::label Foam::meshRefinement::markFakeGapRefinement
     // owner/neighbour not yet refined) and their cells
     labelList cellMap;
     {
-        const labelList testFaces(getRefineCandidateFaces(refineCell));
+        labelList testFaces(getRefineCandidateFaces(refineCell));
+
+        // Extend the set by faceCellFace wave upto given 3*blockLevel size
+        markProximityCandidateFaces
+        (
+            blockedSurfaces,
+            regionToBlockSize,
+            neiLevel,
+            neiCc,
+            testFaces
+        );
+
+
         bitSet isTestCell(mesh_.nCells());
         for (const label facei : testFaces)
         {
@@ -2427,5 +2273,500 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::blockLeakFaces
     return mapPtr;
 }
 
+
+
+/*
+Foam::label Foam::meshRefinement::markProximityRefinementWave
+(
+    const scalar planarCos,
+    const labelList& blockedSurfaces,
+    const label nAllowRefine,
+    const labelList& neiLevel,
+    const pointField& neiCc,
+
+    labelList& refineCell,
+    label& nRefine
+) const
+{
+    labelListList faceZones(surfaces_.surfaces().size());
+    {
+        // If triSurface do additional zoning based on connectivity
+        for (const label surfi : blockedSurfaces)
+        {
+            const label geomi = surfaces_.surfaces()[surfi];
+            const searchableSurface& s = surfaces_.geometry()[geomi];
+            if (isA<triSurfaceMesh>(s) && !isA<distributedTriSurfaceMesh>(s))
+            {
+                const triSurfaceMesh& surf = refCast<const triSurfaceMesh>(s);
+                const labelListList& edFaces = surf.edgeFaces();
+                boolList isOpenEdge(edFaces.size(), false);
+                forAll(edFaces, i)
+                {
+                    if (edFaces[i].size() == 1)
+                    {
+                        isOpenEdge[i] = true;
+                    }
+                }
+
+                labelList faceZone;
+                const label nZones = surf.markZones(isOpenEdge, faceZone);
+                if (nZones > 1)
+                {
+                    faceZones[surfi].transfer(faceZone);
+                }
+            }
+        }
+    }
+
+
+    // Re-work the blockLevel of the blockedSurfaces into a length scale
+    // and a number of cells to cross
+    List<scalarList> regionToBlockSize(surfaces_.surfaces().size());
+    for (const label surfi : blockedSurfaces)
+    {
+        const label geomi = surfaces_.surfaces()[surfi];
+        const searchableSurface& s = surfaces_.geometry()[geomi];
+        const label nRegions = s.regions().size();
+        regionToBlockSize[surfi].setSize(nRegions);
+        for (label regioni = 0; regioni < nRegions; regioni++)
+        {
+            const label globalRegioni = surfaces_.globalRegion(surfi, regioni);
+            const label bLevel = surfaces_.blockLevel()[globalRegioni];
+            regionToBlockSize[surfi][regioni] =
+                meshCutter_.level0EdgeLength()/pow(2.0, bLevel);
+
+            //const label mLevel = surfaces_.maxLevel()[globalRegioni];
+            //// TBD: check for higher cached level of surface due to vol
+            ////      refinement. Problem: might still miss refinement bubble
+            ////      fully inside thin channel
+            //if (isA<triSurfaceMesh>(s) && !isA<distributedTriSurfaceMesh>(s))
+            //{
+            //    const triSurfaceMesh& surf = refCast<const triSurfaceMesh>(s);
+            //}
+
+            //nIters = max(nIters, (2<<(mLevel-bLevel)));
+        }
+    }
+
+    // Clever limiting of the number of iterations (= max cells in the channel)
+    // since it has too many problematic issues, e.g. with volume refinement
+    // and the real check uses the proper distance anyway just disable.
+    const label nIters = mesh_.globalData().nTotalCells();
+
+
+    // Collect candidate faces (i.e. intersecting any surface and
+    // owner/neighbour not yet refined)
+    const labelList testFaces(getRefineCandidateFaces(refineCell));
+
+    // Collect segments
+    pointField start(testFaces.size());
+    pointField end(testFaces.size());
+    labelList minLevel(testFaces.size());
+
+    calcCellCellRays
+    (
+        neiCc,
+        neiLevel,
+        testFaces,
+        start,
+        end,
+        minLevel
+    );
+    // TBD. correct nIters for actual cellLevel (since e.g. volume refinement
+    //      might add to cell level). Unfortunately we only have minLevel,
+    //      not maxLevel. Problem: what if volume refinement only in middle of
+    //      channel? Say channel 1m wide with a 0.1m sphere of refinement
+    //      Workaround: have dummy surface with e.g. maxLevel 100 to
+    //      force nIters to be high enough.
+
+
+    // Test for all intersections (with surfaces of higher gap level than
+    // minLevel) and cache per cell the max surface level and the local normal
+    // on that surface.
+
+    labelList surface1;
+    List<pointIndexHit> hit1;
+    labelList region1;
+    vectorField normal1;
+
+    labelList surface2;
+    List<pointIndexHit> hit2;
+    labelList region2;
+    vectorField normal2;
+
+    surfaces_.findNearestIntersection
+    (
+        blockedSurfaces,
+        start,
+        end,
+
+        surface1,
+        hit1,
+        region1,    // local region
+        normal1,
+
+        surface2,
+        hit2,
+        region2,    // local region
+        normal2
+    );
+
+
+    // Detect cells that are using multiple surface regions
+    //bitSet isMultiRegion;
+    //detectMultiRegionCells
+    //(
+    //    faceZones,
+    //    testFaces,
+    //
+    //    surface1,
+    //    hit1,
+    //    region1,
+    //
+    //    surface2,
+    //    hit2,
+    //    region2,
+    //
+    //    isMultiRegion
+    //);
+
+
+    label n = 0;
+    forAll(testFaces, i)
+    {
+        if (hit1[i].hit())
+        {
+            n++;
+        }
+    }
+
+    List<wallPoints> faceDist(n);
+    labelList changedFaces(n);
+    n = 0;
+
+    DynamicList<point> originLocation(2);
+    DynamicList<scalar> originDistSqr(2);
+    DynamicList<FixedList<label, 3>> originSurface(2);
+    //DynamicList<point> originNormal(2);
+
+
+    //- To avoid walking through surfaces we mark all faces that have been
+    //  intersected. We can either mark only those faces intersecting
+    //  blockedSurfaces (i.e. with a 'blockLevel') or mark faces intersecting
+    //  any (refinement) surface (this includes e.g. faceZones). This is
+    //  much easier since that information is already cached
+    //  (meshRefinement::intersectedFaces())
+
+    //bitSet isBlockedFace(mesh_.nFaces());
+    forAll(testFaces, i)
+    {
+        if (hit1[i].hit())
+        {
+            const label facei = testFaces[i];
+            //isBlockedFace.set(facei);
+            const point& fc = mesh_.faceCentres()[facei];
+            const labelList& fz1 = faceZones[surface1[i]];
+
+            originLocation.clear();
+            originDistSqr.clear();
+            //originNormal.clear();
+            originSurface.clear();
+
+            originLocation.append(hit1[i].point());
+            originDistSqr.append(hit1[i].point().distSqr(fc));
+            //originNormal.append(normal1[i]);
+            originSurface.append
+            (
+                FixedList<label, 3>
+                ({
+                    surface1[i],
+                    region1[i],
+                    (fz1.size() ? fz1[hit1[i].index()] : region1[i])
+                })
+            );
+
+            if (hit2[i].hit() && hit1[i] != hit2[i])
+            {
+                const labelList& fz2 = faceZones[surface2[i]];
+                originLocation.append(hit2[i].point());
+                originDistSqr.append(hit2[i].point().distSqr(fc));
+                //originNormal.append(normal2[i]);
+                originSurface.append
+                (
+                    FixedList<label, 3>
+                    ({
+                        surface2[i],
+                        region2[i],
+                        (fz2.size() ? fz2[hit2[i].index()] : region2[i])
+                    })
+                );
+            }
+
+            // Collect all seed data. Currently walking does not look at
+            // surface direction - if so pass in surface normal as well
+            faceDist[n] = wallPoints
+            (
+                originLocation,     // origin
+                originDistSqr,      // distance to origin
+                originSurface       // surface+region+zone
+                //originNormal        // normal at origin
+            );
+            changedFaces[n] = facei;
+            n++;
+        }
+    }
+
+
+    // Clear intersection info
+    surface1.clear();
+    hit1.clear();
+    region1.clear();
+    normal1.clear();
+    surface2.clear();
+    hit2.clear();
+    region2.clear();
+    normal2.clear();
+
+
+    List<wallPoints> allFaceInfo(mesh_.nFaces());
+    List<wallPoints> allCellInfo(mesh_.nCells());
+
+    // Any refinement surface (even a faceZone) should stop the gap walking.
+    // This is exactly the information which is cached in the surfaceIndex_
+    // field.
+    const bitSet isBlockedFace(intersectedFaces());
+
+    wallPoints::trackData td(isBlockedFace, regionToBlockSize);
+    FaceCellWave<wallPoints, wallPoints::trackData> wallDistCalc
+    (
+        mesh_,
+        changedFaces,
+        faceDist,
+        allFaceInfo,
+        allCellInfo,
+        0,            // max iterations
+        td
+    );
+    wallDistCalc.iterate(nIters);
+
+
+    if (debug&meshRefinement::MESH)
+    {
+        // Dump current nearest opposite surfaces
+        volScalarField distance
+        (
+            IOobject
+            (
+                "gapSize",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            mesh_,
+            dimensionedScalar
+            (
+                "zero",
+                dimLength,  //dimensionSet(0, 1, 0, 0, 0),
+                -1
+            )
+        );
+
+        forAll(allCellInfo, celli)
+        {
+            if (allCellInfo[celli].valid(wallDistCalc.data()))
+            {
+                const point& cc = mesh_.cellCentres()[celli];
+                // Nearest surface points
+                const List<point>& origin = allCellInfo[celli].origin();
+
+                // Find 'opposite' pair with minimum distance
+                for (label i = 0; i < origin.size(); i++)
+                {
+                    for (label j = i + 1; j < origin.size(); j++)
+                    {
+                        if (((cc-origin[i]) & (cc-origin[j])) < 0)
+                        {
+                            const scalar d(mag(origin[i]-origin[j]));
+                            if (distance[celli] < 0)
+                            {
+                                distance[celli] = d;
+                            }
+                            else
+                            {
+                                distance[celli] = min(distance[celli], d);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        distance.correctBoundaryConditions();
+
+        Info<< "Writing measured gap distance to "
+            << distance.name() << endl;
+        distance.write();
+    }
+
+
+
+    // Detect tight gaps:
+    // - cell is inbetween the two surfaces
+    // - two surfaces are planarish
+    // - two surfaces are not too far apart
+    //   (number of walking iterations is a too-coarse measure)
+
+    scalarField smallGapDistance(mesh_.nCells(), 0.0);
+    label nMulti = 0;
+    label nSmallGap = 0;
+
+    //OBJstream str(mesh_.time().timePath()/"multiRegion.obj");
+
+
+    forAll(allCellInfo, celli)
+    {
+        if (allCellInfo[celli].valid(wallDistCalc.data()))
+        {
+            const point& cc = mesh_.cellCentres()[celli];
+
+            const List<point>& origin = allCellInfo[celli].origin();
+            const List<FixedList<label, 3>>& surface =
+                allCellInfo[celli].surface();
+
+            // Find pair with minimum distance
+            for (label i = 0; i < origin.size(); i++)
+            {
+                for (label j = i + 1; j < origin.size(); j++)
+                {
+                    //if (isMultiRegion[celli])
+                    //{
+                    //    // The intersection locations are too inaccurate
+                    //    // (since not proper nearest, just a cell-cell ray
+                    //    //  intersection) so include always
+                    //
+                    //    smallGapDistance[celli] =
+                    //        max(smallGapDistance[celli], maxDist);
+                    //
+                    //
+                    //    str.writeLine(cc, origin[i]);
+                    //    str.writeLine(cc, origin[j]);
+                    //
+                    //    nMulti++;
+                    //}
+                    //else
+                    if (((cc-origin[i]) & (cc-origin[j])) < 0)
+                    {
+                        const label surfi = surface[i][0];
+                        const label regioni = surface[i][1];
+
+                        const label surfj = surface[j][0];
+                        const label regionj = surface[j][1];
+
+                        const scalar maxSize = max
+                        (
+                            regionToBlockSize[surfi][regioni],
+                            regionToBlockSize[surfj][regionj]
+                        );
+
+                        if
+                        (
+                            magSqr(origin[i]-origin[j])
+                          < Foam::sqr(2*maxSize)
+                        )
+                        {
+                            const scalar maxDist
+                            (
+                                max
+                                (
+                                    mag(cc-origin[i]),
+                                    mag(cc-origin[j])
+                                )
+                            );
+
+                            smallGapDistance[celli] =
+                                max(smallGapDistance[celli], maxDist);
+                            nSmallGap++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    if (debug)
+    {
+        Info<< "Marked for blocking due to intersecting multiple surfaces  : "
+            << returnReduce(nMulti, sumOp<label>()) << " cells." << endl;
+        Info<< "Marked for blocking due to close opposite surfaces         : "
+            << returnReduce(nSmallGap, sumOp<label>()) << " cells." << endl;
+    }
+
+    if (debug&meshRefinement::MESH)
+    {
+        volScalarField distance
+        (
+            IOobject
+            (
+                "smallGapDistance",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            mesh_,
+            dimensionedScalar(dimLength, Zero)
+        );
+        distance.field() = smallGapDistance;
+        distance.correctBoundaryConditions();
+
+        Info<< "Writing all small-gap cells to "
+            << distance.name() << endl;
+        distance.write();
+    }
+
+
+    // Mark refinement
+    const label oldNRefine = nRefine;
+    forAll(smallGapDistance, celli)
+    {
+        if (smallGapDistance[celli] > SMALL)
+        {
+            if
+            (
+                !markForRefine
+                (
+                    0,                      // mark level
+                    nAllowRefine,
+                    refineCell[celli],
+                    nRefine
+                )
+            )
+            {
+                if (debug)
+                {
+                    Pout<< "Stopped refining since reaching my cell"
+                        << " limit of " << mesh_.nCells()+7*nRefine
+                        << endl;
+                }
+                break;
+            }
+        }
+    }
+
+    if
+    (
+        returnReduce(nRefine, sumOp<label>())
+      > returnReduce(nAllowRefine, sumOp<label>())
+    )
+    {
+        Info<< "Reached refinement limit." << endl;
+    }
+
+    return returnReduce(nRefine-oldNRefine, sumOp<label>());
+}
+*/
 
 // ************************************************************************* //

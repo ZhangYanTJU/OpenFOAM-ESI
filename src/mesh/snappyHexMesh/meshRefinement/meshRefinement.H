@@ -555,6 +555,18 @@ private:
                 label& nRefine
             ) const;
 
+            //- Mark faces for additional proximity based testing. Extends
+            //  testFaces
+            void markProximityCandidateFaces
+            (
+                const labelList& blockedSurfaces,
+                const List<scalarList>& regionToBlockSize,
+                const labelList& neiLevel,
+                const pointField& neiCc,
+
+                labelList& testFaces
+            ) const;
+
             //- Mark cells for surface proximity based refinement. Uses
             //  ray-shooting from markInternalGapRefinement.
             label markFakeGapRefinement
