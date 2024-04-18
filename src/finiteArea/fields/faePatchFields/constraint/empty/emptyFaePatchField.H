@@ -73,7 +73,8 @@ public:
             const DimensionedField<Type, edgeMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         emptyFaePatchField
         (
             const faPatch&,

@@ -27,7 +27,11 @@ Class
     Foam::cyclicAMIFvsPatchField
 
 Description
-    Foam::cyclicAMIFvsPatchField
+    This boundary condition enforces a cyclic condition between a pair of
+    boundaries, whereby communication between the patches is performed using
+    an arbitrary mesh interface (AMI) interpolation.
+
+    The "value" entry is MUST_READ.
 
 SourceFiles
     cyclicAMIFvsPatchField.C
@@ -54,7 +58,7 @@ class cyclicAMIFvsPatchField
 :
     public coupledFvsPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the cyclic patch
         const cyclicAMIFvPatch& cyclicAMIPatch_;
@@ -75,7 +79,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is MUST_READ.
         cyclicAMIFvsPatchField
         (
             const fvPatch&,

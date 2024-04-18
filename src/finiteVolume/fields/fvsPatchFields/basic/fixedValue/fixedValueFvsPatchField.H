@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,15 +28,33 @@ Class
     Foam::fixedValueFvsPatchField
 
 Description
-    Foam::fixedValueFvsPatchField
+    This boundary condition supplies a fixed value constraint, and is the base
+    class for a number of other boundary conditions.
+
+    The "value" entry is MUST_READ.
+
+Usage
+    \table
+        Property     | Description             | Required    | Default
+        value        | Patch face values       | yes         |
+    \endtable
+
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type            fixedValue;
+        value           uniform 0;  // Example for scalar field usage
+    }
+    \endverbatim
 
 SourceFiles
     fixedValueFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fixedValueFvsPatchField_H
-#define fixedValueFvsPatchField_H
+#ifndef Foam_fixedValueFvsPatchField_H
+#define Foam_fixedValueFvsPatchField_H
 
 #include "fvsPatchField.H"
 
@@ -45,7 +64,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class fixedValueFvsPatch Declaration
+                   Class fixedValueFvsPatchField Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
@@ -81,7 +100,8 @@ public:
         (
             const fvPatch&,
             const DimensionedField<Type, surfaceMesh>&,
-            const dictionary&
+            const dictionary&,
+            IOobjectOption::readOption requireValue = IOobjectOption::MUST_READ
         );
 
         //- Construct by mapping the given fixedValue patch field
@@ -127,6 +147,9 @@ public:
         //- True: this patch field fixes a value.
         virtual bool fixesValue() const { return true; }
 
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
+
 
         // Evaluation functions
 
@@ -153,7 +176,7 @@ public:
             virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
 
 
-    // Member operators
+    // Member Operators
 
         virtual void operator=(const UList<Type>&) {}
 

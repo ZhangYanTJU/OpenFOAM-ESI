@@ -343,13 +343,13 @@ public:
             const fvPatch& p,
             const DimensionedField<Type, surfaceMesh>& iF,
             const dictionary& dict,
-            const bool valueReqd
+            const bool needValue
         )
         :
             fvsPatchField
             (
                 p, iF, dict,
-                (valueReqd? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
+                (needValue? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
             )
         {}
 
@@ -541,7 +541,7 @@ public:
             {}
 
 
-        //- Write
+        //- Write the patch "type"
         virtual void write(Ostream& os) const;
 
         //- Check against given patch field

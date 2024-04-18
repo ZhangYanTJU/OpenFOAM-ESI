@@ -70,10 +70,10 @@ Foam::fixedJumpFvPatchField<Type>::fixedJumpFvPatchField
     const fvPatch& p,
     const DimensionedField<Type, volMesh>& iF,
     const dictionary& dict,
-    const bool valueRequired
+    const bool needValue
 )
 :
-    jumpCyclicFvPatchField<Type>(p, iF, dict, false), // Pass no valueRequired
+    jumpCyclicFvPatchField<Type>(p, iF, dict, false), // needValue = false
     jump_(p.size(), Zero),
     jump0_(p.size(), Zero),
     minJump_(dict.getOrDefault<Type>("minJump", pTraits<Type>::min)),
@@ -82,7 +82,7 @@ Foam::fixedJumpFvPatchField<Type>::fixedJumpFvPatchField
 {
     if (this->cyclicPatch().owner())
     {
-        if (valueRequired)
+        if (needValue)
         {
             jump_.assign("jump", dict, p.size(), IOobjectOption::MUST_READ);
         }
@@ -90,7 +90,7 @@ Foam::fixedJumpFvPatchField<Type>::fixedJumpFvPatchField
         jump0_.assign("jump0", dict, p.size(), IOobjectOption::LAZY_READ);
     }
 
-    if (valueRequired)
+    if (needValue)
     {
         if (!this->readValueEntry(dict))
         {

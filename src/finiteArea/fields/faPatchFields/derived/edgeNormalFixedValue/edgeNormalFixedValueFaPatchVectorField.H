@@ -159,7 +159,7 @@ public:
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
 
-        //- Write
+        //- Write includes "value" entry
         virtual void write(Ostream&) const;
 };
 

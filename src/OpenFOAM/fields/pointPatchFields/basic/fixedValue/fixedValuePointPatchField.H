@@ -30,6 +30,8 @@ Class
 Description
     A FixedValue boundary condition for pointField.
 
+    The "value" entry is normally MUST_READ.
+
 SourceFiles
     fixedValuePointPatchField.C
 
@@ -92,13 +94,13 @@ public:
             const pointPatch& p,
             const DimensionedField<Type, pointMesh>& iF,
             const dictionary& dict,
-            const bool valueReqd
+            const bool needValue
         )
         :
             fixedValuePointPatchField
             (
                 p, iF, dict,
-                (valueReqd? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
+                (needValue? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
             )
         {}
 

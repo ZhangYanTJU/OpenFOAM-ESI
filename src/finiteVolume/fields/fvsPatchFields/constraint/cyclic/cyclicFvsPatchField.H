@@ -27,15 +27,27 @@ Class
     Foam::cyclicFvsPatchField
 
 Description
-    Foam::cyclicFvsPatchField
+    This boundary condition enforces a cyclic condition between a pair of
+    boundaries.
+
+    The "value" entry is NO_READ, but is written.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type            cyclic;
+    }
+    \endverbatim
 
 SourceFiles
     cyclicFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cyclicFvsPatchField_H
-#define cyclicFvsPatchField_H
+#ifndef Foam_cyclicFvsPatchField_H
+#define Foam_cyclicFvsPatchField_H
 
 #include "coupledFvsPatchField.H"
 #include "cyclicFvPatch.H"
@@ -46,7 +58,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class cyclicFvsPatch Declaration
+                     Class cyclicFvsPatchField Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
@@ -54,7 +66,7 @@ class cyclicFvsPatchField
 :
     public coupledFvsPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the cyclic patch
         const cyclicFvPatch& cyclicPatch_;
@@ -75,7 +87,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         cyclicFvsPatchField
         (
             const fvPatch&,

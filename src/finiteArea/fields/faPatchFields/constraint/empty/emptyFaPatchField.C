@@ -38,7 +38,7 @@ Foam::emptyFaPatchField<Type>::emptyFaPatchField
     const DimensionedField<Type, areaMesh>& iF
 )
 :
-    faPatchField<Type>(p, iF, Field<Type>())
+    faPatchField<Type>(p, iF, Field<Type>())  // zero-sized patch field
 {}
 
 
@@ -51,7 +51,7 @@ Foam::emptyFaPatchField<Type>::emptyFaPatchField
     const faPatchFieldMapper&
 )
 :
-    faPatchField<Type>(p, iF, Field<Type>())
+    faPatchField<Type>(p, iF, Field<Type>())  // zero-sized patch field
 {
     if (!isType<emptyFaPatch>(p))
     {
@@ -74,8 +74,11 @@ Foam::emptyFaPatchField<Type>::emptyFaPatchField
     const dictionary& dict
 )
 :
-    faPatchField<Type>(p, iF, Field<Type>())
+    faPatchField<Type>(p, iF, Field<Type>())  // zero-sized patch field
 {
+    // Empty means empty, so no patchType override
+    // with faPatchFieldBase::readDict(dict);
+
     if (!isA<emptyFaPatch>(p))
     {
         FatalIOErrorInFunction(dict)
@@ -92,21 +95,21 @@ Foam::emptyFaPatchField<Type>::emptyFaPatchField
 template<class Type>
 Foam::emptyFaPatchField<Type>::emptyFaPatchField
 (
-    const emptyFaPatchField<Type>& ptf
+    const emptyFaPatchField<Type>& ptf,
+    const DimensionedField<Type, areaMesh>& iF
 )
 :
-    faPatchField<Type>(ptf.patch(), ptf.internalField(), Field<Type>())
+    faPatchField<Type>(ptf.patch(), iF, Field<Type>())  // zero-sized
 {}
 
 
 template<class Type>
 Foam::emptyFaPatchField<Type>::emptyFaPatchField
 (
-    const emptyFaPatchField<Type>& ptf,
-    const DimensionedField<Type, areaMesh>& iF
+    const emptyFaPatchField<Type>& ptf
 )
 :
-    faPatchField<Type>(ptf.patch(), iF, Field<Type>())
+    emptyFaPatchField<Type>(ptf, ptf.internalField())
 {}
 
 

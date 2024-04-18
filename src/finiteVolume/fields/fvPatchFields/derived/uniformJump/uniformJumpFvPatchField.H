@@ -118,7 +118,7 @@ public:
             const fvPatch&,
             const DimensionedField<Type, volMesh>&,
             const dictionary&,
-            const bool valueRequired = true
+            const bool needValue = true
         );
 
         //- Construct by mapping given uniformJumpFvPatchField onto a

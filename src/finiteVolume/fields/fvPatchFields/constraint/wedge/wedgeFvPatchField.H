@@ -33,6 +33,8 @@ Description
     This boundary condition is similar to the cyclic condition, except that
     it is applied to 2-D geometries.
 
+    The "value" entry is NO_READ, NO_WRITE.
+
 Usage
     Example of the boundary condition specification:
     \verbatim
@@ -50,8 +52,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wedgeFvPatchField_H
-#define wedgeFvPatchField_H
+#ifndef Foam_wedgeFvPatchField_H
+#define Foam_wedgeFvPatchField_H
 
 #include "transformFvPatchField.H"
 #include "wedgeFvPatch.H"
@@ -70,6 +72,9 @@ class wedgeFvPatchField
 :
     public transformFvPatchField<Type>
 {
+    //- The parent boundary condition type
+    typedef transformFvPatchField<Type> parent_bctype;
+
 
 public:
 
@@ -86,7 +91,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         wedgeFvPatchField
         (
             const fvPatch&,

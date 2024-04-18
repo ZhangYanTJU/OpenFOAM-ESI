@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,15 +28,26 @@ Class
     Foam::processorFvsPatchField
 
 Description
-    Foam::processorFvsPatchField
+    This boundary condition enables processor communication across patches.
+
+    The "value" entry is MUST_READ.
+
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type    processor;
+        value   uniform (0 0 0);   // Mandatory
+    }
+    \endverbatim
 
 SourceFiles
     processorFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef processorFvsPatchField_H
-#define processorFvsPatchField_H
+#ifndef Foam_processorFvsPatchField_H
+#define Foam_processorFvsPatchField_H
 
 #include "coupledFvsPatchField.H"
 #include "processorFvPatch.H"
@@ -54,7 +66,7 @@ class processorFvsPatchField
 :
     public coupledFvsPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the processor patch
         const processorFvPatch& procPatch_;
@@ -83,7 +95,8 @@ public:
             const Field<Type>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is MUST_READ.
         processorFvsPatchField
         (
             const fvPatch&,
@@ -127,15 +140,15 @@ public:
 
 
     //- Destructor
-    virtual ~processorFvsPatchField();
+    virtual ~processorFvsPatchField() = default;
 
 
     // Member Functions
 
-        //- Return true if running parallel
+        //- True if running parallel
         virtual bool coupled() const
         {
-            return Pstream::parRun();
+            return UPstream::parRun();
         }
 };
 

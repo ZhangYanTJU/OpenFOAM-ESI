@@ -27,7 +27,9 @@ Class
     Foam::cyclicACMIFvsPatchField
 
 Description
-    Foam::cyclicACMIFvsPatchField
+    This boundary condition enforces a cyclic condition between a pair of
+    boundaries, whereby communication between the patches is performed using
+    an arbitrarily coupled mesh interface (ACMI) interpolation.
 
 SourceFiles
     cyclicACMIFvsPatchField.C
@@ -54,7 +56,7 @@ class cyclicACMIFvsPatchField
 :
     public coupledFvsPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the cyclic patch
         const cyclicACMIFvPatch& cyclicACMIPatch_;
@@ -75,7 +77,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is MUST_READ.
         cyclicACMIFvsPatchField
         (
             const fvPatch&,

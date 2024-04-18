@@ -150,11 +150,11 @@ public:
             virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
 
 
-        //- Write
+        //- Write includes "value" entry
         virtual void write(Ostream&) const;
 
 
-    // Member operators
+    // Member Operators
 
         virtual void operator=(const UList<Type>&) {}
 

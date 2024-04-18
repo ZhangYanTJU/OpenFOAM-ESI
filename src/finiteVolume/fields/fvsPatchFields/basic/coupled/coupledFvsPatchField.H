@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,15 +28,17 @@ Class
     Foam::coupledFvsPatchField
 
 Description
-    Foam::coupledFvsPatchField
+    Abstract base class for coupled patches.
+
+    The "value" entry is usually MUST_READ and always WRITE.
 
 SourceFiles
     coupledFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef coupledFvsPatchField_H
-#define coupledFvsPatchField_H
+#ifndef Foam_coupledFvsPatchField_H
+#define Foam_coupledFvsPatchField_H
 
 #include "fvsPatchField.H"
 #include "coupledFvPatch.H"
@@ -46,7 +49,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class coupledFvsPatch Declaration
+                    Class coupledFvsPatchField Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
@@ -54,7 +57,6 @@ class coupledFvsPatchField
 :
     public fvsPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -83,7 +85,8 @@ public:
         (
             const fvPatch&,
             const DimensionedField<Type, surfaceMesh>&,
-            const dictionary&
+            const dictionary&,
+            IOobjectOption::readOption requireValue = IOobjectOption::MUST_READ
         );
 
         //- Construct by mapping the given coupledFvsPatchField onto a new patch
@@ -118,16 +121,16 @@ public:
         ) const = 0;
 
 
-    // Member functions
+    // Member Functions
 
-        // Access
+        //- True if this patch field is derived from coupledFvsPatchField
+        virtual bool coupled() const
+        {
+            return true;
+        }
 
-            //- Return true if this patch field is derived from
-            //  coupledFvsPatchField<Type>.
-            virtual bool coupled() const
-            {
-                return true;
-            }
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 };
 
 

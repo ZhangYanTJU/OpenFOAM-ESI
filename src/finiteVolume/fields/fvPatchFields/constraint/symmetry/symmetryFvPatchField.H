@@ -69,7 +69,6 @@ class symmetryFvPatchField
 :
     public basicSymmetryFvPatchField<Type>
 {
-
 public:
 
     //- Runtime type information

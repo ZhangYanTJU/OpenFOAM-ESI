@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,7 +49,7 @@ Foam::wedgeFvsPatchField<Type>::wedgeFvsPatchField
     const dictionary& dict
 )
 :
-    fvsPatchField<Type>(p, iF, dict)
+    fvsPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ)
 {
     if (!isType<wedgeFvPatch>(p))
     {
@@ -86,21 +87,21 @@ Foam::wedgeFvsPatchField<Type>::wedgeFvsPatchField
 template<class Type>
 Foam::wedgeFvsPatchField<Type>::wedgeFvsPatchField
 (
-    const wedgeFvsPatchField<Type>& ptf
+    const wedgeFvsPatchField<Type>& ptf,
+    const DimensionedField<Type, surfaceMesh>& iF
 )
 :
-    fvsPatchField<Type>(ptf)
+    fvsPatchField<Type>(ptf, iF)
 {}
 
 
 template<class Type>
 Foam::wedgeFvsPatchField<Type>::wedgeFvsPatchField
 (
-    const wedgeFvsPatchField<Type>& ptf,
-    const DimensionedField<Type, surfaceMesh>& iF
+    const wedgeFvsPatchField<Type>& ptf
 )
 :
-    fvsPatchField<Type>(ptf, iF)
+    wedgeFvsPatchField<Type>(ptf, ptf.internalField())
 {}
 
 

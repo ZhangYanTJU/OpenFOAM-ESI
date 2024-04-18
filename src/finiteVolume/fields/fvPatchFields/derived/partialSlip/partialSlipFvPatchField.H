@@ -31,8 +31,10 @@ Group
     grpWallBoundaryConditions grpGenericBoundaryConditions
 
 Description
-    This boundary condition provides a partial slip condition.  The amount of
-    slip is controlled by a user-supplied field.
+    This boundary condition provides a partial slip condition.
+    The amount of slip is controlled by a user-supplied field.
+
+    The "value" entry is NO_READ, optional write.
 
 Usage
     \table
@@ -50,7 +52,6 @@ Usage
         type            partialSlip;
         refValue        uniform 0.001;
         valueFraction   uniform 0.1;
-        value           uniform 0;
     }
     \endverbatim
 
@@ -62,8 +63,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef partialSlipFvPatchField_H
-#define partialSlipFvPatchField_H
+#ifndef Foam_partialSlipFvPatchField_H
+#define Foam_partialSlipFvPatchField_H
 
 #include "transformFvPatchField.H"
 
@@ -112,7 +113,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         partialSlipFvPatchField
         (
             const fvPatch&,
@@ -120,7 +122,8 @@ public:
             const dictionary&
         );
 
-        //- Construct by mapping given partialSlipFvPatchField onto a new patch
+        //- Construct by mapping given partialSlip patch field
+        //- onto a new patch
         partialSlipFvPatchField
         (
             const partialSlipFvPatchField<Type>&,
@@ -162,6 +165,7 @@ public:
 
         //- False: this patch field is not altered by assignment
         virtual bool assignable() const { return false; }
+
 
         // Access
 

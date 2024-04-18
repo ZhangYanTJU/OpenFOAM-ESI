@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,7 +49,7 @@ Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
     const dictionary& dict
 )
 :
-    fvsPatchField<Type>(p, iF, dict)
+    fvsPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ)
 {
     if (!isType<symmetryPlaneFvPatch>(p))
     {
@@ -86,21 +87,21 @@ Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
 template<class Type>
 Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
 (
-    const symmetryPlaneFvsPatchField<Type>& ptf
+    const symmetryPlaneFvsPatchField<Type>& ptf,
+    const DimensionedField<Type, surfaceMesh>& iF
 )
 :
-    fvsPatchField<Type>(ptf)
+    fvsPatchField<Type>(ptf, iF)
 {}
 
 
 template<class Type>
 Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
 (
-    const symmetryPlaneFvsPatchField<Type>& ptf,
-    const DimensionedField<Type, surfaceMesh>& iF
+    const symmetryPlaneFvsPatchField<Type>& ptf
 )
 :
-    fvsPatchField<Type>(ptf, iF)
+    symmetryPlaneFvsPatchField<Type>(ptf, ptf.internalField())
 {}
 
 

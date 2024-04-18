@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,7 +89,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //  Not implemented.
         slicedFvsPatchField
         (
             const fvPatch&,
@@ -98,6 +99,7 @@ public:
         );
 
         //- Construct by mapping the given sliced patch field onto a new patch
+        //  Not implemented.
         slicedFvsPatchField
         (
             const slicedFvsPatchField<Type>&,
@@ -140,6 +142,9 @@ public:
 
         //- True: this patch field fixes a value.
         virtual bool fixesValue() const { return true; }
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 
 
     // Member Operators

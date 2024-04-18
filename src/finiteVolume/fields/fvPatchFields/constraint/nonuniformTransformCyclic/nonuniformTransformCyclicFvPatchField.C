@@ -50,7 +50,7 @@ nonuniformTransformCyclicFvPatchField
     const dictionary& dict
 )
 :
-    cyclicFvPatchField<Type>(p, iF, dict)
+    cyclicFvPatchField<Type>(p, iF, dict)  // needValue (evaluate) = true
 {}
 
 

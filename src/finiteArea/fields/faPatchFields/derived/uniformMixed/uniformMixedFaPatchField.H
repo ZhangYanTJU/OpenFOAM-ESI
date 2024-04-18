@@ -188,7 +188,7 @@ public:
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
 
-        //- Write
+        //- Write includes "value" entry (for visualisation / restart)
         virtual void write(Ostream& os) const;
 };
 

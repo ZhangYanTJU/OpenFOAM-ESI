@@ -27,15 +27,26 @@ Class
     Foam::symmetryPlaneFvsPatchField
 
 Description
-    Foam::symmetryPlaneFvsPatchField
+    This boundary condition enforces a symmetryPlane constraint
+
+    The "value" entry is NO_READ, NO_WRITE.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type            symmetryPlane;
+    }
+    \endverbatim
 
 SourceFiles
     symmetryPlaneFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef symmetryPlaneFvsPatchField_H
-#define symmetryPlaneFvsPatchField_H
+#ifndef Foam_symmetryPlaneFvsPatchField_H
+#define Foam_symmetryPlaneFvsPatchField_H
 
 #include "fvsPatchField.H"
 #include "symmetryPlaneFvPatch.H"
@@ -54,7 +65,6 @@ class symmetryPlaneFvsPatchField
 :
     public fvsPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -70,7 +80,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         symmetryPlaneFvsPatchField
         (
             const fvPatch&,
@@ -78,8 +89,7 @@ public:
             const dictionary&
         );
 
-        //- Construct by mapping given symmetryPlaneFvsPatchField
-        //  onto a new patch
+        //- Construct by mapping given patch field onto a new patch
         symmetryPlaneFvsPatchField
         (
             const symmetryPlaneFvsPatchField<Type>&,

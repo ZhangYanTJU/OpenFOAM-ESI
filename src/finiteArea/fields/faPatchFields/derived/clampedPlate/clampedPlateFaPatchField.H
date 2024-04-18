@@ -183,7 +183,7 @@ public:
 
         // IO
 
-            //- Write
+            //- Write includes "value" entry
             virtual void write(Ostream&) const;
 };
 

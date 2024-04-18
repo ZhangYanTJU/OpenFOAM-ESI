@@ -30,7 +30,8 @@ Group
     grpConstraintBoundaryConditions
 
 Description
-    A symmetry patch
+    A symmetry patch.
+    The "value" entry is NO_READ, NO_WRITE.
 
 SourceFiles
     basicSymmetryFvPatchField.C
@@ -57,7 +58,6 @@ class basicSymmetryFvPatchField
 :
     public transformFvPatchField<Type>
 {
-
 public:
 
     // Constructors
@@ -69,7 +69,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         basicSymmetryFvPatchField
         (
             const fvPatch&,
@@ -77,8 +78,8 @@ public:
             const dictionary&
         );
 
-        //- Construct by mapping given basicSymmetryFvPatchField onto a new
-        //  patch
+        //- Construct by mapping given basicSymmetry patch field
+        //- onto a new patch
         basicSymmetryFvPatchField
         (
             const basicSymmetryFvPatchField<Type>&,

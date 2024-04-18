@@ -36,6 +36,8 @@ Description
     The tangential component is treated as slip, i.e. copied from the internal
     field.
 
+    The "value" entry is NO_READ, optional write.
+
 Usage
     Example of the boundary condition specification:
     \verbatim
@@ -76,8 +78,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fixedNormalSlipFvPatchField_H
-#define fixedNormalSlipFvPatchField_H
+#ifndef Foam_fixedNormalSlipFvPatchField_H
+#define Foam_fixedNormalSlipFvPatchField_H
 
 #include "transformFvPatchField.H"
 
@@ -123,7 +125,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         fixedNormalSlipFvPatchField
         (
             const fvPatch&,

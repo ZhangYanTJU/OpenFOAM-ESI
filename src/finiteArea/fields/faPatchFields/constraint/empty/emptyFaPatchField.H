@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef emptyFaPatchField_H
-#define emptyFaPatchField_H
+#ifndef Foam_emptyFaPatchField_H
+#define Foam_emptyFaPatchField_H
 
 #include "faPatchField.H"
 #include "emptyFaPatch.H"
@@ -74,7 +74,8 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         emptyFaPatchField
         (
             const faPatch&,

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,7 +38,7 @@ Foam::emptyFvPatchField<Type>::emptyFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    fvPatchField<Type>(p, iF, Field<Type>(0))
+    fvPatchField<Type>(p, iF, Field<Type>())  // zero-sized patch field
 {}
 
 
@@ -50,7 +51,7 @@ Foam::emptyFvPatchField<Type>::emptyFvPatchField
     const fvPatchFieldMapper&
 )
 :
-    fvPatchField<Type>(p, iF, Field<Type>(0))
+    fvPatchField<Type>(p, iF, Field<Type>())  // zero-sized patch field
 {
     if (!isType<emptyFvPatch>(p))
     {
@@ -73,8 +74,11 @@ Foam::emptyFvPatchField<Type>::emptyFvPatchField
     const dictionary& dict
 )
 :
-    fvPatchField<Type>(p, iF, Field<Type>(0))
+    fvPatchField<Type>(p, iF, Field<Type>())  // zero-sized patch field
 {
+    // Empty means empty, so no patchType override
+    // with fvPatchFieldBase::readDict(dict);
+
     if (!isType<emptyFvPatch>(p))
     {
         FatalIOErrorInFunction(dict)
@@ -91,26 +95,21 @@ Foam::emptyFvPatchField<Type>::emptyFvPatchField
 template<class Type>
 Foam::emptyFvPatchField<Type>::emptyFvPatchField
 (
-    const emptyFvPatchField<Type>& ptf
+    const emptyFvPatchField<Type>& ptf,
+    const DimensionedField<Type, volMesh>& iF
 )
 :
-    fvPatchField<Type>
-    (
-        ptf.patch(),
-        ptf.internalField(),
-        Field<Type>(0)
-    )
+    fvPatchField<Type>(ptf.patch(), iF, Field<Type>())  // zero-sized
 {}
 
 
 template<class Type>
 Foam::emptyFvPatchField<Type>::emptyFvPatchField
 (
-    const emptyFvPatchField<Type>& ptf,
-    const DimensionedField<Type, volMesh>& iF
+    const emptyFvPatchField<Type>& ptf
 )
 :
-    fvPatchField<Type>(ptf.patch(), iF, Field<Type>(0))
+    emptyFvPatchField<Type>(ptf, ptf.internalField())
 {}
 
 

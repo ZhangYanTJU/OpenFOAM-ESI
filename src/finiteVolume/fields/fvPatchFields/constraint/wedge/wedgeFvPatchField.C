@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,7 +32,6 @@ License
 #include "symmTransform.H"
 #include "diagTensor.H"
 
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -41,7 +41,7 @@ Foam::wedgeFvPatchField<Type>::wedgeFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    transformFvPatchField<Type>(p, iF)
+    parent_bctype(p, iF)
 {}
 
 
@@ -54,7 +54,7 @@ Foam::wedgeFvPatchField<Type>::wedgeFvPatchField
     const fvPatchFieldMapper& mapper
 )
 :
-    transformFvPatchField<Type>(ptf, p, iF, mapper)
+    parent_bctype(ptf, p, iF, mapper)
 {
     if (!isType<wedgeFvPatch>(this->patch()))
     {
@@ -77,7 +77,7 @@ Foam::wedgeFvPatchField<Type>::wedgeFvPatchField
     const dictionary& dict
 )
 :
-    transformFvPatchField<Type>(p, iF, dict)
+    parent_bctype(p, iF, dict)  // "value" is NO_READ
 {
     if (!isType<wedgeFvPatch>(p))
     {
@@ -97,21 +97,21 @@ Foam::wedgeFvPatchField<Type>::wedgeFvPatchField
 template<class Type>
 Foam::wedgeFvPatchField<Type>::wedgeFvPatchField
 (
-    const wedgeFvPatchField<Type>& ptf
+    const wedgeFvPatchField<Type>& ptf,
+    const DimensionedField<Type, volMesh>& iF
 )
 :
-    transformFvPatchField<Type>(ptf)
+    parent_bctype(ptf, iF)
 {}
 
 
 template<class Type>
 Foam::wedgeFvPatchField<Type>::wedgeFvPatchField
 (
-    const wedgeFvPatchField<Type>& ptf,
-    const DimensionedField<Type, volMesh>& iF
+    const wedgeFvPatchField<Type>& ptf
 )
 :
-    transformFvPatchField<Type>(ptf, iF)
+    wedgeFvPatchField<Type>(ptf, ptf.internalField())
 {}
 
 
