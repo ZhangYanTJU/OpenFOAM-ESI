@@ -33,7 +33,6 @@ License
 #include "wallPolyPatch.H"
 #include "patchDistMethod.H"
 #include "OBJstream.H"
-//#include "cyclicACMIPolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -151,34 +150,11 @@ void Foam::wallDistAddressing::correct(volScalarField& y)
     DynamicList<wallPointAddressing> seedInfo(nWalls);
 
 
-    //// Make non-overlap-patch back to cyclicACMI
-    //labelList patchToCyclic(mesh_.boundaryMesh().size(), -1);
-    //for (const auto& pp : mesh_.boundaryMesh())
-    //{
-    //    const auto* cycPtr = isA<cyclicACMIPolyPatch>(pp);
-    //    if (cycPtr)
-    //    {
-    //        patchToCyclic[cycPtr->nonOverlapPatchID()] = cycPtr->index();
-    //    }
-    //}
-
-
     nWalls = 0;
     for (const label patchi : patchIDs_)
     {
         const auto& fc = C.boundaryField()[patchi];
-        //const label cycPatchi = patchToCyclic[patchi];
-        //const auto& mask
-        //(
-        //    cycPatchi == -1
-        //  ? scalarField::null()
-        //  : refCast<const cyclicACMIPolyPatch>
-        //    (
-        //        C.boundaryField()[cycPatchi].patch().patch()
-        //    ).mask()
-        //);
-
-        const tmp<scalarField> areaFraction(fc.patch().patch().areaFraction());
+        const auto& areaFraction = fc.patch().patch().areaFraction();
 
         forAll(fc, patchFacei)
         {

@@ -53,7 +53,7 @@ void Foam::patchDataWave<TransferType, TrackingData>::setChangedFaces
         {
             const polyPatch& patch = mesh.boundaryMesh()[patchi];
 
-            const tmp<scalarField> areaFraction(patch.areaFraction());
+            const auto& areaFraction = patch.areaFraction();
 
             const auto faceCentres(patch.faceCentres());
 

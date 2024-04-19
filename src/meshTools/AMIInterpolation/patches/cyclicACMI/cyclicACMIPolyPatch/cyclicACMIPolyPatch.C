@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -217,10 +217,24 @@ void Foam::cyclicACMIPolyPatch::scalePatchFaceAreas
         return;
     }
 
-    forAll(noSf, facei)
     {
-        const scalar w = min(maxTol, max(tolerance_, mask[facei]));
-        noSf[facei] = noFaceArea[facei]*(scalar(1) - w);
+        tmp<scalarField> scale
+        (
+            scalar(1)
+          - min
+            (
+                max(mask, tolerance_),
+                maxTol
+            )
+        );
+
+        // Scale area
+        forAll(noSf, facei)
+        {
+            noSf[facei] = noFaceArea[facei]*scale()[facei];
+        }
+        // Cache scaling
+        const_cast<polyPatch&>(nonOverlapPatch).areaFraction(scale);
     }
 
     if (!createAMIFaces_)
@@ -235,10 +249,15 @@ void Foam::cyclicACMIPolyPatch::scalePatchFaceAreas
         // Scale the coupled patch face areas
         vectorField::subField Sf = acmipp.faceAreas();
 
+        tmp<scalarField> scale(max(tolerance_, mask));
+
+        // Scale area
         forAll(Sf, facei)
         {
-            Sf[facei] = faceArea[facei]*max(tolerance_, mask[facei]);
+            Sf[facei] = faceArea[facei]*scale()[facei];
         }
+        // Cache scaling
+        const_cast<cyclicACMIPolyPatch&>(acmipp).areaFraction(scale);
 
         // Re-normalise the weights since the effect of overlap is already
         // accounted for in the area

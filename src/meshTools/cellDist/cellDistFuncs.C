@@ -268,7 +268,7 @@ void Foam::cellDistFuncs::correctBoundaryFaceCells
             //  ? scalarField::null()
             //  : refCast<const cyclicACMIPolyPatch>(pbm[cycPatchi]).mask()
             //);
-            const tmp<scalarField> areaFraction(patch.areaFraction());
+            const auto& areaFraction = patch.areaFraction();
 
             // Check cells with face on wall
             forAll(patch, patchFacei)
@@ -353,7 +353,7 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
                 //        }
                 //    }
                 //}
-                const tmp<scalarField> areaFraction(patch.areaFraction());
+                const auto& areaFraction = patch.areaFraction();
 
                 // Check cells with face on wall
                 forAll(patch, patchFacei)

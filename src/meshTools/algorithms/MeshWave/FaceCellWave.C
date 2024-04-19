@@ -830,7 +830,7 @@ void Foam::FaceCellWave<Type, TrackingData>::handleAMICyclicPatches()
             //  ? ACMIptr->mask()
             //  : scalarField::null()
             //);
-            const tmp<scalarField> areaFraction(patch.areaFraction());
+            const auto& areaFraction = patch.areaFraction();
 
             forAll(receiveInfo, i)
             {

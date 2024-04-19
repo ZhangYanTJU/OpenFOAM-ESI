@@ -88,6 +88,9 @@ class polyPatch
         //- Demand-driven: global edge addressing
         mutable std::unique_ptr<labelList> mePtr_;
 
+        //- Cached area fraction
+        tmp<scalarField> areaFraction_;
+
 
 protected:
 
@@ -441,9 +444,16 @@ public:
             //- Return face cell centres
             tmp<vectorField> faceCellCentres() const;
 
-            //- Return the area fraction as the ratio of the stored face area
-            //- and the area given by the face points
-            tmp<scalarField> areaFraction() const;
+            //- Calculate the area fraction as the ratio of the stored face
+            //  area and the area given by the face points.
+            tmp<scalarField> areaFraction(const pointField& points) const;
+
+            //- Return the cached area fraction. Usually only set for the
+            //- non-overlap patches on ACMI.
+            const tmp<scalarField>& areaFraction() const;
+
+            //- Set cached area fraction
+            void areaFraction(const tmp<scalarField>&);
 
 
         // Addressing into mesh

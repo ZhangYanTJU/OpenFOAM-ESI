@@ -342,6 +342,7 @@ void Foam::activePressureForceBaffleVelocityFvPatchVectorField::updateCoeffs()
             ).neighbFvPatch().Sf();
         }
 
+
         // Update this wall patch
         vectorField::subField Sfw = patch().patch().faceAreas();
         vectorField newSfw((1 - areaFraction)*initWallSf_);
@@ -350,16 +351,41 @@ void Foam::activePressureForceBaffleVelocityFvPatchVectorField::updateCoeffs()
             Sfw[facei] = newSfw[facei];
         }
         const_cast<scalarField&>(patch().magSf()) = mag(patch().Sf());
+        // Cache fraction
+        const_cast<polyPatch&>(patch().patch()).areaFraction
+        (
+            tmp<scalarField>::New
+            (
+                patch().patch().size(),
+                (1-areaFraction)
+            )
+        );
+
 
         // Update owner side of cyclic
         const_cast<vectorField&>(cyclicPatch.Sf()) = areaFraction*initCyclicSf_;
-
         const_cast<scalarField&>(cyclicPatch.magSf()) = mag(cyclicPatch.Sf());
+        const_cast<polyPatch&>(cyclicPatch.patch()).areaFraction
+        (
+            tmp<scalarField>::New
+            (
+                cyclicPatch.patch().size(),
+                areaFraction
+            )
+        );
+
 
         // Update neighbour side of cyclic
         const_cast<vectorField&>(nbrPatch.Sf()) = areaFraction*nbrCyclicSf_;
-
         const_cast<scalarField&>(nbrPatch.magSf()) = mag(nbrPatch.Sf());
+        const_cast<polyPatch&>(cyclicPatch.patch()).areaFraction
+        (
+            tmp<scalarField>::New
+            (
+                nbrPatch.patch().size(),
+                areaFraction
+            )
+        );
 
         curTimeIndex_ = this->db().time().timeIndex();
     }
