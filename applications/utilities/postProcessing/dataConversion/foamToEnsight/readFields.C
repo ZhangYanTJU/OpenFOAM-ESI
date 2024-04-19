@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,9 +32,10 @@ License
 
 Foam::label Foam::checkData
 (
-    const fvMesh& mesh,
+    const objectRegistry& obr,
     const instantList& timeDirs,
-    wordList& objectNames
+    wordList& objectNames,
+    const fileName& local
 )
 {
     // Assume prune_0() was used prior to calling this
@@ -43,6 +44,9 @@ Foam::label Foam::checkData
 
     for (const word& fieldName : objectNames)
     {
+        // // If prune_0() not previously used...
+        // if (objectNames.ends_with("_0")) continue;
+
         bool good = false;
 
         for (const instant& inst : timeDirs)
@@ -52,7 +56,8 @@ Foam::label Foam::checkData
                 (
                     fieldName,
                     inst.name(),
-                    mesh,
+                    local,
+                    obr,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE,
                     IOobject::NO_REGISTER

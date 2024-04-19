@@ -74,55 +74,70 @@ void sensitivitySurface::smoothSensitivities()
     // Read in parameters
     const label iters(dict().getOrDefault<label>("iters", 500));
     const scalar tolerance(dict().getOrDefault<scalar>("tolerance", 1.e-06));
-    autoPtr<faMesh> aMeshPtr(nullptr);
 
-    IOobject faceLabels
-    (
-        "faceLabels",
-        mesh_.time().findInstance
-        (
-            mesh_.dbDir()/faMesh::meshSubDir,
-            "faceLabels",
-            IOobject::READ_IF_PRESENT
-        ),
-        faMesh::meshSubDir,
-        mesh_,
-        IOobject::READ_IF_PRESENT,
-        IOobject::NO_WRITE
-    );
+    autoPtr<faMesh> aMeshPtr = faMesh::TryNew(mesh_);
 
-    // If the faMesh already exists, read it
-    if (faceLabels.typeHeaderOk<labelIOList>(false))
+    if (aMeshPtr)
     {
-        Info<< "Reading the already constructed faMesh" << endl;
-        aMeshPtr.reset(new faMesh(mesh_));
+        Info<< "Loaded the existing faMesh" << nl;
     }
     else
     {
         // Dictionary used to construct the faMesh
         dictionary faMeshDefinition;
 
-        IOobject faMeshDefinitionDict
-        (
-            "faMeshDefinition",
-            mesh_.time().caseSystem(),
-            mesh_,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
-        );
+        // Check and read system/faMeshDefinition
+        {
+            IOobject io
+            (
+                "faMeshDefinition",
+                mesh_.time().caseSystem(),
+                mesh_,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            );
 
-        // If the faMeshDefinitionDict exists, use it to construct the mesh
-        if (faMeshDefinitionDict.typeHeaderOk<IOdictionary>(false))
-        {
-            Info<< "Reading faMeshDefinition from system " << endl;
-            faMeshDefinition = IOdictionary(faMeshDefinitionDict);
+            if (io.typeHeaderOk<IOdictionary>(false))
+            {
+                Info<< "Using system/faMeshDefinition" << nl;
+                faMeshDefinition = IOdictionary(io);
+            }
+            else if (debug)
+            {
+                Info<< "No " << io.name() << " in " << io.path() << nl;
+            }
         }
-        // Otherwise, faMesh is generated from all patches on which we compute
-        // sensitivities
-        else
+
+        // Check and read system/finite-area/faMeshDefinition
+        if (faMeshDefinition.empty())
         {
-            Info<< "Constructing faMeshDefinition from sensitivity patches"
-                << endl;
+            IOobject io
+            (
+                "faMeshDefinition",
+                mesh_.time().caseSystem()/faMesh::prefix(),
+                mesh_,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            );
+
+            if (io.typeHeaderOk<IOdictionary>(false))
+            {
+                Info<< "Using system/finite-area/faMeshDefinition" << nl;
+                faMeshDefinition = IOdictionary(io);
+            }
+            else if (debug)
+            {
+                Info<< "No " << io.name() << " in " << io.path() << nl;
+            }
+        }
+
+        // No specified faMeshDefinition?
+        // - generate faMesh from all patches on which we compute sensitivities
+
+        if (faMeshDefinition.empty())
+        {
             wordList polyMeshPatches(sensitivityPatchIDs_.size());
             label i(0);
             for (const label patchID : sensitivityPatchIDs_)
@@ -131,13 +146,22 @@ void sensitivitySurface::smoothSensitivities()
             }
             faMeshDefinition.add<wordList>("polyMeshPatches", polyMeshPatches);
             (void)faMeshDefinition.subDictOrAdd("boundary");
-            Info<< faMeshDefinition << endl;
+
+            // TBD: Place all edges into the "defaultPatch" ?
+            // faMeshDefinition.subDictOrAdd("defaultPatch")
+            //     .add("name", "undefined");
+
+            Info<< "Create faMeshDefinition from sensitivity patches"
+                << nl << nl;
+
+            faMeshDefinition.writeEntry("faMeshDefinition", Info);
         }
 
-        // Construct faMesh
+        // Construct faMesh from faMeshDefinition
         aMeshPtr.reset(new faMesh(mesh_, faMeshDefinition));
     }
-    faMesh& aMesh = aMeshPtr.ref();
+    faMesh& aMesh = *aMeshPtr;
+
 
     // Physical radius of the smoothing, provided either directly or computed
     // based on the average 'length' of boundary faces
@@ -154,7 +178,7 @@ void sensitivitySurface::smoothSensitivities()
         "RpdeSqr", dimArea, sqr(Rphysical/(2.*::sqrt(3.)))
     );
 
-    dimensionedScalar one("1", dimless, 1.);
+    dimensionedScalar one(dimless, Foam::one{});
 
     // Mapping engine
     volSurfaceMapping vsm(aMesh);
@@ -162,16 +186,9 @@ void sensitivitySurface::smoothSensitivities()
     // Source term in faMatrix needs to be an areaField
     areaVectorField sens
     (
-        IOobject
-        (
-            "sens",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        aMesh.newIOobject("sens"),
         aMesh,
-        dimensionedVector(dimless, Zero),
+        dimensionedVector(dimless, Foam::zero{}),
         faPatchFieldBase::zeroGradientType()
     );
 
@@ -220,14 +237,7 @@ void sensitivitySurface::smoothSensitivities()
     // Write normal, regularised sensitivities to file
     volScalarField volSmoothedSens
     (
-        IOobject
-        (
-            "smoothedSurfaceSens" + suffix_,
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        mesh_.newIOobject("smoothedSurfaceSens" + suffix_),
         mesh_,
         dimensionedScalar(dimless, Zero)
     );
