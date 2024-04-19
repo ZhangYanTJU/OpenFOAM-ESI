@@ -930,7 +930,7 @@ void Foam::polyTopoChange::reorderCompactFaces
     if (faceAdditionalZones_.size())
     {
         // Extend to number of faces so oldToNew can be used
-        faceAdditionalZones_.setSize(faceZone_.size());
+        faceAdditionalZones_.setSize(faceZoneFlip_.size());
         inplaceReorder(oldToNew, faceAdditionalZones_);
         faceAdditionalZones_.setCapacity(newSize);
     }
