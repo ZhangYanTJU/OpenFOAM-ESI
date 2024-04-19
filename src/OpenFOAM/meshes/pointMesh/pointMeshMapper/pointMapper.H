@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pointMapper_H
-#define pointMapper_H
+#ifndef Foam_pointMapper_H
+#define Foam_pointMapper_H
 
 #include "morphFieldMapper.H"
 
@@ -46,10 +47,9 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
-class pointMesh;
+// Forward Declarations
 class mapPolyMesh;
-class polyMesh;
+class pointMesh;
 
 /*---------------------------------------------------------------------------*\
                            Class pointMapper Declaration
@@ -59,37 +59,44 @@ class pointMapper
 :
     public morphFieldMapper
 {
-    // Private data
-
-        //- Reference to pointMesh
-        const pointMesh& pMesh_;
+    // Private Data
 
         //- Reference to mapPolyMesh
         const mapPolyMesh& mpm_;
 
-        //- Are there any inserted (unmapped) points
-        bool insertedPoints_;
+        //- The size of the mapper = pointMesh::size()
+        const label mapperLen_;
+
+        //- Number of inserted (unmapped) points
+        label nInsertedObjects_;
 
         //- Is the mapping direct
         bool direct_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         //- Direct addressing (only one for of addressing is used)
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one for of addressing is used)
-        mutable labelListList* interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpAddrPtr_;
 
         //- Interpolation weights
-        mutable scalarListList* weightsPtr_;
+        mutable std::unique_ptr<scalarListList> weightsPtr_;
 
         //- Inserted points
-        mutable labelList* insertedPointLabelsPtr_;
+        mutable std::unique_ptr<labelList> insertedObjectsPtr_;
 
 
     // Private Member Functions
+
+        //- Calculate addressing for mapping with inserted points
+        void calcAddressing() const;
+
+public:
+
+    // Generated Methods
 
         //- No copy construct
         pointMapper(const pointMapper&) = delete;
@@ -98,19 +105,11 @@ class pointMapper
         void operator=(const pointMapper&) = delete;
 
 
-        //- Calculate addressing for mapping with inserted points
-        void calcAddressing() const;
-
-        //- Clear out local storage
-        void clearOut();
-
-
-public:
-
     // Constructors
 
         //- Construct from mapPolyMesh
         pointMapper(const pointMesh&, const mapPolyMesh& mpm);
+
 
 
     //- Destructor
@@ -119,7 +118,7 @@ public:
 
     // Member Functions
 
-        //- Return size
+        //- The mapper size
         virtual label size() const;
 
         //- Return size before mapping
@@ -131,8 +130,7 @@ public:
             return direct_;
         }
 
-        //- Are there unmapped values? I.e. do all size() elements get
-        //  get value
+        //- Are there unmapped values? i.e. do all size() elements get value
         virtual bool hasUnmapped() const
         {
             return insertedObjects();
@@ -148,9 +146,9 @@ public:
         virtual const scalarListList& weights() const;
 
         //- Are there any inserted points
-        bool insertedObjects() const
+        bool insertedObjects() const noexcept
         {
-            return insertedPoints_;
+            return bool(nInsertedObjects_);
         }
 
         //- Return list of inserted points

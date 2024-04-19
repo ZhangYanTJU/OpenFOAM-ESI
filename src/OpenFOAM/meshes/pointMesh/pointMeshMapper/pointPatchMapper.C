@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,7 +30,6 @@ License
 #include "pointPatch.H"
 #include "mapPolyMesh.H"
 #include "faceMapper.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -38,7 +38,7 @@ void Foam::pointPatchMapper::calcAddressing() const
     if
     (
         directAddrPtr_
-     || interpolationAddrPtr_
+     || interpAddrPtr_
      || weightsPtr_
     )
     {
@@ -52,8 +52,11 @@ void Foam::pointPatchMapper::calcAddressing() const
     if (direct())
     {
         // Direct mapping.
-        directAddrPtr_ = new labelList(mpm_.patchPointMap()[patch_.index()]);
-        labelList& addr = *directAddrPtr_;
+        directAddrPtr_ = std::make_unique<labelList>
+        (
+            mpm_.patchPointMap()[patch_.index()]
+        );
+        auto& addr = *directAddrPtr_;
 
         forAll(addr, i)
         {
@@ -73,11 +76,11 @@ void Foam::pointPatchMapper::calcAddressing() const
         // patch points. Problem is we don't know what points were in the patch
         // for points that were merged.
 
-        interpolationAddrPtr_ = new labelListList(size());
-        labelListList& addr = *interpolationAddrPtr_;
+        interpAddrPtr_ = std::make_unique<labelListList>(size());
+        auto& addr = *interpAddrPtr_;
 
-        weightsPtr_ = new scalarListList(addr.size());
-        scalarListList& w = *weightsPtr_;
+        weightsPtr_ = std::make_unique<scalarListList>(addr.size());
+        auto& wght = *weightsPtr_;
 
         const labelList& ppm = mpm_.patchPointMap()[patch_.index()];
 
@@ -85,15 +88,15 @@ void Foam::pointPatchMapper::calcAddressing() const
         {
             if (ppm[i] >= 0)
             {
-                addr[i] = labelList(1, ppm[i]);
-                w[i] = scalarList(1, scalar(1));
+                addr[i].resize(1, ppm[i]);
+                wght[i].resize(1, 1.0);
             }
             else
             {
                 // Inserted point.
                 ///// Map from point0 (arbitrary choice)
-                //addr[i] = labelList(1, Zero);
-                //w[i] = scalarList(1, scalar(1));
+                //addr[i].resize(1, 0);
+                //wght[i].resize(1, 1.0);
                 hasUnmapped_ = true;
             }
         }
@@ -101,13 +104,13 @@ void Foam::pointPatchMapper::calcAddressing() const
 }
 
 
-void Foam::pointPatchMapper::clearOut()
-{
-    deleteDemandDrivenData(directAddrPtr_);
-    deleteDemandDrivenData(interpolationAddrPtr_);
-    deleteDemandDrivenData(weightsPtr_);
-    hasUnmapped_ = false;
-}
+// void Foam::pointPatchMapper::clearOut()
+// {
+//     directAddrPtr_.reset(nullptr);
+//     interpAddrPtr_.reset(nullptr);
+//     weightsPtr_.reset(nullptr);
+//     hasUnmapped_ = false;
+// }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -129,19 +132,14 @@ Foam::pointPatchMapper::pointPatchMapper
       ? mpm_.oldPatchNMeshPoints()[patch_.index()]
       : 0
     ),
-    hasUnmapped_(false),
-    directAddrPtr_(nullptr),
-    interpolationAddrPtr_(nullptr),
-    weightsPtr_(nullptr)
+    hasUnmapped_(false)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::pointPatchMapper::~pointPatchMapper()
-{
-    clearOut();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -173,12 +171,12 @@ const Foam::labelListList& Foam::pointPatchMapper::addressing() const
             << abort(FatalError);
     }
 
-    if (!interpolationAddrPtr_)
+    if (!interpAddrPtr_)
     {
         calcAddressing();
     }
 
-    return *interpolationAddrPtr_;
+    return *interpAddrPtr_;
 }
 
 

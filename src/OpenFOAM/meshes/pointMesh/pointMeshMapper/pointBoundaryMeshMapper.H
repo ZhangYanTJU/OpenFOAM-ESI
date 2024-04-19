@@ -31,8 +31,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pointBoundaryMeshMapper_H
-#define pointBoundaryMeshMapper_H
+#ifndef Foam_pointBoundaryMeshMapper_H
+#define Foam_pointBoundaryMeshMapper_H
 
 #include "PtrList.H"
 #include "pointPatchMapper.H"

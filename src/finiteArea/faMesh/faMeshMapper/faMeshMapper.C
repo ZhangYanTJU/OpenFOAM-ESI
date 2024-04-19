@@ -40,15 +40,19 @@ Foam::faMeshMapper::faMeshMapper
     nOldEdges_(mesh.nEdges()),
     nOldInternalEdges_(mesh.nInternalEdges()),
     nOldFaces_(mesh.nFaces()),
-    oldPatchSizes_(mesh.boundary().size(), 0),
-    oldPatchStarts_(mesh.boundary().size(), -1),
-    oldPatchEdgeFaces_(mesh.boundary().size()),
+    oldPatchSizes_(),
+    oldPatchStarts_(),
+    oldPatchEdgeFaces_(),
     areaMap_(mesh, mpm),
     edgeMap_(mesh, mpm),
     boundaryMap_(mesh, mpm)
 {
     // Capture old patch information
     const faBoundaryMesh& patches = mesh.boundary();
+
+    oldPatchSizes_.resize(patches.size());
+    oldPatchStarts_.resize(patches.size());
+    oldPatchEdgeFaces_.resize(patches.size());
 
     forAll(patches, patchI)
     {

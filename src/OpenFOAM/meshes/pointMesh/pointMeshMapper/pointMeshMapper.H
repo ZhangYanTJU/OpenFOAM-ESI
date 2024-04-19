@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pointMeshMapper_H
-#define pointMeshMapper_H
+#ifndef Foam_pointMeshMapper_H
+#define Foam_pointMeshMapper_H
 
 #include "pointMapper.H"
 #include "pointBoundaryMeshMapper.H"
@@ -46,7 +46,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
+// Forward Declarations
 class pointMesh;
 class mapPolyMesh;
 
@@ -56,7 +56,7 @@ class mapPolyMesh;
 
 class pointMeshMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh
         const pointMesh& mesh_;
@@ -92,28 +92,27 @@ public:
 
     // Member Functions
 
-
         //- Return reference to mesh fields belong to
-        const pointMesh& mesh() const
+        const pointMesh& mesh() const noexcept
         {
             return mesh_;
         }
 
         //- Return reference to objectRegistry storing fields. Can be
         //  removed once fields stored on pointMesh.
-        const objectRegistry& thisDb() const
+        const objectRegistry& thisDb() const noexcept
         {
             return mesh_();
         }
 
         //- Return point mapper
-        const morphFieldMapper& pointMap() const
+        const morphFieldMapper& pointMap() const noexcept
         {
             return pointMap_;
         }
 
         //- Return boundary mapper
-        const pointBoundaryMeshMapper& boundaryMap() const
+        const pointBoundaryMeshMapper& boundaryMap() const noexcept
         {
             return boundaryMap_;
         }

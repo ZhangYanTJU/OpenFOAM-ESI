@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,6 @@ License
 #include "fvMesh.H"
 #include "mapPolyMesh.H"
 #include "faceMapper.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -41,7 +40,7 @@ void Foam::fvPatchMapper::calcAddressing() const
     if
     (
         directAddrPtr_
-     || interpolationAddrPtr_
+     || interpAddrPtr_
      || weightsPtr_
     )
     {
@@ -63,14 +62,14 @@ void Foam::fvPatchMapper::calcAddressing() const
     if (direct())
     {
         // Direct mapping - slice to size
-        directAddrPtr_ = new labelList
+        directAddrPtr_ = std::make_unique<labelList>
         (
             patch_.patchSlice
             (
                 static_cast<const labelList&>(faceMap_.directAddressing())
             )
         );
-        labelList& addr = *directAddrPtr_;
+        auto& addr = *directAddrPtr_;
 
         // Adjust mapping to manage hits into other patches and into
         // internal
@@ -106,26 +105,25 @@ void Foam::fvPatchMapper::calcAddressing() const
     else
     {
         // Interpolative mapping
-        interpolationAddrPtr_ =
-            new labelListList
-            (
-                patch_.patchSlice(faceMap_.addressing())
-            );
-        labelListList& addr = *interpolationAddrPtr_;
+        interpAddrPtr_ = std::make_unique<labelListList>
+        (
+            patch_.patchSlice(faceMap_.addressing())
+        );
+        auto& addr = *interpAddrPtr_;
 
-        weightsPtr_ =
-            new scalarListList
-            (
-                patch_.patchSlice(faceMap_.weights())
-            );
-        scalarListList& w = *weightsPtr_;
+        weightsPtr_ = std::make_unique<scalarListList>
+        (
+            patch_.patchSlice(faceMap_.weights())
+        );
+        auto& wght = *weightsPtr_;
 
         // Adjust mapping to manage hits into other patches and into
         // internal
+
         forAll(addr, facei)
         {
-            labelList& curAddr = addr[facei];
-            scalarList& curW = w[facei];
+            auto& curAddr = addr[facei];
+            auto& curWght = wght[facei];
 
             if
             (
@@ -142,44 +140,42 @@ void Foam::fvPatchMapper::calcAddressing() const
             else
             {
                 // Need to recalculate weights to exclude hits into internal
-                labelList newAddr(curAddr.size());
-                scalarField newWeights(curAddr.size());
 
                 label nActive = 0;
                 scalar sumWeight = 0;
 
-                forAll(curAddr, lfI)
+                forAll(curAddr, i)
                 {
                     if
                     (
-                        curAddr[lfI] >= oldPatchStart
-                     && curAddr[lfI] < oldPatchEnd
+                        curAddr[i] >= oldPatchStart
+                     && curAddr[i] < oldPatchEnd
                     )
                     {
-                        newAddr[nActive] = curAddr[lfI] - oldPatchStart;
-                        newWeights[nActive] = curW[lfI];
+                        curAddr[nActive] = curAddr[i] - oldPatchStart;
+                        curWght[nActive] = curWght[i];
 
-                        sumWeight += curW[lfI];
+                        sumWeight += curWght[i];
                         ++nActive;
                     }
                 }
 
-                newAddr.resize(nActive);
-                newWeights.resize(nActive);
+                // Reset addressing and weights
+                curAddr.resize(nActive);
+                curWght.resize(nActive);
 
                 // Re-scale the weights
-                if (nActive > 0)
+                if (nActive)
                 {
-                    newWeights /= sumWeight;
+                    for (auto& w : curWght)
+                    {
+                        w /= sumWeight;
+                    }
                 }
                 else
                 {
                     hasUnmapped_ = true;
                 }
-
-                // Reset addressing and weights
-                curAddr = newAddr;
-                curW = newWeights;
             }
         }
 
@@ -200,13 +196,13 @@ void Foam::fvPatchMapper::calcAddressing() const
 }
 
 
-void Foam::fvPatchMapper::clearOut()
-{
-    deleteDemandDrivenData(directAddrPtr_);
-    deleteDemandDrivenData(interpolationAddrPtr_);
-    deleteDemandDrivenData(weightsPtr_);
-    hasUnmapped_ = false;
-}
+// void Foam::fvPatchMapper::clearOut()
+// {
+//     directAddrPtr_.reset(nullptr);
+//     interpAddrPtr_.reset(nullptr);
+//     weightsPtr_.reset(nullptr);
+//     hasUnmapped_ = false;
+// }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -220,19 +216,14 @@ Foam::fvPatchMapper::fvPatchMapper
     patch_(patch),
     faceMap_(faceMap),
     sizeBeforeMapping_(faceMap.oldPatchSizes()[patch_.index()]),
-    hasUnmapped_(false),
-    directAddrPtr_(nullptr),
-    interpolationAddrPtr_(nullptr),
-    weightsPtr_(nullptr)
+    hasUnmapped_(false)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::fvPatchMapper::~fvPatchMapper()
-{
-    clearOut();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -264,12 +255,12 @@ const Foam::labelListList& Foam::fvPatchMapper::addressing() const
             << abort(FatalError);
     }
 
-    if (!interpolationAddrPtr_)
+    if (!interpAddrPtr_)
     {
         calcAddressing();
     }
 
-    return *interpolationAddrPtr_;
+    return *interpAddrPtr_;
 }
 
 

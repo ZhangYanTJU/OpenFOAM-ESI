@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faceMapper_H
-#define faceMapper_H
+#ifndef Foam_faceMapper_H
+#define Foam_faceMapper_H
 
 #include "morphFieldMapper.H"
 #include "HashSet.H"
@@ -47,8 +48,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
-class polyMesh;
+// Forward Declarations
 class mapPolyMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -59,37 +59,44 @@ class faceMapper
 :
     public morphFieldMapper
 {
-    // Private data
-
-        //- Reference to polyMesh
-        const polyMesh& mesh_;
+    // Private Data
 
         //- Reference to mapPolyMesh
         const mapPolyMesh& mpm_;
 
-        //- Are there any inserted (unmapped) faces
-        bool insertedFaces_;
+        //- The size of the mapper = polyMesh::nFaces()
+        const label mapperLen_;
+
+        //- Number of inserted (unmapped) faces
+        label nInsertedObjects_;
 
         //- Is the mapping direct
         bool direct_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         //- Direct addressing (only one for of addressing is used)
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one for of addressing is used)
-        mutable labelListList* interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpAddrPtr_;
 
         //- Interpolation weights
-        mutable scalarListList* weightsPtr_;
+        mutable std::unique_ptr<scalarListList> weightsPtr_;
 
         //- Inserted faces
-        mutable labelList* insertedFaceLabelsPtr_;
+        mutable std::unique_ptr<labelList> insertedObjectsPtr_;
 
 
     // Private Member Functions
+
+        //- Calculate addressing for mapping with inserted faces
+        void calcAddressing() const;
+
+public:
+
+    // Generated Methods
 
         //- No copy construct
         faceMapper(const faceMapper&) = delete;
@@ -98,21 +105,10 @@ class faceMapper
         void operator=(const faceMapper&) = delete;
 
 
-        //- Calculate addressing for mapping with inserted faces
-        void calcAddressing() const;
-
-        //- Clear out local storage
-        void clearOut();
-
-
-public:
-
-    // Static data members
-
     // Constructors
 
         //- Construct from mapPolyMesh
-        faceMapper(const mapPolyMesh& mpm);
+        explicit faceMapper(const mapPolyMesh& mpm);
 
 
     //- Destructor
@@ -121,7 +117,7 @@ public:
 
     // Member Functions
 
-        //- Return size
+        //- The mapper size
         virtual label size() const;
 
         //- Return size of field before mapping
@@ -165,7 +161,7 @@ public:
         //- Are there any inserted faces
         virtual bool insertedObjects() const
         {
-            return insertedFaces_;
+            return bool(nInsertedObjects_);
         }
 
         //- Return list of inserted faces

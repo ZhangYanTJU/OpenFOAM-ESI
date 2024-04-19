@@ -27,7 +27,6 @@ License
 
 #include "faAreaMapper.H"
 #include "mapPolyMesh.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -38,9 +37,9 @@ void Foam::faAreaMapper::calcAddressing() const
         newFaceLabelsPtr_
      || newFaceLabelsMapPtr_
      || directAddrPtr_
-     || interpolationAddrPtr_
+     || interpAddrPtr_
      || weightsPtr_
-     || insertedObjectLabelsPtr_
+     || insertedObjectsPtr_
     )
     {
         FatalErrorInFunction
@@ -73,7 +72,7 @@ void Foam::faAreaMapper::calcAddressing() const
         mesh_.mesh().nBoundaryFaces(),
         -1
     );
-    labelList& newFaceLabelsMap = *newFaceLabelsMapPtr_;
+    auto& newFaceLabelsMap = *newFaceLabelsMapPtr_;
     label nNewFaces = 0;
 
     Info<< "Old face list size: " << oldFaces.size()
@@ -91,7 +90,7 @@ void Foam::faAreaMapper::calcAddressing() const
             newFaceLabels[nNewFaces] = reverseFaceMap[oldFaces[faceI]];
             newFaceLabelsMap[nNewFaces] = faceI;
 
-            nNewFaces++;
+            ++nNewFaces;
         }
     }
 
@@ -100,21 +99,20 @@ void Foam::faAreaMapper::calcAddressing() const
     {
         Info<< "Direct"<< endl;
         // Direct mapping: no further faces to add.  Resize list
-        newFaceLabels.setSize(nNewFaces);
+        newFaceLabels.resize(nNewFaces);
 
-        directAddrPtr_ = std::make_unique<labelList>(newFaceLabels.size());
-        labelList& addr = *directAddrPtr_;
+        directAddrPtr_ = std::make_unique<labelList>
+        (
+            labelList::subList(newFaceLabelsMap, nNewFaces)
+        );
+        auto& addr = *directAddrPtr_;
 
         // Adjust for creation of a boundary face from an internal face
-        forAll(addr, faceI)
+        forAll(addr, facei)
         {
-            if (newFaceLabelsMap[faceI] < oldNInternal)
+            if (addr[facei] < oldNInternal)
             {
-                addr[faceI] = 0;
-            }
-            else
-            {
-                addr[faceI] = newFaceLabelsMap[faceI];
+                addr[facei] = 0;
             }
         }
     }
@@ -122,20 +120,20 @@ void Foam::faAreaMapper::calcAddressing() const
     {
         // There are further faces to add.  Prepare interpolation addressing
         // and weights to full size
-        interpolationAddrPtr_ = std::make_unique<labelListList>
+        interpAddrPtr_ = std::make_unique<labelListList>
         (
             newFaceLabels.size()
         );
-        labelListList& addr = *interpolationAddrPtr_;
+        auto& addr = *interpAddrPtr_;
 
-        weightsPtr_ = std::make_unique<scalarListList>(newFaceLabels.size());
-        scalarListList& w = *weightsPtr_;
+        weightsPtr_ = std::make_unique<scalarListList>(addr.size());
+        auto& wght = *weightsPtr_;
 
         // Insert single addressing and weights
         for (label addrI = 0; addrI < nNewFaces; ++addrI)
         {
-            addr[addrI] = labelList(1, newFaceLabelsMap[addrI]);
-            w[addrI] = scalarList(1, scalar(1));
+            addr[addrI].resize(1, newFaceLabelsMap[addrI]);
+            wght[addrI].resize(1, 1.0);
         }
 
         // Pick up faces from points, edges and faces where the origin
@@ -143,146 +141,87 @@ void Foam::faAreaMapper::calcAddressing() const
         // fast lookup
 
         // Set of faces previously in the mesh
-        labelHashSet oldFaceLookup(oldFaces);
+        const labelHashSet oldFaceLookup(oldFaces);
+
+        // Check if master objects are in faMesh
+        DynamicList<label> validMo(128);
+
+        const auto addCheckedObjects = [&](const List<objectMap>& maps)
+        {
+            for (const objectMap& map : maps)
+            {
+                // Get target index, addressing
+                const label facei = map.index();
+                const labelList& mo = map.masterObjects();
+                if (mo.empty()) continue;  // safety
+
+                validMo.clear();
+                validMo.reserve(mo.size());
+
+                for (const label obji : mo)
+                {
+                    if (oldFaceLookup.contains(obji))
+                    {
+                        validMo.push_back(obji);
+                    }
+                }
+
+                if (validMo.size())
+                {
+                    // Some objects found: add face and interpolation to list
+                    newFaceLabels[nNewFaces] = facei;
+
+                    // No old face available
+                    newFaceLabelsMap[nNewFaces] = -1;
+
+                    // Map from masters, uniform weights
+                    addr[nNewFaces] = validMo;
+                    wght[nNewFaces] =
+                        scalarList(validMo.size(), 1.0/validMo.size());
+
+                    ++nNewFaces;
+                }
+            }
+        };
+
 
         // Go through faces-from lists and add the ones where all
         // old face labels belonged to the faMesh
 
-        const List<objectMap>& ffp = mpm_.facesFromPointsMap();
-
-        forAll(ffp, ffpI)
         {
-            // Get addressing
-            const labelList& mo = ffp[ffpI].masterObjects();
-
-            // Check if master objects are in faMesh
-            labelList validMo(mo.size());
-            label nValidMo = 0;
-
-            forAll(mo, moI)
-            {
-                if (oldFaceLookup.found(mo[moI]))
-                {
-                    validMo[nValidMo] = oldFaceLookup[mo[moI]];
-                    nValidMo++;
-                }
-            }
-
-            if (nValidMo > 0)
-            {
-                // Some objects found: add face and interpolation to list
-                newFaceLabels[nNewFaces] = ffp[ffpI].index();
-
-                // No old face available
-                newFaceLabelsMap[nNewFaces] = -1;
-
-                // Map from masters, uniform weights
-                addr[nNewFaces] = validMo;
-                w[nNewFaces] = scalarList(validMo.size(), 1.0/validMo.size());
-
-                nNewFaces++;
-            }
-        }
-
-        const List<objectMap>& ffe = mpm_.facesFromEdgesMap();
-
-        forAll(ffe, ffeI)
-        {
-            // Get addressing
-            const labelList& mo = ffe[ffeI].masterObjects();
-
-            // Check if master objects are in faMesh
-            labelList validMo(mo.size());
-            label nValidMo = 0;
-
-            forAll(mo, moI)
-            {
-                if (oldFaceLookup.found(mo[moI]))
-                {
-                    validMo[nValidMo] = oldFaceLookup[mo[moI]];
-                    nValidMo++;
-                }
-            }
-
-            if (nValidMo > 0)
-            {
-                // Some objects found: add face and interpolation to list
-                newFaceLabels[nNewFaces] = ffe[ffeI].index();
-
-                // No old face available
-                newFaceLabelsMap[nNewFaces] = -1;
-
-                // Map from masters, uniform weights
-                addr[nNewFaces] = validMo;
-                w[nNewFaces] = scalarList(validMo.size(), 1.0/validMo.size());
-
-                nNewFaces++;
-            }
-        }
-
-        const List<objectMap>& fff = mpm_.facesFromFacesMap();
-
-        forAll(fff, fffI)
-        {
-            // Get addressing
-            const labelList& mo = fff[fffI].masterObjects();
-
-            // Check if master objects are in faMesh
-            labelList validMo(mo.size());
-            label nValidMo = 0;
-
-            forAll(mo, moI)
-            {
-                if (oldFaceLookup.found(mo[moI]))
-                {
-                    validMo[nValidMo] = oldFaceLookup[mo[moI]];
-                    nValidMo++;
-                }
-            }
-
-            if (nValidMo > 0)
-            {
-                // Some objects found: add face and interpolation to list
-                newFaceLabels[nNewFaces] = fff[fffI].index();
-
-                // No old face available
-                newFaceLabelsMap[nNewFaces] = -1;
-
-                // Map from masters, uniform weights
-                addr[nNewFaces] = validMo;
-                w[nNewFaces] = scalarList(validMo.size(), 1.0/validMo.size());
-
-                nNewFaces++;
-            }
+            addCheckedObjects(mpm_.facesFromPointsMap());
+            addCheckedObjects(mpm_.facesFromEdgesMap());
+            addCheckedObjects(mpm_.facesFromFacesMap());
         }
 
         // All faces collected.  Reset sizes of lists
-        newFaceLabels.setSize(nNewFaces);
-        newFaceLabelsMap.setSize(nNewFaces);
-        addr.setSize(nNewFaces);
-        w.setSize(nNewFaces);
+        newFaceLabels.resize(nNewFaces);
+        newFaceLabelsMap.resize(nNewFaces);
+        addr.resize(nNewFaces);
+        wght.resize(nNewFaces);
+
         Info<< "addr: " << addr << nl
-            << "w: " << w << endl;
+            << "wght: " << wght << endl;
     }
 
     // Inserted objects cannot appear in the new faMesh as they have no master
     // HJ, 10/Aug/2011
-    insertedObjectLabelsPtr_ = std::make_unique<labelList>();
+    insertedObjectsPtr_ = std::make_unique<labelList>();
 }
 
 
-void Foam::faAreaMapper::clearOut()
-{
-    newFaceLabelsPtr_.reset(nullptr);
-    newFaceLabelsMapPtr_.reset(nullptr);
-
-    directAddrPtr_.reset(nullptr);
-    interpolationAddrPtr_.reset(nullptr);
-    weightsPtr_.reset(nullptr);
-
-    insertedObjectLabelsPtr_.reset(nullptr);
-    hasUnmapped_ = false;
-}
+// void Foam::faAreaMapper::clearOut()
+// {
+//     newFaceLabelsPtr_.reset(nullptr);
+//     newFaceLabelsMapPtr_.reset(nullptr);
+//
+//     directAddrPtr_.reset(nullptr);
+//     interpAddrPtr_.reset(nullptr);
+//     weightsPtr_.reset(nullptr);
+//
+//     insertedObjectsPtr_.reset(nullptr);
+//     hasUnmapped_ = false;
+// }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -295,25 +234,16 @@ Foam::faAreaMapper::faAreaMapper
 :
     mesh_(mesh),
     mpm_(mpm),
-    direct_(false),
-    hasUnmapped_(false),
-    sizeBeforeMapping_(mesh.nFaces())
-{
-    // Check for possibility of direct mapping
-    if
+    sizeBeforeMapping_(mesh.nFaces()),
+    direct_
     (
-        mpm_.facesFromPointsMap().empty()
-     && mpm_.facesFromEdgesMap().empty()
-     && mpm_.facesFromFacesMap().empty()
-    )
-    {
-        direct_ = true;
-    }
-    else
-    {
-        direct_ = false;
-    }
-
+        // Mapping without interpolation?
+        mpm.facesFromPointsMap().empty()
+     && mpm.facesFromEdgesMap().empty()
+     && mpm.facesFromFacesMap().empty()
+    ),
+    hasUnmapped_(false)
+{
     // Inserted objects not supported: no master
 }
 
@@ -321,9 +251,7 @@ Foam::faAreaMapper::faAreaMapper
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::faAreaMapper::~faAreaMapper()
-{
-    clearOut();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -377,12 +305,12 @@ const Foam::labelListList& Foam::faAreaMapper::addressing() const
             << abort(FatalError);
     }
 
-    if (!interpolationAddrPtr_)
+    if (!interpAddrPtr_)
     {
         calcAddressing();
     }
 
-    return *interpolationAddrPtr_;
+    return *interpAddrPtr_;
 }
 
 
@@ -406,12 +334,12 @@ const Foam::scalarListList& Foam::faAreaMapper::weights() const
 
 const Foam::labelList& Foam::faAreaMapper::insertedObjectLabels() const
 {
-    if (!insertedObjectLabelsPtr_)
+    if (!insertedObjectsPtr_)
     {
         calcAddressing();
     }
 
-    return *insertedObjectLabelsPtr_;
+    return *insertedObjectsPtr_;
 }
 
 

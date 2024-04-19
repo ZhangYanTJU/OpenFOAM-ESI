@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "cellMapper.H"
-#include "demandDrivenData.H"
 #include "polyMesh.H"
 #include "mapPolyMesh.H"
 
@@ -37,9 +37,9 @@ void Foam::cellMapper::calcAddressing() const
     if
     (
         directAddrPtr_
-     || interpolationAddrPtr_
+     || interpAddrPtr_
      || weightsPtr_
-     || insertedCellLabelsPtr_
+     || insertedObjectsPtr_
     )
     {
         FatalErrorInFunction
@@ -51,129 +51,105 @@ void Foam::cellMapper::calcAddressing() const
     {
         // Direct addressing, no weights
 
-        directAddrPtr_ = new labelList(mpm_.cellMap());
-        labelList& directAddr = *directAddrPtr_;
+        directAddrPtr_ = std::make_unique<labelList>
+        (
+            // No retired cells, so cellMap().size() == mapperLen_ anyhow
+            labelList::subList(mpm_.cellMap(), mapperLen_)
+        );
+        auto& directAddr = *directAddrPtr_;
 
-        // Not necessary to resize the list as there are no retired cells
-        // directAddr.setSize(mesh_.nCells());
+        insertedObjectsPtr_ = std::make_unique<labelList>();
+        auto& inserted = *insertedObjectsPtr_;
 
-        insertedCellLabelsPtr_ = new labelList(mesh_.nCells());
-        labelList& insertedCells = *insertedCellLabelsPtr_;
-
-        label nInsertedCells = 0;
-
-        forAll(directAddr, celli)
+        // The nInsertedObjects_ already counted in the constructor
+        if (nInsertedObjects_)
         {
-            if (directAddr[celli] < 0)
-            {
-                // Found inserted cell
-                directAddr[celli] = 0;
-                insertedCells[nInsertedCells] = celli;
-                nInsertedCells++;
-            }
-        }
+            inserted.resize(nInsertedObjects_);
 
-        insertedCells.setSize(nInsertedCells);
+            label nInserted = 0;
+            forAll(directAddr, i)
+            {
+                if (directAddr[i] < 0)
+                {
+                    // Found inserted
+                    directAddr[i] = 0;
+                    inserted[nInserted] = i;
+                    ++nInserted;
+
+                    // TBD: check (nInsertedObjects_ < nInserted)?
+                    #ifdef FULLDEBUG
+                    if (nInsertedObjects_ < nInserted)
+                    {
+                        FatalErrorInFunction
+                            << "Unexpected insert of more than "
+                            << nInsertedObjects_ << " items\n"
+                            << abort(FatalError);
+                    }
+                    #endif
+                }
+            }
+            // TBD: check (nInserted < nInsertedObjects_)?
+            #ifdef FULLDEBUG
+            if (nInserted < nInsertedObjects_)
+            {
+                WarningInFunction
+                    << "Found " << nInserted << " instead of "
+                    << nInsertedObjects_ << " items to insert\n";
+            }
+            #endif
+            // The resize should be unnecessary
+            inserted.resize(nInserted);
+        }
     }
     else
     {
         // Interpolative addressing
 
-        interpolationAddrPtr_ = new labelListList(mesh_.nCells());
-        labelListList& addr = *interpolationAddrPtr_;
+        interpAddrPtr_ = std::make_unique<labelListList>(mapperLen_);
+        auto& addr = *interpAddrPtr_;
 
-        weightsPtr_ = new scalarListList(mesh_.nCells());
-        scalarListList& w = *weightsPtr_;
+        weightsPtr_ = std::make_unique<scalarListList>(mapperLen_);
+        auto& wght = *weightsPtr_;
 
-        const List<objectMap>& cfp = mpm_.cellsFromPointsMap();
 
-        forAll(cfp, cfpI)
+        // Set the addressing and uniform weight
+        const auto setAddrWeights = [&]
+        (
+            const List<objectMap>& maps,
+            const char * const nameOfMap
+        )
         {
-            // Get addressing
-            const labelList& mo = cfp[cfpI].masterObjects();
-
-            label celli = cfp[cfpI].index();
-
-            if (addr[celli].size())
+            for (const objectMap& map : maps)
             {
-                FatalErrorInFunction
-                    << "Master cell " << celli
-                    << " mapped from point cells " << mo
-                    << " already destination of mapping." << abort(FatalError);
+                // Get index, addressing
+                const label celli = map.index();
+                const labelList& mo = map.masterObjects();
+                if (mo.empty()) continue;  // safety
+
+                if (addr[celli].size())
+                {
+                    FatalErrorInFunction
+                        << "Master cell " << celli
+                        << " already mapped, cannot apply "
+                        << nameOfMap
+                        << flatOutput(mo) << abort(FatalError);
+                }
+
+                // Map from masters, uniform weights
+                addr[celli] = mo;
+                wght[celli] = scalarList(mo.size(), 1.0/mo.size());
             }
+        };
 
-            // Map from masters, uniform weights
-            addr[celli] = mo;
-            w[celli] = scalarList(mo.size(), 1.0/mo.size());
-        }
 
-        const List<objectMap>& cfe = mpm_.cellsFromEdgesMap();
-
-        forAll(cfe, cfeI)
-        {
-            // Get addressing
-            const labelList& mo = cfe[cfeI].masterObjects();
-
-            label celli = cfe[cfeI].index();
-
-            if (addr[celli].size())
-            {
-                FatalErrorInFunction
-                    << "Master cell " << celli
-                    << " mapped from edge cells " << mo
-                    << " already destination of mapping." << abort(FatalError);
-            }
-
-            // Map from masters, uniform weights
-            addr[celli] = mo;
-            w[celli] = scalarList(mo.size(), 1.0/mo.size());
-        }
-
-        const List<objectMap>& cff = mpm_.cellsFromFacesMap();
-
-        forAll(cff, cffI)
-        {
-            // Get addressing
-            const labelList& mo = cff[cffI].masterObjects();
-
-            label celli = cff[cffI].index();
-
-            if (addr[celli].size())
-            {
-                FatalErrorInFunction
-                    << "Master cell " << celli
-                    << " mapped from face cells " << mo
-                    << " already destination of mapping." << abort(FatalError);
-            }
-
-            // Map from masters, uniform weights
-            addr[celli] = mo;
-            w[celli] = scalarList(mo.size(), 1.0/mo.size());
-        }
+        setAddrWeights(mpm_.cellsFromPointsMap(), "point cells");
+        setAddrWeights(mpm_.cellsFromEdgesMap(), "edge cells");
+        setAddrWeights(mpm_.cellsFromFacesMap(), "face cells");
 
         // Volume conservative mapping if possible
 
-        const List<objectMap>& cfc = mpm_.cellsFromCellsMap();
-
-        forAll(cfc, cfcI)
-        {
-            // Get addressing
-            const labelList& mo = cfc[cfcI].masterObjects();
-
-            label celli = cfc[cfcI].index();
-
-            if (addr[celli].size())
-            {
-                FatalErrorInFunction
-                    << "Master cell " << celli
-                    << " mapped from cell cells " << mo
-                    << " already destination of mapping."
-                    << abort(FatalError);
-            }
-
-            // Map from masters
-            addr[celli] = mo;
-        }
+        const List<objectMap>& cellsFromCells = mpm_.cellsFromCellsMap();
+        setAddrWeights(cellsFromCells, "cell cells");
 
         if (mpm_.hasOldCellVolumes())
         {
@@ -185,182 +161,188 @@ void Foam::cellMapper::calcAddressing() const
             {
                 FatalErrorInFunction
                     << "cellVolumes size " << V.size()
-                    << " is not the old number of cells " << sizeBeforeMapping()
+                    << " != old number of cells " << sizeBeforeMapping()
                     << ". Are your cellVolumes already mapped?"
                     << " (new number of cells " << size() << ")"
                     << abort(FatalError);
             }
 
-            forAll(cfc, cfcI)
+            for (const auto& map : cellsFromCells)
             {
-                const labelList& mo = cfc[cfcI].masterObjects();
+                // Get index, addressing
+                const label celli = map.index();
+                const labelList& mo = map.masterObjects();
+                if (mo.empty()) continue;  // safety
 
-                label celli = cfc[cfcI].index();
+                // wght[celli] is already sized and uniform weighted
+                auto& wght_cell = wght[celli];
 
-                w[celli].setSize(mo.size());
-
-                if (mo.size())
+                scalar sumV = 0;
+                forAll(mo, ci)
                 {
-                    scalar sumV = 0;
-                    forAll(mo, ci)
+                    wght_cell[ci] = V[mo[ci]];
+                    sumV += V[mo[ci]];
+                }
+                if (sumV > VSMALL)
+                {
+                    for (auto& w : wght_cell)
                     {
-                        w[celli][ci] = V[mo[ci]];
-                        sumV += V[mo[ci]];
+                        w /= sumV;
                     }
-                    if (sumV > VSMALL)
-                    {
-                        forAll(mo, ci)
-                        {
-                            w[celli][ci] /= sumV;
-                        }
-                    }
-                    else
-                    {
-                        // Exception: zero volume. Use uniform mapping
-                        w[celli] = scalarList(mo.size(), 1.0/mo.size());
-                    }
+                }
+                else
+                {
+                    // Exception: zero volume. Use uniform mapping
+                    wght_cell = (1.0/mo.size());
                 }
             }
         }
-        else
+
+
+        // Do mapped cells.
+        // - may already have been set, so check if addressing still empty().
+
         {
-            // Uniform weighted
+            const labelList& map = mpm_.cellMap();
 
-            forAll(cfc, cfcI)
+            // The cellMap.size() == nCells() anyhow
+            for (label celli = 0; celli < mapperLen_; ++celli)
             {
-                const labelList& mo = cfc[cfcI].masterObjects();
+                const label mappedi = map[celli];
 
-                label celli = cfc[cfcI].index();
-
-                w[celli] = scalarList(mo.size(), 1.0/mo.size());
+                if (mappedi >= 0 && addr[celli].empty())
+                {
+                    // Mapped from a single cell
+                    addr[celli].resize(1, mappedi);
+                    wght[celli].resize(1, 1.0);
+                }
             }
         }
 
-
-        // Do mapped faces. Note that can already be set from cellsFromCells
-        // so check if addressing size still zero.
-
-        const labelList& cm = mpm_.cellMap();
-
-        forAll(cm, celli)
-        {
-            if (cm[celli] > -1 && addr[celli].empty())
-            {
-                // Mapped from a single cell
-                addr[celli] = labelList(1, cm[celli]);
-                w[celli] = scalarList(1, 1.0);
-            }
-        }
 
         // Grab inserted points (for them the size of addressing is still zero)
 
-        insertedCellLabelsPtr_ = new labelList(mesh_.nCells());
-        labelList& insertedCells = *insertedCellLabelsPtr_;
+        insertedObjectsPtr_ = std::make_unique<labelList>();
+        auto& inserted = *insertedObjectsPtr_;
 
-        label nInsertedCells = 0;
-
-        forAll(addr, celli)
+        // The nInsertedObjects_ already counted in the constructor
+        if (nInsertedObjects_)
         {
-            if (addr[celli].empty())
+            inserted.resize(nInsertedObjects_);
+
+            label nInserted = 0;
+            forAll(addr, i)
             {
-                // Mapped from a dummy cell
-                addr[celli] = labelList(1, Zero);
-                w[celli] = scalarList(1, scalar(1));
+                if (addr[i].empty())
+                {
+                    // Mapped from dummy cell 0
+                    addr[i].resize(1, 0);
+                    wght[i].resize(1, 1.0);
 
-                insertedCells[nInsertedCells] = celli;
-                nInsertedCells++;
+                    inserted[nInserted] = i;
+                    ++nInserted;
+
+                    // TBD: check (nInsertedObjects_ < nInserted)?
+                    #ifdef FULLDEBUG
+                    if (nInsertedObjects_ < nInserted)
+                    {
+                        FatalErrorInFunction
+                            << "Unexpected insert of more than "
+                            << nInsertedObjects_ << " items\n"
+                            << abort(FatalError);
+                    }
+                    #endif
+                }
             }
+            // TBD: check (nInserted < nInsertedObjects_)?
+            #ifdef FULLDEBUG
+            if (nInserted < nInsertedObjects_)
+            {
+                WarningInFunction
+                    << "Found " << nInserted << " instead of "
+                    << nInsertedObjects_ << " items to insert\n";
+            }
+            #endif
+            // The resize should be unnecessary
+            inserted.resize(nInserted);
         }
-
-        insertedCells.setSize(nInsertedCells);
     }
 }
 
 
-void Foam::cellMapper::clearOut()
-{
-    deleteDemandDrivenData(directAddrPtr_);
-    deleteDemandDrivenData(interpolationAddrPtr_);
-    deleteDemandDrivenData(weightsPtr_);
-    deleteDemandDrivenData(insertedCellLabelsPtr_);
-}
+// void Foam::cellMapper::clearOut()
+// {
+//     directAddrPtr_.reset(nullptr);
+//     interpAddrPtr_.reset(nullptr);
+//     weightsPtr_.reset(nullptr);
+//     insertedObjectsPtr_.reset(nullptr);
+// }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::cellMapper::cellMapper(const mapPolyMesh& mpm)
 :
-    mesh_(mpm.mesh()),
     mpm_(mpm),
-    insertedCells_(true),
-    direct_(false),
-    directAddrPtr_(nullptr),
-    interpolationAddrPtr_(nullptr),
-    weightsPtr_(nullptr),
-    insertedCellLabelsPtr_(nullptr)
-{
-    // Check for possibility of direct mapping
-    if
+    mapperLen_(mpm.mesh().nCells()),
+    nInsertedObjects_(0),
+    direct_
     (
-        mpm_.cellsFromPointsMap().empty()
-     && mpm_.cellsFromEdgesMap().empty()
-     && mpm_.cellsFromFacesMap().empty()
-     && mpm_.cellsFromCellsMap().empty()
+        // Mapping without interpolation?
+        mpm.cellsFromPointsMap().empty()
+     && mpm.cellsFromEdgesMap().empty()
+     && mpm.cellsFromFacesMap().empty()
+     && mpm.cellsFromCellsMap().empty()
     )
+{
+    const auto& directMap = mpm_.cellMap();
+
+    if (!mapperLen_)
     {
+        // Empty mesh
         direct_ = true;
+        nInsertedObjects_ = 0;
+    }
+    else if (direct_)
+    {
+        // Number of inserted cells (-ve values)
+        nInsertedObjects_ = std::count_if
+        (
+            directMap.cbegin(),
+            directMap.cbegin(mapperLen_),
+            [](label i) { return (i < 0); }
+        );
     }
     else
     {
-        direct_ = false;
-    }
+        // Check if there are inserted cells with no owner
+        // (check all lists)
 
-    // Check for inserted cells
-    if (direct_ && (mpm_.cellMap().empty() || min(mpm_.cellMap()) > -1))
-    {
-        insertedCells_ = false;
-    }
-    else
-    {
-        // Need to check all 3 lists to see if there are inserted cells
-        // with no owner
+        bitSet unmapped(mapperLen_, true);
 
-        // Make a copy of the cell map, add the entried for cells from points,
-        // cells from edges and cells from faces and check for left-overs
-        labelList cm(mesh_.nCells(), -1);
+        unmapped.unset(directMap);  // direct mapped
 
-        const List<objectMap>& cfp = mpm_.cellsFromPointsMap();
-
-        forAll(cfp, cfpI)
+        for (const auto& map : mpm_.cellsFromPointsMap())
         {
-            cm[cfp[cfpI].index()] = 0;
+            if (!map.empty()) unmapped.unset(map.index());
         }
 
-        const List<objectMap>& cfe = mpm_.cellsFromEdgesMap();
-
-        forAll(cfe, cfeI)
+        for (const auto& map : mpm_.cellsFromEdgesMap())
         {
-            cm[cfe[cfeI].index()] = 0;
+            if (!map.empty()) unmapped.unset(map.index());
         }
 
-        const List<objectMap>& cff = mpm_.cellsFromFacesMap();
-
-        forAll(cff, cffI)
+        for (const auto& map : mpm_.cellsFromFacesMap())
         {
-            cm[cff[cffI].index()] = 0;
+            if (!map.empty()) unmapped.unset(map.index());
         }
 
-        const List<objectMap>& cfc = mpm_.cellsFromCellsMap();
-
-        forAll(cfc, cfcI)
+        for (const auto& map : mpm_.cellsFromCellsMap())
         {
-            cm[cfc[cfcI].index()] = 0;
+            if (!map.empty()) unmapped.unset(map.index());
         }
 
-        if (min(cm) < 0)
-        {
-            insertedCells_ = true;
-        }
+        nInsertedObjects_ = label(unmapped.count());
     }
 }
 
@@ -368,15 +350,14 @@ Foam::cellMapper::cellMapper(const mapPolyMesh& mpm)
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::cellMapper::~cellMapper()
-{
-    clearOut();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::label Foam::cellMapper::size() const
 {
+    // OR:  return mapperLen_;
     return mpm_.cellMap().size();
 }
 
@@ -422,12 +403,12 @@ const Foam::labelListList& Foam::cellMapper::addressing() const
             << abort(FatalError);
     }
 
-    if (!interpolationAddrPtr_)
+    if (!interpAddrPtr_)
     {
         calcAddressing();
     }
 
-    return *interpolationAddrPtr_;
+    return *interpAddrPtr_;
 }
 
 
@@ -451,20 +432,18 @@ const Foam::scalarListList& Foam::cellMapper::weights() const
 
 const Foam::labelList& Foam::cellMapper::insertedObjectLabels() const
 {
-    if (!insertedCellLabelsPtr_)
+    if (!insertedObjectsPtr_)
     {
-        if (!insertedObjects())
+        if (!nInsertedObjects_)
         {
-            // There are no inserted cells
-            insertedCellLabelsPtr_ = new labelList(0);
+            // No inserted objects will be created
+            return labelList::null();
         }
-        else
-        {
-            calcAddressing();
-        }
+
+        calcAddressing();
     }
 
-    return *insertedCellLabelsPtr_;
+    return *insertedObjectsPtr_;
 }
 
 

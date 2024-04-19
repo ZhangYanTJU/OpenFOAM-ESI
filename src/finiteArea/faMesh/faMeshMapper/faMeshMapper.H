@@ -45,8 +45,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faMeshMapper_H
-#define faMeshMapper_H
+#ifndef Foam_faMeshMapper_H
+#define Foam_faMeshMapper_H
 
 #include "faceMapper.H"
 #include "faAreaMapper.H"
@@ -58,7 +58,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
+// Forward Declarations
 class faMesh;
 class mapPolyMesh;
 

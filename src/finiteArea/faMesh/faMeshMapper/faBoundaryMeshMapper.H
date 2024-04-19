@@ -31,8 +31,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faBoundaryMeshMapper_H
-#define faBoundaryMeshMapper_H
+#ifndef Foam_faBoundaryMeshMapper_H
+#define Foam_faBoundaryMeshMapper_H
 
 #include "faPatchMapper.H"
 

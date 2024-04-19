@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faAreaMapper_H
-#define faAreaMapper_H
+#ifndef Foam_faAreaMapper_H
+#define Foam_faAreaMapper_H
 
 #include "morphFieldMapper.H"
 #include "faMesh.H"
@@ -65,16 +65,16 @@ class faAreaMapper
         //- Reference to mapPolyMesh
         const mapPolyMesh& mpm_;
 
+        //- Size before mapping (old mesh size)
+        const label sizeBeforeMapping_;
+
         //- Is the mapping direct
         bool direct_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         mutable bool hasUnmapped_;
-
-        //- Old mesh size
-        label sizeBeforeMapping_;
 
         //- New face labels after mapping
         mutable std::unique_ptr<labelList> newFaceLabelsPtr_;
@@ -87,22 +87,19 @@ class faAreaMapper
         mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one form of addressing is used)
-        mutable std::unique_ptr<labelListList> interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpAddrPtr_;
 
         //- Interpolation weights
         mutable std::unique_ptr<scalarListList> weightsPtr_;
 
         //- Inserted faces
-        mutable std::unique_ptr<labelList> insertedObjectLabelsPtr_;
+        mutable std::unique_ptr<labelList> insertedObjectsPtr_;
 
 
     // Private Member Functions
 
         //- Calculate addressing
         void calcAddressing() const;
-
-        //- Clear out local storage
-        void clearOut();
 
 
 public:
@@ -116,16 +113,19 @@ public:
         void operator=(const faAreaMapper&) = delete;
 
 
-    //- Construct from components
-    faAreaMapper
-    (
-        const faMesh& mesh,
-        const mapPolyMesh& mpm
-    );
+    // Constructors
+
+        //- Construct from components
+        faAreaMapper
+        (
+            const faMesh& mesh,
+            const mapPolyMesh& mpm
+        );
 
 
     //- Destructor
     virtual ~faAreaMapper();
+
 
     // Member Functions
 
