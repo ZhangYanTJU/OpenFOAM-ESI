@@ -42,7 +42,7 @@ Foam::UPstream::Request::Request() noexcept
 
 bool Foam::UPstream::Request::good() const noexcept
 {
-    return MPI_REQUEST_NULL != PstreamDetail::Request::get(*this);
+    return MPI_REQUEST_NULL != PstreamUtils::Cast::to_mpi(*this);
 }
 
 
@@ -50,6 +50,26 @@ void Foam::UPstream::Request::reset() noexcept
 {
     *this = UPstream::Request(MPI_REQUEST_NULL);
 }
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+// Foam::UPstream::Request
+// Foam::UPstream::Request::lookup(const label req)
+// {
+//     if (req < 0 || req >= PstreamGlobals::outstandingRequests_.size())
+//     {
+//         WarningInFunction
+//             << "Illegal request " << req << nl
+//             << "Should be within range [0,"
+//             << PstreamGlobals::outstandingRequests_.size()
+//             << ')' << endl;
+//
+//         return UPstream::Communicator(MPI_REQUEST_NULL);
+//     }
+//
+//     return UPstream::Request(PstreamGlobals::outstandingRequests_[req]);
+// }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -80,7 +100,7 @@ void Foam::UPstream::addRequest(UPstream::Request& req)
     // Transcribe as a MPI_Request
     PstreamGlobals::outstandingRequests_.push_back
     (
-        PstreamDetail::Request::get(req)
+        PstreamUtils::Cast::to_mpi(req)
     );
 
     // Invalidate parameter
@@ -121,7 +141,7 @@ void Foam::UPstream::cancelRequest(UPstream::Request& req)
     }
 
     {
-        MPI_Request request = PstreamDetail::Request::get(req);
+        MPI_Request request = PstreamUtils::Cast::to_mpi(req);
         if (MPI_REQUEST_NULL != request)  // Active handle is mandatory
         {
             MPI_Cancel(&request);
@@ -142,7 +162,7 @@ void Foam::UPstream::cancelRequests(UList<UPstream::Request>& requests)
 
     for (auto& req : requests)
     {
-        MPI_Request request = PstreamDetail::Request::get(req);
+        MPI_Request request = PstreamUtils::Cast::to_mpi(req);
         if (MPI_REQUEST_NULL != request)  // Active handle is mandatory
         {
             MPI_Cancel(&request);
@@ -203,7 +223,7 @@ void Foam::UPstream::freeRequest(UPstream::Request& req)
     }
 
     {
-        MPI_Request request = PstreamDetail::Request::get(req);
+        MPI_Request request = PstreamUtils::Cast::to_mpi(req);
         if (MPI_REQUEST_NULL != request)  // Active handle is mandatory
         {
             // if (cancel)
@@ -227,7 +247,7 @@ void Foam::UPstream::freeRequests(UList<UPstream::Request>& requests)
 
     for (auto& req : requests)
     {
-        MPI_Request request = PstreamDetail::Request::get(req);
+        MPI_Request request = PstreamUtils::Cast::to_mpi(req);
         if (MPI_REQUEST_NULL != request)  // Active handle is mandatory
         {
             // if (cancel)
@@ -329,7 +349,7 @@ void Foam::UPstream::waitRequests(UList<UPstream::Request>& requests)
 
     for (auto& req : requests)
     {
-        MPI_Request request = PstreamDetail::Request::get(req);
+        MPI_Request request = PstreamUtils::Cast::to_mpi(req);
 
         if (MPI_REQUEST_NULL != request)  // Apply some prefiltering
         {
@@ -526,7 +546,7 @@ bool Foam::UPstream::waitSomeRequests
 
     for (auto& req : requests)
     {
-        waitRequests[count] = PstreamDetail::Request::get(req);
+        waitRequests[count] = PstreamUtils::Cast::to_mpi(req);
         ++count;
     }
 
@@ -617,7 +637,7 @@ Foam::label Foam::UPstream::waitAnyRequest(UList<UPstream::Request>& requests)
     //   for the return index.
     for (auto& req : requests)
     {
-        waitRequests[count] = PstreamDetail::Request::get(req);
+        waitRequests[count] = PstreamUtils::Cast::to_mpi(req);
         ++count;
     }
 
@@ -675,13 +695,13 @@ Foam::label Foam::UPstream::waitAnyRequest(UList<UPstream::Request>& requests)
 ///     int count = 0;
 ///     MPI_Request waitRequests[2];
 ///
-///     waitRequests[count] = PstreamDetail::Request::get(req0);
+///     waitRequests[count] = PstreamUtils::Cast::to_mpi(req0);
 ///     if (MPI_REQUEST_NULL != waitRequests[count])
 ///     {
 ///         ++count;
 ///     }
 ///
-///     waitRequests[count] = PstreamDetail::Request::get(req1);
+///     waitRequests[count] = PstreamUtils::Cast::to_mpi(req1);
 ///     if (MPI_REQUEST_NULL != waitRequests[count])
 ///     {
 ///         ++count;
@@ -765,7 +785,7 @@ void Foam::UPstream::waitRequest(UPstream::Request& req)
         return;
     }
 
-    MPI_Request request = PstreamDetail::Request::get(req);
+    MPI_Request request = PstreamUtils::Cast::to_mpi(req);
 
     // No-op for null request
     if (MPI_REQUEST_NULL == request)
@@ -831,7 +851,7 @@ bool Foam::UPstream::finishedRequest(UPstream::Request& req)
         return true;
     }
 
-    MPI_Request request = PstreamDetail::Request::get(req);
+    MPI_Request request = PstreamUtils::Cast::to_mpi(req);
 
     // Fast-path (no-op) for null request
     if (MPI_REQUEST_NULL == request)
@@ -924,7 +944,7 @@ bool Foam::UPstream::finishedRequests(UList<UPstream::Request>& requests)
 
     for (auto& req : requests)
     {
-        MPI_Request request = PstreamDetail::Request::get(req);
+        MPI_Request request = PstreamUtils::Cast::to_mpi(req);
 
         if (MPI_REQUEST_NULL != request)  // Apply some prefiltering
         {
