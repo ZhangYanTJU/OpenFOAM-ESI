@@ -281,9 +281,7 @@ bool Foam::mappedPatchBase::constructIOField
     objectRegistry& obr
 )
 {
-    const word tag("List<" + word(pTraits<Type>::typeName) + '>');
-
-    if (tok.isCompound(tag))
+    if (tok.isCompound<List<Type>>())
     {
         auto* fldPtr = obr.getObjectPtr<IOField<Type>>(name);
         if (!fldPtr)

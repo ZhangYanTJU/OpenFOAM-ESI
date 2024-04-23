@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -870,6 +870,23 @@ inline Foam::token::compound& Foam::token::refCompoundToken()
         parseError("compound");
     }
     return *data_.compoundPtr;
+}
+
+
+template<class Type>
+inline Type& Foam::token::refCompoundToken()
+{
+    if (type_ != tokenType::COMPOUND)
+    {
+        parseError("compound");
+    }
+    return static_cast<Type&>
+    (
+        dynamicCast<token::Compound<Type>>
+        (
+            *data_.compoundPtr
+        )
+    );
 }
 
 

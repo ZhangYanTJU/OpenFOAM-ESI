@@ -433,7 +433,7 @@ public:
         using tokenList::find;
 
         //- Find range containing matching delimiter pair, starting at the
-        //- the specified position. The position -1 indicates to continue
+        //- specified position. The position -1 indicates to continue
         //- from the present tokenIndex() position.
         labelRange find
         (
@@ -441,6 +441,13 @@ public:
             const token::punctuationToken delimClose,
             label pos = 0
         ) const;
+
+        //- Find compoundToken of specified Type, starting at the
+        //- specified position. The position -1 indicates to continue
+        //- from the present tokenIndex() position.
+        //  \return nullptr if not found
+        template<class Type>
+        const Type* findCompound(label pos = 0) const;
 
 
     // Token list modification
@@ -633,6 +640,10 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "ITstreamI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -105,9 +105,9 @@ public:
         CHAR_DATA,        //!< String-variant: plain character content
 
         // Aliases
-        FLOAT_SCALAR = FLOAT,
-        DOUBLE_SCALAR = DOUBLE,
-        VERBATIMSTRING = VERBATIM
+        FLOAT_SCALAR = FLOAT,       //!< compatibility name for FLOAT
+        DOUBLE_SCALAR = DOUBLE,     //!< compatibility name for DOUBLE
+        VERBATIMSTRING = VERBATIM   //!< compatibility name for VERBATIM
     };
 
 
@@ -222,7 +222,8 @@ public:
                 const bool readContent = true
             );
 
-            //- Check if dynamic_cast to \c Type is possible.
+            //- Attempt dynamic_cast to \c Type
+            //- returns nullptr if cast is not possible
             template<class Type>
             const Type* isA() const
             {
@@ -367,11 +368,13 @@ public:
 
         // Selectors
 
-            //- Construct autoPtr compound type with forwarding arguments
+            //- Construct autoPtr compound with forwarding arguments.
+            //  The return type is compound, not Compound since that
+            //  is what the token interface requires.
             template<class... Args>
-            static autoPtr<Compound<T>> New(Args&&... args)
+            static autoPtr<compound> New(Args&&... args)
             {
-                return autoPtr<Compound<T>>
+                return autoPtr<compound>
                 (
                     new Compound<T>(T(std::forward<Args>(args)...))
                 );
@@ -386,7 +389,7 @@ public:
                 return T::size();
             }
 
-            //- Change the size of the underlying container content
+            //- Change the size of the underlying content
             virtual void resize(const label n)
             {
                 T::resize(n);
@@ -759,7 +762,14 @@ public:
         inline const compound& compoundToken() const;
 
         //- Return reference to compound token. Fatal if the wrong type.
+        //- No checks for \em released or \em pending states
         inline compound& refCompoundToken();
+
+        //- Return reference to the underlying encapsulated container
+        //- (eg, \c List<label> etc) of a compound token.
+        //- No checks for \em released or \em pending states
+        template<class Type>
+        inline Type& refCompoundToken();
 
         //- Default construct the specified compound type and read from stream.
         //  A no-op and returns false if compound type is unknown.
