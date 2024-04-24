@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -473,13 +473,16 @@ void Foam::meshRefinement::markFacesOnProblemCells
         // Baffle all faces of cells that need to be removed
         forAllConstIters(problemCells, iter)
         {
-            const cell& cFaces = mesh_.cells()[iter.key()];
-
-            forAll(cFaces, i)
+            for (const label facei : mesh_.cells()[iter.key()])
             {
-                label facei = cFaces[i];
+                const label patchi = patches.whichPatch(facei);
 
-                if (facePatch[facei] == -1 && mesh_.isInternalFace(facei))
+                if
+                (
+                    facePatch[facei] == -1
+                // && mesh_.isInternalFace(facei)
+                && (patchi == -1 || patches[patchi].coupled())
+                )
                 {
                     facePatch[facei] = nearestAdaptPatch[facei];
                     faceZone[facei] = nearestAdaptZone[facei];
@@ -719,14 +722,15 @@ void Foam::meshRefinement::markFacesOnProblemCells
                 else
                 {
                     // Block all faces of cell
-                    forAll(cFaces, cf)
+                    for (const label facei : cFaces)
                     {
-                        label facei = cFaces[cf];
+                        const label patchi = patches.whichPatch(facei);
 
                         if
                         (
                             facePatch[facei] == -1
-                         && mesh_.isInternalFace(facei)
+                        // && mesh_.isInternalFace(facei)
+                         && (patchi == -1 || patches[patchi].coupled())
                         )
                         {
                             facePatch[facei] = nearestAdaptPatch[facei];
@@ -805,10 +809,13 @@ void Foam::meshRefinement::markFacesOnProblemCells
 
                         for (const label facei : cFaces)
                         {
+                            const label patchi = patches.whichPatch(facei);
+
                             if
                             (
                                 facePatch[facei] == -1
-                             && mesh_.isInternalFace(facei)
+                            // && mesh_.isInternalFace(facei)
+                             && (patchi == -1 || patches[patchi].coupled())
                             )
                             {
                                 facePatch[facei] = nearestAdaptPatch[facei];
