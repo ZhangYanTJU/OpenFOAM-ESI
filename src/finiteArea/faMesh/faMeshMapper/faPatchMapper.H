@@ -39,8 +39,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faPatchMapper_H
-#define faPatchMapper_H
+#ifndef Foam_faPatchMapper_H
+#define Foam_faPatchMapper_H
 
 #include "faPatchFieldMapper.H"
 #include "faceMapper.H"
@@ -51,7 +51,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
+// Forward Declarations
 class faPatch;
 class mapPolyMesh;
 
@@ -78,7 +78,7 @@ class faPatchMapper
         const labelList oldEdgeFaces_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         mutable bool hasUnmapped_;
 
@@ -90,9 +90,6 @@ class faPatchMapper
 
         //- Calculate addressing for mapping with inserted cells
         void calcAddressing() const;
-
-        //- Clear out local storage
-        void clearOut();
 
 
 public:
@@ -106,12 +103,10 @@ public:
         void operator=(const faPatchMapper&) = delete;
 
 
-    //- Construct from mappers
-    faPatchMapper
-    (
-        const faPatch& patch,
-        const mapPolyMesh& mpm
-    );
+    // Constructors
+
+        //- Construct from mappers
+        faPatchMapper(const faPatch& patch, const mapPolyMesh& mpm);
 
 
     //- Destructor

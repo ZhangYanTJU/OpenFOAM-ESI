@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,7 +58,8 @@ Foam::fixedValueFvsPatchField<Type>::fixedValueFvsPatchField
 (
     const fvPatch& p,
     const DimensionedField<Type, surfaceMesh>& iF,
-    const dictionary& dict
+    const dictionary& dict,
+    IOobjectOption::readOption requireValue
 )
 :
     fvsPatchField<Type>(p, iF, dict, IOobjectOption::MUST_READ)
@@ -80,21 +82,21 @@ Foam::fixedValueFvsPatchField<Type>::fixedValueFvsPatchField
 template<class Type>
 Foam::fixedValueFvsPatchField<Type>::fixedValueFvsPatchField
 (
-    const fixedValueFvsPatchField<Type>& ptf
+    const fixedValueFvsPatchField<Type>& ptf,
+    const DimensionedField<Type, surfaceMesh>& iF
 )
 :
-    fvsPatchField<Type>(ptf)
+    fvsPatchField<Type>(ptf, iF)
 {}
 
 
 template<class Type>
 Foam::fixedValueFvsPatchField<Type>::fixedValueFvsPatchField
 (
-    const fixedValueFvsPatchField<Type>& ptf,
-    const DimensionedField<Type, surfaceMesh>& iF
+    const fixedValueFvsPatchField<Type>& ptf
 )
 :
-    fvsPatchField<Type>(ptf, iF)
+    fixedValueFvsPatchField<Type>(ptf, ptf.internalField())
 {}
 
 
@@ -135,6 +137,14 @@ Foam::tmp<Foam::Field<Type>>
 Foam::fixedValueFvsPatchField<Type>::gradientBoundaryCoeffs() const
 {
     return this->patch().deltaCoeffs()*(*this);
+}
+
+
+template<class Type>
+void Foam::fixedValueFvsPatchField<Type>::write(Ostream& os) const
+{
+    fvsPatchField<Type>::write(os);
+    fvsPatchField<Type>::writeValueEntry(os);
 }
 
 

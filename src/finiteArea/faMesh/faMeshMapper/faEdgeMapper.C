@@ -27,7 +27,6 @@ License
 
 #include "faEdgeMapper.H"
 #include "mapPolyMesh.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -47,11 +46,11 @@ void Foam::faEdgeMapper::calcAddressing() const
 }
 
 
-void Foam::faEdgeMapper::clearOut()
-{
-    directAddrPtr_.reset(nullptr);
-    hasUnmapped_ = false;
-}
+// void Foam::faEdgeMapper::clearOut()
+// {
+//     directAddrPtr_.reset(nullptr);
+//     hasUnmapped_ = false;
+// }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -62,7 +61,9 @@ Foam::faEdgeMapper::faEdgeMapper
     const mapPolyMesh& mpm
 )
 :
-    mesh_(mesh),
+    // currently unused:  mesh_(mesh),
+    // currently unused:  mpm_(mpm),
+    mapperLen_(mesh.nInternalEdges()),
     sizeBeforeMapping_(mesh.nInternalEdges()),
     hasUnmapped_(false)
 {}
@@ -71,12 +72,16 @@ Foam::faEdgeMapper::faEdgeMapper
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::faEdgeMapper::~faEdgeMapper()
-{
-    clearOut();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::label Foam::faEdgeMapper::size() const
+{
+    return mapperLen_;
+}
+
 
 const Foam::labelUList& Foam::faEdgeMapper::directAddressing() const
 {

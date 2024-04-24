@@ -33,7 +33,9 @@ Description
     This boundary condition provides an 'empty' condition for reduced
     dimensions cases, i.e. 1- and 2-D geometries.  Apply this condition to
     patches whose normal is aligned to geometric directions that do not
-    constitue solution directions.
+    constitute solution directions.
+
+    The "value" entry is NO_READ, NO_WRITE.
 
 Usage
     Example of the boundary condition specification:
@@ -84,7 +86,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         emptyFvPatchField
         (
             const fvPatch&,

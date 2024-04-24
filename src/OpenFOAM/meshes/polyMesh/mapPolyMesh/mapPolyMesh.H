@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -153,6 +153,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class polyMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -161,7 +162,7 @@ class polyMesh;
 
 class mapPolyMesh
 {
-    // Private data
+    // Private Data
 
         //- Reference to polyMesh
         const polyMesh& mesh_;
@@ -273,7 +274,9 @@ class mapPolyMesh
         autoPtr<scalarField> oldCellVolumesPtr_;
 
 
-    // Private Member Functions
+public:
+
+    // Generated Methods
 
         //- No copy construct
         mapPolyMesh(const mapPolyMesh&) = delete;
@@ -282,14 +285,13 @@ class mapPolyMesh
         void operator=(const mapPolyMesh&) = delete;
 
 
-public:
-
     // Constructors
 
         //- Construct from mesh
         mapPolyMesh(const polyMesh& mesh);
 
-        //- Construct from components. Copy (except for oldCellVolumes).
+        //- Copy construct from components,
+        //- except for oldCellVolumes which is move construct
         mapPolyMesh
         (
             const polyMesh& mesh,
@@ -356,18 +358,19 @@ public:
             const bool reuse
         );
 
+
     // Member Functions
 
         // Access
 
             //- Return polyMesh
-            const polyMesh& mesh() const
+            const polyMesh& mesh() const noexcept
             {
                 return mesh_;
             }
 
             //- Number of old points
-            label nOldPoints() const
+            label nOldPoints() const noexcept
             {
                 return nOldPoints_;
             }
@@ -379,13 +382,13 @@ public:
             }
 
             //- Number of old faces
-            label nOldFaces() const
+            label nOldFaces() const noexcept
             {
                 return nOldFaces_;
             }
 
             //- Number of old cells
-            label nOldCells() const
+            label nOldCells() const noexcept
             {
                 return nOldCells_;
             }
@@ -394,13 +397,13 @@ public:
             //  Contains the old point label for all new points.
             //  For preserved points this is the old point label.
             //  For added points this is the master point ID
-            const labelList& pointMap() const
+            const labelList& pointMap() const noexcept
             {
                 return pointMap_;
             }
 
             //- Points originating from points
-            const List<objectMap>& pointsFromPointsMap() const
+            const List<objectMap>& pointsFromPointsMap() const noexcept
             {
                 return pointsFromPointsMap_;
             }
@@ -408,56 +411,56 @@ public:
             //- Old face map.
             //  Contains a list of old face labels for every new face.
             //  Warning: this map contains invalid entries for new faces
-            const labelList& faceMap() const
+            const labelList& faceMap() const noexcept
             {
                 return faceMap_;
             }
 
             //- Faces inflated from points
-            const List<objectMap>& facesFromPointsMap() const
+            const List<objectMap>& facesFromPointsMap() const noexcept
             {
                 return facesFromPointsMap_;
             }
 
             //- Faces inflated from edges
-            const List<objectMap>& facesFromEdgesMap() const
+            const List<objectMap>& facesFromEdgesMap() const noexcept
             {
                 return facesFromEdgesMap_;
             }
 
             //- Faces originating from faces
-            const List<objectMap>& facesFromFacesMap() const
+            const List<objectMap>& facesFromFacesMap() const noexcept
             {
                 return facesFromFacesMap_;
             }
 
             //- Old cell map.
             //  Contains old cell label for all preserved cells.
-            const labelList& cellMap() const
+            const labelList& cellMap() const noexcept
             {
                 return cellMap_;
             }
 
             //- Cells inflated from points
-            const List<objectMap>& cellsFromPointsMap() const
+            const List<objectMap>& cellsFromPointsMap() const noexcept
             {
                 return cellsFromPointsMap_;
             }
 
             //- Cells inflated from edges
-            const List<objectMap>& cellsFromEdgesMap() const
+            const List<objectMap>& cellsFromEdgesMap() const noexcept
             {
                 return cellsFromEdgesMap_;
             }
 
             //- Cells inflated from faces
-            const List<objectMap>& cellsFromFacesMap() const
+            const List<objectMap>& cellsFromFacesMap() const noexcept
             {
                 return cellsFromFacesMap_;
             }
 
             //- Cells originating from cells
-            const List<objectMap>& cellsFromCellsMap() const
+            const List<objectMap>& cellsFromCellsMap() const noexcept
             {
                 return cellsFromCellsMap_;
             }
@@ -467,7 +470,7 @@ public:
 
                 //- Reverse point map
                 //  Contains new point label for all old and added points
-                const labelList& reversePointMap() const
+                const labelList& reversePointMap() const noexcept
                 {
                     return reversePointMap_;
                 }
@@ -499,7 +502,7 @@ public:
 
                 //- Reverse face map
                 //  Contains new face label for all old and added faces
-                const labelList& reverseFaceMap() const
+                const labelList& reverseFaceMap() const noexcept
                 {
                     return reverseFaceMap_;
                 }
@@ -530,7 +533,7 @@ public:
 
                 //- Reverse cell map
                 //  Contains new cell label for all old and added cells
-                const labelList& reverseCellMap() const
+                const labelList& reverseCellMap() const noexcept
                 {
                     return reverseCellMap_;
                 }
@@ -560,7 +563,7 @@ public:
                 }
 
                 //- Map of flipped face flux faces
-                const labelHashSet& flipFaceFlux() const
+                const labelHashSet& flipFaceFlux() const noexcept
                 {
                     return flipFaceFlux_;
                 }
@@ -568,7 +571,7 @@ public:
                 //- Patch point renumbering
                 //  For every preserved point on a patch give the old position.
                 //  For added points, the index is set to -1
-                const labelListList& patchPointMap() const
+                const labelListList& patchPointMap() const noexcept
                 {
                     return patchPointMap_;
                 }
@@ -579,7 +582,7 @@ public:
                 //- Point zone renumbering
                 //  For every preserved point in zone give the old position.
                 //  For added points, the index is set to -1
-                const labelListList& pointZoneMap() const
+                const labelListList& pointZoneMap() const noexcept
                 {
                     return pointZoneMap_;
                 }
@@ -587,7 +590,7 @@ public:
                 //- Face zone point renumbering
                 //  For every preserved point in zone give the old position.
                 //  For added points, the index is set to -1
-                const labelListList& faceZonePointMap() const
+                const labelListList& faceZonePointMap() const noexcept
                 {
                     return faceZonePointMap_;
                 }
@@ -595,7 +598,7 @@ public:
                 //- Face zone face renumbering
                 //  For every preserved face in zone give the old position.
                 //  For added faces, the index is set to -1
-                const labelListList& faceZoneFaceMap() const
+                const labelListList& faceZoneFaceMap() const noexcept
                 {
                     return faceZoneFaceMap_;
                 }
@@ -603,7 +606,7 @@ public:
                 //- Cell zone renumbering
                 //  For every preserved cell in zone give the old position.
                 //  For added cells, the index is set to -1
-                const labelListList& cellZoneMap() const
+                const labelListList& cellZoneMap() const noexcept
                 {
                     return cellZoneMap_;
                 }
@@ -611,49 +614,48 @@ public:
             //- Pre-motion point positions.
             //  This specifies the correct way of blowing up
             //  zero-volume objects
-            const pointField& preMotionPoints() const
+            const pointField& preMotionPoints() const noexcept
             {
                 return preMotionPoints_;
             }
 
             //- Has valid preMotionPoints?
-            bool hasMotionPoints() const
+            bool hasMotionPoints() const noexcept
             {
-                return preMotionPoints_.size() > 0;
+                return !preMotionPoints_.empty();
             }
 
 
             //- Return list of the old patch sizes
-            const labelList& oldPatchSizes() const
+            const labelList& oldPatchSizes() const noexcept
             {
                 return oldPatchSizes_;
             }
 
             //- Return list of the old patch start labels
-            const labelList& oldPatchStarts() const
+            const labelList& oldPatchStarts() const noexcept
             {
                 return oldPatchStarts_;
             }
 
             //- Return numbers of mesh points per old patch
-            const labelList& oldPatchNMeshPoints() const
+            const labelList& oldPatchNMeshPoints() const noexcept
             {
                 return oldPatchNMeshPoints_;
             }
 
 
-            // Geometric mapping data
+        // Geometric mapping data
 
-                bool hasOldCellVolumes() const
-                {
-                    return bool(oldCellVolumesPtr_);
-                }
+            bool hasOldCellVolumes() const noexcept
+            {
+                return bool(oldCellVolumesPtr_);
+            }
 
-                const scalarField& oldCellVolumes() const
-                {
-                    return *oldCellVolumesPtr_;
-                }
-
+            const scalarField& oldCellVolumes() const
+            {
+                return *oldCellVolumesPtr_;
+            }
 };
 
 

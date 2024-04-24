@@ -34,6 +34,8 @@ Description
     This boundary condition enforces a cyclic condition between a pair of
     boundaries.
 
+    The "value" entry is NO_READ.
+
 Usage
     Example of the boundary condition specification:
     \verbatim
@@ -75,7 +77,7 @@ class cyclicFvPatchField
     virtual public cyclicLduInterfaceField,
     public coupledFvPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the cyclic patch
         const cyclicFvPatch& cyclicPatch_;
@@ -113,7 +115,7 @@ public:
             const fvPatch&,
             const DimensionedField<Type, volMesh>&,
             const dictionary&,
-            const bool valueRequired = true
+            const bool needValue = true  //!< evaluate
         );
 
         //- Construct by mapping given cyclicFvPatchField onto a new patch
@@ -154,7 +156,7 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
         // Access
 

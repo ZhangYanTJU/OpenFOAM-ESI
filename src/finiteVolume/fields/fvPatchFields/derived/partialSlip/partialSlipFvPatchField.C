@@ -39,7 +39,7 @@ Foam::partialSlipFvPatchField<Type>::partialSlipFvPatchField
 )
 :
     parent_bctype(p, iF),
-    refValue_(p.size(), Zero),
+    refValue_(p.size(), Foam::zero{}),
     valueFraction_(p.size(), 1.0),
     writeValue_(false)
 {}
@@ -70,7 +70,7 @@ Foam::partialSlipFvPatchField<Type>::partialSlipFvPatchField
 )
 :
     parent_bctype(p, iF),
-    refValue_(p.size(), Zero),
+    refValue_(p.size(), Foam::zero{}),
     valueFraction_("valueFraction", dict, p.size()),
     writeValue_(dict.getOrDefault("writeValue", false))
 {
@@ -86,10 +86,11 @@ Foam::partialSlipFvPatchField<Type>::partialSlipFvPatchField
 template<class Type>
 Foam::partialSlipFvPatchField<Type>::partialSlipFvPatchField
 (
-    const partialSlipFvPatchField<Type>& ptf
+    const partialSlipFvPatchField<Type>& ptf,
+    const DimensionedField<Type, volMesh>& iF
 )
 :
-    parent_bctype(ptf),
+    parent_bctype(ptf, iF),
     refValue_(ptf.refValue_),
     valueFraction_(ptf.valueFraction_),
     writeValue_(ptf.writeValue_)
@@ -99,14 +100,10 @@ Foam::partialSlipFvPatchField<Type>::partialSlipFvPatchField
 template<class Type>
 Foam::partialSlipFvPatchField<Type>::partialSlipFvPatchField
 (
-    const partialSlipFvPatchField<Type>& ptf,
-    const DimensionedField<Type, volMesh>& iF
+    const partialSlipFvPatchField<Type>& ptf
 )
 :
-    parent_bctype(ptf, iF),
-    refValue_(ptf.refValue_),
-    valueFraction_(ptf.valueFraction_),
-    writeValue_(ptf.writeValue_)
+    partialSlipFvPatchField<Type>(ptf, ptf.internalField())
 {}
 
 
@@ -204,12 +201,14 @@ template<class Type>
 void Foam::partialSlipFvPatchField<Type>::write(Ostream& os) const
 {
     this->parent_bctype::write(os);
-    refValue_.writeEntry("refValue", os);
-    valueFraction_.writeEntry("valueFraction", os);
-
     if (writeValue_)
     {
         os.writeEntry("writeValue", "true");
+    }
+    refValue_.writeEntry("refValue", os);
+    valueFraction_.writeEntry("valueFraction", os);
+    if (writeValue_)
+    {
         fvPatchField<Type>::writeValueEntry(os);
     }
 }

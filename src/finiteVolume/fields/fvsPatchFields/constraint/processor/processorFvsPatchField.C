@@ -122,11 +122,4 @@ Foam::processorFvsPatchField<Type>::processorFvsPatchField
 {}
 
 
-// * * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * //
-
-template<class Type>
-Foam::processorFvsPatchField<Type>::~processorFvsPatchField()
-{}
-
-
 // ************************************************************************* //

@@ -449,7 +449,7 @@ void specularRadiationMixedFvPatchScalarField::write(Ostream& os) const
 {
     mixedFvPatchScalarField::write(os);
     os.writeEntryIfDifferent<bool>("interpolate", false, interpolate_);
-    this->writeEntry("value", os);
+    this->writeValueEntry(os);
 }
 
 

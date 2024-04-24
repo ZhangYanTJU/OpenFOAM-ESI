@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fvPatchMapper_H
-#define fvPatchMapper_H
+#ifndef Foam_fvPatchMapper_H
+#define Foam_fvPatchMapper_H
 
 #include "fvPatchFieldMapper.H"
 #include "faceMapper.H"
@@ -47,7 +48,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
+// Forward Declarations
 class fvPatch;
 class mapPolyMesh;
 
@@ -71,18 +72,18 @@ class fvPatchMapper
         const label sizeBeforeMapping_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         mutable bool hasUnmapped_;
 
         //- Direct addressing (only one for of addressing is used)
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one for of addressing is used)
-        mutable labelListList* interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpAddrPtr_;
 
         //- Interpolation weights
-        mutable scalarListList* weightsPtr_;
+        mutable std::unique_ptr<scalarListList> weightsPtr_;
 
 
     // Private Member Functions
@@ -97,13 +98,8 @@ class fvPatchMapper
         //- Calculate addressing for mapping with inserted cells
         void calcAddressing() const;
 
-        //- Clear out local storage
-        void clearOut();
-
 
 public:
-
-    // Static data members
 
     // Constructors
 
@@ -152,7 +148,6 @@ public:
 
         //- Return interpolation weights
         virtual const scalarListList& weights() const;
-
 };
 
 

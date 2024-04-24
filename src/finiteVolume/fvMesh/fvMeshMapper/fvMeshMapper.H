@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fvMeshMapper_H
-#define fvMeshMapper_H
+#ifndef Foam_fvMeshMapper_H
+#define Foam_fvMeshMapper_H
 
 #include "faceMapper.H"
 #include "cellMapper.H"
@@ -47,7 +47,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
+// Forward Declarations
 class fvMesh;
 class mapPolyMesh;
 
@@ -57,7 +57,7 @@ class mapPolyMesh;
 
 class fvMeshMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh
         const fvMesh& mesh_;

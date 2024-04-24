@@ -95,7 +95,8 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- Not implemented
         slicedFaPatchField
         (
             const faPatch&,
@@ -103,8 +104,8 @@ public:
             const dictionary&
         );
 
-        //- Construct by mapping the given sliced patch field
-        //- onto a new patch
+        //- Construct by mapping the given patch field onto a new patch.
+        //- Not implemented
         slicedFaPatchField
         (
             const slicedFaPatchField<Type>&,

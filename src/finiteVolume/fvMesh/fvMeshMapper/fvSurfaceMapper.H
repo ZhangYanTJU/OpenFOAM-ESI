@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,15 +28,15 @@ Class
     Foam::fvSurfaceMapper
 
 Description
-    FV surface mapper.
+    A finiteVolume surface mapper.
 
 SourceFiles
     fvSurfaceMapper.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fvSurfaceMapper_H
-#define fvSurfaceMapper_H
+#ifndef Foam_fvSurfaceMapper_H
+#define Foam_fvSurfaceMapper_H
 
 #include "morphFieldMapper.H"
 #include "fvMesh.H"
@@ -48,8 +49,6 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
-
 /*---------------------------------------------------------------------------*\
                          Class fvSurfaceMapper Declaration
 \*---------------------------------------------------------------------------*/
@@ -58,7 +57,7 @@ class fvSurfaceMapper
 :
     public morphFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh
         const fvMesh& mesh_;
@@ -67,19 +66,19 @@ class fvSurfaceMapper
         const faceMapper& faceMap_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         //- Direct addressing (only one for of addressing is used)
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one for of addressing is used)
-        mutable labelListList* interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpAddrPtr_;
 
         //- Interpolation weights
-        mutable scalarListList* weightsPtr_;
+        mutable std::unique_ptr<scalarListList> weightsPtr_;
 
         //- Inserted faces
-        mutable labelList* insertedObjectLabelsPtr_;
+        mutable std::unique_ptr<labelList> insertedObjectsPtr_;
 
 
 
@@ -95,9 +94,6 @@ class fvSurfaceMapper
         //- Calculate addressing
         void calcAddressing() const;
 
-        //- Clear out local storage
-        void clearOut();
-
 
 public:
 
@@ -107,7 +103,7 @@ public:
         fvSurfaceMapper
         (
             const fvMesh& mesh,
-            const faceMapper& fMapper
+            const faceMapper& mapper
         );
 
 

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pointPatchMapper_H
-#define pointPatchMapper_H
+#ifndef Foam_pointPatchMapper_H
+#define Foam_pointPatchMapper_H
 
 #include "pointMapper.H"
 #include "pointPatchFieldMapper.H"
@@ -47,7 +48,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
+// Forward Declarations
 class pointPatch;
 class mapPolyMesh;
 
@@ -59,7 +60,7 @@ class pointPatchMapper
 :
     public pointPatchFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to patch
         const pointPatch& patch_;
@@ -74,18 +75,18 @@ class pointPatchMapper
         const label sizeBeforeMapping_;
 
 
-    // Demand-driven private data
+    // Demand-driven Data
 
         mutable bool hasUnmapped_;
 
         //- Direct addressing (only one for of addressing is used)
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one for of addressing is used)
-        mutable labelListList* interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpAddrPtr_;
 
         //- Interpolation weights
-        mutable scalarListList* weightsPtr_;
+        mutable std::unique_ptr<scalarListList> weightsPtr_;
 
 
     // Private Member Functions
@@ -99,9 +100,6 @@ class pointPatchMapper
 
         //- Calculate addressing for mapping with inserted cells
         void calcAddressing() const;
-
-        //- Clear out local storage
-        void clearOut();
 
 
 public:
@@ -156,7 +154,6 @@ public:
 
         //- Return interpolaion weights
         virtual const scalarListList& weights() const;
-
 };
 
 

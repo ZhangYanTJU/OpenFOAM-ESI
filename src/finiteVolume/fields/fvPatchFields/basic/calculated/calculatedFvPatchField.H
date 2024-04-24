@@ -31,11 +31,16 @@ Group
     grpGenericBoundaryConditions
 
 Description
-    This boundary condition is not designed to be evaluated; it is assmued
+    This boundary condition is not designed to be evaluated; it is assumed
     that the value is assigned via field assignment, and not via a call to
     e.g. \c updateCoeffs or \c evaluate.
 
 Usage
+    \table
+        Property     | Description             | Required  | Default
+        value        | field value             | yes |
+    \endtable
+
     Example of the boundary condition specification:
     \verbatim
     <patchName>
@@ -99,13 +104,13 @@ public:
             const fvPatch& p,
             const DimensionedField<Type, volMesh>& iF,
             const dictionary& dict,
-            const bool valueReqd
+            const bool needValue
         )
         :
             calculatedFvPatchField
             (
                 p, iF, dict,
-                (valueReqd? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
+                (needValue? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
             )
         {}
 
@@ -178,7 +183,7 @@ public:
             tmp<Field<Type>> gradientBoundaryCoeffs() const;
 
 
-        //- Write
+        //- Write includes "value" entry
         virtual void write(Ostream&) const;
 };
 

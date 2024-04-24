@@ -67,7 +67,7 @@ Foam::fanFvPatchField<Type>::fanFvPatchField
     const dictionary& dict
 )
 :
-    uniformJumpFvPatchField<Type>(p, iF, dict, false), // Pass no valueRequired
+    uniformJumpFvPatchField<Type>(p, iF, dict, false),  // needValue = false
     phiName_(dict.getOrDefault<word>("phi", "phi")),
     rhoName_(dict.getOrDefault<word>("rho", "rho")),
     uniformJump_(dict.getOrDefault("uniformJump", false)),

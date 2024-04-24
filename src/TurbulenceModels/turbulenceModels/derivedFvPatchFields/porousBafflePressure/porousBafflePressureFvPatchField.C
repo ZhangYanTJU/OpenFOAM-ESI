@@ -54,10 +54,10 @@ Foam::porousBafflePressureFvPatchField::porousBafflePressureFvPatchField
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
     const dictionary& dict,
-    const bool valueRequired
+    const bool needValue
 )
 :
-    fixedJumpFvPatchField<scalar>(p, iF, dict, false),
+    fixedJumpFvPatchField<scalar>(p, iF, dict, false),  // needValue = false
     phiName_(dict.getOrDefault<word>("phi", "phi")),
     rhoName_(dict.getOrDefault<word>("rho", "rho")),
     D_(Function1<scalar>::New("D", dict, &db())),
@@ -65,7 +65,7 @@ Foam::porousBafflePressureFvPatchField::porousBafflePressureFvPatchField
     length_(dict.get<scalar>("length")),
     uniformJump_(dict.getOrDefault("uniformJump", false))
 {
-    if (valueRequired)
+    if (needValue)
     {
         if (!this->readValueEntry(dict))
         {

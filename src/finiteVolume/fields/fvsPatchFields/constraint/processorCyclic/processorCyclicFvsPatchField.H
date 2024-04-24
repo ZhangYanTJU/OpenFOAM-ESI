@@ -27,15 +27,18 @@ Class
     Foam::processorCyclicFvsPatchField
 
 Description
-    Foam::processorCyclicFvsPatchField
+    This boundary condition enables processor communication across cyclic
+    patches.
+
+    The "value" entry is MUST_READ.
 
 SourceFiles
     processorCyclicFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef processorCyclicFvsPatchField_H
-#define processorCyclicFvsPatchField_H
+#ifndef Foam_processorCyclicFvsPatchField_H
+#define Foam_processorCyclicFvsPatchField_H
 
 #include "coupledFvsPatchField.H"
 #include "processorCyclicFvPatch.H"
@@ -54,7 +57,7 @@ class processorCyclicFvsPatchField
 :
     public coupledFvsPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the processor patch
         const processorCyclicFvPatch& procPatch_;
@@ -83,7 +86,8 @@ public:
             const Field<Type>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is MUST_READ.
         processorCyclicFvsPatchField
         (
             const fvPatch&,
@@ -91,8 +95,7 @@ public:
             const dictionary&
         );
 
-        //- Construct by mapping given processorCyclicFvsPatchField onto a
-        //  new patch
+        //- Construct by mapping given patch field onto a new patch
         processorCyclicFvsPatchField
         (
             const processorCyclicFvsPatchField<Type>&,
@@ -128,15 +131,15 @@ public:
 
 
     //- Destructor
-    virtual ~processorCyclicFvsPatchField();
+    virtual ~processorCyclicFvsPatchField() = default;
 
 
     // Member Functions
 
-        //- Return true if running parallel
+        //- True if running parallel
         virtual bool coupled() const
         {
-            return Pstream::parRun();
+            return UPstream::parRun();
         }
 };
 

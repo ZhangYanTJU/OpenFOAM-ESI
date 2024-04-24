@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +28,25 @@ Class
     Foam::calculatedFvsPatchField
 
 Description
-    Foam::calculatedFvsPatchField
+    This boundary condition is not designed to be evaluated; it is assumed
+    that the value is assigned via field assignment.
+
+    The "value" entry is MUST_READ.
+
+Usage
+    \table
+        Property     | Description             | Required  | Default
+        value        | Patch face values       | yes |
+    \endtable
+
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type            calculated;
+        value           uniform (0 0 0);    // Required value entry
+    }
+    \endverbatim
 
 SourceFiles
     calculatedFvsPatchField.C
@@ -118,6 +137,9 @@ public:
 
         //- True: this patch field fixes a value.
         virtual bool fixesValue() const { return true; }
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 };
 
 

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,15 +28,27 @@ Class
     Foam::wedgeFvsPatchField
 
 Description
-    Foam::wedgeFvsPatchField
+    This boundary condition is similar to the cyclic condition, except that
+    it is applied to 2-D geometries.
+
+    The "value" entry is NO_READ, NO_WRITE.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type            wedge;
+    }
+    \endverbatim
 
 SourceFiles
     wedgeFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wedgeFvsPatchField_H
-#define wedgeFvsPatchField_H
+#ifndef Foam_wedgeFvsPatchField_H
+#define Foam_wedgeFvsPatchField_H
 
 #include "fvsPatchField.H"
 #include "wedgeFvPatch.H"
@@ -54,7 +67,6 @@ class wedgeFvsPatchField
 :
     public fvsPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -70,7 +82,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         wedgeFvsPatchField
         (
             const fvPatch&,

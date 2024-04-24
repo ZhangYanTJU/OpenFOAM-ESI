@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +39,7 @@ Foam::emptyFvsPatchField<Type>::emptyFvsPatchField
     const DimensionedField<Type, surfaceMesh>& iF
 )
 :
-    fvsPatchField<Type>(p, iF, Field<Type>(0))
+    fvsPatchField<Type>(p, iF, Field<Type>())  // zero-sized patch field
 {}
 
 
@@ -50,8 +51,11 @@ Foam::emptyFvsPatchField<Type>::emptyFvsPatchField
     const dictionary& dict
 )
 :
-    fvsPatchField<Type>(p, iF, Field<Type>(0))
+    fvsPatchField<Type>(p, iF, Field<Type>())  // zero-sized patch field
 {
+    // Empty means empty, so no patchType override
+    // with fvsPatchFieldBase::readDict(dict);
+
     if (!isType<emptyFvPatch>(p))
     {
         FatalIOErrorInFunction(dict)
@@ -71,7 +75,7 @@ Foam::emptyFvsPatchField<Type>::emptyFvsPatchField
     const fvPatchFieldMapper&
 )
 :
-    fvsPatchField<Type>(p, iF, Field<Type>(0))
+    fvsPatchField<Type>(p, iF, Field<Type>())  // zero-sized patch field
 {
     if (!isType<emptyFvPatch>(this->patch()))
     {
@@ -88,26 +92,21 @@ Foam::emptyFvsPatchField<Type>::emptyFvsPatchField
 template<class Type>
 Foam::emptyFvsPatchField<Type>::emptyFvsPatchField
 (
-    const emptyFvsPatchField<Type>& ptf
+    const emptyFvsPatchField<Type>& ptf,
+    const DimensionedField<Type, surfaceMesh>& iF
 )
 :
-    fvsPatchField<Type>
-    (
-        ptf.patch(),
-        ptf.internalField(),
-        Field<Type>(0)
-    )
+    fvsPatchField<Type>(ptf.patch(), iF, Field<Type>())  // zero-sized
 {}
 
 
 template<class Type>
 Foam::emptyFvsPatchField<Type>::emptyFvsPatchField
 (
-    const emptyFvsPatchField<Type>& ptf,
-    const DimensionedField<Type, surfaceMesh>& iF
+    const emptyFvsPatchField<Type>& ptf
 )
 :
-    fvsPatchField<Type>(ptf.patch(), iF, Field<Type>(0))
+    emptyFvsPatchField<Type>(ptf, ptf.internalField())
 {}
 
 

@@ -29,17 +29,17 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-inline Foam::objectMap::objectMap()
+inline Foam::objectMap::objectMap(const label index, const labelUList& master)
 :
-    index_(-1),
-    masterObjects_()
+    index_(index),
+    objects_(master)
 {}
 
 
-inline Foam::objectMap::objectMap(const label index, const UList<label>& master)
+inline Foam::objectMap::objectMap(const label index, labelList&& master)
 :
     index_(index),
-    masterObjects_(master)
+    objects_(std::move(master))
 {}
 
 
@@ -47,36 +47,10 @@ inline Foam::objectMap::objectMap(Istream& is)
 {
     is.readBegin("objectMap");
 
-    is >> index_ >> static_cast<labelList&>(masterObjects_);
+    is >> index_ >> objects_;
 
     is.readEnd("objectMap");
     is.check(FUNCTION_NAME);
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::label& Foam::objectMap::index()
-{
-    return index_;
-}
-
-
-inline Foam::label Foam::objectMap::index() const
-{
-    return index_;
-}
-
-
-inline Foam::labelList& Foam::objectMap::masterObjects()
-{
-    return masterObjects_;
-}
-
-
-inline const Foam::labelList& Foam::objectMap::masterObjects() const
-{
-    return masterObjects_;
 }
 
 
@@ -86,7 +60,7 @@ inline bool Foam::operator==(const objectMap& a, const objectMap& b)
 {
     return
     (
-        (a.index_ == b.index_) && (a.masterObjects_ == b.masterObjects_)
+        (a.index_ == b.index_) && (a.objects_ == b.objects_)
     );
 }
 
@@ -103,7 +77,7 @@ inline Foam::Ostream& Foam::operator<<(Ostream& os, const objectMap& a)
 {
     os  << token::BEGIN_LIST
         << a.index_ << token::SPACE
-        << a.masterObjects_
+        << a.objects_
         << token::END_LIST;
 
     os.check(FUNCTION_NAME);
@@ -114,7 +88,7 @@ inline Foam::Ostream& Foam::operator<<(Ostream& os, const objectMap& a)
 inline Foam::Istream& Foam::operator>>(Istream& is, objectMap& a)
 {
     is.readBegin("objectMap");
-    is >> a.index_ >> a.masterObjects_;
+    is >> a.index_ >> a.objects_;
     is.readEnd("objectMap");
 
     is.check(FUNCTION_NAME);

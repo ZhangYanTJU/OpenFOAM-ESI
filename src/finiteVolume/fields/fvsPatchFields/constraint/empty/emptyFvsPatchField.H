@@ -27,7 +27,19 @@ Class
     Foam::emptyFvsPatchField
 
 Description
-    Foam::emptyFvsPatchField
+    This boundary condition provides an 'empty' condition for reduced
+    dimensions cases.
+
+    The "value" entry is NO_READ, NO_WRITE.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type            empty;
+    }
+    \endverbatim
 
 SourceFiles
     emptyFvsPatchField.C
@@ -69,7 +81,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         emptyFvsPatchField
         (
             const fvPatch&,
@@ -115,9 +128,9 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
-        // Mapping functions
+        // Mapping Functions
 
             //- Map (and resize as needed) from self given a mapping object
             virtual void autoMap

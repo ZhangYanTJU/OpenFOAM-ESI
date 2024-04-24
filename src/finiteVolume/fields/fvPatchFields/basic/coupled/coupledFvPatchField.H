@@ -33,6 +33,8 @@ Group
 Description
     Abstract base class for coupled patches.
 
+    The "value" entry is usually MUST_READ and always WRITE.
+
 SourceFiles
     coupledFvPatchField.C
 
@@ -98,13 +100,13 @@ public:
             const fvPatch& p,
             const DimensionedField<Type, volMesh>& iF,
             const dictionary& dict,
-            const bool valueReqd
+            const bool needValue
         )
         :
             coupledFvPatchField
             (
                 p, iF, dict,
-                (valueReqd? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
+                (needValue? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
             )
         {}
 
@@ -144,8 +146,7 @@ public:
 
         // Access
 
-            //- Return true if this patch field is derived from
-            //  coupledFvPatchField<Type>.
+            //- True if this patch field is derived from coupledFvPatchField.
             virtual bool coupled() const
             {
                 return true;
@@ -268,7 +269,7 @@ public:
             ) const = 0;
 
 
-        //- Write
+        //- Write includes "value" entry
         virtual void write(Ostream&) const;
 };
 

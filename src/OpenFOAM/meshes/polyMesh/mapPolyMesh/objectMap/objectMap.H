@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,10 +36,10 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef objectMap_H
-#define objectMap_H
+#ifndef Foam_objectMap_H
+#define Foam_objectMap_H
 
-#include "labelList.H"
+#include "List.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,7 +47,6 @@ namespace Foam
 {
 
 // Forward Declarations
-
 class objectMap;
 inline bool operator==(const objectMap& a, const objectMap& b);
 inline bool operator!=(const objectMap& a, const objectMap& b);
@@ -60,38 +60,51 @@ inline Istream& operator>>(Istream&, objectMap&);
 
 class objectMap
 {
-    // Private data
+    // Private Data
 
         //- Object index
         label index_;
 
-        //- Master object index
-        labelList masterObjects_;
+        //- Master object indices
+        labelList objects_;
 
 
 public:
 
     // Constructors
 
-        //- Null constructor, with index=-1 and no objects
-        inline objectMap();
+        //- Default construct, with index=-1 and no objects
+        objectMap() noexcept : index_(-1) {}
 
-        //- Construct from components
-        inline objectMap(const label index, const UList<label>& master);
+        //- Copy construct from components
+        inline objectMap(const label index, const labelUList& master);
+
+        //- Move construct from components
+        inline objectMap(const label index, labelList&& master);
 
         //- Construct from Istream
-        inline objectMap(Istream& is);
+        inline explicit objectMap(Istream& is);
 
 
     // Member Functions
 
-        //- Return object index
-        inline label& index();
-        inline label index() const;
+        //- True if there are no objects
+        bool empty() const noexcept { return objects_.empty(); }
 
-        //- Return master object index
-        inline labelList& masterObjects();
-        inline const labelList& masterObjects() const;
+        //- The number of objects
+        label size() const noexcept { return objects_.size(); }
+
+        //- The object index
+        label& index() noexcept { return index_; }
+
+        //- The object index
+        label index() const noexcept { return index_; }
+
+        //- The master object indices
+        labelList& masterObjects() noexcept { return objects_; }
+
+        //- The master object indices
+        const labelList& masterObjects() const noexcept { return objects_; }
 
 
     // Friend Operators

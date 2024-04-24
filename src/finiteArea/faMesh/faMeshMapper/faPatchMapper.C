@@ -27,7 +27,6 @@ License
 
 #include "faPatchMapper.H"
 #include "mapPolyMesh.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -44,7 +43,7 @@ void Foam::faPatchMapper::calcAddressing() const
     hasUnmapped_ = false;
 
     directAddrPtr_ = std::make_unique<labelList>(patch_.size(), Foam::zero{});
-    labelList& addr = *directAddrPtr_;
+    auto& addr = *directAddrPtr_;
 
     // Make a map of old edgeFaces, giving edge index in patch given the new
     // face label next to the patch
@@ -68,9 +67,11 @@ void Foam::faPatchMapper::calcAddressing() const
 
     forAll(ef, efI)
     {
-        if (edgeIndexLookup.found(ef[efI]))
+        const auto iter = edgeIndexLookup.cfind(ef[efI]);
+
+        if (iter.good())
         {
-            addr[efI] = edgeIndexLookup[ef[efI]];
+            addr[efI] = iter.val();
         }
         else
         {
@@ -84,11 +85,11 @@ void Foam::faPatchMapper::calcAddressing() const
 }
 
 
-void Foam::faPatchMapper::clearOut()
-{
-    directAddrPtr_.reset(nullptr);
-    hasUnmapped_ = false;
-}
+// void Foam::faPatchMapper::clearOut()
+// {
+//     directAddrPtr_.reset(nullptr);
+//     hasUnmapped_ = false;
+// }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -110,9 +111,7 @@ Foam::faPatchMapper::faPatchMapper
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::faPatchMapper::~faPatchMapper()
-{
-    clearOut();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

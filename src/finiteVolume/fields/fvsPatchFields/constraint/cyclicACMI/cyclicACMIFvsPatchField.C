@@ -117,7 +117,7 @@ bool Foam::cyclicACMIFvsPatchField<Type>::coupled() const
 {
     if
     (
-        Pstream::parRun()
+        UPstream::parRun()
      || (
             this->cyclicACMIPatch_.size()
          && this->cyclicACMIPatch_.cyclicACMIPatch().neighbPatch().size()

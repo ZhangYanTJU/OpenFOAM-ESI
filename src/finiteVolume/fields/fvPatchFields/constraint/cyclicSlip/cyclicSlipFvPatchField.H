@@ -33,6 +33,8 @@ Description
     This boundary condition is a light wrapper around the cyclicFvPatchField
     condition, providing no new functionality.
 
+    The "value" entry is NO_READ.
+
 Usage
     Example of the boundary condition specification:
     \verbatim
@@ -50,8 +52,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cyclicSlipFvPatchField_H
-#define cyclicSlipFvPatchField_H
+#ifndef Foam_cyclicSlipFvPatchField_H
+#define Foam_cyclicSlipFvPatchField_H
 
 #include "cyclicFvPatchField.H"
 #include "cyclicSlipFvPatch.H"
@@ -70,7 +72,6 @@ class cyclicSlipFvPatchField
 :
     public cyclicFvPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -86,7 +87,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         cyclicSlipFvPatchField
         (
             const fvPatch&,

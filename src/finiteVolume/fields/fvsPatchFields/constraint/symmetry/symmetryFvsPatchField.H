@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,15 +28,26 @@ Class
     Foam::symmetryFvsPatchField
 
 Description
-    Foam::symmetryFvsPatchField
+    This boundary condition enforces a symmetry constraint
+
+    The "value" entry is NO_READ, NO_WRITE.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type            symmetry;
+    }
+    \endverbatim
 
 SourceFiles
     symmetryFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef symmetryFvsPatchField_H
-#define symmetryFvsPatchField_H
+#ifndef Foam_symmetryFvsPatchField_H
+#define Foam_symmetryFvsPatchField_H
 
 #include "fvsPatchField.H"
 #include "symmetryFvPatch.H"
@@ -54,7 +66,6 @@ class symmetryFvsPatchField
 :
     public fvsPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -71,6 +82,7 @@ public:
         );
 
         //- Construct from patch, internal field and dictionary
+        //- The "value" entry is NO_READ.
         symmetryFvsPatchField
         (
             const fvPatch&,

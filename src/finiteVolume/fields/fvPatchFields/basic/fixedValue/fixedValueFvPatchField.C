@@ -92,21 +92,21 @@ Foam::fixedValueFvPatchField<Type>::fixedValueFvPatchField
 template<class Type>
 Foam::fixedValueFvPatchField<Type>::fixedValueFvPatchField
 (
-    const fixedValueFvPatchField<Type>& ptf
+    const fixedValueFvPatchField<Type>& ptf,
+    const DimensionedField<Type, volMesh>& iF
 )
 :
-    fvPatchField<Type>(ptf)
+    fvPatchField<Type>(ptf, iF)
 {}
 
 
 template<class Type>
 Foam::fixedValueFvPatchField<Type>::fixedValueFvPatchField
 (
-    const fixedValueFvPatchField<Type>& ptf,
-    const DimensionedField<Type, volMesh>& iF
+    const fixedValueFvPatchField<Type>& ptf
 )
 :
-    fvPatchField<Type>(ptf, iF)
+    fixedValueFvPatchField<Type>(ptf, ptf.internalField())
 {}
 
 
