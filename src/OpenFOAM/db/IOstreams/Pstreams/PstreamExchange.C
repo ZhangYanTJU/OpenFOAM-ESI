@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,6 +24,21 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Note
+    The send/recv windows for chunk-wise transfers:
+
+        iter    data window
+        ----    -----------
+        0       [0, chunk]
+        1       [chunk, 2*chunk]
+        2       [2*chunk, 3*chunk]
+        ...
+
+    In older versions (v2312 and earlier) the number of chunks was
+    determined by the sender sizes and used an extra MPI_Allreduce.
+    However instead rely on the send/recv buffers having been consistently
+    sized, which avoids the additional reduction.
+
 \*---------------------------------------------------------------------------*/
 
 #include "Pstream.H"
@@ -37,22 +52,78 @@ namespace Foam
 namespace PstreamDetail
 {
 
-//- Setup sends and receives, each specified as [rank, span] tuple
-//  The serial list of tuples can be populated from other lists, from maps
-//  of data or subsets of lists/maps etc.
+//- Number of elements corresponding to max byte transfer.
+//  Max bytes is INT_MAX since MPI sizes are limited to <int>
 template<class Type>
-void exchangeBuf
+inline std::size_t maxTransferCount
+(
+    const std::size_t max_bytes = std::size_t(0)
+) noexcept
+{
+    return
+    (
+        (max_bytes == 0 || max_bytes > std::size_t(INT_MAX))
+      ? (std::size_t(INT_MAX) / sizeof(Type))
+      : (max_bytes > sizeof(Type))
+      ? (max_bytes / sizeof(Type))
+      : (std::size_t(1))
+    );
+}
+
+
+//- Upper limit on number of transfer bytes.
+//  Max bytes is INT_MAX since MPI sizes are limited to <int>.
+//  Negative values indicate a subtraction from INT_MAX.
+inline std::size_t maxTransferBytes(const int64_t max_bytes) noexcept
+{
+    return
+    (
+        (max_bytes < 0)
+      ? std::size_t(INT_MAX + max_bytes)
+      : std::size_t(max_bytes)
+    );
+}
+
+
+//- Chunked exchange of \em contiguous data.
+//- Setup sends and receives, each specified as [rank, span] tuple.
+//  The serial list of tuples can be populated from other lists, from
+//  maps of data or subsets of lists/maps etc.
+template<class Type>
+void exchangeChunked
 (
     const UList<std::pair<int, stdFoam::span<const Type>>>& sends,
     const UList<std::pair<int, stdFoam::span<Type>>>& recvs,
-
     const int tag,
     const label comm,
-    const bool wait
+    const bool wait,        //!< Wait for requests to complete
+    const int64_t maxComms_bytes = UPstream::maxCommsSize
 )
 {
+    typedef stdFoam::span<const Type> sendType;
+    typedef stdFoam::span<Type> recvType;
+
+    // Caller already checked for parRun
+
+    if (sends.empty() && recvs.empty())
+    {
+        // Nothing to do
+        return;
+    }
+
     const label startOfRequests = UPstream::nRequests();
     const int myProci = UPstream::myProcNo(comm);
+
+
+    // The chunk size (number of elements) corresponding to max byte transfer
+    const std::size_t chunkSize
+    (
+        PstreamDetail::maxTransferCount<Type>
+        (
+            PstreamDetail::maxTransferBytes(maxComms_bytes)
+        )
+    );
+
 
     // Set up receives
     // ~~~~~~~~~~~~~~~
@@ -63,19 +134,48 @@ void exchangeBuf
         const auto proci = slot.first;
         auto& payload = slot.second;
 
-        if (proci != myProci && !payload.empty())
+        // No self-communication or zero-size payload
+        if (proci == myProci || payload.empty())
         {
+            continue;
+        }
+
+        // Dispatch chunk-wise until there is nothing left
+        for (int iter = 0; /*true*/; ++iter)
+        {
+            // The begin/end for the data window
+            const std::size_t beg = (std::size_t(iter)*chunkSize);
+            const std::size_t end = (std::size_t(iter+1)*chunkSize);
+
+            // The message tag augmented by the iteration number
+            // - avoids message collisions between different chunks
+            const int msgTagChunk = (tag + iter);
+
+            if (payload.size() <= beg)
+            {
+                // No more windowing
+                break;
+            }
+
+            recvType window
+            (
+                (end < payload.size())
+              ? payload.subspan(beg, end - beg)
+              : payload.subspan(beg)
+            );
+
             UIPstream::read
             (
                 UPstream::commsTypes::nonBlocking,
                 proci,
-                payload.data_bytes(),
-                payload.size_bytes(),
-                tag,
+                window.data_bytes(),
+                window.size_bytes(),
+                msgTagChunk,
                 comm
             );
         }
     }
+
 
     // Set up sends
     // ~~~~~~~~~~~~
@@ -86,29 +186,57 @@ void exchangeBuf
         const auto proci = slot.first;
         const auto& payload = slot.second;
 
-        if (proci != myProci && !payload.empty())
+        // No self-communication or zero-size payload
+        if (proci == myProci || payload.empty())
         {
-            if
+            continue;
+        }
+
+        // Dispatch chunk-wise until there is nothing left
+        for (int iter = 0; /*true*/; ++iter)
+        {
+            // The begin/end for the data window
+            const std::size_t beg = (std::size_t(iter)*chunkSize);
+            const std::size_t end = (std::size_t(iter+1)*chunkSize);
+
+            // The message tag augmented by the iteration number
+            // - avoids message collisions between different chunks
+            const int msgTagChunk = (tag + iter);
+
+            if (payload.size() <= beg)
+            {
+                // No more windowing
+                break;
+            }
+
+            sendType window
             (
-               !UOPstream::write
-                (
-                    UPstream::commsTypes::nonBlocking,
-                    proci,
-                    payload.cdata_bytes(),
-                    payload.size_bytes(),
-                    tag,
-                    comm
-                )
-            )
+                (end < payload.size())
+              ? payload.subspan(beg, end - beg)
+              : payload.subspan(beg)
+            );
+
+            bool ok = UOPstream::write
+            (
+                UPstream::commsTypes::nonBlocking,
+                proci,
+                window.cdata_bytes(),
+                window.size_bytes(),
+                msgTagChunk,
+                comm
+            );
+
+            if (!ok)
             {
                 FatalErrorInFunction
                     << "Cannot send outgoing message to:"
                     << proci << " nBytes:"
-                    << label(payload.size_bytes())
+                    << label(window.size_bytes())
                     << Foam::abort(FatalError);
             }
         }
     }
+
 
     // Wait for all to finish
     // ~~~~~~~~~~~~~~~~~~~~~~
@@ -116,171 +244,6 @@ void exchangeBuf
     if (wait)
     {
         UPstream::waitRequests(startOfRequests);
-    }
-}
-
-
-//- Chunked exchange of \em contiguous data.
-//- Setup sends and receives, each specified as [rank, span] tuple.
-//  The serial list of tuples can be populated from other lists, from
-//  maps of data or subsets of lists/maps etc.
-template<class Type>
-void exchangeChunkedBuf
-(
-    const UList<std::pair<int, stdFoam::span<const Type>>>& sends,
-    const UList<std::pair<int, stdFoam::span<Type>>>& recvs,
-
-    const int tag,
-    const label comm,
-    const bool wait
-)
-{
-    typedef std::pair<int, stdFoam::span<const Type>> sendTuple;
-    typedef std::pair<int, stdFoam::span<Type>> recvTuple;
-
-    // Caller already checked for parRun and maxChunkSize > 0
-
-    {
-        // Determine the number of chunks to send. Note that we
-        // only have to look at the sending data since we are
-        // guaranteed that some processor's sending size is some other
-        // processor's receive size. Also we can ignore any local comms.
-        //
-        // We need to send chunks so the number of iterations:
-        //  maxChunkSize                        iterations
-        //  ------------                        ----------
-        //  0                                   0
-        //  1..maxChunkSize                     1
-        //  maxChunkSize+1..2*maxChunkSize      2
-        //  ...
-
-        const label maxChunkSize =
-        (
-            max
-            (
-                static_cast<label>(1),
-                static_cast<label>(UPstream::maxCommsSize/sizeof(Type))
-            )
-        );
-
-        const int myProci = UPstream::myProcNo(comm);
-
-        label nChunks(0);
-        {
-            // Get max send count (elements)
-            auto maxCount = static_cast<stdFoam::span<char>::size_type>(0);
-
-            for (const auto& slot : sends)
-            {
-                // [rank, span]
-                const auto proci = slot.first;
-                const auto count = slot.second.size();
-
-                if (proci != myProci && count > maxCount)
-                {
-                    // Note: using max() can be ambiguous
-                    maxCount = count;
-                }
-            }
-
-            // Convert from send count (elements) to number of chunks.
-            // Can normally calculate with (count-1), but add some safety
-            if (maxCount)
-            {
-                nChunks = 1 + label(maxCount/maxChunkSize);
-            }
-
-            // MPI reduce (message tag is irrelevant)
-            reduce(nChunks, maxOp<label>(), UPstream::msgType(), comm);
-        }
-
-
-        // Dispatch the exchanges chunk-wise
-        List<sendTuple> sendChunks(sends);
-        List<recvTuple> recvChunks(recvs);
-
-        // Dispatch
-        for (label iter = 0; iter < nChunks; ++iter)
-        {
-            // The begin/end for the data window
-            const auto beg = static_cast<std::size_t>(iter*maxChunkSize);
-            const auto end = static_cast<std::size_t>((iter+1)*maxChunkSize);
-
-            forAll(sendChunks, sloti)
-            {
-                const auto& baseline = sends[sloti].second;
-                auto& payload = sendChunks[sloti].second;
-
-                // Window the data
-                if (beg < baseline.size())
-                {
-                    payload =
-                    (
-                        (end < baseline.size())
-                      ? baseline.subspan(beg, end - beg)
-                      : baseline.subspan(beg)
-                    );
-                }
-                else
-                {
-                    payload = baseline.first(0);  // zero-sized
-                }
-            }
-
-            forAll(recvChunks, sloti)
-            {
-                const auto& baseline = recvs[sloti].second;
-                auto& payload = recvChunks[sloti].second;
-
-                // Window the data
-                if (beg < baseline.size())
-                {
-                    payload =
-                    (
-                        (end < baseline.size())
-                      ? baseline.subspan(beg, end - beg)
-                      : baseline.subspan(beg)
-                    );
-                }
-                else
-                {
-                    payload = baseline.first(0);  // zero-sized
-                }
-            }
-
-
-            // Exchange data chunks
-            PstreamDetail::exchangeBuf<Type>
-            (
-                sendChunks,
-                recvChunks,
-                tag,
-                comm,
-                wait
-            );
-
-            // Debugging output - can report on master only...
-            #if 0 // ifdef Foam_PstreamExchange_debug_chunks
-            do
-            {
-                labelList sendStarts(sends.size());
-                labelList sendCounts(sends.size());
-
-                forAll(sendChunks, sloti)
-                {
-                    const auto& baseline = sends[sloti].second;
-                    const auto& payload = sendChunks[sloti].second;
-
-                    sendStarts[sloti] = (payload.data() - baseline.data());
-                    sendCounts[sloti] = (payload.size());
-                }
-
-                Info<< "iter " << iter
-                    << ": beg=" << flatOutput(sendStarts)
-                    << " len=" << flatOutput(sendCounts) << endl;
-            } while (false);
-            #endif
-        }
     }
 }
 
@@ -298,28 +261,83 @@ void exchangeContainer
     UList<Container>& recvBufs,
     const int tag,
     const label comm,
-    const bool wait               //!< Wait for requests to complete
+    const bool wait,        //!< Wait for requests to complete
+    const int64_t maxComms_bytes = UPstream::maxCommsSize
 )
 {
+    typedef stdFoam::span<const Type> sendType;
+    typedef stdFoam::span<Type> recvType;
+
+    // Caller already checked for parRun
+
+    if (sendBufs.empty() && recvBufs.empty())
+    {
+        // Nothing to do
+        return;
+    }
+
     const label startOfRequests = UPstream::nRequests();
-    const label myProci = UPstream::myProcNo(comm);
+    const int myProci = UPstream::myProcNo(comm);
+
+    // The chunk size (number of elements) corresponding to max byte transfer
+    const std::size_t chunkSize
+    (
+        PstreamDetail::maxTransferCount<Type>
+        (
+            PstreamDetail::maxTransferBytes(maxComms_bytes)
+        )
+    );
+
 
     // Set up receives
     // ~~~~~~~~~~~~~~~
 
     forAll(recvBufs, proci)
     {
-        auto& recvData = recvBufs[proci];
+        // [rank, span]
+        recvType payload
+        (
+            recvBufs[proci].data(),
+            std::size_t(recvBufs[proci].size())
+        );
 
-        if (proci != myProci && !recvData.empty())
+        // No self-communication or zero-size payload
+        if (proci == myProci || payload.empty())
         {
+            continue;
+        }
+
+        // Dispatch chunk-wise until there is nothing left
+        for (int iter = 0; /*true*/; ++iter)
+        {
+            // The begin/end for the data window
+            const std::size_t beg = (std::size_t(iter)*chunkSize);
+            const std::size_t end = (std::size_t(iter+1)*chunkSize);
+
+            // The message tag augmented by the iteration number
+            // - avoids message collisions between different chunks
+            const int msgTagChunk = (tag + iter);
+
+            if (payload.size() <= beg)
+            {
+                // No more windowing
+                break;
+            }
+
+            recvType window
+            (
+                (end < payload.size())
+              ? payload.subspan(beg, end - beg)
+              : payload.subspan(beg)
+            );
+
             UIPstream::read
             (
                 UPstream::commsTypes::nonBlocking,
                 proci,
-                recvData.data_bytes(),
-                recvData.size_bytes(),
-                tag,
+                window.data_bytes(),
+                window.size_bytes(),
+                msgTagChunk,
                 comm
             );
         }
@@ -331,31 +349,64 @@ void exchangeContainer
 
     forAll(sendBufs, proci)
     {
-        const auto& sendData = sendBufs[proci];
+        // [rank, span]
+        sendType payload
+        (
+            sendBufs[proci].cdata(),
+            std::size_t(sendBufs[proci].size())
+        );
 
-        if (proci != myProci && !sendData.empty())
+        // No self-communication or zero-size payload
+        if (proci == myProci || payload.empty())
         {
-            if
+            continue;
+        }
+
+        // Dispatch chunk-wise until there is nothing left
+        for (int iter = 0; /*true*/; ++iter)
+        {
+            // The begin/end for the data window
+            const std::size_t beg = (std::size_t(iter)*chunkSize);
+            const std::size_t end = (std::size_t(iter+1)*chunkSize);
+
+            // The message tag augmented by the iteration number
+            // - avoids message collisions between different chunks
+            const int msgTagChunk = (tag + iter);
+
+            if (payload.size() <= beg)
+            {
+                // No more windowing
+                break;
+            }
+
+            sendType window
             (
-               !UOPstream::write
-                (
-                    UPstream::commsTypes::nonBlocking,
-                    proci,
-                    sendData.cdata_bytes(),
-                    sendData.size_bytes(),
-                    tag,
-                    comm
-                )
-            )
+                (end < payload.size())
+              ? payload.subspan(beg, end - beg)
+              : payload.subspan(beg)
+            );
+
+            bool ok = UOPstream::write
+            (
+                UPstream::commsTypes::nonBlocking,
+                proci,
+                window.cdata_bytes(),
+                window.size_bytes(),
+                msgTagChunk,
+                comm
+            );
+
+            if (!ok)
             {
                 FatalErrorInFunction
-                    << "Cannot send outgoing message. "
-                    << "to:" << proci << " nBytes:"
-                    << label(sendData.size_bytes())
+                    << "Cannot send outgoing message to:"
+                    << proci << " nBytes:"
+                    << label(window.size_bytes())
                     << Foam::abort(FatalError);
             }
         }
     }
+
 
     // Wait for all to finish
     // ~~~~~~~~~~~~~~~~~~~~~~
@@ -383,71 +434,97 @@ void exchangeContainer
     const bool wait               //!< Wait for requests to complete
 )
 {
-    const label startOfRequests = UPstream::nRequests();
+    typedef stdFoam::span<const Type> sendType;
+    typedef stdFoam::span<Type> recvType;
+
+    typedef std::pair<int, sendType> sendTuple;
+    typedef std::pair<int, recvType> recvTuple;
+
     const label myProci = UPstream::myProcNo(comm);
 
-    // Set up receives
-    // ~~~~~~~~~~~~~~~
-
-    forAllIters(recvBufs, iter)
+    // Serialize recv sequences
+    DynamicList<recvTuple> recvs(recvBufs.size());
     {
-        const label proci = iter.key();
-        auto& recvData = iter.val();
-
-        if (proci != myProci && !recvData.empty())
+        forAllIters(recvBufs, iter)
         {
-            UIPstream::read
+            const auto proci = iter.key();
+            auto& recvData = recvBufs[proci];
+
+            recvType payload
             (
-                UPstream::commsTypes::nonBlocking,
-                proci,
-                recvData.data_bytes(),
-                recvData.size_bytes(),
-                tag,
-                comm
+                recvData.data(),
+                std::size_t(recvData.size())
             );
-        }
-    }
 
-
-    // Set up sends
-    // ~~~~~~~~~~~~
-
-    forAllConstIters(sendBufs, iter)
-    {
-        const label proci = iter.key();
-        const auto& sendData = iter.val();
-
-        if (proci != myProci && !sendData.empty())
-        {
-            if
-            (
-               !UOPstream::write
-                (
-                    UPstream::commsTypes::nonBlocking,
-                    proci,
-                    sendData.cdata_bytes(),
-                    sendData.size_bytes(),
-                    tag,
-                    comm
-                )
-            )
+            // No self-communication or zero-size payload
+            if (proci != myProci && !payload.empty())
             {
-                FatalErrorInFunction
-                    << "Cannot send outgoing message to:"
-                    << proci << " nBytes:"
-                    << label(sendData.size_bytes())
-                    << Foam::abort(FatalError);
+                recvs.emplace_back(proci, payload);
             }
         }
+
+        std::sort
+        (
+            recvs.begin(),
+            recvs.end(),
+            [=](const recvTuple& a, const recvTuple& b)
+            {
+                // Sorted processor order
+                return (a.first < b.first);
+
+                // OR: // Shorter messages first
+                // return (a.second.size() < b.second.size());
+            }
+        );
     }
 
-    // Wait for all to finish
-    // ~~~~~~~~~~~~~~~~~~~~~~
-
-    if (wait)
+    // Serialize send sequences
+    DynamicList<sendTuple> sends(sendBufs.size());
     {
-        UPstream::waitRequests(startOfRequests);
+        forAllConstIters(sendBufs, iter)
+        {
+            const auto proci = iter.key();
+            const auto& sendData = iter.val();
+
+            sendType payload
+            (
+                sendData.cdata(),
+                std::size_t(sendData.size())
+            );
+
+            // No self-communication or zero-size payload
+            if (proci != myProci && !payload.empty())
+            {
+                sends.emplace_back(proci, payload);
+            }
+        }
+
+        std::sort
+        (
+            sends.begin(),
+            sends.end(),
+            [=](const sendTuple& a, const sendTuple& b)
+            {
+                // Sorted processor order
+                return (a.first < b.first);
+
+                // OR: // Shorter messages first
+                // return (a.second.size() < b.second.size());
+            }
+        );
     }
+
+
+    // Exchange buffers in chunk-wise transfers
+    PstreamDetail::exchangeChunked<Type>
+    (
+        sends,
+        recvs,
+        tag,
+        comm,
+        wait
+        // (default: UPstream::maxCommsSize)
+    );
 }
 
 } // namespace PstreamDetail
@@ -505,72 +582,15 @@ void Foam::Pstream::exchange
             }
         }
 
-        typedef std::pair<int, stdFoam::span<const Type>> sendTuple;
-        typedef std::pair<int, stdFoam::span<Type>> recvTuple;
-
-        if (UPstream::maxCommsSize <= 0)
-        {
-            // Do the exchanging in one go
-            PstreamDetail::exchangeContainer<Container, Type>
-            (
-                sendBufs,
-                recvBufs,
-                tag,
-                comm,
-                wait
-            );
-        }
-        else
-        {
-            // Dispatch using chunk-wise exchanges
-            // Populate send sequence
-            DynamicList<sendTuple> sends(sendBufs.size());
-            forAll(sendBufs, proci)
-            {
-                const auto& sendData = sendBufs[proci];
-
-                if (proci != myProci && !sendData.empty())
-                {
-                    sends.push_back
-                    (
-                        sendTuple
-                        (
-                            proci,
-                            { sendData.cdata(), std::size_t(sendData.size()) }
-                        )
-                    );
-                }
-            }
-
-            // Populate recv sequence
-            DynamicList<recvTuple> recvs(recvBufs.size());
-            forAll(recvBufs, proci)
-            {
-                auto& recvData = recvBufs[proci];
-
-                if (proci != myProci && !recvData.empty())
-                {
-                    recvs.push_back
-                    (
-                        recvTuple
-                        (
-                            proci,
-                            { recvData.data(), std::size_t(recvData.size()) }
-                        )
-                    );
-                }
-            }
-
-            // Exchange buffers in chunks
-            PstreamDetail::exchangeChunkedBuf<Type>
-            (
-                sends,
-                recvs,
-                tag,
-                comm,
-                wait
-            );
-        }
+        PstreamDetail::exchangeContainer<Container, Type>
+        (
+            sendBufs,
+            recvBufs,
+            tag,
+            comm,
+            wait
+            // (default: UPstream::maxCommsSize)
+        );
     }
 
     // Do myself. Already checked if in communicator
@@ -617,100 +637,14 @@ void Foam::Pstream::exchange
             }
         }
 
-        // Define the exchange sequences as a flattened list.
-        // We add an additional step of ordering the send/recv list
-        // by message size, which can help with transfer speeds.
-
-        typedef std::pair<int, stdFoam::span<const Type>> sendTuple;
-        typedef std::pair<int, stdFoam::span<Type>> recvTuple;
-
-        // Populate send sequences
-        DynamicList<sendTuple> sends(sendBufs.size());
-        forAllConstIters(sendBufs, iter)
-        {
-            const auto proci = iter.key();
-            const auto& sendData = iter.val();
-
-            if (proci != myProci && !sendData.empty())
-            {
-                sends.push_back
-                (
-                    sendTuple
-                    (
-                        proci,
-                        { sendData.cdata(), std::size_t(sendData.size()) }
-                    )
-                );
-            }
-        }
-
-        // Shorter messages first
-        std::sort
+        PstreamDetail::exchangeContainer<Container, Type>
         (
-            sends.begin(),
-            sends.end(),
-            [=](const sendTuple& a, const sendTuple& b)
-            {
-                return (a.second.size() < b.second.size());
-            }
+            sendBufs,
+            recvBufs,
+            tag,
+            comm,
+            wait
         );
-
-        // Populate recv sequences
-        DynamicList<recvTuple> recvs(recvBufs.size());
-        forAllIters(recvBufs, iter)
-        {
-            const auto proci = iter.key();
-            auto& recvData = recvBufs[proci];
-
-            if (proci != myProci && !recvData.empty())
-            {
-                recvs.push_back
-                (
-                    recvTuple
-                    (
-                        proci,
-                        { recvData.data(), std::size_t(recvData.size()) }
-                    )
-                );
-            }
-        }
-
-        // Shorter messages first
-        std::sort
-        (
-            recvs.begin(),
-            recvs.end(),
-            [=](const recvTuple& a, const recvTuple& b)
-            {
-                return (a.second.size() < b.second.size());
-            }
-        );
-
-
-        if (UPstream::maxCommsSize <= 0)
-        {
-            // Do the exchanging in a single go
-            PstreamDetail::exchangeBuf<Type>
-            (
-                sends,
-                recvs,
-                tag,
-                comm,
-                wait
-            );
-        }
-        else
-        {
-            // Exchange buffers in chunks
-            PstreamDetail::exchangeChunkedBuf<Type>
-            (
-                sends,
-                recvs,
-                tag,
-                comm,
-                wait
-            );
-        }
     }
 
     // Do myself (if actually in the communicator)
@@ -856,13 +790,15 @@ void Foam::Pstream::exchangeSizes
     const label comm
 )
 {
-    Map<label> sendSizes(2*sendBufs.size());
     recvSizes.clear();  // Done in allToAllConsensus too, but be explicit here
 
     if (!UPstream::is_rank(comm))
     {
         return;  // Process not in communicator
     }
+
+    Map<label> sendSizes;
+    sendSizes.reserve(sendBufs.size());
 
     forAllConstIters(sendBufs, iter)
     {
@@ -955,9 +891,17 @@ void Foam::Pstream::exchange
     //   non-zero sendcounts. Post all sends and wait.
 
     labelList recvSizes;
-    exchangeSizes(sendBufs, recvSizes, comm);
+    Pstream::exchangeSizes(sendBufs, recvSizes, comm);
 
-    exchange<Container, Type>(sendBufs, recvSizes, recvBufs, tag, comm, wait);
+    Pstream::exchange<Container, Type>
+    (
+        sendBufs,
+        recvSizes,
+        recvBufs,
+        tag,
+        comm,
+        wait
+    );
 }
 
 
@@ -975,9 +919,17 @@ void Foam::Pstream::exchange
     // but using nonblocking consensus exchange for the sizes
 
     Map<label> recvSizes;
-    exchangeSizes(sendBufs, recvSizes, tag, comm);
+    Pstream::exchangeSizes(sendBufs, recvSizes, tag, comm);
 
-    exchange<Container, Type>(sendBufs, recvSizes, recvBufs, tag, comm, wait);
+    Pstream::exchange<Container, Type>
+    (
+        sendBufs,
+        recvSizes,
+        recvBufs,
+        tag,
+        comm,
+        wait
+    );
 }
 
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,159 +44,43 @@ Description
 using namespace Foam;
 
 
-// Looks like Pstream::exchangeBuf
-template<class T>
-void do_exchangeBuf
+//- Number of elements corresponding to max byte transfer.
+//  Max bytes is INT_MAX since MPI sizes are limited to <int>
+template<class Type>
+inline std::size_t PstreamDetail_maxTransferCount
 (
-    const label sendSize,
-    const char* sendData,
-    const label recvSize,
-    char* recvData,
-    const int tag,
-    const label comm,
-    const bool wait
-)
+    const std::size_t max_bytes = std::size_t(0)
+) noexcept
 {
-    const label startOfRequests = UPstream::nRequests();
-
-    // Set up receives
-    // ~~~~~~~~~~~~~~~
-
-    // forAll(recvSizes, proci)
-    {
-        // if (proci != Pstream::myProcNo(comm) && recvSizes[proci] > 0)
-        if (!Pstream::master(comm) && recvSize > 0)
-        {
-            UIPstream::read
-            (
-                UPstream::commsTypes::nonBlocking,
-                UPstream::myProcNo(comm),   // proci,
-                recvData,
-                recvSize*sizeof(T),
-                tag,
-                comm
-            );
-        }
-    }
-
-
-    // Set up sends
-    // ~~~~~~~~~~~~
-
-    // forAll(sendBufs, proci)
-    for (const int proci : Pstream::subProcs(comm))
-    {
-        if (sendSize > 0)
-        // if (proci != Pstream::myProcNo(comm) && sendSizes[proci] > 0)
-        {
-            if
-            (
-               !UOPstream::write
-                (
-                    UPstream::commsTypes::nonBlocking,
-                    proci,
-                    sendData,
-                    sendSize*sizeof(T),
-                    tag,
-                    comm
-                )
-            )
-            {
-                FatalErrorInFunction
-                    << "Cannot send outgoing message. "
-                    << "to:" << proci << " nBytes:"
-                    << label(sendSize*sizeof(T))
-                    << Foam::abort(FatalError);
-            }
-        }
-    }
-
-
-    // Wait for all to finish
-    // ~~~~~~~~~~~~~~~~~~~~~~
-
-    if (wait)
-    {
-        UPstream::waitRequests(startOfRequests);
-    }
+    return
+    (
+        (max_bytes == 0 || max_bytes > std::size_t(INT_MAX))
+      ? (std::size_t(INT_MAX) / sizeof(Type))
+      : (max_bytes > sizeof(Type))
+      ? (max_bytes / sizeof(Type))
+      : (std::size_t(1))
+    );
 }
 
 
-// Looks like Pstream::exchangeContainer
-template<class Container, class T>
-void do_exchangeContainer
+//- Upper limit on number of transfer bytes.
+//  Max bytes is INT_MAX since MPI sizes are limited to <int>.
+//  Negative values indicate a subtraction from INT_MAX.
+inline std::size_t PstreamDetail_maxTransferBytes
 (
-    const Container& sendData,
-    const label recvSize,
-    Container& recvData,
-    const int tag,
-    const label comm,
-    const bool wait
-)
+    const int64_t max_bytes
+) noexcept
 {
-    const label startOfRequests = UPstream::nRequests();
-
-    // Set up receives
-    // ~~~~~~~~~~~~~~~
-
-    // for (const int proci : Pstream::allProcs(comm))
-    {
-        if (!Pstream::master(comm) && recvSize > 0)
-        // if (proci != Pstream::myProcNo(comm) && recvSize > 0)
-        {
-            UIPstream::read
-            (
-                UPstream::commsTypes::nonBlocking,
-                UPstream::myProcNo(comm),  // proci,
-                recvData.data_bytes(),
-                recvSize*sizeof(T),
-                tag,
-                comm
-            );
-        }
-    }
-
-
-    // Set up sends
-    // ~~~~~~~~~~~~
-
-    if (Pstream::master(comm) && sendData.size() > 0)
-    {
-        for (const int proci : Pstream::subProcs(comm))
-        {
-            if
-            (
-               !UOPstream::write
-                (
-                    UPstream::commsTypes::nonBlocking,
-                    proci,
-                    sendData.cdata_bytes(),
-                    sendData.size_bytes(),
-                    tag,
-                    comm
-                )
-            )
-            {
-                FatalErrorInFunction
-                    << "Cannot send outgoing message. "
-                    << "to:" << proci << " nBytes:"
-                    << label(sendData.size_bytes())
-                    << Foam::abort(FatalError);
-            }
-        }
-    }
-
-    // Wait for all to finish
-    // ~~~~~~~~~~~~~~~~~~~~~~
-
-    if (wait)
-    {
-        UPstream::waitRequests(startOfRequests);
-    }
+    return
+    (
+        (max_bytes < 0)
+      ? std::size_t(INT_MAX + max_bytes)
+      : std::size_t(max_bytes)
+    );
 }
 
 
-template<class Container, class T>
+template<class Container, class Type>
 void broadcast_chunks
 (
     Container& sendData,
@@ -206,13 +90,14 @@ void broadcast_chunks
 )
 {
     // OR  static_assert(is_contiguous<T>::value, "Contiguous data only!")
-    if (!is_contiguous<T>::value)
+    if (!is_contiguous<Type>::value)
     {
         FatalErrorInFunction
-            << "Contiguous data only." << sizeof(T) << Foam::abort(FatalError);
+            << "Contiguous data only." << sizeof(Type)
+            << Foam::abort(FatalError);
     }
 
-    if (UPstream::maxCommsSize <= 0)
+    if (UPstream::maxCommsSize == 0)
     {
         // Do in one go
         Info<< "send " << sendData.size() << " elements in one go" << endl;
@@ -227,93 +112,75 @@ void broadcast_chunks
 
     sendData.resize_nocopy(recvSize);  // A no-op on master
 
-    // Determine the number of chunks to send. Note that we
-    // only have to look at the sending data since we are
-    // guaranteed that some processor's sending size is some other
-    // processor's receive size. Also we can ignore any local comms.
 
-    // We need to send chunks so the number of iterations:
-    //  maxChunkSize                        iterations
-    //  ------------                        ----------
-    //  0                                   0
-    //  1..maxChunkSize                     1
-    //  maxChunkSize+1..2*maxChunkSize      2
-    //  ...
-
-    const label maxChunkSize
+    // The chunk size (number of elements) corresponding to max byte transfer
+    const std::size_t chunkSize
     (
-        max
+        PstreamDetail_maxTransferCount<Type>
         (
-            static_cast<label>(1),
-            static_cast<label>(UPstream::maxCommsSize/sizeof(T))
+            PstreamDetail_maxTransferBytes(UPstream::maxCommsSize)
         )
     );
 
-    label nChunks(0);
-    {
-        // Get max send count (elements)
-        // forAll(sendBufs, proci)
-        // {
-        //     if (proci != Pstream::myProcNo(comm))
-        //     {
-        //         nChunks = max(nChunks, sendBufs[proci].size());
-        //     }
-        // }
-        nChunks = sendSize;
 
+    {
         // Convert from send count (elements) to number of chunks.
         // Can normally calculate with (count-1), but add some safety
-        if (nChunks)
-        {
-            nChunks = 1 + (nChunks/maxChunkSize);
-        }
-        reduce(nChunks, maxOp<label>(), tag, comm);
+        label nChunks = 1 + (sendSize/label(chunkSize));
 
         Info
             << "send " << sendSize << " elements ("
-            << (sendSize*sizeof(T)) << " bytes) in " << nChunks
-            << " chunks of " << maxChunkSize << " elements ("
-            << (maxChunkSize*sizeof(T)) << " bytes) for maxCommsSize:"
+            << (sendSize*sizeof(Type)) << " bytes) in " << nChunks
+            << " chunks of " << label(chunkSize) << " elements ("
+            << label(chunkSize*sizeof(Type)) << " bytes) for maxCommsSize:"
             << Pstream::maxCommsSize
             << endl;
     }
+
 
     // stress-test with shortened sendSize
     // will produce useless loops, but no calls
     // sendSize /= 2;
 
-    label nSend(0);
-    label startSend(0);
-    char* charPtrSend;
+    typedef stdFoam::span<Type> sendType;
 
-    for (label iter = 0; iter < nChunks; ++iter)
     {
-        nSend = min
-        (
-            maxChunkSize,
-            sendSize-startSend
-        );
+        sendType payload(sendData.data(), sendData.size());
 
-        charPtrSend =
-        (
-            nSend > 0
-          ? reinterpret_cast<char*>(&(sendData[startSend]))
-          : nullptr
-        );
-
-        Info<< "iter " << iter
-            << ": beg=" << startSend << " len=" << nSend
-            << " (" << (nSend*sizeof(T)) << " bytes)" << endl;
-
-        UPstream::broadcast(charPtrSend, nSend*sizeof(T), comm);
-
-        // forAll(nSend, proci)
+        // Dispatch chunk-wise until there is nothing left
+        for (int iter = 0; /*true*/; ++iter)
         {
-            startSend += nSend;
+            // The begin/end for the data window
+            const std::size_t beg = (std::size_t(iter)*chunkSize);
+            const std::size_t end = (std::size_t(iter+1)*chunkSize);
+
+            if (payload.size() <= beg)
+            {
+                // No more windowing
+                break;
+            }
+
+            sendType window
+            (
+                (end < payload.size())
+              ? payload.subspan(beg, end - beg)
+              : payload.subspan(beg)
+            );
+
+            Info<< "iter " << iter
+                << ": beg=" << label(beg) << " len=" << label(window.size())
+                << " (" << label(window.size_bytes()) << " bytes)" << endl;
+
+            UPstream::broadcast
+            (
+                window.data_bytes(),
+                window.size_bytes(),
+                comm
+            );
         }
     }
 
-    Info<< "final: " << startSend << endl;
+    Info<< "final" << endl;
 }
 
 
@@ -333,7 +200,7 @@ int main(int argc, char *argv[])
     }
 
     labelList input1;
-    if (Pstream::master())
+    if (UPstream::master())
     {
         input1 = identity(500);
     }

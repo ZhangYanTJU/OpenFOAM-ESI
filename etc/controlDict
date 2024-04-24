@@ -146,13 +146,18 @@ OptimisationSwitches
     // The default and minimum is (20000000).
     mpiBufferSize   0;
 
-    // Optional max size (bytes) for unstructured data exchanges. In some
-    // phases of OpenFOAM it can send over very large data chunks
+    // Optional max size (bytes) for unstructured data exchanges.
+    // In some phases of OpenFOAM it can send over very large data chunks
     // (e.g. in parallel load balancing) and some MPI implementations have
-    // problems with this. Setting this variable > 0 indicates that the
-    // data exchange needs to be done in multiple passes, each of maxCommsSize.
-    // This is not switched on by default since it requires an additional
-    // global reduction, even if multi-pass is not needed)
+    // problems with this.
+    //
+    // This tuning parameter specifies the max number of bytes before
+    // switching to a multi-pass send/recv
+    // (currently only affects PstreamBuffers exchanges).
+    //
+    //   0 : limit exchanges to INT_MAX bytes
+    //  >0 : limit exchanges to specified number of bytes
+    //  <0 : limit exchanges to INT_MAX minus specified number of bytes
     maxCommsSize    0;
 
     // Optional (experimental) feature in lduMatrixUpdate
