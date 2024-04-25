@@ -35,6 +35,8 @@ License
 // - as of 2023-06 appears to be broken with INTELMPI + PMI-2 (slurm)
 //   and perhaps other places so currently avoid
 
+#undef Pstream_use_MPI_Get_count
+
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
 // General blocking/non-blocking MPI receive
@@ -128,8 +130,30 @@ static std::streamsize UPstream_mpi_receive
         }
 
         // Check size of message read
+        #ifdef Pstream_use_MPI_Get_count
         int count(0);
         MPI_Get_count(&status, MPI_BYTE, &count);
+        #else
+        MPI_Count count(0);
+        MPI_Get_elements_x(&status, MPI_BYTE, &count);
+        #endif
+
+        // Errors
+        if (count == MPI_UNDEFINED || int64_t(count) < 0)
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "returned undefined or negative value"
+                << Foam::abort(FatalError);
+        }
+        else if (int64_t(count) > int64_t(UList<char>::max_size()))
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "count is larger than UList<char>::max_size() bytes"
+                << Foam::abort(FatalError);
+        }
+
 
         if (bufSize < std::streamsize(count))
         {
@@ -240,8 +264,30 @@ void Foam::UIPstream::bufferIPCrecv()
 
         profilingPstream::addProbeTime();
 
+
+        #ifdef Pstream_use_MPI_Get_count
         int count(0);
         MPI_Get_count(&status, MPI_BYTE, &count);
+        #else
+        MPI_Count count(0);
+        MPI_Get_elements_x(&status, MPI_BYTE, &count);
+        #endif
+
+        // Errors
+        if (count == MPI_UNDEFINED || int64_t(count) < 0)
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "returned undefined or negative value"
+                << Foam::abort(FatalError);
+        }
+        else if (int64_t(count) > int64_t(UList<char>::max_size()))
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "count is larger than UList<char>::max_size() bytes"
+                << Foam::abort(FatalError);
+        }
 
         if (UPstream::debug)
         {
@@ -263,6 +309,20 @@ void Foam::UIPstream::bufferIPCrecv()
         comm_,
         nullptr   // UPstream::Request
     );
+
+    if (count < 0)
+    {
+        FatalErrorInFunction
+            << "MPI_recv() with negative size??"
+            << Foam::abort(FatalError);
+    }
+    else if (int64_t(count) > int64_t(UList<char>::max_size()))
+    {
+        FatalErrorInFunction
+            << "MPI_recv() larger than "
+                "UList<char>::max_size() bytes"
+            << Foam::abort(FatalError);
+    }
 
     // Set addressed size. Leave actual allocated memory intact.
     recvBuf_.resize(label(count));
