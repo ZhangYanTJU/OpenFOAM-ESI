@@ -48,6 +48,10 @@ License
 #include "refinementDistanceData.H"
 #include "degenerateMatcher.H"
 
+//#include "fvMesh.H"
+//#include "volFields.H"
+//#include "OBJstream.H"
+
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
@@ -2803,17 +2807,90 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
     }
 
 
+    //{
+    //    const fvMesh& fMesh = reinterpret_cast<const fvMesh&>(mesh_);
+    //
+    //    // Dump origin level
+    //    volScalarField originLevel
+    //    (
+    //        IOobject
+    //        (
+    //            "originLevel_before_walk",
+    //            fMesh.time().timeName(),
+    //            fMesh,
+    //            IOobject::NO_READ,
+    //            IOobject::NO_WRITE,
+    //            IOobject::NO_REGISTER
+    //        ),
+    //        fMesh,
+    //        dimensionedScalar(dimless, Zero)
+    //    );
+    //
+    //    forAll(originLevel, celli)
+    //    {
+    //        originLevel[celli] = allCellInfo[celli].originLevel();
+    //    }
+    //    Pout<< "Writing " << originLevel.objectPath() << endl;
+    //    originLevel.write();
+    //}
+    //{
+    //    const auto& cc = mesh_.cellCentres();
+    //
+    //    mkDir(mesh_.time().timePath());
+    //    OBJstream os(mesh_.time().timePath()/"origin_before_walk.obj");
+    //    forAll(allCellInfo, celli)
+    //    {
+    //        os.write(linePointRef(cc[celli], allCellInfo[celli].origin()));
+    //    }
+    //}
+
+
     // Labels of seed faces
     DynamicList<label> seedFaces(mesh_.nFaces()/100);
     // refinementLevel data on seed faces
     DynamicList<refinementDistanceData> seedFacesInfo(mesh_.nFaces()/100);
 
     const pointField& cc = mesh_.cellCentres();
+    const polyBoundaryMesh& patches = mesh_.boundaryMesh();
 
-    forAll(facesToCheck, i)
+    // Get neighbour boundary data:
+    // - coupled faces      : owner data
+    // - non-coupled faces  : owner level + 1 so we can treat
+    pointField nbrCc(mesh_.nBoundaryFaces(), point::max);
+    labelList nbrLevel(mesh_.nBoundaryFaces(), labelMax);
+    bitSet isBoundary(mesh_.nFaces());
     {
-        label facei = facesToCheck[i];
+        for (const polyPatch& pp : patches)
+        {
+            if (pp.coupled())
+            {
+                const auto& faceCells = pp.faceCells();
+                forAll(faceCells, i)
+                {
+                    const label own = faceCells[i];
+                    nbrCc[pp.offset()+i] = cc[own];
 
+                    const label ownLevel =
+                    (
+                        allCellInfo[own].valid(dummyTrackData)
+                      ? allCellInfo[own].originLevel()
+                      : cellLevel_[own]
+                    );
+                    nbrLevel[pp.offset()+i] = ownLevel;
+                }
+            }
+            else
+            {
+                isBoundary.set(pp.range());
+            }
+        }
+        syncTools::swapBoundaryFaceList(mesh_, nbrCc);
+        syncTools::swapBoundaryFaceList(mesh_, nbrLevel);
+    }
+
+
+    for (const label facei : facesToCheck)
+    {
         if (allFaceInfo[facei].valid(dummyTrackData))
         {
             // Can only occur if face has already gone through loop below.
@@ -2825,16 +2902,16 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
                 << abort(FatalError);
         }
 
-        label own = faceOwner[facei];
-
-        label ownLevel =
+        const label own = faceOwner[facei];
+        const label ownLevel =
         (
             allCellInfo[own].valid(dummyTrackData)
           ? allCellInfo[own].originLevel()
           : cellLevel_[own]
         );
+        const point& ownCc = cc[own];
 
-        if (!mesh_.isInternalFace(facei))
+        if (isBoundary(facei))
         {
             // Do as if boundary face would have neighbour with one higher
             // refinement level.
@@ -2859,14 +2936,24 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
         }
         else
         {
-            label nei = faceNeighbour[facei];
-
-            label neiLevel =
-            (
-                allCellInfo[nei].valid(dummyTrackData)
-              ? allCellInfo[nei].originLevel()
-              : cellLevel_[nei]
-            );
+            label neiLevel;
+            point neiCc;
+            if (mesh_.isInternalFace(facei))
+            { 
+                const label nei = faceNeighbour[facei];
+                neiLevel =
+                (
+                    allCellInfo[nei].valid(dummyTrackData)
+                  ? allCellInfo[nei].originLevel()
+                  : cellLevel_[nei]
+                );
+                neiCc = cc[nei];
+            }
+            else
+            {
+                neiLevel = nbrLevel[facei-mesh_.nInternalFaces()];
+                neiCc = nbrCc[facei-mesh_.nInternalFaces()];
+            }
 
             if (ownLevel == neiLevel)
             {
@@ -2875,8 +2962,8 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
                 (
                     mesh_,
                     facei,
-                    nei,
-                    refinementDistanceData(level0Size, cc[nei], neiLevel+1),
+                    own,    // not used, should be nei
+                    refinementDistanceData(level0Size, neiCc, neiLevel+1),
                     FaceCellWave<refinementDistanceData, int>::propagationTol(),
                     dummyTrackData
                 );
@@ -2884,8 +2971,8 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
                 (
                     mesh_,
                     facei,
-                    own,
-                    refinementDistanceData(level0Size, cc[own], ownLevel+1),
+                    own,    // not used
+                    refinementDistanceData(level0Size, ownCc, ownLevel+1),
                     FaceCellWave<refinementDistanceData, int>::propagationTol(),
                     dummyTrackData
                 );
@@ -2897,8 +2984,8 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
                 (
                     mesh_,
                     facei,
-                    nei,
-                    refinementDistanceData(level0Size, cc[nei], neiLevel),
+                    own,    // not used, should be nei
+                    refinementDistanceData(level0Size, neiCc, neiLevel),
                     FaceCellWave<refinementDistanceData, int>::propagationTol(),
                     dummyTrackData
                 );
@@ -2906,8 +2993,8 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
                 (
                     mesh_,
                     facei,
-                    own,
-                    refinementDistanceData(level0Size, cc[own], ownLevel),
+                    own,    // not used
+                    refinementDistanceData(level0Size, ownCc, ownLevel),
                     FaceCellWave<refinementDistanceData, int>::propagationTol(),
                     dummyTrackData
                 );
@@ -2918,31 +3005,45 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
     }
 
 
+
     // Create some initial seeds to start walking from. This is only if there
     // are no facesToCheck.
     // Just seed with all faces inbetween different refinement levels for now
-    forAll(faceNeighbour, facei)
+    // Note: no need to handle coupled faces since FaceCellWave below
+    //       already swaps seedInfo upon start
+    //forAll(faceNeighbour, facei)
+    forAll(faceOwner, facei)
     {
         // Check if face already handled in loop above
-        if (!allFaceInfo[facei].valid(dummyTrackData))
+        if (!allFaceInfo[facei].valid(dummyTrackData) && !isBoundary(facei))
         {
-            label own = faceOwner[facei];
-
-            label ownLevel =
+            const label own = faceOwner[facei];
+            const label ownLevel =
             (
                 allCellInfo[own].valid(dummyTrackData)
               ? allCellInfo[own].originLevel()
               : cellLevel_[own]
             );
+            const point& ownCc = cc[own];
 
-            label nei = faceNeighbour[facei];
-
-            label neiLevel =
-            (
-                allCellInfo[nei].valid(dummyTrackData)
-              ? allCellInfo[nei].originLevel()
-              : cellLevel_[nei]
-            );
+            label neiLevel;
+            point neiCc;
+            if (mesh_.isInternalFace(facei))
+            { 
+                const label nei = faceNeighbour[facei];
+                neiLevel =
+                (
+                    allCellInfo[nei].valid(dummyTrackData)
+                  ? allCellInfo[nei].originLevel()
+                  : cellLevel_[nei]
+                );
+                neiCc = cc[nei];
+            }
+            else
+            {
+                neiLevel = nbrLevel[facei-mesh_.nInternalFaces()];
+                neiCc = nbrCc[facei-mesh_.nInternalFaces()];
+            }
 
             if (ownLevel > neiLevel)
             {
@@ -2953,7 +3054,7 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
                     mesh_,
                     facei,
                     own,
-                    refinementDistanceData(level0Size, cc[own], ownLevel),
+                    refinementDistanceData(level0Size, ownCc, ownLevel),
                     FaceCellWave<refinementDistanceData, int>::propagationTol(),
                     dummyTrackData
                 );
@@ -2966,8 +3067,8 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
                 (
                     mesh_,
                     facei,
-                    nei,
-                    refinementDistanceData(level0Size, cc[nei], neiLevel),
+                    own,    // not used, should be nei,
+                    refinementDistanceData(level0Size, neiCc, neiLevel),
                     FaceCellWave<refinementDistanceData, int>::propagationTol(),
                     dummyTrackData
                 );
@@ -2992,8 +3093,45 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
     );
 
 
+    //- noted: origin is different face (? or cell) between non-parallel
+    //         and parallel
+    //{
+    //    const auto& cc = mesh_.cellCentres();
+    //
+    //    mkDir(mesh_.time().timePath());
+    //    OBJstream os(mesh_.time().timePath()/"origin_after_walk.obj");
+    //    forAll(allCellInfo, celli)
+    //    {
+    //        os.write(linePointRef(cc[celli], allCellInfo[celli].origin()));
+    //    }
+    //}
+
+
+
     //if (debug)
     //{
+    //    const fvMesh& fMesh = reinterpret_cast<const fvMesh&>(mesh_);
+    //
+    //    // Dump origin level
+    //    volScalarField originLevel
+    //    (
+    //        IOobject
+    //        (
+    //            "originLevel_after_walk",
+    //            fMesh.time().timeName(),
+    //            fMesh,
+    //            IOobject::NO_READ,
+    //            IOobject::NO_WRITE,
+    //            IOobject::NO_REGISTER
+    //        ),
+    //        fMesh,
+    //        dimensionedScalar(dimless, Zero)
+    //    );
+    //
+    //    forAll(originLevel, celli)
+    //    {
+    //        originLevel[celli] = allCellInfo[celli].originLevel();
+    //    }
     //    // Dump wanted level
     //    volScalarField wantedLevel
     //    (
@@ -3015,6 +3153,9 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement2
     //        wantedLevel[celli] = allCellInfo[celli].wantedLevel(cc[celli]);
     //    }
     //
+    //    Pout<< "Writing " << originLevel.objectPath() << endl;
+    //    //fMesh.write();
+    //    originLevel.write();
     //    Pout<< "Writing " << wantedLevel.objectPath() << endl;
     //    wantedLevel.write();
     //}
