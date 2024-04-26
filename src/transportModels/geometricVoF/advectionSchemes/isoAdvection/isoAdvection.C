@@ -497,7 +497,7 @@ Foam::DynamicList<Foam::label>  Foam::isoAdvection::syncProcPatches
     if (Pstream::parRun())
     {
         DynamicList<label> neighProcs;
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         // Send
         for (const label patchi : procPatchLabels_)

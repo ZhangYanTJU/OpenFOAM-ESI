@@ -537,7 +537,7 @@ void Foam::turbulentDFSEMInletFvPatchVectorField::calcOverlappingProcEddies
     }
 
 
-    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     forAll(sendMap, proci)
     {

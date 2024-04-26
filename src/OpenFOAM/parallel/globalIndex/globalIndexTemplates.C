@@ -1092,7 +1092,7 @@ void Foam::globalIndex::get
         );
 
         // Send local indices to individual processors as local index
-        PstreamBuffers sendBufs(UPstream::commsTypes::nonBlocking, tag, comm);
+        PstreamBuffers sendBufs(comm, tag);
 
         for (const auto proci : validBins)
         {
@@ -1109,7 +1109,7 @@ void Foam::globalIndex::get
         sendBufs.finishedSends();
 
 
-        PstreamBuffers returnBufs(UPstream::commsTypes::nonBlocking, tag, comm);
+        PstreamBuffers returnBufs(comm, tag);
 
         for (const int proci : sendBufs.allProcs())
         {

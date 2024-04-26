@@ -545,7 +545,7 @@ bool Foam::decomposedBlockData::readBlocks
     }
     else
     {
-        PstreamBuffers pBufs(comm, UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs(comm);
 
         if (UPstream::master(comm))
         {
@@ -667,7 +667,7 @@ Foam::autoPtr<Foam::ISstream> Foam::decomposedBlockData::readBlocks
     }
     else
     {
-        PstreamBuffers pBufs(comm, UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs(comm);
 
         if (UPstream::master(comm))
         {

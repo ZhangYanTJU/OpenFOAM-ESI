@@ -681,7 +681,7 @@ void Foam::mapDistributeBase::distribute
 
         if (!is_contiguous<T>::value)
         {
-            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
+            PstreamBuffers pBufs(comm, tag);
 
             // Stream data into buffer
             for (const int proci : UPstream::allProcs(comm))
@@ -1121,7 +1121,7 @@ void Foam::mapDistributeBase::distribute
 
         if (!is_contiguous<T>::value)
         {
-            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
+            PstreamBuffers pBufs(comm, tag);
 
             // Stream data into buffer
             for (const int proci : UPstream::allProcs(comm))

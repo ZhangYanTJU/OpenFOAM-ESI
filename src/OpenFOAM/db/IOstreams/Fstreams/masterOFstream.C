@@ -115,7 +115,7 @@ void Foam::masterOFstream::commit()
         }
 
         // Different files
-        PstreamBuffers pBufs(comm_, UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs(comm_);
 
         if (!UPstream::master(comm_))
         {

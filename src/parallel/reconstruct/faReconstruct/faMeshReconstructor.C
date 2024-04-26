@@ -110,7 +110,7 @@ void Foam::faMeshReconstructor::calcAddressing
             }
         }
 
-        PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         if (Pstream::master())
         {

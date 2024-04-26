@@ -132,7 +132,7 @@ void Foam::syncTools::syncPointMap
         // Presize according to number of processor patches
         // (global topology information may not yet be available...)
         DynamicList<label> neighbProcs(patches.nProcessorPatches());
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         // Reduce communication by only sending non-zero data,
         // but with multiply-connected processor/processor
@@ -396,7 +396,7 @@ void Foam::syncTools::syncEdgeMap
         // Presize according to number of processor patches
         // (global topology information may not yet be available...)
         DynamicList<label> neighbProcs(patches.nProcessorPatches());
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         // Reduce communication by only sending non-zero data,
         // but with multiply-connected processor/processor
@@ -1142,7 +1142,7 @@ void Foam::syncTools::syncBoundaryFaceList
         else
         {
             DynamicList<label> neighbProcs;
-            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+            PstreamBuffers pBufs;
 
             // Send
             for (const polyPatch& pp : patches)

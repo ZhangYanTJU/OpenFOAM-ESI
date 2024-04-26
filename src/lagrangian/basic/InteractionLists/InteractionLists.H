@@ -39,7 +39,7 @@ Description
     Simultaneous communication and computation is possible using:
 
     \verbatim
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
     label startOfRequests = Pstream::nRequests();
     il_.sendReferredData(cellOccupancy_, pBufs);
     // Do other things
@@ -231,8 +231,7 @@ public:
 
     // Member Functions
 
-        //- Prepare and send referred particles and wall data,
-        //  nonBlocking communication
+        //- Prepare and send referred particles and wall data (nonBlocking)
         void sendReferredData
         (
             const List<DynamicList<ParticleType*>>& cellOccupancy,

@@ -78,12 +78,7 @@ void Foam::advancingFrontAMI::distributePatches
     points.setSize(Pstream::nProcs(comm_));
     faceIDs.setSize(Pstream::nProcs(comm_));
 
-    PstreamBuffers pBufs
-    (
-        Pstream::commsTypes::nonBlocking,
-        UPstream::msgType(),
-        comm_
-    );
+    PstreamBuffers pBufs(comm_);
 
     for (const int domain : Pstream::allProcs(comm_))
     {

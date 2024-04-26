@@ -38,7 +38,7 @@ Description
 
     Example usage:
     \code
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         for (const int proci : UPstream::allProcs())
         {
@@ -68,7 +68,7 @@ Description
     one-to-all and all-to-one communication patterns.
     For example,
     \code
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         if (UPstream::master())
         {
@@ -96,7 +96,7 @@ Description
 
     For example,
     \code
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         pBufs.initRegisterSend();
 

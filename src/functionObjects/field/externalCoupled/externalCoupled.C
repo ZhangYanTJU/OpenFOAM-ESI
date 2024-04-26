@@ -111,7 +111,7 @@ void Foam::functionObjects::externalCoupled::readColumns
     // Get sizes for all processors
     const globalIndex globalFaces(globalIndex::gatherOnly{}, nRows);
 
-    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     if (UPstream::master())
     {
@@ -182,7 +182,7 @@ void Foam::functionObjects::externalCoupled::readLines
     // Get sizes for all processors
     const globalIndex globalFaces(globalIndex::gatherOnly{}, nRows);
 
-    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     if (UPstream::master())
     {
