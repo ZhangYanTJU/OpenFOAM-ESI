@@ -62,23 +62,33 @@ bool Foam::UOPstream::write
 {
     PstreamGlobals::reset_request(req);
 
-    if (UPstream::debug)
+    // TODO: some corrective action, at least when not nonBlocking
+    #if 0
+    if (bufSize > std::streamsize(INT_MAX))
     {
-        Pout<< "UOPstream::write : starting write to:" << toProcNo
-            << " tag:" << tag
-            << " comm:" << communicator << " size:" << label(bufSize)
-            << " commType:" << UPstream::commsTypeNames[commsType]
-            << Foam::endl;
+        Perr<< "UOPstream::write() : to rank " << toProcNo
+            << " exceeds INT_MAX bytes" << Foam::endl;
+        error::printStack(Perr);
     }
+    #endif
+
     if (UPstream::warnComm >= 0 && communicator != UPstream::warnComm)
     {
         Pout<< "UOPstream::write : starting write to:" << toProcNo
-            << " tag:" << tag
-            << " comm:" << communicator << " size:" << label(bufSize)
+            << " size:" << label(bufSize)
+            << " tag:" << tag << " comm:" << communicator
             << " commType:" << UPstream::commsTypeNames[commsType]
             << " warnComm:" << UPstream::warnComm
             << Foam::endl;
         error::printStack(Pout);
+    }
+    else if (UPstream::debug)
+    {
+        Pout<< "UOPstream::write : starting write to:" << toProcNo
+            << " size:" << label(bufSize)
+            << " tag:" << tag << " comm:" << communicator
+            << " commType:" << UPstream::commsTypeNames[commsType]
+            << Foam::endl;
     }
 
     PstreamGlobals::checkCommunicator(communicator, toProcNo);
@@ -87,7 +97,7 @@ bool Foam::UOPstream::write
 
     profilingPstream::beginTiming();
 
-    if (commsType == UPstream::commsTypes::blocking)
+    if (commsType == UPstream::commsTypes::buffered)
     {
         returnCode = MPI_Bsend
         (
@@ -104,9 +114,9 @@ bool Foam::UOPstream::write
 
         if (UPstream::debug)
         {
-            Pout<< "UOPstream::write : finished write to:" << toProcNo
-                << " tag:" << tag << " size:" << label(bufSize)
-                << " commsType:" << UPstream::commsTypeNames[commsType]
+            Pout<< "UOPstream::write : finished buffered send to:"
+                << toProcNo
+                << " size:" << label(bufSize) << " tag:" << tag
                 << Foam::endl;
         }
     }
@@ -142,9 +152,9 @@ bool Foam::UOPstream::write
 
         if (UPstream::debug)
         {
-            Pout<< "UOPstream::write : finished write to:" << toProcNo
-                << " tag:" << tag << " size:" << label(bufSize)
-                << " commsType:" << UPstream::commsTypeNames[commsType]
+            Pout<< "UOPstream::write : finished send to:"
+                << toProcNo
+                << " size:" << label(bufSize) << " tag:" << tag
                 << Foam::endl;
         }
     }
@@ -181,9 +191,9 @@ bool Foam::UOPstream::write
 
         if (UPstream::debug)
         {
-            Pout<< "UOPstream::write : started write to:" << toProcNo
-                << " tag:" << tag << " size:" << label(bufSize)
-                << " commType:" << UPstream::commsTypeNames[commsType]
+            Pout<< "UOPstream::write : started non-blocking send to:"
+                << toProcNo
+                << " size:" << label(bufSize) << " tag:" << tag
                 << " request:" <<
                 (req ? label(-1) : PstreamGlobals::outstandingRequests_.size())
                 << Foam::endl;

@@ -47,13 +47,6 @@ bool Foam::UPstream::broadcast
 
     //Needed?  PstreamGlobals::checkCommunicator(comm, rootProcNo);
 
-    if (UPstream::debug)
-    {
-        Pout<< "UPstream::broadcast : root:" << rootProcNo
-            << " comm:" << comm
-            << " size:" << label(bufSize)
-            << Foam::endl;
-    }
     if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
     {
         Pout<< "UPstream::broadcast : root:" << rootProcNo
@@ -62,6 +55,13 @@ bool Foam::UPstream::broadcast
             << " warnComm:" << UPstream::warnComm
             << Foam::endl;
         error::printStack(Pout);
+    }
+    else if (UPstream::debug)
+    {
+        Pout<< "UPstream::broadcast : root:" << rootProcNo
+            << " comm:" << comm
+            << " size:" << label(bufSize)
+            << Foam::endl;
     }
 
     profilingPstream::beginTiming();

@@ -43,7 +43,7 @@ void Foam::processorLduInterface::send
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::scheduled
     )
     {
@@ -113,7 +113,7 @@ void Foam::processorLduInterface::receive
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::scheduled
     )
     {
@@ -194,7 +194,7 @@ void Foam::processorLduInterface::compressedSend
 
         if
         (
-            commsType == UPstream::commsTypes::blocking
+            commsType == UPstream::commsTypes::buffered
          || commsType == UPstream::commsTypes::scheduled
         )
         {
@@ -272,7 +272,7 @@ void Foam::processorLduInterface::compressedReceive
 
         if
         (
-            commsType == UPstream::commsTypes::blocking
+            commsType == UPstream::commsTypes::buffered
          || commsType == UPstream::commsTypes::scheduled
         )
         {

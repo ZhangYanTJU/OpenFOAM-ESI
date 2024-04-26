@@ -43,7 +43,7 @@ void Foam::functionObjects::mapFields::evaluateConstraintTypes
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,7 +96,7 @@ protected:
         const int comm_;
 
         //- The message size, read on bufferIPCrecv or set directly
-        int messageSize_;
+        label messageSize_;
 
         //- Receive position in buffer data, if ony
         //- If there is no external location for recvBufPos_
@@ -279,8 +279,8 @@ public:
     // Static Functions
 
         //- Read buffer contents from given processor.
-        //  \return the message size (bytes read)
-        static label read
+        //  \return the message size (bytes read). May change in the future
+        static std::streamsize read
         (
             const UPstream::commsTypes commsType,
             const int fromProcNo,
@@ -293,8 +293,8 @@ public:
         );
 
         //- Read buffer contents (non-blocking) from given processor.
-        //  \return the message size (bytes read)
-        inline static label read
+        //  \return the message size (bytes read). May change in the future
+        inline static std::streamsize read
         (
             //! [out] request information
             UPstream::Request& req,
@@ -321,7 +321,7 @@ public:
         //  Only valid for contiguous data types.
         //  \return the message size (bytes read). May change in the future
         template<class Type>
-        inline static label read
+        inline static std::streamsize read
         (
             const UPstream::commsTypes commsType,
             const int fromProcNo,
@@ -348,7 +348,7 @@ public:
         //  Only valid for contiguous data types.
         //  \return the message size (bytes read). May change in the future
         template<class Type>
-        inline static label read
+        inline static std::streamsize read
         (
             const UPstream::commsTypes commsType,
             const int fromProcNo,
@@ -375,7 +375,7 @@ public:
         //  Only valid for contiguous data types.
         //  \return the message size (bytes read). May change in the future
         template<class Type>
-        inline static label read
+        inline static std::streamsize read
         (
             //! [out] request information
             UPstream::Request& req,
@@ -401,7 +401,7 @@ public:
         //  Only valid for contiguous data types.
         //  \return the message size (bytes read). May change in the future
         template<class Type>
-        inline static label read
+        inline static std::streamsize read
         (
             //! [out] request information
             UPstream::Request& req,
@@ -474,8 +474,8 @@ public:
     // Static Functions
 
         //- Wrapped version of UPstream::broadcast
-        //  \return the message size (bytes read)
-        static label read
+        //  \return the message size (bytes read). May change in the future
+        static std::streamsize read
         (
             const int rootProcNo,  //!< normally UPstream::masterNo()
             char* buf,

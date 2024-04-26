@@ -93,7 +93,7 @@ flowRateInletVelocityFvPatchVectorField
     // Value field required if mass based
     if (!this->readValueEntry(dict))
     {
-        evaluate(Pstream::commsTypes::blocking);
+        evaluate(Pstream::commsTypes::buffered);
     }
 }
 

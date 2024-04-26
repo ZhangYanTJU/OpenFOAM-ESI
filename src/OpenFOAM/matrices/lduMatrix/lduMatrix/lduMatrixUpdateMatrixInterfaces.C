@@ -44,7 +44,7 @@ void Foam::lduMatrix::initMatrixInterfaces
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
@@ -90,7 +90,7 @@ void Foam::lduMatrix::initMatrixInterfaces
                     psiif,
                     coupleCoeffs[interfacei],
                     cmpt,
-                    UPstream::commsTypes::blocking
+                    UPstream::commsTypes::buffered
                 );
             }
         }
@@ -229,7 +229,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
@@ -241,7 +241,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
         }
 
         // Check/no-check for updatedMatrix() ?
-        const bool noCheck = (commsType == UPstream::commsTypes::blocking);
+        const bool noCheck = (commsType == UPstream::commsTypes::buffered);
 
         // Consume anything still outstanding
         forAll(interfaces, interfacei)
@@ -326,7 +326,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
                     psiif,
                     coupleCoeffs[interfacei],
                     cmpt,
-                    UPstream::commsTypes::blocking
+                    UPstream::commsTypes::buffered
                 );
             }
         }

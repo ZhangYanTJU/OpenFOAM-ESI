@@ -70,7 +70,7 @@ Foam::cyclicFvPatchField<Type>::cyclicFvPatchField
 
     if (needValue)
     {
-        this->evaluate(Pstream::commsTypes::blocking);
+        this->evaluate(Pstream::commsTypes::buffered);
     }
 }
 

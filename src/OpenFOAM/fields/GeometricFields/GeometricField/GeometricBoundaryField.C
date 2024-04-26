@@ -598,7 +598,7 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate()
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
@@ -689,7 +689,7 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal()
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
@@ -755,7 +755,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {

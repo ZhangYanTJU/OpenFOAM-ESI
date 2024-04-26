@@ -130,7 +130,7 @@ public:
             //  HJ, 30/Jun/2009
             virtual void evaluate
             (
-                const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
+                const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
             );
 
             //- Return face-gradient transform diagonal

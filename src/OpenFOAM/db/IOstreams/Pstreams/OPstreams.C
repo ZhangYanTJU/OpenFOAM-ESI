@@ -101,6 +101,12 @@ Foam::UOPstream::~UOPstream()
 {
     if (sendAtDestruct_)
     {
+        // Note: sendAtDestruct_ and nonBlocking is a questionable combination
+        // since the transfer buffer will be destroyed before
+        // the non-blocking send completes!
+        //
+        // Could flag as an error, but not actually used anywhere.
+
         if (!bufferIPCsend())
         {
             FatalErrorInFunction
