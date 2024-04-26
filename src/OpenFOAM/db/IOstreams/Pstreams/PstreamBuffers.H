@@ -32,7 +32,7 @@ Description
 
     Use UOPstream to stream data into buffers, call finishedSends() to
     notify that data is in buffers and then use IUPstream to get data out
-    of received buffers. Works with both blocking and non-blocking. Does
+    of received buffers. Works with both buffered and non-blocking. Does
     not make much sense with scheduled since there you would not need these
     explicit buffers.
 
@@ -51,7 +51,7 @@ Description
             }
         }
 
-        pBufs.finishedSends();   // no-op for blocking
+        pBufs.finishedSends();   // no-op for buffered
 
         for (const int proci : UPstream::allProcs())
         {

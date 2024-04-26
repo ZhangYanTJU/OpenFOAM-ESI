@@ -72,7 +72,7 @@ timeVaryingMappedFixedValueFvPatchField
         //       by re-setting of fvatchfield::updated_ flag. This is
         //       so if first use is in the next time step it retriggers
         //       a new update.
-        this->evaluate(Pstream::commsTypes::blocking);
+        this->evaluate(Pstream::commsTypes::buffered);
     }
 }
 

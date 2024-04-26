@@ -494,7 +494,7 @@ void Foam::mapDistributeBase::distribute
         return;
     }
 
-    if (commsType == UPstream::commsTypes::blocking)
+    if (commsType == UPstream::commsTypes::buffered)
     {
         // Since buffered sending can reuse the field to collect the
         // received data.
@@ -939,7 +939,7 @@ void Foam::mapDistributeBase::distribute
         return;
     }
 
-    if (commsType == UPstream::commsTypes::blocking)
+    if (commsType == UPstream::commsTypes::buffered)
     {
         // Since buffered sending can reuse the field to collect the
         // received data.

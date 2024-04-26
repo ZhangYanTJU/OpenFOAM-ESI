@@ -787,7 +787,7 @@ Foam::UPstream::probeMessage
     int flag = 0;
     MPI_Status status;
 
-    if (UPstream::commsTypes::blocking == commsType)
+    if (UPstream::commsTypes::buffered == commsType)
     {
         // Blocking
         profilingPstream::beginTiming();

@@ -62,7 +62,7 @@ scalar sumReduce
                 scalar procValue;
                 UIPstream::read
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     proci,
                     reinterpret_cast<char*>(&procValue),
                     sizeof(scalar),
@@ -79,7 +79,7 @@ scalar sumReduce
             {
                 UOPstream::write
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     proci,
                     reinterpret_cast<const char*>(&sum),
                     sizeof(scalar),
@@ -93,7 +93,7 @@ scalar sumReduce
             {
                 UOPstream::write
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     UPstream::masterNo(),
                     reinterpret_cast<const char*>(&localValue),
                     sizeof(scalar),
@@ -105,7 +105,7 @@ scalar sumReduce
             {
                 UIPstream::read
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     UPstream::masterNo(),
                     reinterpret_cast<char*>(&sum),
                     sizeof(scalar),

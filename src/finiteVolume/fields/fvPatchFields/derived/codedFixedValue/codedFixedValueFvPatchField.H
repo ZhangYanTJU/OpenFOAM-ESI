@@ -245,7 +245,7 @@ public:
         //- Evaluate the patch field, sets updated() to false
         virtual void evaluate
         (
-            const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
+            const Pstream::commsTypes commsType=Pstream::commsTypes::buffered
         );
 
         //- Write

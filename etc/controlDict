@@ -132,7 +132,7 @@ OptimisationSwitches
     // MPI/Parallel settings
     // =====================
 
-    // Default communication type (nonBlocking | scheduled | blocking);
+    // Default communication type (nonBlocking | scheduled | buffered)
     commsType       nonBlocking;
 
     // Transfer double as float for processor boundaries. Mostly defunct.

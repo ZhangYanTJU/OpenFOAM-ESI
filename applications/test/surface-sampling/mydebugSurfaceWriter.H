@@ -44,7 +44,7 @@ Description
     Format options:
     \table
         Property    | Description                           | Required | Default
-        commsType   | blocking/nonBlocking/scheduled        | no  | scheduled
+        commsType   | scheduled/nonBlocking/buffered        | no  | scheduled
         merge       | Enable geometry/field merging         | no  | true
         write       | Write file(s)                         | no  | false
         narrow      | Communicate with narrowed values      | no  | false

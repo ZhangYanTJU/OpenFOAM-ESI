@@ -50,9 +50,11 @@ const Foam::Enum
 >
 Foam::UPstream::commsTypeNames
 ({
-    { commsTypes::blocking, "blocking" },   // "buffered"
+    { commsTypes::buffered, "buffered" },   // "buffered"
     { commsTypes::scheduled, "scheduled" },
     { commsTypes::nonBlocking, "nonBlocking" },  // "immediate"
+    // compatibility names
+    { commsTypes::buffered, "blocking" },
 });
 
 

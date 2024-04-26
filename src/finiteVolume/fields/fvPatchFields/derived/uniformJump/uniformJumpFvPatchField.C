@@ -77,7 +77,7 @@ Foam::uniformJumpFvPatchField<Type>::uniformJumpFvPatchField
 
         if (!this->readValueEntry(dict))
         {
-            this->evaluate(Pstream::commsTypes::blocking);
+            this->evaluate(Pstream::commsTypes::buffered);
         }
     }
 }

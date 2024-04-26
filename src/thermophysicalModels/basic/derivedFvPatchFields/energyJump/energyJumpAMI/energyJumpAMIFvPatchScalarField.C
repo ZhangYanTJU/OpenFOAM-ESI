@@ -66,7 +66,7 @@ Foam::energyJumpAMIFvPatchScalarField::energyJumpAMIFvPatchScalarField
 {
     if (!this->readValueEntry(dict))
     {
-        evaluate(Pstream::commsTypes::blocking);
+        evaluate(Pstream::commsTypes::buffered);
     }
 }
 
@@ -115,7 +115,7 @@ void Foam::energyJumpAMIFvPatchScalarField::updateCoeffs()
             const_cast<fixedJumpAMIFvPatchScalarField&>(TbPatch);
 
         // force update of jump
-        Tbp.evaluate(Pstream::commsTypes::blocking);
+        Tbp.evaluate(Pstream::commsTypes::buffered);
 
         const labelUList& faceCells = this->patch().faceCells();
 

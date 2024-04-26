@@ -192,7 +192,7 @@ Foam::codedFixedValueFvPatchField<Type>::codedFixedValueFvPatchField
         this->extrapolateInternal();
 
         // Evaluate to assign a value
-        this->evaluate(Pstream::commsTypes::blocking);
+        this->evaluate(Pstream::commsTypes::buffered);
     }
 }
 
