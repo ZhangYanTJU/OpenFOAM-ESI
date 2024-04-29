@@ -78,7 +78,7 @@ void Foam::Pstream::combineGather
 
                 if (debug & 2)
                 {
-                    Pout<< " received from "
+                    Perr<< " received from "
                         << belowID << " data:" << received << endl;
                 }
 
@@ -98,7 +98,7 @@ void Foam::Pstream::combineGather
 
                 if (debug & 2)
                 {
-                    Pout<< " received from "
+                    Perr<< " received from "
                         << belowID << " data:" << received << endl;
                 }
 
@@ -111,7 +111,7 @@ void Foam::Pstream::combineGather
         {
             if (debug & 2)
             {
-                Pout<< " sending to " << myComm.above()
+                Perr<< " sending to " << myComm.above()
                     << " data:" << value << endl;
             }
 
@@ -190,7 +190,7 @@ void Foam::Pstream::listCombineGather
 
                 if (debug & 2)
                 {
-                    Pout<< " received from "
+                    Perr<< " received from "
                         << belowID << " data:" << received << endl;
                 }
 
@@ -213,7 +213,7 @@ void Foam::Pstream::listCombineGather
 
                 if (debug & 2)
                 {
-                    Pout<< " received from "
+                    Perr<< " received from "
                         << belowID << " data:" << received << endl;
                 }
 
@@ -229,7 +229,7 @@ void Foam::Pstream::listCombineGather
         {
             if (debug & 2)
             {
-                Pout<< " sending to " << myComm.above()
+                Perr<< " sending to " << myComm.above()
                     << " data:" << values << endl;
             }
 
@@ -306,7 +306,7 @@ void Foam::Pstream::mapCombineGather
 
             if (debug & 2)
             {
-                Pout<< " received from "
+                Perr<< " received from "
                     << belowID << " data:" << received << endl;
             }
 
@@ -337,7 +337,7 @@ void Foam::Pstream::mapCombineGather
         {
             if (debug & 2)
             {
-                Pout<< " sending to " << myComm.above()
+                Perr<< " sending to " << myComm.above()
                     << " data:" << values << endl;
             }
 

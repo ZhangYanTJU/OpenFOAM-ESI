@@ -90,13 +90,13 @@ static void attachOurBuffers()
 
         if (Foam::UPstream::debug)
         {
-            Foam::Pout<< "UPstream::init : buffer-size " << len << '\n';
+            Foam::Perr<< "UPstream::init : buffer-size " << len << '\n';
         }
     }
     else
     {
         delete[] buf;
-        Foam::Pout<< "UPstream::init : could not attach buffer\n";
+        Foam::Perr<< "UPstream::init : could not attach buffer\n";
     }
 #endif
 }
@@ -171,7 +171,7 @@ bool Foam::UPstream::initNull()
     {
         if (UPstream::debug)
         {
-            Pout<< "UPstream::initNull : was already initialized\n";
+            Perr<< "UPstream::initNull : was already initialized\n";
         }
     }
     else
@@ -229,7 +229,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
         }
         else if (UPstream::debug)
         {
-            Pout<< "UPstream::init : was already initialized\n";
+            Perr<< "UPstream::init : was already initialized\n";
         }
     }
     else
@@ -283,7 +283,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::init :"
+        Perr<< "UPstream::init :"
             << " thread-support : requested:" << needsThread
             << " obtained:"
             << (
@@ -390,7 +390,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
                 &subRank
             );
 
-            Pout<< "UPstream::init : in world:" << world
+            Perr<< "UPstream::init : in world:" << world
                 << " using local communicator:" << subComm
                 << " rank " << subRank
                 << " of " << subNumProcs
@@ -436,7 +436,7 @@ void Foam::UPstream::shutdown(int errNo)
         }
         else if (UPstream::debug && errNo == 0)
         {
-            Pout<< "UPstream::shutdown : was already finalized\n";
+            Perr<< "UPstream::shutdown : was already finalized\n";
         }
         ourMpi = false;
         return;
@@ -465,7 +465,7 @@ void Foam::UPstream::shutdown(int errNo)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::shutdown\n";
+        Perr<< "UPstream::shutdown\n";
     }
 
     // Check for any outstanding requests
@@ -691,7 +691,7 @@ void Foam::UPstream::freeCommunicatorComponents(const label index)
 {
     if (UPstream::debug)
     {
-        Pout<< "freeCommunicatorComponents: " << index
+        Perr<< "freeCommunicatorComponents: " << index
             << " from " << PstreamGlobals::MPICommunicators_.size() << endl;
     }
 

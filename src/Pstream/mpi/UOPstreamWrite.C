@@ -74,17 +74,17 @@ bool Foam::UOPstream::write
 
     if (UPstream::warnComm >= 0 && communicator != UPstream::warnComm)
     {
-        Pout<< "UOPstream::write : starting write to:" << toProcNo
+        Perr<< "UOPstream::write : starting write to:" << toProcNo
             << " size:" << label(bufSize)
             << " tag:" << tag << " comm:" << communicator
             << " commType:" << UPstream::commsTypeNames[commsType]
             << " warnComm:" << UPstream::warnComm
             << Foam::endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
     else if (UPstream::debug)
     {
-        Pout<< "UOPstream::write : starting write to:" << toProcNo
+        Perr<< "UOPstream::write : starting write to:" << toProcNo
             << " size:" << label(bufSize)
             << " tag:" << tag << " comm:" << communicator
             << " commType:" << UPstream::commsTypeNames[commsType]
@@ -114,7 +114,7 @@ bool Foam::UOPstream::write
 
         if (UPstream::debug)
         {
-            Pout<< "UOPstream::write : finished buffered send to:"
+            Perr<< "UOPstream::write : finished buffered send to:"
                 << toProcNo
                 << " size:" << label(bufSize) << " tag:" << tag
                 << Foam::endl;
@@ -152,7 +152,7 @@ bool Foam::UOPstream::write
 
         if (UPstream::debug)
         {
-            Pout<< "UOPstream::write : finished send to:"
+            Perr<< "UOPstream::write : finished send to:"
                 << toProcNo
                 << " size:" << label(bufSize) << " tag:" << tag
                 << Foam::endl;
@@ -191,7 +191,7 @@ bool Foam::UOPstream::write
 
         if (UPstream::debug)
         {
-            Pout<< "UOPstream::write : started non-blocking send to:"
+            Perr<< "UOPstream::write : started non-blocking send to:"
                 << toProcNo
                 << " size:" << label(bufSize) << " tag:" << tag
                 << " request:" <<

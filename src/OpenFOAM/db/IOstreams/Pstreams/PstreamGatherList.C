@@ -107,7 +107,7 @@ void Foam::Pstream::gatherList
 
                 if (debug & 2)
                 {
-                    Pout<< " received through "
+                    Perr<< " received through "
                         << belowID << " data from:" << belowID
                         << " data:" << values[belowID] << endl;
                 }
@@ -119,7 +119,7 @@ void Foam::Pstream::gatherList
 
                     if (debug & 2)
                     {
-                        Pout<< " received through "
+                        Perr<< " received through "
                             << belowID << " data from:" << leafID
                             << " data:" << values[leafID] << endl;
                     }
@@ -136,7 +136,7 @@ void Foam::Pstream::gatherList
 
             if (debug & 2)
             {
-                Pout<< " sending to " << myComm.above()
+                Perr<< " sending to " << myComm.above()
                     << " data from me:" << myProci
                     << " data:" << values[myProci] << endl;
             }
@@ -177,7 +177,7 @@ void Foam::Pstream::gatherList
                 {
                     if (debug & 2)
                     {
-                        Pout<< " sending to "
+                        Perr<< " sending to "
                             << myComm.above() << " data from:" << leafID
                             << " data:" << values[leafID] << endl;
                     }
@@ -259,7 +259,7 @@ void Foam::Pstream::scatterList
 
                     if (debug & 2)
                     {
-                        Pout<< " received through "
+                        Perr<< " received through "
                             << myComm.above() << " data for:" << leafID
                             << " data:" << values[leafID] << endl;
                     }
@@ -310,7 +310,7 @@ void Foam::Pstream::scatterList
 
                     if (debug & 2)
                     {
-                        Pout<< " sent through "
+                        Perr<< " sent through "
                             << belowID << " data for:" << leafID
                             << " data:" << values[leafID] << endl;
                     }
