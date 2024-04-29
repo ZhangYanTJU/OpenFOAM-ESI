@@ -1272,7 +1272,7 @@ void Foam::refinementHistory::distribute(const mapDistributePolyMesh& map)
     // Create subsetted refinement tree consisting of all parents that
     // move in their whole to other processor.
 
-    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     for (const int proci : Pstream::allProcs())
     {

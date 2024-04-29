@@ -67,12 +67,12 @@ void Foam::motionSmootherAlgo::checkConstraints
 
     forAllReverse(bFld, patchi)
     {
-        bFld[patchi].initEvaluate(Pstream::commsTypes::blocking);   // buffered
+        bFld[patchi].initEvaluate(Pstream::commsTypes::buffered);
     }
 
     forAllReverse(bFld, patchi)
     {
-        bFld[patchi].evaluate(Pstream::commsTypes::blocking);
+        bFld[patchi].evaluate(Pstream::commsTypes::buffered);
     }
 
 

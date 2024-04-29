@@ -568,10 +568,9 @@ void syncPoints
                     }
                 }
 
-                // buffered send
                 OPstream toNbr
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     procPatch.neighbProcNo()
                 );
                 toNbr << patchInfo;

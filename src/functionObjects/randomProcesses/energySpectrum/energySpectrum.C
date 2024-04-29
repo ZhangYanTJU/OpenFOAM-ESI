@@ -215,7 +215,7 @@ bool Foam::functionObjects::energySpectrum::write()
 
     if (Pstream::parRun())
     {
-        PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         {
             UOPstream toMaster(Pstream::masterNo(), pBufs);

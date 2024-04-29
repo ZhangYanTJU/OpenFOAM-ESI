@@ -494,7 +494,7 @@ void Foam::mapDistributeBase::distribute
         return;
     }
 
-    if (commsType == UPstream::commsTypes::blocking)
+    if (commsType == UPstream::commsTypes::buffered)
     {
         // Since buffered sending can reuse the field to collect the
         // received data.
@@ -681,7 +681,7 @@ void Foam::mapDistributeBase::distribute
 
         if (!is_contiguous<T>::value)
         {
-            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
+            PstreamBuffers pBufs(comm, tag);
 
             // Stream data into buffer
             for (const int proci : UPstream::allProcs(comm))
@@ -939,7 +939,7 @@ void Foam::mapDistributeBase::distribute
         return;
     }
 
-    if (commsType == UPstream::commsTypes::blocking)
+    if (commsType == UPstream::commsTypes::buffered)
     {
         // Since buffered sending can reuse the field to collect the
         // received data.
@@ -1121,7 +1121,7 @@ void Foam::mapDistributeBase::distribute
 
         if (!is_contiguous<T>::value)
         {
-            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
+            PstreamBuffers pBufs(comm, tag);
 
             // Stream data into buffer
             for (const int proci : UPstream::allProcs(comm))

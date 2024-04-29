@@ -1344,12 +1344,7 @@ void Foam::lduPrimitiveMesh::gather
     (void)mesh.lduAddr().patchSchedule();
 
     // Use PstreamBuffers
-    PstreamBuffers pBufs
-    (
-        Pstream::commsTypes::nonBlocking,
-        UPstream::msgType(),
-        comm
-    );
+    PstreamBuffers pBufs(comm);
 
     // Send to master
     if (!Pstream::master(comm))

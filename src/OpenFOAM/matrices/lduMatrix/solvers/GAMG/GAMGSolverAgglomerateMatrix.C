@@ -311,12 +311,7 @@ void Foam::GAMGSolver::gatherMatrices
     const auto& boundaryMap = agglomeration_.boundaryMap(destLevel);
 
     // Use PstreamBuffers
-    PstreamBuffers pBufs
-    (
-        UPstream::commsTypes::nonBlocking,
-        UPstream::msgType(),
-        comm
-    );
+    PstreamBuffers pBufs(comm);
 
     // Send to master
     if (!UPstream::master(comm))

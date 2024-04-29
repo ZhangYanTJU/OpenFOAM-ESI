@@ -587,12 +587,12 @@ void Foam::motionSmootherAlgo::correctBoundaryConditions
             if (schedEval.init)
             {
                 displacementBf[patchi]
-                    .initEvaluate(Pstream::commsTypes::blocking);
+                    .initEvaluate(Pstream::commsTypes::buffered);
             }
             else
             {
                 displacementBf[patchi]
-                    .evaluate(Pstream::commsTypes::blocking);
+                    .evaluate(Pstream::commsTypes::buffered);
             }
         }
     }
@@ -608,12 +608,12 @@ void Foam::motionSmootherAlgo::correctBoundaryConditions
             if (schedEval.init)
             {
                 displacementBf[patchi]
-                    .initEvaluate(Pstream::commsTypes::blocking);
+                    .initEvaluate(Pstream::commsTypes::buffered);
             }
             else
             {
                 displacementBf[patchi]
-                    .evaluate(Pstream::commsTypes::blocking);
+                    .evaluate(Pstream::commsTypes::buffered);
             }
         }
     }

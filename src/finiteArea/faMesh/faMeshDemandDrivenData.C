@@ -1606,7 +1606,7 @@ void Foam::faMesh::calcPointAreaNormals(vectorField& result) const
             {
                 UOPstream::write
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     procPatch.neighbProcNo(),
                     patchPointNormals
                 );
@@ -1618,7 +1618,7 @@ void Foam::faMesh::calcPointAreaNormals(vectorField& result) const
             {
                 UIPstream::read
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     procPatch.neighbProcNo(),
                     patchPointNormals
                 );
@@ -1916,7 +1916,7 @@ void Foam::faMesh::calcPointAreaNormalsByQuadricsFit(vectorField& result) const
             {
                 OPstream toNeighbProc
                 (
-                    Pstream::commsTypes::blocking,
+                    Pstream::commsTypes::buffered,
                     procPatch.neighbProcNo(),
                     toNgbProcLsPoints.size_bytes()
                   + toNgbProcLsPointStarts.size_bytes()
@@ -1945,7 +1945,7 @@ void Foam::faMesh::calcPointAreaNormalsByQuadricsFit(vectorField& result) const
             {
                 IPstream fromNeighbProc
                 (
-                    Pstream::commsTypes::blocking,
+                    Pstream::commsTypes::buffered,
                     procPatch.neighbProcNo(),
                     10*patchPointLabels.size()*sizeof(vector)
                   + fromNgbProcLsPointStarts.size_bytes()

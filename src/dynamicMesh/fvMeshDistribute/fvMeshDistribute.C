@@ -2153,7 +2153,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
     UPstream::allToAll(nSendCells, nRecvCells);
 
     // Allocate buffers
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
 
     // What to send to neighbouring domains

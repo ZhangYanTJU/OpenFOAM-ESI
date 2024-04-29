@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,7 +39,7 @@ void Foam::UIPBstream::bufferIPCrecv()
 
     // Expected message size, similar to MPI_Probe
     // Same type must be expected in UOPBstream::bufferIPCsend()
-    label bufSize(0);
+    std::streamsize bufSize(0);
 
     // Broadcast #1 - data size
     if
@@ -47,7 +47,7 @@ void Foam::UIPBstream::bufferIPCrecv()
         !UPstream::broadcast
         (
             reinterpret_cast<char*>(&bufSize),
-            sizeof(label),
+            sizeof(std::streamsize),
             comm_,
             fromProcNo_  //< is actually rootProcNo
         )
@@ -63,46 +63,45 @@ void Foam::UIPBstream::bufferIPCrecv()
         Pout<< "UOPBstream IPC read buffer :"
             << " root:" << fromProcNo_
             << " comm:" << comm_
-            << " probed size:" << bufSize
+            << " probed size:" << label(bufSize)
             << " wanted size:" << recvBuf_.capacity()
             << Foam::endl;
     }
 
-    // No buffer size allocated/specified
-    if (!recvBuf_.capacity())
+
+    // Set buffer size, avoiding any copying and resize doubling etc.
+    recvBuf_.clear();
+    if (recvBuf_.capacity() < label(bufSize))
     {
-        recvBuf_.resize(bufSize);
+        recvBuf_.setCapacity_nocopy(label(bufSize));
     }
+    recvBuf_.resize_nocopy(label(bufSize));
 
     // This is the only real information we can trust
-    messageSize_ = bufSize;
+    messageSize_ = label(bufSize);
+
 
     // Broadcast #2 - data content
     // - skip if there is no data to receive
-
-    if (messageSize_)
-    {
-        if
+    if
+    (
+        (bufSize > 0)
+     && !UPstream::broadcast
         (
-            !UPstream::broadcast
-            (
-                recvBuf_.data(),
-                messageSize_,  // same as bufSize
-                comm_,
-                fromProcNo_  //< is actually rootProcNo
-            )
+            recvBuf_.data(),
+            recvBuf_.size(),  // same as bufSize
+            comm_,
+            fromProcNo_  //< is actually rootProcNo
         )
-        {
-            FatalErrorInFunction
-                << "MPI_Bcast failure receiving buffer data:" << bufSize << nl
-                << Foam::abort(FatalError);
-        }
+    )
+    {
+        FatalErrorInFunction
+            << "MPI_Bcast failure receiving buffer data:"
+            << recvBuf_.size() << nl
+            << Foam::abort(FatalError);
     }
 
-    // Set addressed size. Leave actual allocated memory intact.
-    recvBuf_.resize(messageSize_);
-
-    if (!messageSize_)
+    if (recvBuf_.empty())
     {
         setEof();
     }
@@ -111,7 +110,7 @@ void Foam::UIPBstream::bufferIPCrecv()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::label Foam::UIPBstream::read
+std::streamsize Foam::UIPBstream::read
 (
     const int rootProcNo,
     char* buf,

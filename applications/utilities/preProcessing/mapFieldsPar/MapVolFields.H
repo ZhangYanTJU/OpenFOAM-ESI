@@ -48,7 +48,7 @@ void evaluateConstraintTypes(GeometricField<Type, fvPatchField, volMesh>& fld)
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {

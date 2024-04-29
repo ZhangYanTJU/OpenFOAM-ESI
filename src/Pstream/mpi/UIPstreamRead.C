@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,11 +35,12 @@ License
 // - as of 2023-06 appears to be broken with INTELMPI + PMI-2 (slurm)
 //   and perhaps other places so currently avoid
 
+#undef Pstream_use_MPI_Get_count
+
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
-// General blocking/non-blocking MPI receive, optionally with probed
-// message information.
-static Foam::label UPstream_mpi_receive
+// General blocking/non-blocking MPI receive
+static std::streamsize UPstream_mpi_receive
 (
     const Foam::UPstream::commsTypes commsType,
     char* buf,
@@ -54,34 +55,48 @@ static Foam::label UPstream_mpi_receive
 
     PstreamGlobals::reset_request(req);
 
-    if (UPstream::debug)
+    // TODO: some corrective action, at least when not nonBlocking
+    #if 0
+    // No warnings here, just on the sender side.
+    if (bufSize > std::streamsize(INT_MAX))
     {
-        Pout<< "UIPstream::read : starting read from:" << fromProcNo
-            << " tag:" << tag << " comm:" << communicator
-            << " wanted size:" << label(bufSize)
-            << " commsType:" << UPstream::commsTypeNames[commsType]
-            << Foam::endl;
+        Perr<< "UIPstream::read() : from rank " << fromProcNo
+            << " exceeds INT_MAX bytes" << Foam::endl;
+        error::printStack(Perr);
     }
+    #endif
+
     if (UPstream::warnComm >= 0 && communicator != UPstream::warnComm)
     {
         Pout<< "UIPstream::read : starting read from:" << fromProcNo
+            << " size:" << label(bufSize)
             << " tag:" << tag << " comm:" << communicator
-            << " wanted size:" << label(bufSize)
             << " commsType:" << UPstream::commsTypeNames[commsType]
             << " warnComm:" << UPstream::warnComm
             << Foam::endl;
         error::printStack(Pout);
     }
+    else if (UPstream::debug)
+    {
+        Pout<< "UIPstream::read : starting read from:" << fromProcNo
+            << " size:" << label(bufSize)
+            << " tag:" << tag << " comm:" << communicator
+            << " commsType:" << UPstream::commsTypeNames[commsType]
+            << Foam::endl;
+    }
+
+    int returnCode = MPI_ERR_UNKNOWN;
 
     profilingPstream::beginTiming();
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::scheduled
     )
     {
-        int returnCode = 0;
+        // Not UPstream::commsTypes::nonBlocking
+
         MPI_Status status;
 
         {
@@ -97,6 +112,8 @@ static Foam::label UPstream_mpi_receive
             );
         }
 
+        profilingPstream::addGatherTime();
+
         if (returnCode != MPI_SUCCESS)
         {
             FatalErrorInFunction
@@ -104,36 +121,53 @@ static Foam::label UPstream_mpi_receive
                 << Foam::abort(FatalError);
             return 0;
         }
-
-        profilingPstream::addGatherTime();
-
-        // Check size of message read
-
-        int messageSize;
-        MPI_Get_count(&status, MPI_BYTE, &messageSize);
-
-        if (UPstream::debug)
+        else if (UPstream::debug)
         {
-            Pout<< "UIPstream::read : finished read from:" << fromProcNo
-                << " tag:" << tag << " read size:" << label(bufSize)
-                << " commsType:" << UPstream::commsTypeNames[commsType]
+            Pout<< "UIPstream::read : finished recv from:"
+                << fromProcNo
+                << " size:" << label(bufSize) << " tag:" << tag
                 << Foam::endl;
         }
 
-        if (messageSize > bufSize)
+        // Check size of message read
+        #ifdef Pstream_use_MPI_Get_count
+        int count(0);
+        MPI_Get_count(&status, MPI_BYTE, &count);
+        #else
+        MPI_Count count(0);
+        MPI_Get_elements_x(&status, MPI_BYTE, &count);
+        #endif
+
+        // Errors
+        if (count == MPI_UNDEFINED || int64_t(count) < 0)
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "returned undefined or negative value"
+                << Foam::abort(FatalError);
+        }
+        else if (int64_t(count) > int64_t(UList<char>::max_size()))
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "count is larger than UList<char>::max_size() bytes"
+                << Foam::abort(FatalError);
+        }
+
+
+        if (bufSize < std::streamsize(count))
         {
             FatalErrorInFunction
                 << "buffer (" << label(bufSize)
                 << ") not large enough for incoming message ("
-                << messageSize << ')'
+                << label(count) << ')'
                 << Foam::abort(FatalError);
         }
 
-        return messageSize;
+        return std::streamsize(count);
     }
     else if (commsType == UPstream::commsTypes::nonBlocking)
     {
-        int returnCode = 0;
         MPI_Request request;
 
         {
@@ -158,18 +192,19 @@ static Foam::label UPstream_mpi_receive
             return 0;
         }
 
+        PstreamGlobals::push_request(request, req);
+        profilingPstream::addRequestTime();
+
+
         if (UPstream::debug)
         {
-            Pout<< "UIPstream::read : started read from:" << fromProcNo
-                << " tag:" << tag << " read size:" << label(bufSize)
-                << " commsType:" << UPstream::commsTypeNames[commsType]
+            Pout<< "UIPstream::read : started non-blocking recv from:"
+                << fromProcNo
+                << " size:" << label(bufSize) << " tag:" << tag
                 << " request:" <<
                 (req ? label(-1) : PstreamGlobals::outstandingRequests_.size())
                 << Foam::endl;
         }
-
-        PstreamGlobals::push_request(request, req);
-        profilingPstream::addRequestTime();
 
         // Assume the message will be completely received.
         return bufSize;
@@ -197,9 +232,24 @@ void Foam::UIPstream::bufferIPCrecv()
             << Foam::endl;
     }
 
-    // No buffer size allocated/specified - probe size of incoming message
-    if (!recvBuf_.capacity())
+    // Fallback value
+    messageSize_ = recvBuf_.capacity();
+
+    if (commsType() == UPstream::commsTypes::nonBlocking)
     {
+        // Non-blocking
+        // ~~~~~~~~~~~~
+        // No chance of probing for size nor relying on the returned message
+        // size (since it returns immediately without any further checks)
+        //
+        // Fortunately there are not many (any?) places that are using
+        // a non-blocking IPstream with streaming anyhow.
+
+        messageSize_ = recvBuf_.size();
+    }
+    else if (!recvBuf_.capacity())
+    {
+        // No buffer size allocated/specified - probe size of incoming message
         profilingPstream::beginTiming();
 
         MPI_Status status;
@@ -212,34 +262,73 @@ void Foam::UIPstream::bufferIPCrecv()
            &status
         );
 
-        MPI_Get_count(&status, MPI_BYTE, &messageSize_);
-
         profilingPstream::addProbeTime();
 
-        recvBuf_.resize(messageSize_);
+
+        #ifdef Pstream_use_MPI_Get_count
+        int count(0);
+        MPI_Get_count(&status, MPI_BYTE, &count);
+        #else
+        MPI_Count count(0);
+        MPI_Get_elements_x(&status, MPI_BYTE, &count);
+        #endif
+
+        // Errors
+        if (count == MPI_UNDEFINED || int64_t(count) < 0)
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "returned undefined or negative value"
+                << Foam::abort(FatalError);
+        }
+        else if (int64_t(count) > int64_t(UList<char>::max_size()))
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "count is larger than UList<char>::max_size() bytes"
+                << Foam::abort(FatalError);
+        }
 
         if (UPstream::debug)
         {
             Pout<< "UIPstream::UIPstream : probed size:"
-                << messageSize_ << Foam::endl;
+                << label(count) << Foam::endl;
         }
+
+        recvBuf_.resize(label(count));
+        messageSize_ = label(count);
     }
 
-    messageSize_ = UPstream_mpi_receive
+    std::streamsize count = UPstream_mpi_receive
     (
         commsType(),
         recvBuf_.data(),
-        recvBuf_.capacity(),
+        messageSize_,   // The expected size
         fromProcNo_,
         tag_,
         comm_,
         nullptr   // UPstream::Request
     );
 
-    // Set addressed size. Leave actual allocated memory intact.
-    recvBuf_.resize(messageSize_);
+    if (count < 0)
+    {
+        FatalErrorInFunction
+            << "MPI_recv() with negative size??"
+            << Foam::abort(FatalError);
+    }
+    else if (int64_t(count) > int64_t(UList<char>::max_size()))
+    {
+        FatalErrorInFunction
+            << "MPI_recv() larger than "
+                "UList<char>::max_size() bytes"
+            << Foam::abort(FatalError);
+    }
 
-    if (!messageSize_)
+    // Set addressed size. Leave actual allocated memory intact.
+    recvBuf_.resize(label(count));
+    messageSize_ = label(count);
+
+    if (recvBuf_.empty())
     {
         setEof();
     }
@@ -248,7 +337,7 @@ void Foam::UIPstream::bufferIPCrecv()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::label Foam::UIPstream::read
+std::streamsize Foam::UIPstream::read
 (
     const UPstream::commsTypes commsType,
     const int fromProcNo,

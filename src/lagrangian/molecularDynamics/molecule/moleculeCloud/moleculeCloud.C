@@ -131,7 +131,7 @@ void Foam::moleculeCloud::buildCellOccupancy()
 
 void Foam::moleculeCloud::calculatePairForce()
 {
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     // Start sending referred data
     label startOfRequests = Pstream::nRequests();
@@ -356,7 +356,7 @@ void Foam::moleculeCloud::removeHighEnergyOverlaps()
 
     buildCellOccupancy();
 
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     // Start sending referred data
     label startOfRequests = Pstream::nRequests();

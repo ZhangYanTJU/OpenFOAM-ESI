@@ -69,7 +69,7 @@ Foam::porousBafflePressureFvPatchField::porousBafflePressureFvPatchField
     {
         if (!this->readValueEntry(dict))
         {
-            this->evaluate(Pstream::commsTypes::blocking);
+            this->evaluate(Pstream::commsTypes::buffered);
         }
     }
 }

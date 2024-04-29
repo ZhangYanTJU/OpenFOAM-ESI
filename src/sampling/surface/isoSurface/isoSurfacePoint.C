@@ -164,10 +164,9 @@ void Foam::isoSurfacePoint::syncUnseparatedPoints
                     patchInfo[nbrPointi] = pointValues[meshPts[pointi]];
                 }
 
-                // buffered send
                 OPstream toNbr
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     procPatch.neighbProcNo()
                 );
                 toNbr << patchInfo;

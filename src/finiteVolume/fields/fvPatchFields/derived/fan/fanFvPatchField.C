@@ -89,7 +89,7 @@ Foam::fanFvPatchField<Type>::fanFvPatchField
 
     if (!this->readValueEntry(dict))
     {
-        this->evaluate(Pstream::commsTypes::blocking);
+        this->evaluate(Pstream::commsTypes::buffered);
     }
 }
 

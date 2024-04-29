@@ -92,7 +92,7 @@ Foam::cyclicFaPatchField<Type>::cyclicFaPatchField
 
     if (IOobjectOption::isReadRequired(requireValue))
     {
-        this->evaluate(Pstream::commsTypes::blocking);
+        this->evaluate(Pstream::commsTypes::buffered);
     }
 }
 

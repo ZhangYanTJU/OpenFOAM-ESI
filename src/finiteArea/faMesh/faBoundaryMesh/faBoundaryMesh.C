@@ -292,7 +292,7 @@ void Foam::faBoundaryMesh::calcGeometry()
 
     if
     (
-        pBufs.commsType() == Pstream::commsTypes::blocking
+        pBufs.commsType() == Pstream::commsTypes::buffered
      || pBufs.commsType() == Pstream::commsTypes::nonBlocking
     )
     {
@@ -943,7 +943,7 @@ void Foam::faBoundaryMesh::movePoints(const pointField& p)
 
     if
     (
-        pBufs.commsType() == Pstream::commsTypes::blocking
+        pBufs.commsType() == Pstream::commsTypes::buffered
      || pBufs.commsType() == Pstream::commsTypes::nonBlocking
     )
     {
@@ -989,7 +989,7 @@ void Foam::faBoundaryMesh::updateMesh()
 
     if
     (
-        pBufs.commsType() == Pstream::commsTypes::blocking
+        pBufs.commsType() == Pstream::commsTypes::buffered
      || pBufs.commsType() == Pstream::commsTypes::nonBlocking
     )
     {

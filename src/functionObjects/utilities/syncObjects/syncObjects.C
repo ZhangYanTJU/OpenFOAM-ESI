@@ -87,11 +87,7 @@ void Foam::functionObjects::syncObjects::sync()
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // Note provision of explicit all-world communicator
-    PstreamBuffers pBufs
-    (
-        UPstream::commGlobal(),
-        UPstream::commsTypes::nonBlocking
-    );
+    PstreamBuffers pBufs(UPstream::commGlobal());
 
 
     for (const int proci : pBufs.allProcs())

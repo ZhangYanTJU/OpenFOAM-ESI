@@ -73,15 +73,17 @@ public:
     //- Communications types
     enum class commsTypes : char
     {
-        blocking,       //!< "blocking" (buffered)      : (MPI_Bsend, MPI_Recv)
+        buffered,       //!< "buffered"                 : (MPI_Bsend, MPI_Recv)
         scheduled,      //!< "scheduled" (MPI standard) : (MPI_Send, MPI_Recv)
-        nonBlocking     //!< "nonBlocking" (immediate)  : (MPI_Isend, MPI_Irecv)
+        nonBlocking,    //!< "nonBlocking" (immediate)  : (MPI_Isend, MPI_Irecv)
+        // Aliases
+        blocking = buffered  //!< compatibility name for buffered
     };
 
     //- Enumerated names for the communication types
     static const Enum<commsTypes> commsTypeNames;
 
-    //- Different MPI-send modes (ignored for commsTypes::blocking)
+    //- Different MPI-send modes (ignored for commsTypes::buffered)
     enum class sendModes : char
     {
         normal,         //!< (MPI_Send, MPI_Isend)

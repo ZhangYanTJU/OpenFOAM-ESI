@@ -618,7 +618,7 @@ void Foam::conformalVoronoiMesh::reorderProcessorPatches
     labelList rotation(faces.size(), Zero);
     labelList faceMap(faces.size(), label(-1));
 
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     // Send ordering
     forAll(sortMesh.boundaryMesh(), patchi)

@@ -274,7 +274,7 @@ void Foam::meshToMesh::distributeCells
     procLocalFaceIDs.setSize(Pstream::nProcs());;
 
 
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     for (const int domain : Pstream::allProcs())
     {

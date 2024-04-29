@@ -208,7 +208,7 @@ void Foam::RecycleInteraction<CloudType>::postEvolve()
         // See comments in Cloud::move() about transfer particles handling
 
         // Allocate transfer buffers
-        PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         // Cache of opened UOPstream wrappers
         PtrList<UOPstream> UOPstreamPtrs(Pstream::nProcs());

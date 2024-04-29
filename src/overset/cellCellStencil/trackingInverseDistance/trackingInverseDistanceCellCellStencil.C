@@ -765,7 +765,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
 
     const globalIndex globalCells(mesh_.nCells());
 
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     DebugInfo<< FUNCTION_NAME << " : Allocated donor-cell structures" << endl;
 

@@ -632,7 +632,8 @@ void Foam::PstreamDetail::allToAllConsensus
             // Message found, receive into dest buffer location
             const label proci = status.MPI_SOURCE;
 
-            int count = 0;
+            // Only send/recv a single (fundamental) data type
+            int count(0);
             MPI_Get_count(&status, datatype, &count);
 
             if (count != 1)
@@ -812,10 +813,10 @@ void Foam::PstreamDetail::allToAllConsensus
         if (flag)
         {
             // Message found, receive into dest buffer location
-
             const label proci = status.MPI_SOURCE;
-            int count = 0;
 
+            // Only send/recv a single (fundamental) data type
+            int count(0);
             MPI_Get_count(&status, datatype, &count);
 
             if (count != 1)

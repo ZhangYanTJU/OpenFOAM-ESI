@@ -174,7 +174,7 @@ void Foam::fvMeshSubset::doCoupledPatches
 
     if (syncPar && UPstream::parRun())
     {
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         // Send face usage across processor patches
         if (!nCellsUsingFace.empty())

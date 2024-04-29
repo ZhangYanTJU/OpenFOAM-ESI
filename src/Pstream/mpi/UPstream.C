@@ -40,6 +40,8 @@ License
 #include <numeric>
 #include <string>
 
+#undef Pstream_use_MPI_Get_count
+
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 // The min value and default for MPI buffer length
@@ -787,7 +789,7 @@ Foam::UPstream::probeMessage
     int flag = 0;
     MPI_Status status;
 
-    if (UPstream::commsTypes::blocking == commsType)
+    if (UPstream::commsTypes::buffered == commsType)
     {
         // Blocking
         profilingPstream::beginTiming();
@@ -838,8 +840,36 @@ Foam::UPstream::probeMessage
 
     if (flag)
     {
+        // Unlikely to be used with large amounts of data,
+        // but use MPI_Get_elements_x() instead of MPI_Count() anyhow
+
+        #ifdef Pstream_use_MPI_Get_count
+        int count(0);
+        MPI_Get_count(&status, MPI_BYTE, &count);
+        #else
+        MPI_Count count(0);
+        MPI_Get_elements_x(&status, MPI_BYTE, &count);
+        #endif
+
+        // Errors
+        if (count == MPI_UNDEFINED || int64_t(count) < 0)
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "returned undefined or negative value"
+                << Foam::abort(FatalError);
+        }
+        else if (int64_t(count) > int64_t(INT_MAX))
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "count is larger than INI_MAX bytes"
+                << Foam::abort(FatalError);
+        }
+
+
         result.first = status.MPI_SOURCE;
-        MPI_Get_count(&status, MPI_BYTE, &result.second);
+        result.second = int(count);
     }
 
     return result;

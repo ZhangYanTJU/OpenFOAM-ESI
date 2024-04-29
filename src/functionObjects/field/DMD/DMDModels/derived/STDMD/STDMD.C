@@ -227,7 +227,7 @@ reducedKoopmanOperator()
         // the final outcome of TSQR decomposition up to sign
 
         // Don't clear storage on persistent buffer
-        PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
         pBufs.allowClearRecv(false);
 
         const label myProcNo = Pstream::myProcNo();

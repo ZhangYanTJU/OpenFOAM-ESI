@@ -121,7 +121,7 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
         const int oldConsistency = consistency;
         consistency = 0;
 
-        this->evaluate(Pstream::commsTypes::blocking);
+        this->evaluate(Pstream::commsTypes::buffered);
 
         consistency = oldConsistency;
     }

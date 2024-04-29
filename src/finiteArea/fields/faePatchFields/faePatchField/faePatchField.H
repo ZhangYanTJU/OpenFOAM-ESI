@@ -482,7 +482,7 @@ public:
             virtual void initEvaluateLocal
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
@@ -490,7 +490,7 @@ public:
             virtual void evaluateLocal
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
@@ -516,14 +516,14 @@ public:
         //- Initialise the evaluation of the patch field, generally a no-op
         virtual void initEvaluate
         (
-            const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
+            const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
         )
         {}
 
         //- Evaluate the patch field, generally a no-op
         virtual void evaluate
         (
-            const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
+            const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
         )
         {}
 

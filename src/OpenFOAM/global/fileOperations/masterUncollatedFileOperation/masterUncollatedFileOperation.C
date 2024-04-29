@@ -452,7 +452,7 @@ Foam::fileOperations::masterUncollatedFileOperation::read
 {
     autoPtr<ISstream> isPtr;
 
-    PstreamBuffers pBufs(comm, UPstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs(comm);
 
     if (UPstream::master(comm))
     {
@@ -1834,7 +1834,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::readHeader
         }
 
         // Is a more efficient scatter possible?
-        PstreamBuffers pBufs(comm_, UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs(comm_);
 
         if (Pstream::master(comm_))
         {
@@ -2396,7 +2396,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewIFstream
         filePaths[Pstream::myProcNo(comm_)] = filePath;
         Pstream::gatherList(filePaths, Pstream::msgType(), comm_);
 
-        PstreamBuffers pBufs(comm_, Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs(comm_);
 
         if (Pstream::master(comm_))
         {
