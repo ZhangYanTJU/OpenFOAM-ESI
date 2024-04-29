@@ -766,7 +766,7 @@ void Foam::UPstream::barrier(const label communicator, UPstream::Request* req)
 }
 
 
-std::pair<int,int>
+std::pair<int,int64_t>
 Foam::UPstream::probeMessage
 (
     const UPstream::commsTypes commsType,
@@ -775,7 +775,7 @@ Foam::UPstream::probeMessage
     const label communicator
 )
 {
-    std::pair<int,int> result(-1, 0);
+    std::pair<int,int64_t> result(-1, 0);
 
     // No-op for non-parallel or not on communicator
     if (!UPstream::parRun() || !UPstream::is_rank(communicator))
@@ -869,7 +869,7 @@ Foam::UPstream::probeMessage
 
 
         result.first = status.MPI_SOURCE;
-        result.second = int(count);
+        result.second = int64_t(count);
     }
 
     return result;

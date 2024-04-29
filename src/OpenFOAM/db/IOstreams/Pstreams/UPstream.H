@@ -565,14 +565,14 @@ public:
 
         //- Probe for an incoming message.
         //
-        //  \param commsType    Blocking or not
+        //  \param commsType    Non-blocking or not
         //  \param fromProcNo   The source rank (negative == ANY_SOURCE)
         //  \param tag          The source message tag
         //  \param communicator The communicator index
         //
         //  \returns source rank and message size (bytes)
         //      and (-1, 0) on failure
-        static std::pair<int,int> probeMessage
+        static std::pair<int,int64_t> probeMessage
         (
             const UPstream::commsTypes commsType,
             const int fromProcNo,

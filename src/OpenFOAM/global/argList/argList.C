@@ -2049,6 +2049,8 @@ void Foam::argList::parse
             Info<< "Pstream initialized with:" << nl
                 << "    floatTransfer      : "
                 << Switch::name(UPstream::floatTransfer) << nl
+                << "    maxCommsSize       : "
+                << UPstream::maxCommsSize << nl
                 << "    nProcsSimpleSum    : "
                 << UPstream::nProcsSimpleSum << nl
                 << "    nonBlockingExchange: "

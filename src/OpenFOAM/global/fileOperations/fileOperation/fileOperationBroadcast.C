@@ -146,15 +146,17 @@ static void broadcastFile_single
 
     const uint64_t maxChunkSize =
     (
-        UPstream::maxCommsSize > 0
+        (UPstream::maxCommsSize > 0)
       ? uint64_t(UPstream::maxCommsSize)
-      : uint64_t(pTraits<int>::max)
+      : (UPstream::maxCommsSize < 0)    // (numBytes fewer than INT_MAX)
+      ? uint64_t(INT_MAX + UPstream::maxCommsSize)
+      : uint64_t(INT_MAX)               // MPI limit is <int>
     );
 
 
     while (fileLength > 0)
     {
-        const uint64_t sendSize = min(fileLength, maxChunkSize);
+        const uint64_t sendSize = std::min(fileLength, maxChunkSize);
         fileLength -= sendSize;
 
         // Read file contents into a character buffer
