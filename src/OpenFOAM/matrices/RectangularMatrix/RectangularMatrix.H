@@ -39,8 +39,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef RectangularMatrix_H
-#define RectangularMatrix_H
+#ifndef Foam_RectangularMatrix_H
+#define Foam_RectangularMatrix_H
 
 #include "Matrix.H"
 #include "SquareMatrix.H"
@@ -59,7 +59,6 @@ class RectangularMatrix
 :
     public Matrix<RectangularMatrix<Type>, Type>
 {
-
 public:
 
     // Generated Methods
@@ -76,7 +75,7 @@ public:
 
     // Constructors
 
-        //- Construct a square matrix (rows == columns)
+        //- Construct a square matrix (rows == columns), uninitialised content
         inline explicit RectangularMatrix(const label n);
 
         //- Construct given number of rows/columns

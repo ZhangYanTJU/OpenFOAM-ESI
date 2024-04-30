@@ -40,8 +40,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef SymmetricSquareMatrix_H
-#define SymmetricSquareMatrix_H
+#ifndef Foam_SymmetricSquareMatrix_H
+#define Foam_SymmetricSquareMatrix_H
 
 #include "SquareMatrix.H"
 
@@ -59,7 +59,6 @@ class SymmetricSquareMatrix
 :
     public Matrix<SymmetricSquareMatrix<Type>, Type>
 {
-
 public:
 
     // Generated Methods
@@ -71,12 +70,13 @@ public:
         SymmetricSquareMatrix(const SymmetricSquareMatrix&) = default;
 
         //- Copy assignment
-        SymmetricSquareMatrix& operator=(const SymmetricSquareMatrix&) = default;
+        SymmetricSquareMatrix&
+        operator=(const SymmetricSquareMatrix&) = default;
 
 
     // Constructors
 
-        //- Construct for given size (rows == cols)
+        //- Construct for given size (rows == cols), uninitialised content
         inline explicit SymmetricSquareMatrix(const label n);
 
         //- Construct for given size (rows == cols)
@@ -112,6 +112,8 @@ public:
         void operator=(const Identity<AnyType>);
 };
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Global Functions
 

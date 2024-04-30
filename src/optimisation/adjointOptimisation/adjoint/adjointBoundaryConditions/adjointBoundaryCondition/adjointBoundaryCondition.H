@@ -116,7 +116,7 @@ public:
 
 
     //- Destructor
-    virtual ~adjointBoundaryCondition<Type>() = default;
+    virtual ~adjointBoundaryCondition() = default;
 
 
     // Member Functions

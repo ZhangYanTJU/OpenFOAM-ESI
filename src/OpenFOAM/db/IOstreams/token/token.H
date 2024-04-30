@@ -337,10 +337,10 @@ public:
         TypeNameNoDebug("Compound<T>");
 
         //- No copy construct
-        Compound<T>(const Compound<T>&) = delete;
+        Compound(const Compound<T>&) = delete;
 
         //- No copy assignment
-        Compound<T>& operator=(const Compound<T>&) = delete;
+        void operator=(const Compound<T>&) = delete;
 
         // Constructors
 

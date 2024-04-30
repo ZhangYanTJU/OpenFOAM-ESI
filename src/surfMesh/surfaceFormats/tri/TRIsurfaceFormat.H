@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,8 +45,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef TRIsurfaceFormat_H
-#define TRIsurfaceFormat_H
+#ifndef Foam_TRIsurfaceFormat_H
+#define Foam_TRIsurfaceFormat_H
 
 #include "MeshedSurface.H"
 #include "MeshedSurfaceProxy.H"
@@ -84,7 +84,7 @@ public:
     // Constructors
 
         //- Construct from file name
-        TRIsurfaceFormat(const fileName& filename);
+        explicit TRIsurfaceFormat(const fileName& filename);
 
 
     //- Destructor
@@ -93,7 +93,7 @@ public:
 
     // Static Functions
 
-        //- Write surface mesh components by proxy
+        //- Write surface mesh components (by proxy) in TRI format
         static void write
         (
             const fileName& filename,
@@ -115,15 +115,27 @@ public:
     // Member Functions
 
         //- Read from file
-        virtual bool read(const fileName& filename);
+        virtual bool read(const fileName& filename) override;
 
-        //- Write surface mesh to file
+        //- Write surface mesh to file (by proxy)
         virtual void write
         (
             const fileName& name,
             IOstreamOption streamOpt = IOstreamOption(),
             const dictionary& options = dictionary::null
-        ) const
+        ) const override
+        {
+            write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
+        }
+
+        //- Write surface mesh to file (by proxy)
+        virtual void write
+        (
+            const fileName& name,
+            const word& fileType,  /* ignored */
+            IOstreamOption streamOpt = IOstreamOption(),
+            const dictionary& options = dictionary::null
+        ) const override
         {
             write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
         }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,8 +47,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef STARCDsurfaceFormat_H
-#define STARCDsurfaceFormat_H
+#ifndef Foam_STARCDsurfaceFormat_H
+#define Foam_STARCDsurfaceFormat_H
 
 #include "MeshedSurface.H"
 #include "MeshedSurfaceProxy.H"
@@ -88,7 +88,7 @@ public:
     // Constructors
 
         //- Construct from file name
-        STARCDsurfaceFormat(const fileName& filename);
+        explicit STARCDsurfaceFormat(const fileName& filename);
 
 
     //- Destructor
@@ -110,15 +110,27 @@ public:
     // Member Functions
 
         //- Read from file
-        virtual bool read(const fileName& filename);
+        virtual bool read(const fileName& filename) override;
 
-        //- Write surface mesh to file
+        //- Write surface mesh to file (by proxy)
         virtual void write
         (
             const fileName& name,
             IOstreamOption streamOpt = IOstreamOption(),
             const dictionary& options = dictionary::null
-        ) const
+        ) const override
+        {
+            write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
+        }
+
+        //- Write surface mesh to file (by proxy)
+        virtual void write
+        (
+            const fileName& name,
+            const word& fileType,  /* ignored */
+            IOstreamOption streamOpt = IOstreamOption(),
+            const dictionary& options = dictionary::null
+        ) const override
         {
             write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
         }

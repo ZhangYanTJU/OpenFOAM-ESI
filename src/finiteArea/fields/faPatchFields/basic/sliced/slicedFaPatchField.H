@@ -140,8 +140,8 @@ public:
         }
 
 
-    //- Destructor
-    virtual ~slicedFaPatchField<Type>();
+    //- Destructor, resets pointers to avoid deletion of underlying field
+    virtual ~slicedFaPatchField();
 
 
     // Member Functions

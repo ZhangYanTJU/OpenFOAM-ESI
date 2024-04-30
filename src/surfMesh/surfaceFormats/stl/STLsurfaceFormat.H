@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,8 +44,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef STLsurfaceFormat_H
-#define STLsurfaceFormat_H
+#ifndef Foam_STLsurfaceFormat_H
+#define Foam_STLsurfaceFormat_H
 
 #include "STLReader.H"
 #include "MeshedSurface.H"
@@ -94,7 +94,7 @@ public:
     // Constructors
 
         //- Construct from file name
-        STLsurfaceFormat(const fileName& filename);
+        explicit STLsurfaceFormat(const fileName& filename);
 
 
     //- Destructor
@@ -133,8 +133,8 @@ public:
             const UnsortedMeshedSurface<Face>& surf
         );
 
-        //- Write surface mesh components by proxy
-        //  as ASCII or BINARY or dependent on the extension
+        //- Write surface mesh components (by proxy) in STL format
+        //- as ASCII or BINARY or dependent on the extension
         static void write
         (
             const fileName& filename,
@@ -154,8 +154,8 @@ public:
         );
 
 
-        //- Write surface mesh components by proxy
-        //  as ASCII or BINARY, depending on the extension
+        //- Write surface mesh components (by proxy) in STL format
+        //- as ASCII or BINARY, depending on the extension
         static void write
         (
             const fileName& filename,
@@ -165,7 +165,7 @@ public:
         );
 
         //- Write UnsortedMeshedSurface
-        //  as ASCII or BINARY, depending on the extension
+        //- as ASCII or BINARY, depending on the extension
         static void write
         (
             const fileName& filename,
@@ -178,15 +178,27 @@ public:
     // Member Functions
 
         //- Read from file
-        virtual bool read(const fileName& filename);
+        virtual bool read(const fileName& filename) override;
 
-        //- Write surface mesh to file
+        //- Write surface mesh to file (by proxy)
         virtual void write
         (
             const fileName& name,
             IOstreamOption streamOpt = IOstreamOption(),
             const dictionary& options = dictionary::null
-        ) const
+        ) const override
+        {
+            write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
+        }
+
+        //- Write surface mesh to file (by proxy)
+        virtual void write
+        (
+            const fileName& name,
+            const word& fileType,  /* ignored */
+            IOstreamOption streamOpt = IOstreamOption(),
+            const dictionary& options = dictionary::null
+        ) const override
         {
             write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
         }

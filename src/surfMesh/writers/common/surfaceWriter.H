@@ -237,7 +237,7 @@ protected:
             const tmp<Field<Type>>& tfield
         ) const;
 
-#undef  declareSurfaceFieldMethod
+#undef  declareSurfaceFieldMethods
 #define declareSurfaceFieldMethods(Type)                                      \
                                                                               \
         tmp<Field<Type>> mergeField(const Field<Type>& fld) const;            \

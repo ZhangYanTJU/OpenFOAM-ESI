@@ -136,7 +136,7 @@ public:
         //- Default construct (empty matrix)
         inline Matrix() noexcept;
 
-        //- Construct given number of rows/columns
+        //- Construct given number of rows/columns, uninitialised content
         Matrix(const label m, const label n);
 
         //- Construct with given number of rows/columns

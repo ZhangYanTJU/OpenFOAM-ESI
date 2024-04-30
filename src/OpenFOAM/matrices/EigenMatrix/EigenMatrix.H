@@ -225,29 +225,29 @@ public:
     // Access
 
         //- Return real eigenvalues or real part of complex eigenvalues
-        const DiagonalMatrix<cmptType>& EValsRe() const
+        const DiagonalMatrix<cmptType>& EValsRe() const noexcept
         {
             return EValsRe_;
         }
 
         //- Return zero-matrix for real eigenvalues
         //- or imaginary part of complex eigenvalues
-        const DiagonalMatrix<cmptType>& EValsIm() const
+        const DiagonalMatrix<cmptType>& EValsIm() const noexcept
         {
             return EValsIm_;
         }
 
         //- Return right eigenvectors matrix where each column is
         //- a right eigenvector that corresponds to an eigenvalue
-        const SquareMatrix<cmptType>& EVecs() const
+        const SquareMatrix<cmptType>& EVecs() const noexcept
         {
             return EVecs_;
         }
 
         //- Return right eigenvectors in unpacked form
         const SquareMatrix<complex> complexEVecs() const;
-
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

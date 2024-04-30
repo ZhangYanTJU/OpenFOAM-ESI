@@ -134,8 +134,8 @@ public:
         }
 
 
-    //- Destructor
-    virtual ~slicedFvsPatchField<Type>();
+    //- Destructor, resets pointers to avoid deletion of underlying field
+    virtual ~slicedFvsPatchField();
 
 
     // Member Functions

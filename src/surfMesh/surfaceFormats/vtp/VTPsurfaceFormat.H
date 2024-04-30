@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,8 +46,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef VTPsurfaceFormat_H
-#define VTPsurfaceFormat_H
+#ifndef Foam_VTPsurfaceFormat_H
+#define Foam_VTPsurfaceFormat_H
 
 #include "MeshedSurface.H"
 #include "MeshedSurfaceProxy.H"
@@ -95,7 +95,7 @@ public:
 
     // Static Functions
 
-        //- Write surface mesh components by proxy
+        //- Write surface mesh components (by proxy) in VTP format
         static void write
         (
             const fileName& filename,
@@ -116,13 +116,25 @@ public:
 
     // Member Functions
 
-        //- Write meshed surface to a file
+        //- Write surface mesh to file (by proxy)
         virtual void write
         (
             const fileName& name,
             IOstreamOption streamOpt = IOstreamOption(),
             const dictionary& options = dictionary::null
-        ) const
+        ) const override
+        {
+            write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
+        }
+
+        //- Write surface mesh to file (by proxy)
+        virtual void write
+        (
+            const fileName& name,
+            const word& fileType,  /* ignored */
+            IOstreamOption streamOpt = IOstreamOption(),
+            const dictionary& options = dictionary::null
+        ) const override
         {
             write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
         }

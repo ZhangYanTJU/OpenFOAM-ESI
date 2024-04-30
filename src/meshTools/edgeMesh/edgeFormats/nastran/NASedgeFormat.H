@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,8 +42,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef NASedgeFormat_H
-#define NASedgeFormat_H
+#ifndef Foam_NASedgeFormat_H
+#define Foam_NASedgeFormat_H
 
 #include "edgeMesh.H"
 #include "NASCore.H"
@@ -64,14 +64,6 @@ class NASedgeFormat
     public edgeMesh,
     public NASCore
 {
-    // Private Member Functions
-
-        //- No copy construct
-        NASedgeFormat(const NASedgeFormat&) = delete;
-
-        //- No copy assignment
-        void operator=(const NASedgeFormat&) = delete;
-
 public:
 
     // Constructors
@@ -96,7 +88,7 @@ public:
     // Member Functions
 
         //- Read from a file
-        virtual bool read(const fileName& filename);
+        virtual bool read(const fileName& filename) override;
 };
 
 

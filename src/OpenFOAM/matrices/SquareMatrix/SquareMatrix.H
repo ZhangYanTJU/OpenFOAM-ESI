@@ -81,7 +81,7 @@ public:
 
     // Constructors
 
-        //- Construct for given size (rows == cols)
+        //- Construct for given size (rows == cols), uninitialised content
         inline explicit SquareMatrix(const label n);
 
         //- Construct for given size (rows == cols)
