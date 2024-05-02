@@ -193,7 +193,8 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
         if (line.starts_with("$ANSA_NAME"))
         {
             // Keep empty elements when splitting
-            const auto args = stringOps::split<std::string>(line, ';', true);
+            const auto args =
+                stringOps::split<std::string>(line, ';', 0, true);
 
             if (args.size() > 4 && line.starts_with("$ANSA_NAME_COMMENT"))
             {

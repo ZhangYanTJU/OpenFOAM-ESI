@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,6 +34,7 @@ Description
 #include "argList.H"
 #include "fileName.H"
 #include "stringOps.H"
+#include "Switch.H"
 
 using namespace Foam;
 
@@ -65,6 +66,9 @@ int main(int argc, char *argv[])
 {
     argList::noBanner();
     argList::noParallel();
+    argList::noMandatoryArgs();
+    argList::addArgument("string .. stringN");
+
     argList::addOption
     (
         "any",
@@ -89,6 +93,12 @@ int main(int argc, char *argv[])
         "int",
         "test split on fixed width"
     );
+    argList::addOption
+    (
+        "begin",
+        "int",
+        "begin offset for splits"
+    );
     argList::addBoolOption
     (
         "slash",
@@ -104,17 +114,24 @@ int main(int argc, char *argv[])
         "empty",
         "preserve empty strings in split"
     );
-    argList args(argc, argv, false, true);
+
+    argList args(argc, argv);
 
     if (args.size() <= 1 && args.options().empty())
     {
         args.printUsage();
     }
 
+    const label beginOffset = args.getOrDefault<label>("begin", 0);
+
     const bool keepEmpty = args.found("empty");
+
+    Info<< "begin offset: " << beginOffset << nl;
+    Info<< "keep empty  : " << Switch::name(keepEmpty) << nl;
 
     const label nopts =
         args.count({"any", "slash", "space", "sub", "fixed", "char"});
+
 
     if (args.found("any"))
     {
@@ -125,7 +142,7 @@ int main(int argc, char *argv[])
 
         for (label argi=1; argi < args.size(); ++argi)
         {
-            const auto split = stringOps::splitAny(args[argi], str);
+            auto split = stringOps::splitAny(args[argi], str, beginOffset);
             printSubStrings(args[argi], split);
         }
 
@@ -144,7 +161,7 @@ int main(int argc, char *argv[])
 
         for (label argi=1; argi < args.size(); ++argi)
         {
-            const auto split = stringOps::split(args[argi], str);
+            auto split = stringOps::split(args[argi], str, beginOffset);
             printSubStrings(args[argi], split);
         }
 
@@ -161,7 +178,11 @@ int main(int argc, char *argv[])
 
         for (label argi=1; argi < args.size(); ++argi)
         {
-            const auto split = stringOps::splitSpace(args[argi]);
+            auto split = stringOps::splitSpace(args[argi], beginOffset);
+            printSubStrings(args[argi], split);
+
+            Info<< "pop_front(2)" << nl;
+            split.pop_front(2);
             printSubStrings(args[argi], split);
         }
 
@@ -180,7 +201,8 @@ int main(int argc, char *argv[])
 
         for (label argi=1; argi < args.size(); ++argi)
         {
-            const auto split = stringOps::split(args[argi], delim, keepEmpty);
+            auto split =
+                stringOps::split(args[argi], delim, beginOffset, keepEmpty);
             printSubStrings(args[argi], split);
         }
 
@@ -199,7 +221,7 @@ int main(int argc, char *argv[])
 
         for (label argi=1; argi < args.size(); ++argi)
         {
-            const auto split = stringOps::splitFixed(args[argi], width);
+            auto split = stringOps::splitFixed(args[argi], width, beginOffset);
             printSubStrings(args[argi], split);
         }
 
@@ -219,7 +241,8 @@ int main(int argc, char *argv[])
 
         for (label argi=1; argi < args.size(); ++argi)
         {
-            const auto split = stringOps::split(args[argi], delim, keepEmpty);
+            auto split =
+                stringOps::split(args[argi], delim, beginOffset, keepEmpty);
             printSubStrings(args[argi], split);
         }
     }

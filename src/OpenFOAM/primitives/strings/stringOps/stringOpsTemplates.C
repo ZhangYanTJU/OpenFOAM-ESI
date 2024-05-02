@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -98,34 +98,40 @@ Foam::SubStrings<StringType> Foam::stringOps::split
 (
     const StringType& str,
     const char delim,
+    std::string::size_type pos,
     const bool keepEmpty
 )
 {
-    Foam::SubStrings<StringType> lst;
-    if (str.empty() || !delim)
+    Foam::SubStrings<StringType> list;
+
+    if
+    (
+        !delim
+     || (pos == std::string::npos || pos >= str.size())
+    )
     {
-        return lst;
+        return list;
     }
 
-    lst.reserve(20);
+    list.reserve(20);
 
-    std::string::size_type beg = 0, end = 0;
-    while ((end = str.find(delim, beg)) != std::string::npos)
+    std::string::size_type end;
+    while ((end = str.find(delim, pos)) != std::string::npos)
     {
-        if (keepEmpty || (beg < end))
+        if (keepEmpty || (pos < end))
         {
-            lst.append(str.cbegin() + beg, str.cbegin() + end);
+            list.append(str.cbegin() + pos, str.cbegin() + end);
         }
-        beg = end + 1;
+        pos = end + 1;
     }
 
     // Trailing element
-    if (keepEmpty ? (beg <= str.size()) : (beg < str.size()))
+    if (keepEmpty ? (pos <= str.size()) : (pos < str.size()))
     {
-        lst.append(str.cbegin() + beg, str.cend());
+        list.append(str.cbegin() + pos, str.cend());
     }
 
-    return lst;
+    return list;
 }
 
 
@@ -134,34 +140,40 @@ Foam::SubStrings<StringType> Foam::stringOps::split
 (
     const StringType& str,
     const std::string& delim,
+    std::string::size_type pos,
     const bool keepEmpty
 )
 {
-    Foam::SubStrings<StringType> lst;
-    if (str.empty() || delim.empty())
+    Foam::SubStrings<StringType> list;
+
+    if
+    (
+        delim.empty()
+     || (pos == std::string::npos || pos >= str.size())
+    )
     {
-        return lst;
+        return list;
     }
 
-    lst.reserve(20);
+    list.reserve(20);
 
-    std::string::size_type beg = 0, end = 0;
-    while ((end = str.find(delim, beg)) != std::string::npos)
+    std::string::size_type end;
+    while ((end = str.find(delim, pos)) != std::string::npos)
     {
-        if (keepEmpty || (beg < end))
+        if (keepEmpty || (pos < end))
         {
-            lst.append(str.cbegin() + beg, str.cbegin() + end);
+            list.append(str.cbegin() + pos, str.cbegin() + end);
         }
-        beg = end + delim.size();
+        pos = end + delim.size();
     }
 
     // Trailing element
-    if (keepEmpty ? (beg <= str.size()) : (beg < str.size()))
+    if (keepEmpty ? (pos <= str.size()) : (pos < str.size()))
     {
-        lst.append(str.cbegin() + beg, str.cend());
+        list.append(str.cbegin() + pos, str.cend());
     }
 
-    return lst;
+    return list;
 }
 
 
@@ -169,40 +181,41 @@ template<class StringType>
 Foam::SubStrings<StringType> Foam::stringOps::splitAny
 (
     const StringType& str,
-    const std::string& delim
+    const std::string& delim,
+    std::string::size_type pos
 )
 {
-    Foam::SubStrings<StringType> lst;
-    if (str.empty() || delim.empty())
+    Foam::SubStrings<StringType> list;
+
+    if
+    (
+        delim.empty()
+     || (pos == std::string::npos || pos >= str.size())
+    )
     {
-        return lst;
+        return list;
     }
 
-    lst.reserve(20);
+    list.reserve(20);
 
-    for
-    (
-        std::string::size_type pos = 0;
-        (pos = str.find_first_not_of(delim, pos)) != std::string::npos;
-        /*nil*/
-    )
+    while ((pos = str.find_first_not_of(delim, pos)) != std::string::npos)
     {
         const auto end = str.find_first_of(delim, pos);
 
         if (end == std::string::npos)
         {
             // Trailing element
-            lst.append(str.cbegin() + pos, str.cend());
+            list.append(str.cbegin() + pos, str.cend());
             break;
         }
 
         // Intermediate element
-        lst.append(str.cbegin() + pos, str.cbegin() + end);
+        list.append(str.cbegin() + pos, str.cbegin() + end);
 
         pos = end + 1;
     }
 
-    return lst;
+    return list;
 }
 
 
@@ -211,43 +224,53 @@ Foam::SubStrings<StringType> Foam::stringOps::splitFixed
 (
     const StringType& str,
     const std::string::size_type width,
-    const std::string::size_type start
+    std::string::size_type pos
 )
 {
-    Foam::SubStrings<StringType> lst;
-    if (str.empty() || !width)
+    Foam::SubStrings<StringType> list;
+
+    if
+    (
+        !width
+     || (pos == std::string::npos || pos >= str.size())
+    )
     {
-        return lst;
+        return list;
     }
 
-    const auto len = str.size();
-    lst.reserve(1 + (len / width));
+    list.reserve(1 + ((str.size() - pos) / width));
 
-    for (std::string::size_type pos = start; pos < len; pos += width)
+    const auto len = str.size();
+
+    while (pos < len)
     {
         const auto end = (pos + width);
 
         if (end >= len)
         {
             // Trailing element
-            lst.append(str.cbegin() + pos, str.cend());
+            list.append(str.cbegin() + pos, str.cend());
             break;
         }
 
-        lst.append(str.cbegin() + pos, str.cbegin() + end);
+        // Intermediate element
+        list.append(str.cbegin() + pos, str.cbegin() + end);
+
+        pos += width;
     }
 
-    return lst;
+    return list;
 }
 
 
 template<class StringType>
 Foam::SubStrings<StringType> Foam::stringOps::splitSpace
 (
-    const StringType& str
+    const StringType& str,
+    std::string::size_type pos
 )
 {
-    return splitAny(str, "\t\n\v\f\r ");
+    return splitAny(str, "\t\n\v\f\r ", pos);
 }
 
 

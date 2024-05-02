@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
         );
 
         Info<< testInput << nl;
-        SubStrings<string> args = stringOps::splitSpace(testInput);
+        auto args = stringOps::splitSpace(testInput);
         Info<< "split into " << args.size() << " args" << nl;
 
         CStringList inC(args);

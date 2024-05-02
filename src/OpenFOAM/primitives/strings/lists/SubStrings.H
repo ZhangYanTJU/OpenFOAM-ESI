@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,12 +66,6 @@ public:
             typename StringType::const_iterator;
 
 
-    // Constructors
-
-        //- Default construct
-        SubStrings() = default;
-
-
     // Member Functions
 
         //- The total string length of all sub-elements.
@@ -108,6 +102,40 @@ public:
 
             this->push_back(range);
         }
+
+
+        //- Reduce size by 1 or more elements. Can be called on an empty list.
+        void pop_back(size_t n = 1)
+        {
+            if (n >= this->size())
+            {
+                this->clear();
+            }
+            else if (n > 0)
+            {
+                this->resize(this->size() - n);
+            }
+        }
+
+        //- Reduce size by 1 or more elements (from the front).
+        //- Can be called on an empty list.
+        void pop_front(size_t n = 1)
+        {
+            if (n >= this->size())
+            {
+                this->clear();
+            }
+            else if (n > 0)
+            {
+                // Overlapping range, avoid std::copy, std::move
+                for (size_t src = n, dst = 0; src < this->size(); ++src, ++dst)
+                {
+                    (*this)[dst] = (*this)[src];
+                }
+                this->resize(this->size() - n);
+            }
+        }
+
 
     // FUTURE?
     //  #if __cplusplus >= 201703L

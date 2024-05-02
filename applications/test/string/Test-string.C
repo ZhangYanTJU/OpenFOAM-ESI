@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 
             Info<< "input:  " << input  << nl
                 << "expand: " << output << nl
-                << "split: " << stringOps::split(output, "/") << nl << nl;
+                << "split: " << stringOps::split(output, '/') << nl << nl;
         }
     }
 

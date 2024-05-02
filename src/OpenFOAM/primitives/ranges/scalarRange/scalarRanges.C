@@ -36,7 +36,7 @@ Foam::scalarRanges Foam::scalarRanges::parse
     bool report
 )
 {
-    const SubStrings<std::string> items = stringOps::splitAny(str, " ,;");
+    const auto items = stringOps::splitAny(str, " ,;");
 
     scalarRanges ranges(items.size());
 
