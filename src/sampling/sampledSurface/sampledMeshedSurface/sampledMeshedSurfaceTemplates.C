@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,7 +39,11 @@ Foam::sampledMeshedSurface::sampleOnFaces
 {
     const Type deflt
     (
-        defaultValues_.getOrDefault<Type>(sampler.psi().name(), Zero)
+        defaultValues_.getOrDefault<Type>
+        (
+            sampler.psi().name(),
+            Foam::zero{}
+        )
     );
 
     const labelList& elements = sampleElements_;
@@ -71,13 +75,16 @@ Foam::sampledMeshedSurface::sampleOnFaces
 
     const polyBoundaryMesh& pbm = mesh().boundaryMesh();
 
-    Field<Type> bVals(mesh().nBoundaryFaces(), Zero);
+    Field<Type> bVals(mesh().nBoundaryFaces(), deflt);
 
     const auto& bField = sampler.psi().boundaryField();
 
     forAll(bField, patchi)
     {
-        SubList<Type>(bVals, pbm[patchi].range()) = bField[patchi];
+        // Note: restrict transcribing to actual size of the patch field
+        // - handles "empty" patch type etc.
+        const auto& pfld = bField[patchi];
+        SubList<Type>(bVals, pfld.size(), pbm[patchi].offset()) = pfld;
     }
 
     // Sample within the flat boundary field
@@ -109,7 +116,11 @@ Foam::sampledMeshedSurface::sampleOnPoints
 {
     const Type deflt
     (
-        defaultValues_.getOrDefault<Type>(interpolator.psi().name(), Zero)
+        defaultValues_.getOrDefault<Type>
+        (
+            interpolator.psi().name(),
+            Foam::zero{}
+        )
     );
 
     const labelList& elements = sampleElements_;
