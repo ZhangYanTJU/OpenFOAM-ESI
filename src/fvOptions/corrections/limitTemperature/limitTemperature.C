@@ -199,16 +199,19 @@ void Foam::fv::limitTemperature::correct(volScalarField& he)
     const scalar nBelowMinPercent = percent(nBelowMin, nTotCells);
     const scalar nAboveMaxPercent = percent(nAboveMax, nTotCells);
 
-    Info<< type() << ' ' << name_ << " Lower limited " << nBelowMin << " ("
-        << nBelowMinPercent
-        << "%) of cells, with min limit " << Tmin_ << endl;
+    Info<< type() << "=" << name_ << ", Type=Lower"
+        << ", LimitedCells=" << nBelowMin
+        << ", CellsPercent=" << nBelowMinPercent
+        << ", Tmin=" << Tmin_
+        << ", UnlimitedTmin=" << Tmin0
+        << endl;
 
-    Info<< type() << ' ' << name_ << " Upper limited " << nAboveMax << " ("
-        << nAboveMaxPercent
-        << "%) of cells, with max limit " << Tmax_ << endl;
-
-    Info<< type() << ' ' << name_ << " Unlimited Tmin " << Tmin0 << endl;
-    Info<< type() << ' ' << name_ << " Unlimited Tmax " << Tmax0 << endl;
+    Info<< type() << "=" << name_ << ", Type=Upper"
+        << ", LimitedCells=" << nAboveMax
+        << ", CellsPercent=" << nAboveMaxPercent
+        << ", Tmax=" << Tmax_
+        << ", UnlimitedTmax=" << Tmax0
+        << endl;
 
 
     if (canWriteToFile())
