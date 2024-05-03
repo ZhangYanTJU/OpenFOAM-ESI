@@ -44,6 +44,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF),
     cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p)),
+    lowWeightOption_(lowWeightCorrectionBase::option::ASSIGN),
     patchNeighbourFieldPtr_(nullptr)
 {}
 
@@ -59,6 +60,15 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ),
     cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p, dict)),
+    lowWeightOption_
+    (
+        lowWeightCorrectionBase::optionNames_.getOrDefault
+        (
+            "lowWeightOption",
+            dict,
+            lowWeightCorrectionBase::option::ASSIGN
+        )
+    ),
     patchNeighbourFieldPtr_(nullptr)
 {
     if (!isA<cyclicAMIFvPatch>(p))
@@ -114,6 +124,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, p, iF, mapper),
     cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p)),
+    lowWeightOption_(ptf.lowWeightOption_),
     patchNeighbourFieldPtr_(nullptr)
 {
     //if (ptf.patchNeighbourFieldPtr_ && cacheNeighbourField())
@@ -152,6 +163,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf),
     cyclicAMIPatch_(ptf.cyclicAMIPatch_),
+    lowWeightOption_(ptf.lowWeightOption_),
     patchNeighbourFieldPtr_(nullptr)
 {
     if (debug && !ptf.all_ready())
@@ -173,6 +185,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, iF),
     cyclicAMIPatch_(ptf.cyclicAMIPatch_),
+    lowWeightOption_(ptf.lowWeightOption_),
     patchNeighbourFieldPtr_(nullptr)
 {
     if (debug && !ptf.all_ready())
@@ -994,6 +1007,12 @@ void Foam::cyclicAMIFvPatchField<Type>::write(Ostream& os) const
     {
         patchNeighbourFieldPtr_->writeEntry("neighbourValue", os);
     }
+
+    os.writeEntry
+    (
+        "lowWeightOption",
+        lowWeightCorrectionBase::optionNames_[lowWeightOption_]
+    );
 }
 
 

@@ -71,6 +71,7 @@ SourceFiles
 #include "cyclicAMIFvPatch.H"
 #include "coupledFvPatchField.H"
 #include "cyclicAMILduInterfaceField.H"
+#include "lowWeightCorrectionBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -91,6 +92,10 @@ class cyclicAMIFvPatchField
 
         //- Local reference cast into the cyclic patch
         const cyclicAMIFvPatch& cyclicAMIPatch_;
+
+        //- Low weight correction mode
+        //  Default: assign (same as v2312 and earlier)
+        lowWeightCorrectionBase::option lowWeightOption_;
 
 
         // Sending and receiving (distributed AMI)
