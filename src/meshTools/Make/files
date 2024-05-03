@@ -276,6 +276,7 @@ processorLOD/cellBox/cellBox.C
 processorLOD/faceBox/faceBox.C
 
 AMI=AMIInterpolation
+$(AMI)/AMIInterpolation/AMIFieldOps/lowWeightCorrectionBase.C
 $(AMI)/AMIInterpolation/AMIInterpolation.C
 $(AMI)/AMIInterpolation/AMIInterpolationNew.C
 $(AMI)/AMIInterpolation/advancingFrontAMI/advancingFrontAMI.C
