@@ -217,20 +217,34 @@ public:
             tmp<Field<Type>> interpolate
             (
                 const Field<Type>& fld,
-                const UList<Type>& defaultValues = UList<Type>()
+                const UList<Type>& defaultValues = UList<Type>::null(),
+                const lowWeightCorrectionBase::option& lwOption =
+                    lowWeightCorrectionBase::option::ASSIGN
             ) const
             {
-                return cyclicAMIPolyPatch_.interpolate(fld, defaultValues);
+                return cyclicAMIPolyPatch_.interpolate
+                (
+                    fld,
+                    defaultValues,
+                    lwOption
+                );
             }
 
             template<class Type>
             tmp<Field<Type>> interpolate
             (
                 const tmp<Field<Type>>& tFld,
-                const UList<Type>& defaultValues = UList<Type>()
+                const UList<Type>& defaultValues = UList<Type>::null(),
+                const lowWeightCorrectionBase::option& lwOption =
+                    lowWeightCorrectionBase::option::ASSIGN
             ) const
             {
-                return cyclicAMIPolyPatch_.interpolate(tFld, defaultValues);
+                return cyclicAMIPolyPatch_.interpolate
+                (
+                    tFld,
+                    defaultValues,
+                    lwOption
+                );
             }
 
 

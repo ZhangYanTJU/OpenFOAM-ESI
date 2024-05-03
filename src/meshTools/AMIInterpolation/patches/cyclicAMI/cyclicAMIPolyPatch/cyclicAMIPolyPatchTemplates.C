@@ -26,22 +26,30 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "AMIFieldOps.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolateUntransformed
 (
     const Field<Type>& fld,
-    const UList<Type>& defaultValues
+    const UList<Type>& defaultValues,
+    const lowWeightCorrectionBase::option& lwOption
 ) const
 {
     if (owner())
     {
-        return AMI().interpolateToSource(fld, defaultValues);
+        return AMI().interpolateToSource(fld, defaultValues, lwOption);
     }
     else
     {
-        return neighbPatch().AMI().interpolateToTarget(fld, defaultValues);
+        return neighbPatch().AMI().interpolateToTarget
+        (
+            fld,
+            defaultValues,
+            lwOption
+        );
     }
 }
 
@@ -50,7 +58,8 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
 (
     const Field<Type>& fld,
-    const UList<Type>& defaultValues
+    const UList<Type>& defaultValues,
+    const lowWeightCorrectionBase::option& lwOption
 ) const
 {
     autoPtr<coordSystem::cylindrical> cs;
@@ -65,7 +74,7 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
 
     if (!cs)
     {
-        return interpolateUntransformed(fld, defaultValues);
+        return interpolateUntransformed(fld, defaultValues, lwOption);
     }
     else
     {
@@ -141,7 +150,7 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
         return Foam::transform
         (
             ownT,
-            interpolateUntransformed(localFld, localDeflt)
+            interpolateUntransformed(localFld, localDeflt, lwOption)
         );
     }
 }
@@ -151,10 +160,11 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
 (
     const tmp<Field<Type>>& tFld,
-    const UList<Type>& defaultValues
+    const UList<Type>& defaultValues,
+    const lowWeightCorrectionBase::option& lwOption
 ) const
 {
-    return interpolate(tFld(), defaultValues);
+    return interpolate(tFld(), defaultValues, lwOption);
 }
 
 
@@ -245,7 +255,8 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     const Field<Type>& localFld,
     const labelRange& requests,
     const PtrList<List<Type>>& recvBuffers,
-    const UList<Type>& defaultValues
+    const UList<Type>& defaultValues,
+    const lowWeightCorrectionBase::option& lwOption
 ) const
 {
     const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());
@@ -272,13 +283,9 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
 
     if (!cs)
     {
-        AMI.weightedSum
-        (
-            owner(),
-            fld,
-            tresult.ref(),
-            defaultValues
-        );
+        AMICorrectedMultiplyWeightedOp<Type> cop(AMI, owner(), lwOption);
+
+        cop(tresult.ref(), fld, defaultValues);
     }
     else
     {
@@ -296,13 +303,8 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
             Foam::invTransform(localDeflt, ownT, defaultFld);
         }
 
-        AMI.weightedSum
-        (
-            owner(),
-            fld,
-            tresult.ref(),
-            localDeflt
-        );
+        AMICorrectedMultiplyWeightedOp<Type> cop(AMI, owner(), lwOption);
+        cop(tresult.ref(), fld, defaultValues);
 
         // Transform back
         Foam::transform(tresult.ref(), ownT, tresult());
@@ -356,26 +358,7 @@ void Foam::cyclicAMIPolyPatch::interpolate
         }
 
         // Do actual AMI interpolation
-        if (owner())
-        {
-            AMI().interpolateToSource
-            (
-                fld,
-                cop,
-                result,
-                localDeflt
-            );
-        }
-        else
-        {
-            neighbPatch().AMI().interpolateToTarget
-            (
-                fld,
-                cop,
-                result,
-                localDeflt
-            );
-        }
+        AMI().interpolate(fld, cop, result, defaultValues);
 
         // Transform back. Result is now at *this
         Foam::transform(result, ownT, result);
@@ -383,26 +366,7 @@ void Foam::cyclicAMIPolyPatch::interpolate
     else
     */
     {
-        if (owner())
-        {
-            AMI().interpolateToSource
-            (
-                fld,
-                cop,
-                result,
-                defaultValues
-            );
-        }
-        else
-        {
-            neighbPatch().AMI().interpolateToTarget
-            (
-                fld,
-                cop,
-                result,
-                defaultValues
-            );
-        }
+        AMI().interpolate(fld, cop, result, defaultValues);
     }
 }
 

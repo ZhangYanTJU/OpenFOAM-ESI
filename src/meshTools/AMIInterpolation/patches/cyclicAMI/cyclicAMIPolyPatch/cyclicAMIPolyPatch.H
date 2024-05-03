@@ -483,7 +483,9 @@ public:
                 tmp<Field<Type>> interpolate
                 (
                     const Field<Type>& fld,
-                    const UList<Type>& defaultValues = UList<Type>()
+                    const UList<Type>& defaultValues = UList<Type>(),
+                    const lowWeightCorrectionBase::option& lwOption =
+                        lowWeightCorrectionBase::option::ASSIGN
                 ) const;
 
                 //- Interpolate tmp field
@@ -491,7 +493,9 @@ public:
                 tmp<Field<Type>> interpolate
                 (
                     const tmp<Field<Type>>& tFld,
-                    const UList<Type>& defaultValues = UList<Type>()
+                    const UList<Type>& defaultValues = UList<Type>(),
+                    const lowWeightCorrectionBase::option& lwOption =
+                        lowWeightCorrectionBase::option::ASSIGN
                 ) const;
 
                 //- Interpolate without periodic
@@ -499,7 +503,9 @@ public:
                 tmp<Field<Type>> interpolateUntransformed
                 (
                     const Field<Type>& fld,
-                    const UList<Type>& defaultValues
+                    const UList<Type>& defaultValues,
+                    const lowWeightCorrectionBase::option& lwOption =
+                        lowWeightCorrectionBase::option::ASSIGN
                 ) const;
 
                 //- Low-level interpolate List
@@ -541,7 +547,9 @@ public:
                     const Field<Type>& localFld,
                     const labelRange& requests,  // The receive requests
                     const PtrList<List<Type>>& recvBuffers,
-                    const UList<Type>& defaultValues
+                    const UList<Type>& defaultValues,
+                    const lowWeightCorrectionBase::option& lwOption =
+                        lowWeightCorrectionBase::option::ASSIGN
                 ) const;
 
 

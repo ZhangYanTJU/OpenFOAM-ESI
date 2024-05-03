@@ -311,7 +311,8 @@ Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField
         defaultValues = Field<Type>(iField, cyclicAMIPatch_.faceCells());
     }
 
-    tmp<Field<Type>> tpnf = cyclicAMIPatch_.interpolate(pnf, defaultValues);
+    tmp<Field<Type>> tpnf =
+        cyclicAMIPatch_.interpolate(pnf, defaultValues, lowWeightOption_);
 
     if (doTransform())
     {
@@ -539,7 +540,8 @@ void Foam::cyclicAMIFvPatchField<Type>::evaluate
                 Field<Type>::null(),    // Not used for distributed
                 recvRequests_,
                 recvBufs_,
-                defaultValues
+                defaultValues,
+                lowWeightOption_
             ).ptr()
         );
 
@@ -665,7 +667,8 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
                 solveScalarField::null(),   // Not used for distributed
                 recvRequests_,
                 scalarRecvBufs_,
-                defaultValues
+                defaultValues,
+                lowWeightOption_
             );
 
         // Receive requests all handled by last function call
@@ -687,7 +690,7 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
         // Transform according to the transformation tensors
         transformCoupleField(pnf, cmpt);
 
-        pnf = cyclicAMIPatch_.interpolate(pnf, defaultValues);
+        pnf = cyclicAMIPatch_.interpolate(pnf, defaultValues, lowWeightOption_);
     }
 
     // Multiply the field by coefficients and add into the result
@@ -799,7 +802,8 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
                 Field<Type>::null(),  // Not used for distributed
                 recvRequests_,
                 recvBufs_,
-                defaultValues
+                defaultValues,
+                lowWeightOption_
             );
 
         // Receive requests all handled by last function call
@@ -821,7 +825,7 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
             defaultValues = Field<Type>(psiInternal, faceCells);
         }
 
-        pnf = cyclicAMIPatch_.interpolate(pnf, defaultValues);
+        pnf = cyclicAMIPatch_.interpolate(pnf, defaultValues, lowWeightOption_);
     }
 
     // Multiply the field by coefficients and add into the result
