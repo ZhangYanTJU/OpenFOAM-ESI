@@ -28,266 +28,80 @@ License
 
 #include "profiling.H"
 #include "mapDistribute.H"
+#include "AMIFieldOps.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Type, class CombineOp>
-void Foam::AMIInterpolation::weightedSum
+void Foam::AMIInterpolation::interpolate
 (
-    const scalar lowWeightCorrection,
-    const labelListList& allSlots,
-    const scalarListList& allWeights,
-    const scalarField& weightsSum,
     const UList<Type>& fld,
     const CombineOp& cop,
     List<Type>& result,
     const UList<Type>& defaultValues
-)
+) const
 {
-    if (lowWeightCorrection > 0)
-    {
-        forAll(result, facei)
-        {
-            if (weightsSum[facei] < lowWeightCorrection)
-            {
-                result[facei] = defaultValues[facei];
-            }
-            else
-            {
-                const labelList& slots = allSlots[facei];
-                const scalarList& weights = allWeights[facei];
+    addProfiling(ami, "AMIInterpolation::interpolate");
 
-                forAll(slots, i)
-                {
-                    cop(result[facei], facei, fld[slots[i]], weights[i]);
-                }
-            }
-        }
+    label inSize = cop.toSource() ? tgtAddress_.size() : srcAddress_.size();
+
+    if (fld.size() != inSize)
+    {
+        FatalErrorInFunction
+            << "Supplied field size is not equal to expected field size ("
+            << inSize << ")" << nl
+            << "    source patch   = " << srcAddress_.size() << nl
+            << "    target patch   = " << tgtAddress_.size() << nl
+            << "    supplied field = " << fld.size()
+            << abort(FatalError);
+    }
+
+
+    label outSize = cop.toSource() ? srcAddress_.size() : tgtAddress_.size();
+    result.resize_nocopy(outSize);
+
+    if (distributed())
+    {
+        const auto& map = cop.toSource() ? tgtMapPtr_() : srcMapPtr_();
+        List<Type> work = fld;  // deep copy
+        map.distribute(work);
+
+        // Apply interpolation
+        cop(result, work, defaultValues);
     }
     else
     {
-        forAll(result, facei)
-        {
-            const labelList& slots = allSlots[facei];
-            const scalarList& weights = allWeights[facei];
-
-            forAll(slots, i)
-            {
-                cop(result[facei], facei, fld[slots[i]], weights[i]);
-            }
-        }
+        // Apply interpolation
+        cop(result, fld, defaultValues);
     }
-}
-
-
-template<class Type>
-void Foam::AMIInterpolation::weightedSum
-(
-    const bool interpolateToSource,
-    const UList<Type>& fld,
-    List<Type>& result,
-    const UList<Type>& defaultValues
-) const
-{
-    weightedSum
-    (
-        lowWeightCorrection_,
-        (interpolateToSource ? srcAddress_ : tgtAddress_),
-        (interpolateToSource ? srcWeights_ : tgtWeights_),
-        (interpolateToSource ? srcWeightsSum_ : tgtWeightsSum_),
-        fld,
-        multiplyWeightedOp<Type, plusEqOp<Type>>(plusEqOp<Type>()),
-        result,
-        defaultValues
-    );
 }
 
 
 template<class Type, class CombineOp>
-void Foam::AMIInterpolation::interpolateToTarget
-(
-    const UList<Type>& fld,
-    const CombineOp& cop,
-    List<Type>& result,
-    const UList<Type>& defaultValues
-) const
-{
-    addProfiling(ami, "AMIInterpolation::interpolateToTarget");
-
-    if (fld.size() != srcAddress_.size())
-    {
-        FatalErrorInFunction
-            << "Supplied field size is not equal to source patch size" << nl
-            << "    source patch   = " << srcAddress_.size() << nl
-            << "    target patch   = " << tgtAddress_.size() << nl
-            << "    supplied field = " << fld.size()
-            << abort(FatalError);
-    }
-    else if
-    (
-        (lowWeightCorrection_ > 0)
-     && (defaultValues.size() != tgtAddress_.size())
-    )
-    {
-        FatalErrorInFunction
-            << "Employing default values when sum of weights falls below "
-            << lowWeightCorrection_
-            << " but supplied default field size is not equal to target "
-            << "patch size" << nl
-            << "    default values = " << defaultValues.size() << nl
-            << "    target patch   = " << tgtAddress_.size() << nl
-            << abort(FatalError);
-    }
-
-    result.setSize(tgtAddress_.size());
-    List<Type> work;
-
-    if (distributed())
-    {
-        const mapDistribute& map = srcMapPtr_();
-        work = fld;  // deep copy
-        map.distribute(work);
-    }
-
-    weightedSum
-    (
-        lowWeightCorrection_,
-        tgtAddress_,
-        tgtWeights_,
-        tgtWeightsSum_,
-        (distributed() ? work : fld),
-        cop,
-        result,
-        defaultValues
-    );
-}
-
-
-template<class Type, class CombineOp>
-void Foam::AMIInterpolation::interpolateToSource
-(
-    const UList<Type>& fld,
-    const CombineOp& cop,
-    List<Type>& result,
-    const UList<Type>& defaultValues
-) const
-{
-    addProfiling(ami, "AMIInterpolation::interpolateToSource");
-
-    if (fld.size() != tgtAddress_.size())
-    {
-        FatalErrorInFunction
-            << "Supplied field size is not equal to target patch size" << nl
-            << "    source patch   = " << srcAddress_.size() << nl
-            << "    target patch   = " << tgtAddress_.size() << nl
-            << "    supplied field = " << fld.size()
-            << abort(FatalError);
-    }
-    else if
-    (
-        (lowWeightCorrection_ > 0)
-     && (defaultValues.size() != srcAddress_.size())
-    )
-    {
-        FatalErrorInFunction
-            << "Employing default values when sum of weights falls below "
-            << lowWeightCorrection_
-            << " but number of default values is not equal to source "
-            << "patch size" << nl
-            << "    default values = " << defaultValues.size() << nl
-            << "    source patch   = " << srcAddress_.size() << nl
-            << abort(FatalError);
-    }
-
-    result.setSize(srcAddress_.size());
-    List<Type> work;
-
-    if (distributed())
-    {
-        const mapDistribute& map = tgtMapPtr_();
-        work = fld;  // deep copy
-        map.distribute(work);
-    }
-
-    weightedSum
-    (
-        lowWeightCorrection_,
-        srcAddress_,
-        srcWeights_,
-        srcWeightsSum_,
-        (distributed() ? work : fld),
-        cop,
-        result,
-        defaultValues
-    );
-}
-
-
-template<class Type, class CombineOp>
-Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolateToSource
+Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolate
 (
     const Field<Type>& fld,
     const CombineOp& cop,
     const UList<Type>& defaultValues
 ) const
 {
-    auto tresult = tmp<Field<Type>>::New(srcAddress_.size(), Zero);
+    auto tresult = tmp<Field<Type>>::New();
 
-    interpolateToSource
-    (
-        fld,
-        multiplyWeightedOp<Type, CombineOp>(cop),
-        tresult.ref(),
-        defaultValues
-    );
+    interpolate(fld, cop, tresult.ref(), defaultValues);
 
     return tresult;
 }
 
 
 template<class Type, class CombineOp>
-Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolateToSource
+Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolate
 (
     const tmp<Field<Type>>& tFld,
     const CombineOp& cop,
     const UList<Type>& defaultValues
 ) const
 {
-    return interpolateToSource(tFld(), cop, defaultValues);
-}
-
-
-template<class Type, class CombineOp>
-Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolateToTarget
-(
-    const Field<Type>& fld,
-    const CombineOp& cop,
-    const UList<Type>& defaultValues
-) const
-{
-    auto tresult = tmp<Field<Type>>::New(tgtAddress_.size(), Zero);
-
-    interpolateToTarget
-    (
-        fld,
-        multiplyWeightedOp<Type, CombineOp>(cop),
-        tresult.ref(),
-        defaultValues
-    );
-
-    return tresult;
-}
-
-
-template<class Type, class CombineOp>
-Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolateToTarget
-(
-    const tmp<Field<Type>>& tFld,
-    const CombineOp& cop,
-    const UList<Type>& defaultValues
-) const
-{
-    return interpolateToTarget(tFld(), cop, defaultValues);
+    return interpolate(tFld(), cop, defaultValues);
 }
 
 
@@ -295,10 +109,13 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolateToSource
 (
     const Field<Type>& fld,
-    const UList<Type>& defaultValues
+    const UList<Type>& defaultValues,
+    const lowWeightCorrectionBase::option& lwOption
 ) const
 {
-    return interpolateToSource(fld, plusEqOp<Type>(), defaultValues);
+    AMICorrectedMultiplyWeightedOp<Type> cop(*this, true, lwOption);
+
+    return interpolate(fld, cop, defaultValues);
 }
 
 
@@ -306,10 +123,11 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolateToSource
 (
     const tmp<Field<Type>>& tFld,
-    const UList<Type>& defaultValues
+    const UList<Type>& defaultValues,
+    const lowWeightCorrectionBase::option& lwOption
 ) const
 {
-    return interpolateToSource(tFld(), plusEqOp<Type>(), defaultValues);
+    return interpolateToSource(tFld(), defaultValues, lwOption);
 }
 
 
@@ -317,10 +135,13 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolateToTarget
 (
     const Field<Type>& fld,
-    const UList<Type>& defaultValues
+    const UList<Type>& defaultValues,
+    const lowWeightCorrectionBase::option& lwOption
 ) const
 {
-    return interpolateToTarget(fld, plusEqOp<Type>(), defaultValues);
+    AMICorrectedMultiplyWeightedOp<Type> cop(*this, false, lwOption);
+
+    return interpolate(fld, cop, defaultValues);
 }
 
 
@@ -328,10 +149,11 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::AMIInterpolation::interpolateToTarget
 (
     const tmp<Field<Type>>& tFld,
-    const UList<Type>& defaultValues
+    const UList<Type>& defaultValues,
+    const lowWeightCorrectionBase::option& lwOption
 ) const
 {
-    return interpolateToTarget(tFld(), plusEqOp<Type>(), defaultValues);
+    return interpolateToTarget(tFld(), defaultValues, lwOption);
 }
 
 

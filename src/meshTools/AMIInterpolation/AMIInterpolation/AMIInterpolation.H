@@ -61,7 +61,7 @@ SourceFiles
 #include "indexedOctree.H"
 #include "treeDataPrimitivePatch.H"
 #include "runTimeSelectionTables.H"
-
+#include "lowWeightCorrectionBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -512,39 +512,21 @@ public:
             //- Normalise the weights
             void normaliseWeights(const bool conformal, const bool output);
 
+            //- Remove source face connection
+            void removeSourceConnection(const label facei);
+
+            //- Remove target face connection
+            void removeTargetConnection(const label facei);
+
 
         // Evaluation
 
             // Low-level
 
-                //- Weighted sum of contributions
+                //- Interpolate with supplied op to combine existing value
+                //- with remote value and weight
                 template<class Type, class CombineOp>
-                static void weightedSum
-                (
-                    const scalar lowWeightCorrection,
-                    const labelListList& allSlots,
-                    const scalarListList& allWeights,
-                    const scalarField& weightsSum,
-                    const UList<Type>& fld,
-                    const CombineOp& cop,
-                    List<Type>& result,
-                    const UList<Type>& defaultValues
-                );
-
-                //- Weighted sum of contributions
-                template<class Type>
-                void weightedSum
-                (
-                    const bool interpolateToSource,
-                    const UList<Type>& fld,
-                    List<Type>& result,
-                    const UList<Type>& defaultValues
-                ) const;
-
-                //- Interpolate from target to source with supplied op
-                //- to combine existing value with remote value and weight
-                template<class Type, class CombineOp>
-                void interpolateToSource
+                void interpolate
                 (
                     const UList<Type>& fld,
                     const CombineOp& cop,
@@ -552,48 +534,18 @@ public:
                     const UList<Type>& defaultValues = UList<Type>::null()
                 ) const;
 
-                //- Interpolate from source to target with supplied op
-                //- to combine existing value with remote value and weight
-                template<class Type, class CombineOp>
-                void interpolateToTarget
-                (
-                    const UList<Type>& fld,
-                    const CombineOp& cop,
-                    List<Type>& result,
-                    const UList<Type>& defaultValues = UList<Type>::null()
-                ) const;
-
-
-            //- Interpolate from target to source with supplied op
+            //- Interpolate with supplied op
             template<class Type, class CombineOp>
-            tmp<Field<Type>> interpolateToSource
+            tmp<Field<Type>> interpolate
             (
                 const Field<Type>& fld,
                 const CombineOp& cop,
                 const UList<Type>& defaultValues = UList<Type>::null()
             ) const;
 
-            //- Interpolate from target tmp field to source with supplied op
+            //- Interpolate with supplied op
             template<class Type, class CombineOp>
-            tmp<Field<Type>> interpolateToSource
-            (
-                const tmp<Field<Type>>& tFld,
-                const CombineOp& cop,
-                const UList<Type>& defaultValues = UList<Type>::null()
-            ) const;
-
-            //- Interpolate from source to target with supplied op
-            template<class Type, class CombineOp>
-            tmp<Field<Type>> interpolateToTarget
-            (
-                const Field<Type>& fld,
-                const CombineOp& cop,
-                const UList<Type>& defaultValues = UList<Type>::null()
-            ) const;
-
-            //- Interpolate from source tmp field to target with supplied op
-            template<class Type, class CombineOp>
-            tmp<Field<Type>> interpolateToTarget
+            tmp<Field<Type>> interpolate
             (
                 const tmp<Field<Type>>& tFld,
                 const CombineOp& cop,
@@ -605,7 +557,9 @@ public:
             tmp<Field<Type>> interpolateToSource
             (
                 const Field<Type>& fld,
-                const UList<Type>& defaultValues = UList<Type>::null()
+                const UList<Type>& defaultValues = UList<Type>::null(),
+                const lowWeightCorrectionBase::option& lwOption =
+                    lowWeightCorrectionBase::option::ASSIGN
             ) const;
 
             //- Interpolate from target tmp field
@@ -613,7 +567,9 @@ public:
             tmp<Field<Type>> interpolateToSource
             (
                 const tmp<Field<Type>>& tFld,
-                const UList<Type>& defaultValues = UList<Type>::null()
+                const UList<Type>& defaultValues = UList<Type>::null(),
+                const lowWeightCorrectionBase::option& lwOption =
+                    lowWeightCorrectionBase::option::ASSIGN
             ) const;
 
             //- Interpolate from source to target
@@ -621,7 +577,9 @@ public:
             tmp<Field<Type>> interpolateToTarget
             (
                 const Field<Type>& fld,
-                const UList<Type>& defaultValues = UList<Type>::null()
+                const UList<Type>& defaultValues = UList<Type>::null(),
+                const lowWeightCorrectionBase::option& lwOption =
+                    lowWeightCorrectionBase::option::ASSIGN
             ) const;
 
             //- Interpolate from source tmp field
@@ -629,7 +587,9 @@ public:
             tmp<Field<Type>> interpolateToTarget
             (
                 const tmp<Field<Type>>& tFld,
-                const UList<Type>& defaultValues = UList<Type>::null()
+                const UList<Type>& defaultValues = UList<Type>::null(),
+                const lowWeightCorrectionBase::option& lwOption =
+                    lowWeightCorrectionBase::option::ASSIGN
             ) const;
 
 
