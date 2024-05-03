@@ -97,32 +97,50 @@ void Foam::cyclicAMIFvPatch::makeWeights(scalarField& w) const
     {
         const cyclicAMIFvPatch& nbrPatch = neighbFvPatch();
 
-        const scalarField deltas(nf() & coupledFvPatch::delta());
+        const auto& AMI = owner() ? this->AMI() : nbrPatch.AMI();
 
-        tmp<scalarField> tnbrDeltas;
+        auto tnbrDeltas = tmp<scalarField>::New();
         if (applyLowWeightCorrection())
         {
-            tnbrDeltas =
-                interpolate
-                (
-                    nbrPatch.nf() & nbrPatch.coupledFvPatch::delta(),
-                    scalarField(this->size(), 1.0)
-                );
+            // Use 'assign' correction for geometric interpolation
+            auto cop = AMICorrectedMultiplyWeightedOp<scalar>
+            (
+                AMI,
+                owner(),
+                lowWeightCorrectionBase::option::ASSIGN
+            );
+
+            // Faces with invalid interpolation weights converted to one-sided
+            AMI.interpolate
+            (
+                (nbrPatch.nf() & nbrPatch.coupledFvPatch::delta())(),
+                cop,
+                tnbrDeltas.ref(),
+                scalarList(this->size(), 1.0)
+            );
         }
         else
         {
-            tnbrDeltas =
-                interpolate(nbrPatch.nf() & nbrPatch.coupledFvPatch::delta());
+            // Multiply-weighted op - no low weight correction
+            auto cop = AMIMultiplyWeightedOp<scalar>(AMI, owner());
+
+            AMI.interpolate
+            (
+                (nbrPatch.nf() & nbrPatch.coupledFvPatch::delta())(),
+                cop,
+                tnbrDeltas.ref(),
+                UList<scalar>::null()
+            );
         }
 
         const scalarField& nbrDeltas = tnbrDeltas();
+        const scalarField deltas(nf() & coupledFvPatch::delta());
 
         forAll(deltas, facei)
         {
             // Note use of mag
             scalar di = mag(deltas[facei]);
             scalar dni = mag(nbrDeltas[facei]);
-
             w[facei] = dni/(di + dni);
         }
     }
@@ -162,46 +180,58 @@ Foam::tmp<Foam::vectorField> Foam::cyclicAMIFvPatch::delta() const
     {
         const vectorField patchD(coupledFvPatch::delta());
 
-        tmp<vectorField> tnbrPatchD;
+        const auto& AMI = owner() ? this->AMI() : nbrPatch.AMI();
+
+        auto tnbrPatchD = tmp<vectorField>::New();
         if (applyLowWeightCorrection())
         {
-            tnbrPatchD =
-                interpolate
-                (
-                    nbrPatch.coupledFvPatch::delta(),
-                    vectorField(this->size(), Zero)
-                );
+            // Use 'assign' correction for geometric interpolation
+            auto cop = AMICorrectedMultiplyWeightedOp<vector>
+            (
+                AMI,
+                owner(),
+                lowWeightCorrectionBase::option::ASSIGN
+            );
+
+            // Faces with invalid interpolation weights converted to one-sided
+            AMI.interpolate
+            (
+                nbrPatch.coupledFvPatch::delta()(),
+                cop,
+                tnbrPatchD.ref(),
+                vectorField(this->size(), Zero)
+            );
         }
         else
         {
-            tnbrPatchD = interpolate(nbrPatch.coupledFvPatch::delta());
+            // Multiply-weighted op - no low weight correction
+            auto cop = AMIMultiplyWeightedOp<vector>(AMI, owner());
+
+            AMI.interpolate
+            (
+                nbrPatch.coupledFvPatch::delta()(),
+                cop,
+                tnbrPatchD.ref(),
+                UList<vector>::null()
+            );
         }
 
-        const vectorField& nbrPatchD = tnbrPatchD();
+        vectorField& nbrPatchD = tnbrPatchD.ref();
+
+        // Do the transformation if necessary
+        if (!parallel())
+        {
+            transform(nbrPatchD, forwardT()[0], nbrPatchD);
+        }
 
         auto tpdv = tmp<vectorField>::New(patchD.size());
         vectorField& pdv = tpdv.ref();
 
-        // do the transformation if necessary
-        if (parallel())
+        forAll(patchD, facei)
         {
-            forAll(patchD, facei)
-            {
-                const vector& ddi = patchD[facei];
-                const vector& dni = nbrPatchD[facei];
-
-                pdv[facei] = ddi - dni;
-            }
-        }
-        else
-        {
-            forAll(patchD, facei)
-            {
-                const vector& ddi = patchD[facei];
-                const vector& dni = nbrPatchD[facei];
-
-                pdv[facei] = ddi - transform(forwardT()[0], dni);
-            }
+            const vector& ddi = patchD[facei];
+            const vector& dni = nbrPatchD[facei];
+            pdv[facei] = ddi - dni;
         }
 
         return tpdv;

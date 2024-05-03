@@ -26,6 +26,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "AMIFieldOps.H"
+
+
 template<class Type>
 void Foam::mappedPatchBase::distribute(List<Type>& lst) const
 {
@@ -120,7 +123,9 @@ void Foam::mappedPatchBase::distribute
             const label oldWarnComm = UPstream::commWarn(myComm);
             const label oldWorldComm = UPstream::commWorld(myComm);
 
-            lst = interp.interpolateToSource(Field<Type>(std::move(lst)), cop);
+            const auto op = AMIFieldOp<Type, CombineOp>(interp, cop, true);
+
+            lst = interp.interpolate(Field<Type>(std::move(lst)), op);
 
             UPstream::commWarn(oldWarnComm);
             UPstream::commWorld(oldWorldComm);
@@ -206,7 +211,9 @@ void Foam::mappedPatchBase::reverseDistribute
             const label oldWarnComm = UPstream::commWarn(myComm);
             const label oldWorldComm = UPstream::commWorld(myComm);
 
-            lst = interp.interpolateToTarget(Field<Type>(std::move(lst)), cop);
+            const auto op = AMIFieldOp<Type, CombineOp>(interp, false);
+
+            lst = interp.interpolate(Field<Type>(std::move(lst)), op);
 
             UPstream::commWarn(oldWarnComm);
             UPstream::commWorld(oldWorldComm);

@@ -306,13 +306,14 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
         recvRequests_.clear();
 
         solveScalarField pnf(faceCells.size(), Zero);
-        AMI.weightedSum
+
+        // Note: no low-weight correction
+        AMIMultiplyWeightedOp<solveScalar> cop
         (
-            cyclicAMIInterface_.owner(),
-            work,
-            pnf,                // result
-            defaultValues
+            AMI,
+            cyclicAMIInterface_.owner()
         );
+        cop(pnf, work, defaultValues);
 
         // Add result using coefficients
         this->addToInternalField(result, !add, faceCells, coeffs, pnf);
@@ -329,13 +330,14 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
         transformCoupleField(work, cmpt);
 
         solveScalarField pnf(faceCells.size(), Zero);
-        AMI.weightedSum
+
+        // Note: no low-weight correction
+        AMIMultiplyWeightedOp<solveScalar> cop
         (
-            cyclicAMIInterface_.owner(),
-            work,
-            pnf,                // result
-            defaultValues
+            AMI,
+            cyclicAMIInterface_.owner()
         );
+        cop(pnf, work, defaultValues);
 
         // Add result using coefficients
         this->addToInternalField(result, !add, faceCells, coeffs, pnf);

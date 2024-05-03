@@ -292,13 +292,14 @@ void Foam::cyclicACMIGAMGInterfaceField::updateInterfaceMatrix
         recvRequests_.clear();
 
         solveScalarField pnf(faceCells.size(), Zero);
-        AMI.weightedSum
+
+        AMIMultiplyWeightedOp<solveScalar> cop
         (
-            cyclicACMIInterface_.owner(),
-            work,
-            pnf,               // result
-            solveScalarField::null()
+            AMI,
+            cyclicACMIInterface_.owner()
         );
+
+        cop(pnf, work, solveScalarField::null());
 
         // Add result using coefficients
         this->addToInternalField(result, !add, faceCells, coeffs, pnf);

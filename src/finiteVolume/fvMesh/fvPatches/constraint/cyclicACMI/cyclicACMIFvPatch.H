@@ -251,7 +251,7 @@ public:
                         localFld,
                         requests,
                         recvBuffers,
-                        UList<Type>()
+                        UList<Type>::null()
                     );
                 }
 

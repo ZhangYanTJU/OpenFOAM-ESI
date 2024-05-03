@@ -492,13 +492,9 @@ void Foam::meshToMesh::mapAndOpSrcToTgt
 {
     tgtField = Type(Zero);
 
-    AMI.interpolateToTarget
-    (
-        srcField,
-        multiplyWeightedOp<Type, CombineOp>(cop),
-        tgtField,
-        UList<Type>::null()
-    );
+    const AMIMultiplyWeightedOp<Type, CombineOp> amicop(AMI, false);
+
+    AMI.interpolate(srcField, amicop, tgtField, UList<Type>::null());
 }
 
 
@@ -725,13 +721,9 @@ void Foam::meshToMesh::mapAndOpTgtToSrc
 {
     srcField = Type(Zero);
 
-    AMI.interpolateToSource
-    (
-        tgtField,
-        multiplyWeightedOp<Type, CombineOp>(cop),
-        srcField,
-        UList<Type>::null()
-    );
+    const AMIMultiplyWeightedOp<Type, CombineOp> amicop(AMI, true);
+
+    AMI.interpolate(tgtField, amicop, srcField, UList<Type>::null());
 }
 
 

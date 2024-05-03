@@ -100,12 +100,19 @@ void Foam::cyclicACMIFvPatch::makeWeights(scalarField& w) const
 
         // These deltas are of the cyclic part alone - they are
         // not affected by the amount of overlap with the nonOverlapPatch
-        scalarField nbrDeltas
+        scalarField nbrDeltas;
+
+        const auto& AMI = owner() ? this->AMI() : nbrPatch.AMI();
+
+        // Multiply-weighted op - no low weight correction
+        auto cop = AMIMultiplyWeightedOp<scalar>(AMI, owner());
+
+        AMI.interpolate
         (
-            interpolate
-            (
-                nbrPatch.nf() & nbrPatch.coupledFvPatch::delta()
-            )
+            (nbrPatch.nf() & nbrPatch.coupledFvPatch::delta())(),
+            cop,
+            nbrDeltas,
+            UList<scalar>()
         );
 
         const scalar tol = cyclicACMIPolyPatch::tolerance();
@@ -244,31 +251,35 @@ Foam::tmp<Foam::vectorField> Foam::cyclicACMIFvPatch::delta() const
 
         const vectorField patchD(coupledFvPatch::delta());
 
-        vectorField nbrPatchD(interpolate(nbrPatch.coupledFvPatch::delta()));
+        const auto& AMI = owner() ? this->AMI() : nbrPatch.AMI();
+
+        // Multiply-weighted op - no low weight correction
+        auto cop = AMIMultiplyWeightedOp<vector>(AMI, owner());
+
+        vectorField nbrPatchD;
+        AMI.interpolate
+        (
+            nbrPatch.coupledFvPatch::delta()(),
+            cop,
+            nbrPatchD,
+            UList<vector>()
+        );
+
+        // Do the transformation if necessary
+        if (!parallel())
+        {
+            transform(nbrPatchD, forwardT()[0], nbrPatchD);
+        }
 
         auto tpdv = tmp<vectorField>::New(patchD.size());
         vectorField& pdv = tpdv.ref();
 
-        // do the transformation if necessary
-        if (parallel())
+        forAll(patchD, facei)
         {
-            forAll(patchD, facei)
-            {
-                const vector& ddi = patchD[facei];
-                const vector& dni = nbrPatchD[facei];
-
-                pdv[facei] = ddi - dni;
-            }
-        }
-        else
-        {
-            forAll(patchD, facei)
-            {
-                const vector& ddi = patchD[facei];
-                const vector& dni = nbrPatchD[facei];
-
-                pdv[facei] = ddi - transform(forwardT()[0], dni);
-            }
+            const vector& ddi = patchD[facei];
+            const vector& dni = nbrPatchD[facei];
+            pdv[facei] = ddi - dni;
+            pdv[facei] = ddi - dni;
         }
 
         return tpdv;

@@ -29,6 +29,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "faceAreaWeightAMI.H"
 #include "turbulentDFSEMInletFvPatchVectorField.H"
+#include "AMIFieldOps.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -82,14 +83,8 @@ void Foam::turbulentDigitalFilterInletFvPatchField<Type>::mapL
     }
 
     // Map two-point correlations (integral scales)
-    plusEqOp<Type> cop;
-    AMIPtr_->interpolateToSource
-    (
-        sourceFld,
-        multiplyWeightedOp<Type, plusEqOp<Type>>(cop),
-        fld,
-        UList<Type>::null()
-    );
+    AMIMultiplyWeightedOp<Type> cop(AMIPtr_(), true);
+    AMIPtr_->interpolate(sourceFld, cop, fld, UList<Type>::null());
 
     // Map forward-stepwise method correlations if requested
     if (L_.fsm())

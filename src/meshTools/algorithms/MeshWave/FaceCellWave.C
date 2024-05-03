@@ -38,6 +38,7 @@ License
 #include "typeInfo.H"
 #include "SubField.H"
 #include "globalMeshData.H"
+#include "AMIFieldOps.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -92,6 +93,73 @@ namespace Foam
                         solver_.propagationTol(),
                         solver_.data()
                     );
+                }
+            }
+    };
+
+    // Combine operator for AMIInterpolation
+    template<class Type, class TrackingData>
+    class combineField
+    :
+        public AMIFieldOpBase
+    {
+        // Private Data
+
+            FaceCellWave<Type, TrackingData>& solver_;
+
+            const cyclicAMIPolyPatch& patch_;
+
+
+    public:
+
+            combineField
+            (
+                FaceCellWave<Type, TrackingData>& solver,
+                const cyclicAMIPolyPatch& patch
+            )
+            :
+                AMIFieldOpBase(patch.AMI(), patch.owner()),
+                solver_(solver),
+                patch_(patch)
+            {}
+
+            void operator()
+            (
+                List<Type>& result,
+                const UList<Type>& fld,
+                const UList<Type>& /* unused defaultValues */
+            ) const
+            {
+                const auto& allSlots = address();
+
+                forAll(result, facei)
+                {
+                    const labelList& slots = allSlots[facei];
+
+                    for (const label sloti : slots)
+                    {
+                        if (fld[sloti].valid(solver_.data()))
+                        {
+                            label meshFacei = -1;
+                            if (patch_.owner())
+                            {
+                                meshFacei = patch_.start() + facei;
+                            }
+                            else
+                            {
+                                meshFacei =
+                                    patch_.neighbPatch().start() + facei;
+                            }
+                            result[facei].updateFace
+                            (
+                                solver_.mesh(),
+                                meshFacei,
+                                fld[sloti],
+                                solver_.propagationTol(),
+                                solver_.data()
+                            );
+                        }
+                    }
                 }
             }
     };
@@ -782,7 +850,7 @@ void Foam::FaceCellWave<Type, TrackingData>::handleAMICyclicPatches()
                 }
 
                 // Transfer sendInfo to cycPatch
-                combine<Type, TrackingData> cmb(*this, cycPatch);
+                combineField<Type, TrackingData> cmb(*this, cycPatch);
 
                 if (cycPatch.applyLowWeightCorrection())
                 {

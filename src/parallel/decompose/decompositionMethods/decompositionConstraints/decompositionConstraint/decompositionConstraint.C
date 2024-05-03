@@ -78,44 +78,8 @@ void Foam::decompositionConstraint::getMinBoundaryValue
             const labelList nbrDecomp(decomposition, nbrPp.faceCells());
             labelList thisDecomp(decomposition, cycPp.faceCells());
 
-            if (cycPp.owner())
-            {
-                cycPp.AMI().interpolateToSource
-                (
-                    nbrDecomp,
-                    []
-                    (
-                        label& res,
-                        const label facei,
-                        const label& fld,
-                        const scalar& w
-                    )
-                    {
-                        res = min(res, fld);
-                    },
-                    thisDecomp,
-                    thisDecomp      // used in case of low-weight-corr
-                );
-            }
-            else
-            {
-                nbrPp.AMI().interpolateToTarget
-                (
-                    nbrDecomp,
-                    []
-                    (
-                        label& res,
-                        const label facei,
-                        const label& fld,
-                        const scalar& w
-                    )
-                    {
-                        res = min(res, fld);
-                    },
-                    thisDecomp,
-                    thisDecomp      // used in case of low-weight-corr
-                );
-            }
+            AMIMinOp<label> cop(cycPp.AMI(), cycPp.owner());
+            cop(thisDecomp, nbrDecomp, thisDecomp);
 
             forAll(thisDecomp, i)
             {
