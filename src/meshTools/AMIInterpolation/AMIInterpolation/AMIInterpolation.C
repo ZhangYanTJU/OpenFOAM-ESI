@@ -1123,6 +1123,36 @@ void Foam::AMIInterpolation::normaliseWeights
 }
 
 
+void Foam::AMIInterpolation::removeSourceConnection(const label facei)
+{
+    if (facei < 0 || facei > srcAddress_.size())
+    {
+        FatalErrorInFunction
+            << "Face index " << facei << " out of bonds"
+            << abort(FatalError);
+    }
+
+    srcWeightsSum_[facei] = 0;
+    srcWeights_[facei].clear();
+    srcAddress_[facei].clear();
+}
+
+
+void Foam::AMIInterpolation::removeTargetConnection(const label facei)
+{
+    if (facei < 0 || facei > tgtAddress_.size())
+    {
+        FatalErrorInFunction
+            << "Face index " << facei << " out of bonds"
+            << abort(FatalError);
+    }
+
+    tgtWeightsSum_[facei] = 0;
+    tgtWeights_[facei].clear();
+    tgtAddress_[facei].clear();
+}
+
+
 Foam::label Foam::AMIInterpolation::srcPointFace
 (
     const primitivePatch& srcPatch,

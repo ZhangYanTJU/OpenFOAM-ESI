@@ -446,6 +446,54 @@ void Foam::cyclicAMIPolyPatch::resetAMI(const UList<point>& points) const
     {
         AMIPtr_->checkSymmetricWeights(true);
     }
+
+
+    // Check connectivity
+    if (applyLowWeightCorrection() || !AMIPtr_->requireMatch())
+    {
+        Info<< "AMI: performing connectivity checks" << endl;
+
+        const auto& C = boundaryMesh().mesh().cellCentres();
+
+        auto cosTheta =
+            [&](const polyPatch& p1, const polyPatch& p2, const bool toSource)
+        {
+            const auto& Cf1 = p1.faceCentres();
+            const auto& faceCells1 = p1.faceCells();
+
+            vectorField delta1(p1.size());
+            forAll(delta1, i)
+            {
+                delta1[i] = Cf1[i] - C[faceCells1[i]];
+            }
+
+            // Interpolate nbr delta to local (src) side using (uncorrected)
+            // multiply-weighted op
+            const AMIMultiplyWeightedOp<vector> cop(*AMIPtr_, toSource);
+            AMIPtr_->interpolate(delta1, cop, UList<vector>::null());
+            delta1.normalise();
+
+            return delta1 & p2.faceNormals();
+        };
+
+        const scalarField ctSrc(cosTheta(*this, nbr, true));
+        forAll(ctSrc, facei)
+        {
+            if (ctSrc[facei] < 0)
+            {
+                AMIPtr_->removeSourceConnection(facei);
+            }
+        }
+
+        const scalarField ctTgt(cosTheta(nbr, *this, false));
+        forAll(ctTgt, facei)
+        {
+            if (ctTgt[facei] < 0)
+            {
+                AMIPtr_->removeTargetConnection(facei);
+            }
+        }
+    }
 }
 
 
