@@ -62,12 +62,13 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
+    timeSelector::addOptions_singleTime();  // Single-time options
+
     argList::addNote
     (
         "Add point/face/cell Zones from similarly named point/face/cell Sets"
     );
 
-    timeSelector::addOptions(true, false);  // constant(true), zero(false)
     argList::addBoolOption
     (
         "noFlipMap",
@@ -75,14 +76,13 @@ int main(int argc, char *argv[])
     );
 
     #include "addRegionOption.H"
-    #include "addTimeOptions.H"
     #include "setRootCase.H"
     #include "createTime.H"
 
     const bool noFlipMap = args.found("noFlipMap");
 
-    // Get times list
-    (void)timeSelector::selectIfPresent(runTime, args);
+    // Allow override of time from specified time options, or no-op
+    timeSelector::setTimeIfPresent(runTime, args);
 
     #include "createNamedPolyMesh.H"
 

@@ -1569,7 +1569,7 @@ int main(int argc, char *argv[])
 
     //Get polyMesh to write to constant
 
-    runTime.setTime(instant(runTime.constant()), 0);
+    runTime.setTime(instant(0, runTime.constant()), 0);
 
     repatcher.repatch();
 

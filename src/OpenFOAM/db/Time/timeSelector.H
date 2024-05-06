@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,14 +28,13 @@ Class
     Foam::timeSelector
 
 Description
-    A List of scalarRange for selecting times.
-
     The timeSelector provides a convenient means of selecting multiple
-    times. A typical use would be the following:
+    times.
 
+    A typical use would be the following:
     \verbatim
     timeSelector::addOptions();
-    // add other options
+    ...
     #include "setRootCase.H"
     #include "createTime.H"
     instantList timeDirs = timeSelector::select0(runTime, args);
@@ -46,11 +45,11 @@ Description
     }
     \endverbatim
 
-    The result program would receive \b -time, \b -latestTime, \b -constant
-    and \b -noZero options. The \b -constant option explicitly includes the
+    With the \c addOptions() method, application receives
+    \b -time, \b -latestTime, \b -constant and \b -noZero options.
+    The \b -constant option explicitly includes the
     \c constant/ directory in the time list and the \b -noZero option
     explicitly excludes the \c 0/ directory from the time list.
-
     There may however also be many cases in which neither the \c constant/
     directory nor the \c 0/ directory contain particularly relevant
     information. This might occur, for example, when post-processing
@@ -65,6 +64,25 @@ Description
     argument adds an additional \b -withZero option and also prevents the
     \c 0/ directory from being included in the default time range and in the
     \b -latestTime selection.
+
+    It is also possible to use the timeSelector for setting a single time.
+    Typical use would be the following:
+
+    \verbatim
+    timeSelector::addOptions_singleTime();
+    ...
+    #include "setRootCase.H"
+    #include "createTime.H"
+    timeSelector::setTimeIfPresent(runTime, args);
+    \endverbatim
+
+    With the \c addOptions_singleTime() method, application receives
+    \b -time, \b -latestTime, \b -constant options. In the case,
+    the \b -time option is intended to be a single value and not include
+    any ranges.
+
+    The subsequent call to \c setTimeIfPresent() will scan the arguments
+    for relevant time options and use them to set the time.
 
 SourceFiles
     timeSelector.C
@@ -135,6 +153,14 @@ public:
 
         //- Add timeSelector options to argList::validOptions
         //
+        //  \par Options added:
+        //  - \c -constant
+        //  - \c -time
+        //  - \c -latestTime
+        //  - \c -noZero
+        //  - \c -withZero
+        //  .
+        //
         // \param constant
         //   Add the \b -constant option to include the \c constant/ directory
         //
@@ -149,6 +175,16 @@ public:
             const bool constant=true,
             const bool withZero=false
         );
+
+        //- Add single-time timeSelector options to argList::validOptions()
+        //
+        //  \par Options added:
+        //  - \c -constant
+        //  - \c -time
+        //  - \c -latestTime
+        //  - \c -noZero  (ignored)
+        //  .
+        static void addOptions_singleTime();
 
         //- Return the set of times selected based on the argList options
         static instantList select
@@ -167,13 +203,24 @@ public:
             const argList& args
         );
 
-        //- If any time option provided return the set of times (as select0)
-        //- otherwise return just the current time.
+        //- If any time option provided return the set of times -
+        //- as per select0() - otherwise return just the current time.
         //  Also set the runTime to the first instance
         static instantList selectIfPresent
         (
             Time& runTime,
             const argList& args
+        );
+
+        //- Set the runTime based on \c -constant (if present),
+        //- \c -time (value), or \c -latestTime.
+        //  This method is a no-op if no relevant options have been specified.
+        static bool setTimeIfPresent
+        (
+            Time& runTime,
+            const argList& args,
+            //! Force initial time (default: 0) even if no options specified
+            const bool forceInitial = false
         );
 };
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,6 +36,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
+#include "timeSelector.H"
 #include "fvMesh.H"
 #include "volFields.H"
 #include "pointFields.H"
@@ -145,20 +146,22 @@ void ReadAndMapFields
 
 int main(int argc, char *argv[])
 {
+    argList::noFunctionObjects();           // Never use function objects
+
+    timeSelector::addOptions_singleTime();  // Single-time options
+
     argList::addNote
     (
         "Convert polyMesh results to tetDualMesh"
     );
 
     #include "addOverwriteOption.H"
-    #include "addTimeOptions.H"
 
     #include "setRootCase.H"
     #include "createTime.H"
-    // Get times list
-    instantList Times = runTime.times();
-    #include "checkTimeOptions.H"
-    runTime.setTime(Times[startTime], startTime);
+
+    // Set time from specified time options, or force start from Time=0
+    timeSelector::setTimeIfPresent(runTime, args, true);
 
     // Read the mesh
     #include "createNamedMesh.H"

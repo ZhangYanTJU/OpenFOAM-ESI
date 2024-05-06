@@ -201,7 +201,6 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
-    #include "addTimeOptions.H"
     argList::addArgument("patch");
     #include "setRootCase.H"
     #include "createTime.H"

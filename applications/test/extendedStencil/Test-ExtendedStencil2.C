@@ -32,6 +32,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
+#include "timeSelector.H"
 #include "fvMesh.H"
 #include "volFields.H"
 #include "surfaceFields.H"
@@ -107,14 +108,16 @@ void writeStencilStats(const labelListList& stencil)
 
 int main(int argc, char *argv[])
 {
-    #include "addTimeOptions.H"
+    argList::noFunctionObjects();           // Never use function objects
+
+    timeSelector::addOptions_singleTime();  // Single-time options
+
     #include "setRootCase.H"
     #include "createTime.H"
 
-    // Get times list
-    instantList Times = runTime.times();
-    #include "checkTimeOptions.H"
-    runTime.setTime(Times[startTime], startTime);
+    // Set time from specified time options, or force start from Time=0
+    timeSelector::setTimeIfPresent(runTime, args, true);
+
     #include "createMesh.H"
 
 

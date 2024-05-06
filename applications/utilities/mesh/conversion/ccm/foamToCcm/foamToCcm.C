@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 //     // skip over time=0, unless some other time option has been specified
 //     if
 //     (
-//         !args.found("zeroTime")
+//         !args.found("noZero")
 //      && !args.found("time")
 //      && !args.found("latestTime")
 //      && Times.size() > 2

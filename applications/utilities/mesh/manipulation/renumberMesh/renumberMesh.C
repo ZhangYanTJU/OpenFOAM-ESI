@@ -803,6 +803,10 @@ CompactListList<label> regionRenumber
 
 int main(int argc, char *argv[])
 {
+    argList::noFunctionObjects();           // Never use function objects
+
+    timeSelector::addOptions_singleTime();  // Single-time options
+
     argList::addNote
     (
         "Renumber mesh cells to reduce the bandwidth. Use the -lib option or"
@@ -863,11 +867,8 @@ int main(int argc, char *argv[])
         "eg, 'reverse true;'"
     );
 
-    argList::noFunctionObjects();  // Never use function objects
-
     #include "addAllRegionOptions.H"
     #include "addOverwriteOption.H"
-    #include "addTimeOptions.H"
 
     // -------------------------
 
@@ -926,14 +927,15 @@ int main(int argc, char *argv[])
     // Get region names
     #include "getAllRegionOptions.H"
 
-    // Get times list
-    instantList Times = runTime.times();
+    // Set time from specified time options, or force start from Time=0
+    timeSelector::setTimeIfPresent(runTime, args, true);
 
-    // Set startTime depending on -time and -latestTime options
-    #include "checkTimeOptions.H"
-
-    runTime.setTime(Times[startTime], startTime);
-
+    // Capture current time information for non-overwrite
+    const Tuple2<instant, label> startTime
+    (
+        instant(runTime.value(), runTime.timeName()),
+        runTime.timeIndex()
+    );
 
     // Start/reset all timings
     timer.resetTime();
@@ -947,7 +949,10 @@ int main(int argc, char *argv[])
     for (fvMesh& mesh : meshes)
     {
         // Reset time in case of multiple meshes and not overwrite
-        runTime.setTime(Times[startTime], startTime);
+        if (!overwrite)
+        {
+            runTime.setTime(startTime.first(), startTime.second());
+        }
 
         const word oldInstance = mesh.pointsInstance();
 

@@ -33,6 +33,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
+#include "timeSelector.H"
 #include "Time.H"
 #include "volFields.H"
 #include "surfaceFields.H"
@@ -52,21 +53,28 @@ using namespace Foam;
 // Main program:
 int main(int argc, char *argv[])
 {
-    #include "addTimeOptions.H"
-    argList::addArgument("inflate (true|false)");
+    timeSelector::addOptions_singleTime();  // Single-time options
+
+    argList::addBoolOption
+    (
+        "inflate",
+        "Use inflation/deflation for splitting/deleting cells"
+    );
+
     #include "setRootCase.H"
     #include "createTime.H"
+
+    // Allow override of time from specified time options, or no-op
+    timeSelector::setTimeIfPresent(runTime, args);
+
     #include "createMesh.H"
 
-
-    const pointConstraints& pc = pointConstraints::New(pointMesh::New(mesh));
-
-    const Switch inflate(args[1]);
+    const bool inflate = args.found("inflate");
 
     if (inflate)
     {
-        Info<< "Splitting/deleting cells using inflation/deflation" << nl
-            << endl;
+        Info<< "Splitting/deleting cells using inflation/deflation"
+            << nl << endl;
     }
     else
     {
@@ -74,6 +82,8 @@ int main(int argc, char *argv[])
             << nl << endl;
     }
 
+
+    const pointConstraints& pc = pointConstraints::New(pointMesh::New(mesh));
 
     Random rndGen(0);
 

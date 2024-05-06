@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 DHI
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
     Copyright (C) 2017-2020 German Aerospace Center (DLR)
     Copyright (C) 2020 Johan Roenby
 -------------------------------------------------------------------------------
@@ -39,6 +39,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
+#include "timeSelector.H"
 
 #include "triSurface.H"
 #include "triSurfaceTools.H"
@@ -139,6 +140,10 @@ void setAlpha
 
 int main(int argc, char *argv[])
 {
+    argList::noFunctionObjects();           // Never use function objects
+
+    timeSelector::addOptions_singleTime();  // Single-time options
+
     argList::addNote
     (
         "Uses cutCellIso to create a volume fraction field from an "
@@ -151,9 +156,14 @@ int main(int argc, char *argv[])
         "file",
         "Alternative setAlphaFieldDict dictionary"
     );
+
     #include "addRegionOption.H"
     #include "setRootCase.H"
     #include "createTime.H"
+
+    // Set time from specified time options, or no-op
+    timeSelector::setTimeIfPresent(runTime, args);
+
     #include "createNamedMesh.H"
 
     const word dictName("setAlphaFieldDict");
