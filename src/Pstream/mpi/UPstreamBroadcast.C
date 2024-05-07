@@ -49,16 +49,16 @@ bool Foam::UPstream::broadcast
 
     if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
     {
-        Pout<< "UPstream::broadcast : root:" << rootProcNo
+        Perr<< "UPstream::broadcast : root:" << rootProcNo
             << " comm:" << comm
             << " size:" << label(bufSize)
             << " warnComm:" << UPstream::warnComm
             << Foam::endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
     else if (UPstream::debug)
     {
-        Pout<< "UPstream::broadcast : root:" << rootProcNo
+        Perr<< "UPstream::broadcast : root:" << rootProcNo
             << " comm:" << comm
             << " size:" << label(bufSize)
             << Foam::endl;

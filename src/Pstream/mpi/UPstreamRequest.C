@@ -291,7 +291,7 @@ void Foam::UPstream::waitRequests(const label pos, label len)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::waitRequests : starting wait for "
+        Perr<< "UPstream::waitRequests : starting wait for "
             << count << " requests starting at " << pos << endl;
     }
 
@@ -328,7 +328,7 @@ void Foam::UPstream::waitRequests(const label pos, label len)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::waitRequests : finished wait." << endl;
+        Perr<< "UPstream::waitRequests : finished wait." << endl;
     }
 }
 
@@ -409,7 +409,7 @@ bool Foam::UPstream::waitAnyRequest(const label pos, label len)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::waitAnyRequest : starting wait for any of "
+        Perr<< "UPstream::waitAnyRequest : starting wait for any of "
             << count << " requests starting at " << pos << endl;
     }
 
@@ -470,7 +470,7 @@ bool Foam::UPstream::waitSomeRequests
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream:waitSomeRequest : starting wait for some of "
+        Perr<< "UPstream:waitSomeRequest : starting wait for some of "
             << count << " requests starting at " << pos << endl;
     }
 
@@ -563,7 +563,7 @@ bool Foam::UPstream::waitSomeRequests
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream:waitSomeRequest : starting wait for some of "
+        Perr<< "UPstream:waitSomeRequest : starting wait for some of "
             << requests.size() << " requests" << endl;
     }
 
@@ -753,7 +753,7 @@ void Foam::UPstream::waitRequest(const label i)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::waitRequest : starting wait for request:"
+        Perr<< "UPstream::waitRequest : starting wait for request:"
             << i << endl;
     }
 
@@ -771,7 +771,7 @@ void Foam::UPstream::waitRequest(const label i)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::waitRequest : finished wait for request:"
+        Perr<< "UPstream::waitRequest : finished wait for request:"
             << i << endl;
     }
 }
@@ -823,7 +823,7 @@ bool Foam::UPstream::finishedRequest(const label i)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::finishedRequest : check request:"
+        Perr<< "UPstream::finishedRequest : check request:"
             << i << endl;
     }
 
@@ -898,7 +898,7 @@ bool Foam::UPstream::finishedRequests(const label pos, label len)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::finishedRequests : check " << count
+        Perr<< "UPstream::finishedRequests : check " << count
             << " requests starting at " << pos << endl;
     }
 

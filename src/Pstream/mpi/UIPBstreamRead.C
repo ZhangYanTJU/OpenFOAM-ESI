@@ -60,7 +60,7 @@ void Foam::UIPBstream::bufferIPCrecv()
 
     if (UPstream::debug)
     {
-        Pout<< "UOPBstream IPC read buffer :"
+        Perr<< "UOPBstream IPC read buffer :"
             << " root:" << fromProcNo_
             << " comm:" << comm_
             << " probed size:" << label(bufSize)

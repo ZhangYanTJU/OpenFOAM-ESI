@@ -257,7 +257,7 @@ Foam::UIPstreamBase::~UIPstreamBase()
     {
         if (debug)
         {
-            Pout<< "UIPstreamBase Destructor : tag:" << tag_
+            Perr<< "UIPstreamBase Destructor : tag:" << tag_
                 << " fromProcNo:" << fromProcNo_
                 << " clearing receive buffer of size "
                 << recvBuf_.size()

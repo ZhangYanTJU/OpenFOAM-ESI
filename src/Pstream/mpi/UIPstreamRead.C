@@ -68,17 +68,17 @@ static std::streamsize UPstream_mpi_receive
 
     if (UPstream::warnComm >= 0 && communicator != UPstream::warnComm)
     {
-        Pout<< "UIPstream::read : starting read from:" << fromProcNo
+        Perr<< "UIPstream::read : starting read from:" << fromProcNo
             << " size:" << label(bufSize)
             << " tag:" << tag << " comm:" << communicator
             << " commsType:" << UPstream::commsTypeNames[commsType]
             << " warnComm:" << UPstream::warnComm
             << Foam::endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
     else if (UPstream::debug)
     {
-        Pout<< "UIPstream::read : starting read from:" << fromProcNo
+        Perr<< "UIPstream::read : starting read from:" << fromProcNo
             << " size:" << label(bufSize)
             << " tag:" << tag << " comm:" << communicator
             << " commsType:" << UPstream::commsTypeNames[commsType]
@@ -123,7 +123,7 @@ static std::streamsize UPstream_mpi_receive
         }
         else if (UPstream::debug)
         {
-            Pout<< "UIPstream::read : finished recv from:"
+            Perr<< "UIPstream::read : finished recv from:"
                 << fromProcNo
                 << " size:" << label(bufSize) << " tag:" << tag
                 << Foam::endl;
@@ -198,7 +198,7 @@ static std::streamsize UPstream_mpi_receive
 
         if (UPstream::debug)
         {
-            Pout<< "UIPstream::read : started non-blocking recv from:"
+            Perr<< "UIPstream::read : started non-blocking recv from:"
                 << fromProcNo
                 << " size:" << label(bufSize) << " tag:" << tag
                 << " request:" <<
@@ -225,7 +225,7 @@ void Foam::UIPstream::bufferIPCrecv()
     // Called by constructor
     if (UPstream::debug)
     {
-        Pout<< "UIPstream IPC read buffer :"
+        Perr<< "UIPstream IPC read buffer :"
             << " from:" << fromProcNo_
             << " tag:" << tag_ << " comm:" << comm_
             << " wanted size:" << recvBuf_.capacity()
@@ -291,7 +291,7 @@ void Foam::UIPstream::bufferIPCrecv()
 
         if (UPstream::debug)
         {
-            Pout<< "UIPstream::UIPstream : probed size:"
+            Perr<< "UIPstream::UIPstream : probed size:"
                 << label(count) << Foam::endl;
         }
 

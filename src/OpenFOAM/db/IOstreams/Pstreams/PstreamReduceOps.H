@@ -61,8 +61,8 @@ void reduce
     {
         if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
         {
-            Pout<< "** reducing:" << value << " with comm:" << comm << endl;
-            error::printStack(Pout);
+            Perr<< "** reducing:" << value << " with comm:" << comm << endl;
+            error::printStack(Perr);
         }
         Pstream::gather(value, bop, tag, comm);
         Pstream::broadcast(value, comm);

@@ -221,7 +221,7 @@ void Foam::UPstream::setParRun(const label nProcs, const bool haveThreads)
 
     if (debug)
     {
-        Pout<< "UPstream::setParRun :"
+        Perr<< "UPstream::setParRun :"
             << " nProcs:" << nProcs
             << " haveThreads:" << haveThreads
             << endl;
@@ -274,7 +274,7 @@ Foam::label Foam::UPstream::allocateCommunicator
 
     if (debug)
     {
-        Pout<< "Allocating communicator " << index << nl
+        Perr<< "Allocating communicator " << index << nl
             << "    parent : " << parentIndex << nl
             << "    procs  : " << subRanks << nl
             << endl;
@@ -335,7 +335,7 @@ Foam::label Foam::UPstream::allocateCommunicator
 
     if (debug)
     {
-        Pout<< "Allocating communicator " << index << nl
+        Perr<< "Allocating communicator " << index << nl
             << "    parent : " << parentIndex << nl
             << "    procs  : " << flatOutput(subRanks) << nl
             << endl;
@@ -492,7 +492,7 @@ bool Foam::UPstream::allocateHostCommunicatorPairs()
 
     if (debug)
     {
-        Pout<< "Allocating host communicators "
+        Perr<< "Allocating host communicators "
             << interHostComm_ << ", " << intraHostComm_ << nl
             << "    parent : " << parentCommunicator << nl
             << endl;
@@ -588,7 +588,7 @@ void Foam::UPstream::freeCommunicator
 
     if (debug)
     {
-        Pout<< "Communicators : Freeing communicator " << communicator
+        Perr<< "Communicators : Freeing communicator " << communicator
             << " parent: " << parentComm_[communicator]
             << " myProcNo: " << myProcNo_[communicator]
             << endl;

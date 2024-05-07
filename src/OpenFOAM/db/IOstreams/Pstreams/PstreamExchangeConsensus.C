@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,7 +82,7 @@ void exchangeConsensus
     {
         buf.clear();
     }
-    recvSizes = Zero;
+    recvSizes = Foam::zero{};
 
     if (!UPstream::is_rank(comm))
     {
@@ -109,7 +109,7 @@ void exchangeConsensus
         recvBufs[myProci] = sendBufs[myProci];
         if (myProci < recvSizes.size())
         {
-            recvSizes[myProci] = recvBufs.size();
+            recvSizes[myProci] = recvBufs[myProci].size();
         }
     }
 
@@ -175,7 +175,7 @@ void exchangeConsensus
 
     for (bool barrier_active = false, done = false; !done; /*nil*/)
     {
-        std::pair<int, int> probed =
+        std::pair<int, int64_t> probed =
             UPstream::probeMessage
             (
                 UPstream::commsTypes::nonBlocking,
@@ -189,8 +189,8 @@ void exchangeConsensus
             // Message found and had size.
             // - receive into dest buffer location
 
-            const label proci = probed.first;
-            const label count = (probed.second / sizeof(Type));
+            const label proci(probed.first);
+            const label count(probed.second / sizeof(Type));
 
             auto& recvData = recvBufs[proci];
             recvData.resize(count);  // OK with resize() instead of _nocopy()
@@ -254,10 +254,10 @@ void exchangeConsensus
 {
     static_assert(is_contiguous<Type>::value, "Contiguous data only!");
 
-    // TDB: const bool initialBarrier = (UPstream::tuning_NBX_ > 0);
+    const bool initialBarrier = (UPstream::tuning_NBX_ > 0);
 
     const label myProci = UPstream::myProcNo(comm);
-    const label numProc = UPstream::myProcNo(comm);
+    const label numProc = UPstream::nProcs(comm);
 
     // Initial: clear all receive locations
     // Preferrable to clear out the map entries instead of the map itself
@@ -300,7 +300,12 @@ void exchangeConsensus
     // Setup sends
     // ------------------------------------------------------------------------
 
-    // TDB: initialBarrier ...
+    // An initial barrier may help to avoid synchronisation problems
+    // caused elsewhere
+    if (initialBarrier)
+    {
+        UPstream::barrier(comm);
+    }
 
 
     // Algorithm NBX: Nonblocking consensus with Map (HashTable) containers
@@ -347,7 +352,7 @@ void exchangeConsensus
 
     for (bool barrier_active = false, done = false; !done; /*nil*/)
     {
-        std::pair<int, int> probed =
+        std::pair<int, int64_t> probed =
             UPstream::probeMessage
             (
                 UPstream::commsTypes::nonBlocking,
@@ -361,8 +366,8 @@ void exchangeConsensus
             // Message found and had size.
             // - receive into dest buffer location
 
-            const label proci = probed.first;
-            const label count = (probed.second / sizeof(Type));
+            const label proci(probed.first);
+            const label count(probed.second / sizeof(Type));
 
             auto& recvData = recvBufs(proci);
             recvData.resize(count);  // OK with resize() instead of _nocopy()

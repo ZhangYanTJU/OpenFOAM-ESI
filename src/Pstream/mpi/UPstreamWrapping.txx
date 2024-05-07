@@ -80,18 +80,18 @@ void Foam::PstreamDetail::reduce0
 
     if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
     {
-        Pout<< "** MPI_Reduce (blocking):";
+        Perr<< "** MPI_Reduce (blocking):";
         if (count == 1)
         {
-            Pout<< (*values);
+            Perr<< (*values);
         }
         else
         {
-            Pout<< UList<Type>(values, count);
+            Perr<< UList<Type>(values, count);
         }
-        Pout<< " with comm:" << comm
+        Perr<< " with comm:" << comm
             << " warnComm:" << UPstream::warnComm << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
     profilingPstream::beginTiming();
@@ -138,23 +138,23 @@ void Foam::PstreamDetail::allReduce
     {
         if (immediate)
         {
-            Pout<< "** MPI_Iallreduce (non-blocking):";
+            Perr<< "** MPI_Iallreduce (non-blocking):";
         }
         else
         {
-            Pout<< "** MPI_Allreduce (blocking):";
+            Perr<< "** MPI_Allreduce (blocking):";
         }
         if (count == 1)
         {
-            Pout<< (*values);
+            Perr<< (*values);
         }
         else
         {
-            Pout<< UList<Type>(values, count);
+            Perr<< UList<Type>(values, count);
         }
-        Pout<< " with comm:" << comm
+        Perr<< " with comm:" << comm
             << " warnComm:" << UPstream::warnComm << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
 
@@ -245,18 +245,18 @@ void Foam::PstreamDetail::allToAll
     {
         if (immediate)
         {
-            Pout<< "** MPI_Ialltoall (non-blocking):";
+            Perr<< "** MPI_Ialltoall (non-blocking):";
         }
         else
         {
-            Pout<< "** MPI_Alltoall (blocking):";
+            Perr<< "** MPI_Alltoall (blocking):";
         }
-        Pout<< " numProc:" << numProc
+        Perr<< " numProc:" << numProc
             << " sendData:" << sendData.size()
             << " with comm:" << comm
             << " warnComm:" << UPstream::warnComm
             << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
     if
@@ -376,18 +376,18 @@ void Foam::PstreamDetail::allToAllv
     {
         if (immediate)
         {
-            Pout<< "** MPI_Ialltoallv (non-blocking):";
+            Perr<< "** MPI_Ialltoallv (non-blocking):";
         }
         else
         {
-            Pout<< "** MPI_Alltoallv (blocking):";
+            Perr<< "** MPI_Alltoallv (blocking):";
         }
-        Pout<< " sendCounts:" << sendCounts
+        Perr<< " sendCounts:" << sendCounts
             << " sendOffsets:" << sendOffsets
             << " with comm:" << comm
             << " warnComm:" << UPstream::warnComm
             << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
     if
@@ -515,13 +515,13 @@ void Foam::PstreamDetail::allToAllConsensus
 
     if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
     {
-        Pout<< "** non-blocking consensus Alltoall (list):";
-        Pout<< " numProc:" << numProc
+        Perr<< "** non-blocking consensus Alltoall (list):";
+        Perr<< " numProc:" << numProc
             << " sendData:" << sendData.size()
             << " with comm:" << comm
             << " warnComm:" << UPstream::warnComm
             << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
     if (sendData.size() != numProc || recvData.size() != numProc)
@@ -717,13 +717,13 @@ void Foam::PstreamDetail::allToAllConsensus
 
     if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
     {
-        Pout<< "** non-blocking consensus Alltoall (map):";
-        Pout<< " numProc:" << numProc
+        Perr<< "** non-blocking consensus Alltoall (map):";
+        Perr<< " numProc:" << numProc
             << " sendData:" << sendBufs.size()
             << " with comm:" << comm
             << " warnComm:" << UPstream::warnComm
             << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
     // Initial: clear out everything
@@ -917,18 +917,18 @@ void Foam::PstreamDetail::gather
     {
         if (immediate)
         {
-            Pout<< "** MPI_Igather (non-blocking):";
+            Perr<< "** MPI_Igather (non-blocking):";
         }
         else
         {
-            Pout<< "** MPI_Gather (blocking):";
+            Perr<< "** MPI_Gather (blocking):";
         }
-        Pout<< " numProc:" << numProc
+        Perr<< " numProc:" << numProc
             << " count:" << count
             << " with comm:" << comm
             << " warnComm:" << UPstream::warnComm
             << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
 
@@ -1024,18 +1024,18 @@ void Foam::PstreamDetail::scatter
     {
         if (immediate)
         {
-            Pout<< "** MPI_Iscatter (non-blocking):";
+            Perr<< "** MPI_Iscatter (non-blocking):";
         }
         else
         {
-            Pout<< "** MPI_Scatter (blocking):";
+            Perr<< "** MPI_Scatter (blocking):";
         }
-        Pout<< " numProc:" << numProc
+        Perr<< " numProc:" << numProc
             << " count:" << count
             << " with comm:" << comm
             << " warnComm:" << UPstream::warnComm
             << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
 
@@ -1132,19 +1132,19 @@ void Foam::PstreamDetail::gatherv
     {
         if (immediate)
         {
-            Pout<< "** MPI_Igatherv (non-blocking):";
+            Perr<< "** MPI_Igatherv (non-blocking):";
         }
         else
         {
-            Pout<< "** MPI_Gatherv (blocking):";
+            Perr<< "** MPI_Gatherv (blocking):";
         }
-        Pout<< " np:" << np
+        Perr<< " np:" << np
             << " recvCounts:" << recvCounts
             << " recvOffsets:" << recvOffsets
             << " with comm:" << comm
             << " warnComm:" << UPstream::warnComm
             << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
     if
@@ -1274,19 +1274,19 @@ void Foam::PstreamDetail::scatterv
     {
         if (immediate)
         {
-            Pout<< "** MPI_Iscatterv (non-blocking):";
+            Perr<< "** MPI_Iscatterv (non-blocking):";
         }
         else
         {
-            Pout<< "** MPI_Scatterv (blocking):";
+            Perr<< "** MPI_Scatterv (blocking):";
         }
-        Pout<< " np:" << np
+        Perr<< " np:" << np
             << " sendCounts:" << sendCounts
             << " sendOffsets:" << sendOffsets
             << " with comm:" << comm
             << " warnComm:" << UPstream::warnComm
             << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
     if
@@ -1400,17 +1400,17 @@ void Foam::PstreamDetail::allGather
     {
         if (immediate)
         {
-            Pout<< "** MPI_Iallgather (non-blocking):";
+            Perr<< "** MPI_Iallgather (non-blocking):";
         }
         else
         {
-            Pout<< "** MPI_Allgather (blocking):";
+            Perr<< "** MPI_Allgather (blocking):";
         }
-        Pout<< " numProc:" << UPstream::nProcs(comm)
+        Perr<< " numProc:" << UPstream::nProcs(comm)
             << " with comm:" << comm
             << " warnComm:" << UPstream::warnComm
             << endl;
-        error::printStack(Pout);
+        error::printStack(Perr);
     }
 
 

@@ -91,7 +91,7 @@ void Foam::UPstream::barrier(const label communicator, UPstream::Request* req)
 {}
 
 
-std::pair<int,int>
+std::pair<int,int64_t>
 Foam::UPstream::probeMessage
 (
     const UPstream::commsTypes commsType,
@@ -100,7 +100,7 @@ Foam::UPstream::probeMessage
     const label communicator
 )
 {
-    return std::pair<int,int>(-1, 0);
+    return std::pair<int,int64_t>(-1, 0);
 }
 
 
