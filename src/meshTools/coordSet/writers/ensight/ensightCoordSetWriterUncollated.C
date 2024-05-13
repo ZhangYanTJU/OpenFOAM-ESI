@@ -91,9 +91,9 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeUncollated
     merge();
 
     {
-        if (!isDir(outputFile.path()))
+        if (!Foam::isDir(outputFile.path()))
         {
-            mkDir(outputFile.path());
+            Foam::mkDir(outputFile.path());
         }
 
         // Two-argument form for path-name to avoid validating base-dir
@@ -110,6 +110,7 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeUncollated
             caseOpts_.format()
         );
 
+        osGeom.beginGeometry();
         writeGeometry(osGeom, elemOutput);
 
         // Write field (serial only)
@@ -118,7 +119,12 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeUncollated
 
         // Update case file
         {
-            OFstream osCase(outputFile, IOstreamOption::ASCII);
+            OFstream osCase
+            (
+                IOstreamOption::ATOMIC,
+                outputFile,
+                IOstreamOption::ASCII
+            );
             ensightCase::setTimeFormat(osCase, caseOpts_);  // time-format
 
             osCase

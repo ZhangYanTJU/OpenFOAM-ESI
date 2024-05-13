@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "ensightCase.H"
-#include "ensightGeoFile.H"
 #include "Time.H"
 #include "cloud.H"
 #include "IOmanip.H"
@@ -42,15 +41,26 @@ const char* Foam::ensightCase::geometryName = "geometry";
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-Foam::word Foam::ensightCase::padded(const int nwidth, const label value)
+Foam::word Foam::ensightCase::mask(const int nwidth)
 {
     if (nwidth < 1)
     {
-        return Foam::name(value);
+        return word();
+    }
+
+    return word(std::string(nwidth, '*'), false);  // stripping=false
+}
+
+
+Foam::word Foam::ensightCase::padded(const int nwidth, const label index)
+{
+    if (nwidth < 1)
+    {
+        return Foam::name(index);
     }
 
     std::ostringstream oss;
-    oss << std::setfill('0') << std::setw(nwidth) << value;
+    oss << std::setfill('0') << std::setw(nwidth) << index;
 
     return word(oss.str(), false);  // stripping=false
 }
@@ -230,7 +240,7 @@ void Foam::ensightCase::initialize()
         // eg, convert new results or a particular time interval
         // OR remove everything
 
-        if (isDir(ensightDir_))
+        if (Foam::isDir(ensightDir_))
         {
             if (options_->overwrite())
             {
@@ -245,7 +255,7 @@ void Foam::ensightCase::initialize()
         }
 
         // Create ensight and data directories
-        mkDir(dataDir());
+        Foam::mkDir(dataDir());
 
         // The case file is always ASCII
         os_.reset(new OFstream(ensightDir_/caseName_, IOstreamOption::ASCII));
@@ -508,7 +518,7 @@ Foam::ensightCase::createDataFile
         // Note that data/ITER is indeed a valid ensight::FileName
 
         const fileName outdir = dataDir()/padded(timeIndex_);
-        mkDir(outdir);
+        Foam::mkDir(outdir);
 
         return autoPtr<ensightFile>::New(outdir, name, format());
     }
@@ -537,7 +547,7 @@ Foam::ensightCase::createCloudFile
           : (dataDir() / padded(timeIndex_) / cloud::prefix / cloudName)
         );
 
-        mkDir(outdir); // should be unnecessary after newCloud()
+        Foam::mkDir(outdir); // should be unnecessary after newCloud()
 
         return autoPtr<ensightFile>::New(outdir, name, format());
     }
@@ -561,13 +571,7 @@ Foam::ensightCase::ensightCase
     caseName_(caseName + ".case"),
     changed_(false),
     timeIndex_(0),
-    timeValue_(0),
-    timesUsed_(),
-    geomTimes_(),
-    cloudTimes_(),
-    variables_(),
-    nodeVariables_(),
-    cloudVars_()
+    timeValue_(0)
 {
     initialize();
 }
@@ -586,13 +590,7 @@ Foam::ensightCase::ensightCase
     caseName_(caseName + ".case"),
     changed_(false),
     timeIndex_(0),
-    timeValue_(0),
-    timesUsed_(),
-    geomTimes_(),
-    cloudTimes_(),
-    variables_(),
-    nodeVariables_(),
-    cloudVars_()
+    timeValue_(0)
 {
     initialize();
 }
@@ -624,7 +622,7 @@ void Foam::ensightCase::setTime(const scalar value, const label index)
         // Note that data/ITER is indeed a valid ensight::FileName
 
         const fileName outdir = dataDir()/padded(timeIndex_);
-        mkDir(outdir);
+        Foam::mkDir(outdir);
 
         // place a timestamp in the directory for future reference
         OFstream timeStamp(outdir/"time");
@@ -842,7 +840,7 @@ Foam::ensightCase::newGeometry
     bool moving
 ) const
 {
-    autoPtr<Foam::ensightGeoFile> output;
+    autoPtr<ensightGeoFile> filePtr;
 
     if (UPstream::master())
     {
@@ -859,14 +857,16 @@ Foam::ensightCase::newGeometry
             // Static mesh: write as "data/constant/geometry"
             path = dataDir()/word("constant");
         }
-        mkDir(path);
+        Foam::mkDir(path);
 
         noteGeometry(moving);   // note for later use
 
-        return autoPtr<ensightGeoFile>::New(path, geometryName, format());
+        filePtr.reset(new ensightGeoFile(path, geometryName, format()));
+
+        // Before 2024-05 also implicitly called beginGeometry()
     }
 
-    return nullptr;
+    return filePtr;
 }
 
 
@@ -876,23 +876,24 @@ Foam::ensightCase::newCloud
     const word& cloudName
 ) const
 {
-    autoPtr<Foam::ensightFile> output;
+    autoPtr<ensightFile> filePtr;
 
     if (UPstream::master())
     {
-        output = createCloudFile(cloudName, "positions");
+        filePtr = createCloudFile(cloudName, "positions");
+        auto& os = filePtr();
 
         // Tag binary format (just like geometry files)
-        output().writeBinaryHeader();
+        os.writeBinaryHeader();
 
         // Description
-        output().write(cloud::prefix/cloudName);
-        output().newline();
+        os.write(cloud::prefix/cloudName);
+        os.newline();
 
         noteCloud(cloudName);   // note for later use
     }
 
-    return output;
+    return filePtr;
 }
 
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -125,6 +125,11 @@ void Foam::ensightFaMesh::write
     bool parallel
 ) const
 {
+    if (UPstream::master())
+    {
+        os.beginGeometry();
+    }
+
     // Area meshes (currently only one)
     // const label areaId = 0;
     areaPart_.write(os, mesh_.mesh(), parallel);

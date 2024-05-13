@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -73,7 +73,7 @@ inline bool Foam::ensightCase::separateCloud() const
 
 inline Foam::Ostream& Foam::ensightCase::operator()() const
 {
-    return *os_;
+    return (os_ ? *os_ : Foam::Snull);
 }
 
 

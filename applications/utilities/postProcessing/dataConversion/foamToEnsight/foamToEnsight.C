@@ -554,7 +554,8 @@ int main(int argc, char *argv[])
                 {
                     autoPtr<ensightGeoFile> os =
                         ensCase.newGeometry(hasMovingMesh);
-                    ensMesh.write(os);
+
+                    ensMesh.write(os.ref());
                 }
 
                 // finite-area
@@ -562,7 +563,8 @@ int main(int argc, char *argv[])
                 {
                     autoPtr<ensightGeoFile> os =
                         ensFaCasePtr->newGeometry(hasMovingMesh);
-                    ensFaMeshPtr->write(os);
+
+                    ensFaMeshPtr->write(os.ref());
                 }
             }
 

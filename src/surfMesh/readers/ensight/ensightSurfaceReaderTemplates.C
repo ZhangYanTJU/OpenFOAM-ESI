@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,41 +28,28 @@ License
 #include "SpanStream.H"
 #include "ensightPTraits.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
 
 template<class Type>
-void Foam::ensightSurfaceReader::readFromLine
+void Foam::ensightSurfaceReader::readFrom
 (
-    const label nSkip,
-    Istream& is,
+    const std::string& buffer,
     Type& value
-) const
+)
 {
-    skip(nSkip, is);
-
+    ISpanStream is(buffer.data(), buffer.size());
     is  >> value;
 }
 
 
-template<class Type>
-void Foam::ensightSurfaceReader::readFromLine
-(
-    const label nSkip,
-    const string& buffer,
-    Type& value
-) const
-{
-    ISpanStream is(buffer.data(), buffer.length());
-
-    readFromLine(nSkip, is, value);
-}
-
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::ensightSurfaceReader::readField
 (
     const fileName& dataFile,
-    const word& fieldName
+    const word& fieldName,
+    const label timeIndex
 ) const
 {
     auto tfield = tmp<Field<Type>>::New(surfPtr_->nFaces(), Zero);
@@ -80,6 +67,10 @@ Foam::tmp<Foam::Field<Type>> Foam::ensightSurfaceReader::readField
                 << " for field " << fieldName
                 << exit(FatalError);
         }
+
+        // If transient single-file
+        is.seekTime(timeIndex);
+
 
         // Check that data type is as expected
         // (assuming OpenFOAM generated the data set)
@@ -104,11 +95,11 @@ Foam::tmp<Foam::Field<Type>> Foam::ensightSurfaceReader::readField
         }
 
         string strValue;
-        label iValue;
+        label intValue;
 
         // Read header info: part index, e.g. part 1
         is.read(strValue);
-        is.read(iValue);
+        is.read(intValue);
 
         label begFace = 0;
 
@@ -183,11 +174,18 @@ Foam::tmp<Foam::Field<Type>> Foam::ensightSurfaceReader::readField
     }
 
     const word& fieldName = fieldNames_[fieldIndex];
-    const label fileIndex = timeStartIndex_ + timeIndex*timeIncrement_;
+
+    const label fileIndex =
+    (
+        (timeIndex >= 0 && timeIndex < fileNumbers_.size())
+      ? fileNumbers_[timeIndex]
+      : (timeStartIndex_ + timeIndex*timeIncrement_)
+    );
 
     const fileName dataFile
     (
-        baseDir_/replaceMask(fieldFileNames_[fieldIndex], fileIndex)
+        baseDir_
+      / ensightCase::expand_mask(fieldFileNames_[fieldIndex], fileIndex)
     );
 
     if (debug)
@@ -196,7 +194,7 @@ Foam::tmp<Foam::Field<Type>> Foam::ensightSurfaceReader::readField
             << dataFile << endl;
     }
 
-    return readField<Type>(dataFile, fieldName);
+    return readField<Type>(dataFile, fieldName, timeIndex);
 }
 
 

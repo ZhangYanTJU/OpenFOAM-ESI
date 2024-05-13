@@ -42,8 +42,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ensightOutputSurface_H
-#define ensightOutputSurface_H
+#ifndef Foam_ensightOutputSurface_H
+#define Foam_ensightOutputSurface_H
 
 #include "ensightFaces.H"
 
@@ -69,7 +69,9 @@ class ensightOutputSurface
         const faceList& faces_;
 
 
-    // Private Member Functions
+public:
+
+    // Generated Methods
 
         //- No copy construct
         ensightOutputSurface(const ensightOutputSurface&) = delete;
@@ -77,8 +79,6 @@ class ensightOutputSurface
         //- No copy assignment
         void operator=(const ensightOutputSurface&) = delete;
 
-
-public:
 
     // Constructors
 
@@ -98,7 +98,8 @@ public:
 
     // Member Functions
 
-        //- Write processor-local geometry (serial-only)
+        //- Write processor-local geometry (serial-only).
+        //- No beginGeometry() marker.
         void write(ensightGeoFile& os) const;
 
         //- Write a field of face or point values (serial-only)
@@ -121,7 +122,8 @@ public:
 
     // Housekeeping
 
-        //- Cannot write geometry with a mesh reference
+        //- Cannot write geometry with a mesh reference.
+        //- No beginGeometry() marker.
         virtual void write(ensightGeoFile&, const polyMesh&, bool) const
         {}
 };

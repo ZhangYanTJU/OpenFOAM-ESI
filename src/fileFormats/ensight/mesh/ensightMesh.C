@@ -433,6 +433,11 @@ void Foam::ensightMesh::write
     bool parallel
 ) const
 {
+    if (UPstream::master())
+    {
+        os.beginGeometry();
+    }
+
     // The internalMesh, cellZones
     for (const label id : cellZoneParts_.sortedToc())
     {

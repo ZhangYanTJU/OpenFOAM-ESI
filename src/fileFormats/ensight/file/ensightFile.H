@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,8 +28,8 @@ Class
     Foam::ensightFile
 
 Description
-    Ensight output with specialized write() for strings, integers and floats.
-    Correctly handles binary write as well.
+    A variant of OFstream with specialised handling for Ensight writing
+    of strings, integers and floats (ASCII and BINARY).
 
 \*---------------------------------------------------------------------------*/
 
@@ -39,6 +39,7 @@ Description
 #include "OFstream.H"
 #include "ensightFileName.H"
 #include "ensightVarName.H"
+#include "DynamicList.H"
 #include "IndirectListBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -62,17 +63,36 @@ class ensightFile
         //- Value to represent undef in results (default: 1e+37, floatVGREAT)
         static float undefValue_;
 
+        //- Transient single-file:
+        //- the original file size when opened in append mode, zero otherwise
+        int64_t origFileSize_;
+
+        //- Transient single-file:
+        //- the time-step file-offsets (position after "BEGIN TIME STEP").
+        //  Set on initial reading and added to by beginTimeStep().
+        DynamicList<int64_t> timeStepOffsets_;
+
 
     // Private Member Functions
 
-        //- Initialize sets the ASCII output formatting
+        //- Set the ASCII output formatting etc,
+        //- and handle transient single-file timestep information
         void init();
 
-        //- No copy construct
-        ensightFile(const ensightFile&) = delete;
 
-        //- No copy assignment
-        void operator=(const ensightFile&) = delete;
+    // Constructors
+
+        //- Construct with file name, no ensight file naming adjustment.
+        //  Created as an atomic or in append-mode (single-file format).
+        //  In append-mode, attempts to parse existing time-step information.
+        //  Changes APPEND_APP to APPEND_ATE (file rewriting).
+        ensightFile
+        (
+            std::nullptr_t,                     // dispatch tag
+            IOstreamOption::appendType append,  // (NO_APPEND or APPEND_ATE)
+            const fileName& pathname,
+            IOstreamOption::streamFormat fmt
+        );
 
 
 public:
@@ -98,30 +118,70 @@ public:
         }
 
 
+    // Generated Methods
+
+        //- No copy construct
+        ensightFile(const ensightFile&) = delete;
+
+        //- No copy assignment
+        void operator=(const ensightFile&) = delete;
+
+
     // Constructors
 
         //- Construct from path-name.
         //  The path-name is adjusted for valid ensight file naming.
-        //  Always created as an atomic
-        explicit ensightFile
+        //  Created as an atomic or in append mode (single-file format).
+        //  In append mode, attempts to parse existing time-step information.
+        ensightFile
         (
+            //! Append mode: NO_APPEND or APPEND_ATE
+            IOstreamOption::appendType append,
             const fileName& pathname,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
         //- Construct from path and name.
         //  Only the name portion is adjusted for valid ensight file naming.
-        //  Always created as an atomic
+        //  Created as an atomic or in append mode (single-file format).
+        //  In append mode, attempts to parse existing time-step information.
         ensightFile
         (
+            //! Append mode: NO_APPEND or APPEND_ATE
+            IOstreamOption::appendType append,
             const fileName& path,
             const fileName& name,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
+        //- Construct from path-name.
+        //  The path-name is adjusted for valid ensight file naming.
+        //  Created as an atomic, non-append mode.
+        explicit ensightFile
+        (
+            const fileName& pathname,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        :
+            ensightFile(IOstreamOption::NO_APPEND, pathname, fmt)
+        {}
 
-    //- Destructor
-    ~ensightFile() = default;
+        //- Construct from path and name.
+        //  Only the name portion is adjusted for valid ensight file naming.
+        //  Created as an atomic, non-append mode.
+        ensightFile
+        (
+            const fileName& path,
+            const fileName& name,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        :
+            ensightFile(IOstreamOption::NO_APPEND, path, name, fmt)
+        {}
+
+
+    //- Destructor. Commits the time-step footer information (if any)
+    ~ensightFile();
 
 
     // Member Functions
@@ -147,12 +207,6 @@ public:
 
         //- Write "C Binary" string for binary files (eg, geometry/measured)
         void writeBinaryHeader();
-
-        //- Write "BEGIN TIME STEP" string and newline
-        void beginTimeStep();
-
-        //- Write "END TIME STEP" string and newline
-        void endTimeStep();
 
         //- Write character/string content as "%79s" or as binary (max 80 chars)
         void writeString(const char* str, size_t len);
@@ -225,10 +279,58 @@ public:
         void newline();
 
 
+    // Transient single-file format
+
+        //- Write "BEGIN TIME STEP" string and newline
+        //- (for transient single-file format).
+        //  \returns file position after the write
+        int64_t beginTimeStep();
+
+        //- Write "END TIME STEP" string and newline
+        //- (for transient single-file format)
+        //  \returns file position after the write
+        int64_t endTimeStep();
+
+        //- Transient single-file:
+        //- write the time-step file-offsets as footer information.
+        //  Maintains the current file position to allow manual use
+        //  and seamless overwriting.
+        //  \return the output file position at the start of the footer
+        int64_t writeTimeStepFooter();
+
+        //- Transient single-file:
+        //- forget time-step file positions (advanced use)
+        void clearTimeSteps() noexcept
+        {
+            timeStepOffsets_.clear();
+        }
+
+        //- Transient single-file:
+        //- the current number of time steps
+        label nTimes() const noexcept
+        {
+            return timeStepOffsets_.size();
+        }
+
+        //- Transient single-file:
+        //- the current file-offsets for time steps within the file
+        const UList<int64_t>& timeStepOffets() const noexcept
+        {
+            return timeStepOffsets_;
+        }
+
+
     // Convenience Output Methods
 
         //- Begin a part (0-based index internally).
         void beginPart(const label index);
+
+        //- Begin a part (0-based index internally), with a description.
+        //- Only used for geometry files
+        void beginPart(const label index, const std::string& description);
+
+        //- Begin a "coordinates" block. Only used for geometry files.
+        void beginCoordinates(const label nparticles);
 
         //- Begin a "particle coordinates" block (measured data)
         void beginParticleCoordinates(const label nparticles);

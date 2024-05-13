@@ -46,6 +46,14 @@ inline Foam::ensight::VarName::VarName(const std::string& s)
 }
 
 
+inline Foam::ensight::VarName::VarName(std::string&& s)
+:
+    word(std::move(s), false)
+{
+    stripInvalid();
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 inline bool Foam::ensight::VarName::valid(char c)
@@ -73,7 +81,7 @@ inline bool Foam::ensight::VarName::valid(char c)
 
 inline void Foam::ensight::VarName::stripInvalid()
 {
-    string::stripInvalid<VarName>(*this);
+    string::stripInvalid<ensight::VarName>(*this);
 
     if (empty())
     {
@@ -83,10 +91,9 @@ inline void Foam::ensight::VarName::stripInvalid()
     }
 
     // Prefix with '_' to avoid starting with leading digits
-    std::string::iterator iter = begin();
-    if (isdigit(*iter))
+    if (std::isdigit(front()))
     {
-        insert(iter, '_');
+        insert(0, 1, '_');
     }
 }
 

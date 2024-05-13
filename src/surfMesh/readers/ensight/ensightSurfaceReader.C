@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,54 +44,57 @@ namespace Foam
 namespace Foam
 {
 
-// Read and discard specified number of elements
-template<class Type>
-static inline void discard(label n, ensightReadFile& is)
+// Extract timeset and fileset from split line information
+// when the minElements has been satisfied.
+// For example,
+// ----
+//     model: 1   some-geometry
+//     model: 1 1 some-geometry
+// ----
+// would be split *after* the 'model:' resulting in these sub-strings:
+//
+//    ("1" "some-geometry")
+//    ("1" "1" some-geometry")
+//
+// thus call extractTimeset with minElements == 2
+//
+template<class StringType>
+static inline labelPair extractTimeset
+(
+    const SubStrings<StringType>& split,
+    const std::size_t minElements
+)
 {
-    Type val;
+    ISpanStream is;
 
-    while (n > 0)
+    labelPair result(-1, -1);
+    if (split.size() >= minElements)
     {
-        is.read(val);
-        --n;
+        is.reset(split[0]);
+        is >> result.first();
+
+        if (split.size() > minElements)
+        {
+            is.reset(split[1]);
+            is >> result.second();
+        }
     }
+
+    return result;
 }
 
 } // End namespace Foam
 
 
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
 
-void Foam::ensightSurfaceReader::skip(const label n, Istream& is) const
-{
-    label i = 0;
-    token tok;
-    while (is.good() && (i < n))
-    {
-        is >> tok;
-        ++i;
-
-        DebugInfo
-            << "Skipping token " << tok << nl;
-    }
-
-    if (i != n)
-    {
-        WarningInFunction
-            << "Requested to skip " << n << " tokens, but stream exited after "
-            << i << " tokens. Last token read: " << tok
-            << nl;
-    }
-}
-
-
-void Foam::ensightSurfaceReader::readLine(ISstream& is, string& line) const
+bool Foam::ensightSurfaceReader::readLine(ISstream& is, std::string& line)
 {
     do
     {
         is.getLine(line);
 
-        // Trim out any '#' comments
+        // Trim out any '#' comments (trailing or otherwise)
         const auto pos = line.find('#');
         if (pos != std::string::npos)
         {
@@ -100,6 +103,32 @@ void Foam::ensightSurfaceReader::readLine(ISstream& is, string& line) const
         stringOps::inplaceTrimRight(line);
     }
     while (line.empty() && is.good());
+
+    return !line.empty();
+}
+
+
+void Foam::ensightSurfaceReader::checkSection
+(
+    const word& expected,
+    const string& buffer,
+    const ISstream& is
+)
+{
+    // Be more generous with our expectations.
+    // Eg, ensight specifies the "VARIABLE" entry,
+    // but accepts "VARIABLES" as well.
+
+    if (!expected.empty() && !buffer.starts_with(expected))
+    {
+        FatalIOErrorInFunction(is)
+            << "Expected section header '" << expected
+            << "' but read " << buffer << nl
+            << exit(FatalIOError);
+    }
+
+    DebugInfo
+        << "Read section header: " << buffer.c_str() << nl;
 }
 
 
@@ -107,54 +136,23 @@ void Foam::ensightSurfaceReader::debugSection
 (
     const word& expected,
     ISstream& is
-) const
-{
-    string actual;
-    readLine(is, actual);
-
-    if (expected != actual)
-    {
-        FatalIOErrorInFunction(is)
-            << "Expected section header '" << expected
-            << "' but read " << actual << nl
-            << exit(FatalIOError);
-    }
-
-    DebugInfo
-        << "Read section header: " << expected << nl;
-}
-
-
-Foam::fileName Foam::ensightSurfaceReader::replaceMask
-(
-    const fileName& fName,
-    const label timeIndex
 )
 {
-    fileName result(fName);
+    string buffer;
+    readLine(is, buffer);
 
-    const auto nMask = stringOps::count(fName, '*');
-
-    // If there are any '*' chars, they are assumed to be contiguous
-    // Eg, data/******/geometry
-
-    if (nMask)
-    {
-        const std::string maskStr(nMask, '*');
-        const Foam::word  indexStr(ensightCase::padded(nMask, timeIndex));
-        result.replace(maskStr, indexStr);
-    }
-
-    return result;
+    checkSection(expected, buffer, is);
 }
 
 
-Foam::Pair<Foam::ensightSurfaceReader::idTypes>
-Foam::ensightSurfaceReader::readGeometryHeader(ensightReadFile& is) const
-{
-    // Binary flag string if applicable
-    is.readBinaryHeader();
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
+Foam::Pair<Foam::ensightSurfaceReader::idTypes>
+Foam::ensightSurfaceReader::readGeometryHeader
+(
+    ensightReadFile& is
+) const
+{
     string buffer;
 
     Pair<idTypes> idHandling(idTypes::NONE, idTypes::NONE);
@@ -203,17 +201,17 @@ Foam::ensightSurfaceReader::readGeometryHeader(ensightReadFile& is) const
         // Optional extents - read and discard 6 floats
         // (xmin, xmax, ymin, ymax, zmin, zmax)
 
-        discard<scalar>(6, is);
+        is.skip<scalar>(6);
 
-        // Part
+        // "part"
         is.read(buffer);
         DebugInfo<< "buffer [" << buffer.length() << "] " << buffer << nl;
     }
 
     // The part number
-    label ivalue;
-    is.read(ivalue);
-    DebugInfo<< "ivalue: " << ivalue << nl;
+    label intValue;
+    is.read(intValue);
+    DebugInfo<< "part number: " << intValue << nl;
 
     // Part description / name
     is.read(buffer);
@@ -231,6 +229,8 @@ void Foam::ensightSurfaceReader::readCase(ISstream& is)
 {
     DebugInFunction << endl;
 
+    enum ParseSection { UNKNOWN, FORMAT, GEOMETRY, VARIABLE, TIME, FILE };
+
     if (!is.good())
     {
         FatalErrorInFunction
@@ -239,99 +239,366 @@ void Foam::ensightSurfaceReader::readCase(ISstream& is)
     }
 
     string buffer;
+    SubStrings<string> split;
 
-    // Read the file
+    ParseSection parseState = ParseSection::UNKNOWN;
+
+    // FORMAT
+    // ~~~~~~
 
     debugSection("FORMAT", is);
     readLine(is, buffer);  // type: ensight gold
+    parseState = ParseSection::FORMAT;
 
+    // GEOMETRY
+    // ~~~~~~~~
     debugSection("GEOMETRY", is);
-    readLine(is, buffer);
+    parseState = ParseSection::GEOMETRY;
 
-    // GEOMETRY with any of these
-    //     model: 1 xxx.0000.mesh
-    //     model: xxx.0000.mesh
-    //     model: data/directory/geometry
-    //
-    // - use the last entry
-    meshFileName_ = stringOps::splitSpace(buffer).back().str();
+    do
+    {
+        readLine(is, buffer);
 
-    DebugInfo << "mesh file:" << meshFileName_ << endl;
+        if (buffer.starts_with("VARIABLE"))
+        {
+            parseState = ParseSection::VARIABLE;
+            break;
+        }
 
-    debugSection("VARIABLE", is);
+        if (buffer.contains("change_coords_only"))
+        {
+            FatalIOErrorInFunction(is)
+                << "No support for moving points, only topology change" << nl
+                << exit(FatalIOError);
+        }
+
+        // Extract filename from GEOMETRY section
+        // ====
+        // model: [ts] [fs] filename  [change_coords_only [cstep]]
+        //
+        // ====
+
+        // TBD:
+        // check for "model:" vs "measured:" ?
+
+        const auto pos_colon = buffer.find(':');
+
+        if
+        (
+            (pos_colon == std::string::npos)
+        )
+        {
+            FatalIOErrorInFunction(is)
+                << "Error reading geometry 'model:'" << nl
+                << exit(FatalIOError);
+        }
+
+        split = stringOps::splitSpace(buffer, pos_colon+1);
+
+        if (split.empty())
+        {
+            FatalIOErrorInFunction(is)
+                << "Error reading geometry 'model:'" << nl
+                << exit(FatalIOError);
+        }
+
+        // With timeset? - need at least 2 entries
+        meshTimeset_ = extractTimeset(split, 2);
+        meshFileName_ = split[split.size()-1].str();
+
+        DebugInfo << "mesh file:" << meshFileName_ << endl;
+    }
+    while (false);
+
+
+    if (parseState != ParseSection::VARIABLE)
+    {
+        debugSection("VARIABLE", is);
+        parseState = ParseSection::VARIABLE;
+    }
 
     // Read the field description
-    DynamicList<word> fieldNames(16);
-    DynamicList<string> fieldFileNames(16);
+    DynamicList<labelPair> dynFieldTimesets(16);
+    DynamicList<word> dynFieldNames(16);
+    DynamicList<string> dynFieldFileNames(16);
+
+    // VARIABLE
+    // ~~~~~~~~
 
     while (is.good())
     {
         readLine(is, buffer);
 
-        if (buffer == "TIME")
+        if (buffer.starts_with("TIME"))
         {
+            parseState = ParseSection::TIME;
             break;
         }
 
-        // Read the field name and associated file name. Eg,
-        //     scalar per element: 1  p  data/********/p
+        // Read the field name and associated file name.
+        // Eg,
+        //     scalar per element: [ts] [fs]  p  data/********/p
+        // but ignore
+        //     scalar per node: [ts] [fs]  other  data/********/other
 
-        const auto parsed = stringOps::splitSpace(buffer);
+        const auto pos_colon = buffer.find(':');
 
-        if (!buffer.contains(':') || parsed.size() < 4)
+        if (pos_colon == std::string::npos)
+        {
+            DebugInfo<< "ignore variable line: " << buffer << nl;
+            continue;
+        }
+
+        // TODO? handle variable descriptions with spaces (they are quoted)
+
+        split = stringOps::splitSpace(buffer, pos_colon+1);
+
+        if (split.size() < 2)
         {
             WarningInFunction
-                << "Error reading field file name. Current buffer: "
+                << "Error reading field file name, variable line: "
                 << buffer << endl;
             continue;
         }
-        else if (debug)
+
+        auto pos_key = buffer.find("element");
+        if ((pos_key == std::string::npos) || (pos_colon < pos_key))
         {
-            Info<< "variable line: " << parsed.size();
-            for (const auto& s : parsed)
-            {
-                Info<< " " << s.str();
-            }
-            Info<< nl;
+            DebugInfo<< "ignore variable line: " << buffer << nl;
+            continue;
         }
 
-        fieldNames.push_back(parsed[parsed.size()-2].str());
-        fieldFileNames.push_back(parsed.back().str());
+        DebugInfo<< "variable line: " << buffer << nl;
+
+        // With timeset? - need at least 3 entries
+        dynFieldTimesets.push_back(extractTimeset(split, 3));
+
+        dynFieldNames.push_back(split[split.size()-2].str());
+        dynFieldFileNames.push_back(split[split.size()-1].str());
     }
-    fieldNames_.transfer(fieldNames);
-    fieldFileNames_.transfer(fieldFileNames);
+    fieldTimesets_.transfer(dynFieldTimesets);
+    fieldNames_.transfer(dynFieldNames);
+    fieldFileNames_.transfer(dynFieldFileNames);
 
     DebugInfo
         << "fieldNames: " << fieldNames_ << nl
         << "fieldFileNames: " << fieldFileNames_ << nl;
 
-    // Start reading time information
-    readLine(is, buffer);                       // time set: <int>
 
-    readLine(is, buffer);
-    readFromLine(3, buffer, nTimeSteps_);       // number of steps: <int>
-    readLine(is, buffer);
-    readFromLine(3, buffer, timeStartIndex_);   // filename start number: <int>
-    readLine(is, buffer);
-    readFromLine(2, buffer, timeIncrement_);    // filename increment: <int>
+    if (parseState != ParseSection::TIME)
+    {
+        FatalIOErrorInFunction(is)
+            << "Did not find section header 'TIME'" << nl
+            << exit(FatalIOError);
+    }
+
+
+    // Determine which unique timeset or fileset to expect
+
+    labelHashSet expectTimeset;
+    labelHashSet expectFileset;
+
+    expectTimeset.insert(meshTimeset_.first());
+    expectFileset.insert(meshTimeset_.second());
+
+    for (const auto& tup : fieldTimesets_)
+    {
+        expectTimeset.insert(tup.first());
+        expectFileset.insert(tup.second());
+    }
+
+    // Remove placeholders
+    expectTimeset.erase(-1);
+    expectFileset.erase(-1);
+
 
     DebugInfo
-        << "nTimeSteps: " << nTimeSteps_ << nl
-        << "timeStartIndex: " << timeStartIndex_ << nl
-        << "timeIncrement: " << timeIncrement_ << nl;
+        << "expect timesets: " << flatOutput(expectTimeset) << nl
+        << "expect filesets: " << flatOutput(expectFileset) << nl;
 
-    // Read the time values
-    readLine(is, buffer); // time values:
-    timeValues_.resize_nocopy(nTimeSteps_);
-    for (label i = 0; i < nTimeSteps_; ++i)
+
+    // TIME
+    // ~~~~
+    // style 1:
+    // ====
+    // time set:              <int>  [description]
+    // number of steps:       <int>
+    // filename start number: <int>
+    // filename increment:    <int>
+    // time values: time_1 .. time_N
+    // ====
+    //
+    // style 2:
+    // ====
+    // time set:              <int>  [description]
+    // number of steps:       <int>
+    // filename numbers:      int_1 .. int_N
+    // time values: time_1 .. time_N
+    // ====
+    //
+    // style 3:
+    // ====
+    // time set:              <int>  [description]
+    // number of steps:       <int>
+    // filename numbers file: <filename>
+    // time values file:      <filename>
+    // ====
+
+
+    // Currently only handling style 1, style 2
+    // and only a single time set
+
+    // time set = 1
     {
-        scalar t(readScalar(is));
+        // time set: <int>
+        {
+            readLine(is, buffer);
+        }
 
-        timeValues_[i].value() = t;
-        // TODO: use character representation of t directly instead of
-        // regenerating from scalar value
-        timeValues_[i].name() = Foam::name(t);
+        // number of steps: <int>
+        label nTimes = 0;
+        {
+            readLine(is, buffer);
+            split = stringOps::splitSpace(buffer);
+            readFrom(split.back(), nTimes);
+        }
+
+        // filename start number: <int>
+        // filename increment: <int>
+        //
+        // OR:
+        // filename numbers: ...
+
+        readLine(is, buffer);
+        auto pos_colon = buffer.find(':');
+
+        if (buffer.contains("numbers:"))
+        {
+            // Split out trailing values...
+            split = stringOps::splitSpace(buffer, pos_colon+1);
+
+            fileNumbers_.resize_nocopy(nTimes);
+
+            label numRead = 0;
+            while (numRead < nTimes)
+            {
+                for (const auto& chunk : split)
+                {
+                    std::string str(chunk.str());
+
+                    if (!Foam::readLabel(str, fileNumbers_[nTimes]))
+                    {
+                        FatalIOErrorInFunction(is)
+                            << "Could not parse label: " << str << nl
+                            << exit(FatalIOError);
+                    }
+                    ++numRead;
+
+                    if (numRead == nTimes)
+                    {
+                        break;
+                    }
+                }
+
+                // Get more input
+                if (numRead < nTimes)
+                {
+                    readLine(is, buffer);
+                    split = stringOps::splitSpace(buffer);
+                }
+            }
+
+            timeStartIndex_ = 0;
+            timeIncrement_ = 0;
+            fileNumbers_.resize(numRead);
+        }
+        else
+        {
+            // filename start number: <int>
+            split = stringOps::splitSpace(buffer);
+            readFrom(split.back(), timeStartIndex_);
+
+            // filename increment: <int>
+            readLine(is, buffer);
+            split = stringOps::splitSpace(buffer);
+            readFrom(split.back(), timeIncrement_);
+
+            fileNumbers_.clear();
+        }
+
+        DebugInfo
+            << "nTimes: " << nTimes
+            << " start-index: " << timeStartIndex_
+            << " increment: " << timeIncrement_
+            << " file numbers: " << flatOutput(fileNumbers_) << nl;
+
+
+        // time values: time_1 .. time_N
+        readLine(is, buffer);
+
+        // Split out trailing values...
+        {
+            const auto pos_colon = buffer.find(':');
+            const auto pos_key = buffer.find("values");
+
+            if
+            (
+                (pos_colon == std::string::npos)
+             || (pos_key == std::string::npos) || (pos_colon < pos_key)
+            )
+            {
+                split.clear();
+            }
+            else
+            {
+                split = stringOps::splitSpace(buffer, pos_colon+1);
+            }
+        }
+
+        timeValues_.resize_nocopy(nTimes);
+
+        label numRead = 0;
+        while (numRead < nTimes)
+        {
+            for (const auto& chunk : split)
+            {
+                auto& inst = timeValues_[nTimes];
+
+                // Retain character representation
+                inst.name() = word(chunk.str());
+
+                if (!Foam::readScalar(inst.name(), inst.value()))
+                {
+                    FatalIOErrorInFunction(is)
+                        << "Could not parse scalar: " << inst.name() << nl
+                        << exit(FatalIOError);
+                }
+                ++numRead;
+
+                if (numRead == nTimes)
+                {
+                    break;
+                }
+            }
+
+            // Get more input
+            if (numRead < nTimes)
+            {
+                readLine(is, buffer);
+                split = stringOps::splitSpace(buffer);
+            }
+        }
+
+        timeValues_.resize(numRead);
     }
+
+    // Not yet:
+
+    // FILE
+    // ~~~~
+    // file set:        <int>
+    // filename index:  <int>   - file index number in the file name
+    // number of steps: <int>
 }
 
 
@@ -351,14 +618,9 @@ Foam::ensightSurfaceReader::ensightSurfaceReader
     ),
     readFormat_(IOstreamOption::ASCII),  // Placeholder value
     baseDir_(fName.path()),
-    meshFileName_(),
-    fieldNames_(),
-    fieldFileNames_(),
-    nTimeSteps_(0),
+    meshTimeset_(-1,-1),
     timeStartIndex_(0),
-    timeIncrement_(1),
-    timeValues_(),
-    surfPtr_(nullptr)
+    timeIncrement_(1)
 {
     if (options.getOrDefault("debug", false))
     {
@@ -376,12 +638,14 @@ Foam::ensightSurfaceReader::ensightSurfaceReader
         Pstream::broadcasts
         (
             UPstream::worldComm,
+            meshTimeset_,
             meshFileName_,
+            fieldTimesets_,
             fieldNames_,
             fieldFileNames_,
-            nTimeSteps_,
             timeStartIndex_,
             timeIncrement_,
+            fileNumbers_,
             timeValues_
         );
     }
@@ -392,7 +656,8 @@ Foam::ensightSurfaceReader::ensightSurfaceReader
 
 Foam::meshedSurface Foam::ensightSurfaceReader::readGeometry
 (
-    const fileName& geometryFile
+    const fileName& geometryFile,
+    const label timeIndex
 )
 {
     DebugInFunction << endl;
@@ -403,6 +668,9 @@ Foam::meshedSurface Foam::ensightSurfaceReader::readGeometry
 
         // Format detected from the geometry
         readFormat_ = is.format();
+
+        // For transient single-file
+        is.seekTime(timeIndex);
 
         DebugInfo
             << "File: " << is.name()
@@ -433,52 +701,59 @@ Foam::meshedSurface Foam::ensightSurfaceReader::readGeometry
                 << "Ignore " << nPoints << " node ids" << nl;
 
             // Read and discard labels
-            discard<label>(nPoints, is);
+            is.skip<label>(nPoints);
         }
 
-        pointField points(nPoints);
-        for (direction cmpt = 0; cmpt < vector::nComponents; ++cmpt)
-        {
-            for (point& p : points)
-            {
-                is.read(p[cmpt]);
-            }
-        }
+        pointField points;
+        is.readPoints(nPoints, points);
 
 
         // Read faces - may be a mix of tria3, quad4, nsided
         DynamicList<face> dynFaces(nPoints/3);
         DynamicList<faceInfoTuple> faceTypeInfo(16);
 
-        string faceType;
-        label faceCount = 0;
+        string buffer;
 
-        while (is.good()) // (is.peek() != EOF)
+        while (is.good())
         {
             // The element type
-            is.read(faceType);
+            is.read(buffer);
 
             if (!is.good())
             {
                 break;
             }
+            else if (buffer.contains("BEGIN TIME STEP"))
+            {
+                // Graciously handle a miscued start
+                continue;
+            }
+            else if (buffer.contains("END TIME STEP"))
+            {
+                // END TIME STEP is a valid means to terminate input
+                break;
+            }
 
             if
             (
-                faceType
+                buffer
              == ensightFaces::elemNames[ensightFaces::elemType::TRIA3]
             )
             {
-                is.read(faceCount);
+                label elemCount;
+                is.read(elemCount);
 
-                faceTypeInfo.push_back
+                faceTypeInfo.emplace_back
                 (
-                    faceInfoTuple(ensightFaces::elemType::TRIA3, faceCount)
+                    ensightFaces::elemType::TRIA3,
+                    elemCount
                 );
 
                 DebugInfo
-                    << "faceType <" << faceType.c_str() << "> count: "
-                    << faceCount << nl;
+                    << "faceType <"
+                    << ensightFaces::elemNames[ensightFaces::elemType::TRIA3]
+                    << "> count: "
+                    << elemCount << nl;
 
                 if
                 (
@@ -487,39 +762,45 @@ Foam::meshedSurface Foam::ensightSurfaceReader::readGeometry
                 )
                 {
                     DebugInfo
-                        << "Ignore " << faceCount << " element ids" << nl;
+                        << "Ignore " << elemCount << " element ids" << nl;
 
                     // Read and discard labels
-                    discard<label>(faceCount, is);
+                    is.skip<label>(elemCount);
                 }
 
-                for (label facei = 0; facei < faceCount; ++facei)
+                // Extend and fill the new trailing portion
+                const label startElemi = dynFaces.size();
+                dynFaces.resize(startElemi+elemCount, face(3));  // tria3
+                faceList::subList myElements = dynFaces.slice(startElemi);
+
+                for (auto& f : myElements)
                 {
-                    face f(3);
                     for (label& fp : f)
                     {
                         is.read(fp);
                     }
-
-                    dynFaces.push_back(std::move(f));
                 }
             }
             else if
             (
-                faceType
+                buffer
              == ensightFaces::elemNames[ensightFaces::elemType::QUAD4]
             )
             {
-                is.read(faceCount);
+                label elemCount;
+                is.read(elemCount);
 
-                faceTypeInfo.push_back
+                faceTypeInfo.emplace_back
                 (
-                    faceInfoTuple(ensightFaces::elemType::QUAD4, faceCount)
+                    ensightFaces::elemType::QUAD4,
+                    elemCount
                 );
 
                 DebugInfo
-                    << "faceType <" << faceType.c_str() << "> count: "
-                    << faceCount << nl;
+                    << "faceType <"
+                    << ensightFaces::elemNames[ensightFaces::elemType::QUAD4]
+                    << "> count: "
+                    << elemCount << nl;
 
                 if
                 (
@@ -528,39 +809,44 @@ Foam::meshedSurface Foam::ensightSurfaceReader::readGeometry
                 )
                 {
                     DebugInfo
-                        << "Ignore " << faceCount << " element ids" << nl;
+                        << "Ignore " << elemCount << " element ids" << nl;
 
                     // Read and discard labels
-                    discard<label>(faceCount, is);
+                    is.skip<label>(elemCount);
                 }
 
-                for (label facei = 0; facei < faceCount; ++facei)
+                // Extend and fill the new trailing portion
+                const label startElemi = dynFaces.size();
+                dynFaces.resize(startElemi + elemCount, face(4));  // quad4
+                faceList::subList myElements = dynFaces.slice(startElemi);
+
+                for (auto& f : myElements)
                 {
-                    face f(4);
                     for (label& fp : f)
                     {
                         is.read(fp);
                     }
-
-                    dynFaces.push_back(std::move(f));
                 }
             }
             else if
             (
-                faceType
+                buffer
              == ensightFaces::elemNames[ensightFaces::elemType::NSIDED]
             )
             {
-                is.read(faceCount);
+                label elemCount;
+                is.read(elemCount);
 
-                faceTypeInfo.push_back
+                faceTypeInfo.emplace_back
                 (
-                    faceInfoTuple(ensightFaces::elemType::NSIDED, faceCount)
+                    ensightFaces::elemType::NSIDED,
+                    elemCount
                 );
 
                 DebugInfo
-                    << "faceType <" << faceType.c_str() << "> count: "
-                    << faceCount << nl;
+                    << "faceType <"
+                    << ensightFaces::elemNames[ensightFaces::elemType::NSIDED]
+                    << "> count: " << elemCount << nl;
 
                 if
                 (
@@ -569,26 +855,31 @@ Foam::meshedSurface Foam::ensightSurfaceReader::readGeometry
                 )
                 {
                     DebugInfo
-                        << "Ignore " << faceCount << " element ids" << nl;
+                        << "Ignore " << elemCount << " element ids" << nl;
 
                     // Read and discard labels
-                    discard<label>(faceCount, is);
+                    is.skip<label>(elemCount);
                 }
 
-                labelList np(faceCount);
-                for (label facei = 0; facei < faceCount; ++facei)
+                // Extend and fill the new trailing portion
+                const label startElemi = dynFaces.size();
+                dynFaces.resize(startElemi + elemCount);
+                faceList::subList myElements = dynFaces.slice(startElemi);
+
+                for (auto& f : myElements)
                 {
-                    is.read(np[facei]);
+                    label nVerts;
+                    is.read(nVerts);
+
+                    f.resize(nVerts);
                 }
-                for (label facei = 0; facei < faceCount; ++facei)
+
+                for (auto& f : myElements)
                 {
-                    face f(np[facei]);
                     for (label& fp : f)
                     {
                         is.read(fp);
                     }
-
-                    dynFaces.push_back(std::move(f));
                 }
             }
             else
@@ -596,7 +887,7 @@ Foam::meshedSurface Foam::ensightSurfaceReader::readGeometry
                 if (debug)
                 {
                     WarningInFunction
-                        << "Unknown face type: <" << faceType.c_str()
+                        << "Unknown face type: <" << buffer.c_str()
                         << ">. Stopping read and continuing with current "
                         << "elements only" << endl;
                 }
@@ -605,7 +896,7 @@ Foam::meshedSurface Foam::ensightSurfaceReader::readGeometry
         }
 
         // From 1-based Ensight addressing to 0-based OF addressing
-        for (face& f : dynFaces)
+        for (auto& f : dynFaces)
         {
             for (label& fp : f)
             {
@@ -637,11 +928,15 @@ const Foam::meshedSurface& Foam::ensightSurfaceReader::geometry
         surfPtr_.reset(new meshedSurface);
         auto& surf = *surfPtr_;
 
-        fileName geomFile(baseDir_/replaceMask(meshFileName_, timeIndex));
+        fileName geomFile
+        (
+            baseDir_
+          / ensightCase::expand_mask(meshFileName_, timeIndex)
+        );
 
         if (!masterOnly_ || UPstream::master(UPstream::worldComm))
         {
-            surf = readGeometry(geomFile);
+            surf = readGeometry(geomFile, timeIndex);
         }
 
         if (masterOnly_ && UPstream::parRun())

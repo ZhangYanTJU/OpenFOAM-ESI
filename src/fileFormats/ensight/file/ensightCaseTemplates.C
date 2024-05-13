@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,35 @@ License
 
 #include "cloud.H"
 #include "ensightPTraits.H"
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+template<class StringType>
+StringType Foam::ensightCase::expand_mask
+(
+    const StringType& input,
+    const label timeIndex
+)
+{
+    StringType result(input);
+
+    const auto nMask = std::count(input.begin(), input.end(), '*');
+
+    // If there are any '*' chars, they are assumed to be contiguous
+    // Eg, data/******/geometry
+
+    if (nMask)
+    {
+        result.replace
+        (
+            ensightCase::mask(nMask),
+            ensightCase::padded(nMask, timeIndex)
+        );
+    }
+
+    return result;
+}
+
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

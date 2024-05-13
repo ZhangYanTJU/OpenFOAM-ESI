@@ -24,10 +24,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    Test-ensightFile
+    Test-ensightFileName
 
 Description
-    check cleanup of ensight file and variable names
+    Check cleanup of ensight file and variable names
 
 \*---------------------------------------------------------------------------*/
 

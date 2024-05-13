@@ -41,8 +41,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ensightVarName_H
-#define ensightVarName_H
+#ifndef Foam_ensightVarName_H
+#define Foam_ensightVarName_H
 
 #include "word.H"
 
@@ -79,6 +79,9 @@ public:
 
         //- Copy construct from std::string
         inline explicit VarName(const std::string& s);
+
+        //- Move construct from std::string
+        inline explicit VarName(std::string&& s);
 
 
     // Member Functions

@@ -391,6 +391,11 @@ bool Foam::functionObjects::ensightCloudWriteObject::write()
         // Generate a (non-moving) dummy geometry
         // - ParaView ensight-reader needs this, and usually ensight does too
         autoPtr<ensightGeoFile> os = ensCase().newGeometry(false);
+
+        if (os)
+        {
+            os->beginGeometry();
+        }
         ensightCells::writeBox(os.ref(), mesh_.bounds());
     }
 
