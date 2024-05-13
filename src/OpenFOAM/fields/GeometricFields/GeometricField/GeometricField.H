@@ -41,7 +41,6 @@ SourceFiles
 #ifndef Foam_GeometricField_H
 #define Foam_GeometricField_H
 
-#include "regIOobject.H"
 #include "GeometricBoundaryField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -50,7 +49,6 @@ namespace Foam
 {
 
 // Forward Declarations
-class dictionary;
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 class GeometricField;
@@ -104,6 +102,12 @@ public:
 
 private:
 
+    // Private Typedefs
+
+        //- The GeometricField type
+        typedef GeometricField<Type, PatchField, GeoMesh> this_type;
+
+
     // Private Data
 
         //- Current time index.
@@ -111,10 +115,10 @@ private:
         mutable label timeIndex_;
 
         //- Pointer to old time field
-        mutable GeometricField<Type, PatchField, GeoMesh>* field0Ptr_;
+        mutable std::unique_ptr<this_type> field0Ptr_;
 
         //- Pointer to previous iteration (used for under-relaxation)
-        mutable GeometricField<Type, PatchField, GeoMesh>* fieldPrevIterPtr_;
+        mutable std::unique_ptr<this_type> fieldPrevIterPtr_;
 
         //- Boundary field containing boundary field values
         Boundary boundaryField_;
@@ -871,8 +875,8 @@ public:
         //- Correct boundary field
         void correctBoundaryConditions();
 
-        //- Correct boundary conditions after a purely local operation. Is
-        //  dummy for e.g. processor boundary conditions
+        //- Correct boundary conditions after a purely local operation.
+        //  Is dummy for processor boundary conditions etc
         void correctLocalBoundaryConditions();
 
         //- Does the field need a reference level for solution
@@ -1008,19 +1012,20 @@ public:
 
     // Write
 
-        //- The writeData function (required by regIOobject),
-        //- calls operator<<
+        //- The writeData function (required by regIOobject)
         bool writeData(Ostream& os) const;
 
 
     // Ostream Operators
 
+        //- Calls GeometricField::writeData()
         friend Ostream& operator<< <Type, PatchField, GeoMesh>
         (
             Ostream&,
             const GeometricField<Type, PatchField, GeoMesh>&
         );
 
+        //- Calls GeometricField::writeData()
         friend Ostream& operator<< <Type, PatchField, GeoMesh>
         (
             Ostream&,
