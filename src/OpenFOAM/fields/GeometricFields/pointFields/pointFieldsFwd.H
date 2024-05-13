@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,23 +39,12 @@ SourceFiles
 #define Foam_pointFieldsFwd_H
 
 #include "fieldTypes.H"
+#include "GeometricFieldFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// Geometric internal field
-template<class Type, class GeoMesh> class DimensionedField;
-
-// Geometric boundary field
-template<class Type, template<class> class PatchField, class GeoMesh>
-class GeometricBoundaryField;
-
-// Geometric field (internal + boundary)
-template<class Type, template<class> class PatchField, class GeoMesh>
-class GeometricField;
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -80,13 +69,25 @@ using PointInternalField = DimensionedField<Type, pointMesh>;
 
 // Typedefs
 
-typedef GeometricField<scalar, pointPatchField, pointMesh> pointScalarField;
-typedef GeometricField<vector, pointPatchField, pointMesh> pointVectorField;
-typedef GeometricField<sphericalTensor, pointPatchField, pointMesh>
+typedef
+    GeometricField<scalar, pointPatchField, pointMesh>
+    pointScalarField;
+
+typedef
+    GeometricField<vector, pointPatchField, pointMesh>
+    pointVectorField;
+
+typedef
+    GeometricField<sphericalTensor, pointPatchField, pointMesh>
     pointSphericalTensorField;
-typedef GeometricField<symmTensor, pointPatchField, pointMesh>
+
+typedef
+    GeometricField<symmTensor, pointPatchField, pointMesh>
     pointSymmTensorField;
-typedef GeometricField<tensor, pointPatchField, pointMesh> pointTensorField;
+
+typedef
+    GeometricField<tensor, pointPatchField, pointMesh>
+    pointTensorField;
 
 
 /*---------------------------------------------------------------------------*\

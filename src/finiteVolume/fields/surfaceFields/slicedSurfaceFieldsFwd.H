@@ -66,35 +66,28 @@ SlicedGeometricField<Type, fvsPatchField, slicedFvsPatchField, surfaceMesh>;
 // Typedefs
 
 typedef
-SlicedGeometricField<scalar, fvsPatchField, slicedFvsPatchField, surfaceMesh>
+    SlicedGeometricField
+    <scalar, fvsPatchField, slicedFvsPatchField, surfaceMesh>
     slicedSurfaceScalarField;
 
 typedef
-SlicedGeometricField<vector, fvsPatchField, slicedFvsPatchField, surfaceMesh>
+    SlicedGeometricField
+    <vector, fvsPatchField, slicedFvsPatchField, surfaceMesh>
     slicedSurfaceVectorField;
 
 typedef
-SlicedGeometricField
-<
-    sphericalTensor,
-    fvsPatchField,
-    slicedFvsPatchField,
-    surfaceMesh
->
+    SlicedGeometricField
+    <sphericalTensor, fvsPatchField, slicedFvsPatchField, surfaceMesh>
     slicedSurfaceSphericalTensorField;
 
 typedef
-SlicedGeometricField
-<
-    symmTensor,
-    fvsPatchField,
-    slicedFvsPatchField,
-    surfaceMesh
->
+    SlicedGeometricField
+    <symmTensor, fvsPatchField, slicedFvsPatchField, surfaceMesh>
     slicedSurfaceSymmTensorField;
 
 typedef
-SlicedGeometricField<tensor, fvsPatchField, slicedFvsPatchField, surfaceMesh>
+    SlicedGeometricField
+    <tensor, fvsPatchField, slicedFvsPatchField, surfaceMesh>
     slicedSurfaceTensorField;
 
 

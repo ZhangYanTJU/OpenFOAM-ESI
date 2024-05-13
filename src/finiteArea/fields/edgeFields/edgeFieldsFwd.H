@@ -35,15 +35,12 @@ Description
 #define Foam_edgeFieldsFwd_H
 
 #include "fieldTypes.H"
+#include "GeometricFieldFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// Geometric field (internal + boundary)
-template<class Type, template<class> class PatchField, class GeoMesh>
-class GeometricField;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -60,12 +57,25 @@ template<class Type> class faePatchField;
 
 // Typedefs
 
-typedef GeometricField<scalar, faePatchField, edgeMesh> edgeScalarField;
-typedef GeometricField<vector, faePatchField, edgeMesh> edgeVectorField;
-typedef GeometricField<sphericalTensor, faePatchField, edgeMesh>
+typedef
+    GeometricField<scalar, faePatchField, edgeMesh>
+    edgeScalarField;
+
+typedef
+    GeometricField<vector, faePatchField, edgeMesh>
+    edgeVectorField;
+
+typedef
+    GeometricField<sphericalTensor, faePatchField, edgeMesh>
     edgeSphericalTensorField;
-typedef GeometricField<symmTensor, faePatchField, edgeMesh> edgeSymmTensorField;
-typedef GeometricField<tensor, faePatchField, edgeMesh> edgeTensorField;
+
+typedef
+    GeometricField<symmTensor, faePatchField, edgeMesh>
+    edgeSymmTensorField;
+
+typedef
+    GeometricField<tensor, faePatchField, edgeMesh>
+    edgeTensorField;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

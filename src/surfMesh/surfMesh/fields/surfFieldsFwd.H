@@ -45,22 +45,28 @@ template<class Type, class GeoMesh> class DimensionedField;
 class surfGeoMesh;
 
 // Typedefs
-typedef DimensionedField<label, surfGeoMesh>
+typedef
+    DimensionedField<label, surfGeoMesh>
     surfLabelField;
 
-typedef DimensionedField<scalar, surfGeoMesh>
+typedef
+    DimensionedField<scalar, surfGeoMesh>
     surfScalarField;
 
-typedef DimensionedField<vector, surfGeoMesh>
+typedef
+    DimensionedField<vector, surfGeoMesh>
     surfVectorField;
 
-typedef DimensionedField<sphericalTensor, surfGeoMesh>
+typedef
+    DimensionedField<sphericalTensor, surfGeoMesh>
     surfSphericalTensorField;
 
-typedef DimensionedField<symmTensor, surfGeoMesh>
+typedef
+    DimensionedField<symmTensor, surfGeoMesh>
     surfSymmTensorField;
 
-typedef DimensionedField<tensor, surfGeoMesh>
+typedef
+    DimensionedField<tensor, surfGeoMesh>
     surfTensorField;
 
 
@@ -70,22 +76,28 @@ typedef DimensionedField<tensor, surfGeoMesh>
 class surfPointGeoMesh;
 
 // Typedefs
-typedef DimensionedField<label, surfPointGeoMesh>
+typedef
+    DimensionedField<label, surfPointGeoMesh>
     surfPointLabelField;
 
-typedef DimensionedField<scalar, surfPointGeoMesh>
+typedef
+    DimensionedField<scalar, surfPointGeoMesh>
     surfPointScalarField;
 
-typedef DimensionedField<vector, surfPointGeoMesh>
+typedef
+    DimensionedField<vector, surfPointGeoMesh>
     surfPointVectorField;
 
-typedef DimensionedField<sphericalTensor, surfPointGeoMesh>
+typedef
+    DimensionedField<sphericalTensor, surfPointGeoMesh>
     surfPointSphericalTensorField;
 
-typedef DimensionedField<symmTensor, surfPointGeoMesh>
+typedef
+    DimensionedField<symmTensor, surfPointGeoMesh>
     surfPointSymmTensorField;
 
-typedef DimensionedField<tensor, surfPointGeoMesh>
+typedef
+    DimensionedField<tensor, surfPointGeoMesh>
     surfPointTensorField;
 
 

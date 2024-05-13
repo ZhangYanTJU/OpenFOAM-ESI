@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,44 +23,34 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Description
+    Forward declarations related to GeometricField etc.
+
 \*---------------------------------------------------------------------------*/
 
-#ifndef Foam_polyMeshFieldsFwd_H
-#define Foam_polyMeshFieldsFwd_H
-
-#include "fieldTypes.H"
+#ifndef Foam_GeometricFieldFwd_H
+#define Foam_GeometricFieldFwd_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-template<class Type, class GeoMesh> class DimensionedField;
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Internal (volume) fields on a polyMesh
+// Forward Declarations
 
-class polyGeoMesh;
 
-typedef
-    DimensionedField<scalar, polyGeoMesh>
-    polyMeshScalarField;
+// Geometric internal field
+template<class Type, class GeoMesh>
+class DimensionedField;
 
-typedef
-    DimensionedField<vector, polyGeoMesh>
-    polyMeshVectorField;
+// Geometric boundary field
+template<class Type, template<class> class PatchField, class GeoMesh>
+class GeometricBoundaryField;
 
-typedef
-    DimensionedField<sphericalTensor, polyGeoMesh>
-    polyMeshSphericalTensorField;
-
-typedef
-    DimensionedField<symmTensor, polyGeoMesh>
-    polyMeshSymmTensorField;
-
-typedef
-    DimensionedField<tensor, polyGeoMesh>
-    polyMeshTensorField;
+// Geometric field (internal + boundary)
+template<class Type, template<class> class PatchField, class GeoMesh>
+class GeometricField;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

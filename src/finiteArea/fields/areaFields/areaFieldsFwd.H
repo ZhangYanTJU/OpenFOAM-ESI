@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,22 +36,12 @@ SourceFiles
 #define Foam_areaFieldsFwd_H
 
 #include "fieldTypes.H"
+#include "GeometricFieldFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// Geometric internal field
-template<class Type, class GeoMesh> class DimensionedField;
-
-// Geometric boundary field
-template<class Type, template<class> class PatchField, class GeoMesh>
-class GeometricBoundaryField;
-
-// Geometric field (internal + boundary)
-template<class Type, template<class> class PatchField, class GeoMesh>
-class GeometricField;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -75,12 +65,25 @@ using AreaInternalField = DimensionedField<Type, areaMesh>;
 
 // Typedefs
 
-typedef GeometricField<scalar, faPatchField, areaMesh> areaScalarField;
-typedef GeometricField<vector, faPatchField, areaMesh> areaVectorField;
-typedef GeometricField<sphericalTensor, faPatchField, areaMesh>
+typedef
+    GeometricField<scalar, faPatchField, areaMesh>
+    areaScalarField;
+
+typedef
+    GeometricField<vector, faPatchField, areaMesh>
+    areaVectorField;
+
+typedef
+    GeometricField<sphericalTensor, faPatchField, areaMesh>
     areaSphericalTensorField;
-typedef GeometricField<symmTensor, faPatchField, areaMesh> areaSymmTensorField;
-typedef GeometricField<tensor, faPatchField, areaMesh> areaTensorField;
+
+typedef
+    GeometricField<symmTensor, faPatchField, areaMesh>
+    areaSymmTensorField;
+
+typedef
+    GeometricField<tensor, faPatchField, areaMesh>
+    areaTensorField;
 
 
 /*---------------------------------------------------------------------------*\
