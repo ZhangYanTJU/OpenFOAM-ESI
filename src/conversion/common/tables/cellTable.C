@@ -522,9 +522,9 @@ void Foam::cellTable::combine(const dictionary& mapDict, labelList& tableIds)
     labelList mapping(identity(this->maxIndex() + 1));
 
     bool remap = false;
-    forAllConstIters(mapDict, iter)
+    for (const entry& dEntry : mapDict)
     {
-        wordRes patterns(iter().stream());
+        wordRes patterns(dEntry.stream());
 
         // find all matches
         Map<word> matches;
@@ -538,14 +538,14 @@ void Foam::cellTable::combine(const dictionary& mapDict, labelList& tableIds)
 
         if (matches.size())
         {
-            label targetId = this->findIndex(iter().keyword());
+            label targetId = this->findIndex(dEntry.keyword());
 
-            Info<< "combine cellTable: " << iter().keyword();
+            Info<< "combine cellTable: " << dEntry.keyword();
             if (targetId < 0)
             {
                 // not found - reuse 1st element but with different name
                 targetId = min(matches.toc());
-                operator[](targetId).set("Label", iter().keyword());
+                operator[](targetId).set("Label", dEntry.keyword());
 
                 Info<< " = (";
             }

@@ -35,17 +35,11 @@ namespace Foam
 
 static inline const Foam::entry* resolveLabel(const entry& e, const label val)
 {
-    if (e.isStream())
-    {
-        const tokenList& toks = e.stream();
-
-        if (!toks.empty() && toks[0].isLabel(val))
-        {
-            return &e;
-        }
-    }
-
-    return nullptr;
+    return
+    (
+        (e.isStream() && e.stream().front().isLabel(val))
+      ? &e : nullptr
+    );
 }
 
 } // End namespace Foam

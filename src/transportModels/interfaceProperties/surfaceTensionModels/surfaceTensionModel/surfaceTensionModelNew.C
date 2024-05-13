@@ -37,9 +37,11 @@ Foam::autoPtr<Foam::surfaceTensionModel> Foam::surfaceTensionModel::New
     const fvMesh& mesh
 )
 {
-    if (dict.isDict("sigma"))
+    const dictionary* sigmaDictPtr = dict.findDict("sigma");
+
+    if (sigmaDictPtr)
     {
-        const dictionary& sigmaDict = surfaceTensionModel::sigmaDict(dict);
+        const dictionary& sigmaDict = *sigmaDictPtr;
 
         const word modelType(sigmaDict.get<word>("type"));
 

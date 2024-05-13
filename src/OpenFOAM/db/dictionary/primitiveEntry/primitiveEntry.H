@@ -181,14 +181,8 @@ public:
             return ITstream::endLineNumber();
         }
 
-        //- Return true - this entry is a stream
-        virtual bool isStream() const noexcept
-        {
-            return true;
-        }
-
         //- Return pointer to token stream for this primitive entry
-        virtual ITstream* streamPtr() const;
+        virtual ITstream* streamPtr() const noexcept;
 
         //- Return token stream for this primitive entry
         virtual ITstream& stream() const;

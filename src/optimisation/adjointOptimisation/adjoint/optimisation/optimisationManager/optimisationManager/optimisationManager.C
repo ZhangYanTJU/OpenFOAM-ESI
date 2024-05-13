@@ -323,29 +323,29 @@ Foam::optimisationManager::optimisationManager(fvMesh& mesh)
             "optimisationDict",
             mesh.time().system(),
             mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::READ_MODIFIED,
             IOobject::NO_WRITE,
             IOobject::REGISTER
         )
     ),
     mesh_(mesh),
     time_(const_cast<Time&>(mesh.time())),
-    designVars_
-    (
-        this->subOrEmptyDict("optimisation").isDict("designVariables") ?
-        designVariables::New
-        (
-            mesh_,
-            subDict("optimisation").subDict("designVariables")
-        ) :
-        nullptr
-    ),
+    designVars_(nullptr),
     primalSolvers_(),
     adjointSolverManagers_(),
     managerType_(get<word>("optimisationManager")),
     dvUpdate_(nullptr),
     shouldUpdateDesignVariables_(true)
-{}
+{
+    // The "designVariables" sub-dictionary is optional
+    const dictionary* designVarsDictPtr =
+        this->subOrEmptyDict("optimisation").findDict("designVariables");
+
+    if (designVarsDictPtr)
+    {
+        designVars_ = designVariables::New(mesh_, *designVarsDictPtr);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Selectors  * * * * * * * * * * * * * * //

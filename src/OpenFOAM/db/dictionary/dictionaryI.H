@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -147,13 +147,13 @@ inline Foam::dictionary* Foam::dictionary::findDict
 }
 
 
-inline bool Foam::dictionary::isDict
+inline Foam::ITstream* Foam::dictionary::findStream
 (
     const word& keyword,
     enum keyType::option matchOpt
 ) const
 {
-    return static_cast<bool>(findDict(keyword, matchOpt));
+    return csearch(keyword, matchOpt).streamPtr();
 }
 
 

@@ -241,7 +241,7 @@ Foam::label Foam::solution::upgradeSolverDict
     // recast primitive entries into dictionary entries
     for (const entry& dEntry : dict)
     {
-        if (!dEntry.isDict())
+        if (dEntry.isStream())
         {
             ITstream& is = dEntry.stream();
             word name(is);
@@ -256,11 +256,12 @@ Foam::label Foam::solution::upgradeSolverDict
             // transform primitiveEntry with settings -> dictionaryEntry
             for (const word& dictName : subDictNames)
             {
-                entry* eptr = subdict.findEntry(dictName, keyType::LITERAL);
+                ITstream* streamPtr =
+                    subdict.findStream(dictName, keyType::LITERAL);
 
-                if (eptr && !eptr->isDict())
+                if (streamPtr)
                 {
-                    ITstream& is = eptr->stream();
+                    auto& is = *streamPtr;
                     is >> name;
 
                     if (!is.eof())

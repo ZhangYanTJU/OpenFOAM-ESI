@@ -247,7 +247,7 @@ bool Foam::entry::New
             if (finder.good())
             {
                 // Read as primitiveEntry
-                const keyType newKeyword(finder.ptr()->stream());
+                const keyType newKeyword(finder.stream());
 
                 return parentDict.add
                 (

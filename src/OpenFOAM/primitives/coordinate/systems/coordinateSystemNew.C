@@ -129,9 +129,9 @@ Foam::coordinateSystem::New
         {
             dictPtr = finder.dictPtr();
         }
-        else if (finder.good())
+        else if (finder.isStream())
         {
-            const word csName(finder.ref().stream());
+            const word csName(finder.stream());
 
             // Deprecated, unsupported syntax
             if (error::master())
