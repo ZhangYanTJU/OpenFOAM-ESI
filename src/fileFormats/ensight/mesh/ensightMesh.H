@@ -217,6 +217,7 @@ public:
     // Output
 
         //- Write geometry to file (normally in parallel).
+        //- Adds beginGeometry() marker.
         //  If all geometry is disabled, it will simply writes the mesh
         //  bounding box (to ensure that the geometry file is non-empty)
         void write
@@ -226,8 +227,8 @@ public:
         ) const;
 
         //- Write geometry to file (normally in parallel).
-        //  If all geometry is disabled, it will simply writes the mesh
-        //  bounding box (to ensure that the geometry file is non-empty)
+        //- Adds beginGeometry() marker.
+        FOAM_DEPRECATED_FOR(2024-05, "write(ensightGeoFile&, ...")
         inline void write
         (
             autoPtr<ensightGeoFile>& os,

@@ -92,9 +92,9 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeCollated
     merge();
 
     {
-        if (!isDir(outputFile.path()))
+        if (!Foam::isDir(outputFile.path()))
         {
-            mkDir(outputFile.path());
+            Foam::mkDir(outputFile.path());
         }
 
         const bool stateChanged =
@@ -131,12 +131,12 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeCollated
         );
 
         // As per mkdir -p "data/00000000"
-        mkDir(dataDir);
+        Foam::mkDir(dataDir);
 
 
         const fileName geomFile(baseDir/geometryName);
 
-        if (!exists(geomFile))
+        if (!Foam::exists(geomFile))
         {
             if (verbose_)
             {
@@ -151,6 +151,7 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeCollated
                 caseOpts_.format()
             );
 
+            osGeom.beginGeometry();
             writeGeometry(osGeom, elemOutput);
         }
 
@@ -176,7 +177,12 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeCollated
         // Update case file
         if (stateChanged)
         {
-            OFstream osCase(outputFile, IOstreamOption::ASCII);
+            OFstream osCase
+            (
+                IOstreamOption::ATOMIC,
+                outputFile,
+                IOstreamOption::ASCII
+            );
             ensightCase::setTimeFormat(osCase, caseOpts_);  // time-format
 
             if (verbose_)

@@ -99,9 +99,9 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
 
     if (UPstream::master() || !parallel_)
     {
-        if (!isDir(outputFile.path()))
+        if (!Foam::isDir(outputFile.path()))
         {
-            mkDir(outputFile.path());
+            Foam::mkDir(outputFile.path());
         }
 
         const bool stateChanged =
@@ -138,7 +138,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
         );
 
         // As per mkdir -p "data/00000000"
-        mkDir(dataDir);
+        Foam::mkDir(dataDir);
 
 
         const fileName geomFile(baseDir/geometryName);
@@ -151,7 +151,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
             geomFile.name()
         );
 
-        if (!exists(geomFile))
+        if (!Foam::exists(geomFile))
         {
             if (verbose_)
             {
@@ -165,7 +165,9 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
                 geomFile.name(),
                 caseOpts_.format()
             );
-            part.write(osGeom); // serial
+
+            osGeom.beginGeometry();
+            part.write(osGeom);  // serial
         }
 
         // Write field
@@ -190,7 +192,12 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
         // Update case file
         if (stateChanged)
         {
-            OFstream osCase(outputFile, IOstreamOption::ASCII);
+            OFstream osCase
+            (
+                IOstreamOption::ATOMIC,
+                outputFile,
+                IOstreamOption::ASCII
+            );
             ensightCase::setTimeFormat(osCase, caseOpts_);  // time-format
 
             if (verbose_)

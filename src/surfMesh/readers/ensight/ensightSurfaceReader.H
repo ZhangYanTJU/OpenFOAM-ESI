@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,6 +57,7 @@ SourceFiles
 #define Foam_ensightSurfaceReader_H
 
 #include "surfaceReader.H"
+#include "ensightCase.H"
 #include "ensightFaces.H"
 #include "ensightReadFile.H"
 #include "Pair.H"
@@ -103,8 +104,14 @@ protected:
         //- Base directory
         fileName baseDir_;
 
+        //- The timeset/fileset (if any) associated with the mesh
+        labelPair meshTimeset_;
+
         //- Name of mesh file, including any subdirectory
         fileName meshFileName_;
+
+        //- The timeset/fileset (if any) associated with fields
+        List<labelPair> fieldTimesets_;
 
         //- Field names
         List<word> fieldNames_;
@@ -112,14 +119,14 @@ protected:
         //- Field file names
         List<string> fieldFileNames_;
 
-        //- Number of time steps
-        label nTimeSteps_;
-
         //- Start time index
         label timeStartIndex_;
 
         //- Time increment
         label timeIncrement_;
+
+        //- Numbers for files
+        labelList fileNumbers_;
 
         //- Times
         instantList timeValues_;
@@ -131,23 +138,30 @@ protected:
         List<faceInfoTuple> faceTypeInfo_;
 
 
-    // Private Member Functions
+    // Static Member Functions
 
-        //- Helper function to skip forward n steps in stream
-        void skip(const label n, Istream& is) const;
+        //- Helper function to read an ascii line from file,
+        //- skipping blank lines and comments.
+        //  \return True if reading was successful
+        static bool readLine(ISstream& is, std::string& line);
 
-        //- Helper function to read an ascii line from file
-        void readLine(ISstream& is, string& buffer) const;
+        //- Check a section header
+        static void checkSection
+        (
+            const word& expected,
+            const string& buffer,
+            const ISstream& is  // For errors
+        );
 
         //- Read and check a section header
-        void debugSection(const word& expected, ISstream& is) const;
+        static void debugSection(const word& expected, ISstream& is);
 
-        //- Replace the '*' mask chars with a 0 padded string.
-        static fileName replaceMask
-        (
-            const fileName& fName,
-            const label timeIndex
-        );
+        //- Helper function to return Type from string
+        template<class Type>
+        static void readFrom(const std::string& buffer, Type& value);
+
+
+    // Protected Member Functions
 
         //- Read (and discard) geometry file header.
         //  \return information about node/element id handling
@@ -157,27 +171,20 @@ protected:
         void readCase(ISstream& is);
 
         //- Read and return surface geometry. Updates faceTypeInfo_
-        meshedSurface readGeometry(const fileName& geometryFile);
-
-        //- Helper function to return Type after skipping n tokens
-        template<class Type>
-        void readFromLine(const label nSkip, Istream& is, Type& value) const;
-
-        //- Helper function to return Type after skipping n tokens
-        template<class Type>
-        void readFromLine
+        meshedSurface readGeometry
         (
-            const label nSkip,
-            const string& buffer,
-            Type& value
-        ) const;
+            const fileName& geometryFile,
+            //! Optional index for transient single-file format
+            const label timeIndex = 0
+        );
 
         //- Helper function to return a field
         template<class Type>
         tmp<Field<Type>> readField
         (
             const fileName& dataFile,
-            const word& fieldName
+            const word& fieldName,
+            const label timeIndex = 0
         ) const;
 
         //- Helper function to return a field
@@ -190,6 +197,15 @@ protected:
 
 
 public:
+
+    // Generated Methods
+
+        //- No copy construct
+        ensightSurfaceReader(const ensightSurfaceReader&) = delete;
+
+        //- No copy assignment
+        void operator=(const ensightSurfaceReader&) = delete;
+
 
     //- Runtime type information
     TypeName("ensight");

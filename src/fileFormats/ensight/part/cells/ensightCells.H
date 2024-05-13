@@ -274,6 +274,7 @@ public:
         virtual void writeDict(Ostream& os, const bool full=false) const;
 
         //- Write geometry, using a mesh reference (serial only)
+        //- No beginGeometry() marker.
         virtual void write
         (
             ensightGeoFile& os,
@@ -283,6 +284,7 @@ public:
 
         //- Write bounding box geometry.
         //- All parameters are only relevant on master
+        //- No beginGeometry() marker.
         static void writeBox
         (
             ensightGeoFile& os,

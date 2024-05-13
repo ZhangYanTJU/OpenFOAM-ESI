@@ -46,6 +46,14 @@ inline Foam::ensight::FileName::FileName(const std::string& s)
 }
 
 
+inline Foam::ensight::FileName::FileName(std::string&& s)
+:
+    fileName(std::move(s), false)
+{
+    stripInvalid();
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 inline bool Foam::ensight::FileName::valid(char c)
@@ -65,11 +73,11 @@ inline void Foam::ensight::FileName::stripInvalid()
 
     // Avoid characters that upset Windows or others
     string::replaceAny(":<>[]", '_');
-    removeRepeated('_');
+    string::removeRepeated('_');
 
     // Minor cleanup of fileName
-    removeRepeated('/');
-    removeEnd('/');
+    string::removeRepeated('/');
+    string::removeEnd('/');
 
     if (empty())
     {

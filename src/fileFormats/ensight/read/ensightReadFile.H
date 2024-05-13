@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,9 +27,8 @@ Class
     Foam::ensightReadFile
 
 Description
-    A variant of IFstream with specialised read() for
-    strings, integers and floats.
-    Correctly handles binary read as well.
+    A variant of IFstream with specialised handling for Ensight reading
+    of strings, integers and floats (ASCII and BINARY).
 
 \*---------------------------------------------------------------------------*/
 
@@ -38,6 +37,7 @@ Description
 
 #include "IFstream.H"
 #include "IOstream.H"
+#include "vector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,9 +52,28 @@ class ensightReadFile
 :
     public IFstream
 {
-public:
+    // Private Data
 
-    // Generated Methods
+        //- Transient single-file:
+        //- beginning of time-step footer
+        //- as read from the file
+        int64_t timeStepFooterBegin_;
+
+        //- Transient single-file:
+        //- the time-step file-offsets (position after "BEGIN TIME STEP")
+        //- as read from the file
+        List<int64_t> timeStepOffsets_;
+
+
+    // Private Member Functions
+
+        //- Read string as "%80s" or as binary
+        void readString(std::string& value);
+
+        //- Initializes read information
+        //- (optional detection of "C Binary" header)
+        //- and scan for transient single-file format.
+        void init(bool detectFormat);
 
         //- No copy construct
         ensightReadFile(const ensightReadFile&) = delete;
@@ -63,10 +82,20 @@ public:
         void operator=(const ensightReadFile&) = delete;
 
 
+public:
+
+    //- Debug switch
+    static int debug;
+
+
     // Constructors
 
-        //- Construct from pathname, auto-detect the format
-        explicit ensightReadFile(const fileName& pathname);
+        //- Construct a geometry reader, auto-detecting the "C Binary" header
+        //- for binary files and skipping past it.
+        explicit ensightReadFile
+        (
+            const fileName& pathname
+        );
 
         //- Construct from pathname, use the specified (ascii/binary) format
         ensightReadFile
@@ -82,11 +111,13 @@ public:
 
     // Static Functions
 
-        //- Detect if the file is \em binary by testing for initial
-        //- "(C|Fortran) Binary"
-        static IOstreamOption::streamFormat detectBinaryHeader
+        //- Extract time step footer information (if any).
+        //  \return the begin of footer position.
+        static int64_t getTimeStepFooter
         (
-            const fileName& pathname
+            IFstream& is,
+            //! [out] File offsets for each time step (if any)
+            List<int64_t>& offsets
         );
 
 
@@ -101,7 +132,7 @@ public:
         //- Read string as "%80s" or as binary
         virtual Istream& read(string& value) override;
 
-        //- Read integer as "%10d" or as binary
+        //- Read integer as "%10d" or as binary (narrowed) int
         virtual Istream& read(label& value) override;
 
         //- Read floating-point as "%12.5e" or as binary
@@ -113,8 +144,68 @@ public:
         //- Read element keyword. Currently the same as read(string)
         Istream& readKeyword(string& key);
 
-        //- Read "C Binary" for binary files (eg, geometry/measured)
-        Istream& readBinaryHeader();
+
+    // Special Read Functions
+
+        //- Component-wise reading of points/coordinates.
+        //- Read all x components, y components and z components.
+        void readPoints(const label nPoints, List<floatVector>& points);
+
+        //- Component-wise reading of points/coordinates.
+        //- Reads x components, y components and z components.
+        void readPoints(const label nPoints, List<doubleVector>& points);
+
+        //- Read and discard specified number of elements
+        template<class Type>
+        void skip(label n = 1)
+        {
+            Type dummy;
+            for (; n > 0; --n)
+            {
+                this->read(dummy);
+            }
+        }
+
+
+    // Transient single-file format
+
+        //- Transient single-file:
+        //- the position of the FILE_INDEX footer
+        int64_t timeStepFooterBegin() const noexcept
+        {
+            return timeStepFooterBegin_;
+        }
+
+        //- Transient single-file:
+        //- the number of time steps within the file
+        label nTimes() const noexcept
+        {
+            return timeStepOffsets_.size();
+        }
+
+        //- Transient single-file:
+        //- the file-offsets for time steps within the file
+        const UList<int64_t>& timeStepOffets() const noexcept
+        {
+            return timeStepOffsets_;
+        }
+
+        //- Transient single-file:
+        //- seek to the file position corresponding to the given time index.
+        bool seekTime(const label timeIndex);
+
+
+    // Housekeeping
+
+        //- Detect if the file is \em binary by testing for initial
+        //- "(C|Fortran) Binary"
+        FOAM_DEPRECATED_FOR(2024-05, "detected on construct")
+        static IOstreamOption::streamFormat
+        detectBinaryHeader(const fileName& pathname)
+        {
+            ensightReadFile reader(pathname);
+            return reader.format();
+        }
 };
 
 

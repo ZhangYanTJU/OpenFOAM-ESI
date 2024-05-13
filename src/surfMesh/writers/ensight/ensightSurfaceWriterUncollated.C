@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,11 +64,20 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeUncollated()
 
     if (UPstream::master() || !parallel_)
     {
-        if (!isDir(outputDir))
+        if (!Foam::isDir(outputDir))
         {
-            mkDir(outputDir);
+            Foam::mkDir(outputDir);
         }
 
+        // The geometry
+        ensightOutputSurface part
+        (
+            surf.points(),
+            surf.faces(),
+            baseName
+        );
+
+        // Two-argument form for path-name to avoid validating outputDir
         ensightGeoFile osGeom
         (
             outputDir,
@@ -76,16 +85,16 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeUncollated()
             caseOpts_.format()
         );
 
-        ensightOutputSurface part
-        (
-            surf.points(),
-            surf.faces(),
-            osGeom.name().name()
-        );
-        part.write(osGeom); // serial
+        osGeom.beginGeometry();
+        part.write(osGeom);  // serial
 
         // Update case file
-        OFstream osCase(outputFile, IOstreamOption::ASCII);
+        OFstream osCase
+        (
+            IOstreamOption::ATOMIC,
+            outputFile,
+            IOstreamOption::ASCII
+        );
         ensightCase::setTimeFormat(osCase, caseOpts_);  // time-format
 
         osCase
@@ -168,10 +177,18 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeUncollated
 
     if (UPstream::master() || !parallel_)
     {
-        if (!isDir(outputFile.path()))
+        if (!Foam::isDir(outputFile.path()))
         {
-            mkDir(outputFile.path());
+            Foam::mkDir(outputFile.path());
         }
+
+        // The geometry
+        ensightOutputSurface part
+        (
+            surf.points(),
+            surf.faces(),
+            baseName
+        );
 
         // Two-argument form for path-name to avoid validating base-dir
         ensightGeoFile osGeom
@@ -187,14 +204,8 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeUncollated
             caseOpts_.format()
         );
 
-        // Ensight Geometry
-        ensightOutputSurface part
-        (
-            surf.points(),
-            surf.faces(),
-            osGeom.name().name()
-        );
-        part.write(osGeom); // serial
+        osGeom.beginGeometry();
+        part.write(osGeom);  // serial
 
         // Write field (serial)
         osField.write(ensightPTraits<Type>::typeName);
@@ -204,7 +215,12 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeUncollated
 
         // Update case file
         {
-            OFstream osCase(outputFile, IOstreamOption::ASCII);
+            OFstream osCase
+            (
+                IOstreamOption::ATOMIC,
+                outputFile,
+                IOstreamOption::ASCII
+            );
             ensightCase::setTimeFormat(osCase, caseOpts_);  // time-format
 
             osCase

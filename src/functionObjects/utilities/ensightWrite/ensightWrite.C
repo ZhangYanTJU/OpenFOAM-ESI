@@ -237,7 +237,7 @@ bool Foam::functionObjects::ensightWrite::write()
         // Treat all geometry as moving, since we do not know a priori
         // if the simulation has mesh motion later on.
         autoPtr<ensightGeoFile> os = ensCase_().newGeometry(true);
-        ensMesh_().write(os);
+        ensMesh_().write(os.ref());
     }
 
 
