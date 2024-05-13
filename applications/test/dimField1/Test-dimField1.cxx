@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    Test-dimField
+    Test-dimField1
 
 Description
     Simple tests for DimensionedField
@@ -52,7 +52,12 @@ namespace Foam
 
 int main(int argc, char *argv[])
 {
+    argList::addBoolOption("write", "write some test fields");
+
     #include "setRootCase.H"
+
+    const bool doWrite = args.found("write");
+
     #include "createTime.H"
     #include "createMesh.H"
 
@@ -60,19 +65,23 @@ int main(int argc, char *argv[])
         Info<< "Tensor field\n" << endl;
         DimensionedField<tensor, volMesh> tensorfld
         (
-            IOobject
+            mesh.newIOobject
             (
                 "tensor",
-                runTime.timeName(),
-                mesh,
-                { IOobject::READ_IF_PRESENT, IOobject::NO_REGISTER }
+                { IOobject::READ_IF_PRESENT, IOobject::NO_WRITE }
             ),
             mesh,
             dimensioned<tensor>(dimless, tensor(1,2,3,4,5,6,7,8,9))
         );
 
-        Info().beginBlock("transformed")
-            << tensorfld.T() << nl;
+        if (doWrite)
+        {
+            tensorfld.write();
+        }
+
+
+        Info<< nl;
+        Info().beginBlock("transformed") << tensorfld.T();
         Info().endBlock();
 
         {
@@ -84,8 +93,8 @@ int main(int argc, char *argv[])
                     dimensioned<scalar>(14)
                 );
 
-            Info().beginBlock(tfld().type())
-                << tfld << nl;
+            Info<< nl;
+            Info().beginBlock(tfld().type()) << tfld;
             Info().endBlock();
         }
 
@@ -98,8 +107,8 @@ int main(int argc, char *argv[])
                     dimensioned<scalar>(5)
                 );
 
-            Info().beginBlock(tfld().type())
-                << tfld() << nl;
+            Info<< nl;
+            Info().beginBlock(tfld().type()) << tfld();
             Info().endBlock();
 
             // From dissimilar types
@@ -111,8 +120,8 @@ int main(int argc, char *argv[])
                     dimensioned<vector>(Zero)
                 );
 
-            Info().beginBlock(tfld2().type())
-                << tfld2() << nl;
+            Info<< nl;
+            Info().beginBlock(tfld2().type()) << tfld2();
             Info().endBlock();
         }
     }
@@ -122,20 +131,13 @@ int main(int argc, char *argv[])
         Info<< "uint8 field\n" << endl;
         DimensionedField<uint8_t, volMesh> statefld
         (
-            IOobject
-            (
-                "state",
-                runTime.timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            mesh.newIOobject("state")
             mesh,
             dimensioned<uint8_t>(dimless, uint8_t{100})
         );
 
-        Info().beginBlock("stateField")
-            << statefld << nl;
+        Info<< nl;
+        Info().beginBlock("stateField") << statefld;
         Info().endBlock();
     }
     #endif

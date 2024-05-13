@@ -108,7 +108,7 @@ public:
 
         //- Write as a primitive entry with given name.
         //- If the keyword is empty, revert to a plain list.
-        void writeEntry(const keyType& keyword, Ostream& os) const;
+        void writeEntry(const word& keyword, Ostream& os) const;
 
         //- The writeData member function required by regIOobject
         virtual bool writeData(Ostream& os) const;

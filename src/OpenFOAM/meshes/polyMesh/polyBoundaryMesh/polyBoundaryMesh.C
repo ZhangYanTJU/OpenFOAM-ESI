@@ -1440,7 +1440,7 @@ void Foam::polyBoundaryMesh::writeEntry(Ostream& os) const
 
 void Foam::polyBoundaryMesh::writeEntry
 (
-    const keyType& keyword,
+    const word& keyword,
     Ostream& os
 ) const
 {
