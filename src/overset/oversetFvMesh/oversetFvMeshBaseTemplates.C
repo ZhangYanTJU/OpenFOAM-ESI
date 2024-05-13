@@ -80,28 +80,36 @@ void Foam::oversetFvMeshBase::correctBoundaryConditions
     const bool typeOnly
 )
 {
+    // Alternative (C++14)
+    //
+    // bfld.evaluate_if
+    // (
+    //     [typeOnly](const auto& pfld) -> bool
+    //     {
+    //         return (typeOnly == bool(isA<PatchType>(pfld)));
+    //     },
+    //     UPstream::defaultCommsType
+    // );
+
     const UPstream::commsTypes commsType = UPstream::defaultCommsType;
     const label startOfRequests = UPstream::nRequests();
 
-    forAll(bfld, patchi)
+    for (auto& pfld : bfld)
     {
-        if (typeOnly == (isA<PatchType>(bfld[patchi]) != nullptr))
+        if (typeOnly == bool(isA<PatchType>(pfld)))
         {
-            bfld[patchi].initEvaluate(commsType);
+            pfld.initEvaluate(commsType);
         }
     }
 
-    // Wait for outstanding requests
-    if (commsType == UPstream::commsTypes::nonBlocking)
-    {
-        Pstream::waitRequests(startOfRequests);
-    }
+    // Wait for outstanding requests (non-blocking)
+    UPstream::waitRequests(startOfRequests);
 
-    forAll(bfld, patchi)
+    for (auto& pfld : bfld)
     {
-        if (typeOnly == (isA<PatchType>(bfld[patchi]) != nullptr))
+        if (typeOnly == bool(isA<PatchType>(pfld)))
         {
-            bfld[patchi].evaluate(commsType);
+            pfld.evaluate(commsType);
         }
     }
 }
@@ -989,32 +997,30 @@ void Foam::oversetFvMeshBase::write
 template<class GeoField>
 void Foam::oversetFvMeshBase::correctCoupledBoundaryConditions(GeoField& fld)
 {
-    typename GeoField::Boundary& bfld = fld.boundaryFieldRef();
+    auto& bfld = fld.boundaryFieldRef();
 
     const UPstream::commsTypes commsType = UPstream::defaultCommsType;
+
     const label startOfRequests = UPstream::nRequests();
 
-    forAll(bfld, patchi)
+    for (auto& pfld : bfld)
     {
-        if (bfld[patchi].coupled())
+        if (pfld.coupled())
         {
-            //Pout<< "initEval of " << bfld[patchi].patch().name() << endl;
-            bfld[patchi].initEvaluate(commsType);
+            //Pout<< "initEval of " << pfld.patch().name() << endl;
+            pfld.initEvaluate(commsType);
         }
     }
 
-    // Wait for outstanding requests
-    if (commsType == UPstream::commsTypes::nonBlocking)
-    {
-        Pstream::waitRequests(startOfRequests);
-    }
+    // Wait for outstanding requests (non-blocking)
+    UPstream::waitRequests(startOfRequests);
 
-    forAll(bfld, patchi)
+    for (auto& pfld : bfld)
     {
-        if (bfld[patchi].coupled())
+        if (pfld.coupled())
         {
-            //Pout<< "eval of " << bfld[patchi].patch().name() << endl;
-            bfld[patchi].evaluate(commsType);
+            //Pout<< "eval of " << pfld.patch().name() << endl;
+            pfld.evaluate(commsType);
         }
     }
 }

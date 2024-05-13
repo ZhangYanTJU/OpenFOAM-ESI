@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef boundaryFieldsFwd_H
-#define boundaryFieldsFwd_H
+#ifndef Foam_boundaryFieldsFwd_H
+#define Foam_boundaryFieldsFwd_H
 
 #include "fieldTypes.H"
 #include "volFields.H"

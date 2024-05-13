@@ -41,7 +41,6 @@ SourceFiles
 #ifndef Foam_GeometricField_H
 #define Foam_GeometricField_H
 
-#include "regIOobject.H"
 #include "GeometricBoundaryField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -50,7 +49,6 @@ namespace Foam
 {
 
 // Forward Declarations
-class dictionary;
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 class GeometricField;
@@ -871,8 +869,8 @@ public:
         //- Correct boundary field
         void correctBoundaryConditions();
 
-        //- Correct boundary conditions after a purely local operation. Is
-        //  dummy for e.g. processor boundary conditions
+        //- Correct boundary conditions after a purely local operation.
+        //  Is dummy for processor boundary conditions etc
         void correctLocalBoundaryConditions();
 
         //- Does the field need a reference level for solution

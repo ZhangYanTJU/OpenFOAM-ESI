@@ -38,16 +38,12 @@ SourceFiles
 #define Foam_surfaceFieldsFwd_H
 
 #include "fieldTypes.H"
+#include "GeometricFieldFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// Geometric field (internal + boundary)
-template<class Type, template<class> class PatchField, class GeoMesh>
-class GeometricField;
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

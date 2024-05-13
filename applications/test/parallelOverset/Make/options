@@ -7,5 +7,6 @@ EXE_INC = \
 
 EXE_LIBS = \
     -lfiniteVolume \
+    -ldynamicFvMesh \
     -lsampling \
     -loverset

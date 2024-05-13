@@ -56,6 +56,7 @@ Description
 
 #include "fvCFD.H"
 #include "simpleControl.H"
+#include "predicates.H"
 #include "dynamicFvMesh.H"
 #include "dynamicOversetFvMesh.H"
 
@@ -97,6 +98,7 @@ int main(int argc, char *argv[])
         component(T.ref(), mesh.C(), 1);
         // Interpolate + halo swap
         T.correctBoundaryConditions();
+        // T.boundaryFieldRef().evaluate_if(predicates::always{});
         // Check halo swap
         dynamicOversetFvMesh::checkCoupledBC(T);
     }
