@@ -121,6 +121,12 @@ class IOobject;
 template<>
 Ostream& operator<<(Ostream&, const InfoProxy<IOobject>&);
 
+// Traits
+
+//- Trait for specifying global vs. local IOobject file types
+template<class T>
+struct is_globalIOobject : std::false_type {};
+
 
 /*---------------------------------------------------------------------------*\
                            Class IOobject Declaration
@@ -712,17 +718,14 @@ public:
 };
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 //- Specialization for \c void always returns true (no headerClassName check).
 template<>
 inline bool IOobject::isHeaderClass<void>() const
 {
     return true;
 }
-
-
-//- Trait for specifying global vs. local file types
-template<class T>
-struct is_globalIOobject : std::false_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
