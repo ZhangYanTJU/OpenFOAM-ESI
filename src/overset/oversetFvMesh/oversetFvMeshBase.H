@@ -256,7 +256,7 @@ public:
         static void checkCoupledBC(const GeoField& fld);
 
         //- Correct boundary conditions of certain type (typeOnly = true)
-        //  or explicitly not of the type (typeOnly = false)
+        //- or explicitly not of the type (typeOnly = false)
         template<class GeoField, class PatchType>
         static void correctBoundaryConditions
         (

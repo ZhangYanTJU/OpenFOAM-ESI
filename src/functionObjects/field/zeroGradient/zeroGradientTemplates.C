@@ -37,11 +37,9 @@ bool Foam::functionObjects::zeroGradient::accept
     const GeometricField<Type, fvPatchField, volMesh>& input
 )
 {
-    const auto& patches = input.boundaryField();
-
-    forAll(patches, patchi)
+    for (const auto& pfld : input.boundaryField())
     {
-        if (!polyPatch::constraintType(patches[patchi].patch().patch().type()))
+        if (!polyPatch::constraintType(pfld.patch().patch().type()))
         {
             return true;
         }

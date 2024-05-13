@@ -32,11 +32,11 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fieldDictionary_H
-#define fieldDictionary_H
+#ifndef Foam_fieldDictionary_H
+#define Foam_fieldDictionary_H
 
-#include "regIOobject.H"
 #include "dictionary.H"
+#include "regIOobject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,22 +52,22 @@ class fieldDictionary
     public regIOobject,
     public dictionary
 {
-
     // Private Data
 
-        const word type_;
+        //- The specified field type
+        const word fieldType_;
 
 
 public:
 
     // Constructors
 
-        //- Construct from ioobject and overloaded typename.
-        fieldDictionary(const IOobject& io, const word& type)
+        //- Construct from IOobject and specified (overloaded) type name
+        fieldDictionary(const IOobject& io, const word& fieldType)
         :
             regIOobject(io),
-            dictionary(readStream(type)),
-            type_(type)
+            dictionary(readStream(fieldType)),
+            fieldType_(fieldType)
         {
             close();
         }
@@ -78,13 +78,13 @@ public:
         //- Redefine type name to be of the instantiated type
         virtual const word& type() const
         {
-            return type_;
+            return fieldType_;
         }
 
-        bool writeData(Ostream& os) const
+        //- The writeData function required by regIOobject write operation
+        virtual bool writeData(Ostream& os) const
         {
-            static_cast<const dictionary&>(*this).write(os, false);
-
+            dictionary::write(os, false);
             return os.good();
         }
 };

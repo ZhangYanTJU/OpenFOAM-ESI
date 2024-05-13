@@ -183,7 +183,7 @@ void Foam::faBoundaryMeshEntries::writeEntry(Ostream& os) const
 
 void Foam::faBoundaryMeshEntries::writeEntry
 (
-    const keyType& keyword,
+    const word& keyword,
     Ostream& os
 ) const
 {
