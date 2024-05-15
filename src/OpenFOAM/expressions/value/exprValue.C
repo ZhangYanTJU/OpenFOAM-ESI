@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -430,6 +430,58 @@ bool Foam::expressions::exprValue::readTokens(ITstream& is)
 }
 
 
+int Foam::expressions::exprValue::compare
+(
+    const exprValue& rhs
+) const
+{
+    if (typeCode_ != rhs.typeCode_)
+    {
+        // First compare by type
+        return (int(typeCode_) - int(rhs.typeCode_));
+    }
+    else if ((this == &rhs) || !good())
+    {
+        // Identical: same object or not good
+        // (ie, no further comparison possible)
+        return 0;
+    }
+
+    // Types are identical (and good)
+    // - compare by value.
+    // This is even messier than usual, since can only rely on
+    // operator< being defined
+
+    switch (typeCode_)
+    {
+        #undef  doLocalCode
+        #define doLocalCode(Type, UnusedParam)                        \
+                                                                      \
+        case expressions::valueTypeCode::type_##Type :                \
+        {                                                             \
+            const Type* a = data_.get<Type>();                        \
+            const Type* b = rhs.data_.get<Type>();                    \
+            return                                                    \
+            (                                                         \
+                (a && b)                                              \
+              ? ((*a < *b) ? -1 : (*b < *a) ? 1 : 0)                  \
+              : 0                                                     \
+            );                                                        \
+            break;                                                    \
+        }
+
+        FOR_ALL_EXPR_VALUE_TYPES(doLocalCode);
+        #undef doLocalCode
+
+        // exprValue may only be a subset of valueTypeCode types
+        default: break;
+    }
+
+    // Should not happen
+    return 0;
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 bool Foam::expressions::exprValue::operator==(const exprValue& rhs) const
@@ -470,8 +522,7 @@ bool Foam::expressions::exprValue::operator==(const exprValue& rhs) const
 
 bool Foam::expressions::exprValue::operator<(const exprValue& rhs) const
 {
-    // Not yet sortable
-    return false;
+    return (this->compare(rhs) < 0);
 }
 
 

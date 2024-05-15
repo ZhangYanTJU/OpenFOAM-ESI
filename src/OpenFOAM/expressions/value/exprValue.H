@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -175,12 +175,7 @@ class exprValue
         //- Copy assignment
         void deepCopy(const exprValue& rhs);
 
-
 public:
-
-    //- Runtime type information
-    ClassName("exprValue");
-
 
     // Constructors
 
@@ -244,7 +239,7 @@ public:
         //- The value type code
         expressions::valueTypeCode typeCode() const noexcept
         {
-           return typeCode_;
+            return typeCode_;
         }
 
         //- True if the value type is not none/invalid
@@ -276,6 +271,9 @@ public:
         //- Guess type and read tokens (if possible)
         //  \return True on success
         bool readTokens(ITstream& is);
+
+        //- Compare (type,value)
+        int compare(const exprValue& rhs) const;
 
 
     // Typed Access
@@ -350,7 +348,7 @@ public:
         //- Compare (type,value) for inequality
         bool operator!=(const exprValue& rhs) const { return !(*this == rhs); }
 
-        //- Compare (type,value) - currently not implemented.
+        //- Compare (type,value)
         bool operator<(const exprValue& rhs) const;
 
 

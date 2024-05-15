@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,7 +31,7 @@ Description
     as uniform etc.
 
 SourceFiles
-    exprValueFieldTag.cxx
+    exprValueFieldTag.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -39,7 +39,7 @@ SourceFiles
 #define Foam_expressions_exprValueFieldTag_H
 
 #include "exprValue.H"
-#include "List.H"  // For ListPolicy
+#include "UList.H"  // For ListPolicy
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,7 +54,7 @@ namespace expressions
 
 class exprValueFieldTag
 {
-    // Private data
+    // Private Data
 
         //- Uniformity of field
         int uniformity_{};
@@ -66,7 +66,7 @@ public:
 
     // Constructors
 
-        //- Default construct
+        //- Default construct. Uniformity = empty, type = none
         exprValueFieldTag() = default;
 
         //- Construct from a range of values
@@ -87,6 +87,9 @@ public:
 
         //- True if the uniformity is "non-uniform"
         bool is_nonuniform() const noexcept;
+
+        //- Compare (uniformity, type, value)
+        int compare(const exprValueFieldTag& rhs) const;
 
         //- Test for equality of the values
         bool equal(const exprValueFieldTag& rhs) const;
@@ -116,7 +119,15 @@ public:
             value_.set<Type>(val);
         }
 
-        //- Set as non-uniform
+        //- Set non-uniform type and value
+        template<class Type>
+        void set_nonuniform(const Type& val)
+        {
+            uniformity_ = Foam::Detail::ListPolicy::uniformity::NONUNIFORM;
+            value_.set<Type>(val);
+        }
+
+        //- Set as non-uniform, with zero-value
         void set_nouniform() noexcept;
 
 
@@ -144,11 +155,29 @@ public:
 
     // IO Operations
 
+        //- Read uniformity label and the value as pair
         void read(Istream& is);
+
+        //- Write uniformity label and the value as pair
         void write(Ostream& os) const;
 
         //- Print description to Ostream
         void print(Ostream& os) const;
+
+
+    // Member Operators, for List and sorting etc
+
+        //- Compare (uniformity,value) for equality
+        bool operator==(const exprValueFieldTag&) const;
+
+        //- Compare (uniformity,value) for inequality
+        bool operator!=(const exprValueFieldTag& rhs) const
+        {
+            return !(*this == rhs);
+        }
+
+        //- Compare (uniformity,value)
+        bool operator<(const exprValueFieldTag&) const;
 };
 
 } // End namespace expressions

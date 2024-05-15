@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,7 +36,6 @@ Description
 #include "vectorField.H"
 #include "DynamicList.H"
 #include "Random.H"
-#include "exprValue.H"
 #include "exprValueFieldTag.H"
 
 using namespace Foam;
@@ -61,26 +60,54 @@ int main(int argc, char *argv[])
 
     #include "setRootCase.H"
 
+    DynamicList<fieldTag> allTags;
+
     {
         scalarField fld1(20);
         scalarField fld2a(20, Zero);
         scalarField fld2b(10, 3.10);
         scalarField fld3;
 
-        forAll(fld1, i)
+        for (auto& val : fld1)
         {
-            fld1[i] = rnd.position<scalar>(0, 20);
+            val = rnd.position<scalar>(0, 20);
         }
 
         fieldTag tag1(fld1.begin(), fld1.end());
         fieldTag tag2a(fld2a.begin(), fld2a.end());
         fieldTag tag2b(fld2b.begin(), fld2b.end());
         fieldTag tag3(fld3.begin(), fld3.end());
+        fieldTag tag4(fld3.begin(), fld3.end());
 
         printInfo(tag1) << nl;
         printInfo(tag2a) << nl;
         printInfo(tag2b) << nl;
         printInfo(tag3) << nl;
+
+        allTags.clear();
+        allTags.push_back(tag1);
+        allTags.push_back(tag2a);
+        allTags.push_back(tag2b);
+        allTags.push_back(tag3);
+        allTags.push_back(tag4);
+
+        // Add some other types
+        {
+            vectorField vfld2a(20, vector::uniform(1.23));
+
+            allTags.emplace_back
+            (
+                vfld2a.begin(),
+                vfld2a.end()
+            );
+            allTags.emplace_back().set_uniform(vector::uniform(1.414));
+            allTags.emplace_back().set_nonuniform(vector::uniform(1.0));
+        }
+        Info<< "all tags: " << allTags << nl;
+
+        Foam::sort(allTags);
+
+        Info<< "sorted: " << allTags << nl;
 
         fieldTag result;
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,6 +53,26 @@ bool Foam::expressions::exprValueFieldTag::is_nonuniform() const noexcept
     (
         uniformity_ == Foam::Detail::ListPolicy::uniformity::NONUNIFORM
     );
+}
+
+
+int Foam::expressions::exprValueFieldTag::compare
+(
+    const exprValueFieldTag& rhs
+) const
+{
+    if (uniformity_ != rhs.uniformity_)
+    {
+        // First compare by uniformity
+        return (int(uniformity_) - int(rhs.uniformity_));
+    }
+    if (this == &rhs)
+    {
+        // Identical: same object
+        return 0;
+    }
+
+    return value_.compare(rhs.value_);
 }
 
 
@@ -107,22 +127,54 @@ void Foam::expressions::exprValueFieldTag::combine
 }
 
 
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+bool Foam::expressions::exprValueFieldTag::
+operator==(const exprValueFieldTag& rhs) const
+{
+    if (uniformity_ != rhs.uniformity_)
+    {
+        // Uniformity must match
+        return false;
+    }
+    else if (this == &rhs)
+    {
+        return true;
+    }
+
+    return (value_ == rhs.value_);
+}
+
+
+bool Foam::expressions::exprValueFieldTag::
+operator<(const exprValueFieldTag& rhs) const
+{
+    return (this->compare(rhs) < 0);
+}
+
+
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 void Foam::expressions::exprValueFieldTag::read(Istream& is)
 {
     label uniformTag;
 
+    is.readBegin("exprValueFieldTag");
+
     is >> uniformTag;
     uniformity_ = int(uniformTag);
     value_.read(is);
+
+    is.readEnd("exprValueFieldTag");
 }
 
 
 void Foam::expressions::exprValueFieldTag::write(Ostream& os) const
 {
-    os << label(uniformity_);
+    os  << token::BEGIN_LIST
+        << label(uniformity_) << token::SPACE;
     value_.write(os, false);  // No pruning
+    os  << token::END_LIST;
 }
 
 
