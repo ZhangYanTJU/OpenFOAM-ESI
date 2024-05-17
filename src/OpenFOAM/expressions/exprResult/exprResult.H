@@ -146,11 +146,11 @@ class exprResult
         //- Type-checked determination of centre value (min/max)
         //  \return True if the type check was satisfied
         template<class Type>
-        bool setAverageValueChecked(const bool parRun = Pstream::parRun());
+        bool setAverageValueChecked(const bool parRun = UPstream::parRun());
 
         //- Type-checked determination of average bool value
         //  \return True if the type check was satisfied
-        bool setAverageValueCheckedBool(const bool parRun = Pstream::parRun());
+        bool setAverageValueCheckedBool(const bool parRun = UPstream::parRun());
 
         //- Type-checked copy of field
         //  \return True if the type check was satisfied
@@ -385,7 +385,7 @@ public:
         //- Test if field corresponds to a single-value and thus uniform.
         //  Uses field min/max to establish uniformity.
         //  Test afterwards with isUniform()
-        void testIfSingleValue(const bool parRun = Pstream::parRun());
+        void testIfSingleValue(const bool parRun = UPstream::parRun());
 
 
     // Set results
@@ -437,7 +437,7 @@ public:
         (
             const label size,
             const bool noWarn,
-            const bool parRun = Pstream::parRun()
+            const bool parRun = UPstream::parRun()
         ) const;
 
         //- Get a reduced result

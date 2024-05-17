@@ -185,6 +185,7 @@ $(expr)/scanToken/exprScanToken.C
 
 $(expr)/traits/exprTraits.C
 $(expr)/value/exprValue.C
+$(expr)/value/exprValueFieldTag.C
 
 $(expr)/exprDriver/exprDriver.C
 $(expr)/exprDriver/exprDriverFields.C
