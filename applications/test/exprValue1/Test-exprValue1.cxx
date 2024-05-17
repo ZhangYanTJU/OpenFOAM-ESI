@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -21,6 +21,8 @@ Description
 #include "argList.H"
 #include "IOstreams.H"
 #include "ITstream.H"
+#include "OTstream.H"
+#include "SpanStream.H"
 #include "exprValue.H"
 #include "Pstream.H"
 
@@ -31,6 +33,41 @@ void printInfo(const expressions::exprValue& val)
     Pout<< "Boxed type:" << int(val.typeCode())
         << " (" << val.valueTypeName() << ") good:"
         << val.good() << " => " << val << nl;
+}
+
+
+void write_read(const expressions::exprValue& val)
+{
+    OCharStream os;
+    os << val;
+
+    ISpanStream is(os.view());
+    expressions::exprValue val2;
+    is >> val2;
+
+    Pout<< "wrote " << os.count() << " chars: " << os.str() << nl;
+
+    printInfo(val);
+    printInfo(val2);
+    Pout<< "====" << nl;
+}
+
+
+tokenList tokens_of(const expressions::exprValue& val)
+{
+    OTstream toks;
+    toks << val;
+
+    Pout<< "val with tokens: ";
+    toks.writeList(Pout, 0) << nl;
+
+    for (const auto& t : toks)
+    {
+        Pout<< "  " << t.info() << nl;
+    }
+    Pout<< nl;
+
+    return toks;
 }
 
 
@@ -90,6 +127,7 @@ int main(int argc, char *argv[])
 
     {
         expressions::exprValue value;
+        tokenList toks;
 
         Info<< "exprValue"
             << " sizeof:" << value.size_bytes()
@@ -99,21 +137,31 @@ int main(int argc, char *argv[])
 
         // Nothing
         printInfo(value);
+        toks = tokens_of(value);
+        write_read(value);
 
         value.set(scalar(100));
-        printInfo(value);
+        printInfo(value); write_read(value); toks = tokens_of(value);
+
+        value.set(scalar(100.01));
+        printInfo(value); write_read(value); toks = tokens_of(value);
 
         value.set(vector(1,2,3));
-        printInfo(value);
+        printInfo(value); write_read(value); toks = tokens_of(value);
 
         value = vector(4,5,6);
-        printInfo(value);
+        printInfo(value); write_read(value); toks = tokens_of(value);
 
         value = Zero;
-        printInfo(value);
+        printInfo(value); write_read(value); toks = tokens_of(value);
 
         value.clear();
+        printInfo(value); write_read(value); toks = tokens_of(value);
+
+        value.set<bool>(true);
+
         printInfo(value);
+        printInfo(value); write_read(value); toks = tokens_of(value);
 
         if (UPstream::parRun())
         {

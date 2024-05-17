@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,24 +26,42 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "exprValue.H"
+#include "error.H"
 #include "ITstream.H"
 #include "Switch.H"
 #include <cstring>  // For memcpy, memset
+
+// * * * * * * * * * * * * * * * *  Details  * * * * * * * * * * * * * * * * //
+
+void Foam::expressions::Detail::exprValueUnion::notSpecialized
+(
+    const std::string& msg
+) noexcept
+{
+    FatalErrorInFunction
+        << "non-specialized: " << msg.c_str() << endl
+        << abort(FatalError);
+}
+
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
+#if 0
+// General way to add tokens for VectorSpace types
+// (caller excludes none/invalid)
 template<class Type>
-static void fillTokens(const Type& val, tokenList& toks)
+static void addTokens(tokenList& toks, const Type& val)
 {
     const direction nCmpt = pTraits<Type>::nComponents;
     const direction nParen = 2*(pTraits<Type>::rank || (nCmpt > 1) ? 1 : 0);
 
-    toks.resize_nocopy(nCmpt + nParen);
+    const label nOld = toks.size();
+    toks.resize(nOld + label(nCmpt + nParen));
 
-    auto iter = toks.begin();
+    auto iter = toks.begin(nOld);
 
     if (nParen)
     {
@@ -67,28 +85,57 @@ static void fillTokens(const Type& val, tokenList& toks)
 
 //- Specialized for bool
 template<>
-void fillTokens<bool>(const bool& val, tokenList& toks)
+void addTokens<bool>(tokenList& toks, const bool& val)
 {
-    toks.resize_nocopy(1);
-    toks.front() = token::boolean(val);
+    toks.emplace_back() = token::boolean(val);
 }
 
 
 //- Specialized for label
 template<>
-void fillTokens<label>(const label& val, tokenList& toks)
+void addTokens<label>(tokenList& toks, const label& val)
 {
-    toks.resize_nocopy(1);
-    toks.front() = val;
+    toks.emplace_back() = val;
 }
 
 
 //- Specialized for scalar
 template<>
-void fillTokens<scalar>(const scalar& val, tokenList& toks)
+void addTokens<scalar>(tokenList& toks, const scalar& val)
 {
-    toks.resize_nocopy(1);
-    toks.front() = val;
+    toks.emplace_back() = val;
+}
+
+#endif
+
+
+// General output of type (caller excludes none/invalid)
+template<class Type>
+static void putType(Ostream& os, const Type& val)
+{
+    os  << val;
+}
+
+
+//- Specialized for bool.
+//- Write as (true/false) via Switch to avoid bool/label ambiguity
+template<>
+void putType<bool>(Ostream& os, const bool& val)
+{
+    // Note: prefer Switch() vs (std::ios::boolalpha) to avoid any
+    // potential locale issues.
+    os  << Switch(val);
+}
+
+
+//- Specialized for scalar.
+//- Write with '.' to avoid scalar/label ambiguity
+template<>
+void putType<scalar>(Ostream& os, const scalar& val)
+{
+    const auto oldflags = os.setf(std::ios::showpoint);
+    os  << val;
+    os.flags(oldflags);  // Restore
 }
 
 } // End namespace Foam
@@ -226,6 +273,7 @@ void Foam::expressions::exprValue::deepCopy(const exprValue& rhs)
 }
 
 
+#if 0
 Foam::tokenList Foam::expressions::exprValue::tokens(bool prune) const
 {
     // Handling for NONE, INVALID:
@@ -237,24 +285,28 @@ Foam::tokenList Foam::expressions::exprValue::tokens(bool prune) const
 
     tokenList toks;
 
-    if (!prune)
-    {
-        if (typeCode_ == expressions::valueTypeCode::NONE)
-        {
-            toks.resize(2);
-            toks.front() = token::BEGIN_LIST;
-            toks.back() = token::END_LIST;
-            return toks;
-        }
-        else if (typeCode_ == expressions::valueTypeCode::INVALID)
-        {
-            toks.emplace_back(word("bad"));
-            return toks;
-        }
-    }
-
     switch (typeCode_)
     {
+        case expressions::valueTypeCode::NONE :
+        {
+            if (!prune)
+            {
+                toks.resize(2);
+                toks.front() = token::BEGIN_LIST;
+                toks.back() = token::END_LIST;
+            }
+            break;
+        }
+
+        case expressions::valueTypeCode::INVALID :
+        {
+            if (!prune)
+            {
+                toks.emplace_back(word("bad"));
+            }
+            break;
+        }
+
         #undef  doLocalCode
         #define doLocalCode(Type, UnusedParam)                        \
                                                                       \
@@ -263,7 +315,7 @@ Foam::tokenList Foam::expressions::exprValue::tokens(bool prune) const
             const Type* dataPtr = data_.get<Type>();                  \
             if (dataPtr)                                              \
             {                                                         \
-                fillTokens<Type>(*dataPtr, toks);                     \
+                addTokens<Type>(toks, *dataPtr);                      \
             }                                                         \
             break;                                                    \
         }
@@ -277,6 +329,7 @@ Foam::tokenList Foam::expressions::exprValue::tokens(bool prune) const
 
     return toks;
 }
+#endif
 
 
 void Foam::expressions::exprValue::write(Ostream& os, bool prune) const
@@ -288,22 +341,26 @@ void Foam::expressions::exprValue::write(Ostream& os, bool prune) const
     // With prune:
     //   - no output for either
 
-    if (!prune)
-    {
-        if (typeCode_ == expressions::valueTypeCode::NONE)
-        {
-            os << token::BEGIN_LIST << token::END_LIST;
-            return;
-        }
-        else if (typeCode_ == expressions::valueTypeCode::INVALID)
-        {
-            os << word("bad");
-            return;
-        }
-    }
-
     switch (typeCode_)
     {
+        case expressions::valueTypeCode::NONE :
+        {
+            if (!prune)
+            {
+                os << token::BEGIN_LIST << token::END_LIST;
+            }
+            break;
+        }
+
+        case expressions::valueTypeCode::INVALID :
+        {
+            if (!prune)
+            {
+                os << word("bad");
+            }
+            break;
+        }
+
         #undef  doLocalCode
         #define doLocalCode(Type, UnusedParam)                        \
                                                                       \
@@ -312,7 +369,7 @@ void Foam::expressions::exprValue::write(Ostream& os, bool prune) const
             const Type* dataPtr = data_.get<Type>();                  \
             if (dataPtr)                                              \
             {                                                         \
-                os << *dataPtr;                                       \
+                putType(os, *dataPtr);                                \
             }                                                         \
             break;                                                    \
         }
@@ -381,34 +438,27 @@ bool Foam::expressions::exprValue::readTokens(ITstream& is)
 
     const valueTypeCode whichCode(exprValue::peekType(is));
 
-    if (whichCode == expressions::valueTypeCode::NONE)
-    {
-        typeCode_ = whichCode;
-        is.skip(2);  // Skip tokens: '( )'
-        return true;
-    }
-
-    // This one should be rare or even impossible
-    if (whichCode == expressions::valueTypeCode::INVALID)
-    {
-        typeCode_ = whichCode;
-
-        if (is.bad())
-        {
-            return false;
-        }
-
-        const token& tok0 = is.peek();
-
-        if (tok0.isWord("bad"))
-        {
-            is.skip(1);  // Skip token: "bad"
-            return true;
-        }
-    }
-
     switch (whichCode)
     {
+        case expressions::valueTypeCode::NONE :
+        {
+            typeCode_ = whichCode;
+            is.skip(2);  // Skip tokens: '( )'
+            return true;
+        }
+
+        // This one should be rare or even impossible
+        case expressions::valueTypeCode::INVALID :
+        {
+            typeCode_ = whichCode;
+            if (!is.bad() && is.peek().isWord("bad"))
+            {
+                is.skip(1);  // Skip token: "bad"
+                return true;
+            }
+            return false;  // Some type of failure..
+        }
+
         #undef  doLocalCode
         #define doLocalCode(Type, UnusedParam)                        \
                                                                       \
@@ -427,6 +477,58 @@ bool Foam::expressions::exprValue::readTokens(ITstream& is)
     }
 
     return false;
+}
+
+
+int Foam::expressions::exprValue::compare
+(
+    const exprValue& rhs
+) const
+{
+    if (typeCode_ != rhs.typeCode_)
+    {
+        // First compare by type
+        return (int(typeCode_) - int(rhs.typeCode_));
+    }
+    else if ((this == &rhs) || !good())
+    {
+        // Identical: same object or not good
+        // (ie, no further comparison possible)
+        return 0;
+    }
+
+    // Types are identical (and good)
+    // - compare by value.
+    // This is even messier than usual, since can only rely on
+    // operator< being defined
+
+    switch (typeCode_)
+    {
+        #undef  doLocalCode
+        #define doLocalCode(Type, UnusedParam)                        \
+                                                                      \
+        case expressions::valueTypeCode::type_##Type :                \
+        {                                                             \
+            const Type* a = data_.get<Type>();                        \
+            const Type* b = rhs.data_.get<Type>();                    \
+            return                                                    \
+            (                                                         \
+                (a && b)                                              \
+              ? ((*a < *b) ? -1 : (*b < *a) ? 1 : 0)                  \
+              : 0                                                     \
+            );                                                        \
+            break;                                                    \
+        }
+
+        FOR_ALL_EXPR_VALUE_TYPES(doLocalCode);
+        #undef doLocalCode
+
+        // exprValue may only be a subset of valueTypeCode types
+        default: break;
+    }
+
+    // Should not happen
+    return 0;
 }
 
 
@@ -470,8 +572,7 @@ bool Foam::expressions::exprValue::operator==(const exprValue& rhs) const
 
 bool Foam::expressions::exprValue::operator<(const exprValue& rhs) const
 {
-    // Not yet sortable
-    return false;
+    return (this->compare(rhs) < 0);
 }
 
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,7 +36,6 @@ Description
 #include "vectorField.H"
 #include "DynamicList.H"
 #include "Random.H"
-#include "exprValue.H"
 #include "exprValueFieldTag.H"
 
 using namespace Foam;
@@ -61,26 +60,80 @@ int main(int argc, char *argv[])
 
     #include "setRootCase.H"
 
+    DynamicList<fieldTag> allTags;
+
     {
         scalarField fld1(20);
         scalarField fld2a(20, Zero);
         scalarField fld2b(10, 3.10);
         scalarField fld3;
 
-        forAll(fld1, i)
+        for (auto& val : fld1)
         {
-            fld1[i] = rnd.position<scalar>(0, 20);
+            val = rnd.position<scalar>(0, 20);
+        }
+
+        if (!UPstream::master())
+        {
+            fld2b.resize(5);
+            fld2b *= 2;
         }
 
         fieldTag tag1(fld1.begin(), fld1.end());
         fieldTag tag2a(fld2a.begin(), fld2a.end());
         fieldTag tag2b(fld2b.begin(), fld2b.end());
         fieldTag tag3(fld3.begin(), fld3.end());
+        fieldTag tag4(fld3.begin(), fld3.end());
 
         printInfo(tag1) << nl;
         printInfo(tag2a) << nl;
         printInfo(tag2b) << nl;
         printInfo(tag3) << nl;
+
+        {
+            Pout<< "Test reduce" << nl;
+
+            fieldTag work(fld2b.begin(), fld2b.end());
+
+            Pout<< "Before" << nl;
+            printInfo(work) << nl;
+
+            work.reduce();
+
+            Pout<< "After" << nl;
+            printInfo(work) << nl;
+            Pout<< "====" << nl;
+        }
+
+        allTags.clear();
+        allTags.push_back(tag1);
+        allTags.push_back(tag2a);
+        allTags.push_back(tag2b);
+        allTags.push_back(tag3);
+        allTags.push_back(tag4);
+        allTags.push_back(fieldTag::make_empty<tensor>());
+
+
+        // Add some other types
+        {
+            vectorField vfld2a(20, vector::uniform(1.23));
+
+            allTags.emplace_back
+            (
+                vfld2a.begin(),
+                vfld2a.end()
+            );
+            allTags.emplace_back(vector(1.01, 2.02, 3.03));
+            allTags.emplace_back(12.4);
+
+            allTags.emplace_back().set_value(vector::uniform(2.0));
+            allTags.back().set_empty();
+        }
+        Info<< "all tags: " << allTags << nl;
+
+        Foam::sort(allTags);
+
+        Info<< "sorted: " << allTags << nl;
 
         fieldTag result;
 
