@@ -166,9 +166,9 @@ inline Ostream& operator<<(Ostream& os, const Omanip<T>& m)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-inline Smanip<ios_base::fmtflags> setf(const ios_base::fmtflags flags)
+inline Smanip<std::ios_base::fmtflags> setf(std::ios_base::fmtflags flags)
 {
-    return Smanip<ios_base::fmtflags>(&IOstream::setf, flags);
+    return Smanip<std::ios_base::fmtflags>(&IOstream::setf, flags);
 }
 
 

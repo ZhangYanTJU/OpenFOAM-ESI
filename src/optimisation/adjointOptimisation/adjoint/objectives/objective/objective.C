@@ -538,9 +538,8 @@ bool objective::write(const bool valid) const
         {
             setObjectiveFilePtr();
             OFstream& file = objFunctionFilePtr_();
-            ios_base::fmtflags flags = file.flags();
-            flags |= std::cout.left;
-            file.flags(flags);
+            file.setf(std::ios_base::left);
+
             if (target_)
             {
                 file<< setw(width_) << "#target" << " "

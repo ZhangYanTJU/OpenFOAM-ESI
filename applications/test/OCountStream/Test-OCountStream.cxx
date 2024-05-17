@@ -65,11 +65,11 @@ int main(int argc, char *argv[])
 
     OCountStream cnt;
     OCharStream cstr;
-    OStringStream str;
+    OStringStream sstr;
     ocountstream plain;
 
     generateOutput(cstr);
-    generateOutput(str);
+    generateOutput(sstr);
     generateOutput(cnt);
     generateOutput(plain);
 
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 
     Info<< "counter state: " << (cnt.stdStream().rdstate()) << nl
         << "via char-stream: " << label(cstr.view().size()) << " chars" << nl
-        << "via string-stream: " << str.str().size() << " chars" << nl
+        << "via string-stream: " << label(sstr.count()) << " chars" << nl
         << "via ocountstream: " << plain.count() << " chars" << endl;
 
     fileName outputName;

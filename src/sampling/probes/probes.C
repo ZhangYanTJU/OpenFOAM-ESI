@@ -105,7 +105,7 @@ void Foam::probes::createProbeFiles(const wordList& fieldNames)
             DebugInfo<< "open probe stream: " << os.name() << endl;
 
             const unsigned int width(IOstream::defaultPrecision() + 7);
-            os  << setf(ios_base::left);
+            os.setf(std::ios_base::left);
 
             forAll(*this, probei)
             {

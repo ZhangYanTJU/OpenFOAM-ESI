@@ -144,12 +144,20 @@ public:
 
     // Member Functions
 
-    // Inquiry
+    // Stream State Functions
 
-        //- Return flags of output stream
-        virtual ios_base::fmtflags flags() const override
+        //- Return current stream flags.
+        //- Dummy for parallel stream, returns 0.
+        virtual std::ios_base::fmtflags flags() const override
         {
-            return ios_base::fmtflags(0);
+            return std::ios_base::fmtflags(0);
+        }
+
+        //- Set stream flags, return old stream flags.
+        //- Dummy for parallel stream, returns 0.
+        virtual std::ios_base::fmtflags flags(std::ios_base::fmtflags) override
+        {
+            return std::ios_base::fmtflags(0);
         }
 
 
@@ -279,15 +287,6 @@ public:
 
         //- Rewind the send buffer for overwriting
         virtual void rewind();
-
-
-    // Edit
-
-        //- Set flags of stream
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags) override
-        {
-            return ios_base::fmtflags(0);
-        }
 
 
     // Print

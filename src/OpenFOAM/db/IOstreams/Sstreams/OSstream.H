@@ -138,14 +138,17 @@ public:
 
     // Stream State
 
-        //- Get stream flags
-        virtual ios_base::fmtflags flags() const override
+        //- Get current stream flags
+        virtual std::ios_base::fmtflags flags() const override
         {
             return os_.flags();
         }
 
-        //- Set stream flags
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags f) override
+        //- Set stream flags, return old stream flags
+        virtual std::ios_base::fmtflags flags
+        (
+            std::ios_base::fmtflags f
+        ) override
         {
             return os_.flags(f);
         }

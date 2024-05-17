@@ -215,6 +215,9 @@ public:
 
     // Member Functions
 
+        //- The number of bytes outputted
+        std::streamsize count() { return stream_.tellp(); }
+
         //- Get the string.
         //- As Foam::string instead of std::string (may change in future)
         Foam::string str() const { return Foam::string(stream_.str()); }

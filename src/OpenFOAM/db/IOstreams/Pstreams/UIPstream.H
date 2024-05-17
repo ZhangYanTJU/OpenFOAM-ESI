@@ -151,16 +151,18 @@ public:
 
     // Stream State Functions
 
-        //- Return stream flags
-        virtual ios_base::fmtflags flags() const override
+        //- Return current stream flags.
+        //- Dummy for parallel stream, returns 0.
+        virtual std::ios_base::fmtflags flags() const override
         {
-            return ios_base::fmtflags(0);
+            return std::ios_base::fmtflags(0);
         }
 
-        //- Set flags of stream flags
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags) override
+        //- Set stream flags, return old stream flags.
+        //- Dummy for parallel stream, returns 0.
+        virtual std::ios_base::fmtflags flags(std::ios_base::fmtflags) override
         {
-            return ios_base::fmtflags(0);
+            return std::ios_base::fmtflags(0);
         }
 
 

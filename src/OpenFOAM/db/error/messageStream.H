@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,16 +77,18 @@ class messageStream
 public:
 
     //- Message type, error severity flags
-    enum errorSeverity
+    enum errorSeverity : int
     {
         // Serial-only output:
         INFO = 1,       //!< General information output (stdout)
-        INFO_STDERR,    //!< General information output (stderr)
         WARNING,        //!< Warning of possible problem.
 
         // Parallel-aware output:
         SERIOUS,        //!< A serious problem - eg, data corruption.
-        FATAL           //!< A fatal error.
+        FATAL,          //!< A fatal error.
+
+        //! Bitmask for stderr output (for the above enums)
+        USE_STDERR = 0x80
     };
 
 
@@ -94,9 +96,16 @@ protected:
 
     // Protected Data
 
+        //- The title of this error type
         string title_;
-        errorSeverity severity_;
+
+        //- The message type / error severity, possibly with USE_STDERR mask
+        int severity_;
+
+        //- The maximum number of errors before program termination
         int maxErrors_;
+
+        //- The current number of errors counted
         int errorCount_;
 
 
@@ -124,12 +133,26 @@ public:
         //- Construct from components
         messageStream
         (
-            const string& title,
-            const errorSeverity severity,
-            const int maxErrors = 0
+            const char* title,
+            errorSeverity severity,
+            int maxErrors = 0,
+            bool use_stderr = false
         );
 
-        //- Construct as Fatal from dictionary, extracting the 'title'.
+        //- Construct from components
+        messageStream
+        (
+            const std::string& title,
+            errorSeverity severity,
+            int maxErrors = 0,
+            bool use_stderr = false
+        )
+        :
+            messageStream(title.c_str(), severity, maxErrors, use_stderr)
+        {}
+
+
+        //- Construct from dictionary as Fatal, extracting 'title'.
         explicit messageStream(const dictionary& dict);
 
 
@@ -160,9 +183,11 @@ public:
     // Output
 
         //- Return OSstream for output operations.
-        //- Use the \c alternative stream for serial-only output
-        //- if it is a valid pointer.
-        OSstream& stream(OSstream* alternative = nullptr);
+        OSstream& stream
+        (
+            //! An alternative output stream (serial-only)
+            OSstream* alternative = nullptr
+        );
 
         //- Return OSstream for output operations on the master process only,
         //- Snull on other processes.
@@ -177,10 +202,11 @@ public:
         OSstream& deprecated
         (
             const int afterVersion,
-            const char* functionName,
-            const char* sourceFileName,
+            const char* functionName = nullptr,
+            const char* sourceFileName = nullptr,
             const int sourceFileLineNumber = 0
         );
+
 
         //- Implicit cast to OSstream for << operations
         operator OSstream&()
@@ -261,7 +287,7 @@ public:
 
 //- Global for selective suppression of Info output.
 //  This is normally accessed implicitly via the DetailInfo macro and is often
-//  associated applications with suppressed banners. For example,
+//  associated with applications with suppressed banners. For example,
 //
 //  \code
 //      DetailInfo << "Hello, I'm running from program xyz" << nl;

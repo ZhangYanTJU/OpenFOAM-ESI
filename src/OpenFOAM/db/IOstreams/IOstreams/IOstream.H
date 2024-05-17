@@ -339,9 +339,6 @@ public:
             return old;
         }
 
-        //- Return flags of stream
-        virtual ios_base::fmtflags flags() const = 0;
-
         //- Return the default precision
         static unsigned int defaultPrecision() noexcept
         {
@@ -387,27 +384,30 @@ public:
             ioState_ |= std::ios_base::badbit;
         }
 
-        //- Set flags of stream
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags f) = 0;
+        //- Return current stream flags
+        virtual std::ios_base::fmtflags flags() const = 0;
 
-        //- Set flags of stream
-        ios_base::fmtflags setf(const ios_base::fmtflags f)
+        //- Set stream flags, return old stream flags
+        virtual std::ios_base::fmtflags flags(std::ios_base::fmtflags) = 0;
+
+        //- Set stream flag(s), return old stream flags
+        std::ios_base::fmtflags setf(std::ios_base::fmtflags f)
         {
             return flags(flags() | f);
         }
 
-        //- Set flags of given field of stream
-        ios_base::fmtflags setf
+        //- Set stream flag(s) with mask, return old stream flags
+        std::ios_base::fmtflags setf
         (
-            const ios_base::fmtflags f,
-            const ios_base::fmtflags mask
+            const std::ios_base::fmtflags f,
+            const std::ios_base::fmtflags mask
         )
         {
             return flags((flags() & ~mask) | (f & mask));
         }
 
         //- Unset flags of stream
-        void unsetf(const ios_base::fmtflags f)
+        void unsetf(std::ios_base::fmtflags f)
         {
             flags(flags() & ~f);
         }
