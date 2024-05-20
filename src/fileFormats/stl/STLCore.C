@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,6 +57,36 @@ static bool startsWithSolid(const char header[STLHeaderSize])
      && std::toupper(header[pos+2]) == 'L'
      && std::toupper(header[pos+3]) == 'I'
      && std::toupper(header[pos+4]) == 'D'
+    );
+}
+
+
+// Check if file size appears to be reasonable for an STL binary file.
+// Compare file size with that expected from number of tris
+// If this is not sensible, it may be an ASCII file
+//
+// sizeof(STLtriangle) = 50 bytes [int16 + 4 * (3 float)]
+
+inline static bool checkBinaryFileSize
+(
+    const int64_t nTris,
+    const Foam::fileName& file
+)
+{
+    // When checking the content size, account for the header size (80),
+    // but ignore the nTris information (int32_t) to give some rounding
+
+    const int64_t contentSize =
+    (
+        int64_t(Foam::fileSize(file))
+      - int64_t(STLHeaderSize)
+    );
+
+    return
+    (
+        (contentSize >= 0)
+     && (nTris >= contentSize/50)
+     && (nTris <= contentSize/25)
     );
 }
 
@@ -117,31 +147,31 @@ int Foam::fileFormats::STLCore::detectBinaryHeader
 
 
     // Read the number of triangles in the STL file
-    // (note: read as signed so we can check whether >2^31)
+    // (note: read as signed int so we can check whether >2^31).
+    //
+    // With nTris == 2^31, file size is 107.37 GB !
+    //
+    // However, the limit is more likely caused by the number of points
+    // that can be stored (label-size=32) when flattened for merging.
+    // So more like 715.8M triangles (~35.8 GB)
+
     int32_t nTris;
     is.read(reinterpret_cast<char*>(&nTris), sizeof(int32_t));
 
-    // Check that stream is OK and number of triangles is positive,
-    // if not this may be an ASCII file
+    bool ok = (is && nTris >= 0);
 
-    bool bad = (!is || nTris < 0);
-
-    if (!bad && unCompressed)
+    if (ok && unCompressed)
     {
-        // Compare file size with that expected from number of tris
-        // If this is not sensible, it may be an ASCII file
-
-        const off_t dataFileSize = Foam::fileSize(filename);
-
-        bad =
-            (
-                nTris < int(dataFileSize - STLHeaderSize)/50
-             || nTris > int(dataFileSize - STLHeaderSize)/25
-            );
+        ok = checkBinaryFileSize(nTris, filename);
     }
 
+    //if (ok)
+    //{
+    //    InfoErr<< "stlb : " << nTris << " triangles" << nl;
+    //}
+
     // Return number of triangles if it appears to be BINARY and good.
-    return (bad ? 0 : nTris);
+    return (ok ? nTris : 0);
 }
 
 
@@ -189,31 +219,27 @@ Foam::fileFormats::STLCore::readBinaryHeader
             << exit(FatalError);
     }
 
-    // Read the number of triangles in the STl file
-    // (note: read as int so we can check whether >2^31)
+
+    // Read the number of triangles in the STL file
+    // (note: read as signed int so we can check whether >2^31).
+    //
+    // With nTris == 2^31, file size is 107.37 GB !
+    //
+    // However, the limit is more likely caused by the number of points
+    // that can be stored (label-size=32) when flattened for merging.
+    // So more like 715.8M triangles (~35.8 GB)
+
     int32_t nTris;
     is.read(reinterpret_cast<char*>(&nTris), sizeof(int32_t));
 
-    // Check that stream is OK and number of triangles is positive,
-    // if not this maybe an ASCII file
+    bool ok = (is && nTris >= 0);
 
-    bool bad = (!is || nTris < 0);
-
-    if (!bad && unCompressed)
+    if (ok && unCompressed)
     {
-        // Compare file size with that expected from number of tris
-        // If this is not sensible, it may be an ASCII file
-
-        const off_t dataFileSize = Foam::fileSize(filename);
-
-        bad =
-            (
-                nTris < int(dataFileSize - STLHeaderSize)/50
-             || nTris > int(dataFileSize - STLHeaderSize)/25
-            );
+        ok = checkBinaryFileSize(nTris, filename);
     }
 
-    if (bad)
+    if (!ok)
     {
         FatalErrorInFunction
             << "problem reading number of triangles, perhaps file is not binary"
