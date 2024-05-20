@@ -135,8 +135,9 @@ int Foam::fileFormats::STLCore::detectBinaryHeader
 
         bad =
             (
-                nTris < int(dataFileSize - STLHeaderSize)/50
-             || nTris > int(dataFileSize - STLHeaderSize)/25
+                dataFileSize < STLHeaderSize
+             || nTris < (dataFileSize - STLHeaderSize)/50
+             || nTris > (dataFileSize - STLHeaderSize)/25
             );
     }
 
@@ -208,8 +209,9 @@ Foam::fileFormats::STLCore::readBinaryHeader
 
         bad =
             (
-                nTris < int(dataFileSize - STLHeaderSize)/50
-             || nTris > int(dataFileSize - STLHeaderSize)/25
+                dataFileSize < STLHeaderSize
+             || nTris < (dataFileSize - STLHeaderSize)/50
+             || nTris > (dataFileSize - STLHeaderSize)/25
             );
     }
 
