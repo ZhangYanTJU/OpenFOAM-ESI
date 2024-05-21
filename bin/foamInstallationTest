@@ -210,7 +210,7 @@ reportExecutable()
 {
     APP_NAME="$1"
     APP_SPEC="$2"
-    APP_PATH="$(findExec $PATH $1)"
+    APP_PATH="$(findExec "$PATH" "$1")"
     VERSION="unknown"
 
     if [ -z "$APP_PATH" ]
