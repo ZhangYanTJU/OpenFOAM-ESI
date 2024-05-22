@@ -10,41 +10,16 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "system";
-    object      controlDict;
+    object      decomposeParDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     laplacianFoam;
+//- The total number of domains (mandatory)
+numberOfSubdomains  4;
 
-startFrom       startTime;  //latestTime;
+//- The decomposition method (mandatory)
+method          random;
 
-startTime       0;
-
-stopAt          endTime;
-
-endTime         2;
-
-deltaT          1;
-
-//writeControl    runTime;
-//writeInterval   0.1;
-writeControl    timeStep;
-writeInterval   1;
-
-purgeWrite      0;
-
-writeFormat     ascii;
-
-writePrecision  6;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   6;
-
-runTimeModifiable true;
-
+// NOTE: no patch constraints!
 
 // ************************************************************************* //
