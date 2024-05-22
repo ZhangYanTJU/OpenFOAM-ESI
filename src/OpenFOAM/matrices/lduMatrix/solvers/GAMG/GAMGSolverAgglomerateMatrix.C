@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -332,35 +332,47 @@ void Foam::GAMGSolver::gatherMatrices
 
         const label proci = UPstream::myProcNo(comm);
 
-        labelList validInterface(interfaces.size(), -1);
+        // All interfaceBouCoeffs need to be sent across
+        bitSet validCoeffs(interfaces.size());
+        forAll(interfaceBouCoeffs, intI)
+        {
+            if (interfaceBouCoeffs.set(intI))
+            {
+                validCoeffs.set(intI);
+            }
+        }
+        // Only preserved interfaces need to be sent across
+        bitSet validInterface(interfaces.size());
         forAll(interfaces, intI)
         {
             const label allIntI = boundaryMap[proci][intI];
             if (interfaces.set(intI) && allIntI != -1)
             {
-                validInterface[intI] = intI;
+                validInterface.set(intI);
             }
         }
 
         UOPstream toMaster(UPstream::masterNo(), pBufs);
 
-        toMaster<< mat << token::SPACE << validInterface;
+        toMaster<< mat
+            << token::SPACE << validCoeffs
+            << token::SPACE << validInterface;
 
-        forAll(validInterface, intI)
+        for (const label intI : validCoeffs)
         {
-            if (validInterface[intI] != -1)
-            {
-                const auto& interface = refCast<const GAMGInterfaceField>
-                (
-                    interfaces[intI]
-                );
+            toMaster
+                << interfaceBouCoeffs[intI]
+                << interfaceIntCoeffs[intI];
+        }
+        for (const label intI : validInterface)
+        {
+            const auto& interface = refCast<const GAMGInterfaceField>
+            (
+                interfaces[intI]
+            );
 
-                toMaster
-                    << interfaceBouCoeffs[intI]
-                    << interfaceIntCoeffs[intI]
-                    << interface.type();
-                interface.write(toMaster);
-            }
+            toMaster << interface.type();
+            interface.write(toMaster);
         }
     }
 
@@ -389,60 +401,41 @@ void Foam::GAMGSolver::gatherMatrices
 
             otherMats.set(otherI, new lduMatrix(destMesh, fromProc));
 
-            // Receive number of/valid interfaces
-            // >= 0 : remote interface index
-            // -1   : invalid interface
-            const labelList validInterface(fromProc);
+            // Receive bitSet of/valid interfaceCoeffs/interfaces
+            const bitSet validCoeffs(fromProc);
+            const bitSet validInterface(fromProc);
 
-            otherBouCoeffs.set
-            (
-                otherI,
-                new FieldField<Field, scalar>(validInterface.size())
-            );
-            otherIntCoeffs.set
-            (
-                otherI,
-                new FieldField<Field, scalar>(validInterface.size())
-            );
-            otherInterfaces.set
-            (
-                otherI,
-                new PtrList<lduInterfaceField>(validInterface.size())
-            );
+            otherBouCoeffs.emplace_set(otherI, validCoeffs.size());
+            otherIntCoeffs.emplace_set(otherI, validCoeffs.size());
+            otherInterfaces.emplace_set(otherI, validInterface.size());
 
-            forAll(validInterface, intI)
+            // Receive individual interface contributions
+            for (const label intI : validCoeffs)
             {
-                if (validInterface[intI] != -1)
-                {
-                    otherBouCoeffs[otherI].set
-                    (
-                        intI,
-                        new scalarField(fromProc)
-                    );
-                    otherIntCoeffs[otherI].set
-                    (
-                        intI,
-                        new scalarField(fromProc)
-                    );
+                otherBouCoeffs[otherI].emplace_set(intI, fromProc);
+                otherIntCoeffs[otherI].emplace_set(intI, fromProc);
+            }
 
-                    const word coupleType(fromProc);
+            // Receive individual interface contributions
+            for (const label intI : validInterface)
+            {
+                const word coupleType(fromProc);
 
-                    const label allIntI = boundaryMap[proci][intI];
+                const label allIntI = boundaryMap[proci][intI];
 
-                    otherInterfaces[otherI].set
+                otherInterfaces[otherI].set
+                (
+                    intI,
+                    GAMGInterfaceField::New
                     (
-                        intI,
-                        GAMGInterfaceField::New
+                        coupleType,
+                        refCast<const GAMGInterface>
                         (
-                            coupleType,
-                            refCast<const GAMGInterface>
-                            (
-                                destInterfaces[allIntI]
-                            ),
-                            fromProc
-                        ).release()
-                    );
-                }
+                            destInterfaces[allIntI]
+                        ),
+                        fromProc
+                    ).release()
+                );
             }
         }
     }
