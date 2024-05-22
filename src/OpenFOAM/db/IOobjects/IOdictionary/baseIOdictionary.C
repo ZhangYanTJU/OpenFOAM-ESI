@@ -92,7 +92,7 @@ bool Foam::baseIOdictionary::readData(Istream& is)
 {
     is >> *this;
 
-    if (writeDictionaries && Pstream::master() && !is.bad())
+    if (writeDictionaries && UPstream::master() && !is.bad())
     {
         Sout<< nl
             << "--- baseIOdictionary " << name()

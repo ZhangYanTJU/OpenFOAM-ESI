@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -106,6 +106,26 @@ Foam::GlobalIOList<Type>::GlobalIOList
 }
 
 
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+template<class Type>
+Foam::List<Type> Foam::GlobalIOList<Type>::readContents(const IOobject& io)
+{
+    IOobject rio(io, IOobjectOption::NO_REGISTER);
+    if (rio.readOpt() == IOobjectOption::READ_MODIFIED)
+    {
+        rio.readOpt(IOobjectOption::MUST_READ);
+    }
+
+    // The object is global
+    rio.globalObject(true);
+
+    GlobalIOList<Type> reader(rio);
+
+    return List<Type>(std::move(static_cast<List<Type>&>(reader)));
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
@@ -119,7 +139,8 @@ bool Foam::GlobalIOList<Type>::readData(Istream& is)
 template<class Type>
 bool Foam::GlobalIOList<Type>::writeData(Ostream& os) const
 {
-    return (os << *this).good();
+    os << static_cast<const List<Type>&>(*this);
+    return os.good();
 }
 
 

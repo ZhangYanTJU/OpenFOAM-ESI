@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2018 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,13 +85,19 @@ public:
         GlobalIOField(const IOobject& io, const tmp<Field<Type>>& tfld);
 
 
+    // Factory Methods
+
+        //- Read and return contents. The IOobject is never registered
+        static Field<Type> readContents(const IOobject& io);
+
+
     //- Destructor
     virtual ~GlobalIOField() = default;
 
 
     // Member Functions
 
-        //- Is object global
+        //- The object is global
         virtual bool global() const
         {
             return true;

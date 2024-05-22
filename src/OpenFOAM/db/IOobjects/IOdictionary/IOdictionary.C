@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -95,13 +95,30 @@ Foam::IOdictionary::IOdictionary
 
 Foam::dictionary Foam::IOdictionary::readContents(const IOobject& io)
 {
+    return readContents(io, typeName);
+}
+
+
+Foam::dictionary Foam::IOdictionary::readContents
+(
+    const IOobject& io,
+    const word& wantedType
+)
+{
     IOobject rio(io, IOobjectOption::NO_REGISTER);
     if (rio.readOpt() == IOobjectOption::READ_MODIFIED)
     {
         rio.readOpt(IOobjectOption::MUST_READ);
     }
 
-    IOdictionary reader(rio);
+    // The object is global
+    rio.globalObject(true);
+
+    IOdictionary reader
+    (
+        rio,
+        (wantedType.empty() ? typeName : wantedType)
+    );
 
     return dictionary(std::move(static_cast<dictionary&>(reader)));
 }

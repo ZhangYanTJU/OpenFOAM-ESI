@@ -101,9 +101,7 @@ public:
 
     // Member Functions
 
-        bool writeData(Ostream& os) const;
-
-        //- Is object global
+        //- This object is global
         virtual bool global() const
         {
             return true;
@@ -115,6 +113,9 @@ public:
         {
             return globalFilePath(type());
         }
+
+        //- The writeData method for regIOobject write operation
+        bool writeData(Ostream& os) const;
 
 
     // Member Operators

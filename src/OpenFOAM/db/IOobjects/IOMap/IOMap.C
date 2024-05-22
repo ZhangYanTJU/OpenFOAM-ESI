@@ -105,6 +105,9 @@ Foam::Map<T> Foam::IOMap<T>::readContents(const IOobject& io)
         rio.readOpt(IOobjectOption::MUST_READ);
     }
 
+    // The object is global
+    rio.globalObject(true);
+
     IOMap<T> reader(rio);
 
     return Map<T>(std::move(static_cast<Map<T>&>(reader)));
