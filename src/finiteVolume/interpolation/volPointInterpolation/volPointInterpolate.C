@@ -224,42 +224,34 @@ void Foam::volPointInterpolation::interpolateDimensionedInternalField
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::volPointInterpolation::flatBoundaryField
+Foam::tmp<Foam::Field<Type>>
+Foam::volPointInterpolation::flatBoundaryField
 (
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
-    const fvMesh& mesh = vf.mesh();
-    const fvBoundaryMesh& bm = mesh.boundary();
+    const polyBoundaryMesh& pbm = vf.mesh().boundaryMesh();
 
-    auto tboundaryVals = tmp<Field<Type>>::New(mesh.nBoundaryFaces());
-    auto& boundaryVals = tboundaryVals.ref();
+    auto tboundaryVals = tmp<Field<Type>>::New(pbm.nFaces(), Foam::zero{});
+    auto& values = tboundaryVals.ref();
 
     forAll(vf.boundaryField(), patchi)
     {
-        label bFacei = bm[patchi].patch().start() - mesh.nInternalFaces();
+        const auto& pp = pbm[patchi];
+        const auto& pfld = vf.boundaryField()[patchi];
+
+        // Note: restrict transcribing to actual size of the patch field
+        // - handles "empty" patch type etc.
+
+        SubList<Type> slice(values, pfld.size(), pp.offset());
 
         if
         (
-           !isA<emptyFvPatch>(bm[patchi])
-        && !vf.boundaryField()[patchi].coupled()
+            !isA<emptyPolyPatch>(pp)
+         && !pfld.coupled()
         )
         {
-            SubList<Type>
-            (
-                boundaryVals,
-                vf.boundaryField()[patchi].size(),
-                bFacei
-            ) = vf.boundaryField()[patchi];
-        }
-        else
-        {
-            const polyPatch& pp = bm[patchi].patch();
-
-            forAll(pp, i)
-            {
-                boundaryVals[bFacei++] = Zero;
-            }
+            slice = pfld;
         }
     }
 
