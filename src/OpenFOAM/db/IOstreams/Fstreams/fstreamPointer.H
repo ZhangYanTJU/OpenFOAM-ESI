@@ -194,20 +194,37 @@ public:
 
 class ofstreamPointer
 {
+    // Private Data Types
+
+        //- The file open/creation type (bitmask)
+        enum modeType : char
+        {
+            NONE = 0,           // Regular open (truncates existing)
+            ATOMIC = 0x1,       // Atomic file creation
+            APPENDING = 0x2     // Is appending to an existing file
+        };
+
+
     // Private Data
 
         //- The stream pointer (ofstream | ogzstream | ocountstream, ...)
         std::unique_ptr<std::ostream> ptr_;
 
-        //- Atomic file creation
-        bool atomic_;
+        //- File output/creation type (atomic, append etc)
+        char mode_;
+
+
+    // Private Member Functions
+
+        //- Clear any output mode information
+        void clear_mode() noexcept { mode_ = modeType::NONE; }
 
 
 protected:
 
     // Protected Member Functions
 
-        //- Reopen for compressed/non-compressed
+        //- Reopen for compressed/non-compressed. Discards append status.
         void reopen(const std::string& pathname);
 
         //- Close stream and rename file
@@ -245,16 +262,20 @@ public:
         //- Construct from pathname, option, append, file handling atomic
         //  \param pathname The file name to open for writing
         //  \param streamOpt  Respects (UNCOMPRESSED | COMPRESSED)
-        //  \param append   Open in append mode
+        //  \param append   Open in specified append mode
         //  \param atomic   Write into temporary file (not target file).
         //      This option should only be used with a stream wrapper
         //      (eg, OFstream) that handles the final renaming.
+        //
+        //  \note
+        //       There are two different append modes:
+        //       append at every write, or only append after opening.
         explicit ofstreamPointer
         (
             const fileName& pathname,
             IOstreamOption streamOpt = IOstreamOption(),
-            const bool append = false,
-            const bool atomic = false
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND,
+            bool atomic = false
         );
 
         //- Construct from pathname, compression, append, file handling atomic
@@ -268,12 +289,12 @@ public:
         (
             const fileName& pathname,
             IOstreamOption::compressionType comp,
-            const bool append = false,
-            const bool atomic = false
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND,
+            bool atomic = false
         );
 
 
-    // Member Functions
+    // Static Functions
 
         //- True if compiled with libz support
         static bool supports_gz() noexcept;
@@ -293,14 +314,34 @@ public:
         //- Which compression type?
         IOstreamOption::compressionType whichCompression() const;
 
+        //- True if opened in append mode \em and file already existed
+        bool is_appending() const noexcept
+        {
+            return (mode_ & modeType::APPENDING);
+        }
+
+        //- True if file creation behaves as atomic
+        bool is_atomic() const noexcept
+        {
+            return (mode_ & modeType::ATOMIC);
+        }
+
 
     // Edit
 
-        //- Return managed pointer and release ownership
-        std::ostream* release() noexcept { return ptr_.release(); }
+        //- Return managed pointer and release ownership.
+        std::ostream* release() noexcept
+        {
+            clear_mode();
+            return ptr_.release();
+        }
 
         //- Replace the managed pointer
-        void reset(std::ostream* ptr) noexcept { ptr_.reset(ptr); }
+        void reset(std::ostream* ptr) noexcept
+        {
+            clear_mode();
+            ptr_.reset(ptr);
+        }
 
 
     // Operators

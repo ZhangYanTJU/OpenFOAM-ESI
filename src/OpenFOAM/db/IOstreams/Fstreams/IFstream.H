@@ -28,7 +28,8 @@ Class
     Foam::IFstream
 
 Description
-    Input from file stream, using an ISstream
+    Input from file stream as an ISstream, normally using \c std::ifstream
+    for the actual input.
 
 SourceFiles
     IFstream.C
