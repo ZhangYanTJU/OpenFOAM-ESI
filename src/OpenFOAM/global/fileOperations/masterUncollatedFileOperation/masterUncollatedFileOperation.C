@@ -2505,7 +2505,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewOFstream
             comm_,
             pathName,
             streamOpt,
-            IOstreamOption::NON_APPEND,
+            IOstreamOption::NO_APPEND,
             writeOnProc
         )
     );
@@ -2529,7 +2529,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewOFstream
             comm_,
             pathName,
             streamOpt,
-            IOstreamOption::NON_APPEND,
+            IOstreamOption::NO_APPEND,
             writeOnProc
         )
     );
