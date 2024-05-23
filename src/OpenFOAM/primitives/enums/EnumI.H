@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -243,6 +243,20 @@ inline typename Foam::Enum<EnumType>::const_iterator
 Foam::Enum<EnumType>::cfind(const word& key) const
 {
     const label idx = keys_.find(key);
+
+    return typename Enum<EnumType>::const_iterator
+    (
+        this,
+        (idx >= 0 ? idx : this->size())
+    );
+}
+
+
+template<class EnumType>
+inline typename Foam::Enum<EnumType>::const_iterator
+Foam::Enum<EnumType>::cfind(const EnumType e) const
+{
+    const label idx = vals_.find(int(e));
 
     return typename Enum<EnumType>::const_iterator
     (

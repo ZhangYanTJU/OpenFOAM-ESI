@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -298,10 +298,15 @@ public:
         const_iterator begin() const noexcept { return cbegin(); }
         const_iterator end() const noexcept { return cend(); }
 
-        //- Find the enumeration by name.
+        //- Find key/value pair by enumeration name.
         //  Equal to cend() if not found, or test if good()
         inline const_iterator cfind(const word& key) const;
         const_iterator find(const word& key) const { return cfind(key); }
+
+        //- Find key/value pair by enumeration value.
+        //  Equal to cend() if not found, or test if good()
+        inline const_iterator cfind(const EnumType e) const;
+        const_iterator find(const EnumType e) const { return cfind(e); }
 
 
     // Housekeeping
