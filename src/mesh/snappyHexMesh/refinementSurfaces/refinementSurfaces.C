@@ -1956,6 +1956,59 @@ void Foam::refinementSurfaces::findNearestIntersection
 
 void Foam::refinementSurfaces::findNearestIntersection
 (
+//    const labelList& surfacesToTest,
+    const pointField& start,
+    const pointField& end,
+
+    labelList& surface1,
+    labelList& region1,
+    List<pointIndexHit>& hitInfo1,
+    vectorField& normal1
+) const
+{
+    // Initialize arguments
+    surface1.setSize(start.size());
+    surface1 = -1;
+    region1.setSize(start.size());
+    region1 = -1;
+    hitInfo1.setSize(start.size());
+    hitInfo1 = pointIndexHit();
+    normal1.setSize(start.size());
+    normal1 = Zero;
+
+    // Current end of segment to test.
+    pointField nearest(end);
+    // Work array
+    List<pointIndexHit> nearestInfo(start.size());
+    labelList region;
+    vectorField normal;
+
+    forAll(surfaces_, surfI)
+    {
+        const searchableSurface& geom = allGeometry_[surfaces_[surfI]];
+
+        // See if any intersection between start and current nearest
+        geom.findLine(start, nearest, nearestInfo);
+        geom.getRegion(nearestInfo, region);
+        geom.getNormal(nearestInfo, normal);
+
+        forAll(nearestInfo, pointI)
+        {
+            if (nearestInfo[pointI].hit())
+            {
+                surface1[pointI] = surfI;
+                region1[pointI] = region[pointI];
+                hitInfo1[pointI] = nearestInfo[pointI];
+                normal1[pointI] = normal[pointI];
+                nearest[pointI] = nearestInfo[pointI].point();
+            }
+        }
+    }
+}
+
+
+void Foam::refinementSurfaces::findNearestIntersection
+(
     const pointField& start,
     const pointField& end,
 
