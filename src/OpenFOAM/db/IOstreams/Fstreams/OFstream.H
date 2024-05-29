@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,29 @@ Class
     Foam::OFstream
 
 Description
-    Output to file stream, using an OSstream
+    Output to file stream as an OSstream, normally using \c std::ofstream
+    for the actual output.
+
+Note
+    The atomic output works by creating an intermediate temporary file,
+    which is renamed as an atomic operation when closing. It is not
+    possible, or particularly desirable, to have an atomic in combination
+    with append behaviour. If both are specified, append has priority.
+
+Note
+    An output file can be opened in two different \c append modes, both of
+    which preserve existing files:
+    -# A common append mode is APPEND_APP, which corresponds to the
+       \c std::ios_base::app flag.
+       A seek-to-end is performed at \em every write.
+       It is thus not possible to use any manual seeks to overwrite parts
+       of the file.
+    -# The other append mode is APPEND_ATE, which roughly corresponds to the
+       \c std::ios_base::ate flag behaviour.
+       A seek-to-end is performed immediately after opening,
+       but not subsequently.
+       Manual seeks can be used to overwrite parts of the file.
+    .
 
 SourceFiles
     OFstream.C
@@ -64,53 +86,55 @@ public:
 
     // Constructors
 
-        //- Construct a null output file stream.
-        //  Behaves like \c /dev/null and is named accordingly
+        //- Construct a null output file stream that behaves like \c /dev/null
         explicit OFstream(std::nullptr_t);
 
         //- Construct with specified atomic behaviour
-        //- from pathname, stream option, optional append
+        //- from pathname, stream option, optional append (see note).
         OFstream
         (
             IOstreamOption::atomicType atomic,
             const fileName& pathname,
             IOstreamOption streamOpt = IOstreamOption(),
-            IOstreamOption::appendType append = IOstreamOption::NON_APPEND
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND
         );
 
-        //- Construct from pathname and other specifications
+        //- Construct from pathname and other specifications.
+        //  See note on append mode.
         explicit OFstream
         (
             const fileName& pathname,
             IOstreamOption streamOpt = IOstreamOption(),
-            IOstreamOption::appendType append = IOstreamOption::NON_APPEND
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND
         )
         :
             OFstream(IOstreamOption::NON_ATOMIC, pathname, streamOpt, append)
         {}
 
-        //- Construct from pathname, format (uncompressed), optional append,
+        //- Construct from pathname, format (uncompressed),
+        //- optional append (see note),
         //- atomic behaviour as per system default
         OFstream
         (
             const fileName& pathname,
             IOstreamOption::streamFormat fmt,
             IOstreamOption::compressionType cmp = IOstreamOption::UNCOMPRESSED,
-            IOstreamOption::appendType append = IOstreamOption::NON_APPEND
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND
         )
         :
             OFstream(pathname, IOstreamOption(fmt, cmp), append)
         {}
 
         //- Construct with specified atomic behaviour
-        //- from pathname, format (uncompressed), optional append
+        //- from pathname, format (uncompressed),
+        //- optional append (see note).
         OFstream
         (
             IOstreamOption::atomicType atomic,
             const fileName& pathname,
             IOstreamOption::streamFormat fmt,
             IOstreamOption::compressionType cmp = IOstreamOption::UNCOMPRESSED,
-            IOstreamOption::appendType append = IOstreamOption::NON_APPEND
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND
         )
         :
             OFstream(atomic, pathname, IOstreamOption(fmt, cmp), append)
@@ -141,6 +165,21 @@ public:
         virtual void rewind();
 
 
+    // Output stream modes
+
+        //- True if opened in append mode \em and file already existed
+        bool is_appending() const noexcept
+        {
+            return ofstreamPointer::is_appending();
+        }
+
+        //- True if file creation behaves as atomic
+        bool is_atomic() const noexcept
+        {
+            return ofstreamPointer::is_atomic();
+        }
+
+
     // Print
 
         //- Print stream description
@@ -158,7 +197,7 @@ public:
             IOstreamOption::streamFormat fmt,
             IOstreamOption::versionNumber ver,
             IOstreamOption::compressionType cmp = IOstreamOption::UNCOMPRESSED,
-            IOstreamOption::appendType append = IOstreamOption::NON_APPEND
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND
         )
         :
             OFstream(pathname, IOstreamOption(fmt, ver, cmp), append)

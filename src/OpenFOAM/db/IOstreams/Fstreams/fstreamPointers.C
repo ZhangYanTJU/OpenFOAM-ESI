@@ -88,14 +88,14 @@ Foam::ifstreamPointer::ifstreamPointer
 Foam::ofstreamPointer::ofstreamPointer() noexcept
 :
     ptr_(),
-    atomic_(false)
+    mode_(modeType::NONE)
 {}
 
 
 Foam::ofstreamPointer::ofstreamPointer(std::nullptr_t)
 :
     ptr_(new Foam::ocountstream),
-    atomic_(false)
+    mode_(modeType::NONE)
 {}
 
 
@@ -103,27 +103,44 @@ Foam::ofstreamPointer::ofstreamPointer
 (
     const fileName& pathname,
     IOstreamOption streamOpt,
-    const bool append,
-    const bool atomic
+    IOstreamOption::appendType append,
+    bool atomic
 )
 :
     ptr_(),
-    atomic_(atomic)
+    mode_(modeType::NONE)
 {
-    std::ios_base::openmode mode
+    // Leave std::ios_base::trunc implicitly handled to make things
+    // easier for append mode.
+
+    std::ios_base::openmode openmode
     (
         std::ios_base::out | std::ios_base::binary
     );
 
-    if (append)
+    if (append == IOstreamOption::APPEND_APP)
     {
-        mode |= std::ios_base::app;
+        openmode |= std::ios_base::app;
 
         // Cannot append to gzstream
         streamOpt.compression(IOstreamOption::UNCOMPRESSED);
 
         // Cannot use append + atomic operation, without lots of extra work
-        atomic_ = false;
+        atomic = false;
+    }
+    else if (append == IOstreamOption::APPEND_ATE)
+    {
+        // Handle an "append-like" mode by opening "r+b" and NOT as "ab"
+        // - file already exists: Sets read position to start
+        // - file does not exist: Error
+
+        openmode |= std::ios_base::in;  // [SIC] - use read bit, not append!
+
+        // Cannot append to gzstream
+        streamOpt.compression(IOstreamOption::UNCOMPRESSED);
+
+        // Cannot use append + atomic operation, without lots of extra work
+        atomic = false;
     }
 
 
@@ -146,9 +163,9 @@ Foam::ofstreamPointer::ofstreamPointer
 
         #ifdef HAVE_LIBZ
         // TBD:
-        // atomic_ = true;  // Always treat COMPRESSED like an atomic
+        // atomic = true;  // Always treat COMPRESSED like an atomic
 
-        const fileName& target = (atomic_ ? pathname_tmp : pathname_gz);
+        const fileName& target = (atomic ? pathname_tmp : pathname_gz);
 
         // Remove old uncompressed version (if any)
         fType = Foam::type(pathname, false);
@@ -158,7 +175,7 @@ Foam::ofstreamPointer::ofstreamPointer
         }
 
         // Avoid writing into symlinked files (non-append mode)
-        if (!append || atomic_)
+        if (atomic || (append == IOstreamOption::NO_APPEND))
         {
             fType = Foam::type(target, false);
             if (fType == fileName::SYMLINK)
@@ -167,7 +184,7 @@ Foam::ofstreamPointer::ofstreamPointer
             }
         }
 
-        ptr_.reset(new ogzstream(target, mode));
+        ptr_.reset(new ogzstream(target, openmode));
 
         #else /* HAVE_LIBZ */
 
@@ -184,7 +201,7 @@ Foam::ofstreamPointer::ofstreamPointer
 
     if (IOstreamOption::COMPRESSED != streamOpt.compression())
     {
-        const fileName& target = (atomic_ ? pathname_tmp : pathname);
+        const fileName& target = (atomic ? pathname_tmp : pathname);
 
         // Remove old compressed version (if any)
         fType = Foam::type(pathname_gz, false);
@@ -194,7 +211,7 @@ Foam::ofstreamPointer::ofstreamPointer
         }
 
         // Avoid writing into symlinked files (non-append mode)
-        if (!append || atomic_)
+        if (atomic || (append == IOstreamOption::NO_APPEND))
         {
             fType = Foam::type(target, false);
             if (fType == fileName::SYMLINK)
@@ -203,7 +220,75 @@ Foam::ofstreamPointer::ofstreamPointer
             }
         }
 
-        ptr_.reset(new std::ofstream(target, mode));
+        // File pointer (std::ofstream)
+        auto filePtr = std::make_unique<std::ofstream>(target, openmode);
+
+        if (append == IOstreamOption::APPEND_APP)
+        {
+            // Final handling for append 'app' (always non-atomic)
+
+            // Set output position to the end (like std::ios_base::ate)
+            // but only to test if the file had a size.
+            // No real performance problem since any subsequent write
+            // will do the same anyhow.
+
+            filePtr->seekp(0, std::ios_base::end);
+            if (filePtr->tellp() <= 0)
+            {
+                // Did not open an existing file
+                append = IOstreamOption::NO_APPEND;
+            }
+        }
+        else if (append == IOstreamOption::APPEND_ATE)
+        {
+            // Final handling for append 'ate' (always non-atomic)
+
+            if (filePtr->good())
+            {
+                // Success if file already exists.
+                // Set output position to the end - like std::ios_base::ate
+
+                filePtr->seekp(0, std::ios_base::end);
+
+                if (filePtr->tellp() <= 0)
+                {
+                    // Did not open an existing file
+                    append = IOstreamOption::NO_APPEND;
+                }
+            }
+            else
+            {
+                // Error if file does not already exist.
+                // Reopen as regular output mode only.
+
+                // Did not open an existing file
+                append = IOstreamOption::NO_APPEND;
+
+                if (filePtr->is_open())
+                {
+                    filePtr->close();
+                }
+                filePtr->clear();
+                filePtr->open
+                (
+                    target,
+                    (std::ios_base::out | std::ios_base::binary)
+                );
+            }
+        }
+        ptr_.reset(filePtr.release());
+    }
+
+    // Is appending to an existing file
+    if (append != IOstreamOption::NO_APPEND)
+    {
+        mode_ = modeType::APPENDING;
+    }
+
+    // An atomic output operation (normally not appending!)
+    if (atomic)
+    {
+        mode_ |= modeType::ATOMIC;
     }
 }
 
@@ -212,8 +297,8 @@ Foam::ofstreamPointer::ofstreamPointer
 (
     const fileName& pathname,
     IOstreamOption::compressionType comp,
-    const bool append,
-    const bool atomic
+    IOstreamOption::appendType append,
+    bool atomic
 )
 :
     ofstreamPointer
@@ -237,12 +322,12 @@ void Foam::ifstreamPointer::open
     // Forcibly close old stream (if any)
     ptr_.reset(nullptr);
 
-    const std::ios_base::openmode mode
+    const std::ios_base::openmode openmode
     (
         std::ios_base::in | std::ios_base::binary
     );
 
-    ptr_.reset(new std::ifstream(pathname, mode));
+    ptr_.reset(new std::ifstream(pathname, openmode));
 
     if (!ptr_->good())
     {
@@ -254,7 +339,7 @@ void Foam::ifstreamPointer::open
         {
             #ifdef HAVE_LIBZ
 
-            ptr_.reset(new igzstream(pathname_gz, mode));
+            ptr_.reset(new igzstream(pathname_gz, openmode));
 
             #else /* HAVE_LIBZ */
 
@@ -311,7 +396,7 @@ void Foam::ofstreamPointer::reopen(const std::string& pathname)
         gz->close();
         gz->clear();
 
-        if (atomic_)
+        if (mode_ & modeType::ATOMIC)
         {
             gz->open
             (
@@ -341,10 +426,11 @@ void Foam::ofstreamPointer::reopen(const std::string& pathname)
         }
         file->clear();
 
-        // Don't need original request to append since rewind implies
-        // trashing that anyhow.
+        // Invalidate the appending into existing file information
+        // since rewind usually means overwrite
+        mode_ &= ~modeType::APPENDING;
 
-        if (atomic_)
+        if (mode_ & modeType::ATOMIC)
         {
             file->open
             (
@@ -367,7 +453,13 @@ void Foam::ofstreamPointer::reopen(const std::string& pathname)
 
 void Foam::ofstreamPointer::close(const std::string& pathname)
 {
-    if (!atomic_ || pathname.empty()) return;
+    // Invalidate the appending into existing file information
+    mode_ &= ~modeType::APPENDING;
+
+    if (pathname.empty() || !(mode_ & modeType::ATOMIC))
+    {
+        return;
+    }
 
     #ifdef HAVE_LIBZ
     auto* gz = dynamic_cast<ogzstream*>(ptr_.get());

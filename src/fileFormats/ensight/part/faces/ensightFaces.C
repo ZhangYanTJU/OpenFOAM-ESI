@@ -54,7 +54,7 @@ namespace
 {
 
 // Trivial shape classifier
-inline Foam::ensightFaces::elemType whatType(const Foam::face& f)
+inline Foam::ensightFaces::elemType whatType(const Foam::face& f) noexcept
 {
     return
     (

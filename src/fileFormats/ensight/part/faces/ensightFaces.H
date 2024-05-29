@@ -266,6 +266,7 @@ public:
         virtual void writeDict(Ostream& os, const bool full=false) const;
 
         //- Write geometry, using a mesh reference
+        //- No beginGeometry() marker.
         virtual void write
         (
             ensightGeoFile& os,

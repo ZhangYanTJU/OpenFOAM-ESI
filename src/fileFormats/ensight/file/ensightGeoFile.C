@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,61 +29,38 @@ License
 #include "ensightGeoFile.H"
 #include "foamVersion.H"
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-void Foam::ensightGeoFile::init()
-{
-    writeBinaryHeader();
-    beginGeometry();
-}
-
-
-void Foam::ensightGeoFile::beginGeometry()
-{
-    // Description line 1
-    writeString("Ensight Geometry File");
-    newline();
-
-    // Description line 2
-    writeString("Written by OpenFOAM " + std::to_string(foamVersion::api));
-    newline();
-
-    writeString("node id assign");
-    newline();
-
-    writeString("element id assign");
-    newline();
-}
-
-
-void Foam::ensightGeoFile::endGeometry()
-{}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::ensightGeoFile::ensightGeoFile
 (
+    IOstreamOption::appendType append,
     const fileName& pathname,
     IOstreamOption::streamFormat fmt
 )
 :
-    ensightFile(pathname, fmt)
+    ensightFile(append, pathname, fmt)
 {
-    init();
+    if (!OFstream::is_appending())
+    {
+        writeBinaryHeader();  // Mandatory for geometry files
+    }
 }
 
 
 Foam::ensightGeoFile::ensightGeoFile
 (
+    IOstreamOption::appendType append,
     const fileName& path,
     const fileName& name,
     IOstreamOption::streamFormat fmt
 )
 :
-    ensightFile(path, name, fmt)
+    ensightFile(append, path, name, fmt)
 {
-    init();
+    if (!OFstream::is_appending())
+    {
+        writeBinaryHeader();  // Mandatory for geometry files
+    }
 }
 
 
@@ -102,24 +79,20 @@ Foam::Ostream& Foam::ensightGeoFile::writeKeyword(const keyType& key)
 // Convenience Output Methods
 //
 
-void Foam::ensightGeoFile::beginPart
-(
-    const label index,
-    const std::string& description
-)
+void Foam::ensightGeoFile::beginGeometry()
 {
-    beginPart(index);
-    writeString(description);
-    newline();
-}
-
-
-void Foam::ensightGeoFile::beginCoordinates(const label npoints)
-{
-    writeString(ensightFile::coordinates);
+    // Description line 1
+    writeString("Ensight Geometry File");
     newline();
 
-    write(npoints);
+    // Description line 2
+    writeString("Written by OpenFOAM " + std::to_string(foamVersion::api));
+    newline();
+
+    writeString("node id assign");
+    newline();
+
+    writeString("element id assign");
     newline();
 }
 

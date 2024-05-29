@@ -61,9 +61,7 @@ void Foam::ensightPart::decrAddressing(const label off)
 Foam::ensightPart::ensightPart()
 :
     index_(0),
-    identifier_(-1),
-    name_(),
-    address_()
+    identifier_(-1)
 {}
 
 

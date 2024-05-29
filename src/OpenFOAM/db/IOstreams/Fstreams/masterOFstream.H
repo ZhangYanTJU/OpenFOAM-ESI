@@ -107,7 +107,7 @@ public:
             const label comm,
             const fileName& pathname,
             IOstreamOption streamOpt = IOstreamOption(),
-            IOstreamOption::appendType append = IOstreamOption::NON_APPEND,
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND,
             const bool writeOnProc = true
         );
 
@@ -118,7 +118,7 @@ public:
             const label comm,
             const fileName& pathname,
             IOstreamOption streamOpt = IOstreamOption(),
-            IOstreamOption::appendType append = IOstreamOption::NON_APPEND,
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND,
             const bool writeOnProc = true
         )
         :
@@ -140,7 +140,7 @@ public:
             IOstreamOption::atomicType atomic,
             const fileName& pathname,
             IOstreamOption streamOpt = IOstreamOption(),
-            IOstreamOption::appendType append = IOstreamOption::NON_APPEND,
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND,
             const bool writeOnProc = true
         )
         :
@@ -161,7 +161,7 @@ public:
         (
             const fileName& pathname,
             IOstreamOption streamOpt = IOstreamOption(),
-            IOstreamOption::appendType append = IOstreamOption::NON_APPEND,
+            IOstreamOption::appendType append = IOstreamOption::NO_APPEND,
             const bool writeOnProc = true
         )
         :

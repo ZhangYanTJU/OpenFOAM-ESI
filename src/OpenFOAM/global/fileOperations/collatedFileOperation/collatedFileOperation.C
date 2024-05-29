@@ -190,7 +190,7 @@ bool Foam::fileOperations::collatedFileOperation::appendObject
         // UNCOMPRESSED (binary only)
         IOstreamOption(IOstreamOption::BINARY, streamOpt.version()),
         // Append on sub-ranks
-        (isIOmaster ? IOstreamOption::NON_APPEND : IOstreamOption::APPEND)
+        (isIOmaster ? IOstreamOption::NO_APPEND : IOstreamOption::APPEND_APP)
     );
 
     if (!os.good())
@@ -384,7 +384,7 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
             comm_,
             pathName,
             streamOpt,
-            IOstreamOption::NON_APPEND,
+            IOstreamOption::NO_APPEND,
             writeOnProc
         );
 
@@ -431,7 +431,7 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
                 comm_,
                 pathName,
                 streamOpt,
-                IOstreamOption::NON_APPEND,
+                IOstreamOption::NO_APPEND,
                 writeOnProc
             );
 
