@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,6 @@ License
 
 #include "GeometricField.H"
 #include "Time.H"
-#include "demandDrivenData.H"
 #include "dictionary.H"
 #include "localIOdictionary.H"
 #include "meshState.H"
@@ -77,19 +76,22 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::readFields
 template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricField<Type, PatchField, GeoMesh>::readFields()
 {
-    const localIOdictionary dict
+    dictionary dict
     (
-        IOobject
+        localIOdictionary::readContents
         (
-            this->name(),
-            this->instance(),
-            this->local(),
-            this->db(),
-            IOobjectOption::MUST_READ,
-            IOobjectOption::NO_WRITE,
-            IOobjectOption::NO_REGISTER
-        ),
-        typeName
+            IOobject
+            (
+                this->name(),
+                this->instance(),
+                this->local(),
+                this->db(),
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
+            ),
+            typeName
+        )
     );
 
     this->close();
@@ -111,10 +113,7 @@ bool Foam::GeometricField<Type, PatchField, GeoMesh>::readIfPresent()
     else if
     (
         this->isReadOptional()
-     && this->template typeHeaderOk<GeometricField<Type, PatchField, GeoMesh>>
-        (
-            true
-        )
+     && this->template typeHeaderOk<this_type>(true)  // checkType = true
     )
     {
         readFields();
@@ -143,20 +142,13 @@ bool Foam::GeometricField<Type, PatchField, GeoMesh>::readOldTimeIfPresent()
 
     if
     (
-        field0.template typeHeaderOk<GeometricField<Type, PatchField, GeoMesh>>
-        (
-            true
-        )
+        field0.template typeHeaderOk<this_type>(true)  // checkType = true
     )
     {
         DebugInFunction
             << "Reading old time level for field" << nl << this->info() << endl;
 
-        field0Ptr_ = new GeometricField<Type, PatchField, GeoMesh>
-        (
-            field0,
-            this->mesh()
-        );
+        field0Ptr_ = std::make_unique<this_type>(field0, this->mesh());
 
         // Ensure the old time field oriented flag is set to the parent's state
         // Note: required for backwards compatibility in case of restarting from
@@ -190,8 +182,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, dims, false),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary(), *this, patchFieldType)
 {
     DebugInFunction
@@ -213,8 +203,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, dims, false),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary(), *this, patchFieldTypes, actualPatchTypes)
 {
     DebugInFunction
@@ -236,8 +224,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, value, dims, false),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary(), *this, patchFieldType)
 {
     DebugInFunction
@@ -262,8 +248,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, value, dims, false),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary(), *this, patchFieldTypes, actualPatchTypes)
 {
     DebugInFunction
@@ -327,8 +311,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, diField),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(this->mesh().boundary(), *this, ptfl)
 {
     DebugInFunction
@@ -348,8 +330,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, std::move(diField)),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(this->mesh().boundary(), *this, ptfl)
 {
     DebugInFunction
@@ -369,8 +349,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, tfield),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(this->mesh().boundary(), *this, ptfl)
 {
     DebugInFunction
@@ -389,8 +367,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(diField),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(this->mesh().boundary(), *this, ptfl)
 {
     DebugInFunction
@@ -409,8 +385,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(std::move(diField)),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(this->mesh().boundary(), *this, ptfl)
 {
     DebugInFunction
@@ -432,8 +406,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, dims, iField),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary(), *this, patchFieldType)
 {
     DebugInFunction
@@ -455,8 +427,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, dims, std::move(iField)),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary(), *this, patchFieldType)
 {
     DebugInFunction
@@ -478,8 +448,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, dims, iField),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary(), *this, ptfl)
 {
     DebugInFunction
@@ -501,8 +469,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, dims, std::move(iField)),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary(), *this, ptfl)
 {
     DebugInFunction
@@ -524,8 +490,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, dims, tfield),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary(), *this, ptfl)
 {
     DebugInFunction
@@ -545,8 +509,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, dimless, false),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary())
 {
     DebugInFunction
@@ -584,8 +546,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, mesh, dimless, false),
     timeIndex_(this->time().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary())
 {
     readFields(dict);
@@ -603,8 +563,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(gf),
     timeIndex_(gf.timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(*this, gf.boundaryField_)
 {
     DebugInFunction
@@ -612,10 +570,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 
     if (gf.field0Ptr_)
     {
-        field0Ptr_ = new GeometricField<Type, PatchField, GeoMesh>
-        (
-            *gf.field0Ptr_
-        );
+        field0Ptr_ = std::make_unique<this_type>(*gf.field0Ptr_);
     }
 
     this->writeOpt(IOobjectOption::NO_WRITE);
@@ -630,8 +585,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(tgf.constCast(), tgf.movable()),
     timeIndex_(tgf().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(*this, tgf().boundaryField_)
 {
     DebugInFunction
@@ -652,8 +605,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, gf),
     timeIndex_(gf.timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(*this, gf.boundaryField_)
 {
     DebugInFunction
@@ -662,7 +613,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 
     if (!readIfPresent() && gf.field0Ptr_)
     {
-        field0Ptr_ = new GeometricField<Type, PatchField, GeoMesh>
+        field0Ptr_ = std::make_unique<this_type>
         (
             io.name() + "_0",
             *gf.field0Ptr_
@@ -680,8 +631,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, tgf.constCast(), tgf.movable()),
     timeIndex_(tgf().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(*this, tgf().boundaryField_)
 {
     DebugInFunction
@@ -703,8 +652,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(newName, gf),
     timeIndex_(gf.timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(*this, gf.boundaryField_)
 {
     DebugInFunction
@@ -713,7 +660,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 
     if (!readIfPresent() && gf.field0Ptr_)
     {
-        field0Ptr_ = new GeometricField<Type, PatchField, GeoMesh>
+        field0Ptr_ = std::make_unique<this_type>
         (
             newName + "_0",
             *gf.field0Ptr_
@@ -731,8 +678,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(newName, tgf.constCast(), tgf.movable()),
     timeIndex_(tgf().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(*this, tgf().boundaryField_)
 {
     DebugInFunction
@@ -753,8 +698,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, gf),
     timeIndex_(gf.timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(this->mesh().boundary(), *this, patchFieldType)
 {
     DebugInFunction
@@ -765,7 +708,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 
     if (!readIfPresent() && gf.field0Ptr_)
     {
-        field0Ptr_ = new GeometricField<Type, PatchField, GeoMesh>
+        field0Ptr_ = std::make_unique<this_type>
         (
             io.name() + "_0",
             *gf.field0Ptr_
@@ -785,8 +728,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, gf),
     timeIndex_(gf.timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_
     (
         this->mesh().boundary(),
@@ -803,7 +744,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 
     if (!readIfPresent() && gf.field0Ptr_)
     {
-        field0Ptr_ = new GeometricField<Type, PatchField, GeoMesh>
+        field0Ptr_ = std::make_unique<this_type>
         (
             io.name() + "_0",
             *gf.field0Ptr_
@@ -823,8 +764,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, gf),
     timeIndex_(gf.timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_(*this, gf.boundaryField_, patchIDs, patchFieldType)
 {
     DebugInFunction
@@ -834,7 +773,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 
     if (!readIfPresent() && gf.field0Ptr_)
     {
-        field0Ptr_ = new GeometricField<Type, PatchField, GeoMesh>
+        field0Ptr_ = std::make_unique<this_type>
         (
             io.name() + "_0",
             *gf.field0Ptr_
@@ -854,8 +793,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 :
     Internal(io, tgf.constCast(), tgf.movable()),
     timeIndex_(tgf().timeIndex()),
-    field0Ptr_(nullptr),
-    fieldPrevIterPtr_(nullptr),
     boundaryField_
     (
         this->mesh().boundary(),
@@ -897,13 +834,8 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::~GeometricField()
     }
     */
 
-    deleteDemandDrivenData(field0Ptr_);
-    deleteDemandDrivenData(fieldPrevIterPtr_);
-
     // FUTURE: register cache field info
     // // this->db().cacheTemporaryObject(*this);
-
-    clearOldTimes();
 }
 
 
@@ -1014,7 +946,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::oldTime() const
 {
     if (!field0Ptr_)
     {
-        field0Ptr_ = new GeometricField<Type, PatchField, GeoMesh>
+        field0Ptr_ = std::make_unique<this_type>
         (
             IOobject
             (
@@ -1068,7 +1000,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::storePrevIter() const
             << "Allocating previous iteration field" << nl
             << this->info() << endl;
 
-        fieldPrevIterPtr_ = new GeometricField<Type, PatchField, GeoMesh>
+        fieldPrevIterPtr_ = std::make_unique<this_type>
         (
             this->name() + "PrevIter",
             *this
@@ -1101,8 +1033,8 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::prevIter() const
 template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricField<Type, PatchField, GeoMesh>::clearOldTimes()
 {
-    deleteDemandDrivenData(field0Ptr_);
-    deleteDemandDrivenData(fieldPrevIterPtr_);
+    field0Ptr_.reset(nullptr);
+    fieldPrevIterPtr_.reset(nullptr);
 }
 
 
@@ -1110,8 +1042,11 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricField<Type, PatchField, GeoMesh>::
 correctBoundaryConditions()
 {
-    this->setUpToDate();
-    storeOldTimes();
+    // updateAccessTime
+    {
+        this->setUpToDate();
+        storeOldTimes();
+    }
     boundaryField_.evaluate();
 }
 
@@ -1120,8 +1055,11 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricField<Type, PatchField, GeoMesh>::
 correctLocalBoundaryConditions()
 {
-    this->setUpToDate();
-    storeOldTimes();
+    // updateAccessTime
+    {
+        this->setUpToDate();
+        storeOldTimes();
+    }
     boundaryField_.evaluateLocal();
 }
 
@@ -1208,7 +1146,11 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 bool Foam::GeometricField<Type, PatchField, GeoMesh>::
 writeData(Ostream& os) const
 {
-    os << *this;
+    this->internalField().writeData(os, "internalField");
+    os  << nl;
+    this->boundaryField().writeEntry("boundaryField", os);
+
+    os.check(FUNCTION_NAME);
     return os.good();
 }
 
@@ -1540,14 +1482,10 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const GeometricField<Type, PatchField, GeoMesh>& gf
+    const GeometricField<Type, PatchField, GeoMesh>& fld
 )
 {
-    gf.internalField().writeData(os, "internalField");
-    os  << nl;
-    gf.boundaryField().writeEntry("boundaryField", os);
-
-    os.check(FUNCTION_NAME);
+    fld.writeData(os);
     return os;
 }
 
@@ -1556,11 +1494,12 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tgf
+    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tfld
 )
 {
-    os << tgf();
-    tgf.clear();
+    tfld().writeData(os);
+    tfld.clear();
+
     return os;
 }
 

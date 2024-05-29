@@ -115,7 +115,11 @@ private:
         //- Assert that non-zero field size == mesh size
         void checkFieldSize() const;
 
+        //- Read from file if it is present. Checks the readOption flag
         void readIfPresent(const word& fieldDictEntry = "value");
+
+        //- Read the field - create the field dictionary on-the-fly
+        void readField(const word& fieldDictEntry = "value");
 
         //- Implementation for 'New' with specified registerObject preference.
         //  For LEGACY_REGISTER, registration is determined by
@@ -580,8 +584,8 @@ public:
         bool writeData(Ostream& os, const word& fieldDictEntry) const;
 
         //- The writeData function (required by regIOobject),
-        //- call writeData with dictionary entry name = "value"
-        bool writeData(Ostream& os) const;
+        //- calls writeData with dictionary entry name = "value"
+        bool writeData(Ostream& os) const { return writeData(os, "value"); }
 
 
     // Member Operators
@@ -613,12 +617,14 @@ public:
 
     // Ostream Operators
 
+        //- Calls DimensionedField::writeData()
         friend Ostream& operator<< <Type, GeoMesh>
         (
             Ostream& os,
             const DimensionedField<Type, GeoMesh>& df
         );
 
+        //- Calls DimensionedField::writeData()
         friend Ostream& operator<< <Type, GeoMesh>
         (
             Ostream& os,

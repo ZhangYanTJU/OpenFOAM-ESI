@@ -28,6 +28,7 @@ License
 
 #include "DimensionedField.H"
 #include "IOstreams.H"
+#include "localIOdictionary.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -59,14 +60,48 @@ void Foam::DimensionedField<Type, GeoMesh>::readField
 
 
 template<class Type, class GeoMesh>
+void Foam::DimensionedField<Type, GeoMesh>::readField
+(
+    const word& fieldDictEntry
+)
+{
+    dictionary dict
+    (
+        localIOdictionary::readContents
+        (
+            IOobject
+            (
+                this->name(),
+                this->instance(),
+                this->local(),
+                this->db(),
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
+            ),
+            typeName
+        )
+    );
+
+    this->close();
+
+    readField(dict, fieldDictEntry);
+}
+
+
+template<class Type, class GeoMesh>
 void Foam::DimensionedField<Type, GeoMesh>::readIfPresent
 (
     const word& fieldDictEntry
 )
 {
-    if (this->isReadRequired() || (this->isReadOptional() && this->headerOk()))
+    if
+    (
+        this->isReadRequired()
+     || (this->isReadOptional() && this->headerOk())
+    )
     {
-        readField(dictionary(readStream(typeName)), fieldDictEntry);
+        readField(fieldDictEntry);
     }
 }
 
@@ -87,7 +122,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
     dimensions_(dimless),
     oriented_()
 {
-    readField(dictionary(readStream(typeName)), fieldDictEntry);
+    readField(fieldDictEntry);
 }
 
 
@@ -134,23 +169,16 @@ bool Foam::DimensionedField<Type, GeoMesh>::writeData
 }
 
 
-template<class Type, class GeoMesh>
-bool Foam::DimensionedField<Type, GeoMesh>::writeData(Ostream& os) const
-{
-    return writeData(os, "value");
-}
-
-
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 template<class Type, class GeoMesh>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const DimensionedField<Type, GeoMesh>& df
+    const DimensionedField<Type, GeoMesh>& fld
 )
 {
-    df.writeData(os);
+    fld.writeData(os);
 
     return os;
 }
@@ -160,11 +188,11 @@ template<class Type, class GeoMesh>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const tmp<DimensionedField<Type, GeoMesh>>& tdf
+    const tmp<DimensionedField<Type, GeoMesh>>& tfld
 )
 {
-    tdf().writeData(os);
-    tdf.clear();
+    tfld().writeData(os);
+    tfld.clear();
 
     return os;
 }

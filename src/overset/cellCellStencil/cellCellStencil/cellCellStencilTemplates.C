@@ -185,29 +185,26 @@ void Foam::cellCellStencil::correctBoundaryConditions
     // Version of GeoField::correctBoundaryConditions that exclude evaluation
     // of oversetFvPatchFields
 
-    typename GeoField::Boundary& bfld = psi.boundaryFieldRef();
+    auto& bfld = psi.boundaryFieldRef();
 
-    const label nReq = Pstream::nRequests();
+    const label startOfRequests = UPstream::nRequests();
 
-    forAll(bfld, patchi)
+    for (auto& pfld : bfld)
     {
-        if (!isA<SuppressBC>(bfld[patchi]))
+        if (!isA<SuppressBC>(pfld))
         {
-            bfld[patchi].initEvaluate(Pstream::commsTypes::nonBlocking);
+            pfld.initEvaluate(UPstream::commsTypes::nonBlocking);
         }
     }
 
-    // Block for any outstanding requests
-    if (Pstream::parRun())
-    {
-        Pstream::waitRequests(nReq);
-    }
+    // Wait for outstanding requests (non-blocking)
+    UPstream::waitRequests(startOfRequests);
 
-    forAll(bfld, patchi)
+    for (auto& pfld : bfld)
     {
-        if (!isA<SuppressBC>(bfld[patchi]))
+        if (!isA<SuppressBC>(pfld))
         {
-            bfld[patchi].evaluate(Pstream::commsTypes::nonBlocking);
+            pfld.evaluate(UPstream::commsTypes::nonBlocking);
         }
     }
 }
