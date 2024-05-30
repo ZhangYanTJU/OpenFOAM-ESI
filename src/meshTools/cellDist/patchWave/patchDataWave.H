@@ -115,8 +115,8 @@ private:
         void setChangedFaces
         (
             const labelHashSet& patchIDs,
-            labelList&,
-            List<TransferType>&
+            DynamicList<label>& changedFaces,
+            DynamicList<TransferType>& faceDist
         ) const;
 
         //- Copy MeshWave values into *this

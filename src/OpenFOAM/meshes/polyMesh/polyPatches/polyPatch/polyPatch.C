@@ -350,13 +350,15 @@ Foam::tmp<Foam::vectorField> Foam::polyPatch::faceCellCentres() const
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::polyPatch::areaFraction() const
+Foam::tmp<Foam::scalarField> Foam::polyPatch::areaFraction
+(
+    const pointField& points
+) const
 {
     auto tfraction = tmp<scalarField>::New(size());
     auto& fraction = tfraction.ref();
 
     const vectorField::subField faceAreas = this->faceAreas();
-    const pointField& points = this->points();
 
     forAll(*this, facei)
     {
@@ -366,6 +368,18 @@ Foam::tmp<Foam::scalarField> Foam::polyPatch::areaFraction() const
     }
 
     return tfraction;
+}
+
+
+const Foam::tmp<Foam::scalarField>& Foam::polyPatch::areaFraction() const
+{
+    return areaFraction_;
+}
+
+
+void Foam::polyPatch::areaFraction(const tmp<scalarField>& fraction)
+{
+    areaFraction_ = fraction;
 }
 
 
