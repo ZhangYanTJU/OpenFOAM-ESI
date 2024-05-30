@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,54 +25,22 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "radial.H"
+#include "Lookup.H"
+#include "fieldTypes.H"
+#include "PatchFunction1.H"
 #include "addToRunTimeSelectionTable.H"
+#include "UniformValueField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace extrudeModels
-{
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-defineTypeNameAndDebug(radial, 0);
-
-addToRunTimeSelectionTable(extrudeModel, radial, dictionary);
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-radial::radial(const dictionary& dict)
-:
-    extrudeModel(typeName, dict),
-    R_(Function1<scalar>::New("R", coeffDict_))
-{}
-
-
-// * * * * * * * * * * * * * * * * Operators * * * * * * * * * * * * * * * * //
-
-point radial::operator()
-(
-    const point& surfacePoint,
-    const vector& surfaceNormal,
-    const label layer
-) const
-{
-    // radius of the surface
-    scalar rs = mag(surfacePoint);
-    vector rsHat = surfacePoint/rs;
-
-    scalar r = R_->value(layer);
-
-    return r*rsHat;
+    makeFunction1Type(Lookup, scalar);
+    makeFunction1Type(Lookup, vector);
+    makeFunction1Type(Lookup, sphericalTensor);
+    makeFunction1Type(Lookup, symmTensor);
+    makeFunction1Type(Lookup, tensor);
 }
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace extrudeModels
-} // End namespace Foam
 
 // ************************************************************************* //
