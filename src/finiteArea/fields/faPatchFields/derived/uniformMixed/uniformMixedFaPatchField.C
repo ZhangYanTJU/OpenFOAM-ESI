@@ -74,7 +74,8 @@ Foam::uniformMixedFaPatchField<Type>::uniformMixedFaPatchField
         (
             /* p.patch(), */
             "uniformValue",
-            dict
+            dict,
+            &iF.db()
         )
     ),
     refGradFunc_
@@ -83,7 +84,8 @@ Foam::uniformMixedFaPatchField<Type>::uniformMixedFaPatchField
         (
             // p.patch(),
             "uniformGradient",
-            dict
+            dict,
+            &iF.db()
         )
     ),
     valueFractionFunc_(nullptr)
@@ -101,7 +103,8 @@ Foam::uniformMixedFaPatchField<Type>::uniformMixedFaPatchField
                 (
                     /* p.patch(), */
                     "uniformValueFraction",
-                    dict
+                    dict,
+                    &iF.db()
                 )
             );
         }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,54 +25,65 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "radial.H"
-#include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-namespace extrudeModels
-{
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-defineTypeNameAndDebug(radial, 0);
-
-addToRunTimeSelectionTable(extrudeModel, radial, dictionary);
-
+#include "uniformDimensionedFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-radial::radial(const dictionary& dict)
+template<class Type>
+Foam::Function1Types::Lookup<Type>::Lookup
+(
+    const word& entryName,
+    const dictionary& dict,
+    const objectRegistry* obrPtr
+)
 :
-    extrudeModel(typeName, dict),
-    R_(Function1<scalar>::New("R", coeffDict_))
+    lookupBase(dict),
+    Function1<Type>(entryName, dict, obrPtr)
 {}
 
 
-// * * * * * * * * * * * * * * * * Operators * * * * * * * * * * * * * * * * //
+template<class Type>
+Foam::Function1Types::Lookup<Type>::Lookup(const Lookup<Type>& rhs)
+:
+    lookupBase(rhs),
+    Function1<Type>(rhs)
+{}
 
-point radial::operator()
-(
-    const point& surfacePoint,
-    const vector& surfaceNormal,
-    const label layer
-) const
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+inline Type Foam::Function1Types::Lookup<Type>::value(const scalar t) const
 {
-    // radius of the surface
-    scalar rs = mag(surfacePoint);
-    vector rsHat = surfacePoint/rs;
+    const objectRegistry& db = function1Base::obr();
+    const auto& obj =
+        db.lookupObject<UniformDimensionedField<Type>>(name_, true);
 
-    scalar r = R_->value(layer);
-
-    return r*rsHat;
+    return obj.value();
 }
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+template<class Type>
+inline Type Foam::Function1Types::Lookup<Type>::integrate
+(
+    const scalar t1,
+    const scalar t2
+) const
+{
+    return (t2-t1)*value(0.5*(t1+t2));
+}
 
-} // End namespace extrudeModels
-} // End namespace Foam
+
+template<class Type>
+void Foam::Function1Types::Lookup<Type>::writeData(Ostream& os) const
+{
+    Function1<Type>::writeData(os);
+    os.endEntry();
+
+    os.beginBlock(word(this->name() + "Coeffs"));
+    writeEntries(os);
+    os.endBlock();
+}
+
 
 // ************************************************************************* //

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,56 +23,75 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::lookupBase
+
+Description
+    Base level of Lookup and LookupField classes.
+
+SourceFiles
+    lookupBase.C
+
 \*---------------------------------------------------------------------------*/
 
-#include "radial.H"
-#include "addToRunTimeSelectionTable.H"
+#ifndef lookupBase_H
+#define lookupBase_H
+
+#include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace extrudeModels
+
+/*---------------------------------------------------------------------------*\
+                         Class lookupBase Declaration
+\*---------------------------------------------------------------------------*/
+
+class lookupBase
 {
+protected:
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+    // Protected Data
 
-defineTypeNameAndDebug(radial, 0);
-
-addToRunTimeSelectionTable(extrudeModel, radial, dictionary);
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-radial::radial(const dictionary& dict)
-:
-    extrudeModel(typeName, dict),
-    R_(Function1<scalar>::New("R", coeffDict_))
-{}
+        //- Key of object
+        word name_;
 
 
-// * * * * * * * * * * * * * * * * Operators * * * * * * * * * * * * * * * * //
+public:
 
-point radial::operator()
-(
-    const point& surfacePoint,
-    const vector& surfaceNormal,
-    const label layer
-) const
-{
-    // radius of the surface
-    scalar rs = mag(surfacePoint);
-    vector rsHat = surfacePoint/rs;
+    // Generated Methods
 
-    scalar r = R_->value(layer);
+        //- No copy assignment
+        void operator=(const lookupBase&) = delete;
 
-    return r*rsHat;
-}
+
+    // Constructors
+
+        //- Construct from dictionary
+        explicit lookupBase(const dictionary& dict);
+
+        //- Copy construct
+        explicit lookupBase(const lookupBase& rhs);
+
+
+    //- Destructor
+    virtual ~lookupBase() = default;
+
+
+    // Member Functions
+
+        //- Write coefficient entries in dictionary format
+        virtual void writeEntries(Ostream& os) const;
+};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace extrudeModels
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
 
 // ************************************************************************* //
