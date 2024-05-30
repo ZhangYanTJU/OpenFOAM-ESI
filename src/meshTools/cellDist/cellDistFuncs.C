@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -235,6 +235,8 @@ void Foam::cellDistFuncs::correctBoundaryFaceCells
     Map<label>& nearestFace
 ) const
 {
+    const auto& pbm = mesh().boundaryMesh();
+
     // Size neighbours array for maximum possible (= size of largest patch)
     DynamicList<label> neighbours(maxPatchSize(patchIDs));
 
@@ -242,15 +244,22 @@ void Foam::cellDistFuncs::correctBoundaryFaceCells
     const vectorField& cellCentres = mesh().cellCentres();
     const labelList& faceOwner = mesh().faceOwner();
 
-    forAll(mesh().boundaryMesh(), patchi)
+    forAll(pbm, patchi)
     {
         if (patchIDs.found(patchi))
         {
-            const polyPatch& patch = mesh().boundaryMesh()[patchi];
+            const polyPatch& patch = pbm[patchi];
+            const auto& areaFraction = patch.areaFraction();
 
             // Check cells with face on wall
             forAll(patch, patchFacei)
             {
+                if (areaFraction && (areaFraction()[patchFacei] <= 0.5))
+                {
+                    // is mostly coupled
+                    continue;
+                }
+
                 getPointNeighbours(patch, patchFacei, neighbours);
 
                 label celli = faceOwner[patch.start() + patchFacei];
@@ -283,20 +292,42 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
 {
     // Correct all (non-visited) cells with point on wall
 
+    const auto& pbm = mesh().boundaryMesh();
     const vectorField& cellCentres = mesh().cellCentres();
 
-    forAll(mesh().boundaryMesh(), patchi)
+    forAll(pbm, patchi)
     {
         if (patchIDs.found(patchi))
         {
-            const polyPatch& patch = mesh().boundaryMesh()[patchi];
-
+            const polyPatch& patch = pbm[patchi];
+            const auto& localFaces = patch.localFaces();
             const labelList& meshPoints = patch.meshPoints();
             const labelListList& pointFaces = patch.pointFaces();
 
-            forAll(meshPoints, meshPointi)
+            bitSet isWallPoint(meshPoints.size(), true);
             {
-                const label vertI = meshPoints[meshPointi];
+                const auto& areaFraction = patch.areaFraction();
+
+                // Check cells with face on wall
+                forAll(patch, patchFacei)
+                {
+                    if (!areaFraction || (areaFraction()[patchFacei] <= 0.5))
+                    {
+                        // face mostly coupled
+                        isWallPoint.unset(localFaces[patchFacei]);
+                    }
+                }
+            }
+
+
+            forAll(meshPoints, patchPointi)
+            {
+                const label vertI = meshPoints[patchPointi];
+
+                if (!isWallPoint[patchPointi])
+                {
+                    continue;
+                }
 
                 const labelList& neighbours = mesh().pointCells(vertI);
 
@@ -304,7 +335,7 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
                 {
                     if (!nearestFace.found(celli))
                     {
-                        const labelList& wallFaces = pointFaces[meshPointi];
+                        const labelList& wallFaces = pointFaces[patchPointi];
 
                         label minFacei = -1;
 

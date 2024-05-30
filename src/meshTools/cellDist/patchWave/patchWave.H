@@ -89,8 +89,8 @@ class patchWave
         void setChangedFaces
         (
             const labelHashSet& patchIDs,
-            labelList& changedFaces,
-            List<wallPoint>& changedInfo
+            DynamicList<label>& changedFaces,
+            DynamicList<wallPoint>& faceDist
         ) const;
 
         //- Copy MeshWave cell values. Return number of illegal/unset
