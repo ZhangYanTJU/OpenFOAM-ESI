@@ -49,6 +49,7 @@ options:
   -output=DIR       Output directory (default: ".")
   -prefix=NAME      Prefix directory within tar-file (default: auto)
   -pkg-modules      Only package submodules - exclude OpenFOAM
+  -pkg-plugins      Only package plugins - exclude OpenFOAM
   -no-modules       Exclude submodules
   -no-patch         Ignore '_patch' number for output tar-file
   -no-prefix        Do not prefix subdirectory
@@ -93,7 +94,7 @@ die()
 outputDir="."
 versionSeparator='_'
 withPatchNum=true
-unset compress packageApi withSource withModules prefixDir tarName
+unset compress packageApi withSource withModules withPlugins prefixDir tarName
 unset gitbase
 
 # Cleanup tarName to remove trailing '.tar', detect compression etc
@@ -148,10 +149,17 @@ do
         ;;
     -pkg-modules)
         withModules=true
+        withPlugins=false
         withSource=false
         ;;
-    -no-modules)
+    -pkg-plugins)
         withModules=false
+        withPlugins=true
+        withSource=false
+        ;;
+    -no-modules | -no-plugins)
+        withModules=false
+        withPlugins=false
         withSource=true
         ;;
     -no-patch)
@@ -293,7 +301,12 @@ then
     prefixDir="OpenFOAM-v${packageApi}"
     if [ "$withSource" = false ]
     then
-        prefixDir="OpenFOAM-modules-v${packageApi}"
+        if [ "$withPlugins" = true ]
+        then
+            prefixDir="OpenFOAM-plugins-v${packageApi}"
+        else
+            prefixDir="OpenFOAM-modules-v${packageApi}"
+        fi
     fi
 elif [ "$prefixDir" = false ]
 then
@@ -322,7 +335,12 @@ case "$tarName" in
     tarName="OpenFOAM-v${packageApi}"
     if [ "$withSource" = false ]
     then
-        tarName="OpenFOAM-modules-v${packageApi}"
+        if [ "$withPlugins" = true ]
+        then
+            tarName="OpenFOAM-plugins-v${packageApi}"
+        else
+            tarName="OpenFOAM-modules-v${packageApi}"
+        fi
     fi
 
     if [ "$withPatchNum" = false ]
@@ -363,6 +381,7 @@ echo
 echo 'buildInfo="${prefixDir}${prefixDir:+@}META-INFO@build-info"'
 echo 'manifest0="${prefixDir}${prefixDir:+@}META-INFO@manifest.txt"'
 echo 'manifest1="${prefixDir}${prefixDir:+@}META-INFO@modules-manifest.txt"'
+echo 'manifest2="${prefixDir}${prefixDir:+@}META-INFO@plugins-manifest.txt"'
 echo '#--------'
 
 #------------------------------------------------------------------------------
@@ -371,6 +390,12 @@ if [ "$withModules" = false ]
 then
     echo '# No modules'
     echo 'unset manifest1'
+fi
+
+if [ "$withPlugins" = false ]
+then
+    echo '# No plugins'
+    echo 'unset manifest2'
 fi
 
 if [ "$withSource" = false ]
@@ -489,6 +514,30 @@ then
     echo '{ echo; echo "# End"; } >> "$outputDir/$manifest1"'
 fi
 
+if [ "$withPlugins" != false ]
+then
+    echo
+    echo '# Plugins'
+    echo '{'
+    echo '  echo "# OpenFOAM plugins"'
+    echo '  echo api="$api"'
+    echo '  echo patch="$patch"'
+    echo '  echo head="$head"'
+    echo '} > "$outputDir/$manifest2"'
+
+    # HACK
+    echo 'oldManifest1="$manifest1"'
+    echo 'manifest1="$manifest2"'
+
+    packModule plugins
+
+    # HACK RESTORE
+    echo 'manifest1="$oldManifest1"'
+
+    echo
+    echo '{ echo; echo "# End"; } >> "$outputDir/$manifest2"'
+fi
+
 #------------------------------------------------------------------------------
 # Add in build-info and manifest files
 # Decode '@' in the names as '/' directory separator
@@ -497,7 +546,7 @@ echo
 echo "echo 'Adding build-info and manifest files'"
 echo 'if pushd "$outputDir"; then'
 echo "tar --owner=root --group=root --append --transform='s|@|/|g' -v -f \"\$tarName.tar\" \"\$buildInfo\" \"\$manifest0\" \"\$manifest1\""
-echo 'rm -f "$buildInfo" "$manifest0" "$manifest1"'
+echo 'rm -f "$buildInfo" "$manifest0" "$manifest1" "$manifest2"'
 echo 'popd; fi'
 
 echo
