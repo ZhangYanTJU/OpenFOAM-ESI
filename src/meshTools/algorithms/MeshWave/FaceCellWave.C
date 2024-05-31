@@ -822,7 +822,7 @@ void Foam::FaceCellWave<Type, TrackingData>::handleAMICyclicPatches()
 
             // Merge into global storage
 
-            const auto& areaFraction = patch.areaFraction();
+            const auto areaFraction(patch.areaFraction());
 
             forAll(receiveInfo, i)
             {

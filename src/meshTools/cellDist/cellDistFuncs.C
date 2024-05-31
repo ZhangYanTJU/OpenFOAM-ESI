@@ -249,7 +249,7 @@ void Foam::cellDistFuncs::correctBoundaryFaceCells
         if (patchIDs.found(patchi))
         {
             const polyPatch& patch = pbm[patchi];
-            const auto& areaFraction = patch.areaFraction();
+            const auto areaFraction(patch.areaFraction());
 
             // Check cells with face on wall
             forAll(patch, patchFacei)
@@ -306,7 +306,7 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
 
             bitSet isWallPoint(meshPoints.size(), true);
             {
-                const auto& areaFraction = patch.areaFraction();
+                const auto areaFraction(patch.areaFraction());
 
                 // Check cells with face on wall
                 forAll(patch, patchFacei)

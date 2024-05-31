@@ -317,16 +317,10 @@ void Foam::activePressureForceBaffleVelocityFvPatchVectorField::updateCoeffs()
             Info<< "Open fraction = " << openFraction_ << endl;
         }
 
-        scalar areaFraction = 0.0;
-
-        if (opening_)
-        {
-            areaFraction = openFraction_;
-        }
-        else
-        {
-            areaFraction = 1 - openFraction_;
-        }
+        const scalar areaFraction =
+        (
+            opening_ ? openFraction_ : (1 - openFraction_)
+        );
 
         if (patch().boundaryMesh().mesh().moving())
         {
@@ -352,40 +346,19 @@ void Foam::activePressureForceBaffleVelocityFvPatchVectorField::updateCoeffs()
         }
         const_cast<scalarField&>(patch().magSf()) = mag(patch().Sf());
         // Cache fraction
-        const_cast<polyPatch&>(patch().patch()).areaFraction
-        (
-            tmp<scalarField>::New
-            (
-                patch().patch().size(),
-                (1-areaFraction)
-            )
-        );
+        const_cast<polyPatch&>(patch().patch()).areaFraction(1-areaFraction);
 
 
         // Update owner side of cyclic
         const_cast<vectorField&>(cyclicPatch.Sf()) = areaFraction*initCyclicSf_;
         const_cast<scalarField&>(cyclicPatch.magSf()) = mag(cyclicPatch.Sf());
-        const_cast<polyPatch&>(cyclicPatch.patch()).areaFraction
-        (
-            tmp<scalarField>::New
-            (
-                cyclicPatch.patch().size(),
-                areaFraction
-            )
-        );
+        const_cast<polyPatch&>(cyclicPatch.patch()).areaFraction(areaFraction);
 
 
         // Update neighbour side of cyclic
         const_cast<vectorField&>(nbrPatch.Sf()) = areaFraction*nbrCyclicSf_;
         const_cast<scalarField&>(nbrPatch.magSf()) = mag(nbrPatch.Sf());
-        const_cast<polyPatch&>(cyclicPatch.patch()).areaFraction
-        (
-            tmp<scalarField>::New
-            (
-                nbrPatch.patch().size(),
-                areaFraction
-            )
-        );
+        const_cast<polyPatch&>(nbrPatch.patch()).areaFraction(areaFraction);
 
         curTimeIndex_ = this->db().time().timeIndex();
     }

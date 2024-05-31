@@ -154,7 +154,7 @@ void Foam::wallDistAddressing::correct(volScalarField& y)
     for (const label patchi : patchIDs_)
     {
         const auto& fc = C.boundaryField()[patchi];
-        const auto& areaFraction = fc.patch().patch().areaFraction();
+        const auto areaFraction(fc.patch().patch().areaFraction());
 
         forAll(fc, patchFacei)
         {

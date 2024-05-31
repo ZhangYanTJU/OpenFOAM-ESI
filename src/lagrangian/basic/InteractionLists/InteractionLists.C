@@ -299,7 +299,7 @@ void Foam::InteractionLists<ParticleType>::buildInteractionLists()
     {
         if (isA<wallPolyPatch>(patch))
         {
-            const auto& areaFraction = patch.areaFraction();
+            const auto areaFraction(patch.areaFraction());
 
             forAll(patch, facei)
             {

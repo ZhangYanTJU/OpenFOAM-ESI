@@ -558,12 +558,12 @@ void Foam::cyclicAMIPolyPatch::movePoints
     polyPatch::movePoints
      -> primitivePatch::movePoints
         -> primitivePatch::clearGeom:
-    deleteDemandDrivenData(localPointsPtr_);
-    deleteDemandDrivenData(faceCentresPtr_);
-    deleteDemandDrivenData(faceAreasPtr_);
-    deleteDemandDrivenData(magFaceAreasPtr_);
-    deleteDemandDrivenData(faceNormalsPtr_);
-    deleteDemandDrivenData(pointNormalsPtr_);
+    localPointsPtr_.reset(nullptr);
+    faceCentresPtr_.reset(nullptr);
+    faceAreasPtr_.reset(nullptr);
+    magFaceAreasPtr_.reset(nullptr);
+    faceNormalsPtr_.reset(nullptr);
+    pointNormalsPtr_.reset(nullptr);
 */
 }
 
