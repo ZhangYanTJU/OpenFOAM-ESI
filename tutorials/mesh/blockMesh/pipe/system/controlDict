@@ -70,11 +70,12 @@ functions
             (
                 "banana",
                 mesh().time().constant(),
-                mesh()
+                mesh().thisDb()
             );
 
-            auto* ptr = const_cast<objectRegistry&>(io.db()).
-                    findObject<uniformDimensionedScalarField>(io.name());
+            auto* ptr =
+                io.db().getObjectPtr<uniformDimensionedScalarField>(io.name());
+
             if (!ptr)
             {
                 Info<< "Registering relaxation factor " << io.name() << endl;
@@ -95,7 +96,7 @@ functions
             (
                 "banana",
                 mesh().time().constant(),
-                mesh()
+                mesh().thisDb()
             );
 
             auto& val =

@@ -100,8 +100,8 @@ public:
         //- Construct as copy
         UniformDimensionedField(const UniformDimensionedField<Type>&);
 
-        //- Construct from Istream
-        UniformDimensionedField(const IOobject& io);
+        //- Construct from IOobject. Either reads or sets dimensionless zero
+        explicit UniformDimensionedField(const IOobject& io);
 
 
     //- Destructor
@@ -129,7 +129,7 @@ public:
         }
 
         //- Return complete path + object name if the file exists
-        //  either in the case/processor or case otherwise null
+        //- either in the case/processor or case otherwise null
         virtual fileName filePath() const
         {
             return globalFilePath(type());

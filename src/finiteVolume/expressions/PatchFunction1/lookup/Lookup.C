@@ -53,7 +53,7 @@ Foam::Function1Types::Lookup<Type>::Lookup(const Lookup<Type>& rhs)
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-inline Type Foam::Function1Types::Lookup<Type>::value(const scalar t) const
+Type Foam::Function1Types::Lookup<Type>::value(const scalar t) const
 {
     const objectRegistry& db = function1Base::obr();
     const auto& obj =
@@ -64,7 +64,7 @@ inline Type Foam::Function1Types::Lookup<Type>::value(const scalar t) const
 
 
 template<class Type>
-inline Type Foam::Function1Types::Lookup<Type>::integrate
+Type Foam::Function1Types::Lookup<Type>::integrate
 (
     const scalar t1,
     const scalar t2
