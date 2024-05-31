@@ -130,9 +130,16 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-            #include "UEqn.H"
+
             #include "YEqns.H"
             #include "TEqn.H"
+
+            if (pimple.frozenFlow())
+            {
+                continue;
+            }
+
+            #include "UEqn.H"
 
             // --- Pressure corrector loop
             while (pimple.correct())
