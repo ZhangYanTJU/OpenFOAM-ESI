@@ -7,6 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
     Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2024 Haakan Nilsson
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,6 +72,9 @@ Usage
     The any or all of the three options may be specified and are processed
     in the above order.
 
+    -cylToCart (originVector axisVector directionVector)
+        Tranform cylindrical coordinates to cartesian coordinates
+
     With -rotateFields (in combination with -rotate/yawPitchRoll/rollPitchYaw)
     it will also read & transform vector & tensor fields.
 
@@ -93,6 +97,7 @@ Note
 #include "transformGeometricField.H"
 #include "axisAngleRotation.H"
 #include "EulerCoordinateRotation.H"
+#include "cylindricalCS.H"
 
 using namespace Foam;
 using namespace Foam::coordinateRotations;
@@ -326,6 +331,13 @@ int main(int argc, char *argv[])
         "Scale by the specified amount - Eg, for uniform [mm] to [m] scaling "
         "use either '(0.001 0.001 0.001)' or simply '0.001'"
     );
+    argList::addOption
+    (
+        "cylToCart",
+        "(originVec axisVec directionVec)",
+        "Tranform cylindrical coordinates to cartesian coordinates"
+    );
+
 
     // Compatibility with surfaceTransformPoints
     argList::addOptionCompat("scale", {"write-scale", 0});
@@ -348,7 +360,8 @@ int main(int argc, char *argv[])
             "rotate-z",
             "rollPitchYaw",
             "yawPitchRoll",
-            "scale"
+            "scale",
+            "cylToCart"
         });
 
         if (!args.count(operationNames))
@@ -551,6 +564,23 @@ int main(int argc, char *argv[])
 
         // Output scaling
         applyScaling(points, getScalingOpt("scale", args));
+
+        if (args.found("cylToCart"))
+        {
+            vectorField n1n2(args.lookup("cylToCart")());
+            n1n2[1].normalise();
+            n1n2[2].normalise();
+
+            cylindricalCS ccs
+                (
+                    "ccs",
+                    n1n2[0],
+                    n1n2[1],
+                    n1n2[2]
+                );
+
+            points = ccs.globalPosition(points);
+        }
 
         // More precision (for points data)
         IOstream::minPrecision(10);
