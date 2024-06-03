@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef radiation_noScatter_H
-#define radiation_noScatter_H
+#ifndef Foam_radiation_noScatter_H
+#define Foam_radiation_noScatter_H
 
 #include "scatterModel.H"
 

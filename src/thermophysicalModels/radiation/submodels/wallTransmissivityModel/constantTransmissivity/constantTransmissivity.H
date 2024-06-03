@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef radiation_constantTransmissivity_H
-#define radiation_constantTransmissivity_H
+#ifndef Foam_radiation_constantTransmissivity_H
+#define Foam_radiation_constantTransmissivity_H
 
 #include "wallTransmissivityModel.H"
 
@@ -89,8 +89,8 @@ public:
         tmp<scalarField> t
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Return transmissivity on facw

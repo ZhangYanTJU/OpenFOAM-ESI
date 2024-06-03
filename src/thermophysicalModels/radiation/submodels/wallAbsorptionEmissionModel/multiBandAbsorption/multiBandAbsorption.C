@@ -78,8 +78,8 @@ Foam::tmp<Foam::scalarField>
 Foam::radiation::multiBandAbsorption::a
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), aCoeffs_[bandI]);
@@ -100,8 +100,8 @@ Foam::scalar Foam::radiation::multiBandAbsorption::a
 Foam::tmp<Foam::scalarField> Foam::radiation::multiBandAbsorption::e
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), eCoeffs_[bandI]);

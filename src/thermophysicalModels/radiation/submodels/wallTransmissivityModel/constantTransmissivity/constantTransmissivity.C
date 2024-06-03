@@ -66,8 +66,8 @@ Foam::tmp<Foam::scalarField>
 Foam::radiation::constantTransmissivity::t
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), tau_);

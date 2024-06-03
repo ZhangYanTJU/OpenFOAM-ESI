@@ -26,7 +26,6 @@ License
 Class
     Foam::radiation::solidAbsorption
 
-
 Description
     Radiation absorptivity-emissivity model to be used on walls on
     inter-region patches when the solid opaque radiation model is used
@@ -48,8 +47,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef radiation_solidAbsorption_H
-#define radiation_solidAbsorption_H
+#ifndef Foam_radiation_solidAbsorption_H
+#define Foam_radiation_solidAbsorption_H
 
 #include "wallAbsorptionEmissionModel.H"
 #include "fvMesh.H"
@@ -100,8 +99,8 @@ public:
         tmp<scalarField> a
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Return absorptivity on face
@@ -117,8 +116,8 @@ public:
         tmp<scalarField> e
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Return emission coefficient

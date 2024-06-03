@@ -66,8 +66,8 @@ Foam::radiation::constantAbsorption::constantAbsorption
 Foam::tmp<Foam::scalarField> Foam::radiation::constantAbsorption::a
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), a_);
@@ -89,8 +89,8 @@ Foam::scalar Foam::radiation::constantAbsorption::a
 Foam::tmp<Foam::scalarField> Foam::radiation::constantAbsorption::e
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), e_);

@@ -185,8 +185,8 @@ Foam::radiation::boundaryRadiationProperties::emissivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))
@@ -244,8 +244,8 @@ Foam::radiation::boundaryRadiationProperties::absorptivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))
@@ -303,8 +303,8 @@ Foam::radiation::boundaryRadiationProperties::transmissivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))
@@ -399,8 +399,8 @@ Foam::radiation::boundaryRadiationProperties::diffReflectivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))
@@ -458,8 +458,8 @@ Foam::radiation::boundaryRadiationProperties::specReflectivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))

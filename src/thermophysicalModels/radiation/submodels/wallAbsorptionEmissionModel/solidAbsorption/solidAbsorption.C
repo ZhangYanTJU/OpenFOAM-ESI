@@ -97,8 +97,8 @@ Foam::radiation::solidAbsorption::~solidAbsorption()
 Foam::tmp<Foam::scalarField> Foam::radiation::solidAbsorption::a
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     // Since we're inside initEvaluate/evaluate there might be processor
@@ -148,8 +148,8 @@ Foam::scalar Foam::radiation::solidAbsorption::a
 Foam::tmp<Foam::scalarField> Foam::radiation::solidAbsorption::e
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
 

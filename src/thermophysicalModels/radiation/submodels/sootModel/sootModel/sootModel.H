@@ -27,12 +27,12 @@ Class
     Foam::radiation::sootModel
 
 Description
-    Base class for soor models
+    Base class for soot models
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef radiation_sootModel_H
-#define radiation_sootModel_H
+#ifndef Foam_radiation_sootModel_H
+#define Foam_radiation_sootModel_H
 
 #include "IOdictionary.H"
 #include "autoPtr.H"

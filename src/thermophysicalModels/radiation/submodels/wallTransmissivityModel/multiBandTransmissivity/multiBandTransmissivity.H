@@ -48,8 +48,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef multiBandTransmissivity_H
-#define multiBandTransmissivity_H
+#ifndef Foam_radiation_multiBandTransmissivity_H
+#define Foam_radiation_multiBandTransmissivity_H
 
 #include "wallTransmissivityModel.H"
 
@@ -118,8 +118,8 @@ public:
             tmp<scalarField> t
             (
                 const label bandI = 0,
-                vectorField* incomingDirection = nullptr,
-                scalarField* T = nullptr
+                const vectorField* incomingDirection = nullptr,
+                const scalarField* T = nullptr
             ) const;
 
             //- Return transmissivity on face
