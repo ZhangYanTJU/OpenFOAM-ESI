@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2018 OpenCFD Ltd.
+    Copyright (C) 2015-2018, 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,21 +56,36 @@ Foam::radiation::constantTransmissivity::constantTransmissivity
 :
     wallTransmissivityModel(dict, pp),
     coeffsDict_(dict),
-    tau_(coeffsDict_.get<scalar>("transmissivity"))
+    tau_(Function1<scalar>::New("transmissivity", coeffsDict_))
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField>
-Foam::radiation::constantTransmissivity::t
+Foam::tmp<Foam::scalarField> Foam::radiation::constantTransmissivity::t
 (
     const label bandI,
     const vectorField* incomingDirection,
     const scalarField* T
 ) const
 {
-    return tmp<scalarField>::New(pp_.size(), tau_);
+    if (tau_->constant())
+    {
+        // Use arbitrary argument for a_
+        return tmp<scalarField>::New(pp_.size(), tau_->value(0));
+    }
+
+    if (T)
+    {
+        return tau_->value(*T);
+    }
+
+    FatalErrorInFunction
+        << "Attempted to set 't' using a non-uniform function of Temperature, "
+        << "but temperature field is unavailable"
+        << abort(FatalError);
+
+    return nullptr;
 }
 
 
@@ -82,7 +97,7 @@ Foam::scalar Foam::radiation::constantTransmissivity::t
     const scalar T
 ) const
 {
-    return tau_;
+    return tau_->value(T);
 }
 
 

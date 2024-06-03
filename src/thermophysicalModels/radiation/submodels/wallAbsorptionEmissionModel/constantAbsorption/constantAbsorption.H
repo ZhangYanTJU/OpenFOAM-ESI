@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018, 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,6 +41,7 @@ SourceFiles
 #define Foam_radiation_constantAbsorption_H
 
 #include "wallAbsorptionEmissionModel.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,10 +65,10 @@ class constantAbsorption
         dictionary coeffsDict_;
 
         //- Absorptivity coefficient
-        scalar a_;
+        autoPtr<Function1<scalar>> a_;
 
         //- Emissivity coefficient
-        scalar e_;
+        autoPtr<Function1<scalar>> e_;
 
 
 public:
