@@ -1,0 +1,12 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+runApplication blockMesh
+
+SOLVER=PCG runApplication -s PCG $(getApplication) -debug-switch SolverPerformance=2
+
+SOLVER=GMRES runApplication -s GMRES $(getApplication) -debug-switch SolverPerformance=2
+
+#------------------------------------------------------------------------------
