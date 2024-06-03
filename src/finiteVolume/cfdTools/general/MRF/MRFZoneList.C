@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +28,7 @@ License
 
 #include "MRFZoneList.H"
 #include "volFields.H"
+#include "surfaceFields.H"
 #include "fixedValueFvsPatchFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -213,6 +214,26 @@ Foam::tmp<Foam::volVectorField> Foam::MRFZoneList::DDt
 ) const
 {
     return rho*DDt(U);
+}
+
+
+Foam::tmp<Foam::surfaceScalarField> Foam::MRFZoneList::phi() const
+{
+    auto tphi = surfaceScalarField::New
+    (
+        "phiMRF",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimVelocity*dimArea, Zero)
+    );
+    auto& phi = tphi.ref();
+
+    for (const auto& mrf : *this)
+    {
+        mrf.makeAbsolute(phi);
+    }
+
+    return tphi;
 }
 
 
