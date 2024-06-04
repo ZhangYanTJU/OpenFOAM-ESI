@@ -178,14 +178,14 @@ updateCoeffs()
 
     const tmp<scalarField> temissivity
     (
-        boundaryRadiation.emissivity(patch().index())
+        boundaryRadiation.emissivity(patch().index(), 0, nullptr, &Tp)
     );
 
     const scalarField& emissivity = temissivity();
 
     const tmp<scalarField> ttransmissivity
     (
-        boundaryRadiation.transmissivity(patch().index())
+        boundaryRadiation.transmissivity(patch().index(), 0, nullptr, &Tp)
     );
 
     const scalarField& transmissivity = ttransmissivity();

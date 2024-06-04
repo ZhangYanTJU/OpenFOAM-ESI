@@ -240,6 +240,9 @@ public:
                 return radiation_;
             }
 
+            //- Return access to the temperature field
+            const volScalarField& T() const noexcept { return T_; }
+
             //- Source term component (for power of T^4)
             virtual tmp<volScalarField> Rp() const = 0;
 

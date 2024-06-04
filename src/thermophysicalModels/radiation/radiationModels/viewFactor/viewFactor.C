@@ -738,14 +738,14 @@ void Foam::radiation::viewFactor::calculate()
 
             fvPatchScalarField& qrPatch = qrBf[patchID];
 
-            greyDiffusiveViewFactorFixedValueFvPatchScalarField& qrp =
+            auto& qrp =
                 refCast
                 <
                     greyDiffusiveViewFactorFixedValueFvPatchScalarField
                 >(qrPatch);
 
             const tmp<scalarField> teb =
-                boundaryRadiation.emissivity(patchID, bandI);
+                boundaryRadiation.emissivity(patchID, bandI, nullptr, &Tp);
 
             const scalarField& eb = teb();
 
