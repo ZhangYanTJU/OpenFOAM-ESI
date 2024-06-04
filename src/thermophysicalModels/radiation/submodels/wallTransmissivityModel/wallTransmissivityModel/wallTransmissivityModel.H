@@ -31,8 +31,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wallTransmissivityModel_H
-#define wallTransmissivityModel_H
+#ifndef Foam_radiation_wallTransmissivityModel_H
+#define Foam_radiation_wallTransmissivityModel_H
 
 #include "dictionary.H"
 #include "autoPtr.H"
@@ -106,8 +106,8 @@ public:
         virtual tmp<scalarField> t
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const = 0;
 
         //- Return transmissivity on face

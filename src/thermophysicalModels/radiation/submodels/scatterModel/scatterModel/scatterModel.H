@@ -31,8 +31,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef scatterModel_H
-#define scatterModel_H
+#ifndef Foam_radiation_scatterModel_H
+#define Foam_radiation_scatterModel_H
 
 #include "IOdictionary.H"
 #include "autoPtr.H"

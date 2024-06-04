@@ -70,8 +70,8 @@ Foam::tmp<Foam::scalarField>
 Foam::radiation::multiBandTransmissivity::t
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), tauCoeffs_[bandI]);

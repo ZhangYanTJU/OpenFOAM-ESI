@@ -31,8 +31,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wallAbsorptionEmissionModel_H
-#define wallAbsorptionEmissionModel_H
+#ifndef Foam_radiation_wallAbsorptionEmissionModel_H
+#define Foam_radiation_wallAbsorptionEmissionModel_H
 
 #include "dictionary.H"
 #include "autoPtr.H"
@@ -47,7 +47,7 @@ namespace radiation
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class wallAbsorptionEmissionModel Declaration
+                Class wallAbsorptionEmissionModel Declaration
 \*---------------------------------------------------------------------------*/
 
 class wallAbsorptionEmissionModel
@@ -108,8 +108,8 @@ public:
         virtual tmp<scalarField> e
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const = 0;
 
 
@@ -127,8 +127,8 @@ public:
         virtual tmp<scalarField> a
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const = 0;
 
 

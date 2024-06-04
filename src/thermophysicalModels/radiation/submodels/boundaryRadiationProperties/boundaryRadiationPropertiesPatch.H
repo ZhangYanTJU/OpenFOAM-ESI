@@ -33,8 +33,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef boundaryRadiationPropertiesPatch_H
-#define boundaryRadiationPropertiesPatch_H
+#ifndef Foam_radiation_boundaryRadiationPropertiesPatch_H
+#define Foam_radiation_boundaryRadiationPropertiesPatch_H
 
 #include "scalarField.H"
 #include "Enum.H"
@@ -138,8 +138,8 @@ public:
         virtual tmp<scalarField> e
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const = 0;
 
         //- Return emissivity on face
@@ -155,8 +155,8 @@ public:
         virtual tmp<scalarField> a
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const = 0;
 
         //- Return absorptivity on face
@@ -172,8 +172,8 @@ public:
         virtual tmp<scalarField> t
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const = 0;
 
         //- Return transmissivity on face
@@ -189,8 +189,8 @@ public:
         virtual tmp<scalarField> rSpec
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const = 0;
 
         //- Return specular reflectivity on face
@@ -206,8 +206,8 @@ public:
         virtual tmp<scalarField> rDiff
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const = 0;
 
         //- Return diffusive reflectivity on face

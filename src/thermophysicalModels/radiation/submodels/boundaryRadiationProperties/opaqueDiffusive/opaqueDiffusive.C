@@ -71,8 +71,8 @@ Foam::radiation::opaqueDiffusive::opaqueDiffusive
 Foam::tmp<Foam::scalarField> Foam::radiation::opaqueDiffusive::e
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return(absorptionEmission_->e(bandI, dir, T));
@@ -91,12 +91,11 @@ Foam::scalar Foam::radiation::opaqueDiffusive::e
 }
 
 
-Foam::tmp<Foam::scalarField>
-Foam::radiation::opaqueDiffusive::a
+Foam::tmp<Foam::scalarField> Foam::radiation::opaqueDiffusive::a
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return(absorptionEmission_->a(bandI, dir, T));
@@ -118,8 +117,8 @@ Foam::scalar Foam::radiation::opaqueDiffusive::a
 Foam::tmp<Foam::scalarField> Foam::radiation::opaqueDiffusive::t
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), 0.0);
@@ -138,12 +137,11 @@ Foam::scalar Foam::radiation::opaqueDiffusive::t
 }
 
 
-Foam::tmp<Foam::scalarField>
-Foam::radiation::opaqueDiffusive::rSpec
+Foam::tmp<Foam::scalarField> Foam::radiation::opaqueDiffusive::rSpec
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), Zero);
@@ -165,8 +163,8 @@ Foam::scalar Foam::radiation::opaqueDiffusive::rSpec
 Foam::tmp<Foam::scalarField> Foam::radiation::opaqueDiffusive::rDiff
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), Zero);

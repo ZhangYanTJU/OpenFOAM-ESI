@@ -120,8 +120,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary emissivity on face
@@ -139,8 +139,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary absorptivity on face
@@ -158,8 +158,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary transmissivity on face
@@ -191,8 +191,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary diffuse reflectivity on face
@@ -210,8 +210,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary specular reflectivity on face

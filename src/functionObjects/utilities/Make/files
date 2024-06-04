@@ -39,6 +39,8 @@ systemCall/systemCall.C
 
 timeActivatedFileUpdate/timeActivatedFileUpdate.C
 
+viewFactorHeatFlux/viewFactorHeatFlux.C
+
 writeDictionary/writeDictionary.C
 
 writeObjects/writeObjects.C

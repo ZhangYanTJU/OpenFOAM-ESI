@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2018 OpenCFD Ltd.
+    Copyright (C) 2015-2018, 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,10 +37,11 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef radiation_constantTransmissivity_H
-#define radiation_constantTransmissivity_H
+#ifndef Foam_radiation_constantTransmissivity_H
+#define Foam_radiation_constantTransmissivity_H
 
 #include "wallTransmissivityModel.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,7 +65,7 @@ class constantTransmissivity
         dictionary coeffsDict_;
 
         //- Transmissivity coefficient
-        scalar tau_;
+        autoPtr<Function1<scalar>> tau_;
 
 
 public:
@@ -89,8 +90,8 @@ public:
         tmp<scalarField> t
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Return transmissivity on facw
