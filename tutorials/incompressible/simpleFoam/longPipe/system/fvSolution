@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2403                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -18,30 +18,14 @@ solvers
 {
     p
     {
+        solver          ${SOLVER};
+        preconditioner  DIC;
+        nDirections     100;
         tolerance       1e-06;
         relTol          0.1;
-
-        /*
-        solver          GAMG;
-        smoother        GaussSeidel;
-
-        // Explicit specify solver for coarse-level correction to override
-        // solution tolerance
-        coarsestLevelCorr
-        {
-            // For limited residual reduction (relTol) PPCR behaves better
-            // than PCG (or PPCG)
-            solver          PCG;
-            preconditioner  DIC;
-            //relTol          0.05;
-        }
-        */
-        solver          ${SOLVER};
-        nDirections     100;
-        preconditioner  DIC;
     }
 
-    "(U|k|epsilon|omega|f|v2)"
+    "(U|k|epsilon|omega)"
     {
         solver          smoothSolver;
         smoother        symGaussSeidel;
@@ -59,7 +43,7 @@ SIMPLE
     {
         p               1e-2;
         U               1e-3;
-        "(k|epsilon|omega|f|v2)" 1e-3;
+        "(k|epsilon|omega)" 1e-3;
     }
 }
 
@@ -67,10 +51,9 @@ relaxationFactors
 {
     equations
     {
-        U               0.9; // 0.9 is more stable but 0.95 more convergent
-        ".*"            0.9; // 0.9 is more stable but 0.95 more convergent
+        U               0.9;
+        ".*"            0.9;
     }
 }
-
 
 // ************************************************************************* //

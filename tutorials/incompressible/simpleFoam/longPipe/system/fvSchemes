@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2403                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -35,7 +35,6 @@ divSchemes
     div(phi,epsilon) $turbulence;
     div(phi,omega)  $turbulence;
 
-    div(nonlinearStress) Gauss linear;
     div((nuEff*dev2(T(grad(U))))) Gauss linear;
 }
 
@@ -58,6 +57,5 @@ wallDist
 {
     method          meshWave;
 }
-
 
 // ************************************************************************* //

@@ -5,8 +5,10 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 ./Allrun.pre
 
-SOLVER=PCG runApplication -s PCG $(getApplication) # -debug-switch SolverPerformance=2
+runApplication decomposePar
 
-SOLVER=GMRES runApplication -s GMRES $(getApplication) # -debug-switch SolverPerformance=2
+SOLVER=PCG runParallel -s PCG $(getApplication) # -debug-switch SolverPerformance=2
+
+SOLVER=GMRES runParallel -s GMRES $(getApplication) # -debug-switch SolverPerformance=2
 
 #------------------------------------------------------------------------------
