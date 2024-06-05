@@ -108,7 +108,7 @@ Foam::gmresSolver::gmresSolver
             dict
         )
     ),
-    nDirs_(readLabel(dict.lookup("nDirections")))
+    nDirs_(dict.getLabel("nDirections"))
 {}
 
 
@@ -121,7 +121,7 @@ Foam::solverPerformance Foam::gmresSolver::scalarSolve
     const direction cmpt
 ) const
 {
-    // Prepare solver performance
+    // Initialise the solverPerformance object to track solver performance
     solverPerformance solverPerf
     (
         preconPtr_->type() + typeName, fieldName()
@@ -155,9 +155,7 @@ Foam::solverPerformance Foam::gmresSolver::scalarSolve
     // Note: GMRES cannot be forced to do minIter sweeps
     // if the residual is zero, due to algorithmic reasons
     // HJ, 22/Aug/2012
-    //if (!converged(solverPerf))
     if (!solverPerf.checkConvergence(tolerance_, relTol_, log_))
-//     if (!stop(solverPerf))
     {
         typedef SquareMatrix<solveScalar> solveScalarSquareMatrix;
 
@@ -192,7 +190,7 @@ Foam::solverPerformance Foam::gmresSolver::scalarSolve
             bh = 0;
             bh[0] = beta;
 
-            for (label i = 0; i < nDirs_; i++)
+            for (label i = 0; i < nDirs_; ++i)
             {
                 // Set search direction
                 V[i] = wA;
@@ -204,7 +202,7 @@ Foam::solverPerformance Foam::gmresSolver::scalarSolve
                 // Execute preconditioning
                 preconPtr_->precondition(wA, rA, cmpt);
 
-                for (label j = 0; j <= i; j++)
+                for (label j = 0; j <= i; ++j)
                 {
                     beta = gSumProd(wA, V[j], matrix().mesh().comm());
 
@@ -219,7 +217,7 @@ Foam::solverPerformance Foam::gmresSolver::scalarSolve
                 beta = Foam::sqrt(gSumSqr(wA, matrix().mesh().comm()));
 
                 // Apply previous Givens rotations to new column of H.
-                for (label j = 0; j < i; j++)
+                for (label j = 0; j < i; ++j)
                 {
                     const solveScalar Hji = H[j][i];
                     H[j][i] = c[j]*Hji - s[j]*H[j + 1][i];
@@ -240,7 +238,7 @@ Foam::solverPerformance Foam::gmresSolver::scalarSolve
             {
                 solveScalar sum = bh[i];
 
-                for (label j = i + 1; j < nDirs_; j++)
+                for (label j = i + 1; j < nDirs_; ++j)
                 {
                     sum -= H[i][j]*yh[j];
                 }
@@ -249,8 +247,7 @@ Foam::solverPerformance Foam::gmresSolver::scalarSolve
             }
 
             // Update solution
-
-            for (label i = 0; i < nDirs_; i++)
+            for (label i = 0; i < nDirs_; ++i)
             {
                 const solveScalarField& Vi = V[i];
                 const solveScalar& yi = yh[i];
@@ -273,7 +270,7 @@ Foam::solverPerformance Foam::gmresSolver::scalarSolve
                 gSumMag(rA, matrix().mesh().comm())
                /normFactor;
             solverPerf.nIterations()++;
-        } while //(!stop(solverPerf));
+        } while
         (
             (
               ++solverPerf.nIterations() < maxIter_

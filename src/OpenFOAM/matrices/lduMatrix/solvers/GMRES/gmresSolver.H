@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef gmresSolver_H
-#define gmresSolver_H
+#ifndef Foam_gmresSolver_H
+#define Foam_gmresSolver_H
 
 #include "lduMatrix.H"
 
@@ -65,15 +65,6 @@ class gmresSolver
         label nDirs_;
 
 
-    // Private Member Functions
-
-        //- Disallow default bitwise copy construct
-        gmresSolver(const gmresSolver&) = delete;
-
-        //- Disallow default bitwise assignment
-        void operator=(const gmresSolver&) = delete;
-
-
         //- Givens rotation
         void givensRotation
         (
@@ -88,6 +79,15 @@ public:
 
     //- Runtime type information
     TypeName("GMRES");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        gmresSolver(const gmresSolver&) = delete;
+
+        //- No copy assignment
+        void operator=(const gmresSolver&) = delete;
 
 
     // Constructors
