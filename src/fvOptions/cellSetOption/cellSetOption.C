@@ -408,9 +408,13 @@ bool Foam::fv::cellSetOption::isActive()
             // Report new volume (if changed)
             setVol();
         }
-        else if (selectionMode_ == smMovingPoints)
+        else if
+        (
+            selectionMode_ == smMovingPoints
+         || selectionMode_ == smGeometric
+        )
         {
-            // Update the cell selection if it moves
+            // Update the cell selection even if mesh is not moving
             setCellSelection();
             setVol();
         }
