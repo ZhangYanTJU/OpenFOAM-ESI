@@ -20,3 +20,6 @@
 [submodule "turbulence-community"]
 	path = plugins/turbulence-community
 	url = https://gitlab.com/openfoam/community/tc-turbulence/turbulence-community.git
+[submodule "plugins/data-community"]
+	path = plugins/data-community
+	url = https://gitlab.com/openfoam/community/sig-data-modelling/data-community.git
