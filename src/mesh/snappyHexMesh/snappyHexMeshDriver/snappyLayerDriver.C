@@ -4919,9 +4919,9 @@ void Foam::snappyLayerDriver::addLayers
 
 
     // Per cell 0 or number of layers in the cell column it is part of
-    labelList cellNLayers;
+    labelList cellNLayers(mesh.nCells(), Zero);
     // Per face actual overall layer thickness
-    scalarField faceRealThickness;
+    scalarField faceRealThickness(mesh.nFaces(), Zero);
     // Per face wanted overall layer thickness
     scalarField faceWantedThickness(mesh.nFaces(), Zero);
     {
