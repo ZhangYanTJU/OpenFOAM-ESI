@@ -9,6 +9,11 @@
         fvOptions(rho, e)
     );
 
+    if (MRF.active())
+    {
+        EEqn += fvc::div(MRF.phi(), p);
+    }
+
     EEqn.relax();
 
     fvOptions.constrain(EEqn);
