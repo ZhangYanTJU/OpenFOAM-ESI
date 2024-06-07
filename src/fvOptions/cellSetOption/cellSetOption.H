@@ -122,6 +122,7 @@ Usage
       points    | Use cells containing a given set of points
       movingPoints | Use cells containing a given set of moving points
       geometric | Select cells based on topoSetCellSource actions
+      cellType  | For overset only : use cells of type 'porous
     \endverbatim
 
     The inherited entries are elaborated in:
