@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020,2022 OpenCFD Ltd.
+    Copyright (C) 2015-2020,2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,6 +34,7 @@ License
 #include "OFstream.H"
 #include "edgeHashes.H"
 #include "syncTools.H"
+#include "dummyTransform.H"
 #include "triangle.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -52,6 +53,7 @@ Foam::tetDecomposer::decompositionTypeNames
     { decompositionType::FACE_CENTRE_TRIS,  "faceCentre" },
     { decompositionType::FACE_DIAG_TRIS, "faceDiagonal" },
     { decompositionType::PYRAMID, "pyramid" },
+    { decompositionType::FACE_DIAG_QUADS, "faceDiagonalQuads" },
 });
 
 
@@ -69,6 +71,13 @@ void Foam::tetDecomposer::modifyFace
     const bool zoneFlip
 ) const
 {
+    if (own == nei)
+    {
+        FatalErrorInFunction
+            << "Problem own:" << own
+            << " nei:" << nei << exit(FatalError);
+    }
+
     // First usage of face. Modify.
     if (nei == -1 || own < nei)
     {
@@ -105,6 +114,7 @@ void Foam::tetDecomposer::addFace
 (
     polyTopoChange& meshMod,
     const face& f,
+    const label facei,
     const label own,
     const label nei,
     const label masterPointID,
@@ -115,9 +125,17 @@ void Foam::tetDecomposer::addFace
     const bool zoneFlip
 ) const
 {
+    if (own == nei)
+    {
+        FatalErrorInFunction
+            << "Problem own:" << own
+            << " nei:" << nei << exit(FatalError);
+    }
+
     // Second or more usage of face. Add.
     if (nei == -1 || own < nei)
     {
+        //const label newFacei =
         meshMod.addFace
         (
             f,                          // modified face
@@ -134,6 +152,7 @@ void Foam::tetDecomposer::addFace
     }
     else
     {
+        //const label newFacei =
         meshMod.addFace
         (
             f.reverseFace(),            // modified face
@@ -199,6 +218,273 @@ const
 }
 
 
+void Foam::tetDecomposer::splitBoundaryFaces
+(
+    List<faceList>& boundaryQuads,
+    List<faceList>& boundaryTris
+) const
+{
+    // Work space
+    faceList quadFaces(1000);
+    faceList triFaces(1000);
+
+    const auto& pbm = mesh_.boundaryMesh();
+    for (const auto& pp : pbm)
+    {
+        if (pp.coupled() && refCast<const coupledPolyPatch>(pp).owner())
+        {
+            forAll(pp, i)
+            {
+                const label facei = pp.start()+i;
+                const face& meshFace = pp[i];
+
+                if (meshFace.size() > 4)
+                {
+                    label trii = 0;
+                    label quadi = 0;
+                    meshFace.trianglesQuads
+                    (
+                        mesh_.points(),
+                        trii,
+                        quadi,
+                        triFaces,
+                        quadFaces
+                    );
+
+                    const label bFacei = facei-mesh_.nInternalFaces();
+
+                    {
+                        auto& faces = boundaryTris[bFacei];
+                        faces.setSize(trii);
+                        // Express as relative w.r.t. 0th vertex
+                        for (label i = 0; i < trii; i++)
+                        {
+                            const auto& f = triFaces[i];
+                            auto& verts = faces[i];
+                            verts.setSize(f.size());
+                            forAll(f, fp)
+                            {
+                                verts[fp] = meshFace.find(f[fp]);
+                            }
+                        }
+                    }
+                    {
+                        auto& faces = boundaryQuads[bFacei];
+                        faces.setSize(quadi);
+                        // Express as relative w.r.t. 0th vertex
+                        for (label i = 0; i < quadi; i++)
+                        {
+                            const auto& f = quadFaces[i];
+                            auto& verts = faces[i];
+                            verts.setSize(f.size());
+                            forAll(f, fp)
+                            {
+                                verts[fp] = meshFace.find(f[fp]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Send coupled side indices to neighbour. Note: could also do re-indexing
+    // here...
+    syncTools::syncBoundaryFaceList
+    (
+        mesh_,
+        boundaryTris,
+        [](faceList& result, const faceList& input)
+        {
+            if (!result.size())
+            {
+                result = input;
+            }
+        },
+        dummyTransform()
+    );
+    syncTools::syncBoundaryFaceList
+    (
+        mesh_,
+        boundaryQuads,
+        [](faceList& result, const faceList& input)
+        {
+            if (!result.size())
+            {
+                result = input;
+            }
+        },
+        dummyTransform()
+    );
+}
+
+
+void Foam::tetDecomposer::relativeIndicesToFace
+(
+    const bool doFlip,
+    const face& meshFace,
+    const faceList& indexLists,
+    faceList& faces
+) const
+{
+    //faces.setSize(indexLists.size());
+
+    if (!doFlip)
+    {
+        forAll(indexLists, facei)
+        {
+            const auto& verts = indexLists[facei];
+            auto& f = faces[facei];
+            f.setSize(verts.size());
+
+            forAll(verts, fp)
+            {
+                f[fp] = meshFace[verts[fp]];
+            }
+        }
+    }
+    else
+    {
+        forAllReverse(indexLists, facei)
+        {
+            const auto& verts = indexLists[facei];
+            auto& f = faces[facei];
+            f.setSize(verts.size());
+
+            // - 0th vertex matches; walking order opposite
+            // - assemble in opposite order so as to flip normal
+            label destFp = verts.size()-1;
+            forAll(verts, fp)
+            {
+                if (verts[fp] == 0)
+                {
+                    f[destFp] = meshFace[0];
+                }
+                else
+                {
+                    f[destFp] = meshFace[meshFace.size()-verts[fp]];
+                }
+                --destFp;
+            }
+        }
+    }
+}
+
+
+void Foam::tetDecomposer::splitFace
+(
+    const List<faceList>& boundaryQuads,
+    const List<faceList>& boundaryTris,
+    const label facei,
+    const label patchi,
+    label& quadi,
+    faceList& quadFaces,
+    label& trii,
+    faceList& triFaces
+) const
+{
+    // Split face into quads (in quadFaces) and tris (in triFaces)
+
+    const face& f = mesh_.faces()[facei];
+
+    trii = 0;
+    quadi = 0;
+    if (patchi != -1 && mesh_.boundaryMesh()[patchi].coupled())
+    {
+        const auto& pp = mesh_.boundaryMesh()[patchi];
+        const bool owner =
+            refCast<const coupledPolyPatch>(pp).owner();
+        const label bFacei = facei-mesh_.nInternalFaces();
+
+        // Triangles
+        trii = boundaryTris[bFacei].size();
+        relativeIndicesToFace
+        (
+            !owner,
+            f,
+            boundaryTris[bFacei],
+            triFaces
+        );
+
+        // Quads
+        quadi = boundaryQuads[bFacei].size();
+        relativeIndicesToFace
+        (
+            !owner,
+            f,
+            boundaryQuads[bFacei],
+            quadFaces
+        );
+    }
+    else if (f.size() == 4)
+    {
+        quadFaces[quadi++] = f;
+    }
+    else
+    {
+        f.trianglesQuads
+        (
+            mesh_.points(),
+            trii,
+            quadi,
+            triFaces,
+            quadFaces
+        );
+    }
+}
+
+
+void Foam::tetDecomposer::splitFace
+(
+    const List<faceList>& boundaryQuads,
+    const List<faceList>& boundaryTris,
+    const label facei,
+    const label patchi,
+    faceList& quadFaces,
+    faceList& triFaces,
+    faceList& subFaces
+) const
+{
+    const face& f = mesh_.faces()[facei];
+
+    if (f.size() <= 4)
+    {
+        subFaces.resize_nocopy(1);
+        subFaces[0] = f;
+    }
+    else
+    {
+        label trii;
+        label quadi;
+        splitFace
+        (
+            boundaryQuads,
+            boundaryTris,
+            facei,
+            patchi,
+            quadi,
+            quadFaces,
+            trii,
+            triFaces
+        );
+
+        // Collect into single face list
+        subFaces.resize_nocopy(quadi+trii);
+        {
+            label subFacei = 0;
+            for (label i = 0; i < quadi; i++)
+            {
+                subFaces[subFacei++] = quadFaces[i];
+            }
+            for (label i = 0; i < trii; i++)
+            {
+                subFaces[subFacei++] = triFaces[i];
+            }
+        }
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::tetDecomposer::tetDecomposer(const polyMesh& mesh)
@@ -216,25 +502,6 @@ void Foam::tetDecomposer::setRefinement
     polyTopoChange& meshMod
 )
 {
-    cellToPoint_.setSize(mesh_.nCells(), -1);
-    forAll(mesh_.cellCentres(), celli)
-    {
-        if (decomposeCell[celli])
-        {
-            // Any point on the cell
-            label masterPointi = mesh_.faces()[mesh_.cells()[celli][0]][0];
-
-            cellToPoint_[celli] = meshMod.addPoint
-            (
-                mesh_.cellCentres()[celli],
-                masterPointi,
-                -1,
-                true
-            );
-        }
-    }
-
-
     // Determine for every face whether it borders a cell that is decomposed
     bitSet decomposeFace(mesh_.nFaces());
     {
@@ -272,6 +539,95 @@ void Foam::tetDecomposer::setRefinement
             }
         }
     }
+    setRefinement(decomposeType, decomposeCell, decomposeFace, meshMod);
+}
+
+
+void Foam::tetDecomposer::setRefinement
+(
+    const decompositionType decomposeType,
+    const bitSet& decomposeCell,
+    const bitSet& decomposeFace,
+    polyTopoChange& meshMod
+)
+{
+    if (debug)
+    {
+        // Check that current mesh makes sense
+        const auto& faces = mesh_.faces();
+        labelList nVerts(mesh_.nFaces());
+        forAll(faces, facei)
+        {
+            nVerts[facei] = faces[facei].size();
+        }
+        syncTools::swapFaceList(mesh_, nVerts);
+        forAll(nVerts, facei)
+        {
+            if (nVerts[facei] != faces[facei].size())
+            {
+                FatalErrorInFunction<< "problem with nVerts"
+                    << exit(FatalError);
+            }
+        }
+    }
+    if (debug)
+    {
+        // Check that decomposeFace makes sense
+        bitSet newDecomposeFace(decomposeFace);
+        syncTools::swapFaceList(mesh_, newDecomposeFace);
+        forAll(newDecomposeFace, facei)
+        {
+            if (decomposeFace[facei] != newDecomposeFace[facei])
+            {
+                FatalErrorInFunction<< "problem with decomposeFace"
+                    << exit(FatalError);
+            }
+        }
+    }
+
+
+    // For diagonal splitting : send over diagonals since two sides of
+    // coupled face might make different decisions
+    // TBD: probably also for FACE_DIAG_TRIS ?
+    faceList quadFaces;
+    faceList triFaces;
+    List<faceList> boundaryQuads;
+    List<faceList> boundaryTris;
+    faceList subFaces;
+
+    if (decomposeType == FACE_DIAG_QUADS)
+    {
+        // Pre-calculate coupled faces triangulation. Store as indices w.r.t.
+        // vertex 0.
+        // Note: could triangulate all faces here but trying to save some
+        // memory so only doing:
+        //  - faces on proc boundaries
+        //  - faces > 4 verts
+        quadFaces.resize_nocopy(1000);
+        triFaces.resize_nocopy(1000);
+        boundaryQuads.resize_nocopy(mesh_.nBoundaryFaces());
+        boundaryTris.resize_nocopy(mesh_.nBoundaryFaces());
+        splitBoundaryFaces(boundaryQuads, boundaryTris);
+    }
+
+
+    cellToPoint_.setSize(mesh_.nCells(), -1);
+    forAll(mesh_.cellCentres(), celli)
+    {
+        if (decomposeCell[celli])
+        {
+            // Any point on the cell
+            label masterPointi = mesh_.faces()[mesh_.cells()[celli][0]][0];
+
+            cellToPoint_[celli] = meshMod.addPoint
+            (
+                mesh_.cellCentres()[celli],
+                masterPointi,
+                -1,
+                true
+            );
+        }
+    }
 
 
     // Add face centre points
@@ -306,9 +662,17 @@ void Foam::tetDecomposer::setRefinement
     {
         forAll(faceOwnerCells_, facei)
         {
-            const face& f = mesh_.faces()[facei];
-            faceOwnerCells_[facei].setSize(f.size(), -1);
-            faceNeighbourCells_[facei].setSize(f.size(), -1);
+            if (decomposeFace[facei])
+            {
+                const face& f = mesh_.faces()[facei];
+                faceOwnerCells_[facei].setSize(f.size(), -1);
+                faceNeighbourCells_[facei].setSize(f.size(), -1);
+            }
+            else
+            {
+                faceOwnerCells_[facei].setSize(1, -1);
+                faceNeighbourCells_[facei].setSize(1, -1);
+            }
         }
     }
     else if (decomposeType == FACE_DIAG_TRIS)
@@ -318,9 +682,78 @@ void Foam::tetDecomposer::setRefinement
 
         forAll(faceOwnerCells_, facei)
         {
-            const face& f = mesh_.faces()[facei];
-            faceOwnerCells_[facei].setSize(f.size()-2, -1);
-            faceNeighbourCells_[facei].setSize(f.size()-2, -1);
+            if (decomposeFace[facei])
+            {
+                const face& f = mesh_.faces()[facei];
+                faceOwnerCells_[facei].setSize(f.size()-2, -1);
+                faceNeighbourCells_[facei].setSize(f.size()-2, -1);
+            }
+            else
+            {
+                faceOwnerCells_[facei].setSize(1, -1);
+                faceNeighbourCells_[facei].setSize(1, -1);
+            }
+        }
+    }
+    else if (decomposeType == FACE_DIAG_QUADS)
+    {
+        // Note: sizing according to the number of sub-faces, not according to
+        //       f.size(). Plus: less storage. Min: much harder to look up
+        //       cell corresponding to face+edge
+
+        // Do coupled faces first - do not use local face triangulation
+        // but use coupled version instead
+        const auto& pbm = mesh_.boundaryMesh();
+        for (const auto& pp : pbm)
+        {
+            if (pp.coupled())
+            {
+                forAll(pp, i)
+                {
+                    const label facei = pp.start()+i;
+                    if (decomposeFace[facei])
+                    {
+                        const label bFacei = pp.offset()+i;
+                        const label n =
+                            boundaryQuads[bFacei].size()
+                          + boundaryTris[bFacei].size();
+
+                        faceOwnerCells_[facei].setSize(n, -1);
+                        faceNeighbourCells_[facei].setSize(n, -1);
+                    }
+                }
+            }
+        }
+
+        // Do all other faces
+        forAll(faceOwnerCells_, facei)
+        {
+            if (faceOwnerCells_[facei].empty())
+            {
+                if (decomposeFace[facei])
+                {
+                    const face& f = mesh_.faces()[facei];
+
+                    // Convention: quads first, followed by triangles
+
+                    label nTris = 0;
+                    label nQuads = 0;
+                    const label nSubFaces = f.nTrianglesQuads
+                    (
+                        mesh_.points(),
+                        nTris,
+                        nQuads
+                    );
+
+                    faceOwnerCells_[facei].setSize(nSubFaces, -1);
+                    faceNeighbourCells_[facei].setSize(nSubFaces, -1);
+                }
+                else
+                {
+                    faceOwnerCells_[facei].setSize(1, -1);
+                    faceNeighbourCells_[facei].setSize(1, -1);
+                }
+            }
         }
     }
     else
@@ -345,7 +778,6 @@ void Foam::tetDecomposer::setRefinement
         forAll(cFaces, cFacei)
         {
             label facei = cFaces[cFacei];
-            const face& f = mesh_.faces()[facei];
 
             // Get reference to either owner or neighbour
             labelList& added =
@@ -359,17 +791,17 @@ void Foam::tetDecomposer::setRefinement
             {
                 if (decomposeType == FACE_CENTRE_TRIS)
                 {
-                    forAll(f, fp)
+                    forAll(added, i)
                     {
                         if (!modifiedCell)
                         {
                             // Reuse cell itself
-                            added[fp] = celli;
+                            added[i] = celli;
                             modifiedCell = true;
                         }
                         else
                         {
-                            added[fp] = meshMod.addCell
+                            added[i] = meshMod.addCell
                             (
                                 -1,     // masterPoint
                                 -1,     // masterEdge
@@ -380,19 +812,23 @@ void Foam::tetDecomposer::setRefinement
                         }
                     }
                 }
-                else if (decomposeType == FACE_DIAG_TRIS)
+                else if
+                (
+                    decomposeType == FACE_DIAG_TRIS
+                 || decomposeType == FACE_DIAG_QUADS
+                )
                 {
-                    for (label triI = 0; triI < f.size()-2; triI++)
+                    forAll(added, subi)
                     {
                         if (!modifiedCell)
                         {
                             // Reuse cell itself
-                            added[triI] = celli;
+                            added[subi] = celli;
                             modifiedCell = true;
                         }
                         else
                         {
-                            added[triI] = meshMod.addCell
+                            added[subi] = meshMod.addCell
                             (
                                 -1,     // masterPoint
                                 -1,     // masterEdge
@@ -400,12 +836,6 @@ void Foam::tetDecomposer::setRefinement
                                 celli,  // masterCell
                                 mesh_.cellZones().whichZone(celli)
                             );
-                            //Pout<< "For cell:" << celli
-                            //    << " at:" << mesh_.cellCentres()[celli]
-                            //    << " face:" << facei
-                            //    << " at:" << mesh_.faceCentres()[facei]
-                            //    << " tri:" << triI
-                            //    << " added cell:" << added[triI] << endl;
                         }
                     }
                 }
@@ -413,6 +843,19 @@ void Foam::tetDecomposer::setRefinement
                 {
                     // Pyramidal decomposition.
                     // Assign same cell to all slots
+
+                    if (added.size() != 1)
+                    {
+                        FatalErrorInFunction
+                            << "For cell:" << celli
+                            << " at:" << mesh_.cellCentres()[celli]
+                            << " face:" << facei
+                            << " at:" << mesh_.faceCentres()[facei]
+                            << " added cells:" << added
+                            << exit(FatalError);
+                    }
+
+
                     if (!modifiedCell)
                     {
                         // Reuse cell itself
@@ -442,32 +885,35 @@ void Foam::tetDecomposer::setRefinement
 
 
 
-    // Add triangle faces
+    // Add split faces
     face triangle(3);
 
     forAll(mesh_.faces(), facei)
     {
         label own = mesh_.faceOwner()[facei];
-        const labelList& addedOwn = faceOwnerCells_[facei];
-        const labelList& addedNei = faceNeighbourCells_[facei];
+        const auto& addedOwn = faceOwnerCells_[facei];
+        const auto& addedNei = faceNeighbourCells_[facei];
         const face& f = mesh_.faces()[facei];
+        //const point& fc = mesh_.faceCentres()[facei];
 
+        label nei = -1;
         label patchi = -1;
         if (facei >= mesh_.nInternalFaces())
         {
             patchi = mesh_.boundaryMesh().whichPatch(facei);
         }
-
-        label zoneI = mesh_.faceZones().whichZone(facei);
-        bool zoneFlip = false;
-        if (zoneI != -1)
+        else
         {
-            const faceZone& fz = mesh_.faceZones()[zoneI];
-            zoneFlip = fz.flipMap()[fz.whichFace(facei)];
+            nei = mesh_.faceNeighbour()[facei];
         }
 
-        //Pout<< "Face:" << facei << " at:" << mesh_.faceCentres()[facei]
-        //    << endl;
+        label zonei = mesh_.faceZones().whichZone(facei);
+        bool zoneFlip = false;
+        if (zonei != -1)
+        {
+            const faceZone& fz = mesh_.faceZones()[zonei];
+            zoneFlip = fz.flipMap()[fz.whichFace(facei)];
+        }
 
         if (decomposeType == FACE_CENTRE_TRIS && decomposeFace[facei])
         {
@@ -480,12 +926,18 @@ void Foam::tetDecomposer::setRefinement
                     triangle[1] = f[f.fcIndex(fp)];
                     triangle[2] = faceToPoint_[facei];
 
-                    //Pout<< "    triangle:" << triangle
-                    //    << " points:"
-                    //    << UIndirectList<point>(meshMod.points(), triangle)
-                    //    << " between:" << addedOwn[fp]
-                    //    << " and:" << addedNei[fp] << endl;
-
+                    const label newOwn
+                    (
+                        addedOwn.size() == 1
+                      ? addedOwn[0]
+                      : addedOwn[fp]
+                    );
+                    const label newNei
+                    (
+                        addedNei.size() == 1
+                      ? addedNei[0]
+                      : addedNei[fp]
+                    );
 
                     if (fp == 0)
                     {
@@ -494,10 +946,10 @@ void Foam::tetDecomposer::setRefinement
                             meshMod,
                             triangle,
                             facei,
-                            addedOwn[fp],
-                            addedNei[fp],
+                            newOwn,
+                            newNei,
                             patchi,
-                            zoneI,
+                            zonei,
                             zoneFlip
                         );
                     }
@@ -507,13 +959,14 @@ void Foam::tetDecomposer::setRefinement
                         (
                             meshMod,
                             triangle,
-                            addedOwn[fp],
-                            addedNei[fp],
+                            facei,
+                            newOwn,
+                            newNei,
                             -1,                 //point
                             -1,                 //edge
                             facei,              //face
                             patchi,
-                            zoneI,
+                            zonei,
                             zoneFlip
                         );
                     }
@@ -534,6 +987,7 @@ void Foam::tetDecomposer::setRefinement
                     (
                         meshMod,
                         triangle,
+                        facei,
                         newOwn,
                         newNei,
                         f[fp],      //point
@@ -545,23 +999,20 @@ void Foam::tetDecomposer::setRefinement
                     );
                 }
                 // 2b. Within neighbour cell - to cell centre
-                if
-                (
-                    facei < mesh_.nInternalFaces()
-                 && decomposeCell[mesh_.faceNeighbour()[facei]]
-                )
+                if (facei < mesh_.nInternalFaces() && decomposeCell[nei])
                 {
                     label newOwn = addedNei[f.rcIndex(fp)];
                     label newNei = addedNei[fp];
 
                     triangle[0] = f[fp];
                     triangle[1] = faceToPoint_[facei];
-                    triangle[2] = cellToPoint_[mesh_.faceNeighbour()[facei]];
+                    triangle[2] = cellToPoint_[nei];
 
                     addFace
                     (
                         meshMod,
                         triangle,
+                        facei,
                         newOwn,
                         newNei,
                         f[fp],      //point
@@ -579,9 +1030,9 @@ void Foam::tetDecomposer::setRefinement
             label fp0 = max(mesh_.tetBasePtIs()[facei], 0);
             label fp = f.fcIndex(fp0);
 
-            for (label triI = 0; triI < f.size()-2; triI++)
+            for (label trii = 0; trii < f.size()-2; trii++)
             {
-                label nextTri = triI+1;
+                label nextTri = trii+1;
                 if (nextTri >= f.size()-2)
                 {
                     nextTri -= f.size()-2;
@@ -589,27 +1040,40 @@ void Foam::tetDecomposer::setRefinement
                 label nextFp = f.fcIndex(fp);
 
 
-                // Triangle triI consisiting of f[fp0], f[fp], f[nextFp]
+                // Triangle trii consisiting of f[fp0], f[fp], f[nextFp]
 
 
                 // 1. Front triangle (decomposition of face itself)
                 //    (between owner and neighbour cell)
                 {
+                    const label newOwn
+                    (
+                        addedOwn.size() == 1
+                      ? addedOwn[0]
+                      : addedOwn[trii]
+                    );
+                    const label newNei
+                    (
+                        addedNei.size() == 1
+                      ? addedNei[0]
+                      : addedNei[trii]
+                    );
+
                     triangle[0] = f[fp0];
                     triangle[1] = f[fp];
                     triangle[2] = f[nextFp];
 
-                    if (triI == 0)
+                    if (trii == 0)
                     {
                         modifyFace
                         (
                             meshMod,
                             triangle,
                             facei,
-                            addedOwn[triI],
-                            addedNei[triI],
+                            newOwn,
+                            newNei,
                             patchi,
-                            zoneI,
+                            zonei,
                             zoneFlip
                         );
                     }
@@ -619,13 +1083,14 @@ void Foam::tetDecomposer::setRefinement
                         (
                             meshMod,
                             triangle,
-                            addedOwn[triI],
-                            addedNei[triI],
+                            facei,
+                            newOwn,
+                            newNei,
                             -1,                 //point
                             -1,                 //edge
                             facei,              //face
                             patchi,
-                            zoneI,
+                            zonei,
                             zoneFlip
                         );
                     }
@@ -633,11 +1098,11 @@ void Foam::tetDecomposer::setRefinement
 
 
                 // 2. Within owner cell - diagonal to cell centre
-                if (triI < f.size()-3)
+                if (trii < f.size()-3)
                 {
                     if (decomposeCell[own])
                     {
-                        label newOwn = addedOwn[triI];
+                        label newOwn = addedOwn[trii];
                         label newNei = addedOwn[nextTri];
 
                         triangle[0] = f[fp0];
@@ -648,6 +1113,7 @@ void Foam::tetDecomposer::setRefinement
                         (
                             meshMod,
                             triangle,
+                            facei,
                             newOwn,
                             newNei,
                             f[fp],      //point
@@ -660,24 +1126,20 @@ void Foam::tetDecomposer::setRefinement
                     }
 
                     // 2b. Within neighbour cell - to cell centre
-                    if
-                    (
-                        facei < mesh_.nInternalFaces()
-                     && decomposeCell[mesh_.faceNeighbour()[facei]]
-                    )
+                    if (facei < mesh_.nInternalFaces() && decomposeCell[nei])
                     {
-                        label newOwn = addedNei[triI];
+                        label newOwn = addedNei[trii];
                         label newNei = addedNei[nextTri];
 
                         triangle[0] = f[nextFp];
                         triangle[1] = f[fp0];
-                        triangle[2] =
-                            cellToPoint_[mesh_.faceNeighbour()[facei]];
+                        triangle[2] = cellToPoint_[nei];
 
                         addFace
                         (
                             meshMod,
                             triangle,
+                            facei,
                             newOwn,
                             newNei,
                             f[fp],      //point
@@ -694,6 +1156,175 @@ void Foam::tetDecomposer::setRefinement
                 fp = nextFp;
             }
         }
+        else if (decomposeType == FACE_DIAG_QUADS && decomposeFace[facei])
+        {
+            // Decompose face into subFaces (quads followed by any triangles)
+            splitFace
+            (
+                boundaryQuads,
+                boundaryTris,
+                facei,
+                patchi,
+                quadFaces,  // work space
+                triFaces,   // work space
+                subFaces
+            );
+
+            EdgeMap<labelPair> edgeFaces(subFaces.size());
+
+            forAll(subFaces, subFacei)
+            {
+                const face& subF = subFaces[subFacei];
+
+                // 1. Front quad (decomposition of face itself)
+                //    (between owner and neighbour cell)
+                {
+                    const label newOwn
+                    (
+                        addedOwn.size() == 1
+                      ? addedOwn[0]
+                      : addedOwn[subFacei]
+                    );
+                    const label newNei
+                    (
+                        addedNei.size() == 1
+                      ? addedNei[0]
+                      : addedNei[subFacei]
+                    );
+
+                    if (subFacei == 0)
+                    {
+                        modifyFace
+                        (
+                            meshMod,
+                            subF,
+                            facei,
+                            newOwn,
+                            newNei,
+                            patchi,
+                            zonei,
+                            zoneFlip
+                        );
+                    }
+                    else
+                    {
+                        addFace
+                        (
+                            meshMod,
+                            subF,
+                            facei,
+                            newOwn,
+                            newNei,
+                            -1,                 //point
+                            -1,                 //edge
+                            facei,              //face
+                            patchi,
+                            zonei,
+                            zoneFlip
+                        );
+                    }
+                }
+
+                // Populate edge-faces (note: in order of increasing subFacei
+                // and hence in order of added cells)
+                forAll(subF, fp)
+                {
+                    const edge e(subF.edge(fp));
+                    auto eFnd = edgeFaces.find(e);
+                    if (!eFnd)
+                    {
+                        edgeFaces.insert(e, labelPair(subFacei, -1));
+                    }
+                    else
+                    {
+                        auto& eFaces = eFnd();
+                        if (eFaces[1] != -1)
+                        {
+                            FatalErrorInFunction << "edgeFaces:" << edgeFaces
+                            << exit(FatalError);
+                        }
+                        eFaces[1] = subFacei;
+                    }
+                }
+            }
+
+            // Get diagonals
+            forAllConstIters(edgeFaces, iter)
+            {
+                const auto& e = iter.key();
+                const auto& eFaces = iter();
+
+                if (eFaces.find(-1) != -1)
+                {
+                    // Open edge
+                    //Pout<< "for face:" << facei
+                    //    << " ignoring open edge:" << e << endl;
+                    continue;
+                }
+
+                if (decomposeCell[own])
+                {
+                    const label newOwn(addedOwn[eFaces[0]]);
+                    const label newNei(addedOwn[eFaces[1]]);
+
+                    if (newNei < newOwn) FatalErrorInFunction << "problem"
+                        << exit(FatalError);
+
+                    // Point out of owner side
+                    triangle[0] = e[1];
+                    triangle[1] = e[0];
+                    triangle[2] = cellToPoint_[own];
+
+                    addFace
+                    (
+                        meshMod,
+                        triangle,
+                        facei,
+                        newOwn,
+                        newNei,
+                        e[0],       //point ? or edge ? or face ?
+                        -1,         //edge
+                        -1,         //face
+                        -1,         //patchi
+                        -1,         //zone
+                        false
+                    );
+                }
+
+                // 2b. Within neighbour cell - to cell centre
+                if
+                (
+                    facei < mesh_.nInternalFaces()
+                 && decomposeCell[nei]
+                )
+                {
+                    const label newOwn(addedNei[eFaces[0]]);
+                    const label newNei(addedNei[eFaces[1]]);
+
+                    if (newNei < newOwn) FatalErrorInFunction << "problem"
+                        << exit(FatalError);
+
+                    triangle[0] = e[0];
+                    triangle[1] = e[1];
+                    triangle[2] = cellToPoint_[nei];
+
+                    addFace
+                    (
+                        meshMod,
+                        triangle,
+                        facei,
+                        newOwn,
+                        newNei,
+                        e[0],       //point ? or edge ? or face ?
+                        -1,         //edge
+                        -1,         //face
+                        -1,         //patchi
+                        -1,         //zone
+                        false
+                    );
+                }
+            }
+        }
         else
         {
             // No decomposition. Use zero'th slot.
@@ -705,31 +1336,32 @@ void Foam::tetDecomposer::setRefinement
                 addedOwn[0],
                 addedNei[0],
                 patchi,
-                zoneI,
+                zonei,
                 zoneFlip
             );
         }
     }
 
 
-
-    // Add triangles for all edges.
+    // Add triangles to the cell centre for all edges to form the pyramids
     EdgeMap<label> edgeToFace;
 
     forAll(mesh_.cells(), celli)
     {
-        const cell& cFaces = mesh_.cells()[celli];
-
-        edgeToFace.clear();
-
-        forAll(cFaces, cFacei)
+        if (decomposeCell[celli])
         {
-            label facei = cFaces[cFacei];
+            const cell& cFaces = mesh_.cells()[celli];
 
-            if (decomposeCell[celli])
+            edgeToFace.clear();
+
+            forAll(cFaces, cFacei)
             {
+                const label facei = cFaces[cFacei];
+                const label patchi = mesh_.boundaryMesh().whichPatch(facei);
                 const face& f = mesh_.faces()[facei];
-                //const labelList& fEdges = mesh_.faceEdges()[facei];
+
+                // Loop over edges of face. Avoid constructing faceEdges for
+                // whole mesh.
                 forAll(f, fp)
                 {
                     label p0 = f[fp];
@@ -782,79 +1414,173 @@ void Foam::tetDecomposer::setRefinement
                         }
 
                         // Determine tets on either side
-                        label thisTet, otherTet;
+
+                        const auto& thisCells =
+                        (
+                            (mesh_.faceOwner()[facei] == celli)
+                          ? faceOwnerCells_[facei]
+                          : faceNeighbourCells_[facei]
+                        );
+                        const auto& otherCells =
+                        (
+                            (mesh_.faceOwner()[otherFacei] == celli)
+                          ? faceOwnerCells_[otherFacei]
+                          : faceNeighbourCells_[otherFacei]
+                        );
+
+                        label thisTet = -1;
+                        label otherTet = -1;
 
                         if (decomposeType == FACE_CENTRE_TRIS)
                         {
-                            if (mesh_.faceOwner()[facei] == celli)
+                            if (thisCells.size() == 1)
                             {
-                                thisTet = faceOwnerCells_[facei][fp];
+                                thisTet = thisCells[0];
                             }
                             else
                             {
-                                thisTet = faceNeighbourCells_[facei][fp];
+                                thisTet = thisCells[fp];
                             }
 
-                            if (mesh_.faceOwner()[otherFacei] == celli)
+                            if (otherCells.size() == 1)
                             {
-                                otherTet =
-                                    faceOwnerCells_[otherFacei][otherFp];
+                                otherTet = otherCells[0];
                             }
                             else
                             {
-                                otherTet =
-                                    faceNeighbourCells_[otherFacei][otherFp];
+                                otherTet = otherCells[otherFp];
                             }
                         }
                         else if (decomposeType == FACE_DIAG_TRIS)
                         {
-                            label thisTriI = triIndex(facei, fp);
-                            if (mesh_.faceOwner()[facei] == celli)
+                            if (thisCells.size() == 1)
                             {
-                                thisTet = faceOwnerCells_[facei][thisTriI];
+                                thisTet = thisCells[0];
                             }
                             else
                             {
-                                thisTet = faceNeighbourCells_[facei][thisTriI];
+                                thisTet = thisCells[triIndex(facei, fp)];
                             }
 
-                            label otherTriI = triIndex(otherFacei, otherFp);
-                            if (mesh_.faceOwner()[otherFacei] == celli)
+                            if (otherCells.size() == 1)
                             {
-                                otherTet =
-                                    faceOwnerCells_[otherFacei][otherTriI];
+                                otherTet = otherCells[0];
                             }
                             else
                             {
                                 otherTet =
-                                    faceNeighbourCells_[otherFacei][otherTriI];
+                                    otherCells[triIndex(otherFacei, otherFp)];
+                            }
+                        }
+                        else if (decomposeType == FACE_DIAG_QUADS)
+                        {
+                            // Get added cell on facei
+                            if (thisCells.size() == 1)
+                            {
+                                thisTet = thisCells[0];
+                            }
+                            else
+                            {
+                                // We have not stored the face-split so
+                                // don't know yet the correspondence. Maybe
+                                // store to avoid re-doing split?
+                                splitFace
+                                (
+                                    boundaryQuads,
+                                    boundaryTris,
+                                    facei,
+                                    patchi,
+                                    quadFaces,  // work space
+                                    triFaces,   // work space
+                                    subFaces
+                                );
+
+                                // Find the edge. Should be only on one of the
+                                // subfaces.
+                                forAll(subFaces, subFacei)
+                                {
+                                    const auto& subF = subFaces[subFacei];
+                                    if (subF.find(e) != -1)
+                                    {
+                                        thisTet = thisCells[subFacei];
+                                        break;
+                                    }
+                                }
+                                if (thisTet == -1)
+                                {
+                                    FatalErrorInFunction
+                                        << "For cell:" << celli
+                                        << " at:" << mesh_.cellCentres()[celli]
+                                        << " patch:" << patchi
+                                        << " face:" << facei
+                                        << " at:" << mesh_.faceCentres()[facei]
+                                        << " did not find edge:" << e
+                                        << " at:" << e.line(mesh_.points())
+                                        << " in OWNER-side decomposed faces:"
+                                        << flatOutput(subFaces)
+                                        << exit(FatalError);
+                                }
+                            }
+
+
+                            // Get added cell on otherFacei
+                            if (otherCells.size() == 1)
+                            {
+                                otherTet = otherCells[0];
+                            }
+                            else
+                            {
+                                splitFace
+                                (
+                                    boundaryQuads,
+                                    boundaryTris,
+                                    otherFacei,
+                                    mesh_.boundaryMesh().whichPatch(otherFacei),
+                                    quadFaces,  // work space
+                                    triFaces,   // work space
+                                    subFaces
+                                );
+
+                                // Find the edge. Should be only on one of the
+                                // subfaces.
+                                forAll(subFaces, subFacei)
+                                {
+                                    const auto& subF = subFaces[subFacei];
+                                    if (subF.find(e) != -1)
+                                    {
+                                        otherTet = otherCells[subFacei];
+                                        break;
+                                    }
+                                }
+                                if (otherTet == -1)
+                                {
+                                    FatalErrorInFunction
+                                        << "For cell:" << celli
+                                        << " at:" << mesh_.cellCentres()[celli]
+                                        << " patch:"
+                                        << mesh_.boundaryMesh().whichPatch(otherFacei)
+                                        << " face:" << otherFacei
+                                        << " at:"
+                                        << mesh_.faceCentres()[otherFacei]
+                                        << " did not find edge:" << e
+                                        << " at:" << e.line(mesh_.points())
+                                        << " in decomposed faces:"
+                                        << flatOutput(subFaces)
+                                        << exit(FatalError);
+                                }
                             }
                         }
                         else
                         {
-                            if (mesh_.faceOwner()[facei] == celli)
-                            {
-                                thisTet = faceOwnerCells_[facei][0];
-                            }
-                            else
-                            {
-                                thisTet = faceNeighbourCells_[facei][0];
-                            }
-                            if (mesh_.faceOwner()[otherFacei] == celli)
-                            {
-                                otherTet = faceOwnerCells_[otherFacei][0];
-                            }
-                            else
-                            {
-                                otherTet =
-                                    faceNeighbourCells_[otherFacei][0];
-                            }
+                            thisTet = thisCells[0];
+                            otherTet = otherCells[0];
                         }
 
                         addFace
                         (
                             meshMod,
                             triangle,
+                            facei,
                             otherTet,
                             thisTet,
                             -1,         //masterPoint

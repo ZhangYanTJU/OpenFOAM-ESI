@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,7 @@ Class
     Foam::tetDecomposer
 
 Description
-    Decomposes polyMesh into tets or pyramids.
+    Decomposes polyMesh into tets (or pyramids)
 
     Cells neighbouring decomposed cells are not decomposed themselves
     so will be polyhedral.
@@ -46,6 +46,7 @@ SourceFiles
 #include "boolList.H"
 #include "typeInfo.H"
 #include "Enum.H"
+#include "faceList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -72,7 +73,8 @@ public:
             FACE_CENTRE_TRIS, //- Faces decomposed into triangles
                               //  using face-centre
             FACE_DIAG_TRIS,   //- Faces decomposed into triangles diagonally
-            PYRAMID           //- Faces not decomposed (generates pyramids)
+            PYRAMID,          //- Faces not decomposed (generates pyramids)
+            FACE_DIAG_QUADS   //- Like FACE_DIAG_TRIS but does quads mainly
         };
         static const Enum<decompositionType> decompositionTypeNames;
 
@@ -88,7 +90,6 @@ private:
 
         //- From face to tet point
         labelList faceToPoint_;
-
 
         // Per face, per point (faceCentre) or triangle (faceDiag)
         // the added tet on the owner side
@@ -119,6 +120,7 @@ private:
         (
             polyTopoChange& meshMod,
             const face& f,
+            const label facei,
             const label own,
             const label nei,
             const label masterPointID,
@@ -131,6 +133,46 @@ private:
 
         //- Work out triangle index given the starting vertex in the face
         label triIndex(const label facei, const label fp) const;
+
+        //- Calculate triangulation of boundary faces
+        void splitBoundaryFaces
+        (
+            List<faceList>& boundaryQuads,
+            List<faceList>& boundaryTris
+        ) const;
+
+        //- Correct coupled faces to match up
+        void relativeIndicesToFace
+        (
+            const bool doFlip,
+            const face& meshFace,
+            const faceList& indexLists,
+            faceList& faces
+        ) const;
+
+        //- Calculate triangulation of any face
+        void splitFace
+        (
+            const List<faceList>& boundaryQuads,
+            const List<faceList>& boundaryTris,
+            const label facei,
+            const label patchi,
+            label& quadi,
+            faceList& quadFaces,
+            label& trii,
+            faceList& triFaces
+        ) const;
+
+        void splitFace
+        (
+            const List<faceList>& boundaryQuads,
+            const List<faceList>& boundaryTris,
+            const label facei,
+            const label patchi,
+            faceList& quadFaces,
+            faceList& triFaces,
+            faceList& subFaces
+        ) const;
 
         //- No copy construct
         tetDecomposer(const tetDecomposer&) = delete;
@@ -188,11 +230,22 @@ public:
         // Edit
 
             //- Insert all changes into meshMod to convert the polyMesh into
-            //  tets.
+            //  subshapes (tets/prisms)
             void setRefinement
             (
                 const decompositionType decomposeType,
                 const bitSet& decomposeCell,
+                polyTopoChange& meshMod
+            );
+
+            //- Insert all changes into meshMod to convert the polyMesh into
+            //- subshapes (tets/prisms). Explicit control over which faces
+            //- get decomposed. Can be used e.g. to not split triangles.
+            void setRefinement
+            (
+                const decompositionType decomposeType,
+                const bitSet& decomposeCell,
+                const bitSet& decomposeFace,
                 polyTopoChange& meshMod
             );
 
