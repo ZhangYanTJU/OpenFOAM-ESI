@@ -43,7 +43,7 @@ Type Foam::functionObjects::extractEulerianParticles::faceValue
     {
         label patchi = patchIDs_[localFacei];
         label pFacei = patchFaceIDs_[localFacei];
-        if (patchi != 0)
+        if (patchi != -1)
         {
             return field.boundaryField()[patchi][pFacei];
         }
