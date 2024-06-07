@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,6 +35,7 @@ License
 #include "NonSphereDragForce.H"
 
 #include "SaffmanMeiLiftForce.H"
+#include "TomiyamaDragForce.H"
 #include "TomiyamaLiftForce.H"
 
 #include "GravityForce.H"
@@ -53,6 +54,7 @@ License
     makeParticleForceModelType(SphereDragForce, CloudType);                    \
     makeParticleForceModelType(NonSphereDragForce, CloudType);                 \
     makeParticleForceModelType(SaffmanMeiLiftForce, CloudType);                \
+    makeParticleForceModelType(TomiyamaDragForce, CloudType);                  \
     makeParticleForceModelType(TomiyamaLiftForce, CloudType);                  \
     makeParticleForceModelType(GravityForce, CloudType);                       \
     makeParticleForceModelType(NonInertialFrameForce, CloudType);              \
