@@ -76,6 +76,7 @@ patchWave = $(algorithms)/PatchEdgeFaceWave
 $(patchWave)/PatchEdgeFaceWaveBase.C
 $(patchWave)/patchEdgeFaceInfo.C
 $(patchWave)/patchPatchDist.C
+$(patchWave)/patchEdgeFaceRegion.C
 $(patchWave)/patchEdgeFaceRegions.C
 
 
