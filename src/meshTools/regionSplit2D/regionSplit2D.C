@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,7 @@ License
 #include "regionSplit2D.H"
 #include "polyMesh.H"
 #include "PatchEdgeFaceWave.H"
-#include "edgeTopoDistanceData.H"
+#include "patchEdgeFaceRegion.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -51,12 +51,11 @@ Foam::regionSplit2D::regionSplit2D
     nRegions_(0)
 {
     globalIndex globalFaces(blockedFaces.size());
-    label regionI = globalFaces.toGlobal(0);
-    List<edgeTopoDistanceData<label>> allEdgeInfo(patch.nEdges());
-    List<edgeTopoDistanceData<label>> allFaceInfo(patch.size());
+    label regioni = globalFaces.toGlobal(0);
+    List<patchEdgeFaceRegion> allEdgeInfo(patch.nEdges());
+    List<patchEdgeFaceRegion> allFaceInfo(patch.size());
     DynamicList<label> changedEdges;
-    DynamicList<edgeTopoDistanceData<label>> changedRegions;
-
+    DynamicList<patchEdgeFaceRegion> changedRegions;
     label nBlockedFaces = 0;
     forAll(blockedFaces, facei)
     {
@@ -67,26 +66,15 @@ Foam::regionSplit2D::regionSplit2D
                 changedEdges.append(edgei);
 
                 // Append globally unique value
-                changedRegions.append
-                (
-                    edgeTopoDistanceData<label>
-                    (
-                        0,              // distance
-                        regionI         // passive data
-                    )
-                );
+                changedRegions.append(regioni);
             }
             nBlockedFaces++;
-            regionI++;
+            regioni++;
         }
         else
         {
             // Block all non-seeded faces from the walk
-            allFaceInfo[facei] = edgeTopoDistanceData<label>
-            (
-                0,              // distance
-                BLOCKED         // passive data
-            );
+            allFaceInfo[facei] = BLOCKED;
         }
     }
 
@@ -99,7 +87,7 @@ Foam::regionSplit2D::regionSplit2D
     PatchEdgeFaceWave
     <
         indirectPrimitivePatch,
-        edgeTopoDistanceData<label>
+        patchEdgeFaceRegion
     >
     (
         mesh,
@@ -115,23 +103,23 @@ Foam::regionSplit2D::regionSplit2D
     // Map from regions to local compact indexing
     // - only for regions that originate from this processor
     Map<label> regionToCompactAddr(changedRegions.size());
-    label compactRegionI = 0;
-    forAll(allFaceInfo, faceI)
+    label compactRegioni = 0;
+    forAll(allFaceInfo, facei)
     {
-        label regionI = allFaceInfo[faceI].data();
+        const label regioni = allFaceInfo[facei].region();
         if
         (
-            globalFaces.isLocal(regionI)
-         && regionToCompactAddr.insert(regionI, compactRegionI)
+            globalFaces.isLocal(regioni)
+         && regionToCompactAddr.insert(regioni, compactRegioni)
         )
         {
-            compactRegionI++;
+            compactRegioni++;
         }
     }
 
-    // In-place renumber the local regionI to global (compact) regionI
+    // In-place renumber the local regionI to global (compact) regioni
     {
-        const label myProcOffset = globalIndex::calcOffset(compactRegionI);
+        const label myProcOffset = globalIndex::calcOffset(compactRegioni);
         forAllIters(regionToCompactAddr, iter)
         {
             iter.val() += myProcOffset;
@@ -147,12 +135,12 @@ Foam::regionSplit2D::regionSplit2D
     nRegions_ = regionToCompactAddr.size();
 
     // Set the region index per face
-    forAll(allFaceInfo, faceI)
+    forAll(allFaceInfo, facei)
     {
-        label regionI = allFaceInfo[faceI].data();
-        if (regionI >= 0)
+        const label regioni = allFaceInfo[facei].region();
+        if (regioni >= 0)
         {
-            this->operator[](faceI) = regionToCompactAddr[regionI] + offset;
+            this->operator[](facei) = regionToCompactAddr[regioni] + offset;
         }
     }
 }
