@@ -110,4 +110,14 @@ Foam::emptyFvsPatchField<Type>::emptyFvsPatchField
 {}
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::emptyFvsPatchField<Type>::write(Ostream& os) const
+{
+    fvsPatchField<Type>::write(os);
+    // Never write "value"
+}
+
+
 // ************************************************************************* //

@@ -30,14 +30,15 @@ Class
 Description
     This boundary condition enforces a symmetry constraint
 
-    The "value" entry is NO_READ, NO_WRITE.
+    The "value" entry is MUST_READ.
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        type            symmetry;
+        type    symmetry;
+        value   ...;
     }
     \endverbatim
 
@@ -82,7 +83,7 @@ public:
         );
 
         //- Construct from patch, internal field and dictionary
-        //- The "value" entry is NO_READ.
+        //- The "value" entry is MUST_READ.
         symmetryFvsPatchField
         (
             const fvPatch&,
@@ -126,6 +127,12 @@ public:
         {
             return fvsPatchField<Type>::Clone(*this, iF);
         }
+
+
+    // Member Functions
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 };
 
 

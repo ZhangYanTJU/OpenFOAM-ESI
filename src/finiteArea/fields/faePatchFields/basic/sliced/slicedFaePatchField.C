@@ -131,4 +131,14 @@ Foam::slicedFaePatchField<Type>::~slicedFaePatchField()
 }
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::slicedFaePatchField<Type>::write(Ostream& os) const
+{
+    faePatchField<Type>::write(os);
+    faePatchField<Type>::writeValueEntry(os);
+}
+
+
 // ************************************************************************* //

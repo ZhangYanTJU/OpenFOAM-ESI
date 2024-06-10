@@ -137,4 +137,14 @@ void Foam::emptyFaPatchField<Type>::updateCoeffs()
 }
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::emptyFaPatchField<Type>::write(Ostream& os) const
+{
+    faPatchField<Type>::write(os);
+    // Never write "value"
+}
+
+
 // ************************************************************************* //

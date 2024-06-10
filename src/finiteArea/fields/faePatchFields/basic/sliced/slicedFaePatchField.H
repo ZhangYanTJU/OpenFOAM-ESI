@@ -141,6 +141,9 @@ public:
         //- True: this patch field fixes a value.
         virtual bool fixesValue() const { return true; }
 
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
+
 
     // Member Operators
 

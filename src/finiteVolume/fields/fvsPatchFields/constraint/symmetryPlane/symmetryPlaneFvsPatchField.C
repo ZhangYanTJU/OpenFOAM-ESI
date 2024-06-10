@@ -49,7 +49,7 @@ Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
     const dictionary& dict
 )
 :
-    fvsPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ)
+    fvsPatchField<Type>(p, iF, dict, IOobjectOption::MUST_READ)
 {
     if (!isType<symmetryPlaneFvPatch>(p))
     {
@@ -103,6 +103,16 @@ Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
 :
     symmetryPlaneFvsPatchField<Type>(ptf, ptf.internalField())
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::symmetryPlaneFvsPatchField<Type>::write(Ostream& os) const
+{
+    fvsPatchField<Type>::write(os);
+    fvsPatchField<Type>::writeValueEntry(os);
+}
 
 
 // ************************************************************************* //
