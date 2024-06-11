@@ -29,6 +29,7 @@ divSchemes
     default         none;
 
     div(phi,U)      Gauss limitedLinearV 1;
+    div(phiMRF,p)   Gauss limitedLinear 1;
 
     div(phi,h)      Gauss limitedLinear 1;
     div(phi,K)      Gauss linear;
