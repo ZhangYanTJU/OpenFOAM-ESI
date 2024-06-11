@@ -134,10 +134,7 @@ bool Foam::functionObjects::zeroGradient::execute()
 {
     results_.clear();
 
-    wordHashSet candidates
-    (
-        mesh_.names(selectFields_)
-    );
+    wordHashSet candidates(mesh_.names<regIOobject>(selectFields_));
 
     DynamicList<word> missing(selectFields_.size());
     DynamicList<word> ignored(selectFields_.size());
