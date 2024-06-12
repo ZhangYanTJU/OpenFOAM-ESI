@@ -91,6 +91,14 @@ makeLaminarModel(generalizedNewtonian);
 #include "kEpsilon.H"
 makeRASModel(kEpsilon);
 
+#include "realizableKE.H"
+makeRASModel(realizableKE);
+
+#include "kOmega.H"
+makeRASModel(kOmega);
+
+#include "kOmegaSST.H"
+makeRASModel(kOmegaSST);
 
 // -------------------------------------------------------------------------- //
 // LES models
