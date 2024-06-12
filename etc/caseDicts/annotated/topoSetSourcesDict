@@ -34,6 +34,16 @@ cellSet_doc
         // or
         min     (0 0 0);
         max     (1 1 1);
+
+        // Optional the cell centres can be transformed before being used. This
+        // can be used to simulate moving selections in transient simulations.
+        // Any solidBodyMotionFunction can be used. Note: the same optional
+        // transformation can be used for any selection requiring face centres
+        // or point locations.
+        solidBodyMotionFunction linearMotion
+        {
+            velocity    (-0.1 -0.1 0);
+        }
     }
 
 
@@ -58,6 +68,8 @@ cellSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
     //- Select based on faceSet
@@ -117,6 +129,8 @@ cellSet_doc
     {
         source  nearestToCell;
         points  ((0 0 0) (1 1 1)(2 2 2));
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -162,6 +176,8 @@ cellSet_doc
         i       (0.2 0.2 0);
         j       (-0.2 0.2 0);
         k       (10 10 10);
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -170,6 +186,8 @@ cellSet_doc
         source       searchableSurfaceToCell;
         surfaceType  triSurfaceMesh;  // Type of surface
         surfaceName  blob.obj;        // Name for surface object
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -188,6 +206,8 @@ cellSet_doc
 
         // optional
         innerRadius 1.0;
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -209,6 +229,7 @@ cellSet_doc
         useSurfaceOrientation false;  // use closed surface inside/outside
                                       // test (ignores includeCut,
                                       // outsidePoints)
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -257,6 +278,8 @@ faceSet_doc
         // or
         min     (0 0 0);
         max     (1 1 1);
+
+        // See boxToCell for optional transformation of the face centres
     }
 
 
@@ -286,6 +309,8 @@ faceSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+
+        // See boxToCell for optional transformation of the face centres
     }
 
 
@@ -352,6 +377,8 @@ faceSet_doc
         source       searchableSurfaceToFace;
         surfaceType  triSurfaceMesh;  // Type of surface
         surfaceName  blob.obj;        // Name for surface object
+
+        // See boxToCell for optional transformation of the face centres
     }
 
 
@@ -362,6 +389,8 @@ faceSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+
+        // See boxToCell for optional transformation of the face centres
     }
 
 
@@ -410,6 +439,8 @@ pointSet_doc
         // or
         min     (0 0 0);
         max     (1 1 1);
+
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -436,6 +467,7 @@ pointSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -465,6 +497,7 @@ pointSet_doc
     {
         source  nearestToPoint;
         points  ((0 0 0) (1 1 1));
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -486,6 +519,7 @@ pointSet_doc
         source       searchableSurfaceToCell;
         surfaceType  triSurfaceMesh;  // Type of surface
         surfaceName  blob.obj;        // Name for surface object
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -496,6 +530,7 @@ pointSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -508,6 +543,7 @@ pointSet_doc
                                 // (requires closed surface with consistent
                                 //  normals)
         includeOutside  false;  //   ,,    outside  ,,
+        // See boxToCell for optional transformation of the points
     }
 
 

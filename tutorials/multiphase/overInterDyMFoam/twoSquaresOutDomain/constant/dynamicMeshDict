@@ -28,9 +28,6 @@ multiSolidBodyMotionSolverCoeffs
             one
             {
                 solidBodyMotionFunction linearMotion;
-                origin      (0.005 0.005 0.005);
-                axis        (0 0 1);
-                omega       0;
                 velocity    (-0.1 -0.1 0);
             }
             two
@@ -39,7 +36,6 @@ multiSolidBodyMotionSolverCoeffs
                 origin      (0.005 0.005 0.005);
                 axis        (0 0 1);
                 omega       20.0;
-                velocity    (-0.1 0 0);
             }
         }
     }
@@ -50,9 +46,6 @@ multiSolidBodyMotionSolverCoeffs
         linearMotionCoeffs
         {
             velocity    (0.1 0 0);
-            origin      (0.009 0.005 0.005);
-            axis        (0 0 1);
-            omega       -100.0;
         }
     }
 }
