@@ -123,4 +123,12 @@ void Foam::emptyFvPatchField<Type>::updateCoeffs()
 }
 
 
+template<class Type>
+void Foam::emptyFvPatchField<Type>::write(Ostream& os) const
+{
+    fvPatchField<Type>::write(os);
+    // Never write "value"
+}
+
+
 // ************************************************************************* //

@@ -108,4 +108,14 @@ Foam::emptyFaePatchField<Type>::emptyFaePatchField
 {}
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::emptyFaePatchField<Type>::write(Ostream& os) const
+{
+    faePatchField<Type>::write(os);
+    // Never write "value"
+}
+
+
 // ************************************************************************* //

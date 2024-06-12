@@ -43,8 +43,8 @@ Usage
     \verbatim
     <patchName>
     {
-        type            fixedValue;
-        value           uniform 0;  // Example for scalar field usage
+        type    fixedValue;
+        value   uniform 0;  // Example for scalar field usage
     }
     \endverbatim
 
@@ -151,7 +151,7 @@ public:
         virtual void write(Ostream&) const;
 
 
-        // Evaluation functions
+        // Evaluation Functions
 
             //- Return the matrix diagonal coefficients corresponding to the
             //  evaluation of the value of this patchField with given weights

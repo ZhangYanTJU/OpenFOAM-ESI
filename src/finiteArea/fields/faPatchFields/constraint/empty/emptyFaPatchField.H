@@ -186,6 +186,12 @@ public:
             {
                 return tmp<Field<Type>>::New();
             }
+
+
+    // Member Functions
+
+        //- Write without "value" entry!
+        virtual void write(Ostream&) const;
 };
 
 

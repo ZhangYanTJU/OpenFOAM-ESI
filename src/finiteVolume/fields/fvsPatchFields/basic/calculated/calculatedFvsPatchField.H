@@ -43,8 +43,8 @@ Usage
     \verbatim
     <patchName>
     {
-        type            calculated;
-        value           uniform (0 0 0);    // Required value entry
+        type    calculated;
+        value   uniform (0 0 0);    // Required value entry
     }
     \endverbatim
 
@@ -88,6 +88,7 @@ public:
         );
 
         //- Construct from patch, internal field and dictionary
+        //- The "value" entry is MUST_READ.
         calculatedFvsPatchField
         (
             const fvPatch&,

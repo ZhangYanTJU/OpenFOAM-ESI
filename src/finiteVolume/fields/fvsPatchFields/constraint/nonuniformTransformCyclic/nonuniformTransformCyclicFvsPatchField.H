@@ -54,7 +54,6 @@ class nonuniformTransformCyclicFvsPatchField
 :
     public cyclicFvsPatchField<Type>
 {
-
 public:
 
     //- Runtime type information

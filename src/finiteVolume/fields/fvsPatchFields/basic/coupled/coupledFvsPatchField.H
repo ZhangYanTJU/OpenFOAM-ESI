@@ -123,7 +123,7 @@ public:
 
     // Member Functions
 
-        //- True if this patch field is derived from coupledFvsPatchField
+        //- True: this patch field is derived from coupledFvsPatchField
         virtual bool coupled() const
         {
             return true;

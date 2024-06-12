@@ -31,14 +31,15 @@ Description
     This boundary condition is similar to the cyclic condition, except that
     it is applied to 2-D geometries.
 
-    The "value" entry is NO_READ, NO_WRITE.
+    The "value" entry is MUST_READ.
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        type            wedge;
+        type    wedge;
+        value   uniform ...;    // Required value entry
     }
     \endverbatim
 
@@ -83,7 +84,7 @@ public:
         );
 
         //- Construct from patch, internal field and dictionary.
-        //- The "value" entry is NO_READ.
+        //- The "value" entry is MUST_READ.
         wedgeFvsPatchField
         (
             const fvPatch&,
@@ -127,6 +128,12 @@ public:
         {
             return fvsPatchField<Type>::Clone(*this, iF);
         }
+
+
+    // Member Functions
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 };
 
 

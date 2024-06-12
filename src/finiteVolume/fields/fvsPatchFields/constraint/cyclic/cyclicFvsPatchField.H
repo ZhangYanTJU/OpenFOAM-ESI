@@ -88,7 +88,7 @@ public:
         );
 
         //- Construct from patch, internal field and dictionary.
-        //- The "value" entry is NO_READ.
+        //- The "value" entry is MUST_READ.
         cyclicFvsPatchField
         (
             const fvPatch&,

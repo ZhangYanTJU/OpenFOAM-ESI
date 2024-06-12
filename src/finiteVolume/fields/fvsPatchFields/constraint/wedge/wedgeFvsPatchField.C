@@ -49,7 +49,7 @@ Foam::wedgeFvsPatchField<Type>::wedgeFvsPatchField
     const dictionary& dict
 )
 :
-    fvsPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ)
+    fvsPatchField<Type>(p, iF, dict, IOobjectOption::MUST_READ)
 {
     if (!isType<wedgeFvPatch>(p))
     {
@@ -103,6 +103,16 @@ Foam::wedgeFvsPatchField<Type>::wedgeFvsPatchField
 :
     wedgeFvsPatchField<Type>(ptf, ptf.internalField())
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::wedgeFvsPatchField<Type>::write(Ostream& os) const
+{
+    fvsPatchField<Type>::write(os);
+    fvsPatchField<Type>::writeValueEntry(os);
+}
 
 
 // ************************************************************************* //

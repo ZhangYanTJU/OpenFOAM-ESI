@@ -124,9 +124,9 @@ public:
     virtual ~emptyFaePatchField() = default;
 
 
-    // Member functions
+    // Member Functions
 
-        // Mapping functions
+        // Mapping Functions
 
             //- Map (and resize as needed) from self given a mapping object
             virtual void autoMap
@@ -142,6 +142,12 @@ public:
                 const labelList&
             )
             {}
+
+
+    // Member Functions
+
+        //- Write without "value" entry!
+        virtual void write(Ostream&) const;
 };
 
 

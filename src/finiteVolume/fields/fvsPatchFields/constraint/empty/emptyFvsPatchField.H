@@ -37,7 +37,7 @@ Usage
     \verbatim
     <patchName>
     {
-        type            empty;
+        type    empty;
     }
     \endverbatim
 
@@ -146,6 +146,12 @@ public:
                 const labelList&
             )
             {}
+
+
+    // Member Functions
+
+        //- Write without "value" entry!
+        virtual void write(Ostream&) const;
 };
 
 
