@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,9 +26,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "rawTopoChangerFvMesh.H"
-#include "Time.H"
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, template<class> class PatchField, class GeoMesh>
@@ -42,10 +40,7 @@ void Foam::rawTopoChangerFvMesh::setUnmappedValues
 
     forAll(fld.boundaryField(), patchi)
     {
-        PatchField<Type>& fvp = const_cast<PatchField<Type>&>
-        (
-            fld.boundaryField()[patchi]
-        );
+        auto& fvp = const_cast<PatchField<Type>&>(fld.boundaryField()[patchi]);
 
         const label start = fvp.patch().start();
         forAll(fvp, i)
@@ -71,33 +66,27 @@ void Foam::rawTopoChangerFvMesh::zeroUnmappedValues
 {
     typedef GeometricField<Type, PatchField, GeoMesh> FieldType;
 
-    const wordList fldNames(names(FieldType::typeName));
+    std::unique_ptr<FieldType> zeroFieldPtr;
 
-    forAll(fldNames, i)
+    for (const word& fldName : names<FieldType>())
     {
-        //Pout<< "Checking field " << fldNames[i] << endl;
+        FieldType& fld = lookupObjectRef<FieldType>(fldName);
+        //Pout<< "Checking field " << fld.name() << endl;
 
-        FieldType& fld = lookupObjectRef<FieldType>(fldNames[i]);
-
-        setUnmappedValues
-        (
-            fld,
-            mappedFace,
-            FieldType
+        if (!zeroFieldPtr)
+        {
+            zeroFieldPtr = std::make_unique<FieldType>
             (
-                IOobject
-                (
-                    "zero",
-                    time().timeName(),
-                    *this,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
+                this->newIOobject("zero"),
                 *this,
-                dimensioned<Type>(fld.dimensions(), Zero)
-            )
-        );
+                Foam::zero{},
+                dimless
+            );
+        }
+
+        zeroFieldPtr->dimensions().reset(fld.dimensions());
+
+        setUnmappedValues(fld, mappedFace, *zeroFieldPtr);
     }
 }
 

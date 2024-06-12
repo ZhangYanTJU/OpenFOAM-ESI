@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef rawTopoChangerFvMesh_H
-#define rawTopoChangerFvMesh_H
+#ifndef Foam_rawTopoChangerFvMesh_H
+#define Foam_rawTopoChangerFvMesh_H
 
 #include "topoChangerFvMesh.H"
 #include "bitSet.H"
@@ -48,8 +48,6 @@ SourceFiles
 
 namespace Foam
 {
-
-// Forward declaration of classes
 
 /*---------------------------------------------------------------------------*\
                       Class rawTopoChangerFvMesh Declaration
@@ -94,8 +92,9 @@ public:
             const bool doInit=true
         );
 
+
     //- Destructor
-    virtual ~rawTopoChangerFvMesh();
+    virtual ~rawTopoChangerFvMesh() = default;
 
 
     // Member Functions
