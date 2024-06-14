@@ -6,7 +6,7 @@
     \\/      M anipulation   |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2021 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -161,25 +161,22 @@ int main(int argc, char *argv[])
         // rather than tensors to allow indexed permutation.
 
         // Cartesian basis vectors - right handed orthogonal triplet
-        List<vector> cartesian(3);
+        FixedList<vector, 3> cartesian;
 
         cartesian[0] = vector(1, 0, 0);
         cartesian[1] = vector(0, 1, 0);
         cartesian[2] = vector(0, 0, 1);
 
-        // Principal axis basis vectors - right handed orthogonal
-        // triplet
-        List<vector> principal(3);
+        // Principal axis basis vectors - right handed orthogonal triplet
+        FixedList<vector, 3> principal;
 
         principal[0] = eVec.x();
         principal[1] = eVec.y();
         principal[2] = eVec.z();
 
-        scalar maxMagDotProduct = -GREAT;
-
         // Matching axis indices, first: cartesian, second:principal
-
         Pair<label> match(-1, -1);
+        scalar maxMagDotProduct = -GREAT;
 
         forAll(cartesian, cI)
         {
@@ -187,12 +184,11 @@ int main(int argc, char *argv[])
             {
                 scalar magDotProduct = mag(cartesian[cI] & principal[pI]);
 
-                if (magDotProduct > maxMagDotProduct)
+                if (maxMagDotProduct < magDotProduct)
                 {
                     maxMagDotProduct = magDotProduct;
 
                     match.first() = cI;
-
                     match.second() = pI;
                 }
             }
@@ -208,7 +204,7 @@ int main(int argc, char *argv[])
             // Invert the best match direction and swap the order of
             // the other two vectors
 
-            List<vector> tPrincipal = principal;
+            FixedList<vector, 3> tPrincipal = principal;
 
             tPrincipal[match.second()] *= -1;
 
@@ -237,7 +233,7 @@ int main(int argc, char *argv[])
 
             permutationDelta += 3;
 
-            List<vector> tPrincipal = principal;
+            FixedList<vector, 3> tPrincipal = principal;
 
             vector tEVal = eVal;
 
@@ -253,10 +249,9 @@ int main(int argc, char *argv[])
             eVal = tEVal;
         }
 
-        label matchedAlready = match.first();
+        const label matchedAlready = match.first();
 
-        match =Pair<label>(-1, -1);
-
+        match = Pair<label>(-1, -1);
         maxMagDotProduct = -GREAT;
 
         forAll(cartesian, cI)
@@ -275,12 +270,11 @@ int main(int argc, char *argv[])
 
                 scalar magDotProduct = mag(cartesian[cI] & principal[pI]);
 
-                if (magDotProduct > maxMagDotProduct)
+                if (maxMagDotProduct < magDotProduct)
                 {
                     maxMagDotProduct = magDotProduct;
 
                     match.first() = cI;
-
                     match.second() = pI;
                 }
             }
@@ -295,7 +289,7 @@ int main(int argc, char *argv[])
         {
             principal[match.second()] *= -1;
 
-            List<vector> tPrincipal = principal;
+            FixedList<vector, 3> tPrincipal = principal;
 
             tPrincipal[(matchedAlready + 1) % 3] =
                 principal[(matchedAlready + 2) % 3]*-sense;
@@ -335,15 +329,16 @@ int main(int argc, char *argv[])
         showTransform = false;
     }
 
-    // calculate the total surface area
 
+    // Calculate total surface area and average normal vector
     scalar surfaceArea = 0;
+    vector averageNormal(Zero);
 
     forAll(surf, facei)
     {
         const labelledTri& f = surf[facei];
 
-        if (f[0] == f[1] || f[0] == f[2] || f[1] == f[2])
+        if (!f.good())
         {
             WarningInFunction
                << "Illegal triangle " << facei << " vertices " << f
@@ -351,20 +346,23 @@ int main(int argc, char *argv[])
         }
         else
         {
-            surfaceArea += triPointRef
-            (
-                surf.points()[f[0]],
-                surf.points()[f[1]],
-                surf.points()[f[2]]
-            ).mag();
+            triPointRef tri = f.tri(surf.points());
+
+            surfaceArea += tri.mag();
+            averageNormal += tri.areaNormal();
         }
     }
+
+    // The unit normal (area-averaged)
+    averageNormal.normalise();
+
 
     Info<< nl << setprecision(12)
         << "Density: " << density << nl
         << "Mass: " << m << nl
         << "Centre of mass: " << cM << nl
         << "Surface area: " << surfaceArea << nl
+        << "Average normal: " << averageNormal << nl
         << "Inertia tensor around centre of mass: " << nl << J << nl
         << "eigenValues (principal moments): " << eVal << nl
         << "eigenVectors (principal axes): " << nl
@@ -398,21 +396,26 @@ int main(int argc, char *argv[])
             << endl;
     }
 
-    OFstream str("axes.obj");
 
-    Info<< nl << "Writing scaled principal axes at centre of mass of "
-        << surfFileName <<  " to " << str.name() << endl;
-
-    scalar scale = mag(cM - surf.points()[0])/eVal.component(findMin(eVal));
-
-    meshTools::writeOBJ(str, cM);
-    meshTools::writeOBJ(str, cM + scale*eVal.x()*eVec.x());
-    meshTools::writeOBJ(str, cM + scale*eVal.y()*eVec.y());
-    meshTools::writeOBJ(str, cM + scale*eVal.z()*eVec.z());
-
-    for (label i = 1; i < 4; i++)
+    // Write (scaled) principal axes at centre of mass
     {
-        str << "l " << 1 << ' ' << i + 1 << endl;
+        OFstream str("axes.obj");
+
+        Info<< nl << "Writing scaled principal axes at centre of mass of "
+            << surfFileName <<  " to " << str.name() << endl;
+
+        scalar scale =
+            mag(cM - surf.points()[0])/eVal.component(findMin(eVal));
+
+        meshTools::writeOBJ(str, cM);
+        meshTools::writeOBJ(str, cM + scale*eVal.x()*eVec.x());
+        meshTools::writeOBJ(str, cM + scale*eVal.y()*eVec.y());
+        meshTools::writeOBJ(str, cM + scale*eVal.z()*eVec.z());
+
+        for (label i = 1; i < 4; i++)
+        {
+            str << "l " << 1 << ' ' << i + 1 << endl;
+        }
     }
 
     Info<< "\nEnd\n" << endl;
