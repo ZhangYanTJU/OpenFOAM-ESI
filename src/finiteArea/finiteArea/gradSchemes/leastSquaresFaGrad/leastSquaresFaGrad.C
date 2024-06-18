@@ -105,12 +105,20 @@ leastSquaresFaGrad<Type>::calcGrad
     {
         const faPatchField<Type>& bf = vsf.boundaryField()[patchi];
 
-        const Field<Type>& vsfp =
+        //const Field<Type>& vsfp =
+        //(
+        //    bf.coupled()
+        //  ? bf.patchNeighbourField().cref()
+        //  : const_cast<faPatchField<Type>&>(bf)
+        //);
+
+        const tmp<Field<Type>> tvsfp
         (
             bf.coupled()
-          ? bf.patchNeighbourField().cref()
-          : const_cast<faPatchField<Type>&>(bf)
+          ? bf.patchNeighbourField()
+          : bf
         );
+        const Field<Type>& vsfp = tvsfp();
 
         const faePatchVectorField& ownLsp = ownLs.boundaryField()[patchi];
         const labelUList& edgeFaces =
