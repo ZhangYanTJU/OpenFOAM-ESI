@@ -302,7 +302,7 @@ void Foam::ThermoSurfaceFilm<CloudType>::cacheFilmFields
     TFilmPatch_ = film.Tf().primitiveField();
 
     // Direct copy (one-to-one mapping)
-    TFilmPatch_ = film.Cp().primitiveField();
+    CpFilmPatch_ = film.Cp().primitiveField();
 }
 
 

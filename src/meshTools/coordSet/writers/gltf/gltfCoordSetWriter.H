@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,24 +45,27 @@ Description
     \verbatim
     formatOptions
     {
-        // Apply colours flag (yes | no ) [optional]
-        colours     yes;
-
-        // List of options per field
-        fieldInfo
+        gltf
         {
-            p
+            // Apply colours flag (yes | no ) [optional]
+            colour      yes;
+
+            // List of options per field
+            fieldInfo
             {
-                // Colour map [optional]
-                colourMap       <colourMap>;
+                p
+                {
+                    // Colour map [optional]
+                    colourMap       <colourMap>;
 
-                // Colour map minimum and maximum limits [optional]
-                // Uses field min and max if not specified
-                min             0;
-                max             1;
+                    // Colour map minimum and maximum limits [optional]
+                    // Uses field min and max if not specified
+                    min             0;
+                    max             1;
 
-                // Alpha channel [optional] (<scalar>)
-                alpha           0.5;
+                    // Alpha channel [optional] (<scalar>)
+                    alpha           0.5;
+                }
             }
         }
     }
@@ -73,35 +76,38 @@ Description
     \verbatim
     formatOptions
     {
-        // Apply colours flag (yes | no) [optional]
-        colours     yes;
-
-        // Animate tracks (yes | no) [optional]
-        animate     yes;
-
-        // Animation properties [optional]
-        animationInfo
+        gltf
         {
-            // Colour map [optional]
-            colourMap       <colourMap>;
+            // Apply colours flag (yes | no) [optional]
+            colour      yes;
 
-            // Colour [optional] (<vector> | uniform | field)
-            colour          (1 0 0); // RGB in range [0-1]
+            // Animate tracks (yes | no) [optional]
+            animate     yes;
 
-            //colour          uniform;
-            //colourValue     (1 0 0); // RGB in range [0-1]
+            // Animation properties [optional]
+            animationInfo
+            {
+                // Colour map [optional]
+                colourMap       <colourMap>;
 
-            //colour          field;
-            //colourField     d;
+                // Colour [optional] (<vector> | uniform | field)
+                colour          (1 0 0); // RGB in range [0-1]
 
-            // Colour map minimum and maximum limits [optional]
-            // Note: for colour = field option
-            // Uses field min and max if not specified
-            min             0;
-            max             1;
+                //colour          uniform;
+                //colourValue     (1 0 0); // RGB in range [0-1]
 
-            // Alpha channel [optional] (<scalar>)
-            alpha           0.5;
+                //colour          field;
+                //colourField     d;
+
+                // Colour map minimum and maximum limits [optional]
+                // Note: for colour = field option
+                // Uses field min and max if not specified
+                min             0;
+                max             1;
+
+                // Alpha channel [optional] (<scalar>)
+                alpha           0.5;
+            }
         }
     }
     \endverbatim

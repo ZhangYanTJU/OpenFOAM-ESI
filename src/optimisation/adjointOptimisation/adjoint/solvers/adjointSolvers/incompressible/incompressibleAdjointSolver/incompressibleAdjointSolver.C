@@ -420,19 +420,21 @@ void Foam::incompressibleAdjointSolver::accumulateBCSensitivityIntegrand
         fvPatchVectorField& Uab = UaBoundary[patchI];
         if (isA<adjointVectorBoundaryCondition>(Uab))
         {
-            const fvPatch& patch = mesh_.boundary()[patchI];
-            tmp<vectorField> tnf = patch.nf();
-            const scalarField& magSf = patch.magSf();
+            tmp<tensorField> dxdbMult =
+                refCast<adjointVectorBoundaryCondition>(Uab).dxdbMult();
+            if (dxdbMult)
+            {
+                const fvPatch& patch = mesh_.boundary()[patchI];
+                tmp<vectorField> tnf = patch.nf();
+                const scalarField& magSf = patch.magSf();
 
-            tmp<vectorField> DvDbMult =
-                nuEffBoundary[patchI]*(Uab.snGrad() + (gradUabf[patchI] & tnf))
-    //        - (nf*pa.boundaryField()[patchI])
-              + adjointTurbulence().adjointMomentumBCSource()[patchI];
-            bcDxDbMult()[patchI] +=
-                (
-                    DvDbMult
-                  & refCast<adjointVectorBoundaryCondition>(Uab).dxdbMult()
-                )*magSf*dt;
+                tmp<vectorField> DvDbMult =
+                    nuEffBoundary[patchI]
+                   *(Uab.snGrad() + (gradUabf[patchI] & tnf))
+        //        - (nf*pa.boundaryField()[patchI])
+                  + adjointTurbulence().adjointMomentumBCSource()[patchI];
+                bcDxDbMult()[patchI] += (DvDbMult & dxdbMult())*magSf*dt;
+            }
         }
     }
 }
