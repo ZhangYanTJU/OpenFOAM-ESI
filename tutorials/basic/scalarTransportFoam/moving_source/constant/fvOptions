@@ -23,7 +23,7 @@ scalarSource1
     selectionMode   geometric;
     selection
     {
-        box1
+        cylinder
         {
             action  use;
             source  cylinder;
