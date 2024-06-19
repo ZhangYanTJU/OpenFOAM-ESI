@@ -338,8 +338,8 @@ Foam::optimisationManager::optimisationManager(fvMesh& mesh)
     shouldUpdateDesignVariables_(true)
 {
     // The "designVariables" sub-dictionary is optional
-    const dictionary* designVarsDictPtr =
-        this->subOrEmptyDict("optimisation").findDict("designVariables");
+    const dictionary odict(this->subOrEmptyDict("optimisation"));
+    const dictionary* designVarsDictPtr = odict.findDict("designVariables");
 
     if (designVarsDictPtr)
     {
