@@ -176,7 +176,7 @@ autoPtr<labelIOList> procAddressing
     const objectRegistry& procRegistry,
     const word& name,
     const word& instance,
-    const word& local = fvMesh::meshSubDir
+    const word& local = polyMesh::meshSubDir
 )
 {
     return autoPtr<labelIOList>::New
@@ -218,17 +218,22 @@ const labelIOList& procAddressing
     PtrList<labelIOList>& procAddressingList
 )
 {
-    const fvMesh& procMesh = procMeshList[proci];
+    const auto& procMesh = procMeshList[proci];
 
-    if (!procAddressingList.set(proci))
-    {
-        procAddressingList.set
+    return procAddressingList.try_emplace
+    (
+        proci,
+        IOobject
         (
-            proci,
-            procAddressing(procMesh, name, procMesh.facesInstance())
-        );
-    }
-    return procAddressingList[proci];
+            name,
+            procMesh.facesInstance(),
+            polyMesh::meshSubDir,
+            procMesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        )
+    );
 }
 
 
