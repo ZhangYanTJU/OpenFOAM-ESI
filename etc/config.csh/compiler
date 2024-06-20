@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2016 OpenFOAM Foundation
-#     Copyright (C) 2016-2023 OpenCFD Ltd.
+#     Copyright (C) 2016-2024 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -73,8 +73,29 @@ case ThirdParty:
     case Gcc:
         set gcc_version="$default_gcc_version"
         breaksw
+    case Gcc141*:
+        set gcc_version=gcc-14.1.0
+        breaksw
+    case Gcc133*:
+        set gcc_version=gcc-13.3.0
+        breaksw
+    case Gcc132*:
+        set gcc_version=gcc-13.2.0
+        breaksw
+    case Gcc131*:
+        set gcc_version=gcc-13.1.0
+        breaksw
+    case Gcc123*:
+        set gcc_version=gcc-12.3.0
+        breaksw
+    case Gcc122*:
+        set gcc_version=gcc-12.2.0
+        breaksw
     case Gcc121*:
         set gcc_version=gcc-12.1.0
+        breaksw
+    case Gcc114*:
+        set gcc_version=gcc-11.4.0
         breaksw
     case Gcc113*:
         set gcc_version=gcc-11.3.0
@@ -83,7 +104,13 @@ case ThirdParty:
         set gcc_version=gcc-11.2.0
         breaksw
     case Gcc111*:
-        set gcc_version=gcc-11.1.1
+        set gcc_version=gcc-11.1.0
+        breaksw
+    case Gcc105*:
+        set gcc_version=gcc-10.5.0
+        breaksw
+    case Gcc104*:
+        set gcc_version=gcc-10.4.0
         breaksw
     case Gcc103*:
         set gcc_version=gcc-10.3.0
@@ -182,8 +209,20 @@ case ThirdParty:
     case Clang:
         set clang_version="$default_clang_version"
         breaksw
+    case Clang181*:
+        set clang_version=llvm-18.1.6
+        breaksw
+    case Clang170*:
+        set clang_version=llvm-17.0.6
+        breaksw
+    case Clang160*:
+        set clang_version=llvm-16.0.6
+        breaksw
+    case Clang150*:
+        set clang_version=llvm-15.0.7
+        breaksw
     case Clang140*:
-        set clang_version=llvm-14.0.5
+        set clang_version=llvm-14.0.6
         breaksw
     case Clang130*:
         set clang_version=llvm-13.0.1
