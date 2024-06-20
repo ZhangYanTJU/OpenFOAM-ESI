@@ -74,8 +74,11 @@ Foam::compressibleInterPhaseTransportModel::compressibleInterPhaseTransportModel
         const volScalarField& alpha1(mixture_.alpha1());
         const volScalarField& alpha2(mixture_.alpha2());
 
-        const volScalarField& rho1 = mixture_.thermo1().rho();
-        const volScalarField& rho2 = mixture_.thermo2().rho();
+        const tmp<volScalarField> trho1 = mixture_.thermo1().rho();
+        const tmp<volScalarField> trho2 = mixture_.thermo2().rho();
+
+        const auto& rho1 = trho1();
+        const auto& rho2 = trho2();
 
         alphaRhoPhi1_ =
         (
@@ -185,8 +188,8 @@ void Foam::compressibleInterPhaseTransportModel::correctPhasePhi()
 {
     if (twoPhaseTransport_)
     {
-        const volScalarField& rho1 = mixture_.thermo1().rho();
-        const volScalarField& rho2 = mixture_.thermo2().rho();
+        const tmp<volScalarField> rho1 = mixture_.thermo1().rho();
+        const tmp<volScalarField> rho2 = mixture_.thermo2().rho();
 
         alphaRhoPhi1_.ref() = fvc::interpolate(rho1)*alphaPhi10_;
         alphaRhoPhi2_.ref() = fvc::interpolate(rho2)*(phi_ - alphaPhi10_);

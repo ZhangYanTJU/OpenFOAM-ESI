@@ -8,11 +8,13 @@
 
     volVectorField& U1 = phase1.URef();
     surfaceScalarField& phi1 = phase1.phiRef();
-    const surfaceScalarField& alphaPhi1 = phase1.alphaPhi();
+    const tmp<surfaceScalarField> talphaPhi1 = phase1.alphaPhi();
+    const auto& alphaPhi1 = talphaPhi1();
 
     volVectorField& U2 = phase2.URef();
     surfaceScalarField& phi2 = phase2.phiRef();
-    const surfaceScalarField& alphaPhi2 = phase2.alphaPhi();
+    const tmp<surfaceScalarField> talphaPhi2 = phase2.alphaPhi();
+    const auto& alphaPhi2 = talphaPhi2();
 
     surfaceScalarField& phi = fluid.phi();
 

@@ -743,12 +743,12 @@ Foam::label Foam::cellShapeControlMesh::estimateCellCount
                 cit->vertex(3)->point()
             );
 
-            pointFromPoint centre = topoint(CGAL::centroid(tet));
+            const auto tetCentre = CGAL::centroid(tet);
 
             if
             (
-                Pstream::parRun()
-             && !decomposition().positionOnThisProcessor(centre)
+                UPstream::parRun()
+             && !decomposition().positionOnThisProcessor(topoint(tetCentre))
             )
             {
                 continue;
