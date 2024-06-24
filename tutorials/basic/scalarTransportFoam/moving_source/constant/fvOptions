@@ -37,7 +37,7 @@ scalarSource1
             {
                 // coefficients
                 amplitude       (0 0.02 0);
-                omega           0.7;            // rad/s
+                omega           0.628318530718; // rad/s
             }
 
             /*
