@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -307,16 +307,10 @@ void Foam::surfaceWriters::nastranWriter::writeGeometry
 Foam::surfaceWriters::nastranWriter::nastranWriter()
 :
     surfaceWriter(),
-    writeFormat_(fieldFormat::SHORT),
-    fieldMap_(),
+    writeFormat_(fieldFormat::FREE),
     commonGeometry_(false),
-    separator_()
-{
-    // if (writeFormat_ == fieldFormat::FREE)
-    // {
-    //     separator_ = ",";
-    // }
-}
+    separator_(",")  // FREE format
+{}
 
 
 Foam::surfaceWriters::nastranWriter::nastranWriter
@@ -331,12 +325,10 @@ Foam::surfaceWriters::nastranWriter::nastranWriter
         (
             "format",
             options,
-            fieldFormat::LONG
+            fieldFormat::FREE
         )
     ),
-    fieldMap_(),
-    commonGeometry_(options.getOrDefault("commonGeometry", false)),
-    separator_()
+    commonGeometry_(options.getOrDefault("commonGeometry", false))
 {
     if (writeFormat_ == fieldFormat::FREE)
     {
