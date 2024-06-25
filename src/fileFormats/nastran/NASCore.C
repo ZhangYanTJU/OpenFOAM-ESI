@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -122,7 +122,8 @@ std::string Foam::fileFormats::NASCore::nextNasField
 (
     const std::string& str,
     std::string::size_type& pos,
-    std::string::size_type len
+    const std::string::size_type width,
+    const bool free_format
 )
 {
     const auto beg = pos;
@@ -130,15 +131,23 @@ std::string Foam::fileFormats::NASCore::nextNasField
 
     if (end == std::string::npos)
     {
-        pos = beg + len;    // Continue after field width
+        if (free_format)
+        {
+            // Nothing left
+            pos = str.size();
+            return str.substr(beg);
+        }
+
+        // Fixed format - continue after field width
+        pos = beg + width;
+        return str.substr(beg, width);
     }
     else
     {
-        len = (end - beg);  // Efffective width
-        pos = end + 1;      // Continue after comma
+        // Free format - continue after comma
+        pos = end + 1;
+        return str.substr(beg, (end - beg));
     }
-
-    return str.substr(beg, len);
 }
 
 
@@ -235,8 +244,8 @@ void Foam::fileFormats::NASCore::writeCoord
     // 2 ID   : point ID - requires starting index of 1
     // 3 CP   : coordinate system ID                (blank)
     // 4 X1   : point x coordinate
-    // 5 X2   : point x coordinate
-    // 6 X3   : point x coordinate
+    // 5 X2   : point y coordinate
+    // 6 X3   : point z coordinate
     // 7 CD   : coordinate system for displacements (blank)
     // 8 PS   : single point constraints            (blank)
     // 9 SEID : super-element ID
