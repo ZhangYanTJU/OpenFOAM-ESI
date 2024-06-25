@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,7 +48,6 @@ SourceFiles
 
 namespace Foam
 {
-
 namespace fileFormats
 {
 
@@ -74,18 +73,18 @@ public:
         //- Output load format
         enum loadFormat
         {
-            PLOAD2,
-            PLOAD4
+            PLOAD2,     //!< Face load (eg, pressure)
+            PLOAD4      //!< Vertex load
         };
 
-        //- Selection names for the NASTRAN file field formats
+        //- Selection names for the NASTRAN load formats
         static const Enum<loadFormat> loadFormatNames;
 
 
     // Constructors
 
         //- Default construct
-        NASCore() = default;
+        NASCore() noexcept = default;
 
 
     // Public Static Member Functions
@@ -93,18 +92,20 @@ public:
         //- Extract numbers from things like "-2.358-8" (same as "-2.358e-8")
         static scalar readNasScalar(const std::string& str);
 
-        //- A string::substr() to handle fixed-format and free-format NASTRAN.
-        //  Returns the substr to the next comma (if found) or the given length
-        //
-        //  \param str The string to extract from
-        //  \param pos On input, the position of the first character of the
-        //      substring. On output, advances to the next position to use.
-        //  \param len The fixed-format length to use if a comma is not found.
+        //- A std::string::substr() variant to handle fixed-format and
+        //- free-format NASTRAN.
+        //  Returns the substr until the next comma (if found)
+        //  or the given fixed width
         static std::string nextNasField
         (
+            //! The string to extract from
             const std::string& str,
+            //! [in,out] The parse position within \p str
             std::string::size_type& pos,
-            std::string::size_type len
+            //! The fixed-format width to use (if comma is not found)
+            const std::string::size_type width,
+            //! The input is known to be free-format
+            const bool free_format = false
         );
 
 
