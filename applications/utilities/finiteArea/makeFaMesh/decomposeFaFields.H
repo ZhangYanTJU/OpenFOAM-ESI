@@ -55,7 +55,7 @@ do
 
         bitSet haveMeshOnProc;
         std::unique_ptr<faMeshSubset> subsetter;
-        IOobjectList objects(0);
+        IOobjectList objects;
 
         refPtr<fileOperation> newHandler(fileOperation::NewUncollated());
 
@@ -70,7 +70,13 @@ do
 
             const bool oldParRun = UPstream::parRun(false);
 
-            objects = IOobjectList(serialMesh.time(), runTime.timeName());
+            objects = IOobjectList
+            (
+                serialMesh.time(),
+                runTime.timeName(),
+                serialMesh.dbDir(),
+                IOobjectOption::NO_REGISTER
+            );
 
             UPstream::parRun(oldParRun);
         }

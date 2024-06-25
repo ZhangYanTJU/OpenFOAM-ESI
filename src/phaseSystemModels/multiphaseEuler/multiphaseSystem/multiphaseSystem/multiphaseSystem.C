@@ -536,19 +536,12 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseSystem::Cvm
     const phaseModel& phase
 ) const
 {
-    tmp<volScalarField> tCvm
+    auto tCvm = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Cvm",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar(dimDensity, Zero)
-        )
+        "Cvm",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimDensity, Zero)
     );
 
     for (const phaseModel& phase2 : phases_)
@@ -584,23 +577,15 @@ Foam::tmp<Foam::volVectorField> Foam::multiphaseSystem::Svm
     const phaseModel& phase
 ) const
 {
-    tmp<volVectorField> tSvm
+    auto tSvm = volVectorField::New
     (
-        new volVectorField
+        "Svm",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedVector
         (
-            IOobject
-            (
-                "Svm",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedVector
-            (
-                "Svm",
-                dimensionSet(1, -2, -2, 0, 0),
-                Zero
-            )
+            dimensionSet(1, -2, -2, 0, 0),
+            Zero
         )
     );
 
@@ -653,7 +638,7 @@ Foam::tmp<Foam::volVectorField> Foam::multiphaseSystem::Svm
 Foam::autoPtr<Foam::multiphaseSystem::dragCoeffFields>
 Foam::multiphaseSystem::dragCoeffs() const
 {
-    autoPtr<dragCoeffFields> dragCoeffsPtr(new dragCoeffFields);
+    auto dragCoeffsPtr = autoPtr<dragCoeffFields>::New();
 
     forAllConstIters(dragModels_, iter)
     {
@@ -708,24 +693,12 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseSystem::dragCoeff
     const dragCoeffFields& dragCoeffs
 ) const
 {
-    tmp<volScalarField> tdragCoeff
+    auto tdragCoeff = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "dragCoeff",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar
-            (
-                "dragCoeff",
-                dimensionSet(1, -3, -1, 0, 0),
-                0
-            )
-        )
+        "dragCoeff",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimensionSet(1, -3, -1, 0, 0), Zero)
     );
 
     dragModelTable::const_iterator dmIter = dragModels_.begin();
@@ -756,24 +729,12 @@ Foam::tmp<Foam::surfaceScalarField> Foam::multiphaseSystem::surfaceTension
     const phaseModel& phase1
 ) const
 {
-    tmp<surfaceScalarField> tSurfaceTension
+    auto tSurfaceTension = surfaceScalarField::New
     (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "surfaceTension",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar
-            (
-                "surfaceTension",
-                dimensionSet(1, -2, -2, 0, 0),
-                0
-            )
-        )
+        "surfaceTension",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimensionSet(1, -2, -2, 0, 0), Zero)
     );
     tSurfaceTension.ref().setOriented();
 
@@ -805,19 +766,12 @@ Foam::tmp<Foam::surfaceScalarField> Foam::multiphaseSystem::surfaceTension
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseSystem::nearInterface() const
 {
-    tmp<volScalarField> tnearInt
+    auto tnearInt = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "nearInterface",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar("nearInterface", dimless, 0.0)
-        )
+        "nearInterface",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless, Zero)
     );
 
     for (const phaseModel& phase : phases_)
@@ -872,7 +826,7 @@ void Foam::multiphaseSystem::solve()
                         mesh_
                     ),
                     mesh_,
-                    dimensionedScalar("0", dimensionSet(0, 3, -1, 0, 0), 0)
+                    dimensionedScalar(dimensionSet(0, 3, -1, 0, 0), Zero)
                 )
             );
 

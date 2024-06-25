@@ -129,18 +129,6 @@ public:
             const pointPatchFieldMapper&
         );
 
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchField<vector>> clone() const
-        {
-            return autoPtr<pointPatchField<vector>>
-            (
-                new uniformInterpolatedDisplacementPointPatchVectorField
-                (
-                    *this
-                )
-            );
-        }
-
         //- Construct as copy setting internal field reference
         uniformInterpolatedDisplacementPointPatchVectorField
         (
@@ -148,20 +136,19 @@ public:
             const DimensionedField<vector, pointMesh>&
         );
 
+        //- Return a clone
+        virtual autoPtr<pointPatchField<vector>> clone() const
+        {
+            return pointPatchField<vector>::Clone(*this);
+        }
+
         //- Construct and return a clone setting internal field reference
         virtual autoPtr<pointPatchField<vector>> clone
         (
             const DimensionedField<vector, pointMesh>& iF
         ) const
         {
-            return autoPtr<pointPatchField<vector>>
-            (
-                new uniformInterpolatedDisplacementPointPatchVectorField
-                (
-                    *this,
-                    iF
-                )
-            );
+            return pointPatchField<vector>::Clone(*this, iF);
         }
 
 

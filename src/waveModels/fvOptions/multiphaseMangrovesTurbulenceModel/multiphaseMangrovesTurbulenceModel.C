@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 IH-Cantabria
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,21 +58,14 @@ Foam::fv::multiphaseMangrovesTurbulenceModel::kCoeff
     const volVectorField& U
 ) const
 {
-    auto tkCoeff = tmp<volScalarField>::New
+    auto tkCoeff = volScalarField::New
     (
-        IOobject
-        (
-            typeName + ":kCoeff",
-            mesh_.time().timeName(),
-            mesh_.time(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName(typeName, "kCoeff"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimless/dimTime, Zero)
     );
-
-    volScalarField& kCoeff = tkCoeff.ref();
+    auto& kCoeff = tkCoeff.ref();
 
     forAll(zoneIDs_, i)
     {
@@ -104,21 +97,13 @@ Foam::fv::multiphaseMangrovesTurbulenceModel::epsilonCoeff
     const volVectorField& U
 ) const
 {
-    auto tepsilonCoeff = tmp<volScalarField>::New
+    auto tepsilonCoeff = volScalarField::New
     (
-        IOobject
-        (
-            typeName + ":epsilonCoeff",
-            mesh_.time().timeName(),
-            mesh_.time(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName(typeName, "epsilonCoeff"),
         mesh_,
         dimensionedScalar(dimless/dimTime, Zero)
     );
-
-    volScalarField& epsilonCoeff = tepsilonCoeff.ref();
+    auto& epsilonCoeff = tepsilonCoeff.ref();
 
     forAll(zoneIDs_, i)
     {

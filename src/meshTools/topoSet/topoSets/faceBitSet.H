@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,16 +56,14 @@ class faceBitSet
 public:
 
     //- Runtime type information
-    TypeName("faceBitSet");
+    TypeNameNoDebug("faceBitSet");
 
 
     // Constructors
 
-        //- Construct with nFaces elements, all elements unset
-        explicit faceBitSet(const polyMesh& mesh);
-
-        //- Construct with nFaces elements, using initial val
-        faceBitSet(const polyMesh& mesh, const bool val);
+        //- Construct with nFaces elements,
+        //- all elements unset or initial value
+        explicit faceBitSet(const polyMesh& mesh, const bool val = false);
 
         //- Copy construct from bitset, resizing to nFaces elements as required
         faceBitSet(const polyMesh& mesh, const bitSet& bits);

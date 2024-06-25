@@ -1195,19 +1195,19 @@ void Foam::polyMesh::movePoints(const pointField& newPoints)
     {
         if (debug)
         {
-            Info<< "tmp<scalarField> polyMesh::movePoints(const pointField&) : "
+            Info<< "void polyMesh::movePoints(const pointField&) : "
                 << " Storing current points for time " << time().value()
                 << " index " << time().timeIndex() << endl;
         }
 
         if (storeOldCellCentres_)
         {
-            oldCellCentresPtr_.clear();
+            oldCellCentresPtr_.reset(nullptr);
             oldCellCentresPtr_.reset(new pointField(cellCentres()));
         }
 
         // Mesh motion in the new time step
-        oldPointsPtr_.clear();
+        oldPointsPtr_.reset(nullptr);
         oldPointsPtr_.reset(new pointField(points_));
         curMotionTimeIndex_ = time().timeIndex();
     }
@@ -1276,7 +1276,7 @@ void Foam::polyMesh::movePoints(const pointField& newPoints)
     // have to clear any geometry. However your critical path still stays the
     // same so no time would be gained (unless the decomposition gets weighted).
     // Small benefit for lots of scope for problems so not done.
-    cellTreePtr_.clear();
+    cellTreePtr_.reset(nullptr);
 
     // Reset valid directions (could change with rotation)
     geometricD_ = Zero;
@@ -1304,8 +1304,8 @@ void Foam::polyMesh::movePoints(const pointField& newPoints)
 void Foam::polyMesh::resetMotion() const
 {
     curMotionTimeIndex_ = 0;
-    oldPointsPtr_.clear();
-    oldCellCentresPtr_.clear();
+    oldPointsPtr_.reset(nullptr);
+    oldCellCentresPtr_.reset(nullptr);
 }
 
 

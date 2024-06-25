@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2019 OpenCFD Ltd
+    Copyright (C) 2017-2024 OpenCFD Ltd
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -206,9 +206,13 @@ public:
         //- Construct as copy
         DTRMParticle(const DTRMParticle& p);
 
+        //- Return a clone
+        virtual autoPtr<particle> clone() const
+        {
+            return particle::Clone(*this);
+        }
 
-        //- Factory class to read-construct particles used for
-        //  parallel transfer
+        //- Factory class to read-construct particles (for parallel transfer)
         class iNew
         {
             const polyMesh& mesh_;

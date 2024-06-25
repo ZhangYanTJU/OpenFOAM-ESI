@@ -354,9 +354,8 @@ Foam::tmp<Foam::tensorField> Foam::momentOfInertia::meshInertia
     const polyMesh& mesh
 )
 {
-    tmp<tensorField> tTf = tmp<tensorField>(new tensorField(mesh.nCells()));
-
-    tensorField& tf = tTf.ref();
+    auto tTf = tmp<tensorField>::New(mesh.nCells());
+    auto& tf = tTf.ref();
 
     forAll(tf, cI)
     {

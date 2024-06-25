@@ -153,7 +153,7 @@ Foam::surfaceToPoint::surfaceToPoint
     const dictionary& dict
 )
 :
-    topoSetPointSource(mesh),
+    topoSetPointSource(mesh, dict),
     surfName_(dict.get<fileName>("file").expand()),
     surfType_(dict.getOrDefault<word>("fileType", word::null)),
     scale_(dict.getOrDefault<scalar>("scale", -1)),

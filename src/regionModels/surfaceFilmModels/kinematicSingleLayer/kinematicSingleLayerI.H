@@ -211,45 +211,25 @@ inline tmp<volScalarField> kinematicSingleLayer::deltaMass() const
 
 inline tmp<volScalarField> kinematicSingleLayer::gNorm() const
 {
-    tmp<volScalarField> tgNorm
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "gNorm",
-                time().timeName(),
-                regionMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            g_ & nHat()
-        )
+        "gNorm",
+        IOobject::NO_REGISTER,
+        g_ & nHat()
     );
-
-    return tgNorm;
 }
 
 
 inline tmp<volScalarField> kinematicSingleLayer::gNormClipped() const
 {
-    tmp<volScalarField> tgNormClipped
+    auto tgNormClipped = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "gNormClipped",
-                time().timeName(),
-                regionMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            g_ & nHat()
-        )
+        "gNormClipped",
+        IOobject::NO_REGISTER,
+        g_ & nHat()
     );
+    auto& gNormClipped = tgNormClipped.ref();
 
-    volScalarField& gNormClipped = tgNormClipped.ref();
     gNormClipped.clamp_max(0);
 
     return tgNormClipped;
@@ -258,24 +238,14 @@ inline tmp<volScalarField> kinematicSingleLayer::gNormClipped() const
 
 inline tmp<volVectorField> kinematicSingleLayer::gTan() const
 {
-    tmp<volVectorField> tgTan
+    return volVectorField::New
     (
-        new volVectorField
-        (
-            IOobject
-            (
-                "gTan",
-                time().timeName(),
-                regionMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            g_ - nHat()*gNorm()
-        )
+        "gTan",
+        IOobject::NO_REGISTER,
+        g_ - nHat()*gNorm()
     );
-
-    return tgTan;
 }
+
 
 inline tmp<vectorField> kinematicSingleLayer::gTan
 (
@@ -284,7 +254,7 @@ inline tmp<vectorField> kinematicSingleLayer::gTan
 {
     const vectorField& nH = nHat().boundaryField()[patchI];
     const vector& g = g_.value();
-    tmp<vectorField> tgTan(new vectorField(g - nH*(g & nH)));
+    tmp<vectorField> tgTan(g - nH*(g & nH));
 
     return tgTan;
 }

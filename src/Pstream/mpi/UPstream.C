@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,6 +39,8 @@ License
 #include <memory>
 #include <numeric>
 #include <string>
+
+#undef Pstream_use_MPI_Get_count
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -88,13 +90,13 @@ static void attachOurBuffers()
 
         if (Foam::UPstream::debug)
         {
-            Foam::Pout<< "UPstream::init : buffer-size " << len << '\n';
+            Foam::Perr<< "UPstream::init : buffer-size " << len << '\n';
         }
     }
     else
     {
         delete[] buf;
-        Foam::Pout<< "UPstream::init : could not attach buffer\n";
+        Foam::Perr<< "UPstream::init : could not attach buffer\n";
     }
 #endif
 }
@@ -169,7 +171,7 @@ bool Foam::UPstream::initNull()
     {
         if (UPstream::debug)
         {
-            Pout<< "UPstream::initNull : was already initialized\n";
+            Perr<< "UPstream::initNull : was already initialized\n";
         }
     }
     else
@@ -227,7 +229,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
         }
         else if (UPstream::debug)
         {
-            Pout<< "UPstream::init : was already initialized\n";
+            Perr<< "UPstream::init : was already initialized\n";
         }
     }
     else
@@ -281,7 +283,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::init :"
+        Perr<< "UPstream::init :"
             << " thread-support : requested:" << needsThread
             << " obtained:"
             << (
@@ -388,7 +390,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
                 &subRank
             );
 
-            Pout<< "UPstream::init : in world:" << world
+            Perr<< "UPstream::init : in world:" << world
                 << " using local communicator:" << subComm
                 << " rank " << subRank
                 << " of " << subNumProcs
@@ -434,7 +436,7 @@ void Foam::UPstream::shutdown(int errNo)
         }
         else if (UPstream::debug && errNo == 0)
         {
-            Pout<< "UPstream::shutdown : was already finalized\n";
+            Perr<< "UPstream::shutdown : was already finalized\n";
         }
         ourMpi = false;
         return;
@@ -463,7 +465,7 @@ void Foam::UPstream::shutdown(int errNo)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::shutdown\n";
+        Perr<< "UPstream::shutdown\n";
     }
 
     // Check for any outstanding requests
@@ -548,7 +550,7 @@ void Foam::UPstream::allocateCommunicatorComponents
         if (index != UPstream::commGlobal())
         {
             FatalErrorInFunction
-                << "world communicator should always be index "
+                << "base world communicator should always be index "
                 << UPstream::commGlobal()
                 << Foam::exit(FatalError);
         }
@@ -687,36 +689,30 @@ void Foam::UPstream::allocateCommunicatorComponents
 
 void Foam::UPstream::freeCommunicatorComponents(const label index)
 {
-    // Skip placeholders and pre-defined (not allocated) communicators
     if (UPstream::debug)
     {
-        Pout<< "freeCommunicatorComponents: " << index
+        Perr<< "freeCommunicatorComponents: " << index
             << " from " << PstreamGlobals::MPICommunicators_.size() << endl;
     }
 
-    // Not touching the first two communicators (SELF, WORLD)
-    // or anything out-of bounds.
+    // Only free communicators that we have specifically allocated ourselves
     //
-    // No UPstream communicator indices when MPI is initialized outside
-    // of OpenFOAM - thus needs a bounds check too!
+    // Bounds checking needed since there are no UPstream communicator indices
+    // when MPI is initialized outside of OpenFOAM
 
     if
     (
-        index > 1
-     && index < PstreamGlobals::MPICommunicators_.size()
+        (index >= 0 && index < PstreamGlobals::MPICommunicators_.size())
+     && PstreamGlobals::pendingMPIFree_[index]
     )
     {
-        if
-        (
-            PstreamGlobals::pendingMPIFree_[index]
-         && (MPI_COMM_NULL != PstreamGlobals::MPICommunicators_[index])
-        )
+        PstreamGlobals::pendingMPIFree_[index] = false;
+
+        // Free communicator. Sets communicator to MPI_COMM_NULL
+        if (MPI_COMM_NULL != PstreamGlobals::MPICommunicators_[index])
         {
-            // Free communicator. Sets communicator to MPI_COMM_NULL
             MPI_Comm_free(&PstreamGlobals::MPICommunicators_[index]);
         }
-
-        PstreamGlobals::pendingMPIFree_[index] = false;
     }
 }
 
@@ -770,7 +766,7 @@ void Foam::UPstream::barrier(const label communicator, UPstream::Request* req)
 }
 
 
-std::pair<int,int>
+std::pair<int,int64_t>
 Foam::UPstream::probeMessage
 (
     const UPstream::commsTypes commsType,
@@ -779,7 +775,7 @@ Foam::UPstream::probeMessage
     const label communicator
 )
 {
-    std::pair<int,int> result(-1, 0);
+    std::pair<int,int64_t> result(-1, 0);
 
     // No-op for non-parallel or not on communicator
     if (!UPstream::parRun() || !UPstream::is_rank(communicator))
@@ -793,7 +789,7 @@ Foam::UPstream::probeMessage
     int flag = 0;
     MPI_Status status;
 
-    if (UPstream::commsTypes::blocking == commsType)
+    if (UPstream::commsTypes::buffered == commsType)
     {
         // Blocking
         profilingPstream::beginTiming();
@@ -844,8 +840,36 @@ Foam::UPstream::probeMessage
 
     if (flag)
     {
+        // Unlikely to be used with large amounts of data,
+        // but use MPI_Get_elements_x() instead of MPI_Count() anyhow
+
+        #ifdef Pstream_use_MPI_Get_count
+        int count(0);
+        MPI_Get_count(&status, MPI_BYTE, &count);
+        #else
+        MPI_Count count(0);
+        MPI_Get_elements_x(&status, MPI_BYTE, &count);
+        #endif
+
+        // Errors
+        if (count == MPI_UNDEFINED || int64_t(count) < 0)
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "returned undefined or negative value"
+                << Foam::abort(FatalError);
+        }
+        else if (int64_t(count) > int64_t(INT_MAX))
+        {
+            FatalErrorInFunction
+                << "MPI_Get_count() or MPI_Get_elements_x() : "
+                   "count is larger than INI_MAX bytes"
+                << Foam::abort(FatalError);
+        }
+
+
         result.first = status.MPI_SOURCE;
-        MPI_Get_count(&status, MPI_BYTE, &result.second);
+        result.second = int64_t(count);
     }
 
     return result;

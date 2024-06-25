@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,8 @@ Class
     Foam::cellToCell
 
 Description
-    A \c topoSetCellSource to select all the cells from given \c cellSet(s).
+    A \c topoSetCellSource to select all the cells from given \c cellSet(s)
+    or \c cellZone(s).
 
     Operands:
     \table
@@ -50,7 +51,7 @@ Usage
         source      cellToCell;
 
         // Conditional mandatory entries
-        // Select either of the below
+        // Select one of the below
 
         // Option-1
         sets
@@ -61,7 +62,18 @@ Usage
         );
 
         // Option-2
-        set <cellSetName>;
+        zones
+        (
+            <cellZoneName0>
+            <cellZoneName1>
+            ...
+        );
+
+        // Option-3
+        set     <cellSetName>;
+
+        // Option-4
+        zone    <cellZoneName>;
     }
     \endverbatim
 
@@ -81,16 +93,14 @@ Usage
       subtract | Remove selected cells from this cellSet
     \endverbatim
 
-    Options for the conditional mandatory entries:
+    Options for the conditional mandatory entries (in order of precedence):
     \verbatim
       Entry    | Description                    | Type     | Req'd  | Dflt
       sets     | Names of input cellSets        | wordList | cond'l | -
+      zones    | Names of input cellZones       | wordList | cond'l | -
       set      | Name of input cellSet          | word     | cond'l | -
+      zone     | Name of input cellZone         | word     | cond'l | -
     \endverbatim
-
-Note
-    The order of precedence among the conditional mandatory entries from the
-    highest to the lowest is \c sets, and \c set.
 
 See also
     - Foam::topoSetSource
@@ -101,8 +111,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cellToCell_H
-#define cellToCell_H
+#ifndef Foam_cellToCell_H
+#define Foam_cellToCell_H
 
 #include "topoSetCellSource.H"
 
@@ -124,8 +134,11 @@ class cellToCell
         //- Add usage string
         static addToUsageTable usage_;
 
-        //- Names of sets to use
+        //- Names of sets or zones to use
         wordList names_;
+
+        //- Is name a set or a zone
+        const bool isZone_;
 
 
 public:

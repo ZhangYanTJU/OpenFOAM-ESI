@@ -95,7 +95,7 @@ Foam::solverPerformance Foam::smoothSolver::solve
     // If the nSweeps_ is negative do a fixed number of sweeps
     if (nSweeps_ < 0)
     {
-        addProfiling(solve, "lduMatrix::smoother." + fieldName_);
+        addProfiling(solve, "lduMatrix::smoother.", fieldName_);
 
         autoPtr<lduMatrix::smoother> smootherPtr = lduMatrix::smoother::New
         (
@@ -163,7 +163,7 @@ Foam::solverPerformance Foam::smoothSolver::solve
          || !solverPerf.checkConvergence(tolerance_, relTol_, log_)
         )
         {
-            addProfiling(solve, "lduMatrix::smoother." + fieldName_);
+            addProfiling(solve, "lduMatrix::smoother.", fieldName_);
 
             autoPtr<lduMatrix::smoother> smootherPtr = lduMatrix::smoother::New
             (

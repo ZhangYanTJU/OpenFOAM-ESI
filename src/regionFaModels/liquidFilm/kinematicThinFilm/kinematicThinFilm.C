@@ -27,7 +27,6 @@ License
 
 #include "kinematicThinFilm.H"
 #include "addToRunTimeSelectionTable.H"
-#include "uniformDimensionedFields.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -75,10 +74,7 @@ void kinematicThinFilm::preEvolveRegion()
 
 void kinematicThinFilm::evolveRegion()
 {
-    if (debug)
-    {
-        InfoInFunction << endl;
-    }
+    DebugInFunction << endl;
 
     const areaVectorField& ns = regionMesh().faceAreaNormals();
 
@@ -86,7 +82,7 @@ void kinematicThinFilm::evolveRegion()
 
     phi2s_ = fac::interpolate(h_)*phif_;
 
-    for (int oCorr=1; oCorr<=nOuterCorr_; oCorr++)
+    for (int oCorr=1; oCorr<=nOuterCorr_; ++oCorr)
     {
         pf_.storePrevIter();
 
@@ -108,10 +104,10 @@ void kinematicThinFilm::evolveRegion()
 
         if (momentumPredictor_)
         {
-            solve(UsEqn == - fac::grad(pf_*h_)/rho_ + pf_*fac::grad(h_)/rho_);
+            solve(UsEqn == -fac::grad(pf_*h_)/rho_ + pf_*fac::grad(h_)/rho_);
         }
 
-        for (int corr=1; corr<=nCorr_; corr++)
+        for (int corr=1; corr<=nCorr_; ++corr)
         {
             areaScalarField UsA(UsEqn.A());
 
@@ -126,7 +122,7 @@ void kinematicThinFilm::evolveRegion()
                 + fac::interpolate(pf_/(rho_*UsA))
                 * fac::lnGrad(h_)*regionMesh().magLe();
 
-            for (int nFilm=1; nFilm<=nFilmCorr_; nFilm++)
+            for (int nFilm=1; nFilm<=nFilmCorr_; ++nFilm)
             {
                 faScalarMatrix hEqn
                 (

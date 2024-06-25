@@ -104,9 +104,12 @@ int main(int argc, char *argv[])
     );
 
     #include "addRegionOption.H"
+    #include "addFaRegionOption.H"
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createNamedPolyMesh.H"
+
+    #include "getFaRegionOption.H"
 
     const bool doDecompose = !args.found("no-decompose");
     const bool doDecompFields = !args.found("no-fields");
@@ -133,8 +136,15 @@ int main(int argc, char *argv[])
     // Preliminary checks
     #include "checkPatchTopology.H"
 
+    Info << "Create areaMesh";
+    if (!Foam::polyMesh::regionName(areaRegionName).empty())
+    {
+        Foam::Info << ' ' << areaRegionName;
+    }
+    Info << " for polyMesh at time = " << runTime.timeName() << nl;
+
     // Create
-    faMesh aMesh(mesh, meshDefDict);
+    faMesh aMesh(areaRegionName, mesh, meshDefDict);
 
     // Mesh information (less verbose)
     faMeshTools::printMeshChecks(aMesh, 0);
@@ -155,8 +165,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        // Set the precision of the points data to 10
-        IOstream::defaultPrecision(10);
+        // More precision (for points data)
+        IOstream::minPrecision(10);
 
         Info<< nl << "Write finite area mesh." << nl;
         aMesh.write();

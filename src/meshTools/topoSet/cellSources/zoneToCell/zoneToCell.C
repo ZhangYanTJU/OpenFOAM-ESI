@@ -181,7 +181,7 @@ Foam::zoneToCell::zoneToCell
     const dictionary& dict
 )
 :
-    topoSetCellSource(mesh),
+    topoSetCellSource(mesh, dict),
     zoneMatcher_()
 {
     // Look for 'zones' and 'zone', but accept 'name' as well

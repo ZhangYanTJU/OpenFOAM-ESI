@@ -82,11 +82,9 @@ class surfaceFieldWriter
         label numberOfPoints_;
 
 
-    // Private Member Functions
+public:
 
-        //- Flatten boundary field values into a contiguous list
-        List<vector> flattenBoundary(const surfaceVectorField& field) const;
-
+    // Generated Methods
 
         //- No copy construct
         surfaceFieldWriter(const surfaceFieldWriter&) = delete;
@@ -94,8 +92,6 @@ class surfaceFieldWriter
         //- No copy assignment
         void operator=(const surfaceFieldWriter&) = delete;
 
-
-public:
 
     // Constructors
 

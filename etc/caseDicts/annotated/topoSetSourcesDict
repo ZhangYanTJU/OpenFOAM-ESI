@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -34,6 +34,16 @@ cellSet_doc
         // or
         min     (0 0 0);
         max     (1 1 1);
+
+        // Optional the cell centres can be transformed before being used. This
+        // can be used to simulate moving selections in transient simulations.
+        // Any solidBodyMotionFunction can be used. Note: the same optional
+        // transformation can be used for any selection requiring face centres
+        // or point locations.
+        solidBodyMotionFunction linearMotion
+        {
+            velocity    (-0.1 -0.1 0);
+        }
     }
 
 
@@ -43,6 +53,10 @@ cellSet_doc
         sets    (c1 c2);
         // or
         set     c1;
+        // or
+        zones   (c1Zone c2Zone);
+        // or
+        zone    c1Zone;
     }
 
 
@@ -54,6 +68,8 @@ cellSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
     //- Select based on faceSet
@@ -62,6 +78,10 @@ cellSet_doc
         sets    (f0 f1);
         // or
         set     f0;             // Name of faceSet
+        // or
+        zones   (f0Zone f1Zone);
+        // or
+        zone    f0Zone;
 
         //- selection option (mandatory)
         option any;             // cell with any face in faceSet
@@ -109,6 +129,8 @@ cellSet_doc
     {
         source  nearestToCell;
         points  ((0 0 0) (1 1 1)(2 2 2));
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -127,6 +149,10 @@ cellSet_doc
         sets    (p0 p1);
         // or
         sets    p0;
+        // or
+        zones   (p0Zone p1Zone);
+        // or
+        zone    p0Zone;
 
         option any;         // cell with any point in pointSet
         //option edge;      // cell with an edge with both points in pointSet
@@ -150,6 +176,8 @@ cellSet_doc
         i       (0.2 0.2 0);
         j       (-0.2 0.2 0);
         k       (10 10 10);
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -158,6 +186,8 @@ cellSet_doc
         source       searchableSurfaceToCell;
         surfaceType  triSurfaceMesh;  // Type of surface
         surfaceName  blob.obj;        // Name for surface object
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -176,6 +206,8 @@ cellSet_doc
 
         // optional
         innerRadius 1.0;
+
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -197,6 +229,7 @@ cellSet_doc
         useSurfaceOrientation false;  // use closed surface inside/outside
                                       // test (ignores includeCut,
                                       // outsidePoints)
+        // See boxToCell for optional transformation of the cell centres
     }
 
 
@@ -245,6 +278,8 @@ faceSet_doc
         // or
         min     (0 0 0);
         max     (1 1 1);
+
+        // See boxToCell for optional transformation of the face centres
     }
 
 
@@ -254,6 +289,10 @@ faceSet_doc
         sets    (c0 c1);
         // or
         set     c0;             // Name of cellSet
+        // or
+        zones   (c0Zone c1Zone);
+        // or
+        zone    c0Zone;
 
         option  all;            // All faces of cells
         //option  both;         // Only faces with owner+neighbour in cellSet
@@ -270,6 +309,8 @@ faceSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+
+        // See boxToCell for optional transformation of the face centres
     }
 
 
@@ -310,6 +351,10 @@ faceSet_doc
         sets    (p0 p1);
         // or
         set     p0;             // Name of pointSet
+        // or
+        zones   (p0Zone p1Zone);
+        // or
+        zone    p0Zone;
 
         option  any;           // Faces using any point in pointSet
         //option  all          // Faces with all points in pointSet
@@ -332,6 +377,8 @@ faceSet_doc
         source       searchableSurfaceToFace;
         surfaceType  triSurfaceMesh;  // Type of surface
         surfaceName  blob.obj;        // Name for surface object
+
+        // See boxToCell for optional transformation of the face centres
     }
 
 
@@ -342,6 +389,8 @@ faceSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+
+        // See boxToCell for optional transformation of the face centres
     }
 
 
@@ -390,6 +439,8 @@ pointSet_doc
         // or
         min     (0 0 0);
         max     (1 1 1);
+
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -399,6 +450,10 @@ pointSet_doc
         sets    (c1 c2);
         // or
         set     c1;
+        // or
+        zones   (c1Zone c2Zone);
+        // or
+        zone    c1Zone;
 
         option  all;         // all points of cell
     }
@@ -412,6 +467,7 @@ pointSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -421,6 +477,10 @@ pointSet_doc
         sets    (f1 f2);
         // or
         set     f1;
+        // or
+        zones   (f1Zone f2Zone);
+        // or
+        zone    f1Zone;
 
         option  all;         // all points of face
     }
@@ -437,6 +497,7 @@ pointSet_doc
     {
         source  nearestToPoint;
         points  ((0 0 0) (1 1 1));
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -446,6 +507,10 @@ pointSet_doc
         sets    (p1 p2);
         // or
         set     p1;
+        // or
+        zones   (p1Zone p2Zone);
+        // or
+        zone    p1Zone;
     }
 
 
@@ -454,6 +519,7 @@ pointSet_doc
         source       searchableSurfaceToCell;
         surfaceType  triSurfaceMesh;  // Type of surface
         surfaceName  blob.obj;        // Name for surface object
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -464,6 +530,7 @@ pointSet_doc
         radius  5.0;
         // optional
         innerRadius 1.0;
+        // See boxToCell for optional transformation of the points
     }
 
 
@@ -476,6 +543,7 @@ pointSet_doc
                                 // (requires closed surface with consistent
                                 //  normals)
         includeOutside  false;  //   ,,    outside  ,,
+        // See boxToCell for optional transformation of the points
     }
 
 

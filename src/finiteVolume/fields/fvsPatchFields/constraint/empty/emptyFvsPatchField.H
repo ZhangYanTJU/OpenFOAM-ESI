@@ -27,7 +27,19 @@ Class
     Foam::emptyFvsPatchField
 
 Description
-    Foam::emptyFvsPatchField
+    This boundary condition provides an 'empty' condition for reduced
+    dimensions cases.
+
+    The "value" entry is NO_READ, NO_WRITE.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type    empty;
+    }
+    \endverbatim
 
 SourceFiles
     emptyFvsPatchField.C
@@ -69,7 +81,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         emptyFvsPatchField
         (
             const fvPatch&,
@@ -92,15 +105,6 @@ public:
             const emptyFvsPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const
-        {
-            return tmp<fvsPatchField<Type>>
-            (
-                new emptyFvsPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         emptyFvsPatchField
         (
@@ -108,22 +112,25 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const
+        {
+            return fvsPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
         ) const
         {
-            return tmp<fvsPatchField<Type>>
-            (
-                new emptyFvsPatchField<Type>(*this, iF)
-            );
+            return fvsPatchField<Type>::Clone(*this, iF);
         }
 
 
-    // Member functions
+    // Member Functions
 
-        // Mapping functions
+        // Mapping Functions
 
             //- Map (and resize as needed) from self given a mapping object
             virtual void autoMap
@@ -139,6 +146,12 @@ public:
                 const labelList&
             )
             {}
+
+
+    // Member Functions
+
+        //- Write without "value" entry!
+        virtual void write(Ostream&) const;
 };
 
 

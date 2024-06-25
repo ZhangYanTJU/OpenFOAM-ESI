@@ -148,7 +148,8 @@ void Foam::fv::directionalPressureGradientExplicitSource::writeProps
                 "uniform",
                 mesh_,
                 IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             )
         );
         propsDict.add("gradient", gradP);
@@ -463,23 +464,18 @@ void Foam::fv::directionalPressureGradientExplicitSource::addSup
     const label fieldI
 )
 {
-    DimensionedField<vector, volMesh> Su
+    auto tSu = DimensionedField<vector, volMesh>::New
     (
-        IOobject
-        (
-            name_ + fieldNames_[fieldI] + "Sup",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        name_ + fieldNames_[fieldI] + "Sup",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedVector(eqn.dimensions()/dimVolume, Zero)
     );
+    auto& Su = tSu.ref();
 
     UIndirectList<vector>(Su, cells_) = gradP0_ + dGradP_ + gradPporous_;
 
-    eqn += Su;
+    eqn += tSu;
 }
 
 
@@ -506,14 +502,7 @@ void Foam::fv::directionalPressureGradientExplicitSource::constrain
         (
             new volScalarField
             (
-                IOobject
-                (
-                    name_ + ":invA",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
+                mesh_.newIOobject(IOobject::scopedName(name_, "invA")),
                 1.0/eqn.A()
             )
         );

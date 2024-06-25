@@ -369,7 +369,7 @@ Foam::SlicedGeometricField<Type, PatchField, SlicedPatchField, GeoMesh>::
 ~SlicedGeometricField()
 {
     // Set internalField to nullptr to avoid deletion of underlying field
-    UList<Type>::shallowCopy(UList<Type>());
+    UList<Type>::shallowCopy(nullptr);
 }
 
 

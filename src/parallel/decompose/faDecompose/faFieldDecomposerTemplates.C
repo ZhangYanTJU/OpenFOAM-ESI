@@ -60,7 +60,7 @@ Foam::faFieldDecomposer::decomposeField
                 (
                     field.boundaryField()[oldPatchi],
                     procMesh_.boundary()[patchi],
-                    DimensionedField<Type, areaMesh>::null(),
+                    faPatchField<Type>::Internal::null(),
                     patchFieldDecomposerPtrs_[patchi]
                 )
             );
@@ -73,7 +73,7 @@ Foam::faFieldDecomposer::decomposeField
                 new processorFaPatchField<Type>
                 (
                     procMesh_.boundary()[patchi],
-                    DimensionedField<Type, areaMesh>::null(),
+                    faPatchField<Type>::Internal::null(),
                     Field<Type>
                     (
                         field.internalField(),
@@ -171,7 +171,7 @@ Foam::faFieldDecomposer::decomposeField
                 (
                     field.boundaryField()[oldPatchi],
                     procMesh_.boundary()[patchi],
-                    DimensionedField<Type, edgeMesh>::null(),
+                    faePatchField<Type>::Internal::null(),
                     patchFieldDecomposerPtrs_[patchi]
                 )
             );
@@ -184,7 +184,7 @@ Foam::faFieldDecomposer::decomposeField
                 new processorFaePatchField<Type>
                 (
                     procMesh_.boundary()[patchi],
-                    DimensionedField<Type, edgeMesh>::null(),
+                    faePatchField<Type>::Internal::null(),
                     Field<Type>
                     (
                         allEdgeField,

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,8 +101,8 @@ Note
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Function1Types_Square_H
-#define Function1Types_Square_H
+#ifndef Foam_Function1Types_Square_H
+#define Foam_Function1Types_Square_H
 
 #include "Sine.H"
 
@@ -155,10 +155,10 @@ public:
         //- Copy construct
         explicit Square(const Square<Type>& rhs);
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual tmp<Function1<Type>> clone() const
         {
-            return tmp<Function1<Type>>(new Square<Type>(*this));
+            return Function1<Type>::Clone(*this);
         }
 
 

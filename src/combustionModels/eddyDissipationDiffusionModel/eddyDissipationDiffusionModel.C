@@ -77,25 +77,16 @@ template<class ReactionThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 eddyDissipationDiffusionModel<ReactionThermo, ThermoType>::rtDiff() const
 {
-    tmp<volScalarField> tdelta
+    auto tdelta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "tdelta",
-                this->mesh().time().timeName(),
-                this->mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            this->mesh(),
-            dimensionedScalar(dimLength, Zero),
-            fvPatchFieldBase::zeroGradientType()
-        )
+        "tdelta",
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar(dimLength, Zero),
+        fvPatchFieldBase::zeroGradientType()
     );
+    auto& delta = tdelta.ref();
 
-    volScalarField& delta = tdelta.ref();
     delta.ref() = cbrt(this->mesh().V());
     delta.correctBoundaryConditions();
 

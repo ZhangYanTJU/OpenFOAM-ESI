@@ -194,7 +194,7 @@ gaussLaplacianScheme<Type, GType>::fvmLaplacian
 
     if (mesh.fluxRequired(vf.name()))
     {
-        fvm.faceFluxCorrectionPtr() = tfaceFluxCorrection.ptr();
+        fvm.faceFluxCorrectionPtr(tfaceFluxCorrection.ptr());
     }
 
     return tfvm;

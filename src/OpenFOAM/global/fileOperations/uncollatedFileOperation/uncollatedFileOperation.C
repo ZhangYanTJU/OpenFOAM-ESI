@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -108,13 +108,15 @@ Foam::fileName Foam::fileOperations::uncollatedFileOperation::filePathInfo
             {
                 // Constant & system can come from global case
 
-                fileName parentObjectPath =
-                    io.rootPath()/io.time().globalCaseName()
-                   /io.instance()/io.db().dbDir()/io.local()/io.name();
+                fileName parentPath =
+                (
+                    io.rootPath()/io.globalCaseName()
+                   /io.instance()/io.db().dbDir()/io.local()/io.name()
+                );
 
-                if (isFileOrDir(isFile, parentObjectPath))
+                if (isFileOrDir(isFile, parentPath))
                 {
-                    return parentObjectPath;
+                    return parentPath;
                 }
             }
 
@@ -535,7 +537,8 @@ Foam::fileNameList Foam::fileOperations::uncollatedFileOperation::readObjects
     if (newInstance.empty())
     {
         // Find similar time
-        fileName newInst = db.time().findInstancePath(instant(instance));
+        word newInst = db.time().findInstancePath(instant(instance));
+
         if (!newInst.empty() && newInst != instance)
         {
             // Try with new time
@@ -699,7 +702,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
 {
     bool ok = false;
 
-    if (!masterOnly || Pstream::master(UPstream::worldComm))
+    if (!masterOnly || UPstream::master(UPstream::worldComm))
     {
         if (debug)
         {
@@ -716,6 +719,14 @@ bool Foam::fileOperations::uncollatedFileOperation::read
         const bool oldMasterOnly = regIOobject::masterOnlyReading;
         regIOobject::masterOnlyReading = masterOnly;
 
+        const bool oldParRun = UPstream::parRun();
+        if (masterOnly)
+        {
+            // Reading on master only.
+            // Avoid side effects from io.readStream below.
+            UPstream::parRun(false);
+        }
+
         // Read file
         ok = io.readData(io.readStream(typeName));
         io.close();
@@ -723,6 +734,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
         // Restore flags
         io.globalObject(oldGlobal);
         regIOobject::masterOnlyReading = oldMasterOnly;
+        UPstream::parRun(oldParRun);
 
         if (debug)
         {
@@ -732,35 +744,23 @@ bool Foam::fileOperations::uncollatedFileOperation::read
         }
     }
 
-    if (masterOnly && Pstream::parRun())
+    if (masterOnly && UPstream::parRun())
     {
-        Pstream::broadcasts
-        (
-            UPstream::worldComm,
-            io.headerClassName(),
-            io.note()
-        );
-
+        // Broadcast regIOobject content, with writeData/readData handling
         if (UPstream::master(UPstream::worldComm))
         {
-            OPBstream toAll
-            (
-                UPstream::masterNo(),
-                UPstream::worldComm,
-                format
-            );
-            bool okWrite = io.writeData(toAll);
+            OPBstream os(UPstream::worldComm, format);
+
+            os << io.headerClassName() << io.note();
+            bool okWrite = io.writeData(os);
             ok = ok && okWrite;
         }
         else
         {
-            IPBstream fromMaster
-            (
-                UPstream::masterNo(),
-                UPstream::worldComm,
-                format
-            );
-            ok = io.readData(fromMaster);
+            IPBstream is(UPstream::worldComm, format);
+
+            is >> io.headerClassName() >> io.note();
+            ok = io.readData(is);
         }
     }
 

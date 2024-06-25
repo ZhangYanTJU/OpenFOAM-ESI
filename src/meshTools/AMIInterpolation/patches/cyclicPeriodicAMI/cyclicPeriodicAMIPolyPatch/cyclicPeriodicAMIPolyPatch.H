@@ -29,6 +29,10 @@ Class
 Description
     Cyclic patch for periodic Arbitrary Mesh Interface (AMI)
 
+    Uses automated matching to fill all of the faces on owner and neighbour.
+    Can be used for translational periodic matching as well. Uses the
+    transforms from a specified periodic patch to transform the geometry.
+
 SourceFiles
     cyclicPeriodicAMIPolyPatch.C
 
@@ -59,7 +63,9 @@ private:
 
     // Private data
 
-        //- Current number of transformations (+ve forward, -ve backward)
+        //- Current number of transformations (+ve forward, -ve backward).
+        //- Used internally to stores the last state that gave a starting
+        //- match. Speeds up the automatic matching.
         mutable label nTransforms_;
 
         //- Number of sectors in a rotationally periodic geometry (optional)

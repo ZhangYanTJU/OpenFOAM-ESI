@@ -29,8 +29,6 @@ License
 #include "leastSquaresFaVectors.H"
 #include "edgeFields.H"
 #include "areaFields.H"
-#include "mapPolyMesh.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -44,19 +42,8 @@ namespace Foam
 
 Foam::leastSquaresFaVectors::leastSquaresFaVectors(const faMesh& mesh)
 :
-    MeshObject<faMesh, Foam::MoveableMeshObject, leastSquaresFaVectors>(mesh),
-    pVectorsPtr_(nullptr),
-    nVectorsPtr_(nullptr)
+    MeshObject_type(mesh)
 {}
-
-
-// * * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * //
-
-Foam::leastSquaresFaVectors::~leastSquaresFaVectors()
-{
-    deleteDemandDrivenData(pVectorsPtr_);
-    deleteDemandDrivenData(nVectorsPtr_);
-}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -67,7 +54,7 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
         << "Constructing finite area (invDist) least square gradient vectors"
         << nl;
 
-    pVectorsPtr_ = new edgeVectorField
+    pVectorsPtr_ = std::make_unique<edgeVectorField>
     (
         IOobject
         (
@@ -83,7 +70,7 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
     );
     auto& lsP = *pVectorsPtr_;
 
-    nVectorsPtr_ = new edgeVectorField
+    nVectorsPtr_ = std::make_unique<edgeVectorField>
     (
         IOobject
         (
@@ -237,8 +224,8 @@ bool Foam::leastSquaresFaVectors::movePoints()
     DebugInFunction
         << "Clearing least square data" << nl;
 
-    deleteDemandDrivenData(pVectorsPtr_);
-    deleteDemandDrivenData(nVectorsPtr_);
+    pVectorsPtr_.reset(nullptr);
+    nVectorsPtr_.reset(nullptr);
 
     return true;
 }

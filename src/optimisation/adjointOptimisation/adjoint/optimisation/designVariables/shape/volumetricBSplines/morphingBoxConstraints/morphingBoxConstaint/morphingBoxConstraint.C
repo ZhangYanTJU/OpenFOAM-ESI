@@ -121,9 +121,9 @@ Foam::autoPtr<Foam::morphingBoxConstraint> Foam::morphingBoxConstraint::New
 
     Info<< "morphingBoxConstraint type : " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
@@ -135,9 +135,10 @@ Foam::autoPtr<Foam::morphingBoxConstraint> Foam::morphingBoxConstraint::New
 
     return autoPtr<morphingBoxConstraint>
     (
-        cstrIter()(mesh, dict, designVariables)
+        ctorPtr(mesh, dict, designVariables)
     );
 }
+
 
 // * * * * * * * * * * * * * * *  Member Functions   * * * * * * * * * * * * //
 

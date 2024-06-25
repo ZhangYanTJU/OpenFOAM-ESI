@@ -34,6 +34,8 @@ Description
     This boundary condition enforces a cyclic condition between a pair of
     boundaries.
 
+    The "value" entry is NO_READ.
+
 Usage
     Example of the boundary condition specification:
     \verbatim
@@ -75,7 +77,7 @@ class cyclicFvPatchField
     virtual public cyclicLduInterfaceField,
     public coupledFvPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the cyclic patch
         const cyclicFvPatch& cyclicPatch_;
@@ -113,7 +115,7 @@ public:
             const fvPatch&,
             const DimensionedField<Type, volMesh>&,
             const dictionary&,
-            const bool valueRequired = true
+            const bool needValue = true  //!< evaluate
         );
 
         //- Construct by mapping given cyclicFvPatchField onto a new patch
@@ -131,15 +133,6 @@ public:
             const cyclicFvPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new cyclicFvPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         cyclicFvPatchField
         (
@@ -147,20 +140,23 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return fvPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>
-            (
-                new cyclicFvPatchField<Type>(*this, iF)
-            );
+            return fvPatchField<Type>::Clone(*this, iF);
         }
 
 
-    // Member functions
+    // Member Functions
 
         // Access
 

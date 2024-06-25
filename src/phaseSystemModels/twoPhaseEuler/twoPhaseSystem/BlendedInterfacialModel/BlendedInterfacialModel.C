@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,8 +39,7 @@ void Foam::BlendedInterfacialModel<modelType>::correctFixedFluxBCs
     GeometricField& field
 ) const
 {
-    typename GeometricField::Boundary& fieldBf =
-        field.boundaryFieldRef();
+    auto& fieldBf = field.boundaryFieldRef();
 
     forAll(pair_.phase1().phi().boundaryField(), patchi)
     {
@@ -140,22 +139,12 @@ Foam::BlendedInterfacialModel<modelType>::K() const
         f2 = blending_.f2(pair1In2_.dispersed(), pair2In1_.dispersed());
     }
 
-    tmp<volScalarField> x
+    auto x = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                modelType::typeName + ":K",
-                pair_.phase1().mesh().time().timeName(),
-                pair_.phase1().mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            pair_.phase1().mesh(),
-            dimensionedScalar(modelType::dimK, Zero)
-        )
+        IOobject::scopedName(modelType::typeName, "K"),
+        IOobject::NO_REGISTER,
+        pair_.phase1().mesh(),
+        dimensionedScalar(modelType::dimK, Zero)
     );
 
     if (model_)
@@ -208,22 +197,11 @@ Foam::BlendedInterfacialModel<modelType>::Kf() const
         );
     }
 
-    tmp<surfaceScalarField> x
+    auto x = surfaceScalarField::New
     (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                modelType::typeName + ":Kf",
-                pair_.phase1().mesh().time().timeName(),
-                pair_.phase1().mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            pair_.phase1().mesh(),
-            dimensionedScalar(modelType::dimK, Zero)
-        )
+        IOobject::scopedName(modelType::typeName, "Kf"),
+        pair_.phase1().mesh(),
+        dimensionedScalar(modelType::dimK, Zero)
     );
 
     if (model_)
@@ -271,17 +249,10 @@ Foam::BlendedInterfacialModel<modelType>::F() const
         f2 = blending_.f2(pair1In2_.dispersed(), pair2In1_.dispersed());
     }
 
-    auto x = tmp<GeometricField<Type, fvPatchField, volMesh>>::New
+    auto x = GeometricField<Type, fvPatchField, volMesh>::New
     (
-        IOobject
-        (
-            modelType::typeName + ":F",
-            pair_.phase1().mesh().time().timeName(),
-            pair_.phase1().mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName(modelType::typeName, "F"),
+        IOobject::NO_REGISTER,
         pair_.phase1().mesh(),
         dimensioned<Type>(modelType::dimF, Zero)
     );
@@ -336,17 +307,10 @@ Foam::BlendedInterfacialModel<modelType>::Ff() const
         );
     }
 
-    auto x = tmp<surfaceScalarField>::New
+    auto x = surfaceScalarField::New
     (
-        IOobject
-        (
-            modelType::typeName + ":Ff",
-            pair_.phase1().mesh().time().timeName(),
-            pair_.phase1().mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName(modelType::typeName, "Ff"),
+        IOobject::NO_REGISTER,
         pair_.phase1().mesh(),
         dimensionedScalar(modelType::dimF*dimArea, Zero)
     );
@@ -397,22 +361,12 @@ Foam::BlendedInterfacialModel<modelType>::D() const
         f2 = blending_.f2(pair1In2_.dispersed(), pair2In1_.dispersed());
     }
 
-    tmp<volScalarField> x
+    auto x = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                modelType::typeName + ":D",
-                pair_.phase1().mesh().time().timeName(),
-                pair_.phase1().mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            pair_.phase1().mesh(),
-            dimensionedScalar(modelType::dimD, Zero)
-        )
+        IOobject::scopedName(modelType::typeName, "D"),
+        IOobject::NO_REGISTER,
+        pair_.phase1().mesh(),
+        dimensionedScalar(modelType::dimD, Zero)
     );
 
     if (model_)

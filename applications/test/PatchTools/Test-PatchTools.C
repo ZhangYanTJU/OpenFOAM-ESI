@@ -67,8 +67,8 @@ using namespace Foam;
 //    //    (note:without calculating pointNormals
 //    //     to avoid them being stored)
 //
-//    tmp<pointField> textrudeN(new pointField(p.nPoints(), Zero));
-//    pointField& extrudeN = textrudeN();
+//    auto textrudeN = tmp<pointField>::New(p.nPoints(), Zero);
+//    auto& extrudeN = textrudeN.ref();
 //    {
 //        const faceList& localFaces = p.localFaces();
 //        const vectorField& faceAreas = mesh.faceAreas();
@@ -201,7 +201,6 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
-    #include "addTimeOptions.H"
     argList::addArgument("patch");
     #include "setRootCase.H"
     #include "createTime.H"

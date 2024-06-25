@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -109,45 +109,68 @@ void Foam::pointPatchField<Type>::write(Ostream& os) const
 
 
 template<class Type>
+template<class Type1>
+void Foam::pointPatchField<Type>::patchInternalField
+(
+    const UList<Type1>& internalData,
+    const labelUList& addressing,
+    Field<Type1>& pfld
+) const
+{
+    // Check size
+    if (internalData.size() != primitiveField().size())
+    {
+        FatalErrorInFunction
+            << "Internal field size: " << internalData.size()
+            << " != mesh size: " << primitiveField().size() << nl
+            << abort(FatalError);
+    }
+
+    const label len = this->size();
+
+    pfld.resize_nocopy(len);
+
+    for (label i = 0; i < len; ++i)
+    {
+        pfld[i] = internalData[addressing[i]];
+    }
+}
+
+
+template<class Type>
+template<class Type1>
+Foam::tmp<Foam::Field<Type1>>
+Foam::pointPatchField<Type>::patchInternalField
+(
+    const UList<Type1>& internalData,
+    const labelUList& addressing
+) const
+{
+    auto tpfld = tmp<Field<Type1>>::New();
+    this->patchInternalField(internalData, addressing, tpfld.ref());
+    return tpfld;
+}
+
+
+template<class Type>
+template<class Type1>
+Foam::tmp<Foam::Field<Type1>>
+Foam::pointPatchField<Type>::patchInternalField
+(
+    const UList<Type1>& internalData
+) const
+{
+    auto tpfld = tmp<Field<Type1>>::New();
+    this->patchInternalField(internalData, patch().meshPoints(), tpfld.ref());
+    return tpfld;
+}
+
+
+template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::pointPatchField<Type>::patchInternalField() const
 {
     return patchInternalField(primitiveField());
-}
-
-
-template<class Type>
-template<class Type1>
-Foam::tmp<Foam::Field<Type1>>
-Foam::pointPatchField<Type>::patchInternalField
-(
-    const Field<Type1>& iF,
-    const labelUList& meshPoints
-) const
-{
-    // Check size
-    if (iF.size() != primitiveField().size())
-    {
-        FatalErrorInFunction
-            << "given internal field does not correspond to the mesh. "
-            << "Field size: " << iF.size()
-            << " mesh size: " << primitiveField().size()
-            << abort(FatalError);
-    }
-
-    return tmp<Field<Type1>>::New(iF, meshPoints);
-}
-
-
-template<class Type>
-template<class Type1>
-Foam::tmp<Foam::Field<Type1>>
-Foam::pointPatchField<Type>::patchInternalField
-(
-    const Field<Type1>& iF
-) const
-{
-    return patchInternalField(iF, patch().meshPoints());
 }
 
 
@@ -163,18 +186,16 @@ void Foam::pointPatchField<Type>::addToInternalField
     if (iF.size() != primitiveField().size())
     {
         FatalErrorInFunction
-            << "given internal field does not correspond to the mesh. "
-            << "Field size: " << iF.size()
-            << " mesh size: " << primitiveField().size()
+            << "Internal field size: " << iF.size()
+            << " != mesh size: " << primitiveField().size() << nl
             << abort(FatalError);
     }
 
     if (pF.size() != size())
     {
         FatalErrorInFunction
-            << "given patch field does not correspond to the mesh. "
-            << "Field size: " << pF.size()
-            << " mesh size: " << size()
+            << "Patch field size: " << pF.size()
+            << " != patch size: " << size() << nl
             << abort(FatalError);
     }
 
@@ -201,18 +222,16 @@ void Foam::pointPatchField<Type>::addToInternalField
     if (iF.size() != primitiveField().size())
     {
         FatalErrorInFunction
-            << "given internal field does not correspond to the mesh. "
-            << "Field size: " << iF.size()
-            << " mesh size: " << primitiveField().size()
+            << "Internal field size: " << iF.size()
+            << " != mesh size: " << primitiveField().size() << nl
             << abort(FatalError);
     }
 
     if (pF.size() != size())
     {
         FatalErrorInFunction
-            << "given patch field does not correspond to the mesh. "
-            << "Field size: " << pF.size()
-            << " mesh size: " << size()
+            << "Patch field size: " << pF.size()
+            << " != patch size: " << size() << nl
             << abort(FatalError);
     }
 
@@ -240,18 +259,16 @@ void Foam::pointPatchField<Type>::setInInternalField
     if (iF.size() != primitiveField().size())
     {
         FatalErrorInFunction
-            << "given internal field does not correspond to the mesh. "
-            << "Field size: " << iF.size()
-            << " mesh size: " << primitiveField().size()
+            << "Internal field size: " << iF.size()
+            << " != mesh size: " << primitiveField().size() << nl
             << abort(FatalError);
     }
 
     if (pF.size() != meshPoints.size())
     {
         FatalErrorInFunction
-            << "given patch field does not correspond to the meshPoints. "
-            << "Field size: " << pF.size()
-            << " meshPoints size: " << size()
+            << "Patch field size: " << pF.size()
+            << " != meshPoints size: " << meshPoints.size() << nl
             << abort(FatalError);
     }
 

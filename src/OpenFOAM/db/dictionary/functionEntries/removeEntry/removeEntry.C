@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,7 @@ License
 
 #include "removeEntry.H"
 #include "dictionary.H"
-#include "stringListOps.H"
+#include "wordRes.H"
 #include "addToMemberFunctionSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -75,7 +75,7 @@ bool Foam::functionEntries::removeEntry::execute
         {
             // Remove by pattern
             const wordList dictKeys = parentDict.toc();
-            const labelList indices = findStrings(key, dictKeys);
+            const labelList indices = wordRes::matching(key, dictKeys);
 
             for (const auto idx : indices)
             {

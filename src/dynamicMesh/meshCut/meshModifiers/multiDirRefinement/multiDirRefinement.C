@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -277,16 +277,14 @@ void Foam::multiDirRefinement::refineHex8
     {
         // Create count 1 for original cells
         Map<label> hexCellSet(2*hexCells.size());
-        forAll(hexCells, i)
+        for (const label celli : hexCells)
         {
-            hexCellSet.insert(hexCells[i], 1);
+            hexCellSet.insert(celli, 1);
         }
 
         // Increment count
-        forAll(consistentCells, i)
+        for (const label celli : consistentCells)
         {
-            const label celli = consistentCells[i];
-
             auto iter = hexCellSet.find(celli);
 
             if (iter.good())

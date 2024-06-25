@@ -51,7 +51,7 @@ Foam::cyclicFvPatchField<Type>::cyclicFvPatchField
     const fvPatch& p,
     const DimensionedField<Type, volMesh>& iF,
     const dictionary& dict,
-    const bool valueRequired
+    const bool needValue
 )
 :
     coupledFvPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ),
@@ -68,9 +68,9 @@ Foam::cyclicFvPatchField<Type>::cyclicFvPatchField
             << exit(FatalIOError);
     }
 
-    if (valueRequired)
+    if (needValue)
     {
-        this->evaluate(Pstream::commsTypes::blocking);
+        this->evaluate(Pstream::commsTypes::buffered);
     }
 }
 
@@ -134,8 +134,8 @@ Foam::cyclicFvPatchField<Type>::patchNeighbourField() const
     const labelUList& nbrFaceCells =
         cyclicPatch().cyclicPatch().neighbPatch().faceCells();
 
-    tmp<Field<Type>> tpnf(new Field<Type>(this->size()));
-    Field<Type>& pnf = tpnf.ref();
+    auto tpnf = tmp<Field<Type>>::New(this->size());
+    auto& pnf = tpnf.ref();
 
 
     if (doTransform())
@@ -323,5 +323,6 @@ void Foam::cyclicFvPatchField<Type>::manipulateMatrix
         }
     }
 }
+
 
 // ************************************************************************* //

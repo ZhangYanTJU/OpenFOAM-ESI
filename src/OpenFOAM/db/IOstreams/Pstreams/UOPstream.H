@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -104,7 +104,7 @@ protected:
         const int comm_;
 
         //- Call bufferIPCsend on termination (in the destructor)
-        const bool sendAtDestruct_;
+        bool sendAtDestruct_;
 
         //- Reference to the send buffer data
         DynamicList<char>& sendBuf_;
@@ -144,12 +144,20 @@ public:
 
     // Member Functions
 
-    // Inquiry
+    // Stream State Functions
 
-        //- Return flags of output stream
-        virtual ios_base::fmtflags flags() const override
+        //- Return current stream flags.
+        //- Dummy for parallel stream, returns 0.
+        virtual std::ios_base::fmtflags flags() const override
         {
-            return ios_base::fmtflags(0);
+            return std::ios_base::fmtflags(0);
+        }
+
+        //- Set stream flags, return old stream flags.
+        //- Dummy for parallel stream, returns 0.
+        virtual std::ios_base::fmtflags flags(std::ios_base::fmtflags) override
+        {
+            return std::ios_base::fmtflags(0);
         }
 
 
@@ -281,15 +289,6 @@ public:
         virtual void rewind();
 
 
-    // Edit
-
-        //- Set flags of stream
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags) override
-        {
-            return ios_base::fmtflags(0);
-        }
-
-
     // Print
 
         //- Print stream description to Ostream
@@ -309,7 +308,7 @@ class UOPstream
 {
     // Private Member Functions
 
-        //- Final buffer send, called by destructor
+        //- Buffer send, usually called by destructor
         bool bufferIPCsend();
 
 
@@ -348,6 +347,10 @@ public:
 
 
     // Member Functions
+
+        //- Send buffer contents now and not in destructor [advanced usage].
+        //- Returns true on success
+        bool send();
 
         //- Use all write methods from base class
         using UOPstreamBase::write;
@@ -470,7 +473,7 @@ class UOPBstream
 {
     // Private Member Functions
 
-        //- Final buffer send, called by destructor
+        //- Buffer send, usually called by destructor
         bool bufferIPCsend();
 
 

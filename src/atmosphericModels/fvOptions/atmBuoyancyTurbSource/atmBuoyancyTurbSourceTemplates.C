@@ -47,8 +47,10 @@ void Foam::fv::atmBuoyancyTurbSource::atmBuoyancyTurbSourceEpsilon
         );
 
     // Fetch required fields from the epsilon-based model
-    const volScalarField& k = turbPtr->k();
-    const volScalarField& epsilon = turbPtr->epsilon();
+    const tmp<volScalarField> tk(turbPtr->k());
+    const volScalarField& k = tk();
+    const tmp<volScalarField> tepsilon(turbPtr->epsilon());
+    const volScalarField& epsilon = tepsilon();
     const volScalarField::Internal& GbyNu =
         mesh_.lookupObjectRef<volScalarField::Internal>
         (
@@ -77,8 +79,10 @@ void Foam::fv::atmBuoyancyTurbSource::atmBuoyancyTurbSourceOmega
         );
 
     // Fetch required fields from the omega-based model
-    const volScalarField& k = turbPtr->k();
-    const volScalarField& omega = turbPtr->omega();
+    const tmp<volScalarField> tk(turbPtr->k());
+    const volScalarField& k = tk();
+    const tmp<volScalarField> tomega(turbPtr->omega());
+    const volScalarField& omega = tomega();
     const volScalarField::Internal& GbyNu =
         mesh_.lookupObjectRef<volScalarField::Internal>
         (
@@ -121,7 +125,8 @@ void Foam::fv::atmBuoyancyTurbSource::atmBuoyancyTurbSourceK
             turbulenceModel::propertiesName
         );
 
-    const volScalarField& k = turbPtr->k();
+    const tmp<volScalarField> tk(turbPtr->k());
+    const volScalarField& k = tk();
 
     eqn += fvm::Sp(alpha()*rho()*B_/k(), k);
 }

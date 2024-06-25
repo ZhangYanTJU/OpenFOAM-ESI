@@ -44,7 +44,7 @@ void Foam::LduMatrix<Type, DType, LUType>::initMatrixInterfaces
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
@@ -88,7 +88,7 @@ void Foam::LduMatrix<Type, DType, LUType>::initMatrixInterfaces
                     interfacei,
                     psiif,
                     interfaceCoeffs[interfacei],
-                    UPstream::commsTypes::blocking
+                    UPstream::commsTypes::buffered
                 );
             }
         }
@@ -172,7 +172,7 @@ void Foam::LduMatrix<Type, DType, LUType>::updateMatrixInterfaces
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
@@ -184,7 +184,7 @@ void Foam::LduMatrix<Type, DType, LUType>::updateMatrixInterfaces
         }
 
         // Check/no-check for updatedMatrix() ?
-        const bool noCheck = (commsType == UPstream::commsTypes::blocking);
+        const bool noCheck = (commsType == UPstream::commsTypes::buffered);
 
         forAll(interfaces_, interfacei)
         {
@@ -264,7 +264,7 @@ void Foam::LduMatrix<Type, DType, LUType>::updateMatrixInterfaces
                     interfacei,
                     psiif,
                     interfaceCoeffs[interfacei],
-                    UPstream::commsTypes::blocking
+                    UPstream::commsTypes::buffered
                 );
             }
         }

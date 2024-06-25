@@ -332,9 +332,11 @@ Foam::Reaction<ReactionThermo>::Reaction
     name_(dict.dictName()),
     species_(species)
 {
+    ICharStream reactionIs(dict.getString("reaction"));
+
     setLRhs
     (
-        IStringStream(dict.getString("reaction"))(),
+        reactionIs,
         species_,
         lhs_,
         rhs_,
@@ -441,7 +443,7 @@ const Foam::List<typename Foam::Reaction<ReactionThermo>::specieCoeffs>&
 Foam::Reaction<ReactionThermo>::glhs() const
 {
     NotImplemented;
-    return NullObjectRef<List<specieCoeffs>>();
+    return List<specieCoeffs>::null();
 }
 
 
@@ -450,7 +452,7 @@ const Foam::List<typename Foam::Reaction<ReactionThermo>::specieCoeffs>&
 Foam::Reaction<ReactionThermo>::grhs() const
 {
     NotImplemented;
-    return NullObjectRef<List<specieCoeffs>>();
+    return List<specieCoeffs>::null();
 }
 
 

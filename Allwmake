@@ -68,19 +68,34 @@ src/Allwmake $targetType $*
 # OpenFOAM applications
 applications/Allwmake $targetType $*
 
+#------------------------------------------------------------------------------
+# Additional components
 
-# Additional components/modules
 case "$FOAM_MODULE_PREFIX" in
 (false | none)
     echo ========================================
     echo "OpenFOAM modules disabled (prefix=${FOAM_MODULE_PREFIX})"
+    echo "Can be built separately:"
+    echo
+    echo "    ./Allwmake-modules -prefix=..."
+    echo
+    echo ========================================
     echo
     ;;
 (*)
     # Use wmake -all instead of Allwmake to allow for overrides
     ( cd "$WM_PROJECT_DIR/modules" 2>/dev/null && wmake -all )
+
+    echo ========================================
+    echo "The optional plugins can be built separately:"
+    echo
+    echo "    ./Allwmake-plugins -prefix=..."
+    echo
+    echo ========================================
+    echo
 esac
 
+#------------------------------------------------------------------------------
 # Count files in given directory. Ignore "Test-*" binaries.
 _foamCountDirEntries()
 {

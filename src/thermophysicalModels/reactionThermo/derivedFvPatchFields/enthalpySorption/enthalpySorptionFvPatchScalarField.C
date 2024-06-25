@@ -89,7 +89,7 @@ Foam::enthalpySorptionFvPatchScalarField::enthalpySorptionFvPatchScalarField
         case enthalpyModelType::calculated:
         {
             enthalpyMassLoadPtr_ =
-                Function1<scalar>::New("enthalpyTable", dict);
+                Function1<scalar>::New("enthalpyTable", dict, &iF.db());
             break;
         }
         case enthalpyModelType::estimated:

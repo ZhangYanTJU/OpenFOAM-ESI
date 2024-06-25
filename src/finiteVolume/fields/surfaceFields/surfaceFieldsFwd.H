@@ -38,16 +38,12 @@ SourceFiles
 #define Foam_surfaceFieldsFwd_H
 
 #include "fieldTypes.H"
+#include "GeometricFieldFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// Geometric field (internal + boundary)
-template<class Type, template<class> class PatchField, class GeoMesh>
-class GeometricField;
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -63,13 +59,25 @@ using SurfaceField = GeometricField<Type, fvsPatchField, surfaceMesh>;
 
 // Typedefs
 
-typedef GeometricField<scalar, fvsPatchField, surfaceMesh> surfaceScalarField;
-typedef GeometricField<vector, fvsPatchField, surfaceMesh> surfaceVectorField;
-typedef GeometricField<sphericalTensor, fvsPatchField, surfaceMesh>
+typedef
+    GeometricField<scalar, fvsPatchField, surfaceMesh>
+    surfaceScalarField;
+
+typedef
+    GeometricField<vector, fvsPatchField, surfaceMesh>
+    surfaceVectorField;
+
+typedef
+    GeometricField<sphericalTensor, fvsPatchField, surfaceMesh>
     surfaceSphericalTensorField;
-typedef GeometricField<symmTensor, fvsPatchField, surfaceMesh>
+
+typedef
+    GeometricField<symmTensor, fvsPatchField, surfaceMesh>
     surfaceSymmTensorField;
-typedef GeometricField<tensor, fvsPatchField, surfaceMesh> surfaceTensorField;
+
+typedef
+    GeometricField<tensor, fvsPatchField, surfaceMesh>
+    surfaceTensorField;
 
 
 /*---------------------------------------------------------------------------*\

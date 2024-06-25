@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,6 +40,7 @@ Foam::DimensionedField<Type, GeoMesh>::New_impl
 {
     auto ptr = tmp<DimensionedField<Type, GeoMesh>>::New
     (
+        // == mesh.thisDb().newIOobject(name)
         IOobject
         (
             name,
@@ -53,19 +54,22 @@ Foam::DimensionedField<Type, GeoMesh>::New_impl
         std::forward<Args>(args)...
     );
 
-    if (IOobjectOption::REGISTER == regOpt)
+    // Registration
     {
-        ptr->checkIn();
-    }
-    else if
-    (
-        // LEGACY_REGISTER: detect if caching is desired
-        (IOobjectOption::LEGACY_REGISTER == regOpt)
-     && ptr->db().is_cacheTemporaryObject(ptr.get())
-    )
-    {
-        ptr.protect(true);
-        ptr->checkIn();
+        if (IOobjectOption::REGISTER == regOpt)
+        {
+            ptr->checkIn();
+        }
+        else if
+        (
+            // LEGACY_REGISTER: detect if caching is desired
+            (IOobjectOption::LEGACY_REGISTER == regOpt)
+         && ptr->db().is_cacheTemporaryObject(ptr.get())
+        )
+        {
+            ptr.protect(true);
+            ptr->checkIn();
+        }
     }
     return ptr;
 }
@@ -290,6 +294,7 @@ Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
 Foam::DimensionedField<Type, GeoMesh>::New
 (
     const word& name,
+    IOobjectOption::registerOption regOpt,
     const tmp<DimensionedField<Type, GeoMesh>>& tfld
 )
 {
@@ -308,15 +313,41 @@ Foam::DimensionedField<Type, GeoMesh>::New
         tfld
     );
 
-    if
-    (
-        ptr->db().is_cacheTemporaryObject(ptr.get())
-    )
+    // Registration
     {
-        ptr.protect(true);
-        ptr->checkIn();
+        if (IOobjectOption::REGISTER == regOpt)
+        {
+            ptr->checkIn();
+        }
+        else if
+        (
+            // LEGACY_REGISTER: detect if caching is desired
+            (IOobjectOption::LEGACY_REGISTER == regOpt)
+         && ptr->db().is_cacheTemporaryObject(ptr.get())
+        )
+        {
+            ptr.protect(true);
+            ptr->checkIn();
+        }
     }
     return ptr;
+}
+
+
+template<class Type, class GeoMesh>
+Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
+Foam::DimensionedField<Type, GeoMesh>::New
+(
+    const word& name,
+    const tmp<DimensionedField<Type, GeoMesh>>& tfld
+)
+{
+    return DimensionedField<Type, GeoMesh>::New
+    (
+        name,
+        IOobjectOption::LEGACY_REGISTER,
+        tfld
+    );
 }
 
 
@@ -345,13 +376,16 @@ Foam::DimensionedField<Type, GeoMesh>::New
         dims
     );
 
-    if
-    (
-        ptr->db().is_cacheTemporaryObject(ptr.get())
-    )
+    // Registration
     {
-        ptr.protect(true);
-        ptr->checkIn();
+        if
+        (
+            ptr->db().is_cacheTemporaryObject(ptr.get())
+        )
+        {
+            ptr.protect(true);
+            ptr->checkIn();
+        }
     }
     return ptr;
 }
@@ -383,13 +417,16 @@ Foam::DimensionedField<Type, GeoMesh>::New
         dt.dimensions()
     );
 
-    if
-    (
-        ptr->db().is_cacheTemporaryObject(ptr.get())
-    )
+    // Registration
     {
-        ptr.protect(true);
-        ptr->checkIn();
+        if
+        (
+            ptr->db().is_cacheTemporaryObject(ptr.get())
+        )
+        {
+            ptr.protect(true);
+            ptr->checkIn();
+        }
     }
     return ptr;
 }

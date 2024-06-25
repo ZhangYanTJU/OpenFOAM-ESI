@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,6 +83,14 @@ class globalIndex
             DynamicList<label>& validBins
         );
 
+        // Cannot use non-blocking for non-contiguous data.
+        // template<class Type>
+        // inline static UPstream::commsTypes getCommsType
+        // (
+        //     const UPstream::commsTypes preferred
+        //   = UPstream::commsTypes::nonBlocking
+        // );
+
         //- Report overflow at specified (non-negative) index
         static void reportOverflowAndExit
         (
@@ -108,6 +116,16 @@ public:
         //- Construct 'one-sided' from the non-master local sizes
         //- using gather but no broadcast.
         struct gatherNonLocal{};
+
+
+    // Static Member Functions
+
+        //- Return a null globalIndex (reference to a nullObject).
+        //- Behaves like an empty globalIndex
+        static const globalIndex& null() noexcept
+        {
+            return NullObjectRef<globalIndex>();
+        }
 
 
     // Constructors
@@ -187,7 +205,7 @@ public:
         inline label length() const noexcept;
 
         //- Global sum of localSizes. Same as totalSize()
-        FOAM_DEPRECATED_STRICT(2022-10, "totalSize() - less ambiguous")
+        FOAM_DEPRECATED_STRICT(2022-10, "totalSize() - unambiguous")
         inline label size() const;
 
         //- The span size covered by the offsets, zero if empty
@@ -722,10 +740,11 @@ public:
         //- Inplace collect data in processor order on master
         //- (in serial: a no-op).
         //  Communication with default/specified communicator, message tag.
-        //  After the gather, the field is zero-sized on the slaves.
+        //  After the gather, the field is zero-sized on non-master.
         template<class Type>
         void gatherInplace
         (
+            //! [in,out]
             List<Type>& fld,
             const int tag = UPstream::msgType(),
             const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
@@ -737,12 +756,11 @@ public:
         //  Communication with default/specified communicator.
         //  \attention The nProcs for globalIndex and communicator
         //      must match!!
-        //
-        //  The allData is output (master), zero-sized on non-master
         template<class Type, class OutputContainer = List<Type>>
         void mpiGather
         (
             const UList<Type>& sendData,
+            //! [out] output on master, zero-sized on non-master
             OutputContainer& allData,
             const label comm = UPstream::worldComm,  //!< communicator
 
@@ -780,6 +798,7 @@ public:
         template<class Type>
         void mpiGatherInplace
         (
+            //! [in,out]
             List<Type>& fld,
             const label comm = UPstream::worldComm,  //!< communicator
 
@@ -833,6 +852,7 @@ public:
         template<class Type>
         static void mpiGatherInplaceOp
         (
+            //! [in,out]
             List<Type>& fld,
             const label comm = UPstream::worldComm,  //!< communicator
 
@@ -844,12 +864,11 @@ public:
         //- Collect data in processor order on master
         //- (in serial: performs a simple copy).
         //  Communication with default/specified communicator, message tag.
-        //
-        //  The allFld is output (master), zero-sized on non-master
         template<class Type>
         static void gatherOp
         (
             const UList<Type>& sendData,
+            //! [out] output on master, zero-sized on non-master
             List<Type>& allData,
             const int tag = UPstream::msgType(),
             const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
@@ -859,12 +878,11 @@ public:
         //- Collect data in processor order on master
         //- (in serial: performs a simple copy).
         //  Communication with default/specified communicator, message tag.
-        //
-        //  The allFld is output (master), zero-sized on non-master
         template<class Type, class Addr>
         static void gatherOp
         (
             const IndirectListBase<Type, Addr>& sendData,
+            //! [out] output on master, zero-sized on non-master
             List<Type>& allData,
             const int tag = UPstream::msgType(),
             const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
@@ -903,10 +921,11 @@ public:
         //- (in serial: a no-op).
         //  Communication with default/specified communicator, message tag.
         //
-        //  After the gather, the field is zero-sized on the slaves.
+        //  After the gather, the field is zero-sized on non-master.
         template<class Type>
         static void gatherInplaceOp
         (
+            //! [in,out]
             List<Type>& fld,
             const int tag = UPstream::msgType(),
             const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,

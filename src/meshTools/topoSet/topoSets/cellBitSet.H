@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,16 +96,14 @@ class cellBitSet
 public:
 
     //- Runtime type information
-    TypeName("cellBitSet");
+    TypeNameNoDebug("cellBitSet");
 
 
     // Constructors
 
-        //- Construct with nCells elements, all elements unset
-        explicit cellBitSet(const polyMesh& mesh);
-
-        //- Construct with nCells elements, using initial val
-        cellBitSet(const polyMesh& mesh, const bool val);
+        //- Construct with nCells elements,
+        //- all elements unset or initial value
+        explicit cellBitSet(const polyMesh& mesh, const bool val = false);
 
         //- Copy construct from bitset, resizing to nCells elements as required
         cellBitSet(const polyMesh& mesh, const bitSet& bits);

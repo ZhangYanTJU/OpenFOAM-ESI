@@ -73,7 +73,8 @@ public:
             const DimensionedField<Type, edgeMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         emptyFaePatchField
         (
             const faPatch&,
@@ -96,15 +97,6 @@ public:
             const emptyFaePatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<faePatchField<Type>> clone() const
-        {
-            return tmp<faePatchField<Type>>
-            (
-                new emptyFaePatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         emptyFaePatchField
         (
@@ -112,25 +104,29 @@ public:
             const DimensionedField<Type, edgeMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<faePatchField<Type>> clone() const
+        {
+            return faePatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<faePatchField<Type>> clone
         (
             const DimensionedField<Type, edgeMesh>& iF
         ) const
         {
-            return tmp<faePatchField<Type>>
-            (
-                new emptyFaePatchField<Type>(*this, iF)
-            );
+            return faePatchField<Type>::Clone(*this, iF);
         }
+
 
     //- Destructor
     virtual ~emptyFaePatchField() = default;
 
 
-    // Member functions
+    // Member Functions
 
-        // Mapping functions
+        // Mapping Functions
 
             //- Map (and resize as needed) from self given a mapping object
             virtual void autoMap
@@ -146,6 +142,12 @@ public:
                 const labelList&
             )
             {}
+
+
+    // Member Functions
+
+        //- Write without "value" entry!
+        virtual void write(Ostream&) const;
 };
 
 

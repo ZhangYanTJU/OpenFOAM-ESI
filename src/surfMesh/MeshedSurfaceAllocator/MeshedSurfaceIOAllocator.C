@@ -63,14 +63,6 @@ Foam::Detail::MeshedSurfaceIOAllocator::MeshedSurfaceIOAllocator
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::Detail::MeshedSurfaceIOAllocator::~MeshedSurfaceIOAllocator()
-{
-    clear();
-}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::Detail::MeshedSurfaceIOAllocator::setInstance

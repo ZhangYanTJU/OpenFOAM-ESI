@@ -29,9 +29,7 @@ License
 #include "edgeInterpolationScheme.H"
 #include "areaFields.H"
 #include "edgeFields.H"
-#include "faPatchFields.H"
 #include "coupledFaPatchField.H"
-#include "transform.H"
 
 // * * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * //
 
@@ -211,8 +209,8 @@ Foam::edgeInterpolationScheme<Type>::interpolate
             label size = vf.boundaryField()[pi].patch().size();
             label start = vf.boundaryField()[pi].patch().start();
 
-            Field<Type> pOwnVf = vf.boundaryField()[pi].patchInternalField();
-            Field<Type> pNgbVf = vf.boundaryField()[pi].patchNeighbourField();
+            Field<Type> pOwnVf(vf.boundaryField()[pi].patchInternalField());
+            Field<Type> pNgbVf(vf.boundaryField()[pi].patchNeighbourField());
 
             Field<Type>& pSf = sf.boundaryFieldRef()[pi];
 

@@ -173,7 +173,7 @@ Foam::boolList Foam::betaMax::markProcessorEdges
         const edge meshE = edge(mp[e[0]], mp[e[1]]);
         auto iter = isInletEdge.find(meshE);
 
-        if (iter.found())
+        if (iter.good())
         {
             iter.val() = true;
         }
@@ -196,9 +196,8 @@ Foam::boolList Foam::betaMax::markProcessorEdges
     {
         const edge& e = edges[edgeI];
         const edge meshE = edge(mp[e[0]], mp[e[1]]);
-        const auto iter = isInletEdge.cfind(meshE);
 
-        if (iter.found() && iter.val())
+        if (isInletEdge.lookup(meshE, false))
         {
             isProcessorEdge[edgeI - nInternalEdges] = true;
         }
@@ -206,7 +205,6 @@ Foam::boolList Foam::betaMax::markProcessorEdges
 
     return isProcessorEdge;
 }
-
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -232,11 +230,11 @@ Foam::autoPtr<Foam::betaMax> Foam::betaMax::New
 {
     const word modelType(dict.getOrDefault<word>("betaMaxType", "value"));
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
     Info<< "betaMax type " << modelType << endl;
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
@@ -247,7 +245,7 @@ Foam::autoPtr<Foam::betaMax> Foam::betaMax::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<betaMax>(cstrIter()(mesh, dict));
+    return autoPtr<betaMax>(ctorPtr(mesh, dict));
 }
 
 

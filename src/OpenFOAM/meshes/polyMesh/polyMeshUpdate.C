@@ -24,9 +24,6 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    Update the polyMesh corresponding to the given map.
-
 \*---------------------------------------------------------------------------*/
 
 #include "polyMesh.H"
@@ -54,9 +51,10 @@ void Foam::polyMesh::updateMesh(const mapPolyMesh& mpm)
     cellZones_.clearAddressing();
 
     // Remove the stored tet base points
-    tetBasePtIsPtr_.clear();
+    tetBasePtIsPtr_.reset(nullptr);
+
     // Remove the cell tree
-    cellTreePtr_.clear();
+    cellTreePtr_.reset(nullptr);
 
     // Update parallel data
     if (globalMeshDataPtr_)

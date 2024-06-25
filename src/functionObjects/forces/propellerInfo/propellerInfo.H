@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -205,6 +205,9 @@ protected:
 
     // Protected data
 
+        //- Copy of dictionary used during construction
+        dictionary dict_;
+
         //- Propeller radius
         scalar radius_;
 
@@ -270,6 +273,9 @@ protected:
             //- Default value when a sample point is not found; default =
             //- scalar::min
             scalar nanValue_;
+
+            //- Initialised flag
+            bool initialised_;
 
 
     // Protected Member Functions

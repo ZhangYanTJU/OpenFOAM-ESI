@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,42 +83,38 @@ public:
 
     // Member Functions
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  This is only defined for geometric renumberMethods.
-        virtual labelList renumber(const pointField&) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+        //- Renumbering method requires a polyMesh for its topology
+        virtual bool needs_mesh() const { return true; }
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Use the mesh connectivity (if needed)
+
+    // With mesh topology
+
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- uses the mesh for connectivity and global exchanges
         virtual labelList renumber
         (
-            const polyMesh& mesh,
-            const pointField& cc
+            const polyMesh& mesh
         ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+
+    // With explicit topology - Not implemented!
+
+        //- Return the cell visit order (from ordered back to original cell id).
+        //- Not implemented!
         virtual labelList renumber
         (
-            const CompactListList<label>& cellCells,
-            const pointField& cellCentres
+            const CompactListList<label>& cellCells
         ) const
         {
             NotImplemented;
             return labelList();
         }
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+        //- Return the cell visit order (from ordered back to original cell id).
+        //- Not implemented!
         virtual labelList renumber
         (
-            const labelListList& cellCells,
-            const pointField& cellCentres
+            const labelListList& cellCells
         ) const
         {
             NotImplemented;

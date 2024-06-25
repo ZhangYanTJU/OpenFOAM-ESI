@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -320,7 +320,7 @@ void Foam::vtk::polyWriter::writeLines
         // processor-local connectivity offsets
         label off =
         (
-            parallel_ ? globalIndex(nLocalConns).localStart() : 0
+            parallel_ ? globalIndex::calcOffset(nLocalConns) : 0
         );
 
 
@@ -521,7 +521,7 @@ void Foam::vtk::polyWriter::writePolys
         // processor-local connectivity offsets
         label off =
         (
-            parallel_ ? globalIndex(nLocalConns).localStart() : 0
+            parallel_ ? globalIndex::calcOffset(nLocalConns) : 0
         );
 
 
@@ -632,7 +632,7 @@ bool Foam::vtk::polyWriter::writeLineGeometry
 
     const label pointOffset =
     (
-        parallel_ ? globalIndex(nLocalPoints_).localStart() : 0
+        parallel_ ? globalIndex::calcOffset(nLocalPoints_) : 0
     );
 
     if (legacy())
@@ -662,7 +662,7 @@ bool Foam::vtk::polyWriter::writePolyGeometry
 
     const label pointOffset =
     (
-        parallel_ ? globalIndex(nLocalPoints_).localStart() : 0
+        parallel_ ? globalIndex::calcOffset(nLocalPoints_) : 0
     );
 
     if (legacy())

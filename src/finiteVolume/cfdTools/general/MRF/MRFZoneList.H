@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2018 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -126,6 +126,9 @@ public:
             const volScalarField& rho,
             const volVectorField& U
         ) const;
+
+        //- Return the MRF absolute flux
+        tmp<surfaceScalarField> phi() const;
 
         //- Make the given absolute velocity relative within the MRF region
         void makeRelative(volVectorField& U) const;

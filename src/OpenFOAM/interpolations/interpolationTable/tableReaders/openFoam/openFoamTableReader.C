@@ -47,7 +47,10 @@ void Foam::openFoamTableReader<Type>::operator()
 )
 {
     // Read data from file
-    fileHandler().NewIFstream(fName)()() >> data;
+    autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fName));
+    ISstream& is = isPtr();
+
+    is >> data;
 }
 
 
@@ -59,7 +62,10 @@ void Foam::openFoamTableReader<Type>::operator()
 )
 {
     // Read data from file
-    fileHandler().NewIFstream(fName)()() >> data;
+    autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fName));
+    ISstream& is = isPtr();
+
+    is >> data;
 }
 
 

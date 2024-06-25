@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fa.H"
-#include "HashTable.H"
 #include "objectRegistry.H"
 #include "solution.H"
 

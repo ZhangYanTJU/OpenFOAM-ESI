@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,7 +87,8 @@ private:
     // Private Typedefs
 
         //- Internal mesh storage type
-        typedef PrimitivePatch<::Foam::List<face>, pointField>
+        typedef
+            PrimitivePatch<::Foam::List<face>, pointField>
             MeshReference;
 
 
@@ -101,12 +102,6 @@ private:
 
         //- Calculate per-face zone/region information
         void calculateZoneIds(const UList<surfZone>& zones);
-
-        //- No copy construct
-        polySurface(const polySurface&) = delete;
-
-        //- No copy assignment
-        void operator=(const polySurface&) = delete;
 
 
 protected:
@@ -122,7 +117,11 @@ protected:
         //- Non-const access to the faces
         faceList& storedFaces()
         {
-            return static_cast<faceList&>(static_cast<MeshReference&>(*this));
+            return
+                static_cast<faceList&>
+                (
+                    static_cast<MeshReference&>(*this)
+                );
         }
 
         //- Const access to the faces
@@ -154,14 +153,23 @@ public:
     TypeName("polySurface");
 
 
+    // Generated Methods
+
+        //- No copy construct
+        polySurface(const polySurface&) = delete;
+
+        //- No copy assignment
+        void operator=(const polySurface&) = delete;
+
+
     // Constructors
 
-        //- Construct null with NO_READ, NO_WRITE
+        //- Default construct with NO_READ, NO_WRITE
         //- optionally with a checkIn on the parent registry.
         //  Created without a PointData sub-registry
         explicit polySurface(const IOobject& io, bool doCheckIn = false);
 
-        //- Construct null with specified name on the given registry,
+        //- Default construct with specified name on the given registry,
         //- optionally with a checkIn on the parent registry.
         //  Created without a PointData sub-registry
         polySurface
@@ -196,6 +204,15 @@ public:
 
     //- Destructor
     virtual ~polySurface();
+
+
+    // Factory Methods
+
+        //- Get or create (NO_READ, NO_WRITE) named surface on registry
+        static polySurface& New(const word& surfName, const objectRegistry&);
+
+        //- Remove named surface from specified registry
+        static bool Delete(const word& surfName, const objectRegistry&);
 
 
     // Member Functions
@@ -268,30 +285,36 @@ public:
 
     // Modification
 
-        //- Update with new contents
+        //- Update with new contents.
+        //- Removes existing fields if sizes have changed
         void copySurface
         (
             const pointField& points,
             const faceList& faces,
+            //! validate the zone coverage (ignored)
             bool unused=false
         );
 
-        //- Update with new contents
+        //- Update with new contents.
+        //- Removes existing fields if sizes have changed
         void copySurface
         (
             const meshedSurf& surf,
+            //! validate the zone coverage (ignored)
             bool unused=false
         );
 
-        //- Update with new contents
+        //- Update with new contents.
+        //- Removes existing fields if sizes have changed
         void copySurface
         (
             const MeshedSurface<face>& surf,
+            //! validate the zone coverage (ignored)
             bool unused=false
         );
 
-        //- Transfer the contents of the argument and annul the argument
-        //  Optionally validate the zone coverage.
+        //- Transfer the contents (and annul the parameters).
+        //- Removes existing fields.
         void transfer
         (
             pointField&& points,
@@ -299,11 +322,12 @@ public:
             labelList&& zoneIds = labelList()
         );
 
-        //- Transfer the contents of the argument and annul the argument
-        //  Optionally validate the zone coverage.
+        //- Transfer the contents (and annul the parameters).
+        //- Removes existing fields.
         void transfer
         (
             MeshedSurface<face>& surf,
+            //! validate the zone coverage
             bool validate=false
         );
 
@@ -353,19 +377,37 @@ public:
         const objectRegistry& faceData() const;
 
         //- Point data are stored in a sub-registry
-        //  Note that this method with automatically create the corresponding
+        //  Note that this method will automatically create the corresponding
         //  sub-registry if it did not previously exist.
         //  Use the nPointData() methods instead if you wish to test for
         //  content without this side-effect.
         const objectRegistry& pointData() const;
 
 
+        //- Create/store named zero field as face or point data
+        //- (template parameter).
+        //
+        //  - Default is face-data (polySurfaceGeoMesh as template).
+        //  - For point-data use polySurfacePointGeoMesh as template.
+        //
+        //  \return reference to the field
+        template<class Type, class GeoMeshType = polySurfaceGeoMesh>
+        DimensionedField<Type, GeoMeshType>&
+        newField
+        (
+            const word& fieldName,
+            const dimensionSet& dims
+        );
+
         //- Copy/store named field as face or point data (template parameter).
         //
-        //  Default is face-data (polySurfaceGeoMesh as template).
-        //  For point data use (polySurfacePointGeoMesh as template).
+        //  - Default is face-data (polySurfaceGeoMesh as template).
+        //  - For point-data use polySurfacePointGeoMesh as template.
+        //
+        //  \return reference to the field
         template<class Type, class GeoMeshType = polySurfaceGeoMesh>
-        void storeField
+        DimensionedField<Type, GeoMeshType>&
+        storeField
         (
             const word& fieldName,
             const dimensionSet& dims,
@@ -374,10 +416,13 @@ public:
 
         //- Move/store named field as face or point data (template parameter).
         //
-        //  Default is face-data (polySurfaceGeoMesh as template).
-        //  For point data use (polySurfacePointGeoMesh as template).
+        //  - Default is face-data (polySurfaceGeoMesh as template).
+        //  - For point-data use polySurfacePointGeoMesh as template.
+        //
+        //  \return reference to the field
         template<class Type, class GeoMeshType = polySurfaceGeoMesh>
-        void storeField
+        DimensionedField<Type, GeoMeshType>&
+        storeField
         (
             const word& fieldName,
             const dimensionSet& dims,

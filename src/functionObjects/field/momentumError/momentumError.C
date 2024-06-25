@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -154,53 +154,54 @@ Foam::functionObjects::momentumError::momentumError
         phi.dimensions()*dimVelocity/dimVolume
     );
 
-
-    volVectorField* momentPtr = nullptr;
-
-    word momName(scopedName("momentError"));
-
     if (zoneSubSetPtr_)
     {
         const fvMesh& subMesh = zoneSubSetPtr_->subsetter().subMesh();
 
         // momentErrorMap
 
-        momentPtr = new volVectorField
+        volVectorField* fldPtr = new volVectorField
         (
             IOobject
             (
                 scopedName("momentErrorMap"),
                 subMesh.time().timeName(),
-                subMesh,
+                subMesh.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
             ),
             subMesh,
-            dimensionedVector(momDims)
+            dimensionedVector(momDims, Zero)
         );
 
-        subMesh.objectRegistry::store(momentPtr);
+        regIOobject::store(fldPtr);
 
-        momName = scopedName("momentErrorZone");
     }
 
-    momentPtr = new volVectorField
+    const word momName =
+    (
+        zoneSubSetPtr_
+      ? scopedName("momentErrorZone")
+      : scopedName("momentError")
+    );
+
+    volVectorField* fldPtr = new volVectorField
     (
         IOobject
         (
             momName,
             time_.timeName(),
-            mesh_,
+            mesh_.thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
             IOobject::REGISTER
         ),
         mesh_,
-        dimensionedVector(momDims)
+        dimensionedVector(momDims, Zero)
     );
 
-    mesh_.objectRegistry::store(momentPtr);
+    regIOobject::store(fldPtr);
 }
 
 

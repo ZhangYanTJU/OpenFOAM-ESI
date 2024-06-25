@@ -85,7 +85,7 @@ Foam::label Foam::metisDecomp::decomposeSerial
 
     const dictionary* coeffsDictPtr = decompDict_.findDict("metisCoeffs");
 
-    idx_t numCells = max(0, (xadj.size()-1));
+    idx_t numCells = Foam::max(0, (xadj.size()-1));
 
     // Decomposition options
     List<idx_t> options(METIS_NOPTIONS);

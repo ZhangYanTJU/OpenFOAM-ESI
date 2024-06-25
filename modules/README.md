@@ -1,11 +1,16 @@
 [[_TOC_]]
 
-## OpenFOAM Modules
+## OpenFOAM modules
 
 This directory is a location for additional OpenFOAM components or
 tools to placed and have them built as part of the normal OpenFOAM
 build process. It is assumed that each subdirectory contain an
 appropriate `Allwmake` (or `Allwmake.override`) file.
+
+The primary distinction between `modules` and `plugins` is that `modules` are
+mainly maintained and released by OpenFOAM developers, whereas `plugins` are an
+open and welcoming area for add-ons, predominantly maintained and driven by
+OpenFOAM community members and groups.
 
 ### How to use
 
@@ -91,7 +96,7 @@ To build the doxygen information for the components, it is also
 necessary to link the directories to the doc/ subdirectory.
 This is a purely manual operation.
 
-### Developer Information
+### Developer information
 
 #### Build locations
 

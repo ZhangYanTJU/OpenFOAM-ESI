@@ -53,10 +53,10 @@ Description
         default         CrankNicolson
         ocCoeff
         {
-            type scale;
-            scale linearRamp;
-            duration 0.01;
-            value 0.9;
+            type        scale;
+            scale       linearRamp;
+            duration    0.01;
+            value       0.9;
         };
     }
     \endverbatim
@@ -93,8 +93,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef CrankNicolsonDdtScheme_H
-#define CrankNicolsonDdtScheme_H
+#ifndef Foam_CrankNicolsonDdtScheme_H
+#define Foam_CrankNicolsonDdtScheme_H
 
 #include "ddtScheme.H"
 #include "Function1.H"
@@ -120,9 +120,9 @@ class CrankNicolsonDdtScheme
 {
     // Private Data
 
-        //- Class to store the ddt0 fields on the objectRegistry for use in the
-        //  next time-step.  The start-time index of the CN scheme is also
-        //  stored to help handle the transition from Euler to CN
+        //- Store ddt0 fields on the registry for use in the next time-step.
+        //  The start-time index of the CN scheme is also stored
+        //  to help handle the transition from Euler to CrankNicolson
         template<class GeoField>
         class DDt0Field
         :
@@ -132,24 +132,24 @@ class CrankNicolsonDdtScheme
 
         public:
 
-            //- Constructor from file for restart.
+            //- Read construct from file (for restart)
             DDt0Field
             (
                 const IOobject& io,
                 const fvMesh& mesh
             );
 
-            //- Constructor from components, initisalised to zero with given
-            //  dimensions.
+            //- Construct value-initialised with given dimensions
             DDt0Field
             (
                 const IOobject& io,
                 const fvMesh& mesh,
-                const dimensioned<typename GeoField::value_type>& dimType
+                const typename GeoField::value_type& value,
+                const dimensionSet& dims
             );
 
             //- Return the start-time index
-            label startTimeIndex() const;
+            label startTimeIndex() const noexcept { return startTimeIndex_; }
 
             //- Cast to the underlying GeoField
             GeoField& operator()();

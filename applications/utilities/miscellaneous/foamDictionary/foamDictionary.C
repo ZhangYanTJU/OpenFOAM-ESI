@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
 
     const auto dictFileName = args.get<fileName>(1);
 
-    autoPtr<IFstream> dictFile(new IFstream(dictFileName));
+    auto dictFile = autoPtr<IFstream>::New(dictFileName);
     if (!dictFile().good())
     {
         FatalErrorInFunction
@@ -549,16 +549,17 @@ int main(int argc, char *argv[])
                 {
                     Info<< finder.dict();
                 }
-                else if (finder.ref().isStream())
+                else if (finder.isStream())
                 {
-                    bool addSep = false;
+                    bool separator = false;
 
-                    const tokenList& tokens = finder.ref().stream();
-
-                    for (const token& tok : tokens)
+                    for (const token& tok : finder.stream())
                     {
-                        if (addSep) Info<< token::SPACE;
-                        addSep = true;
+                        if (separator)
+                        {
+                            Info<< token::SPACE;
+                        }
+                        separator = true;
                         Info<< tok;
                     }
                     Info<< endl;

@@ -42,7 +42,7 @@ namespace Foam
 template<class PrimitiveType>
 static List<PrimitiveType> splitStringToList(const std::string& str)
 {
-    const SubStrings<std::string> items = stringOps::splitAny(str, " ,;");
+    const auto items = stringOps::splitAny(str, " ,;");
 
     DynamicList<PrimitiveType> values(items.size());
 

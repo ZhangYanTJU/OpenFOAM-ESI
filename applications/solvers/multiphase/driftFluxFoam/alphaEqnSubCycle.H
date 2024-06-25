@@ -18,12 +18,7 @@
         dimensionedScalar totalDeltaT = runTime.deltaT();
         surfaceScalarField alphaPhiSum
         (
-            IOobject
-            (
-                "alphaPhiSum",
-                runTime.timeName(),
-                mesh
-            ),
+            mesh.newIOobject("alphaPhiSum"),
             mesh,
             dimensionedScalar(phi.dimensions(), Zero)
         );

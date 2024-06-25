@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,14 +66,14 @@ Foam::volScalarField& Foam::histogramModel::getOrReadField
             (
                 fieldName,
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::MUST_READ,
                 IOobject::AUTO_WRITE,
                 IOobject::REGISTER
             ),
             mesh_
         );
-        mesh_.objectRegistry::store(ptr);
+        regIOobject::store(ptr);
     }
 
     return *ptr;

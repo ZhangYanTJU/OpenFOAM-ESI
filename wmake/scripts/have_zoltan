@@ -5,7 +5,7 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
-#     Copyright (C) 2018-2020 OpenCFD Ltd.
+#     Copyright (C) 2018-2024 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -64,6 +64,9 @@ search_zoltan()
     local prefix="${1:-system}"
     local header library
 
+    local mpiPrefix="$MPI_ARCH_PATH"
+    local mpiName="${MPI_ARCH_PATH##*/}"
+
     # ----------------------------------
     if isNone "$prefix"
     then
@@ -71,11 +74,29 @@ search_zoltan()
         return 1
     elif hasAbsdir "$prefix"
     then
-        header=$(findFirstFile "$prefix/include/$incName")
-        library=$(findExtLib "$libName")
+        header=$(findFirstFile \
+            "$prefix/include/$FOAM_MPI/$incName" \
+            "$prefix/include/zoltan/$incName" \
+            "$prefix/include/$incName" \
+            "$mpiPrefix/include/$incName" \
+            "$prefix/include/$mpiName/$incName" \
+            "$prefix/include/${mpiName}-$(uname -m)/$incName" \
+        )
+        library=$(findExtLib \
+            "$FOAM_MPI/$libName" \
+            "$libName" \
+        )
     elif isSystem "$prefix"
     then
-        header=$(findSystemInclude -name="$incName")
+        header=$(findFirstFile \
+            "/usr/local/include/zoltan/$incName" \
+            "/usr/local/include/$incName" \
+            "/usr/include/zoltan/$incName" \
+            "/usr/include/$incName" \
+            "$mpiPrefix/include/$incName" \
+            "/usr/include/$mpiName/$incName" \
+            "$prefix/include/${mpiName}-$(uname -m)/$incName" \
+        )
         prefix=$(sysPrefix "$header")
     else
         unset prefix
@@ -91,6 +112,7 @@ search_zoltan()
     # Library
     [ -n "$library" ] \
     || library=$(findLibrary -prefix="$prefix" -name="$libName") \
+    || library=$(findLibrary -prefix="$mpiPrefix" -name="$libName") \
     || {
         [ -n "$warn" ] && echo "$warn (no library)"
         return 2
@@ -99,6 +121,7 @@ search_zoltan()
     # ----------------------------------
 
     # OK
+    # echo "zoltan - $prefix"
     export HAVE_ZOLTAN=true
     export ZOLTAN_ARCH_PATH="$prefix"
     export ZOLTAN_INC_DIR="${header%/*}"     # Basename

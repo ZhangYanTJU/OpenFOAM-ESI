@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2018 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -356,7 +356,8 @@ Foam::radiation::fvDOM::fvDOM(const volScalarField& T)
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimMass/pow3(dimTime), Zero)
@@ -369,7 +370,8 @@ Foam::radiation::fvDOM::fvDOM(const volScalarField& T)
             mesh_.time().timeName(),
             mesh_,
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimMass/pow3(dimTime), Zero)
@@ -395,7 +397,8 @@ Foam::radiation::fvDOM::fvDOM(const volScalarField& T)
             mesh_.time().timeName(),
             mesh_,
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimMass/pow3(dimTime), Zero)
@@ -462,7 +465,8 @@ Foam::radiation::fvDOM::fvDOM
             mesh_.time().timeName(),
             mesh_,
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimMass/pow3(dimTime), Zero)
@@ -475,7 +479,8 @@ Foam::radiation::fvDOM::fvDOM
             mesh_.time().timeName(),
             mesh_,
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimMass/pow3(dimTime), Zero)
@@ -501,7 +506,8 @@ Foam::radiation::fvDOM::fvDOM
             mesh_.time().timeName(),
             mesh_,
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimMass/pow3(dimTime), Zero)
@@ -645,29 +651,18 @@ void Foam::radiation::fvDOM::calculate()
 Foam::tmp<Foam::volScalarField> Foam::radiation::fvDOM::Rp() const
 {
     // Construct using contribution from first frequency band
-    tmp<volScalarField> tRp
+    auto tRp = volScalarField::New
     (
-        new volScalarField
+        "Rp",
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                "Rp",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            (
-                4
-               *physicoChemical::sigma
-               *(aLambda_[0] - absorptionEmission_->aDisp(0)())
-               *blackBody_.deltaLambdaT(T_, absorptionEmission_->bands(0))
-            )
+            4
+          * physicoChemical::sigma
+          * (aLambda_[0] - absorptionEmission_->aDisp(0)())
+          * blackBody_.deltaLambdaT(T_, absorptionEmission_->bands(0))
         )
     );
-
-    volScalarField& Rp=tRp.ref();
+    auto& Rp = tRp.ref();
 
     // Add contributions over remaining frequency bands
     for (label j=1; j < nLambda_; j++)
@@ -688,25 +683,14 @@ Foam::tmp<Foam::volScalarField> Foam::radiation::fvDOM::Rp() const
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::radiation::fvDOM::Ru() const
 {
-    tmp<DimensionedField<scalar, volMesh>> tRu
+    auto tRu = DimensionedField<scalar, volMesh>::New
     (
-        new DimensionedField<scalar, volMesh>
-        (
-            IOobject
-            (
-                "Ru",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimensionSet(1, -1, -3, 0, 0), Zero)
-        )
+        "Ru",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimensionSet(1, -1, -3, 0, 0), Zero)
     );
-
-    DimensionedField<scalar, volMesh>& Ru=tRu.ref();
+    auto& Ru = tRu.ref();
 
     // Sum contributions over all frequency bands
     for (label j=0; j < nLambda_; j++)

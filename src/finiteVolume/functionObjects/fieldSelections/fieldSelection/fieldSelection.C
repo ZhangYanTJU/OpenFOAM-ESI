@@ -136,7 +136,7 @@ bool Foam::functionObjects::fieldSelection::resetFieldFilters
 
 bool Foam::functionObjects::fieldSelection::read(const dictionary& dict)
 {
-    HashSet<wordRe> fields(0);
+    HashSet<wordRe> fields;
     dict.readEntry("fields", fields);
 
     return resetFieldFilters(fields);

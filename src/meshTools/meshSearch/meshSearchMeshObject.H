@@ -54,6 +54,14 @@ class meshSearchMeshObject
     public MeshObject<polyMesh, GeometricMeshObject, meshSearchMeshObject>,
     public meshSearch
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            polyMesh,
+            GeometricMeshObject,
+            meshSearchMeshObject
+        > MeshObject_type;
 
 public:
 
@@ -63,8 +71,13 @@ public:
 
     // Constructors
 
-        //- Constructor given polyMesh
-        explicit meshSearchMeshObject(const polyMesh& mesh);
+        //- Construct given polyMesh
+        explicit meshSearchMeshObject(const polyMesh& mesh)
+        :
+            MeshObject_type(mesh),
+            meshSearch(mesh)
+        {}
+
 
     //- Destructor
     virtual ~meshSearchMeshObject() = default;

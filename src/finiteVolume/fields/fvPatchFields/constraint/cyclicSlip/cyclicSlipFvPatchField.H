@@ -33,6 +33,8 @@ Description
     This boundary condition is a light wrapper around the cyclicFvPatchField
     condition, providing no new functionality.
 
+    The "value" entry is NO_READ.
+
 Usage
     Example of the boundary condition specification:
     \verbatim
@@ -50,8 +52,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cyclicSlipFvPatchField_H
-#define cyclicSlipFvPatchField_H
+#ifndef Foam_cyclicSlipFvPatchField_H
+#define Foam_cyclicSlipFvPatchField_H
 
 #include "cyclicFvPatchField.H"
 #include "cyclicSlipFvPatch.H"
@@ -70,7 +72,6 @@ class cyclicSlipFvPatchField
 :
     public cyclicFvPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -86,7 +87,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         cyclicSlipFvPatchField
         (
             const fvPatch&,
@@ -109,15 +111,6 @@ public:
             const cyclicSlipFvPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new cyclicSlipFvPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         cyclicSlipFvPatchField
         (
@@ -125,16 +118,19 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return fvPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>
-            (
-                new cyclicSlipFvPatchField<Type>(*this, iF)
-            );
+            return fvPatchField<Type>::Clone(*this, iF);
         }
 };
 

@@ -501,38 +501,26 @@ template<class CloudType>
 inline Foam::tmp<Foam::volScalarField::Internal>
 Foam::KinematicCloud<CloudType>::Srhok() const
 {
-    label debug0 = debug;
-    debug = 1;
     if (debug)
     {
         Pout<< "rhokTrans min/max = " << min(rhokTrans()).value() << ", "
             << max(rhokTrans()).value() << endl;
     }
-    debug = debug0;
 
     if (this->solution().coupled())
     {
         return rhokTrans()/this->db().time().deltaT()/this->mesh().V();
     }
 
-    return
-        tmp<volScalarField::Internal>::New
+    return tmp<volScalarField::Internal>::New
+    (
+        this->newIOobject(IOobject::scopedName(this->name(), "rhokTrans")),
+        this->mesh(),
+        dimensionedScalar
         (
-            IOobject
-            (
-                IOobject::scopedName(this->name(), "rhokTrans"),
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar
-            (
-                rhokTrans().dimensions()/dimTime/dimVolume, Zero
-            )
-        );
+            rhokTrans().dimensions()/dimTime/dimVolume, Zero
+        )
+    );
 }
 
 
@@ -571,8 +559,8 @@ const
         }
         else
         {
-            tmp<fvVectorMatrix> tfvm(new fvVectorMatrix(U, dim));
-            fvVectorMatrix& fvm = tfvm.ref();
+            auto tfvm = tmp<fvVectorMatrix>::New(U, dim);
+            auto& fvm = tfvm.ref();
 
             fvm.source() = -UTrans()/(this->db().time().deltaT());
 
@@ -588,26 +576,15 @@ template<class CloudType>
 inline const Foam::tmp<Foam::volScalarField>
 Foam::KinematicCloud<CloudType>::vDotSweep() const
 {
-    tmp<volScalarField> tvDotSweep
+    auto tvDotSweep = tmp<volScalarField>::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                IOobject::scopedName(this->name(), "vDotSweep"),
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless/dimTime, Zero),
-            fvPatchFieldBase::extrapolatedCalculatedType()
-        )
+        this->newIOobject(IOobject::scopedName(this->name(), "vDotSweep")),
+        mesh_,
+        dimensionedScalar(dimless/dimTime, Zero),
+        fvPatchFieldBase::extrapolatedCalculatedType()
     );
+    auto& vDotSweep = tvDotSweep.ref();
 
-    volScalarField& vDotSweep = tvDotSweep.ref();
     for (const parcelType& p : *this)
     {
         const label celli = p.cell();
@@ -626,26 +603,15 @@ template<class CloudType>
 inline const Foam::tmp<Foam::volScalarField>
 Foam::KinematicCloud<CloudType>::theta() const
 {
-    tmp<volScalarField> ttheta
+    auto ttheta = tmp<volScalarField>::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                IOobject::scopedName(this->name(), "theta"),
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless, Zero),
-            fvPatchFieldBase::extrapolatedCalculatedType()
-        )
+        this->newIOobject(IOobject::scopedName(this->name(), "theta")),
+        mesh_,
+        dimensionedScalar(dimless, Zero),
+        fvPatchFieldBase::extrapolatedCalculatedType()
     );
+    auto& theta = ttheta.ref();
 
-    volScalarField& theta = ttheta.ref();
     for (const parcelType& p : *this)
     {
         const label celli = p.cell();
@@ -664,22 +630,11 @@ template<class CloudType>
 inline const Foam::tmp<Foam::volScalarField>
 Foam::KinematicCloud<CloudType>::alpha() const
 {
-    tmp<volScalarField> talpha
+    auto talpha = tmp<volScalarField>::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                IOobject::scopedName(this->name(), "alpha"),
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless, Zero)
-        )
+        this->newIOobject(IOobject::scopedName(this->name(), "alpha")),
+        mesh_,
+        dimensionedScalar(dimless, Zero)
     );
 
     scalarField& alpha = talpha.ref().primitiveFieldRef();
@@ -700,22 +655,11 @@ template<class CloudType>
 inline const Foam::tmp<Foam::volScalarField>
 Foam::KinematicCloud<CloudType>::rhoEff() const
 {
-    tmp<volScalarField> trhoEff
+    auto trhoEff = tmp<volScalarField>::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                IOobject::scopedName(this->name(), "rhoEff"),
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimDensity, Zero)
-        )
+        this->newIOobject(IOobject::scopedName(this->name(), "rhoEff")),
+        mesh_,
+        dimensionedScalar(dimDensity, Zero)
     );
 
     scalarField& rhoEff = trhoEff.ref().primitiveFieldRef();

@@ -135,14 +135,14 @@ public:
             virtual volScalarField& he()
             {
                 NotImplemented;
-                return thermo1_->he();
+                return const_cast<volScalarField&>(volScalarField::null());
             }
 
             //- Enthalpy/Internal energy [J/kg]
             virtual const volScalarField& he() const
             {
                 NotImplemented;
-                return thermo1_->he();
+                return volScalarField::null();
             }
 
             //- Enthalpy/Internal energy
@@ -213,7 +213,7 @@ public:
             ) const
             {
                 NotImplemented;
-                return tmp<scalarField>::New(p);
+                return nullptr;
             }
 
             //- Heat capacity at constant volume [J/kg/K]
@@ -236,7 +236,7 @@ public:
             ) const
             {
                 NotImplemented;
-                return tmp<scalarField>::New(p);
+                return nullptr;
             }
 
             //- Gamma = Cp/Cv []

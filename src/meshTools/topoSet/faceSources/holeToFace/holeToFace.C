@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1095,7 +1095,7 @@ Foam::holeToFace::holeToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     zonePoints_(dict.get<List<pointField>>("points")),
     blockedFaceNames_(),
     blockedCellNames_(),
@@ -1148,8 +1148,8 @@ void Foam::holeToFace::applyToSet
     bitSet isBlockedFace(mesh_.nFaces());
     for (const word& setName : blockedFaceNames_)
     {
-        const faceSet loadedSet(mesh_, setName);
-        isBlockedFace.set(loadedSet.toc());
+        faceSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
+        isBlockedFace.setMany(loadedSet.begin(), loadedSet.end());
     }
 
     // Optional initial blocked cells
@@ -1158,8 +1158,8 @@ void Foam::holeToFace::applyToSet
     {
         for (const word& setName : blockedCellNames_)
         {
-            const cellSet loadedSet(mesh_, setName);
-            isCandidateCell.set(loadedSet.toc());
+            cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
+            isCandidateCell.setMany(loadedSet.begin(), loadedSet.end());
         }
     }
     else

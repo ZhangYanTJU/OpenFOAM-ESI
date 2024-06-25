@@ -30,7 +30,8 @@ Group
     grpConstraintBoundaryConditions
 
 Description
-    A symmetry patch
+    A symmetry patch.
+    The "value" entry is NO_READ, NO_WRITE.
 
 SourceFiles
     basicSymmetryFvPatchField.C
@@ -57,7 +58,6 @@ class basicSymmetryFvPatchField
 :
     public transformFvPatchField<Type>
 {
-
 public:
 
     // Constructors
@@ -69,7 +69,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         basicSymmetryFvPatchField
         (
             const fvPatch&,
@@ -77,8 +78,8 @@ public:
             const dictionary&
         );
 
-        //- Construct by mapping given basicSymmetryFvPatchField onto a new
-        //  patch
+        //- Construct by mapping given basicSymmetry patch field
+        //- onto a new patch
         basicSymmetryFvPatchField
         (
             const basicSymmetryFvPatchField<Type>&,
@@ -93,15 +94,6 @@ public:
             const basicSymmetryFvPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new basicSymmetryFvPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         basicSymmetryFvPatchField
         (
@@ -109,20 +101,23 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return fvPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>
-            (
-                new basicSymmetryFvPatchField<Type>(*this, iF)
-            );
+            return fvPatchField<Type>::Clone(*this, iF);
         }
 
 
-    // Member functions
+    // Member Functions
 
         //- Return gradient at boundary
         virtual tmp<Field<Type>> snGrad() const;
@@ -130,11 +125,17 @@ public:
         //- Evaluate the patch field
         virtual void evaluate
         (
-            const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
+            const Pstream::commsTypes commsType=Pstream::commsTypes::buffered
         );
 
         //- Return face-gradient transform diagonal
         virtual tmp<Field<Type>> snGradTransformDiag() const;
+
+
+    // Member Operators
+
+        //- Inherit assignment operators
+        using transformFvPatchField<Type>::operator=;
 };
 
 

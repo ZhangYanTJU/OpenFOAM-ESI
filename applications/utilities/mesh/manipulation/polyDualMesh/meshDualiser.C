@@ -65,16 +65,19 @@ void Foam::meshDualiser::checkPolyTopoChange(const polyTopoChange& meshMod)
 
     if (nUnique < points.size())
     {
-        labelListList newToOld(invertOneToMany(nUnique, oldToNew));
+        CompactListList<label> newToOld
+        (
+            invertOneToManyCompact(nUnique, oldToNew)
+        );
 
-        forAll(newToOld, newI)
+        forAll(newToOld, newi)
         {
-            if (newToOld[newI].size() != 1)
+            if (newToOld[newi].size() != 1)
             {
                 FatalErrorInFunction
-                    << "duplicate verts:" << newToOld[newI]
+                    << "duplicate verts:" << newToOld[newi]
                     << " coords:"
-                    << UIndirectList<point>(points, newToOld[newI])
+                    << UIndirectList<point>(points, newToOld[newi])
                     << abort(FatalError);
             }
         }

@@ -169,18 +169,6 @@ public:
             const surfaceDisplacementPointPatchVectorField&
         );
 
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchVectorField> clone() const
-        {
-            return autoPtr<pointPatchVectorField>
-            (
-                new surfaceDisplacementPointPatchVectorField
-                (
-                    *this
-                )
-            );
-        }
-
         //- Construct as copy setting internal field reference
         surfaceDisplacementPointPatchVectorField
         (
@@ -188,21 +176,21 @@ public:
             const DimensionedField<vector, pointMesh>&
         );
 
+        //- Return a clone
+        virtual autoPtr<pointPatchField<vector>> clone() const
+        {
+            return pointPatchField<vector>::Clone(*this);
+        }
+
         //- Construct and return a clone setting internal field reference
-        virtual autoPtr<pointPatchVectorField> clone
+        virtual autoPtr<pointPatchField<vector>> clone
         (
             const DimensionedField<vector, pointMesh>& iF
         ) const
         {
-            return autoPtr<pointPatchVectorField>
-            (
-                new surfaceDisplacementPointPatchVectorField
-                (
-                    *this,
-                    iF
-                )
-            );
+            return pointPatchField<vector>::Clone(*this, iF);
         }
+
 
     // Member Functions
 

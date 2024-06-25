@@ -131,17 +131,10 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::pressure::rhoScale
 {
     if (p.dimensions() == dimPressure)
     {
-        return tmp<volScalarField>::New
+        return volScalarField::New
         (
-            IOobject
-            (
-                "rhoScale",
-                p.mesh().time().timeName(),
-                p.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            "rhoScale",
+            IOobject::NO_REGISTER,
             p,
             fvPatchFieldBase::calculatedType()
         );
@@ -236,21 +229,14 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::pressure::calcPressure
 ) const
 {
     // Initialise to the pressure reference level
-    auto tresult =
-        tmp<volScalarField>::New
-        (
-            IOobject
-            (
-                scopedName("p"),
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ
-            ),
-            mesh_,
-            dimensionedScalar("p", dimPressure, pRef_)
-        );
-
-    volScalarField& result = tresult.ref();
+    auto tresult = volScalarField::New
+    (
+        scopedName("p"),
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar("p", dimPressure, pRef_)
+    );
+    auto& result = tresult.ref();
 
     addHydrostaticContribution(p, result);
 
@@ -304,7 +290,7 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::pressure::coeff
     if (mode_ & COEFF)
     {
         tmp<volScalarField> tpCoeff(tp.ptr());
-        volScalarField& pCoeff = tpCoeff.ref();
+        auto& pCoeff = tpCoeff.ref();
 
         pCoeff -= dimensionedScalar("pInf", dimPressure, pInf_);
 
@@ -325,21 +311,16 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::pressure::coeff
 
 bool Foam::functionObjects::pressure::calc()
 {
-    if (foundObject<volScalarField>(fieldName_))
-    {
-        const volScalarField& p = lookupObject<volScalarField>(fieldName_);
+    const auto* pptr = cfindObject<volScalarField>(fieldName_);
 
-        auto tp = tmp<volScalarField>::New
+    if (pptr)
+    {
+        const auto& p = *pptr;
+
+        auto tp = volScalarField::New
         (
-            IOobject
-            (
-                resultName_,
-                p.mesh().time().timeName(),
-                p.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
-            ),
+            resultName_,
+            IOobject::REGISTER,
             coeff(calcPressure(p, rhoScale(p)))
         );
 

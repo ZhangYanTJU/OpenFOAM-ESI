@@ -58,8 +58,10 @@ class OSstream
 {
     // Private Data
 
+        //- The output stream path
         fileName name_;
 
+        //- The output stream
         std::ostream& os_;
 
 
@@ -119,6 +121,11 @@ public:
         //- (eg, the name of the Fstream file name)
         virtual const fileName& name() const override { return name_; }
 
+        //- The name of the output serial stream, for modification.
+        //  Use with caution since some classes (eg, Fstream)
+        //  also use this for filesystem information!
+        virtual fileName& name() { return name_; }
+
 
     // STL stream
 
@@ -131,14 +138,17 @@ public:
 
     // Stream State
 
-        //- Get stream flags
-        virtual ios_base::fmtflags flags() const override
+        //- Get current stream flags
+        virtual std::ios_base::fmtflags flags() const override
         {
             return os_.flags();
         }
 
-        //- Set stream flags
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags f) override
+        //- Set stream flags, return old stream flags
+        virtual std::ios_base::fmtflags flags
+        (
+            std::ios_base::fmtflags f
+        ) override
         {
             return os_.flags(f);
         }

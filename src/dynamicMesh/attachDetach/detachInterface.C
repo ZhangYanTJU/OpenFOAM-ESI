@@ -366,16 +366,8 @@ void Foam::attachDetach::detachInterface
     }
 
     // Create the master layer point map
-    Map<label> masterLayerPointMap(2*mp.size());
+    Map<label> masterLayerPointMap(mp, addedPoints);
 
-    forAll(mp, pointi)
-    {
-        masterLayerPointMap.insert
-        (
-            mp[pointi],
-            addedPoints[pointi]
-        );
-    }
 
     // Grab the list of faces of the master layer
     const labelList masterCellFaces = masterCellFaceMap.toc();

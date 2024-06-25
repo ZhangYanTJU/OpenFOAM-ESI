@@ -27,7 +27,11 @@ Class
     Foam::cyclicAMIFvsPatchField
 
 Description
-    Foam::cyclicAMIFvsPatchField
+    This boundary condition enforces a cyclic condition between a pair of
+    boundaries, whereby communication between the patches is performed using
+    an arbitrary mesh interface (AMI) interpolation.
+
+    The "value" entry is MUST_READ.
 
 SourceFiles
     cyclicAMIFvsPatchField.C
@@ -54,7 +58,7 @@ class cyclicAMIFvsPatchField
 :
     public coupledFvsPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the cyclic patch
         const cyclicAMIFvPatch& cyclicAMIPatch_;
@@ -75,7 +79,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is MUST_READ.
         cyclicAMIFvsPatchField
         (
             const fvPatch&,
@@ -98,15 +103,6 @@ public:
             const cyclicAMIFvsPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const
-        {
-            return tmp<fvsPatchField<Type>>
-            (
-                new cyclicAMIFvsPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         cyclicAMIFvsPatchField
         (
@@ -114,25 +110,26 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const
+        {
+            return fvsPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
         ) const
         {
-            return tmp<fvsPatchField<Type>>
-            (
-                new cyclicAMIFvsPatchField<Type>(*this, iF)
-            );
+            return fvsPatchField<Type>::Clone(*this, iF);
         }
 
-    // Member functions
 
-        // Access
+    // Member Functions
 
-            //- Return true if running parallel
-            virtual bool coupled() const;
-
+        //- Return true if running parallel
+        virtual bool coupled() const;
 };
 
 

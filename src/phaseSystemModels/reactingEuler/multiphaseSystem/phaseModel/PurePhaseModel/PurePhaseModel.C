@@ -88,7 +88,7 @@ Foam::PurePhaseModel<BasePhaseModel>::Y(const word& name) const
         << "Cannot get a species fraction by name from a pure phase"
         << exit(FatalError);
 
-    return NullObjectRef<volScalarField>();
+    return volScalarField::null();
 }
 
 

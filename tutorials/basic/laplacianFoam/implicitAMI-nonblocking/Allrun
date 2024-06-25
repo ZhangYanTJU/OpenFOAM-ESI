@@ -11,4 +11,18 @@ runApplication decomposePar
 
 runParallel $(getApplication) -debug-switch GAMGAgglomeration
 
+
+# Try again with random decomposition. Needs a few more cells to create
+# proper agglomeration - otherwise processorAgglomerator complains
+
+decompDict="-decomposeParDict system/decomposeParDict.random"
+
+runApplication -s random \
+    decomposePar -force $decompDict
+
+runParallel -s random refineMesh -overwrite $decompDict
+
+runParallel -s random \
+    $(getApplication) $decompDict -debug-switch GAMGAgglomeration
+
 #------------------------------------------------------------------------------

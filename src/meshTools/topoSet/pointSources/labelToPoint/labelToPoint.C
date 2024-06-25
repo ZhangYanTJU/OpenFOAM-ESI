@@ -94,7 +94,8 @@ Foam::labelToPoint::labelToPoint
     const dictionary& dict
 )
 :
-    labelToPoint(mesh, dict.get<labelList>("value"))
+    topoSetPointSource(mesh, dict),
+    labels_(dict.get<labelList>("value"))
 {}
 
 

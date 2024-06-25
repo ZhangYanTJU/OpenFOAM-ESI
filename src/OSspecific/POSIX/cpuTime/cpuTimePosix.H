@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,7 +72,8 @@ class cpuTimePosix
         //- Start time, at the time of construction
         value_type start_;
 
-        //- Last time when elapsedTime or timeIncrement was called
+        //- Last time when elapsedCpuTime or cpuTimeIncrement was called.
+        //- Also affected by resetCpuTime and resetCpuTimeIncrement.
         mutable value_type last_;
 
 
@@ -95,10 +96,14 @@ public:
         //- Reset to use the current time for the start time
         void resetCpuTime();
 
-        //- Return CPU time (in seconds) from the start
+        //- Reset to use the current time for the increment point
+        void resetCpuTimeIncrement() const;
+
+        //- Return CPU time [seconds] from the start
         double elapsedCpuTime() const;
 
-        //- Return CPU time (in seconds) since last call to cpuTimeIncrement()
+        //- Return CPU time [seconds] since last call to cpuTimeIncrement(),
+        //- resetCpuTimeIncrement().
         double cpuTimeIncrement() const;
 };
 

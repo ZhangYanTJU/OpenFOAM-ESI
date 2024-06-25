@@ -30,6 +30,8 @@ Class
 Description
     A FixedValue boundary condition for pointField.
 
+    The "value" entry is normally MUST_READ.
+
 SourceFiles
     fixedValuePointPatchField.C
 
@@ -92,13 +94,13 @@ public:
             const pointPatch& p,
             const DimensionedField<Type, pointMesh>& iF,
             const dictionary& dict,
-            const bool valueReqd
+            const bool needValue
         )
         :
             fixedValuePointPatchField
             (
                 p, iF, dict,
-                (valueReqd? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
+                (needValue? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
             )
         {}
 
@@ -111,18 +113,6 @@ public:
             const pointPatchFieldMapper&
         );
 
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchField<Type>> clone() const
-        {
-            return autoPtr<pointPatchField<Type>>
-            (
-                new fixedValuePointPatchField<Type>
-                (
-                    *this
-                )
-            );
-        }
-
         //- Construct as copy setting internal field reference
         fixedValuePointPatchField
         (
@@ -130,20 +120,19 @@ public:
             const DimensionedField<Type, pointMesh>&
         );
 
+        //- Return a clone
+        virtual autoPtr<pointPatchField<Type>> clone() const
+        {
+            return pointPatchField<Type>::Clone(*this);
+        }
+
         //- Construct and return a clone setting internal field reference
         virtual autoPtr<pointPatchField<Type>> clone
         (
             const DimensionedField<Type, pointMesh>& iF
         ) const
         {
-            return autoPtr<pointPatchField<Type>>
-            (
-                new fixedValuePointPatchField<Type>
-                (
-                    *this,
-                    iF
-                )
-            );
+            return pointPatchField<Type>::Clone(*this, iF);
         }
 
 

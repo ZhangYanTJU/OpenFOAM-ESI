@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2009-2016 Bernhard Gschaider
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
     Copyright (C) 2023 Josep Pocurull Serra, Barcelona Supercomputing Center
 -------------------------------------------------------------------------------
 License
@@ -140,26 +140,33 @@ static void close_extrae_region()
 #endif  /* HAVE_EXTRAE */
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-Foam::profilingTrigger::profilingTrigger() noexcept
-:
-    ptr_(nullptr)
-{}
-
-
-Foam::profilingTrigger::profilingTrigger(const char* name)
-:
-    profilingTrigger(std::string(name))
-{}
-
-
-Foam::profilingTrigger::profilingTrigger(const std::string& name)
-:
-    ptr_(profiling::New(name))
+bool Foam::profilingTrigger::possible() noexcept
 {
+    return
+    (
+        profiling::active()
+        #ifdef HAVE_EXTRAE
+     || bool(Extrae_event)
+        #endif
+    );
+}
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::profilingTrigger::enter(const std::string& name)
+{
+    // debug:  std::cerr<< "enter profiling: " << name << '\n';
+
+    ptr_ = profiling::New(name);
+
     #ifdef HAVE_EXTRAE
-    if (Extrae_event) open_extrae_region(std::string(name));
+    if (Extrae_event)
+    {
+        open_extrae_region(name);
+    }
     #endif
 }
 
@@ -183,7 +190,10 @@ bool Foam::profilingTrigger::running() const noexcept
 void Foam::profilingTrigger::stop()
 {
     #ifdef HAVE_EXTRAE
-    if (Extrae_event) close_extrae_region();
+    if (Extrae_event)
+    {
+        close_extrae_region();
+    }
     #endif
 
     if (ptr_)

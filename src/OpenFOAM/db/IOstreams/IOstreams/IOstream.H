@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -339,9 +339,6 @@ public:
             return old;
         }
 
-        //- Return flags of stream
-        virtual ios_base::fmtflags flags() const = 0;
-
         //- Return the default precision
         static unsigned int defaultPrecision() noexcept
         {
@@ -349,11 +346,23 @@ public:
         }
 
         //- Reset the default precision
-        //  \return the previous value
+        //  \return the previous default precision
         static unsigned int defaultPrecision(unsigned int prec) noexcept
         {
             unsigned int old(precision_);
             precision_ = prec;
+            return old;
+        }
+
+        //- Set the minimum default precision
+        //  \return the previous default precision
+        static unsigned int minPrecision(unsigned int prec) noexcept
+        {
+            unsigned int old(precision_);
+            if (precision_ < prec)
+            {
+                precision_ = prec;
+            }
             return old;
         }
 
@@ -370,32 +379,35 @@ public:
         }
 
         //- Set stream state to be 'bad'
-        void setBad()
+        void setBad() noexcept
         {
             ioState_ |= std::ios_base::badbit;
         }
 
-        //- Set flags of stream
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags f) = 0;
+        //- Return current stream flags
+        virtual std::ios_base::fmtflags flags() const = 0;
 
-        //- Set flags of stream
-        ios_base::fmtflags setf(const ios_base::fmtflags f)
+        //- Set stream flags, return old stream flags
+        virtual std::ios_base::fmtflags flags(std::ios_base::fmtflags) = 0;
+
+        //- Set stream flag(s), return old stream flags
+        std::ios_base::fmtflags setf(std::ios_base::fmtflags f)
         {
             return flags(flags() | f);
         }
 
-        //- Set flags of given field of stream
-        ios_base::fmtflags setf
+        //- Set stream flag(s) with mask, return old stream flags
+        std::ios_base::fmtflags setf
         (
-            const ios_base::fmtflags f,
-            const ios_base::fmtflags mask
+            const std::ios_base::fmtflags f,
+            const std::ios_base::fmtflags mask
         )
         {
             return flags((flags() & ~mask) | (f & mask));
         }
 
         //- Unset flags of stream
-        void unsetf(const ios_base::fmtflags f)
+        void unsetf(std::ios_base::fmtflags f)
         {
             flags(flags() & ~f);
         }
@@ -464,6 +476,41 @@ inline IOstream& scientific(IOstream& io)
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Detail
+{
+
+/*---------------------------------------------------------------------------*\
+                   Class Detail::StreamAllocator Declaration
+\*---------------------------------------------------------------------------*/
+
+//- A wrapper to hold a std::stream type for OpenFOAM wrapped streams.
+//- This is necessary since the OpenFOAM streams hold a reference to
+//- the normal std::stream
+template<class StreamType>
+class StreamAllocator
+{
+protected:
+
+    // Protected Data
+
+        //- The std::stream
+        StreamType stream_;
+
+
+    // Constructors
+
+        //- Default construct (empty)
+        StreamAllocator() = default;
+};
+
+
+} // End namespace Detail
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Functions/Algorithms
 
 namespace Detail
 {

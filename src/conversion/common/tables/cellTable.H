@@ -59,20 +59,21 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cellTable_H
-#define cellTable_H
+#ifndef Foam_cellTable_H
+#define Foam_cellTable_H
 
-#include "polyMesh.H"
 #include "Map.H"
 #include "dictionary.H"
-#include "labelList.H"
-#include "wordList.H"
 #include "wordRes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+// Forward Declarations
+class polyMesh;
+class objectRegistry;
 
 /*---------------------------------------------------------------------------*\
                          Class cellTable Declaration
@@ -82,39 +83,29 @@ class cellTable
 :
     public Map<dictionary>
 {
-    // Private data
-
-       static const char* const defaultMaterial_;
-
-
     // Private Member Functions
-
-        //- Map from cellTable ID => zone number
-        Map<label> zoneMap() const;
-
-        //- A contiguous list of cellTable names
-        wordList namesList() const;
 
         //- Add required entries - MaterialType
         void addDefaults();
 
-        void setEntry(const label id, const word& keyWord, const word& value);
-
-        //- No copy construct
-        cellTable(const cellTable&) = delete;
+        void setEntry(const label id, const word& key, const word& value);
 
 
 public:
 
+    //- No copy construct
+    cellTable(const cellTable&) = delete;
+
+
     // Constructors
 
-        //- Construct null
-        cellTable();
+        //- Default construct
+        cellTable() noexcept = default;
 
-        //- Construct read from registry, name. instance
-        cellTable
+        //- Read construct from registry, name, instance
+        explicit cellTable
         (
-            const objectRegistry&,
+            const objectRegistry& obr,
             const word& name = "cellTable",
             const fileName& instance = "constant"
         );
@@ -126,25 +117,28 @@ public:
 
     // Member Functions
 
-        //- Append to the end, return index
-        label append(const dictionary&);
+        //- Add to the end, return index
+        label push_back(const dictionary& dict);
 
-        //- Return index corresponding to name
-        //  returns -1 if not found
+        //- The max table index, -1 if empty
+        label maxIndex() const;
+
+        //- The index corresponding to entry with 'Label' of given name,
+        //- or -1 if not found
         label findIndex(const word& name) const;
 
-        //- Return the name corresponding to id
-        //  returns cellTable_ID if not otherwise defined
+        //- The 'Label' name corresponding to id,
+        //- or cellTable_ID if not otherwise defined
         word name(const label id) const;
 
-        //- Return a Map of (id => name)
+        //- Return the extracted Map of (id => name)
         Map<word> names() const;
 
-        //- Return a Map of (id => names) selected by patterns
+        //- Return the extracted Map of (id => names) selected by patterns
         Map<word> names(const wordRes& patterns) const;
 
-        //- Return a Map of (id => name) for materialType
-        //  (fluid | solid | shell)
+        //- Return the extracted Map of (id => name) for materialType
+        //- (fluid | solid | shell)
         Map<word> selectType(const word& materialType) const;
 
         //- Return a Map of (id => name) for fluids
@@ -205,7 +199,14 @@ public:
         //- Combine tableIds together
         //  each dictionary entry is a wordList
         void combine(const dictionary& mapDict, labelList& tableIds);
+
+
+    // Housekeeping
+
+        //- Add to the end, return index
+        label append(const dictionary& dict) { return push_back(dict); }
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

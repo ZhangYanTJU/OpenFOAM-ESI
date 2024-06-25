@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,7 +30,6 @@ License
 
 #include "SloanRenumber.H"
 #include "addToRunTimeSelectionTable.H"
-#include "globalMeshData.H"
 #include "processorPolyPatch.H"
 #include "syncTools.H"
 
@@ -74,6 +73,9 @@ typedef adjacency_list
 typedef graph_traits<Graph>::vertex_descriptor Vertex;
 typedef graph_traits<Graph>::vertices_size_type size_type;
 
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
 namespace Foam
 {
     defineTypeNameAndDebug(SloanRenumber, 0);
@@ -88,6 +90,13 @@ namespace Foam
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::SloanRenumber::SloanRenumber(const bool reverse)
+:
+    renumberMethod(),
+    reverse_(reverse)
+{}
+
 
 Foam::SloanRenumber::SloanRenumber(const dictionary& dict)
 :
@@ -155,8 +164,7 @@ Foam::labelList renumberImpl(Graph& G, const bool useReverse)
 
 Foam::labelList Foam::SloanRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField& points
+    const polyMesh& mesh
 ) const
 {
     // Construct graph : faceOwner + connections across cyclics.
@@ -176,7 +184,7 @@ Foam::labelList Foam::SloanRenumber::renumber
     Graph G(mesh.nCells());
 
     // Add internal faces
-    forAll(mesh.faceNeighbour(), facei)
+    for (label facei = 0; facei < mesh.nInternalFaces(); ++facei)
     {
         add_edge(mesh.faceOwner()[facei], mesh.faceNeighbour()[facei], G);
     }
@@ -216,8 +224,7 @@ Foam::labelList Foam::SloanRenumber::renumber
 
 Foam::labelList Foam::SloanRenumber::renumber
 (
-    const CompactListList<label>& cellCells,
-    const pointField&
+    const CompactListList<label>& cellCells
 ) const
 {
     Graph G(cellCells.size());
@@ -241,8 +248,7 @@ Foam::labelList Foam::SloanRenumber::renumber
 
 Foam::labelList Foam::SloanRenumber::renumber
 (
-    const labelListList& cellCells,
-    const pointField&
+    const labelListList& cellCells
 ) const
 {
     Graph G(cellCells.size());

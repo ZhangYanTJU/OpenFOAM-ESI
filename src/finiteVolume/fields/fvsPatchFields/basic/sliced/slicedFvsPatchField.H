@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,7 +89,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //  Not implemented.
         slicedFvsPatchField
         (
             const fvPatch&,
@@ -98,6 +99,7 @@ public:
         );
 
         //- Construct by mapping the given sliced patch field onto a new patch
+        //  Not implemented.
         slicedFvsPatchField
         (
             const slicedFvsPatchField<Type>&,
@@ -109,9 +111,6 @@ public:
         //- Construct as copy
         slicedFvsPatchField(const slicedFvsPatchField<Type>&);
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const;
-
         //- Construct as copy setting internal field reference
         slicedFvsPatchField
         (
@@ -119,21 +118,33 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const
+        {
+            return fvsPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
-        ) const;
+        ) const
+        {
+            return fvsPatchField<Type>::Clone(*this, iF);
+        }
 
 
-    //- Destructor
-    virtual ~slicedFvsPatchField<Type>();
+    //- Destructor, resets pointers to avoid deletion of underlying field
+    virtual ~slicedFvsPatchField();
 
 
     // Member Functions
 
         //- True: this patch field fixes a value.
         virtual bool fixesValue() const { return true; }
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 
 
     // Member Operators

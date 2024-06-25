@@ -133,7 +133,7 @@ public:
         ) const
         {
             NotImplemented;
-            return autoPtr<GAMGInterfaceField>(nullptr);
+            return nullptr;
         }
 
 

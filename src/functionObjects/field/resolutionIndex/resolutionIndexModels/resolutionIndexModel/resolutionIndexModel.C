@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,17 +45,10 @@ namespace Foam
 
 Foam::tmp<Foam::volScalarField> Foam::resolutionIndexModel::V() const
 {
-    auto tV = tmp<volScalarField>::New
+    auto tV = volScalarField::New
     (
-        IOobject
-        (
-            "V",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "V",
+        IOobject::NO_REGISTER,
         mesh_,
         dimVolume,
         fvPatchFieldBase::zeroGradientType()
@@ -98,7 +91,7 @@ bool Foam::resolutionIndexModel::read(const dictionary& dict)
             (
                 resultName_,
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::LAZY_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -108,7 +101,7 @@ bool Foam::resolutionIndexModel::read(const dictionary& dict)
             fvPatchFieldBase::zeroGradientType()
         );
 
-        mesh_.objectRegistry::store(indexPtr);
+        regIOobject::store(indexPtr);
     }
 
     return true;

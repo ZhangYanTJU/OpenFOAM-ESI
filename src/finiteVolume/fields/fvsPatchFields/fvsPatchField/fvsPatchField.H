@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -205,10 +205,30 @@ class fvsPatchField
     public fvsPatchFieldBase,
     public Field<Type>
 {
+public:
+
+    // Public Data Types
+
+        //- The patch type for the patch field
+        typedef fvPatch Patch;
+
+        //- The value_type for the patch field
+        typedef Type value_type;
+
+        //- The internal field type associated with the patch field
+        typedef DimensionedField<Type, surfaceMesh> Internal;
+
+        //- Type for a \em calculated patch
+        typedef calculatedFvsPatchField<Type> Calculated;
+
+
+private:
+
     // Private Data
 
         //- Reference to internal field
         const DimensionedField<Type, surfaceMesh>& internalField_;
+
 
 protected:
 
@@ -231,16 +251,6 @@ protected:
 
 
 public:
-
-    //- The internal field type associated with the patch field
-    typedef DimensionedField<Type, surfaceMesh> Internal;
-
-    //- The patch type for the patch field
-    typedef fvPatch Patch;
-
-    //- Type for a \em calculated patch
-    typedef calculatedFvsPatchField<Type> Calculated;
-
 
     // Declare run-time constructor selection tables
 
@@ -333,13 +343,13 @@ public:
             const fvPatch& p,
             const DimensionedField<Type, surfaceMesh>& iF,
             const dictionary& dict,
-            const bool valueReqd
+            const bool needValue
         )
         :
             fvsPatchField
             (
                 p, iF, dict,
-                (valueReqd? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
+                (needValue? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
             )
         {}
 
@@ -362,23 +372,43 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone
+        //- Clone patch field with its own internal field reference
         virtual tmp<fvsPatchField<Type>> clone() const
         {
-            return tmp<fvsPatchField<Type>>::New(*this);
+            return tmp<fvsPatchField<Type>>
+            (
+                new fvsPatchField<Type>(*this, this->internalField_)
+            );
         }
 
-        //- Construct and return a clone setting internal field reference
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
         ) const
         {
-            return tmp<fvsPatchField<Type>>::New(*this, iF);
+            return tmp<fvsPatchField<Type>>
+            (
+                new fvsPatchField<Type>(*this, iF)
+            );
         }
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a patch field, optionally with internal field reference etc.
+        template<class DerivedPatchField, class... Args>
+        static tmp<fvsPatchField<Type>> Clone
+        (
+            const DerivedPatchField& pf,
+            Args&&... args
+        )
+        {
+            return tmp<fvsPatchField<Type>>
+            (
+                new DerivedPatchField(pf, std::forward<Args>(args)...)
+            );
+        }
 
         //- Return a pointer to a new patchField created on freestore given
         //  patch and internal field
@@ -425,15 +455,15 @@ public:
         //  freestore without setting patchField values
         static tmp<fvsPatchField<Type>> NewCalculatedType
         (
-            const fvPatch&
+            const fvPatch& p
         );
 
         //- Return a pointer to a new calculatedFvsPatchField created on
         //  freestore without setting patchField values
-        template<class Type2>
+        template<class AnyType>
         static tmp<fvsPatchField<Type>> NewCalculatedType
         (
-            const fvsPatchField<Type2>&
+            const fvsPatchField<AnyType>& pf
         );
 
 
@@ -481,7 +511,7 @@ public:
             virtual void initEvaluate
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
@@ -489,7 +519,7 @@ public:
             virtual void evaluate
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
@@ -498,7 +528,7 @@ public:
             virtual void initEvaluateLocal
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
@@ -506,12 +536,12 @@ public:
             virtual void evaluateLocal
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
 
-        //- Write
+        //- Write the patch "type"
         virtual void write(Ostream& os) const;
 
         //- Check against given patch field

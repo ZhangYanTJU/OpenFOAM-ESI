@@ -56,7 +56,7 @@ class faceBoolSet
 public:
 
     //- Runtime type information
-    TypeName("faceBoolSet");
+    TypeNameNoDebug("faceBoolSet");
 
 
     // Constructors

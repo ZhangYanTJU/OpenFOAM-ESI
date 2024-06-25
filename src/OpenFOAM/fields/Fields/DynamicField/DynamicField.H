@@ -97,8 +97,8 @@ public:
 
     // Static Member Functions
 
-        //- Return a null field
-        inline static const DynamicField<T, SizeMin>& null()
+        //- Return a null DynamicField (reference to a nullObject).
+        static const DynamicField<T, SizeMin>& null() noexcept
         {
             return NullObjectRef<DynamicField<T, SizeMin>>();
         }

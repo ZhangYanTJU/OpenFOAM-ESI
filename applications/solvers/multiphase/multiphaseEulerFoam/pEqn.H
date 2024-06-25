@@ -50,7 +50,8 @@
             runTime.timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionedScalar(dimVelocity*dimArea, Zero)

@@ -68,22 +68,25 @@ class limitedLnGrad
 :
     public lnGradScheme<Type>
 {
-    // Private data
+    // Private Data
 
         //- Limiter.  0 = no limiting, 1 = full limiting
         scalar limitCoeff_;
-
-
-    // Private Member Functions
-
-        //- No copy assignment
-        void operator=(const limitedLnGrad&) = delete;
 
 
 public:
 
     //- Runtime type information
     TypeName("limited");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        limitedLnGrad(const limitedLnGrad&) = delete;
+
+        //- No copy assignment
+        void operator=(const limitedLnGrad&) = delete;
 
 
     // Constructors

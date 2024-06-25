@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,21 +40,22 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef patchInjectionBase_H
-#define patchInjectionBase_H
+#ifndef Foam_patchInjectionBase_H
+#define Foam_patchInjectionBase_H
 
 #include "word.H"
 #include "labelList.H"
 #include "scalarList.H"
 #include "vectorList.H"
 #include "faceList.H"
+#include "labelledTri.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-// Forward declarations
+// Forward Declarations
 class polyMesh;
 class fvMesh;
 class Random;
@@ -66,7 +68,7 @@ class patchInjectionBase
 {
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Patch name
         const word patchName_;
@@ -83,13 +85,11 @@ protected:
         //- List of cell labels corresponding to injector positions
         labelList cellOwners_;
 
-        //- Decomposed patch faces as a list of triangles
-        faceList triFace_;
+        //- The polyPatch faces as triangles, the index of each corresponds
+        //- to the undecomposed patch face index.
+        List<labelledTri> triFace_;
 
-        //- Addressing from per triangle to patch face
-        labelList triToFace_;
-
-        //- Cumulative triangle area per triangle face
+        //- Cumulative triangle area per triangle face (processor-local)
         scalarList triCumulativeMagSf_;
 
         //- Cumulative area fractions per processor

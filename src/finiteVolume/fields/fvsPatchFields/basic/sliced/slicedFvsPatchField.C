@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -112,46 +112,13 @@ Foam::slicedFvsPatchField<Type>::slicedFvsPatchField
 
 
 template<class Type>
-Foam::tmp<Foam::fvsPatchField<Type>>
-Foam::slicedFvsPatchField<Type>::clone() const
-{
-    return tmp<fvsPatchField<Type>>
-    (
-        new slicedFvsPatchField<Type>(*this)
-    );
-}
-
-
-template<class Type>
 Foam::slicedFvsPatchField<Type>::slicedFvsPatchField
 (
     const slicedFvsPatchField<Type>& ptf
 )
 :
-    fvsPatchField<Type>
-    (
-        ptf.patch(),
-        ptf.internalField(),
-        Field<Type>()
-    )
-{
-    // Transfer the slice from the argument
-    UList<Type>::shallowCopy(ptf);
-}
-
-
-template<class Type>
-Foam::tmp<Foam::fvsPatchField<Type>>
-Foam::slicedFvsPatchField<Type>::clone
-(
-    const DimensionedField<Type, surfaceMesh>& iF
-) const
-{
-    return tmp<fvsPatchField<Type>>
-    (
-        new slicedFvsPatchField<Type>(*this, iF)
-    );
-}
+    slicedFvsPatchField<Type>(ptf, ptf.internalField())
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -160,7 +127,17 @@ template<class Type>
 Foam::slicedFvsPatchField<Type>::~slicedFvsPatchField()
 {
     // Set to nullptr to avoid deletion of underlying field
-    UList<Type>::shallowCopy(UList<Type>());
+    UList<Type>::shallowCopy(nullptr);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::slicedFvsPatchField<Type>::write(Ostream& os) const
+{
+    fvsPatchField<Type>::write(os);
+    fvsPatchField<Type>::writeValueEntry(os);
 }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2023 Sergey Lesnik
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,12 +51,17 @@ class formattingEntry
 :
     public primitiveEntry
 {
+    // Private Data
+
+        //- The output visibility
+        bool active_ = true;
+
 public:
 
     // Static Member Functions
 
-        //- Generate a default entry keyword: "__format-entry__NNN"
-        //  The generated names are unlikely to collide with user dictionaries
+        //- Generate an entry keyword: "__format-entry__NNN".
+        //- The generated names are unlikely to collide with user dictionaries
         static keyType defaultName(label n)
         {
             return keyType
@@ -99,6 +104,12 @@ public:
             formattingEntry(defaultName(n), std::move(content))
         {}
 
+        //- Construct with token data, using a generated keyword
+        formattingEntry(const label n, token&& tok, bool visible=true)
+        :
+            primitiveEntry(defaultName(n), std::move(tok)),
+            active_(visible)
+        {}
 
         //- Clone the entry
         virtual autoPtr<entry> clone(const dictionary&) const
@@ -111,6 +122,21 @@ public:
 
 
     // Member Functions
+
+        //- Set output visibility on/off.
+        //  \return the previous value
+        bool active(bool on) noexcept
+        {
+            bool old(active_);
+            active_ = on;
+            return old;
+        }
+
+        //- Get the output visibility
+        bool active() const noexcept
+        {
+            return active_;
+        }
 
         //- Write content without the keyword.
         //  Special properties:

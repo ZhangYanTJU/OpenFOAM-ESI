@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2018 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -206,23 +206,13 @@ Foam::radiation::wideBandAbsorptionEmission::aCont(const label bandi) const
     const volScalarField& T = thermo_.T();
     const volScalarField& p = thermo_.p();
 
-    tmp<volScalarField> ta
+    auto ta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "a",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+        "a",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar(dimless/dimLength, Zero)
     );
-
     scalarField& a = ta.ref().primitiveFieldRef();
 
     forAll(a, celli)
@@ -290,21 +280,12 @@ Foam::radiation::wideBandAbsorptionEmission::eCont(const label bandi) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::wideBandAbsorptionEmission::ECont(const label bandi) const
 {
-    tmp<volScalarField> E
+    auto E = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "E",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "E",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
 
     const volScalarField* QdotPtr = mesh().findObject<volScalarField>("Qdot");

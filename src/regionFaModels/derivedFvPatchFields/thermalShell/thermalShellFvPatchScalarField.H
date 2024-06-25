@@ -41,17 +41,17 @@ Usage
     \verbatim
     <masterPatchName>
     {
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         type                compressible::thermalShell;
 
-        // Mandatory/Optional (inherited) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property | Description                           | Type  | Reqd | Dflt
+      Property | Description                           | Type  | Reqd | Deflt
       type     | Type name: compressible::thermalShell | word  | yes  | -
     \endtable
 
@@ -71,7 +71,6 @@ SourceFiles
 #ifndef Foam_thermalShellFvPatchScalarField_H
 #define Foam_thermalShellFvPatchScalarField_H
 
-#include "autoPtr.H"
 #include "thermalShellModel.H"
 #include "fixedValueFvPatchFields.H"
 
@@ -138,15 +137,6 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new thermalShellFvPatchScalarField(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         thermalShellFvPatchScalarField
         (
@@ -154,16 +144,19 @@ public:
             const DimensionedField<scalar, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
-        virtual tmp<fvPatchScalarField> clone
+        //- Return a clone
+        virtual tmp<fvPatchField<scalar>> clone() const
+        {
+            return fvPatchField<scalar>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
+        virtual tmp<fvPatchField<scalar>> clone
         (
             const DimensionedField<scalar, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchScalarField>
-            (
-                new thermalShellFvPatchScalarField(*this, iF)
-            );
+            return fvPatchField<scalar>::Clone(*this, iF);
         }
 
 

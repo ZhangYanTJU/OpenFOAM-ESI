@@ -55,8 +55,9 @@ Foam::SRF::SRFModel::SRFModel
             "SRFProperties",
             Urel.time().constant(),
             Urel.db(),
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
+            IOobject::READ_MODIFIED,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
     Urel_(Urel),
@@ -118,19 +119,12 @@ const Foam::dimensionedVector& Foam::SRF::SRFModel::omega() const
 Foam::tmp<Foam::DimensionedField<Foam::vector, Foam::volMesh>>
 Foam::SRF::SRFModel::Fcoriolis() const
 {
-    return tmp<volVectorField::Internal>
+    return volVectorField::Internal::New
     (
-        new volVectorField::Internal
+        "Fcoriolis",
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                "Fcoriolis",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            2.0*omega_ ^ Urel_
+            2.0*omega_ ^ Urel_.internalField()
         )
     );
 }
@@ -139,18 +133,11 @@ Foam::SRF::SRFModel::Fcoriolis() const
 Foam::tmp<Foam::DimensionedField<Foam::vector, Foam::volMesh>>
 Foam::SRF::SRFModel::Fcentrifugal() const
 {
-    return tmp<volVectorField::Internal>
+    return volVectorField::Internal::New
     (
-        new volVectorField::Internal
+        "Fcentrifugal",
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                "Fcentrifugal",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
             omega_ ^ (omega_ ^ (mesh_.C().internalField() - origin_))
         )
     );
@@ -169,14 +156,14 @@ Foam::vectorField Foam::SRF::SRFModel::velocity
     const vectorField& positions
 ) const
 {
-    tmp<vectorField> tfld =
+    return vectorField
+    (
         omega_.value()
       ^ (
             (positions - origin_.value())
           - axis_*(axis_ & (positions - origin_.value()))
-        );
-
-    return tfld();
+        )
+    );
 }
 
 
@@ -186,18 +173,11 @@ Foam::tmp<Foam::volVectorField> Foam::SRF::SRFModel::U() const
     volVectorField::Boundary::localConsistency = 0;
     tmp<volVectorField> relPos(mesh_.C() - origin_);
 
-    tmp<volVectorField> tU
+    auto tU = volVectorField::New
     (
-        new volVectorField
+        "Usrf",
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                "Usrf",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
             omega_ ^ (relPos() - axis_*(axis_ & relPos()))
         )
     );
@@ -211,24 +191,13 @@ Foam::tmp<Foam::volVectorField> Foam::SRF::SRFModel::Uabs() const
 {
     tmp<volVectorField> Usrf = U();
 
-    tmp<volVectorField> tUabs
+    auto tUabs = volVectorField::New
     (
-        new volVectorField
-        (
-            IOobject
-            (
-                "Uabs",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            Usrf
-        )
+        "Uabs",
+        IOobject::NO_REGISTER,
+        Usrf
     );
-
-    volVectorField& Uabs = tUabs.ref();
+    auto& Uabs = tUabs.ref();
 
     // Add SRF contribution to internal field
     Uabs.primitiveFieldRef() += Urel_.primitiveField();

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,9 +99,9 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
 
     if (UPstream::master() || !parallel_)
     {
-        if (!isDir(outputFile.path()))
+        if (!Foam::isDir(outputFile.path()))
         {
-            mkDir(outputFile.path());
+            Foam::mkDir(outputFile.path());
         }
 
         const bool stateChanged =
@@ -138,7 +138,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
         );
 
         // As per mkdir -p "data/00000000"
-        mkDir(dataDir);
+        Foam::mkDir(dataDir);
 
 
         const fileName geomFile(baseDir/geometryName);
@@ -151,7 +151,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
             geomFile.name()
         );
 
-        if (!exists(geomFile))
+        if (!Foam::exists(geomFile))
         {
             if (verbose_)
             {
@@ -165,7 +165,9 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
                 geomFile.name(),
                 caseOpts_.format()
             );
-            part.write(osGeom); // serial
+
+            osGeom.beginGeometry();
+            part.write(osGeom);  // serial
         }
 
         // Write field
@@ -190,7 +192,12 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
         // Update case file
         if (stateChanged)
         {
-            OFstream osCase(outputFile, IOstreamOption::ASCII);
+            OFstream osCase
+            (
+                IOstreamOption::ATOMIC,
+                outputFile,
+                IOstreamOption::ASCII
+            );
             ensightCase::setTimeFormat(osCase, caseOpts_);  // time-format
 
             if (verbose_)
@@ -236,7 +243,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
             {
                 const dictionary& subDict = dEntry.dict();
 
-                const word varType(subDict.get<word>("type"));
+                const string varType(subDict.get<string>("type"));
                 const word varName
                 (
                     subDict.getOrDefault<word>
@@ -247,7 +254,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
                 );
 
                 osCase
-                    << varType
+                    << varType.c_str()
                     <<
                     (
                         this->isPointData()

@@ -77,7 +77,7 @@ Foam::setsToFaceZone::setsToFaceZone
     const dictionary& dict
 )
 :
-    topoSetFaceZoneSource(mesh),
+    topoSetFaceZoneSource(mesh, dict),
     faceSetName_(dict.get<word>("faceSet")),
     cellSetName_(dict.get<word>("cellSet")),
     flip_(dict.getOrDefault("flip", false))
@@ -135,8 +135,8 @@ void Foam::setsToFaceZone::applyToSet
             }
 
             // Load the sets
-            faceSet fSet(mesh_, faceSetName_);
-            cellSet cSet(mesh_, cellSetName_);
+            faceSet fSet(mesh_, faceSetName_, IOobject::NO_REGISTER);
+            cellSet cSet(mesh_, cellSetName_, IOobject::NO_REGISTER);
 
             // Start off from copy
             DynamicList<label> newAddressing(zoneSet.addressing());

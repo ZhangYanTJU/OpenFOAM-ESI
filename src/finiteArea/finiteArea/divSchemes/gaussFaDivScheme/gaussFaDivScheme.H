@@ -59,7 +59,13 @@ class gaussDivScheme
 :
     public fa::divScheme<Type>
 {
-    // Private Member Functions
+public:
+
+    //- Runtime type information
+    TypeName("Gauss");
+
+
+    // Generated Methods
 
         //- No copy construct
         gaussDivScheme(const gaussDivScheme&) = delete;
@@ -68,15 +74,9 @@ class gaussDivScheme
         void operator=(const gaussDivScheme&) = delete;
 
 
-public:
-
-    //- Runtime type information
-    TypeName("Gauss");
-
-
     // Constructors
 
-        //- Construct null
+        //- Construct from mesh
         gaussDivScheme(const faMesh& mesh)
         :
             divScheme<Type>(mesh)

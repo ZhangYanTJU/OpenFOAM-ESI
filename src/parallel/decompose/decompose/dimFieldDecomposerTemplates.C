@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,26 +37,17 @@ Foam::dimFieldDecomposer::decomposeField
     const DimensionedField<Type, volMesh>& field
 ) const
 {
-    // Create and map the internal field values
-    Field<Type> mappedField(field, cellAddressing_);
-
     // Create the field for the processor
-    return
-        tmp<DimensionedField<Type, volMesh>>::New
-        (
-            IOobject
-            (
-                field.name(),
-                procMesh_.thisDb().time().timeName(),
-                procMesh_.thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            procMesh_,
-            field.dimensions(),
-            std::move(mappedField)
-        );
+
+    return DimensionedField<Type, volMesh>::New
+    (
+        field.name(),
+        IOobject::NO_REGISTER,
+        procMesh_,
+        field.dimensions(),
+        // Internal field - mapped values
+        Field<Type>(field.field(), cellAddressing_)
+    );
 }
 
 

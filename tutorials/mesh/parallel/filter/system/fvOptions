@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -38,6 +38,29 @@ filter1
                 e2      (0 1 0);
             }
         }
+    }
+}
+
+
+heater1
+{
+    // Add some additional water inside a cellZone that is nested inside
+    // the filter. This is just to demonstrate overlapping cellZones
+
+    type            scalarSemiImplicitSource;
+    active          yes;
+
+    timeStart       0.0;
+    duration        0.4;
+    volumeMode      specific;
+
+    selectionMode   cellZone;
+    cellZone        heater;
+
+    sources
+    {
+        rho         (1e-2 0); // kg/s/m^3
+        H2O         (1e-2 0); // kg/s/m^3
     }
 }
 

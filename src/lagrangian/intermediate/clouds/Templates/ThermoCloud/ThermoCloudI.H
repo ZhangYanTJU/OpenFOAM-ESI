@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -260,8 +260,8 @@ Foam::ThermoCloud<CloudType>::Sh(volScalarField& hs) const
         }
         else
         {
-            tmp<fvScalarMatrix> tfvm(new fvScalarMatrix(hs, dimEnergy/dimTime));
-            fvScalarMatrix& fvm = tfvm.ref();
+            auto tfvm = tmp<fvScalarMatrix>::New(hs, dimEnergy/dimTime);
+            auto& fvm = tfvm.ref();
 
             fvm.source() = -hsTrans()/(this->db().time().deltaT());
 
@@ -276,22 +276,14 @@ Foam::ThermoCloud<CloudType>::Sh(volScalarField& hs) const
 template<class CloudType>
 inline Foam::tmp<Foam::volScalarField> Foam::ThermoCloud<CloudType>::Ep() const
 {
-    tmp<volScalarField> tEp
+    auto tEp = tmp<volScalarField>::New
     (
-        new volScalarField
+        this->newIOobject
         (
-            IOobject
-            (
-                this->name() + ":radiation:Ep",
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+            IOobject::scopedName(this->name(), "radiation", "Ep")
+        ),
+        this->mesh(),
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
 
     if (radiation_)
@@ -312,22 +304,14 @@ inline Foam::tmp<Foam::volScalarField> Foam::ThermoCloud<CloudType>::Ep() const
 template<class CloudType>
 inline Foam::tmp<Foam::volScalarField> Foam::ThermoCloud<CloudType>::ap() const
 {
-    tmp<volScalarField> tap
+    auto tap = tmp<volScalarField>::New
     (
-        new volScalarField
+        this->newIOobject
         (
-            IOobject
-            (
-                this->name() + ":radiation:ap",
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+            IOobject::scopedName(this->name(), "radiation", "ap")
+        ),
+        this->mesh(),
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 
     if (radiation_)
@@ -349,22 +333,14 @@ template<class CloudType>
 inline Foam::tmp<Foam::volScalarField>
 Foam::ThermoCloud<CloudType>::sigmap() const
 {
-    tmp<volScalarField> tsigmap
+    auto tsigmap = tmp<volScalarField>::New
     (
-        new volScalarField
+        this->newIOobject
         (
-            IOobject
-            (
-                this->name() + ":radiation:sigmap",
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+            IOobject::scopedName(this->name(), "radiation", "sigmap")
+        ),
+        this->mesh(),
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 
     if (radiation_)

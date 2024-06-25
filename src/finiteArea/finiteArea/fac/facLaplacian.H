@@ -34,7 +34,6 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-
 #ifndef facLaplacian_H
 #define facLaplacian_H
 

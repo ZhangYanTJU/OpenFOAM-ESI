@@ -67,8 +67,8 @@ scalar getMergeDistance
     const scalar mergeTol =
         args.getOrDefault<scalar>("mergeTol", defaultMergeTol);
 
-    scalar writeTol =
-        Foam::pow(scalar(10), -scalar(IOstream::defaultPrecision()));
+    const scalar writeTol =
+        std::pow(scalar(10), -scalar(IOstream::defaultPrecision()));
 
     Info<< "Merge tolerance : " << mergeTol << nl
         << "Write tolerance : " << writeTol << endl;
@@ -310,8 +310,8 @@ tmp<scalarField> signedDistance
     const labelList& surfaces
 )
 {
-    tmp<scalarField> tfld(new scalarField(points.size(), Foam::sqr(GREAT)));
-    scalarField& fld = tfld.ref();
+    auto tfld = tmp<scalarField>::New(points.size(), Foam::sqr(GREAT));
+    auto& fld = tfld.ref();
 
     // Find nearest
     List<pointIndexHit> nearest;

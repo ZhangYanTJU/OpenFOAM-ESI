@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,17 +37,24 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(pointSet, 0);
+    defineTypeName(pointSet);
     addToRunTimeSelectionTable(topoSet, pointSet, word);
     addToRunTimeSelectionTable(topoSet, pointSet, size);
     addToRunTimeSelectionTable(topoSet, pointSet, set);
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::pointSet::pointSet(const IOobject& io)
 :
     topoSet(io, typeName)
+{}
+
+
+Foam::pointSet::pointSet(const IOobject& io, const Foam::zero)
+:
+    topoSet(io, Foam::zero{})
 {}
 
 
@@ -56,12 +63,13 @@ Foam::pointSet::pointSet
     const polyMesh& mesh,
     const word& name,
     IOobjectOption::readOption rOpt,
-    IOobjectOption::writeOption wOpt
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
 )
 :
-    topoSet(mesh, typeName, name, rOpt, wOpt)
+    topoSet(mesh, typeName, name, rOpt, wOpt, reg)
 {
-    check(mesh.nPoints());
+    check(mesh.nPoints());  // Valid range?
 }
 
 
@@ -69,11 +77,11 @@ Foam::pointSet::pointSet
 (
     const polyMesh& mesh,
     const word& name,
-    const label size,
+    const  label initialCapacity,
     IOobjectOption::writeOption wOpt
 )
 :
-    topoSet(mesh, name, size, wOpt)
+    topoSet(mesh, name, initialCapacity, wOpt)
 {}
 
 
@@ -123,6 +131,28 @@ Foam::pointSet::pointSet
 :
     topoSet(mesh, name, labels, wOpt)
 {}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::labelHashSet Foam::pointSet::readContents
+(
+    const polyMesh& mesh,
+    const word& name
+)
+{
+    pointSet reader
+    (
+        topoSet::findIOobject(mesh, name, IOobjectOption::NO_REGISTER),
+        Foam::zero{}
+    );
+
+    labelHashSet labels;
+    reader.readIOcontents(typeName, labels);
+    reader.checkLabels(labels, mesh.nPoints());  // Valid range?
+
+    return labels;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

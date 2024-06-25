@@ -45,22 +45,28 @@ template<class Type, class GeoMesh> class DimensionedField;
 class triSurfaceGeoMesh;
 
 // Typedefs
-typedef Foam::DimensionedField<label, triSurfaceGeoMesh>
+typedef
+    DimensionedField<label, triSurfaceGeoMesh>
     triSurfaceLabelField;
 
-typedef Foam::DimensionedField<scalar, triSurfaceGeoMesh>
+typedef
+    DimensionedField<scalar, triSurfaceGeoMesh>
     triSurfaceScalarField;
 
-typedef Foam::DimensionedField<vector, triSurfaceGeoMesh>
+typedef
+    DimensionedField<vector, triSurfaceGeoMesh>
     triSurfaceVectorField;
 
-typedef Foam::DimensionedField<sphericalTensor, triSurfaceGeoMesh>
+typedef
+    DimensionedField<sphericalTensor, triSurfaceGeoMesh>
     triSurfaceSphericalTensorField;
 
-typedef Foam::DimensionedField<symmTensor, triSurfaceGeoMesh>
+typedef
+    DimensionedField<symmTensor, triSurfaceGeoMesh>
     triSurfaceSymmTensorField;
 
-typedef Foam::DimensionedField<tensor, triSurfaceGeoMesh>
+typedef
+    DimensionedField<tensor, triSurfaceGeoMesh>
     triSurfaceTensorField;
 
 
@@ -69,22 +75,28 @@ typedef Foam::DimensionedField<tensor, triSurfaceGeoMesh>
 
 class triSurfacePointGeoMesh;
 
-typedef Foam::DimensionedField<label, triSurfacePointGeoMesh>
+typedef
+    DimensionedField<label, triSurfacePointGeoMesh>
     triSurfacePointLabelField;
 
-typedef Foam::DimensionedField<scalar, triSurfacePointGeoMesh>
+typedef
+    DimensionedField<scalar, triSurfacePointGeoMesh>
     triSurfacePointScalarField;
 
-typedef Foam::DimensionedField<vector, triSurfacePointGeoMesh>
+typedef
+    DimensionedField<vector, triSurfacePointGeoMesh>
     triSurfacePointVectorField;
 
-typedef Foam::DimensionedField<sphericalTensor, triSurfacePointGeoMesh>
+typedef
+    DimensionedField<sphericalTensor, triSurfacePointGeoMesh>
     triSurfacePointSphericalTensorField;
 
-typedef Foam::DimensionedField<symmTensor, triSurfacePointGeoMesh>
+typedef
+    DimensionedField<symmTensor, triSurfacePointGeoMesh>
     triSurfacePointSymmTensorField;
 
-typedef Foam::DimensionedField<tensor, triSurfacePointGeoMesh>
+typedef
+    DimensionedField<tensor, triSurfacePointGeoMesh>
     triSurfacePointTensorField;
 
 

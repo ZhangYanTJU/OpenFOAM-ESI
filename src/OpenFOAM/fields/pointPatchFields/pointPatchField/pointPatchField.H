@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -240,6 +240,25 @@ class pointPatchField
 :
     public pointPatchFieldBase
 {
+public:
+
+    // Public Data Types
+
+        //- The patch type for the patch field
+        typedef pointPatch Patch;
+
+        //- The value_type for the patch field
+        typedef Type value_type;
+
+        //- The internal field type associated with the patch field
+        typedef DimensionedField<Type, pointMesh> Internal;
+
+        //- Type for a \em calculated patch
+        typedef calculatedPointPatchField<Type> Calculated;
+
+
+private:
+
     // Private Data
 
         //- Reference to internal field
@@ -247,19 +266,6 @@ class pointPatchField
 
 
 public:
-
-    //- The Field value_type
-    typedef Type value_type;
-
-    //- The internal field type associated with the patch field
-    typedef DimensionedField<Type, pointMesh> Internal;
-
-    //- The patch type for the patch field
-    typedef pointPatch Patch;
-
-    //- Type for a \em calculated patch
-    typedef calculatedPointPatchField<Type> Calculated;
-
 
     // Declare run-time constructor selection tables
 
@@ -339,17 +345,31 @@ public:
             const DimensionedField<Type, pointMesh>&
         );
 
-        //- Construct and return a clone
+        //- Clone patch field with its own internal field reference
         virtual autoPtr<pointPatchField<Type>> clone() const = 0;
 
-        //- Construct and return a clone setting internal field reference
+        //- Clone patch field with an internal field reference
         virtual autoPtr<pointPatchField<Type>> clone
         (
             const DimensionedField<Type, pointMesh>& iF
         ) const = 0;
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a patch field, optionally with internal field reference etc.
+        template<class DerivedPatchField, class... Args>
+        static autoPtr<pointPatchField<Type>> Clone
+        (
+            const DerivedPatchField& pf,
+            Args&&... args
+        )
+        {
+            return autoPtr<pointPatchField<Type>>
+            (
+                new DerivedPatchField(pf, std::forward<Args>(args)...)
+            );
+        }
 
         //- Return a pointer to a new patchField created on freestore given
         //  patch and internal field
@@ -394,11 +414,19 @@ public:
 
         //- Return a pointer to a new calculatedPointPatchField created on
         //  freestore without setting patchField values
-        template<class Type2>
         static autoPtr<pointPatchField<Type>>
         NewCalculatedType
         (
-            const pointPatchField<Type2>&
+            const pointPatch& p
+        );
+
+        //- Return a pointer to a new calculatedPointPatchField created on
+        //  freestore without setting patchField values
+        template<class AnyType>
+        static autoPtr<pointPatchField<Type>>
+        NewCalculatedType
+        (
+            const pointPatchField<AnyType>& pf
         );
 
 
@@ -431,25 +459,42 @@ public:
 
         // Evaluation Functions
 
-            //- Return field created from appropriate internal field values
-            tmp<Field<Type>> patchInternalField() const;
-
-            //- Return field created from appropriate internal field values
-            //- given internal field reference
+            //- Extract field using specified addressing
+            // \param internalData The internal field to extract from
+            // \param addressing Addressing (mesh-points) into internal field
+            // \param [out] pfld The extracted patch field.
+            //     It is always resized according to the patch size(),
+            //     which can be smaller than the addressing size
             template<class Type1>
-            tmp<Field<Type1>> patchInternalField
+            void patchInternalField
             (
-                const Field<Type1>& iF
+                const UList<Type1>& internalData,
+                const labelUList& addressing,
+                Field<Type1>& pfld
             ) const;
 
             //- Return field created from selected internal field values
             //- given internal field reference
+            // \param internalData The internal field to extract from
+            // \param addressing Addressing (mesh-points) into internal field
             template<class Type1>
             tmp<Field<Type1>> patchInternalField
             (
-                const Field<Type1>& iF,
-                const labelUList& meshPoints
+                const UList<Type1>& internalData,
+                const labelUList& addressing
             ) const;
+
+            //- Return field created from appropriate internal field values
+            //- given internal field reference
+            template<class Type1>
+            tmp<Field<Type1>> patchInternalField
+            (
+                const UList<Type1>& internalData
+            ) const;
+
+            //- Return field created from appropriate internal field values
+            tmp<Field<Type>> patchInternalField() const;
+
 
             //- Given the internal field and a patch field,
             //- add the patch field to the internal field
@@ -517,14 +562,14 @@ public:
         //- Initialise evaluation of the patch field (do nothing)
         virtual void initEvaluate
         (
-            const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
+            const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
         )
         {}
 
         //- Evaluate the patch field, sets updated() to false
         virtual void evaluate
         (
-            const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
+            const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
         );
 
             //- Initialise the evaluation of the patch field after a local
@@ -532,7 +577,7 @@ public:
             virtual void initEvaluateLocal
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
@@ -540,7 +585,7 @@ public:
             virtual void evaluateLocal
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 

@@ -100,14 +100,14 @@ Foam::fac::interpolate
     Istream& schemeData
 )
 {
-#   ifdef DEBUGInterpolations
+    #ifdef DEBUGInterpolations
     if (edgeInterpolation::debug)
     {
         InfoInFunction
             << "interpolating GeometricField<Type, faPatchField, areaMesh> "
             << endl;
     }
-#   endif
+    #endif
 
     return scheme<Type>(faceFlux, schemeData)().interpolate(vf);
 }
@@ -122,7 +122,7 @@ Foam::fac::interpolate
     const word& name
 )
 {
-#   ifdef DEBUGInterpolations
+    #ifdef DEBUGInterpolations
     if (edgeInterpolation::debug)
     {
         InfoInFunction
@@ -130,7 +130,7 @@ Foam::fac::interpolate
             << "using " << name
             << endl;
     }
-#   endif
+    #endif
 
     return scheme<Type>(faceFlux, name)().interpolate(vf);
 }
@@ -199,14 +199,14 @@ Foam::fac::interpolate
     Istream& schemeData
 )
 {
-#   ifdef DEBUGInterpolations
+    #ifdef DEBUGInterpolations
     if (edgeInterpolation::debug)
     {
         InfoInFunction
             << "interpolating GeometricField<Type, faPatchField, areaMesh> "
             << endl;
     }
-#   endif
+    #endif
 
     return scheme<Type>(vf.mesh(), schemeData)().interpolate(vf);
 }
@@ -220,7 +220,7 @@ Foam::fac::interpolate
     const word& name
 )
 {
-#   ifdef DEBUGInterpolations
+    #ifdef DEBUGInterpolations
     if (edgeInterpolation::debug)
     {
         InfoInFunction
@@ -228,7 +228,7 @@ Foam::fac::interpolate
             << "using " << name
             << endl;
     }
-#   endif
+    #endif
 
     return scheme<Type>(vf.mesh(), name)().interpolate(vf);
 }
@@ -257,7 +257,7 @@ Foam::fac::interpolate
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-#   ifdef DEBUGInterpolations
+    #ifdef DEBUGInterpolations
     if (edgeInterpolation::debug)
     {
         InfoInFunction
@@ -265,7 +265,7 @@ Foam::fac::interpolate
             << "using run-time selected scheme"
             << endl;
     }
-#   endif
+    #endif
 
     return interpolate(vf, "interpolate(" + vf.name() + ')');
 }

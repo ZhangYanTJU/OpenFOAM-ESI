@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -112,7 +112,7 @@ bool Foam::vtk::writeCellSetFaces
         // processor-local cellID offset
         const label cellIdOffset =
         (
-            writer.parallel() ? globalIndex(mesh.nCells()).localStart() : 0
+            writer.parallel() ? globalIndex::calcOffset(mesh.nCells()) : 0
         );
 
         forAll(faceValues, facei)

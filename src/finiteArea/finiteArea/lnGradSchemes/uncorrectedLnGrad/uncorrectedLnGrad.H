@@ -58,16 +58,19 @@ class uncorrectedLnGrad
 :
     public lnGradScheme<Type>
 {
-    // Private Member Functions
-
-        //- No copy assignment
-        void operator=(const uncorrectedLnGrad&) = delete;
-
-
 public:
 
     //- Runtime type information
     TypeName("uncorrected");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        uncorrectedLnGrad(const uncorrectedLnGrad&) = delete;
+
+        //- No copy assignment
+        void operator=(const uncorrectedLnGrad&) = delete;
 
 
     // Constructors
@@ -101,10 +104,7 @@ public:
         }
 
         //- Return true if this scheme uses an explicit correction
-        virtual bool corrected() const
-        {
-            return false;
-        }
+        virtual bool corrected() const { return false; }
 
         //- Return the explicit correction to the uncorrectedLnGrad
         //- for the given field

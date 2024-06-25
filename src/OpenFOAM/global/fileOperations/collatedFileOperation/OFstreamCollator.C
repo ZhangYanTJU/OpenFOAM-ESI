@@ -80,7 +80,7 @@ bool Foam::OFstreamCollator::writeFile
         osPtr.reset(new OFstream(atomic, fName, streamOpt, append));
         auto& os = *osPtr;
 
-        if (append == IOstreamOption::NON_APPEND)
+        if (append == IOstreamOption::NO_APPEND)
         {
             // No IOobject so cannot use IOobject::writeHeader
 

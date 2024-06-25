@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef emptyFaPatchField_H
-#define emptyFaPatchField_H
+#ifndef Foam_emptyFaPatchField_H
+#define Foam_emptyFaPatchField_H
 
 #include "faPatchField.H"
 #include "emptyFaPatch.H"
@@ -74,7 +74,8 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         emptyFaPatchField
         (
             const faPatch&,
@@ -97,15 +98,6 @@ public:
             const emptyFaPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<faPatchField<Type>> clone() const
-        {
-            return tmp<faPatchField<Type>>
-            (
-                new emptyFaPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         emptyFaPatchField
         (
@@ -113,16 +105,19 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<faPatchField<Type>> clone() const
+        {
+            return faPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<faPatchField<Type>> clone
         (
             const DimensionedField<Type, areaMesh>& iF
         ) const
         {
-            return tmp<faPatchField<Type>>
-            (
-                new emptyFaPatchField<Type>(*this, iF)
-            );
+            return faPatchField<Type>::Clone(*this, iF);
         }
 
 
@@ -191,6 +186,12 @@ public:
             {
                 return tmp<Field<Type>>::New();
             }
+
+
+    // Member Functions
+
+        //- Write without "value" entry!
+        virtual void write(Ostream&) const;
 };
 
 

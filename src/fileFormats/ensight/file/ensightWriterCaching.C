@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -203,7 +203,7 @@ bool Foam::ensightOutput::writerCaching::update
     const scalar timeValue,
     const bool geomChanged,
     const word& fieldName,
-    const word& fieldType,
+    const string& fieldType,  // May contain spaces (eg, "tensor symm")
     const word& varName
 )
 {

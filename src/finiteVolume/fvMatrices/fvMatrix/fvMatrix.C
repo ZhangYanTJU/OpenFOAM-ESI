@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -369,8 +369,7 @@ Foam::fvMatrix<Type>::fvMatrix
     dimensions_(ds),
     source_(psi.size(), Zero),
     internalCoeffs_(psi.mesh().boundary().size()),
-    boundaryCoeffs_(psi.mesh().boundary().size()),
-    faceFluxCorrectionPtr_(nullptr)
+    boundaryCoeffs_(psi.mesh().boundary().size())
 {
     DebugInFunction
         << "Constructing fvMatrix<Type> for field " << psi_.name() << endl;
@@ -410,19 +409,17 @@ Foam::fvMatrix<Type>::fvMatrix(const fvMatrix<Type>& fvm)
     dimensions_(fvm.dimensions_),
     source_(fvm.source_),
     internalCoeffs_(fvm.internalCoeffs_),
-    boundaryCoeffs_(fvm.boundaryCoeffs_),
-    faceFluxCorrectionPtr_(nullptr)
+    boundaryCoeffs_(fvm.boundaryCoeffs_)
 {
     DebugInFunction
         << "Copying fvMatrix<Type> for field " << psi_.name() << endl;
 
     if (fvm.faceFluxCorrectionPtr_)
     {
-        faceFluxCorrectionPtr_ =
-            new GeometricField<Type, fvsPatchField, surfaceMesh>
-            (
-                *(fvm.faceFluxCorrectionPtr_)
-            );
+        faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
+        (
+            *(fvm.faceFluxCorrectionPtr_)
+        );
     }
 }
 
@@ -438,8 +435,7 @@ Foam::fvMatrix<Type>::fvMatrix(const tmp<fvMatrix<Type>>& tmat)
     dimensions_(tmat().dimensions_),
     source_(tmat.constCast().source_, tmat.movable()),
     internalCoeffs_(tmat.constCast().internalCoeffs_, tmat.movable()),
-    boundaryCoeffs_(tmat.constCast().boundaryCoeffs_, tmat.movable()),
-    faceFluxCorrectionPtr_(nullptr)
+    boundaryCoeffs_(tmat.constCast().boundaryCoeffs_, tmat.movable())
 {
     DebugInFunction
         << "Copy/move fvMatrix<Type> for field " << psi_.name() << endl;
@@ -448,16 +444,15 @@ Foam::fvMatrix<Type>::fvMatrix(const tmp<fvMatrix<Type>>& tmat)
     {
         if (tmat.movable())
         {
-            faceFluxCorrectionPtr_ = tmat().faceFluxCorrectionPtr_;
-            tmat().faceFluxCorrectionPtr_ = nullptr;
-        }
-        else
-        {
             faceFluxCorrectionPtr_ =
-                new GeometricField<Type, fvsPatchField, surfaceMesh>
-                (
-                    *(tmat().faceFluxCorrectionPtr_)
-                );
+                std::move(tmat.constCast().faceFluxCorrectionPtr_);
+        }
+        else if (tmat().faceFluxCorrectionPtr_)
+        {
+            faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
+            (
+                *(tmat().faceFluxCorrectionPtr_)
+            );
         }
     }
 
@@ -473,7 +468,6 @@ Foam::fvMatrix<Type>::~fvMatrix()
     DebugInFunction
         << "Destroying fvMatrix<Type> for field " << psi_.name() << endl;
 
-    deleteDemandDrivenData(faceFluxCorrectionPtr_);
     subMatrices_.clear();
 }
 
@@ -894,13 +888,13 @@ void Foam::fvMatrix<Type>::transferFvMatrixCoeffs()
 template<class Type>
 Foam::lduPrimitiveMeshAssembly* Foam::fvMatrix<Type>::lduMeshPtr()
 {
-    const lduPrimitiveMeshAssembly* lduAssemMeshPtr =
-        psi_.mesh().thisDb().objectRegistry::template findObject
+    return
+    (
+        psi_.mesh().thisDb().objectRegistry::template getObjectPtr
         <
             lduPrimitiveMeshAssembly
-        > (lduAssemblyName_);
-
-    return const_cast<lduPrimitiveMeshAssembly*>(lduAssemMeshPtr);
+        > (lduAssemblyName_)
+    );
 }
 
 
@@ -1577,9 +1571,10 @@ void Foam::fvMatrix<Type>::operator=(const fvMatrix<Type>& fvmv)
     }
     else if (fvmv.faceFluxCorrectionPtr_)
     {
-        faceFluxCorrectionPtr_ =
-            new GeometricField<Type, fvsPatchField, surfaceMesh>
-        (*fvmv.faceFluxCorrectionPtr_);
+        faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
+        (
+            *fvmv.faceFluxCorrectionPtr_
+        );
     }
 
     useImplicit_ = fvmv.useImplicit_;
@@ -1631,8 +1626,7 @@ void Foam::fvMatrix<Type>::operator+=(const fvMatrix<Type>& fvmv)
     }
     else if (fvmv.faceFluxCorrectionPtr_)
     {
-        faceFluxCorrectionPtr_ = new
-        GeometricField<Type, fvsPatchField, surfaceMesh>
+        faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
         (
             *fvmv.faceFluxCorrectionPtr_
         );
@@ -1669,9 +1663,10 @@ void Foam::fvMatrix<Type>::operator-=(const fvMatrix<Type>& fvmv)
     }
     else if (fvmv.faceFluxCorrectionPtr_)
     {
-        faceFluxCorrectionPtr_ =
-            new GeometricField<Type, fvsPatchField, surfaceMesh>
-        (-*fvmv.faceFluxCorrectionPtr_);
+        faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
+        (
+            -*fvmv.faceFluxCorrectionPtr_
+        );
     }
 }
 
@@ -2002,7 +1997,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::correction
 
     // Delete the faceFluxCorrection from the correction matrix
     // as it does not have a clear meaning or purpose
-    deleteDemandDrivenData(tAcorr.ref().faceFluxCorrectionPtr());
+    tAcorr.ref().faceFluxCorrectionPtr(nullptr);
 
     return tAcorr;
 }
@@ -2018,7 +2013,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::correction
 
     // Delete the faceFluxCorrection from the correction matrix
     // as it does not have a clear meaning or purpose
-    deleteDemandDrivenData(tAcorr.ref().faceFluxCorrectionPtr());
+    tAcorr.ref().faceFluxCorrectionPtr(nullptr);
 
     return tAcorr;
 }
@@ -2078,7 +2073,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator==
 )
 {
     checkMethod(A, su, "==");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += su.mesh().V()*su.field();
     return tC;
 }
@@ -2091,7 +2086,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator==
 )
 {
     checkMethod(A, tsu(), "==");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += tsu().mesh().V()*tsu().field();
     tsu.clear();
     return tC;
@@ -2105,7 +2100,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator==
 )
 {
     checkMethod(A, tsu(), "==");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
     return tC;
@@ -2160,7 +2155,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator==
 )
 {
     checkMethod(A, su, "==");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += A.psi().mesh().V()*su.value();
     return tC;
 }
@@ -2206,7 +2201,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     return tC;
 }
@@ -2231,7 +2226,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, B, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() += B;
     return tC;
 }
@@ -2284,7 +2279,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, su, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= su.mesh().V()*su.field();
     return tC;
 }
@@ -2297,7 +2292,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, tsu(), "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= tsu().mesh().V()*tsu().field();
     tsu.clear();
     return tC;
@@ -2311,7 +2306,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, tsu(), "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
     return tC;
@@ -2366,7 +2361,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, su, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= su.mesh().V()*su.field();
     return tC;
 }
@@ -2379,7 +2374,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, tsu(), "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= tsu().mesh().V()*tsu().field();
     tsu.clear();
     return tC;
@@ -2393,7 +2388,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, tsu(), "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
     return tC;
@@ -2449,7 +2444,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, B, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() -= B;
     return tC;
 }
@@ -2503,7 +2498,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, su, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += su.mesh().V()*su.field();
     return tC;
 }
@@ -2516,7 +2511,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, tsu(), "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += tsu().mesh().V()*tsu().field();
     tsu.clear();
     return tC;
@@ -2530,7 +2525,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, tsu(), "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
     return tC;
@@ -2585,7 +2580,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, su, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     tC.ref().source() -= su.mesh().V()*su.field();
     return tC;
@@ -2599,7 +2594,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, tsu(), "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     tC.ref().source() -= tsu().mesh().V()*tsu().field();
     tsu.clear();
@@ -2614,7 +2609,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, tsu(), "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     tC.ref().source() -= tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
@@ -2673,7 +2668,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, su, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= su.value()*A.psi().mesh().V();
     return tC;
 }
@@ -2699,7 +2694,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, su, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= su.value()*A.psi().mesh().V();
     return tC;
 }
@@ -2725,7 +2720,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, su, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += su.value()*tC().psi().mesh().V();
     return tC;
 }
@@ -2751,7 +2746,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, su, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     tC.ref().source() -= su.value()*A.psi().mesh().V();
     return tC;
@@ -2779,7 +2774,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator*
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() *= dsf;
     return tC;
 }
@@ -2791,7 +2786,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator*
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() *= tdsf;
     return tC;
 }
@@ -2803,7 +2798,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator*
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() *= tvsf;
     return tC;
 }
@@ -2851,7 +2846,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator*
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() *= ds;
     return tC;
 }

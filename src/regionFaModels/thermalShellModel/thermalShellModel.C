@@ -26,9 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "thermalShellModel.H"
-#include "faMesh.H"
-#include "fvMesh.H"
-#include "fvPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

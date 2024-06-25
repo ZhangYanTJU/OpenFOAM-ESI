@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "zeroGradient.H"
-#include "stringListOps.H"
 #include "volFields.H"
 #include "dictionary.H"
 #include "wordRes.H"
@@ -135,7 +134,8 @@ bool Foam::functionObjects::zeroGradient::execute()
 {
     results_.clear();
 
-    wordHashSet candidates(subsetStrings(selectFields_, mesh_.names()));
+    wordHashSet candidates(mesh_.names<regIOobject>(selectFields_));
+
     DynamicList<word> missing(selectFields_.size());
     DynamicList<word> ignored(selectFields_.size());
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -123,9 +123,8 @@ template<class ReactionThermo>
 Foam::tmp<Foam::fvScalarMatrix>
 Foam::combustionModels::laminar<ReactionThermo>::R(volScalarField& Y) const
 {
-    tmp<fvScalarMatrix> tSu(new fvScalarMatrix(Y, dimMass/dimTime));
-
-    fvScalarMatrix& Su = tSu.ref();
+    auto tSu = tmp<fvScalarMatrix>::New(Y, dimMass/dimTime);
+    auto& Su = tSu.ref();
 
     if (this->active())
     {
@@ -143,22 +142,12 @@ template<class ReactionThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::combustionModels::laminar<ReactionThermo>::Qdot() const
 {
-    tmp<volScalarField> tQdot
+    auto tQdot = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                this->thermo().phasePropertyName(typeName + ":Qdot"),
-                this->mesh().time().timeName(),
-                this->mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
-        )
+        this->thermo().phaseScopedName(typeName, "Qdot"),
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );
 
     if (this->active())

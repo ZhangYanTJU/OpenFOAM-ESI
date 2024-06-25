@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2017 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +34,7 @@ int Foam::CStringList::resetContent(const ListType& input)
 {
     clear();
 
-    if (input.empty())
+    if (!input.size())
     {
         // Special handling of an empty list
         argv_ = new char*[1];
@@ -43,9 +43,9 @@ int Foam::CStringList::resetContent(const ListType& input)
     }
 
     // Count overall required string length, including each trailing nul char
-    for (const auto& str : input)
+    for (const auto& s : input)
     {
-        nbytes_ += str.length() + 1;
+        nbytes_ += s.length() + 1;
     }
     --nbytes_;  // Do not include final nul char in overall count
 
@@ -54,10 +54,10 @@ int Foam::CStringList::resetContent(const ListType& input)
 
     argv_[0] = data_;   // Starts here
 
-    for (const auto& str : input)
+    for (const auto& s : input)
     {
-        char *next = stringCopy(argv_[argc_], str);
-        argv_[++argc_] = next;   // The start of next string
+        char *next = stringCopy(argv_[argc_], s);
+        argv_[++argc_] = next;  // The start of next string
     }
 
     argv_[argc_] = nullptr;     // Final nullptr terminator
@@ -76,7 +76,7 @@ Foam::CStringList::asList(int argc, const char * const argv[])
 
     for (int i=0; i < argc; ++i)
     {
-        list[i] = argv[i];
+        if (argv[i]) list[i] = argv[i];
     }
 
     return list;

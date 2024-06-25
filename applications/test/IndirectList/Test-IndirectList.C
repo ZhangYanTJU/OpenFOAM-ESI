@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -156,29 +156,24 @@ int main(int argc, char *argv[])
         os.writeEntry("idl3", idl3);
     }
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
-        if (Pstream::master())
+        if (UPstream::master())
         {
             Pout<< "full: " << flatOutput(idl3.values()) << nl
                 << "send: " << flatOutput(idl3) << endl;
 
-            for (const int proci : Pstream::subProcs())
+            for (const int proci : UPstream::subProcs())
             {
-                OPstream toSlave(Pstream::commsTypes::scheduled, proci);
-                toSlave << idl3;
+                OPstream::send(idl3, proci);
             }
         }
         else
         {
             // From master
-            IPstream fromMaster
-            (
-                Pstream::commsTypes::scheduled,
-                Pstream::masterNo()
-            );
+            List<label> recv;
 
-            List<label> recv(fromMaster);
+            IPstream::recv(recv, UPstream::masterNo());
 
             Pout<<"recv: " << flatOutput(recv) << endl;
         }

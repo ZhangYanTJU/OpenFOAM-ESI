@@ -76,6 +76,7 @@ patchWave = $(algorithms)/PatchEdgeFaceWave
 $(patchWave)/PatchEdgeFaceWaveBase.C
 $(patchWave)/patchEdgeFaceInfo.C
 $(patchWave)/patchPatchDist.C
+$(patchWave)/patchEdgeFaceRegion.C
 $(patchWave)/patchEdgeFaceRegions.C
 
 
@@ -353,5 +354,19 @@ regionModel/regionProperties/regionProperties.C
 tetOverlapVolume/tetOverlapVolume.C
 
 triangulatedPatch/triangulatedPatch.C
+
+solidBodyMotion = solidBodyMotionFunctions
+$(solidBodyMotion)/solidBodyMotionFunction/solidBodyMotionFunction.C
+$(solidBodyMotion)/solidBodyMotionFunction/solidBodyMotionFunctionNew.C
+$(solidBodyMotion)/SDA/SDA.C
+$(solidBodyMotion)/tabulated6DoFMotion/tabulated6DoFMotion.C
+$(solidBodyMotion)/linearMotion/linearMotion.C
+$(solidBodyMotion)/drivenLinearMotion/drivenLinearMotion.C
+$(solidBodyMotion)/rotatingMotion/rotatingMotion.C
+$(solidBodyMotion)/axisRotationMotion/axisRotationMotion.C
+$(solidBodyMotion)/multiMotion/multiMotion.C
+$(solidBodyMotion)/oscillatingLinearMotion/oscillatingLinearMotion.C
+$(solidBodyMotion)/oscillatingRotatingMotion/oscillatingRotatingMotion.C
+
 
 LIB = $(FOAM_LIBBIN)/libmeshTools

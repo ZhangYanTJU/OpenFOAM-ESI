@@ -61,7 +61,7 @@ Usage
       type       | Type name: faceSet                  | word |  yes  | -
       action     | Action applied on faces - see below | word |  yes  | -
       source     | Source name: regionToFace           | word |  yes  | -
-      set        | Name of faceSet restricting search  | word |  yes  | -
+      set / zone | Name of faceSet / zone restricting search  | word |  yes  | -
       nearPoint  | The point on/near to the region     | vector | yes | -
     \endtable
 
@@ -81,8 +81,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef regionToFace_H
-#define regionToFace_H
+#ifndef Foam_regionToFace_H
+#define Foam_regionToFace_H
 
 #include "topoSetFaceSource.H"
 #include "indirectPrimitivePatch.H"
@@ -105,11 +105,14 @@ class regionToFace
         //- Add usage string
         static addToUsageTable usage_;
 
-        //- Name of set to use
+        //- Name of set or zone to use
         word setName_;
 
+        //- Is name a set or a zone
+        bool isZone_;
+
         //- Coordinate that is nearest/on connected region
-        point nearPoint_;
+        const point nearPoint_;
 
 
     // Private Member Functions
@@ -124,7 +127,12 @@ class regionToFace
             labelList& faceZone
         ) const;
 
-        void combine(topoSet& set, const bool add) const;
+        void combine
+        (
+            topoSet& set,
+            const bool add,
+            const labelUList& ids
+        ) const;
 
 
 public:

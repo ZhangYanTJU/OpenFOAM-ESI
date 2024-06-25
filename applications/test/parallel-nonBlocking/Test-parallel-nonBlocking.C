@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
             Pstream::myProcNo()
         );
 
-        PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         if (!Pstream::master())
         {
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 
     // Do a non-blocking send inbetween
     {
-        PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         for (const int proci : Pstream::allProcs())
         {

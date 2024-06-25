@@ -254,10 +254,8 @@ steadyStateDdtScheme<Type>::fvcDdtUfCorr
                 mesh().thisDb()
             ),
             mesh(),
-            dimensioned<typename flux<Type>::type>
-            (
-                Uf.dimensions()*dimArea/dimTime, Zero
-            )
+            Foam::zero{},  // value
+            Uf.dimensions()*dimArea/dimTime
         )
     );
 
@@ -286,10 +284,8 @@ steadyStateDdtScheme<Type>::fvcDdtPhiCorr
                 mesh().thisDb()
             ),
             mesh(),
-            dimensioned<typename flux<Type>::type>
-            (
-                phi.dimensions()/dimTime, Zero
-            )
+            Foam::zero{},  // value
+            phi.dimensions()/dimTime
         )
     );
 
@@ -321,10 +317,8 @@ steadyStateDdtScheme<Type>::fvcDdtUfCorr
                 mesh().thisDb()
             ),
             mesh(),
-            dimensioned<typename flux<Type>::type>
-            (
-                Uf.dimensions()*dimArea/dimTime, Zero
-            )
+            Foam::zero{},  // value
+            Uf.dimensions()*dimArea/dimTime
         )
     );
 
@@ -356,10 +350,8 @@ steadyStateDdtScheme<Type>::fvcDdtPhiCorr
                 mesh().thisDb()
             ),
             mesh(),
-            dimensioned<typename flux<Type>::type>
-            (
-                phi.dimensions()/dimTime, Zero
-            )
+            Foam::zero{},  // value
+            phi.dimensions()/dimTime
         )
     );
 

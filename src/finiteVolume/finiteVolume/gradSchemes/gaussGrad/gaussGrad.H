@@ -39,8 +39,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef gaussGrad_H
-#define gaussGrad_H
+#ifndef Foam_gaussGrad_H
+#define Foam_gaussGrad_H
 
 #include "gradScheme.H"
 #include "surfaceInterpolationScheme.H"
@@ -103,19 +103,17 @@ public:
         {
             if (is.eof())
             {
-                tinterpScheme_ =
-                    tmp<surfaceInterpolationScheme<Type>>
-                    (
-                        new linear<Type>(mesh)
-                    );
+                tinterpScheme_.reset
+                (
+                    new linear<Type>(mesh)
+                );
             }
             else
             {
-                tinterpScheme_ =
-                    tmp<surfaceInterpolationScheme<Type>>
-                    (
-                        surfaceInterpolationScheme<Type>::New(mesh, is)
-                    );
+                tinterpScheme_.reset
+                (
+                    surfaceInterpolationScheme<Type>::New(mesh, is)
+                );
             }
         }
 

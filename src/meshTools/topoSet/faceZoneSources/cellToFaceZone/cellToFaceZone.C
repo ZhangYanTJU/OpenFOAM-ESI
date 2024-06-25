@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,7 +58,7 @@ Foam::topoSetSource::addToUsageTable Foam::cellToFaceZone::usage_
 
 void Foam::cellToFaceZone::selectFaces
 (
-    const cellSet& cSet,
+    const bitSet& whichCells,
     bitSet& selectedFace,
     bitSet& doFlip
 ) const
@@ -81,8 +81,8 @@ void Foam::cellToFaceZone::selectFaces
     // Check all internal faces
     for (label facei = 0; facei < nInt; ++facei)
     {
-        const bool ownFound = cSet.found(own[facei]);
-        const bool neiFound = cSet.found(nei[facei]);
+        const bool ownFound = whichCells.test(own[facei]);
+        const bool neiFound = whichCells.test(nei[facei]);
 
         if (ownFound && !neiFound)
         {
@@ -106,7 +106,7 @@ void Foam::cellToFaceZone::selectFaces
             label facei = pp.start();
             forAll(pp, i)
             {
-                neiInSet[facei-nInt] = cSet.found(own[facei]);
+                neiInSet[facei-nInt] = whichCells.test(own[facei]);
                 ++facei;
             }
         }
@@ -120,7 +120,7 @@ void Foam::cellToFaceZone::selectFaces
         label facei = pp.start();
         forAll(pp, i)
         {
-            const bool ownFound = cSet.found(own[facei]);
+            const bool ownFound = whichCells.test(own[facei]);
             const bool neiFound = neiInSet[facei-nInt];
 
             if (ownFound && !neiFound)
@@ -149,7 +149,8 @@ Foam::cellToFaceZone::cellToFaceZone
 )
 :
     topoSetFaceZoneSource(mesh),
-    names_(one{}, setName),
+    names_(Foam::one{}, setName),
+    isZone_(false),
     flip_(flip)
 {}
 
@@ -160,17 +161,11 @@ Foam::cellToFaceZone::cellToFaceZone
     const dictionary& dict
 )
 :
-    topoSetFaceZoneSource(mesh),
+    topoSetFaceZoneSource(mesh, dict),
     names_(),
+    isZone_(topoSetSource::readNames(dict, names_)),
     flip_(dict.getOrDefault("flip", false))
-{
-    // Look for 'sets' or 'set'
-    if (!dict.readIfPresent("sets", names_))
-    {
-        names_.resize(1);
-        dict.readEntry("set", names_.front());
-    }
-}
+{}
 
 
 Foam::cellToFaceZone::cellToFaceZone
@@ -180,7 +175,8 @@ Foam::cellToFaceZone::cellToFaceZone
 )
 :
     topoSetFaceZoneSource(mesh),
-    names_(one{}, word(checkIs(is))),
+    names_(Foam::one{}, word(checkIs(is))),
+    isZone_(false),
     flip_(false)
 {}
 
@@ -207,7 +203,8 @@ void Foam::cellToFaceZone::applyToSet
         {
             if (verbose_)
             {
-                Info<< "    Adding all faces on outside of cell sets: "
+                Info<< "    Adding all faces on outside of cell "
+                    << (isZone_ ? "zones:" : "sets: ")
                     << flatOutput(names_) << "; orientation pointing ";
 
                 if (flip_)
@@ -222,12 +219,23 @@ void Foam::cellToFaceZone::applyToSet
 
             bitSet selectedFace(mesh_.nFaces());
             bitSet doFlip(mesh_.nFaces());
+
             for (const word& setName : names_)
             {
-                // Load the sets
-                cellSet cSet(mesh_, setName);
+                bitSet whichCells(mesh_.nCells());
+                if (isZone_)
+                {
+                    whichCells.set(mesh_.cellZones()[setName]);
+                }
+                else
+                {
+                    // Load the sets
+                    cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
+                    whichCells.setMany(loadedSet.begin(), loadedSet.end());
+                }
+
                 // Select outside faces
-                selectFaces(cSet, selectedFace, doFlip);
+                selectFaces(whichCells, selectedFace, doFlip);
             }
 
             // Start off from copy
@@ -251,7 +259,8 @@ void Foam::cellToFaceZone::applyToSet
         {
             if (verbose_)
             {
-                Info<< "    Removing all faces on outside of cell sets: "
+                Info<< "    Removing all faces on outside of cell "
+                    << (isZone_ ? "zones:" : "sets: ")
                     << flatOutput(names_) << " ..." << endl;
             }
 
@@ -259,10 +268,19 @@ void Foam::cellToFaceZone::applyToSet
             bitSet doFlip(mesh_.nFaces());
             for (const word& setName : names_)
             {
-                // Load the sets
-                cellSet cSet(mesh_, setName);
+                bitSet whichCells(mesh_.nCells());
+                if (isZone_)
+                {
+                    whichCells.set(mesh_.cellZones()[setName]);
+                }
+                else
+                {
+                    // Load the sets
+                    cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
+                    whichCells.setMany(loadedSet.begin(), loadedSet.end());
+                }
                 // Select outside faces
-                selectFaces(cSet, selectedFace, doFlip);
+                selectFaces(whichCells, selectedFace, doFlip);
             }
 
             // Start off empty

@@ -60,15 +60,7 @@ diffusionMulticomponent<ReactionThermo, ThermoType>::init()
             k,
             new volScalarField
             (
-                IOobject
-                (
-                    "Rijk" + Foam::name(k),
-                    this->mesh_.time().timeName(),
-                    this->mesh_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
+                this->mesh_.newIOobject("Rijk" + Foam::name(k)),
                 this->mesh_,
                 dimensionedScalar(dimMass/dimTime/dimVolume, Zero),
                 fvPatchFieldBase::zeroGradientType()
@@ -198,15 +190,7 @@ diffusionMulticomponent<ReactionThermo, ThermoType>::correct()
                 k,
                 new volScalarField
                 (
-                    IOobject
-                    (
-                        "Rijl" + Foam::name(k),
-                        this->mesh_.time().timeName(),
-                        this->mesh_,
-                        IOobject::NO_READ,
-                        IOobject::NO_WRITE,
-                        IOobject::NO_REGISTER
-                    ),
+                    this->mesh_.newIOobject("Rijl" + Foam::name(k)),
                     this->mesh_,
                     dimensionedScalar(dimMass/dimTime/dimVolume, Zero),
                     fvPatchFieldBase::zeroGradientType()
@@ -374,9 +358,8 @@ Foam::combustionModels::diffusionMulticomponent<ReactionThermo, ThermoType>::R
     volScalarField& Y
 ) const
 {
-    tmp<fvScalarMatrix> tSu(new fvScalarMatrix(Y, dimMass/dimTime));
-
-    fvScalarMatrix& Su = tSu.ref();
+    auto tSu = tmp<fvScalarMatrix>::New(Y, dimMass/dimTime);
+    auto& Su = tSu.ref();
 
     if (this->active())
     {
@@ -395,23 +378,13 @@ Foam::tmp<Foam::volScalarField>
 Foam::combustionModels::
 diffusionMulticomponent<ReactionThermo, ThermoType>::Qdot() const
 {
-    tmp<volScalarField> tQdot
+    auto tQdot = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Qdot",
-                this->mesh().time().timeName(),
-                this->mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar(dimEnergy/dimTime/dimVolume, Zero),
-            fvPatchFieldBase::zeroGradientType()
-        )
+        "Qdot",
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar(dimEnergy/dimTime/dimVolume, Zero),
+        fvPatchFieldBase::zeroGradientType()
     );
 
     if (this->active())

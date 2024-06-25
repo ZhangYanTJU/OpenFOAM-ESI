@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -134,7 +134,7 @@ void Foam::polyBoundaryMesh::populate(PtrList<entry>&& entries)
 }
 
 
-bool Foam::polyBoundaryMesh::readContents(const bool allowOptionalRead)
+bool Foam::polyBoundaryMesh::readIOcontents(const bool allowOptionalRead)
 {
     bool updated = false;
     PtrList<entry> entries;
@@ -180,7 +180,7 @@ Foam::polyBoundaryMesh::polyBoundaryMesh
     regIOobject(io),
     mesh_(mesh)
 {
-    readContents(false);  // allowOptionalRead = false
+    readIOcontents(false);  // allowOptionalRead = false
 }
 
 
@@ -221,7 +221,7 @@ Foam::polyBoundaryMesh::polyBoundaryMesh
     regIOobject(io),
     mesh_(pm)
 {
-    if (!readContents(true))  // allowOptionalRead = true
+    if (!readIOcontents(true))  // allowOptionalRead = true
     {
         // Nothing read. Use supplied patches
         polyPatchList& patches = *this;
@@ -246,7 +246,7 @@ Foam::polyBoundaryMesh::polyBoundaryMesh
     regIOobject(io),
     mesh_(pm)
 {
-    if (!readContents(true))  // allowOptionalRead = true
+    if (!readIOcontents(true))  // allowOptionalRead = true
     {
         populate(std::move(entries));
     }
@@ -304,7 +304,7 @@ void Foam::polyBoundaryMesh::calcGeometry()
 
     if
     (
-        pBufs.commsType() == Pstream::commsTypes::blocking
+        pBufs.commsType() == Pstream::commsTypes::buffered
      || pBufs.commsType() == Pstream::commsTypes::nonBlocking
     )
     {
@@ -1297,7 +1297,7 @@ void Foam::polyBoundaryMesh::movePoints(const pointField& p)
 
     if
     (
-        pBufs.commsType() == Pstream::commsTypes::blocking
+        pBufs.commsType() == Pstream::commsTypes::buffered
      || pBufs.commsType() == Pstream::commsTypes::nonBlocking
     )
     {
@@ -1347,7 +1347,7 @@ void Foam::polyBoundaryMesh::updateMesh()
 
     if
     (
-        pBufs.commsType() == Pstream::commsTypes::blocking
+        pBufs.commsType() == Pstream::commsTypes::buffered
      || pBufs.commsType() == Pstream::commsTypes::nonBlocking
     )
     {
@@ -1440,7 +1440,7 @@ void Foam::polyBoundaryMesh::writeEntry(Ostream& os) const
 
 void Foam::polyBoundaryMesh::writeEntry
 (
-    const keyType& keyword,
+    const word& keyword,
     Ostream& os
 ) const
 {

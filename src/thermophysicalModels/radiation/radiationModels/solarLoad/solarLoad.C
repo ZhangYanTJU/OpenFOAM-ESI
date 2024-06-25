@@ -911,17 +911,10 @@ void Foam::radiation::solarLoad::calculate()
 
 Foam::tmp<Foam::volScalarField> Foam::radiation::solarLoad::Rp() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "Rp",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "Rp",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar
         (

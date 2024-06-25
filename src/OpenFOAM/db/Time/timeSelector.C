@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -115,7 +115,7 @@ void Foam::timeSelector::addOptions
         argList::addBoolOption
         (
             "constant",
-            "Include the 'constant/' dir in the times list"
+            "Include 'constant/' dir in the times list"
         );
     }
     if (withZero)
@@ -123,13 +123,13 @@ void Foam::timeSelector::addOptions
         argList::addBoolOption
         (
             "withZero",
-            "Include the '0/' dir in the times list"
+            "Include '0/' dir in the times list"
         );
     }
     argList::addBoolOption
     (
         "noZero",
-        string("Exclude the '0/' dir from the times list")
+        string("Exclude '0/' dir from the times list")
       + (
             withZero
           ? ", has precedence over the -withZero option"
@@ -146,6 +146,32 @@ void Foam::timeSelector::addOptions
         "time",
         "ranges",
         "List of ranges. Eg, ':10,20 40:70 1000:', 'none', etc"
+    );
+}
+
+
+void Foam::timeSelector::addOptions_singleTime()
+{
+    argList::addBoolOption
+    (
+        "constant",
+        "Include 'constant/' dir in the times"
+    );
+    argList::addBoolOption
+    (
+        "noZero",
+        "Exclude '0/' dir from the times (currently ignored)"
+    );
+    argList::addBoolOption
+    (
+        "latestTime",
+        "Select the latest time"
+    );
+    argList::addOption
+    (
+        "time",
+        "value",
+        "Select the nearest time to the specified value"
     );
 }
 
@@ -288,6 +314,79 @@ Foam::instantList Foam::timeSelector::selectIfPresent
 
     // No timeSelector option specified. Do not change runTime.
     return instantList(one{}, instant(runTime.value(), runTime.timeName()));
+}
+
+
+bool Foam::timeSelector::setTimeIfPresent
+(
+    Time& runTime,
+    const argList& args,
+    const bool forceInitial
+)
+{
+    label timei = -1;
+    instantList times;
+
+    if
+    (
+        forceInitial
+     || args.found("constant")
+     || args.found("latestTime")
+     || args.found("time")
+        // Currently ignoring -noZero, -withZero
+    )
+    {
+        // Get times list
+        times = runTime.times();
+    }
+
+    if (times.size())
+    {
+        // Start from first time (eg, for -constant or forced)
+        timei = 0;
+
+        // Determine latestTime selection (if any)
+        // This must appear before the -time option processing
+        if (args.found("latestTime"))
+        {
+            timei = times.size() - 1;
+        }
+        else if (args.found("time"))
+        {
+            const scalar target = args.get<scalar>("time");
+
+            timei = TimePaths::findClosestTimeIndex(times, target);
+        }
+
+
+        // Avoid "constant" unless specifically requested with -constant,
+        // and the -constant option is actually an expected option
+
+        if
+        (
+            (timei >= 0 && timei < times.size()-1)
+         && times[timei].name() == "constant"
+         && (argList::validOptions.found("constant") && !args.found("constant"))
+        )
+        {
+            ++timei;
+        }
+    }
+
+
+    if (timei >= 0 && timei < times.size())
+    {
+        // Specified a timeSelector option, or forceInitial.
+        // Set the runTime accordingly.
+
+        runTime.setTime(times[timei], timei);
+        return true;
+    }
+    else
+    {
+        // No timeSelector option specified. Do not change runTime.
+        return false;
+    }
 }
 
 

@@ -77,7 +77,7 @@ Foam::UIPstream::UIPstream(const int fromProcNo, PstreamBuffers& buffers)
 
         if (debug)
         {
-            Pout<< "UIPstream::UIPstream PstreamBuffers :"
+            Perr<< "UIPstream::UIPstream PstreamBuffers :"
                 << " fromProcNo:" << fromProcNo_
                 << " tag:" << tag_ << " comm:" << comm_
                 << " receive buffer size:" << messageSize_

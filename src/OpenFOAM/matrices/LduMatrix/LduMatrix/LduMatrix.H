@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -93,25 +93,32 @@ class LduMatrix
         const lduMesh& lduMesh_;
 
         //- Diagonal coefficients
-        Field<DType> *diagPtr_;
+        std::unique_ptr<Field<DType>> diagPtr_;
 
         //- Off-diagonal coefficients
-        Field<LUType> *upperPtr_, *lowerPtr_;
+        std::unique_ptr<Field<LUType>> upperPtr_;
+
+        //- Off-diagonal coefficients
+        std::unique_ptr<Field<LUType>> lowerPtr_;
 
         //- Source
-        Field<Type> *sourcePtr_;
+        std::unique_ptr<Field<Type>> sourcePtr_;
 
         //- Field interfaces (processor patches etc.)
         LduInterfaceFieldPtrsList<Type> interfaces_;
 
         //- Off-diagonal coefficients for interfaces
-        FieldField<Field, LUType> interfacesUpper_, interfacesLower_;
+        FieldField<Field, LUType> interfacesUpper_;
+
+        //- Off-diagonal coefficients for interfaces
+        FieldField<Field, LUType> interfacesLower_;
 
 
 public:
 
     friend class SolverPerformance<Type>;
 
+    // -----------------------------------------------------------------------
     //- Abstract base-class for LduMatrix solvers
     class solver
     {
@@ -274,6 +281,7 @@ public:
     };
 
 
+    // -----------------------------------------------------------------------
     //- Abstract base-class for LduMatrix smoothers
     class smoother
     {
@@ -371,6 +379,7 @@ public:
     };
 
 
+    // -----------------------------------------------------------------------
     //- Abstract base-class for LduMatrix preconditioners
     class preconditioner
     {
@@ -466,6 +475,8 @@ public:
     };
 
 
+    // -----------------------------------------------------------------------
+
     // Static Data
 
         // Declare name of the class and its debug switch
@@ -476,126 +487,125 @@ public:
 
         //- Construct given an LDU addressed mesh.
         //  The coefficients are initially empty for subsequent setting.
-        LduMatrix(const lduMesh&);
+        //  Not yet 'explicit' (legacy code may rely on implicit construct)
+        LduMatrix(const lduMesh& mesh);
 
-        //- Construct as copy
+        //- Copy construct
         LduMatrix(const LduMatrix<Type, DType, LUType>&);
+
+        //- Move construct
+        LduMatrix(LduMatrix<Type, DType, LUType>&&);
 
         //- Construct as copy or re-use as specified.
         LduMatrix(LduMatrix<Type, DType, LUType>&, bool reuse);
 
         //- Construct given an LDU addressed mesh and an Istream
-        //  from which the coefficients are read
-        LduMatrix(const lduMesh&, Istream&);
+        //- from which the coefficients are read
+        LduMatrix(const lduMesh& mesh, Istream& is);
 
 
     //- Destructor
-    ~LduMatrix();
+    ~LduMatrix() = default;
 
 
     // Member Functions
 
-        // Access to addressing
+    // Addressing
 
-            //- Return the LDU mesh from which the addressing is obtained
-            const lduMesh& mesh() const noexcept
-            {
-                return lduMesh_;
-            }
+        //- Return the LDU mesh from which the addressing is obtained
+        const lduMesh& mesh() const noexcept
+        {
+            return lduMesh_;
+        }
 
-            //- Return the LDU addressing
-            const lduAddressing& lduAddr() const
-            {
-                return lduMesh_.lduAddr();
-            }
+        //- Return the LDU addressing
+        const lduAddressing& lduAddr() const
+        {
+            return lduMesh_.lduAddr();
+        }
 
-            //- Return the patch evaluation schedule
-            const lduSchedule& patchSchedule() const
-            {
-                return lduAddr().patchSchedule();
-            }
+        //- Return the patch evaluation schedule
+        const lduSchedule& patchSchedule() const
+        {
+            return lduMesh_.lduAddr().patchSchedule();
+        }
 
-            //- Return interfaces
-            const LduInterfaceFieldPtrsList<Type>& interfaces() const
-            {
-                return interfaces_;
-            }
+        //- Const access to the interfaces
+        const LduInterfaceFieldPtrsList<Type>& interfaces() const noexcept
+        {
+            return interfaces_;
+        }
 
-            //- Return interfaces
-            LduInterfaceFieldPtrsList<Type>& interfaces()
-            {
-                return interfaces_;
-            }
-
-
-        // Access to coefficients
-
-            Field<DType>& diag();
-            Field<LUType>& upper();
-            Field<LUType>& lower();
-            Field<Type>& source();
-
-            FieldField<Field, LUType>& interfacesUpper()
-            {
-                return interfacesUpper_;
-            }
-
-            FieldField<Field, LUType>& interfacesLower()
-            {
-                return interfacesLower_;
-            }
+        //- Non-const access to the interfaces
+        LduInterfaceFieldPtrsList<Type>& interfaces() noexcept
+        {
+            return interfaces_;
+        }
 
 
-            const Field<DType>& diag() const;
-            const Field<LUType>& upper() const;
-            const Field<LUType>& lower() const;
-            const Field<Type>& source() const;
+    // Coefficients
 
-            const FieldField<Field, LUType>& interfacesUpper() const
-            {
-                return interfacesUpper_;
-            }
+        const Field<DType>& diag() const;
+        const Field<LUType>& upper() const;
+        const Field<LUType>& lower() const;
+        const Field<Type>& source() const;
 
-            const FieldField<Field, LUType>& interfacesLower() const
-            {
-                return interfacesLower_;
-            }
+        Field<DType>& diag();
+        Field<LUType>& upper();
+        Field<LUType>& lower();
+        Field<Type>& source();
 
 
-            bool hasDiag() const noexcept
-            {
-                return (diagPtr_);
-            }
+    // Interfaces
 
-            bool hasUpper() const noexcept
-            {
-                return (upperPtr_);
-            }
+        const FieldField<Field, LUType>& interfacesUpper() const noexcept
+        {
+            return interfacesUpper_;
+        }
 
-            bool hasLower() const noexcept
-            {
-                return (lowerPtr_);
-            }
+        const FieldField<Field, LUType>& interfacesLower() const noexcept
+        {
+            return interfacesLower_;
+        }
 
-            bool hasSource() const noexcept
-            {
-                return (sourcePtr_);
-            }
+        FieldField<Field, LUType>& interfacesUpper() noexcept
+        {
+            return interfacesUpper_;
+        }
 
-            bool diagonal() const noexcept
-            {
-                return (diagPtr_ && !lowerPtr_ && !upperPtr_);
-            }
+        FieldField<Field, LUType>& interfacesLower() noexcept
+        {
+            return interfacesLower_;
+        }
 
-            bool symmetric() const noexcept
-            {
-                return (diagPtr_ && (!lowerPtr_ && upperPtr_));
-            }
 
-            bool asymmetric() const noexcept
-            {
-                return (diagPtr_ && lowerPtr_ && upperPtr_);
-            }
+    // Characteristics
+
+        //- The matrix type (empty, diagonal, symmetric, ...)
+        word matrixTypeName() const;
+
+        bool hasDiag() const noexcept { return bool(diagPtr_); }
+        bool hasUpper() const noexcept { return bool(upperPtr_); }
+        bool hasLower() const noexcept { return bool(lowerPtr_); }
+        bool hasSource() const noexcept { return bool(sourcePtr_); }
+
+        //- Matrix has diagonal only
+        bool diagonal() const noexcept
+        {
+            return (diagPtr_ && !lowerPtr_ && !upperPtr_);
+        }
+
+        //- Matrix is symmetric
+        bool symmetric() const noexcept
+        {
+            return (diagPtr_ && !lowerPtr_ && upperPtr_);
+        }
+
+        //- Matrix is asymmetric (ie, full)
+        bool asymmetric() const noexcept
+        {
+            return (diagPtr_ && lowerPtr_ && upperPtr_);
+        }
 
 
         // Operations
@@ -651,7 +661,11 @@ public:
 
     // Member Operators
 
+        //- Copy assignment
         void operator=(const LduMatrix<Type, DType, LUType>&);
+
+        //- Move assignment
+        void operator=(LduMatrix<Type, DType, LUType>&&);
 
         void negate();
 

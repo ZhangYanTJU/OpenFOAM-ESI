@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -29,6 +29,7 @@ divSchemes
     default         none;
 
     div(phi,U)      Gauss limitedLinearV 1;
+    div(phiMRF,p)   Gauss limitedLinear 1;
 
     div(phi,h)      Gauss limitedLinear 1;
     div(phi,K)      Gauss linear;

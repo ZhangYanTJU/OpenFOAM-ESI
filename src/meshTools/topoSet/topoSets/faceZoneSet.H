@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,10 +62,34 @@ class faceZoneSet
         boolList flipMap_;
 
 
+    // Private Member Functions
+
+        void subset
+        (
+            const word& setName,
+            const labelUList& setAddressing,
+            const UList<bool>& setFlipMap
+        );
+
+        void addSet
+        (
+            const word& setName,
+            const labelUList& setAddressing,
+            const UList<bool>& setFlipMap
+        );
+
+        void subtractSet
+        (
+            const word& setName,
+            const labelUList& setAddressing,
+            const UList<bool>& setFlipMap
+        );
+
+
 public:
 
     //- Runtime type information
-    TypeName("faceZoneSet");
+    TypeNameNoDebug("faceZoneSet");
 
 
     // Constructors
@@ -79,16 +103,16 @@ public:
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct with initial size for labelHashSet
+        //- Construct empty (no-read) with initial labelHashSet capacity.
         faceZoneSet
         (
             const polyMesh& mesh,
             const word& name,
-            const label size,
+            const label initialCapacity,
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Copy construct from existing set
+        //- Copy construct (no-read) from existing set
         faceZoneSet
         (
             const polyMesh& mesh,
@@ -134,12 +158,21 @@ public:
         virtual void invert(const label maxLen);
 
         //- Subset contents. Only elements present in both sets remain.
+        virtual void subset(const labelUList& elems);
+
+        //- Subset contents. Only elements present in both sets remain.
         virtual void subset(const topoSet& set);
 
-        //- Add elements present in set.
+        //- Add given elements to the set
+        virtual void addSet(const labelUList& elems);
+
+        //- Add given elements to the set
         virtual void addSet(const topoSet& set);
 
-        //- Subtract elements present in set.
+        //- Subtract given elements from the set
+        virtual void subtractSet(const labelUList& elems);
+
+        //- Subtract given elements from the set
         virtual void subtractSet(const topoSet& set);
 
         //- Sync faceZoneSet across coupled patches.

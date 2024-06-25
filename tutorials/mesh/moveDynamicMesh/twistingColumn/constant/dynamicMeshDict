@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -33,8 +33,8 @@ localCode
         const pointField& points
     )
     {
-        tmp<pointField> tnewPoints(new pointField(points));
-        pointField& newPoints = tnewPoints.ref();
+        auto tnewPoints = tmp<pointField>::New(points);
+        auto& newPoints = tnewPoints.ref();
 
         const boundBox bb(points, true);
         const scalar zMin = bb.min()[vector::Z];

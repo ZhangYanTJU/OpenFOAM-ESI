@@ -54,6 +54,16 @@ class cellAspectRatio
     public MeshObject<polyMesh, MoveableMeshObject, cellAspectRatio>,
     public scalarField
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            polyMesh,
+            MoveableMeshObject,
+            cellAspectRatio
+        > MeshObject_type;
+
+
     // Private Member Functions
 
         //- Construct aspect ratio

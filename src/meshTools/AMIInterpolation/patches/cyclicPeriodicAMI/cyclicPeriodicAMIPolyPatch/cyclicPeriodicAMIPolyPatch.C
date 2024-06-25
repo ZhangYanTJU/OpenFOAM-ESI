@@ -273,16 +273,17 @@ void Foam::cyclicPeriodicAMIPolyPatch::resetAMI() const
         {
             const Time& runTime = boundaryMesh().mesh().time();
 
-            fileName dir(runTime.globalPath());
-            fileName postfix("_" + runTime.timeName()+"_expanded.obj");
+            const fileName dir(runTime.globalPath());
+            const fileName postfix("_" + runTime.timeName()+"_expanded.obj");
 
             ownStr.reset(new OBJstream(dir/name() + postfix));
             neiStr.reset(new OBJstream(dir/neighbPatch().name() + postfix));
 
             InfoInFunction
                 << "patch:" << name()
-                << " writing accumulated AMI to " << ownStr().name()
-                << " and " << neiStr().name() << endl;
+                << " writing accumulated AMI to "
+                << ownStr().name().relative(dir)
+                << " and " << neiStr().name().relative(dir) << endl;
         }
 
         // Create another copy

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -193,7 +193,8 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
         if (line.starts_with("$ANSA_NAME"))
         {
             // Keep empty elements when splitting
-            const auto args = stringOps::split<std::string>(line, ';', true);
+            const auto args =
+                stringOps::split<std::string>(line, ';', 0, true);
 
             if (args.size() > 4 && line.starts_with("$ANSA_NAME_COMMENT"))
             {
@@ -493,16 +494,11 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
     // Transfer to normal lists
     this->storedPoints().transfer(dynPoints);
 
-    pointId.shrink();
     dynFaces.shrink();
 
     // Build inverse mapping (NASTRAN pointId -> index)
-    Map<label> mapPointId;
-    mapPointId.reserve(pointId.size());
-    for (const label pointi : pointId)
-    {
-        mapPointId.insert(pointi, mapPointId.size());
-    }
+    Map<label> mapPointId(invertToMap(pointId));
+    pointId.clearStorage();
 
     // Relabel faces
     // ~~~~~~~~~~~~~
@@ -513,7 +509,6 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
             vert = mapPointId[vert];
         }
     }
-    pointId.clearStorage();
     mapPointId.clear();
 
     DebugInfo

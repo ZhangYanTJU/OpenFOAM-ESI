@@ -528,8 +528,9 @@ Foam::faPatchList Foam::faMesh::createPatchList
     }
 
     // Create processor-processor definitions
-    Map<label> procToDefLookup(2*procConnections.size());
+    Map<label> procToDefLookup;
     {
+        procToDefLookup.reserve(procConnections.size());
         faPatchDefs.reserve(faPatchDefs.size() + procConnections.size());
 
         for (const label otherProci : procConnections.sortedToc())

@@ -30,38 +30,18 @@ License
 #include "directFvPatchFieldMapper.H"
 #include "Time.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-tmp<GeometricField<Type, fvPatchField, volMesh>> singleCellFvMesh::interpolate
+Foam::tmp<Foam::GeometricField<Type, Foam::fvPatchField, Foam::volMesh>>
+Foam::singleCellFvMesh::interpolate
 (
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
     // 1. Create the complete field with dummy patch fields
-    PtrList<fvPatchField<Type>> patchFields(vf.boundaryField().size());
 
-    forAll(patchFields, patchi)
-    {
-        patchFields.set
-        (
-            patchi,
-            fvPatchField<Type>::New
-            (
-                fvPatchFieldBase::calculatedType(),
-                boundary()[patchi],
-                DimensionedField<Type, volMesh>::null()
-            )
-        );
-    }
-
-    // Create the complete field from the pieces
-    tmp<GeometricField<Type, fvPatchField, volMesh>> tresF
+    tmp<GeometricField<Type, fvPatchField, volMesh>> tresult
     (
         new GeometricField<Type, fvPatchField, volMesh>
         (
@@ -74,19 +54,18 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> singleCellFvMesh::interpolate
                 IOobject::NO_WRITE
             ),
             *this,
+            Type(gAverage(vf.primitiveField())),
             vf.dimensions(),
-            Field<Type>(1, gAverage(vf)),
-            patchFields
+            fvPatchFieldBase::calculatedType()
         )
     );
-    GeometricField<Type, fvPatchField, volMesh>& resF = tresF.ref();
+    auto& result = tresult.ref();
 
 
     // 2. Change the fvPatchFields to the correct type using a mapper
     //  constructor (with reference to the now correct internal field)
 
-    typename GeometricField<Type, fvPatchField, volMesh>::
-        Boundary& bf = resF.boundaryFieldRef();
+    auto& bf = result.boundaryFieldRef();
 
     if (agglomerate())
     {
@@ -117,7 +96,7 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> singleCellFvMesh::interpolate
                 (
                     vf.boundaryField()[patchi],
                     boundary()[patchi],
-                    resF(),
+                    result.internalField(),
                     agglomPatchFieldMapper(coarseToFine, coarseWeights)
                 )
             );
@@ -136,19 +115,15 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> singleCellFvMesh::interpolate
                 (
                     vf.boundaryField()[patchi],
                     boundary()[patchi],
-                    resF(),
+                    result.internalField(),
                     directFvPatchFieldMapper(map)
                 )
             );
         }
     }
 
-    return tresF;
+    return tresult;
 }
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

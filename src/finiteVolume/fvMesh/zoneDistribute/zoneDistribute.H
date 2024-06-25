@@ -82,6 +82,16 @@ class zoneDistribute
 :
     public MeshObject<fvMesh, TopologicalMeshObject, zoneDistribute>
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            TopologicalMeshObject,
+            zoneDistribute
+        > MeshObject_type;
+
+
     // Private Data
 
         //- Reference to the zone stencil

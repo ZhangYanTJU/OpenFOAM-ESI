@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,13 +29,13 @@ License
 #include "CuthillMcKeeRenumber.H"
 #include "addToRunTimeSelectionTable.H"
 #include "bandCompression.H"
-#include "globalMeshData.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(CuthillMcKeeRenumber, 0);
+    defineTypeName(CuthillMcKeeRenumber);
+    defineTypeName(reverseCuthillMcKeeRenumber);
 
     addToRunTimeSelectionTable
     (
@@ -43,10 +43,33 @@ namespace Foam
         CuthillMcKeeRenumber,
         dictionary
     );
+
+    addToRunTimeSelectionTable
+    (
+        renumberMethod,
+        reverseCuthillMcKeeRenumber,
+        dictionary
+    );
+
+    // Select under the name "RCM"
+    addNamedToRunTimeSelectionTable
+    (
+        renumberMethod,
+        reverseCuthillMcKeeRenumber,
+        dictionary,
+        RCM
+    );
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::CuthillMcKeeRenumber::CuthillMcKeeRenumber(const bool reverse)
+:
+    renumberMethod(),
+    reverse_(reverse)
+{}
+
 
 Foam::CuthillMcKeeRenumber::CuthillMcKeeRenumber(const dictionary& dict)
 :
@@ -59,29 +82,44 @@ Foam::CuthillMcKeeRenumber::CuthillMcKeeRenumber(const dictionary& dict)
 {}
 
 
+Foam::CuthillMcKeeRenumber::CuthillMcKeeRenumber
+(
+    const dictionary& dict,
+    const bool reverse
+)
+:
+    renumberMethod(dict),
+    reverse_(reverse)
+{}
+
+
+Foam::reverseCuthillMcKeeRenumber::reverseCuthillMcKeeRenumber()
+:
+    CuthillMcKeeRenumber(true)  // reverse = true
+{}
+
+
+Foam::reverseCuthillMcKeeRenumber::reverseCuthillMcKeeRenumber
+(
+    const dictionary& dict
+)
+:
+    CuthillMcKeeRenumber(dict, true)  // reverse = true
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField& points
+    const polyMesh& mesh
 ) const
 {
-    CompactListList<label> cellCells;
-    globalMeshData::calcCellCells
-    (
-        mesh,
-        identity(mesh.nCells()),
-        mesh.nCells(),
-        false,                      // local only
-        cellCells
-    );
-
-    labelList orderedToOld = meshTools::bandCompression(cellCells);
+    labelList orderedToOld = meshTools::bandCompression(mesh);
 
     if (reverse_)
     {
-        reverse(orderedToOld);
+        Foam::reverse(orderedToOld);
     }
 
     return orderedToOld;
@@ -90,16 +128,14 @@ Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 
 Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 (
-    const labelList& cellCells,
-    const labelList& offsets,
-    const pointField& cc
+    const CompactListList<label>& cellCells
 ) const
 {
-    labelList orderedToOld = meshTools::bandCompression(cellCells, offsets);
+    labelList orderedToOld = meshTools::bandCompression(cellCells);
 
     if (reverse_)
     {
-        reverse(orderedToOld);
+        Foam::reverse(orderedToOld);
     }
 
     return orderedToOld;
@@ -108,36 +144,35 @@ Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 
 Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 (
-    const CompactListList<label>& cellCells,
-    const pointField& cc
+    const labelListList& cellCells
 ) const
 {
     labelList orderedToOld = meshTools::bandCompression(cellCells);
 
     if (reverse_)
     {
-        reverse(orderedToOld);
+        Foam::reverse(orderedToOld);
     }
 
     return orderedToOld;
 }
 
 
-Foam::labelList Foam::CuthillMcKeeRenumber::renumber
-(
-    const labelListList& cellCells,
-    const pointField& points
-) const
-{
-    labelList orderedToOld = meshTools::bandCompression(cellCells);
-
-    if (reverse_)
-    {
-        reverse(orderedToOld);
-    }
-
-    return orderedToOld;
-}
+// Foam::labelList Foam::CuthillMcKeeRenumber::renumber
+// (
+//     const labelUList& cellCells,
+//     const labelUList& offsets
+// ) const
+// {
+//     labelList orderedToOld = meshTools::bandCompression(cellCells, offsets);
+//
+//     if (reverse_)
+//     {
+//         Foam::reverse(orderedToOld);
+//     }
+//
+//     return orderedToOld;
+// }
 
 
 // ************************************************************************* //

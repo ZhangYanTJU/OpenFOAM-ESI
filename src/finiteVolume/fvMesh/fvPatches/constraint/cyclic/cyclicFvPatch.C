@@ -64,8 +64,8 @@ Foam::tmp<Foam::vectorField> Foam::cyclicFvPatch::delta() const
     const vectorField patchD(coupledFvPatch::delta());
     const vectorField nbrPatchD(neighbFvPatch().coupledFvPatch::delta());
 
-    tmp<vectorField> tpdv(new vectorField(patchD.size()));
-    vectorField& pdv = tpdv.ref();
+    auto tpdv = tmp<vectorField>::New(patchD.size());
+    auto& pdv = tpdv.ref();
 
     // To the transformation if necessary
     if (parallel())

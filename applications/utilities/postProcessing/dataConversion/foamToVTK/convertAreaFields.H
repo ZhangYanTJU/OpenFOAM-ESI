@@ -29,7 +29,7 @@ if (doFiniteArea)
     autoPtr<faMesh> faMeshPtr;
 
     const label nAreaFields =
-        objects.count(stringListOps::foundOp<word>(fieldTypes::area));
+        faObjects.count(stringListOps::foundOp<word>(fieldTypes::area));
 
     if (nAreaFields || withMeshIds)
     {
@@ -40,7 +40,7 @@ if (doFiniteArea)
     {
         const faMesh& areaMesh = faMeshPtr();
 
-        reportFields::area(Info, objects);
+        reportFields::area(Info, faObjects);
 
         const auto& pp = faMeshPtr->patch();
 
@@ -97,7 +97,7 @@ if (doFiniteArea)
         (
             writer,
             areaMesh,
-            objects,
+            faObjects,
             true // syncPar
         );
 

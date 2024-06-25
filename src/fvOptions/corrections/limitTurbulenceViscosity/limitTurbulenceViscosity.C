@@ -87,19 +87,13 @@ Foam::tmp<Foam::volScalarField> Foam::fv::limitTurbulenceViscosity::nu() const
     const auto* dictPtr = mesh_.cfindObject<dictionary>("transportProperties");
     if (dictPtr)
     {
-        return
-            tmp<volScalarField>::New
-            (
-                IOobject
-                (
-                    "nu",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::NO_READ
-                ),
-                mesh_,
-                dimensionedScalar("nu", dimViscosity, *dictPtr)
-            );
+        return volScalarField::New
+        (
+            "nu",
+            IOobject::NO_REGISTER,
+            mesh_,
+            dimensionedScalar("nu", dimViscosity, *dictPtr)
+        );
     }
 
     FatalErrorInFunction

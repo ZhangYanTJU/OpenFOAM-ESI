@@ -59,8 +59,10 @@ class ISstream
 {
     // Private Data
 
+        //- The input stream path
         fileName name_;
 
+        //- The input stream
         std::istream& is_;
 
 
@@ -129,6 +131,8 @@ public:
         virtual const fileName& name() const override { return name_; }
 
         //- The name of the input serial stream, for modification.
+        //  Use with caution since some classes (eg, Fstream)
+        //  also use this for filesystem information!
         virtual fileName& name() { return name_; }
 
 
@@ -143,14 +147,17 @@ public:
 
     // Stream State
 
-        //- Return flags of output stream
-        virtual ios_base::fmtflags flags() const override
+        //- Return current stream flags
+        virtual std::ios_base::fmtflags flags() const override
         {
             return is_.flags();
         }
 
-        //- Set stream flags
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags f) override
+        //- Set stream flags, return old stream flags
+        virtual std::ios_base::fmtflags flags
+        (
+            std::ios_base::fmtflags f
+        ) override
         {
             return is_.flags(f);
         }

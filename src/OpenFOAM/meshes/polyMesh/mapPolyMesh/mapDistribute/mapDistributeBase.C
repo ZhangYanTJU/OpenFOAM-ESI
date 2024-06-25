@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -227,15 +227,8 @@ Foam::List<Foam::labelPair> Foam::mapDistributeBase::schedule
         // Receive and merge
         for (const int proci : UPstream::subProcs(comm))
         {
-            IPstream fromProc
-            (
-                UPstream::commsTypes::scheduled,
-                proci,
-                0,
-                tag,
-                comm
-            );
-            List<labelPair> nbrData(fromProc);
+            List<labelPair> nbrData;
+            IPstream::recv(nbrData, proci, tag, comm);
 
             for (const labelPair& connection : nbrData)
             {
@@ -247,15 +240,7 @@ Foam::List<Foam::labelPair> Foam::mapDistributeBase::schedule
     {
         if (UPstream::parRun())
         {
-            OPstream toMaster
-            (
-                UPstream::commsTypes::scheduled,
-                UPstream::masterNo(),
-                0,
-                tag,
-                comm
-            );
-            toMaster << allComms;
+            OPstream::send(allComms, UPstream::masterNo(), tag, comm);
         }
     }
 

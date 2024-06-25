@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,23 +87,13 @@ Foam::fv::acousticDampingSource::acousticDampingSource
     fv::cellSetOption(name, modelType, dict, mesh),
     blendFactor_
     (
-        volScalarField
-        (
-            IOobject
-            (
-                name_ + ":blend",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            scalar(1),
-            dimless,
-            fvPatchFieldBase::zeroGradientType()
-        )
+        mesh_.newIOobject(IOobject::scopedName(name_, "blend")),
+        mesh_,
+        scalar(1),
+        dimless,
+        fvPatchFieldBase::zeroGradientType()
     ),
-    frequency_("frequency", dimless/dimTime, 0),
+    frequency_("frequency", dimless/dimTime, Zero),
     x0_(Zero),
     r1_(0),
     r2_(0),
@@ -122,8 +112,15 @@ void Foam::fv::acousticDampingSource::addSup
     const label fieldI
 )
 {
+    auto tcoeff = volScalarField::New
+    (
+        IOobject::scopedName(name_, "coeff"),
+        IOobject::NO_REGISTER,
+        w_*frequency_*blendFactor_
+    );
+    const auto& coeff = tcoeff();
+
     const volVectorField& U = eqn.psi();
-    const volScalarField coeff(name_ + ":coeff", w_*frequency_*blendFactor_);
     const auto& URef = mesh().lookupObject<volVectorField>(URefName_);
 
     fvMatrix<vector> dampingEqn
@@ -141,8 +138,15 @@ void Foam::fv::acousticDampingSource::addSup
     const label fieldI
 )
 {
+    auto tcoeff = volScalarField::New
+    (
+        IOobject::scopedName(name_, "coeff"),
+        IOobject::NO_REGISTER,
+        w_*frequency_*blendFactor_
+    );
+    const auto& coeff = tcoeff();
+
     const volVectorField& U = eqn.psi();
-    const volScalarField coeff(name_ + ":coeff", w_*frequency_*blendFactor_);
     const auto& URef = mesh().lookupObject<volVectorField>(URefName_);
 
     fvMatrix<vector> dampingEqn
@@ -161,8 +165,15 @@ void Foam::fv::acousticDampingSource::addSup
     const label fieldI
 )
 {
+    auto tcoeff = volScalarField::New
+    (
+        IOobject::scopedName(name_, "coeff"),
+        IOobject::NO_REGISTER,
+        w_*frequency_*blendFactor_
+    );
+    const auto& coeff = tcoeff();
+
     const volVectorField& U = eqn.psi();
-    const volScalarField coeff(name_ + ":coeff", w_*frequency_*blendFactor_);
     const auto& URef = mesh().lookupObject<volVectorField>(URefName_);
 
     fvMatrix<vector> dampingEqn

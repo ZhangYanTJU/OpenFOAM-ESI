@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -115,7 +115,11 @@ private:
         //- Assert that non-zero field size == mesh size
         void checkFieldSize() const;
 
+        //- Read from file if it is present. Checks the readOption flag
         void readIfPresent(const word& fieldDictEntry = "value");
+
+        //- Read the field - create the field dictionary on-the-fly
+        void readField(const word& fieldDictEntry = "value");
 
         //- Implementation for 'New' with specified registerObject preference.
         //  For LEGACY_REGISTER, registration is determined by
@@ -137,8 +141,11 @@ public:
 
     // Static Member Functions
 
-        //- Return a NullObjectRef DimensionedField
-        inline static const DimensionedField<Type, GeoMesh>& null();
+        //- Return a null DimensionedField (reference to a nullObject).
+        static const DimensionedField<Type, GeoMesh>& null() noexcept
+        {
+            return NullObjectRef<DimensionedField<Type, GeoMesh>>();
+        }
 
 
     // Constructors
@@ -440,8 +447,19 @@ public:
             const dimensioned<Type>& dt
         );
 
-        //- Return renamed tmp field (NO_READ, NO_WRITE).
-        //- [Takes current timeName from the mesh registry].
+        //- Return renamed tmp field (NO_READ, NO_WRITE)
+        //- retaining its instance/local.
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<DimensionedField<Type, GeoMesh>> New
+        (
+            const word& newName,
+            IOobjectOption::registerOption regOpt,
+            const tmp<DimensionedField<Type, GeoMesh>>& tfld
+        );
+
+        //- Return renamed tmp field (NO_READ, NO_WRITE)
+        //- retaining its instance/local.
         //  Registration/persistence determined by
         //  objectRegistry::is_cacheTemporaryObject().
         static tmp<DimensionedField<Type, GeoMesh>> New
@@ -566,8 +584,8 @@ public:
         bool writeData(Ostream& os, const word& fieldDictEntry) const;
 
         //- The writeData function (required by regIOobject),
-        //- call writeData with dictionary entry name = "value"
-        bool writeData(Ostream& os) const;
+        //- calls writeData with dictionary entry name = "value"
+        bool writeData(Ostream& os) const { return writeData(os, "value"); }
 
 
     // Member Operators
@@ -599,12 +617,14 @@ public:
 
     // Ostream Operators
 
+        //- Calls DimensionedField::writeData()
         friend Ostream& operator<< <Type, GeoMesh>
         (
             Ostream& os,
             const DimensionedField<Type, GeoMesh>& df
         );
 
+        //- Calls DimensionedField::writeData()
         friend Ostream& operator<< <Type, GeoMesh>
         (
             Ostream& os,

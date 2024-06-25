@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,9 +38,6 @@ Foam::pointFieldDecomposer::decomposeField
     const GeometricField<Type, pointPatchField, pointMesh>& field
 ) const
 {
-    // Create and map the internal field values
-    Field<Type> internalField(field.primitiveField(), pointAddressing_);
-
     // Create a list of pointers for the patchFields
     PtrList<pointPatchField<Type>> patchFields(boundaryAddressing_.size());
 
@@ -56,7 +53,7 @@ Foam::pointFieldDecomposer::decomposeField
                 (
                     field.boundaryField()[boundaryAddressing_[patchi]],
                     procMesh_.boundary()[patchi],
-                    DimensionedField<Type, pointMesh>::null(),
+                    pointPatchField<Type>::Internal::null(),
                     patchFieldDecomposerPtrs_[patchi]
                 )
             );
@@ -69,30 +66,24 @@ Foam::pointFieldDecomposer::decomposeField
                 new processorPointPatchField<Type>
                 (
                     procMesh_.boundary()[patchi],
-                    DimensionedField<Type, pointMesh>::null()
+                    pointPatchField<Type>::Internal::null()
                 )
             );
         }
     }
 
     // Create the field for the processor
-    return
-        tmp<GeometricField<Type, pointPatchField, pointMesh>>::New
-        (
-            IOobject
-            (
-                field.name(),
-                procMesh_.thisDb().time().timeName(),
-                procMesh_.thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            procMesh_,
-            field.dimensions(),
-            internalField,
-            patchFields
-        );
+    return GeometricField<Type, pointPatchField, pointMesh>::New
+    (
+        field.name(),
+        IOobject::NO_REGISTER,
+        procMesh_,
+        field.dimensions(),
+        // Internal field - mapped values
+        Field<Type>(field.primitiveField(), pointAddressing_),
+        // Boundary field
+        patchFields
+    );
 }
 
 

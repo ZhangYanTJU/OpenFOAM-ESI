@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,8 +44,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef GTSsurfaceFormat_H
-#define GTSsurfaceFormat_H
+#ifndef Foam_GTSsurfaceFormat_H
+#define Foam_GTSsurfaceFormat_H
 
 #include "MeshedSurface.H"
 #include "MeshedSurfaceProxy.H"
@@ -79,7 +79,7 @@ public:
     // Constructors
 
         //- Construct from file name
-        GTSsurfaceFormat(const fileName& filename);
+        explicit GTSsurfaceFormat(const fileName& filename);
 
 
     //- Destructor
@@ -110,7 +110,7 @@ public:
     // Member Functions
 
         //- Read from file
-        virtual bool read(const fileName& filename);
+        virtual bool read(const fileName& filename) override;
 
         //- Write surface mesh to file
         virtual void write
@@ -118,7 +118,19 @@ public:
             const fileName& name,
             IOstreamOption streamOpt = IOstreamOption(),
             const dictionary& options = dictionary::null
-        ) const
+        ) const override
+        {
+            write(name, *this, streamOpt, options);
+        }
+
+        //- Write surface mesh to file
+        virtual void write
+        (
+            const fileName& name,
+            const word& fileType,  /* ignored */
+            IOstreamOption streamOpt = IOstreamOption(),
+            const dictionary& options = dictionary::null
+        ) const override
         {
             write(name, *this, streamOpt, options);
         }

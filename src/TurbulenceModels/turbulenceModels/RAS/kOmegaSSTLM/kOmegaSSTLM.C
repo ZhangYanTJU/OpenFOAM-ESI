@@ -95,11 +95,11 @@ tmp<volScalarField::Internal> kOmegaSSTLM<BasicTurbulenceModel>::Fthetat
     const volScalarField::Internal ReOmega(sqr(y)*omega/nu);
     const volScalarField::Internal Fwake(exp(-sqr(ReOmega/1e5)));
 
-    return tmp<volScalarField::Internal>
+    return volScalarField::Internal::New
     (
-        new volScalarField::Internal
+        IOobject::groupName("Fthetat", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         (
-            IOobject::groupName("Fthetat", this->alphaRhoPhi_.group()),
             min
             (
                 max
@@ -118,21 +118,14 @@ template<class BasicTurbulenceModel>
 tmp<volScalarField::Internal>
 kOmegaSSTLM<BasicTurbulenceModel>::ReThetac() const
 {
-    tmp<volScalarField::Internal> tReThetac
+    auto tReThetac = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                IOobject::groupName("ReThetac", this->alphaRhoPhi_.group()),
-                this->runTime_.timeName(),
-                this->mesh_
-            ),
-            this->mesh_,
-            dimless
-        )
+        IOobject::groupName("ReThetac", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimless
     );
-    volScalarField::Internal& ReThetac = tReThetac.ref();
+    auto& ReThetac = tReThetac.ref();
 
     forAll(ReThetac, celli)
     {
@@ -161,21 +154,14 @@ tmp<volScalarField::Internal> kOmegaSSTLM<BasicTurbulenceModel>::Flength
     const volScalarField::Internal& nu
 ) const
 {
-    tmp<volScalarField::Internal> tFlength
+    auto tFlength = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                IOobject::groupName("Flength", this->alphaRhoPhi_.group()),
-                this->runTime_.timeName(),
-                this->mesh_
-            ),
-            this->mesh_,
-            dimless
-        )
+        IOobject::groupName("Flength", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimless
     );
-    volScalarField::Internal& Flength = tFlength.ref();
+    auto& Flength = tFlength.ref();
 
     const volScalarField::Internal& omega = this->omega_();
     const volScalarField::Internal& y = this->y_();
@@ -226,21 +212,14 @@ tmp<volScalarField::Internal> kOmegaSSTLM<BasicTurbulenceModel>::ReThetat0
     const volScalarField::Internal& nu
 ) const
 {
-    tmp<volScalarField::Internal> tReThetat0
+    auto tReThetat0 = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                IOobject::groupName("ReThetat0", this->alphaRhoPhi_.group()),
-                this->runTime_.timeName(),
-                this->mesh_
-            ),
-            this->mesh_,
-            dimless
-        )
+        IOobject::groupName("ReThetat0", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimless
     );
-    volScalarField::Internal& ReThetat0 = tReThetat0.ref();
+    auto& ReThetat0 = tReThetat0.ref();
 
     const volScalarField& k = this->k_;
 
@@ -349,13 +328,11 @@ tmp<volScalarField::Internal> kOmegaSSTLM<BasicTurbulenceModel>::Fonset
 
     const volScalarField::Internal Fonset3(max(1 - pow3(RT/2.5), scalar(0)));
 
-    return tmp<volScalarField::Internal>
+    return volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject::groupName("Fonset", this->alphaRhoPhi_.group()),
-            max(Fonset2 - Fonset3, scalar(0))
-        )
+        IOobject::groupName("Fonset", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
+        max(Fonset2 - Fonset3, scalar(0))
     );
 }
 
@@ -459,7 +436,8 @@ kOmegaSSTLM<BasicTurbulenceModel>::kOmegaSSTLM
             this->runTime_.timeName(),
             this->mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         this->mesh_
     ),
@@ -472,7 +450,8 @@ kOmegaSSTLM<BasicTurbulenceModel>::kOmegaSSTLM
             this->runTime_.timeName(),
             this->mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         this->mesh_
     ),

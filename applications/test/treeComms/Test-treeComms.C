@@ -51,7 +51,7 @@ void printConnection(Ostream& os, const label proci, const labelUList& below)
 // The number of receives - as per gatherList (v2112)
 void printRecvCount_gatherList
 (
-    const List<UPstream::commsStruct>& comms,
+    const UList<UPstream::commsStruct>& comms,
     const label comm = UPstream::worldComm
 )
 {
@@ -91,7 +91,7 @@ void printRecvCount_gatherList
 // The number of sends - as per scatterList (v2112)
 void printSendCount_scatterList
 (
-    const List<UPstream::commsStruct>& comms,
+    const UList<UPstream::commsStruct>& comms,
     const label comm = UPstream::worldComm
 )
 {
@@ -131,7 +131,7 @@ void printSendCount_scatterList
 // Transmission widths (contiguous data)
 void printWidths
 (
-    const List<UPstream::commsStruct>& comms,
+    const UList<UPstream::commsStruct>& comms,
     const label comm = UPstream::worldComm
 )
 {
@@ -206,8 +206,8 @@ int main(int argc, char *argv[])
 
         for (const int proci : UPstream::subProcs())
         {
-            IPstream fromProc(UPstream::commsTypes::scheduled, proci);
-            labelList below(fromProc);
+            labelList below;
+            IPstream::recv(below, proci);
 
             printConnection(os, proci, below);
         }
@@ -222,13 +222,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        OPstream toMaster
-        (
-             Pstream::commsTypes::scheduled,
-             Pstream::masterNo()
-        );
-
-        toMaster << myComm.below();
+        OPstream::send(myComm.below(), UPstream::masterNo());
         // Pout<< flatOutput(myComm.allBelow()) << nl;
     }
 

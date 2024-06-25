@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,20 +85,26 @@ public:
         GlobalIOList(const IOobject& io, List<Type>&& content);
 
 
+    // Factory Methods
+
+        //- Read and return contents. The IOobject is never registered
+        static List<Type> readContents(const IOobject& io);
+
+
     //- Destructor
     virtual ~GlobalIOList() = default;
 
 
     // Member Functions
 
-        //- Is object global
+        //- This object is global
         virtual bool global() const
         {
             return true;
         }
 
         //- Return complete path + object name if the file exists
-        //  either in the case/processor or case otherwise null
+        //- either in the case/processor or case otherwise null
         virtual fileName filePath() const
         {
             return globalFilePath(type());

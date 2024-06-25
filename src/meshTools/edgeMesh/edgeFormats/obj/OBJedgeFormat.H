@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OBJedgeFormat_H
-#define OBJedgeFormat_H
+#ifndef Foam_OBJedgeFormat_H
+#define Foam_OBJedgeFormat_H
 
 #include "edgeMesh.H"
 #include "Fstream.H"
@@ -59,21 +59,12 @@ class OBJedgeFormat
 :
     public edgeMesh
 {
-    // Private Member Functions
-
-        //- No copy construct
-        OBJedgeFormat(const OBJedgeFormat&) = delete;
-
-        //- No copy assignment
-        void operator=(const OBJedgeFormat&) = delete;
-
-
 public:
 
     // Constructors
 
         //- Construct from file name
-        OBJedgeFormat(const fileName&);
+        explicit OBJedgeFormat(const fileName& filename);
 
 
     // Selectors
@@ -89,9 +80,9 @@ public:
     virtual ~OBJedgeFormat() = default;
 
 
-    // Member Functions
+    // Static Functions
 
-        //- Write edge mesh to file
+        //- Write edge mesh to file in OBJ format
         static void write
         (
             const fileName& filename,
@@ -104,7 +95,7 @@ public:
     // Member Functions
 
         //- Read from file
-        virtual bool read(const fileName& name);
+        virtual bool read(const fileName& filename) override;
 
         //- Write to file
         virtual void write
@@ -112,7 +103,19 @@ public:
             const fileName& name,
             IOstreamOption streamOpt = IOstreamOption(),
             const dictionary& options = dictionary::null
-        ) const
+        ) const override
+        {
+            write(name, *this, streamOpt, options);
+        }
+
+        //- Write to file
+        virtual void write
+        (
+            const fileName& name,
+            const word& fileType,  /* ignored */
+            IOstreamOption streamOpt = IOstreamOption(),
+            const dictionary& options = dictionary::null
+        ) const override
         {
             write(name, *this, streamOpt, options);
         }

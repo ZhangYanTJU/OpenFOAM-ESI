@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +28,25 @@ Class
     Foam::calculatedFvsPatchField
 
 Description
-    Foam::calculatedFvsPatchField
+    This boundary condition is not designed to be evaluated; it is assumed
+    that the value is assigned via field assignment.
+
+    The "value" entry is MUST_READ.
+
+Usage
+    \table
+        Property     | Description             | Required  | Default
+        value        | Patch face values       | yes |
+    \endtable
+
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type    calculated;
+        value   uniform (0 0 0);    // Required value entry
+    }
+    \endverbatim
 
 SourceFiles
     calculatedFvsPatchField.C
@@ -69,6 +88,7 @@ public:
         );
 
         //- Construct from patch, internal field and dictionary
+        //- The "value" entry is MUST_READ.
         calculatedFvsPatchField
         (
             const fvPatch&,
@@ -91,15 +111,6 @@ public:
             const calculatedFvsPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const
-        {
-            return tmp<fvsPatchField<Type>>
-            (
-                new calculatedFvsPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         calculatedFvsPatchField
         (
@@ -107,16 +118,19 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const
+        {
+            return fvsPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
         ) const
         {
-            return tmp<fvsPatchField<Type>>
-            (
-                new calculatedFvsPatchField<Type>(*this, iF)
-            );
+            return fvsPatchField<Type>::Clone(*this, iF);
         }
 
 
@@ -124,6 +138,9 @@ public:
 
         //- True: this patch field fixes a value.
         virtual bool fixesValue() const { return true; }
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 };
 
 

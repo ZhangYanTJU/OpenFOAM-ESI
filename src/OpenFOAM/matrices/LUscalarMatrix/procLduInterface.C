@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -69,27 +70,47 @@ Foam::procLduInterface::procLduInterface
 
 
 Foam::procLduInterface::procLduInterface(Istream& is)
-:
-    faceCells_(is),
-    coeffs_(is),
-    myProcNo_(readLabel(is)),
-    neighbProcNo_(readLabel(is)),
-    tag_(readLabel(is)),
-    comm_(readLabel(is))
-{}
+{
+    read(is);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::procLduInterface::read(Istream& is)
+{
+    is  >> faceCells_
+        >> coeffs_
+        >> myProcNo_
+        >> neighbProcNo_
+        >> tag_
+        >> comm_;
+}
+
+
+void Foam::procLduInterface::write(Ostream& os) const
+{
+    os  << faceCells_
+        << coeffs_
+        << myProcNo_
+        << neighbProcNo_
+        << tag_
+        << comm_;
+}
 
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
-Foam::Ostream& Foam::operator<<(Ostream& os, const procLduInterface& cldui)
+Foam::Istream& Foam::operator>>(Istream& is, procLduInterface& intf)
 {
-    os  << cldui.faceCells_
-        << cldui.coeffs_
-        << cldui.myProcNo_
-        << cldui.neighbProcNo_
-        << cldui.tag_
-        << cldui.comm_;
+    intf.read(is);
+    return is;
+}
 
+
+Foam::Ostream& Foam::operator<<(Ostream& os, const procLduInterface& intf)
+{
+    intf.write(os);
     return os;
 }
 

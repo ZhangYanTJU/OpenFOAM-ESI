@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,26 +44,17 @@ Foam::fvFieldDecomposer::decomposeField
     const DimensionedField<Type, volMesh>& field
 ) const
 {
-    // Create and map the internal field values
-    Field<Type> mappedField(field, cellAddressing_);
-
     // Create the field for the processor
-    return
-        tmp<DimensionedField<Type, volMesh>>::New
-        (
-            IOobject
-            (
-                field.name(),
-                procMesh_.thisDb().time().timeName(),
-                procMesh_.thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            procMesh_,
-            field.dimensions(),
-            std::move(mappedField)
-        );
+
+    return DimensionedField<Type, volMesh>::New
+    (
+        field.name(),
+        IOobject::NO_REGISTER,
+        procMesh_,
+        field.dimensions(),
+        // Internal field - mapped values
+        Field<Type>(field.field(), cellAddressing_)
+    );
 }
 
 
@@ -75,52 +66,26 @@ Foam::fvFieldDecomposer::decomposeField
     const bool allowUnknownPatchFields
 ) const
 {
-    typedef GeometricField<Type, fvPatchField, volMesh> VolFieldType;
-
-    // 1. Create the complete field with dummy patch fields
-    PtrList<fvPatchField<Type>> patchFields(boundaryAddressing_.size());
-
-    forAll(boundaryAddressing_, patchi)
-    {
-        patchFields.set
-        (
-            patchi,
-            fvPatchField<Type>::New
-            (
-                fvPatchFieldBase::calculatedType(),
-                procMesh_.boundary()[patchi],
-                DimensionedField<Type, volMesh>::null()
-            )
-        );
-    }
-
     // Create the field for the processor
-    tmp<VolFieldType> tresF
+    // - with dummy patch fields
+    auto tresult = GeometricField<Type, fvPatchField, volMesh>::New
     (
-        new VolFieldType
-        (
-            IOobject
-            (
-                field.name(),
-                procMesh_.thisDb().time().timeName(),
-                procMesh_.thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            procMesh_,
-            field.dimensions(),
-            Field<Type>(field.primitiveField(), cellAddressing_),
-            patchFields
-        )
+        field.name(),
+        IOobject::NO_REGISTER,
+        procMesh_,
+        field.dimensions(),
+        // Internal field - mapped values
+        Field<Type>(field.primitiveField(), cellAddressing_),
+        fvPatchFieldBase::calculatedType()
     );
-    VolFieldType& resF = tresF.ref();
-    resF.oriented() = field().oriented();
+    auto& result = tresult.ref();
+    result.oriented() = field.oriented();
 
 
     // 2. Change the fvPatchFields to the correct type using a mapper
     //  constructor (with reference to the now correct internal field)
 
-    auto& bf = resF.boundaryFieldRef();
+    auto& bf = result.boundaryFieldRef();
 
     forAll(bf, patchi)
     {
@@ -133,7 +98,7 @@ Foam::fvFieldDecomposer::decomposeField
                 (
                     field.boundaryField()[boundaryAddressing_[patchi]],
                     procMesh_.boundary()[patchi],
-                    resF(),
+                    result.internalField(),
                     patchFieldDecomposerPtrs_[patchi]
                 )
             );
@@ -146,7 +111,7 @@ Foam::fvFieldDecomposer::decomposeField
                 new processorCyclicFvPatchField<Type>
                 (
                     procMesh_.boundary()[patchi],
-                    resF(),
+                    result.internalField(),
                     Field<Type>
                     (
                         field.primitiveField(),
@@ -163,7 +128,7 @@ Foam::fvFieldDecomposer::decomposeField
                 new processorFvPatchField<Type>
                 (
                     procMesh_.boundary()[patchi],
-                    resF(),
+                    result.internalField(),
                     Field<Type>
                     (
                         field.primitiveField(),
@@ -180,7 +145,7 @@ Foam::fvFieldDecomposer::decomposeField
                 new emptyFvPatchField<Type>
                 (
                     procMesh_.boundary()[patchi],
-                    resF()
+                    result.internalField()
                 )
             );
         }
@@ -192,7 +157,7 @@ Foam::fvFieldDecomposer::decomposeField
     }
 
     // Create the field for the processor
-    return tresF;
+    return tresult;
 }
 
 
@@ -203,27 +168,15 @@ Foam::fvFieldDecomposer::decomposeField
     const GeometricField<Type, fvsPatchField, surfaceMesh>& field
 ) const
 {
-    typedef GeometricField<Type, fvsPatchField, surfaceMesh> SurfaceFieldType;
-
     labelList mapAddr
     (
-        labelList::subList
-        (
-            faceAddressing_,
-            procMesh_.nInternalFaces()
-        )
+        labelList::subList(faceAddressing_, procMesh_.nInternalFaces())
     );
     forAll(mapAddr, i)
     {
         mapAddr[i] -= 1;
     }
 
-    // Create and map the internal field values
-    Field<Type> internalField
-    (
-        field.primitiveField(),
-        mapAddr
-    );
 
     // Problem with addressing when a processor patch picks up both internal
     // faces and faces from cyclic boundaries. This is a bit of a hack, but
@@ -232,66 +185,40 @@ Foam::fvFieldDecomposer::decomposeField
     // (i.e. using slices)
     Field<Type> allFaceField(field.mesh().nFaces());
 
-    forAll(field.primitiveField(), i)
     {
-        allFaceField[i] = field.primitiveField()[i];
-    }
+        SubList<Type>(allFaceField, field.primitiveField().size()) =
+            field.primitiveField();
 
-    forAll(field.boundaryField(), patchi)
-    {
-        const Field<Type>& p = field.boundaryField()[patchi];
-
-        const label patchStart = field.mesh().boundaryMesh()[patchi].start();
-
-        forAll(p, i)
+        forAll(field.boundaryField(), patchi)
         {
-            allFaceField[patchStart + i] = p[i];
+            const Field<Type>& pfld = field.boundaryField()[patchi];
+
+            const label start = field.mesh().boundaryMesh()[patchi].start();
+
+            SubList<Type>(allFaceField, pfld.size(), start) = pfld;
         }
     }
 
 
     // 1. Create the complete field with dummy patch fields
-    PtrList<fvsPatchField<Type>> patchFields(boundaryAddressing_.size());
 
-    forAll(boundaryAddressing_, patchi)
-    {
-        patchFields.set
-        (
-            patchi,
-            fvsPatchField<Type>::New
-            (
-                fvsPatchFieldBase::calculatedType(),
-                procMesh_.boundary()[patchi],
-                DimensionedField<Type, surfaceMesh>::null()
-            )
-        );
-    }
-
-    tmp<SurfaceFieldType> tresF
+    auto tresult = GeometricField<Type, fvsPatchField, surfaceMesh>::New
     (
-        new SurfaceFieldType
-        (
-            IOobject
-            (
-                field.name(),
-                procMesh_.thisDb().time().timeName(),
-                procMesh_.thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            procMesh_,
-            field.dimensions(),
-            Field<Type>(field.primitiveField(), mapAddr),
-            patchFields
-        )
+        field.name(),
+        IOobject::NO_REGISTER,
+        procMesh_,
+        field.dimensions(),
+        // Internal field - mapped values
+        Field<Type>(field.primitiveField(), mapAddr),
+        fvsPatchFieldBase::calculatedType()
     );
-    SurfaceFieldType& resF = tresF.ref();
-    resF.oriented() = field().oriented();
+    auto& result = tresult.ref();
+    result.oriented() = field.oriented();
 
     // 2. Change the fvsPatchFields to the correct type using a mapper
     //  constructor (with reference to the now correct internal field)
 
-    auto& bf = resF.boundaryFieldRef();
+    auto& bf = result.boundaryFieldRef();
 
     forAll(boundaryAddressing_, patchi)
     {
@@ -304,7 +231,7 @@ Foam::fvFieldDecomposer::decomposeField
                 (
                     field.boundaryField()[boundaryAddressing_[patchi]],
                     procMesh_.boundary()[patchi],
-                    resF(),
+                    result.internalField(),
                     patchFieldDecomposerPtrs_[patchi]
                 )
             );
@@ -317,7 +244,7 @@ Foam::fvFieldDecomposer::decomposeField
                 new processorCyclicFvsPatchField<Type>
                 (
                     procMesh_.boundary()[patchi],
-                    resF(),
+                    result.internalField(),
                     Field<Type>
                     (
                         allFaceField,
@@ -326,7 +253,7 @@ Foam::fvFieldDecomposer::decomposeField
                 )
             );
 
-            if (resF.is_oriented())
+            if (result.is_oriented())
             {
                 bf[patchi] *= faceSign_[patchi];
             }
@@ -339,7 +266,7 @@ Foam::fvFieldDecomposer::decomposeField
                 new processorFvsPatchField<Type>
                 (
                     procMesh_.boundary()[patchi],
-                    resF(),
+                    result.internalField(),
                     Field<Type>
                     (
                         allFaceField,
@@ -348,7 +275,7 @@ Foam::fvFieldDecomposer::decomposeField
                 )
             );
 
-            if (resF.is_oriented())
+            if (result.is_oriented())
             {
                 bf[patchi] *= faceSign_[patchi];
             }
@@ -361,7 +288,7 @@ Foam::fvFieldDecomposer::decomposeField
     }
 
     // Create the field for the processor
-    return tresF;
+    return tresult;
 }
 
 

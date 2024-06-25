@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
     argList args(argc, argv);
     Time runTime(args.rootPath(), args.caseName());
 
-    // Increase the precision of the points data
-    IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    IOstream::minPrecision(10);
 
     const fileName geomFile(args.get<fileName>(1));
 

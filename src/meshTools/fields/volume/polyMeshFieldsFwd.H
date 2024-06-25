@@ -42,12 +42,25 @@ template<class Type, class GeoMesh> class DimensionedField;
 
 class polyGeoMesh;
 
-typedef DimensionedField<scalar, polyGeoMesh> polyMeshScalarField;
-typedef DimensionedField<vector, polyGeoMesh> polyMeshVectorField;
-typedef DimensionedField<sphericalTensor, polyGeoMesh>
+typedef
+    DimensionedField<scalar, polyGeoMesh>
+    polyMeshScalarField;
+
+typedef
+    DimensionedField<vector, polyGeoMesh>
+    polyMeshVectorField;
+
+typedef
+    DimensionedField<sphericalTensor, polyGeoMesh>
     polyMeshSphericalTensorField;
-typedef DimensionedField<symmTensor, polyGeoMesh> polyMeshSymmTensorField;
-typedef DimensionedField<tensor, polyGeoMesh> polyMeshTensorField;
+
+typedef
+    DimensionedField<symmTensor, polyGeoMesh>
+    polyMeshSymmTensorField;
+
+typedef
+    DimensionedField<tensor, polyGeoMesh>
+    polyMeshTensorField;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

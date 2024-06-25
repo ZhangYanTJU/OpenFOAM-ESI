@@ -33,6 +33,8 @@ Description
     This boundary condition enforces a cyclic condition between a pair of
     boundaries, incorporating a non-uniform transformation.
 
+    The "value" entry is NO_READ.
+
 SourceFiles
     nonuniformTransformCyclicFvPatchField.C
     nonuniformTransformCyclicFvPatchFields.H
@@ -41,8 +43,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef nonuniformTransformCyclicFvPatchField_H
-#define nonuniformTransformCyclicFvPatchField_H
+#ifndef Foam_nonuniformTransformCyclicFvPatchField_H
+#define Foam_nonuniformTransformCyclicFvPatchField_H
 
 #include "cyclicFvPatchField.H"
 #include "nonuniformTransformCyclicFvPatch.H"
@@ -61,8 +63,6 @@ class nonuniformTransformCyclicFvPatchField
 :
     public cyclicFvPatchField<Type>
 {
-    // Private data
-
 public:
 
     //- Runtime type information
@@ -78,7 +78,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         nonuniformTransformCyclicFvPatchField
         (
             const fvPatch&,
@@ -102,15 +103,6 @@ public:
             const nonuniformTransformCyclicFvPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new nonuniformTransformCyclicFvPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         nonuniformTransformCyclicFvPatchField
         (
@@ -118,18 +110,20 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return fvPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>
-            (
-                new nonuniformTransformCyclicFvPatchField<Type>(*this, iF)
-            );
+            return fvPatchField<Type>::Clone(*this, iF);
         }
-
 };
 
 

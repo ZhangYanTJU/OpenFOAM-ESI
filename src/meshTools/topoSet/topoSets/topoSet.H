@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,6 +70,15 @@ protected:
 
     // Protected Member Functions
 
+        //- Read into labelHashSet if IOobject flags set. Return true if read.
+        bool readIOcontents(const word& wantedType, labelHashSet& contents);
+
+        //- Check limits on addressable range.
+        void checkLabels(const labelUList& labels, const label maxSize);
+
+        //- Check limits on addressable range.
+        void checkLabels(const labelHashSet& labels, const label maxSize);
+
         //- Update map from map.
         //  Used to update cell/face labels after morphing
         virtual void updateLabels(const labelUList& map);
@@ -77,24 +86,25 @@ protected:
         //- Check limits on addressable range.
         virtual void check(const label maxSize);
 
-        //- Write part of contents nicely formatted. Prints labels only.
-        void writeDebug
+        //- Write part of contents nicely formatted.
+        //  Prints labels only.
+        //  \returns number of labels written
+        label writeDebug
         (
             Ostream& os,
             const label maxElem,
-            topoSet::const_iterator& iter,
-            label& elemI
+            labelHashSet::const_iterator& iter
         ) const;
 
-        //- Write part of contents nicely formatted. Prints label
-        //  and corresponding coordinate.
-        void writeDebug
+        //- Write part of contents nicely formatted.
+        //  Prints label and corresponding coordinate.
+        //  \returns number of labels written
+        label writeDebug
         (
             Ostream& os,
             const pointField& coords,
             const label maxElem,
-            topoSet::const_iterator& iter,
-            label& elemI
+            labelHashSet::const_iterator& iter
         ) const;
 
         //- Write labels and coordinates columnwise to os. Truncate to maxLen.
@@ -123,22 +133,37 @@ public:
         //- Name of file set will use.
         static fileName localPath(const polyMesh& mesh, const word& name);
 
-        //- Find IOobject in the polyMesh/sets (used as constructor helper)
+        //- Find IOobject in the polyMesh/sets/ (used as constructor helper)
         static IOobject findIOobject
         (
             const polyMesh& mesh,
             const word& name,
             IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
-            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            IOobjectOption::registerOption reg = IOobjectOption::LEGACY_REGISTER
         );
 
-        //- Find IOobject in the polyMesh/sets (used as constructor helper)
+        //- Find IOobject in the polyMesh/sets/ (used as constructor helper)
+        static IOobject findIOobject
+        (
+            const polyMesh& mesh,
+            const word& name,
+            IOobjectOption::registerOption reg,
+            IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+        )
+        {
+            return findIOobject(mesh, name, rOpt, wOpt, reg);
+        }
+
+        //- Find IOobject in the polyMesh/sets/ (used as constructor helper)
         static IOobject findIOobject
         (
             const Time& runTime,
             const word& name,
             IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
-            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            IOobjectOption::registerOption reg = IOobjectOption::LEGACY_REGISTER
         );
 
 
@@ -196,6 +221,21 @@ public:
         //  Can't use typeName info here since subclasses not yet instantiated
         topoSet(const IOobject& io, const word& wantedType);
 
+        //- Construct empty (no-read) with IOobject information
+        topoSet(const IOobject& io, const Foam::zero);
+
+        //- Construct empty (no-read) with initial labelHashSet capacity,
+        //- with IOobject information
+        topoSet(const IOobject& io, const label initialCapacity);
+
+        //- Copy construct (no-read) from labelHashSet,
+        //- with IOobject information.
+        topoSet(const IOobject& io, const labelHashSet& labels);
+
+        //- Move construct (no-read) from labelHashSet,
+        //- with IOobject information.
+        topoSet(const IOobject& io, labelHashSet&& labels);
+
         //- Construct from polyMesh and name.
         //  Searches for a polyMesh/sets directory but not beyond the
         //  mesh.facesInstance().
@@ -205,21 +245,23 @@ public:
             const word& wantedType,
             const word& name,
             IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
-            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            IOobjectOption::registerOption reg = IOobjectOption::LEGACY_REGISTER
         );
 
-        //- Construct empty from additional size of labelHashSet.
+        //- Construct empty (no-read) with initial labelHashSet capacity.
         //  Searches for a polyMesh/sets directory but not beyond the
         //  mesh.facesInstance().
         topoSet
         (
             const polyMesh& mesh,
             const word& name,
-            const label size,
-            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+            const label initialCapacity,
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            IOobjectOption::registerOption reg = IOobjectOption::LEGACY_REGISTER
         );
 
-        //- Construct (no-read) with copy of labelHashSet
+        //- Copy construct (no-read) from labelHashSet.
         //  Searches for a polyMesh/sets directory but not beyond the
         //  mesh.facesInstance().
         topoSet
@@ -227,10 +269,11 @@ public:
             const polyMesh& mesh,
             const word& name,
             const labelHashSet& labels,
-            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            IOobjectOption::registerOption reg = IOobjectOption::LEGACY_REGISTER
         );
 
-        //- Construct (no-read) with moving labelHashSet
+        //- Move construct (no-read) from labelHashSet.
         //  Searches for a polyMesh/sets directory but not beyond the
         //  mesh.facesInstance().
         topoSet
@@ -238,10 +281,11 @@ public:
             const polyMesh& mesh,
             const word& name,
             labelHashSet&& labels,
-            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            IOobjectOption::registerOption reg = IOobjectOption::LEGACY_REGISTER
         );
 
-        //- Construct (no-read) with copy of labels
+        //- Copy construct (no-read) from list of labels.
         //  Searches for a polyMesh/sets directory but not beyond the
         //  mesh.facesInstance().
         topoSet
@@ -249,17 +293,9 @@ public:
             const polyMesh& mesh,
             const word& name,
             const labelUList& labels,
-            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            IOobjectOption::registerOption reg = IOobjectOption::LEGACY_REGISTER
         );
-
-        //- Construct empty from IOobject and HashSet size.
-        topoSet(const IOobject& io, const label size);
-
-        //- Construct from IOobject and copy of labelHashSet.
-        topoSet(const IOobject& io, const labelHashSet& labels);
-
-        //- Construct from IOobject and move labelHashSet.
-        topoSet(const IOobject& io, labelHashSet&& labels);
 
 
         //- Clone
@@ -310,6 +346,9 @@ public:
     // Member Functions
 
         //- Has the given index?
+        virtual bool contains(const label id) const;
+
+        //- Has the given index?
         virtual bool found(const label id) const;
 
         //- Set an index
@@ -329,13 +368,23 @@ public:
         virtual void invert(const label maxLen);
 
         //- Subset contents. Only elements present in both sets remain.
+        virtual void subset(const labelUList& elems);
+
+        //- Subset contents. Only elements present in both sets remain.
         virtual void subset(const topoSet& set);
 
-        //- Add elements present in set.
+        //- Add given elements to the set
+        virtual void addSet(const labelUList& elems);
+
+        //- Add given elements to the set
         virtual void addSet(const topoSet& set);
 
-        //- Subtract elements present in set.
+        //- Subtract given elements from the set
+        virtual void subtractSet(const labelUList& elems);
+
+        //- Subtract given elements from the set
         virtual void subtractSet(const topoSet& set);
+
 
         //- Sync set across coupled patches.
         virtual void sync(const polyMesh& mesh);
@@ -364,19 +413,23 @@ public:
         //- Return max allowable index (+1). Not implemented.
         virtual label maxSize(const polyMesh& mesh) const = 0;
 
-        //- Helper: call updateMesh on all sets in container (and
-        //  updates instance)
+        //- Helper: call updateMesh on all items in container
+        //- (and updates instance)
         template<class Container>
         static void updateMesh
         (
             const fileName& instance,
             const mapPolyMesh&,
-            Container&
+            Container& items
         );
 
-        //- Helper: set instance on all sets in container
+        //- Helper: set instance on all items in container
         template<class Container>
-        static void setInstance(const fileName& instance, Container&);
+        static void setInstance
+        (
+            const fileName& instance,
+            Container& items
+        );
 
         //- Helper: remove all sets files from mesh instance
         static void removeFiles(const polyMesh&);
@@ -392,7 +445,8 @@ public:
 
         //- Deprecated(2018-10) subtract elements present in set.
         //  \deprecated(2018-10) - use subtractSet instead
-        virtual void deleteSet(const topoSet& set);
+        FOAM_DEPRECATED_FOR(2018-10, "subtractSet()")
+        virtual void deleteSet(const topoSet& set) { this->subtractSet(set); }
 };
 
 

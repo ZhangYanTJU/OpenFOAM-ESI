@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -72,7 +72,7 @@ fields
 //      midPoint            one point per cell, inbetween two face intersections
 //      midPointAndFace     combination of face and midPoint
 //
-//      polyLine            specified points, not nessecary on line, uses
+//      polyLine            specified points, not necessary on line, uses
 //                          tracking
 //      cloud               specified points, uses findCell
 //      triSurfaceMeshPointSet  points of triSurface

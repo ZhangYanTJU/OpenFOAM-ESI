@@ -68,7 +68,8 @@ Foam::topoSetSource::addToUsageTable Foam::cylinderToFace::usage_
 
 void Foam::cylinderToFace::combine(topoSet& set, const bool add) const
 {
-    const pointField& ctrs = mesh_.faceCentres();
+    const tmp<pointField> tctrs(this->transform(mesh_.faceCentres()));
+    const pointField& ctrs = tctrs();
 
     const vector axis = (point2_ - point1_);
     const scalar magAxis2 = magSqr(axis);
@@ -127,12 +128,12 @@ Foam::cylinderToFace::cylinderToFace
     const dictionary& dict
 )
 :
-    cylinderToFace
+    topoSetFaceSource(mesh, dict),
+    point1_(dict.getCompat<point>("point1", {{"p1", -2112}})),
+    point2_(dict.getCompat<point>("point2", {{"p2", -2112}})),
+    radius_(dict.getCompat<scalar>("radius", {{"outerRadius", -2112}})),
+    innerRadius_
     (
-        mesh,
-        dict.getCompat<point>("point1", {{"p1", -2112}}),
-        dict.getCompat<point>("point2", {{"p2", -2112}}),
-        dict.getCompat<scalar>("radius", {{"outerRadius", -2112}}),
         dict.getCheckOrDefault<scalar>("innerRadius", 0, scalarMinMax::ge(0))
     )
 {}

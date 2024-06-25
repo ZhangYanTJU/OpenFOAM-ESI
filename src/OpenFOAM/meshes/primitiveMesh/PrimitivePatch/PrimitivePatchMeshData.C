@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -129,15 +129,9 @@ Foam::PrimitivePatch<FaceList, PointField>::calcMeshPointMap() const
             << abort(FatalError);
     }
 
-    const labelList& mp = meshPoints();
+    const labelList& meshPts = meshPoints();
 
-    meshPointMapPtr_.reset(new Map<label>(2*mp.size()));
-    auto& mpMap = *meshPointMapPtr_;
-
-    forAll(mp, i)
-    {
-        mpMap.insert(mp[i], i);
-    }
+    meshPointMapPtr_.reset(new Map<label>(invertToMap(meshPts)));
 
     DebugInfo << "Calculated mesh point map" << endl;
 }

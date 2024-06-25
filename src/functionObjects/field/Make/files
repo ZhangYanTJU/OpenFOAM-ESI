@@ -120,6 +120,7 @@ fluxSummary/fluxSummary.C
 mapFields/mapFields.C
 reactionSensitivityAnalysis/reactionsSensitivityAnalysisObjects.C
 DESModelRegions/DESModelRegions.C
+cellDecomposer/cellDecomposer.C
 
 externalCoupled/externalCoupled.C
 externalCoupled/externalCoupledMixed/externalCoupledMixedFvPatchFields.C

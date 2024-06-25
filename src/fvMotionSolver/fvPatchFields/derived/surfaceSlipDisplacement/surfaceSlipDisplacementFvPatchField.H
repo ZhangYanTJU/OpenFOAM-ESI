@@ -108,15 +108,6 @@ public:
             slipFvPatchField<Type>(ptf)
         {}
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new surfaceSlipDisplacementFvPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         surfaceSlipDisplacementFvPatchField
         (
@@ -127,17 +118,21 @@ public:
             slipFvPatchField<Type>(ptf, iF)
         {}
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return fvPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>
-            (
-                new surfaceSlipDisplacementFvPatchField<Type>(*this, iF)
-            );
+            return fvPatchField<Type>::Clone(*this, iF);
         }
+
 
         virtual void write(Ostream& os) const
         {

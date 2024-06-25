@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,10 +42,8 @@ SourceFiles
 #ifndef Foam_expressions_exprValue_H
 #define Foam_expressions_exprValue_H
 
-#include "exprTraits.H"
-#include "error.H"
+#include "exprTraits.H"  // For valueTypeCode and label, scalar, vector etc.
 #include "contiguous.H"
-#include "tokenList.H"
 #include "InfoProxy.H"
 #include <typeinfo>
 
@@ -102,12 +100,7 @@ union exprValueUnion
         //  This seems to be the best way to catch programming errors
         //  since static_assert does not help here.
         //  The 'noexcept' is slightly misleading (needed for the caller)
-        static void notSpecialized(const std::string& msg) noexcept
-        {
-            FatalErrorInFunction
-                << "non-specialized: " << msg.c_str() << endl
-                << abort(FatalError);
-        }
+        static void notSpecialized(const std::string& msg) noexcept;
 
         //- Return read pointer to typed union member,
         //- which is nullptr for unspecialized versions
@@ -175,12 +168,7 @@ class exprValue
         //- Copy assignment
         void deepCopy(const exprValue& rhs);
 
-
 public:
-
-    //- Runtime type information
-    ClassName("exprValue");
-
 
     // Constructors
 
@@ -244,7 +232,7 @@ public:
         //- The value type code
         expressions::valueTypeCode typeCode() const noexcept
         {
-           return typeCode_;
+            return typeCode_;
         }
 
         //- True if the value type is not none/invalid
@@ -276,6 +264,9 @@ public:
         //- Guess type and read tokens (if possible)
         //  \return True on success
         bool readTokens(ITstream& is);
+
+        //- Compare (type,value)
+        int compare(const exprValue& rhs) const;
 
 
     // Typed Access
@@ -350,7 +341,7 @@ public:
         //- Compare (type,value) for inequality
         bool operator!=(const exprValue& rhs) const { return !(*this == rhs); }
 
-        //- Compare (type,value) - currently not implemented.
+        //- Compare (type,value)
         bool operator<(const exprValue& rhs) const;
 
 
@@ -359,16 +350,11 @@ public:
         //- Return info proxy for printing information to a stream
         InfoProxy<exprValue> info() const { return *this; }
 
-        //- The exprValue as tokens.
-        //  For none : emits pair of brackets.
-        //  For invalid : emits "bad".
-        //
-        //  \param prune suppress the output for none/invalid
-        tokenList tokens(bool prune = false) const;
-
         //- Write the (type-specific) content.
         //  For none : emits pair of brackets.
         //  For invalid : emits "bad".
+        //
+        //  Use OTstream for the stream to recover as tokens.
         //
         //  \param prune suppress the output for none/invalid
         void write(Ostream& os, bool prune = false) const;

@@ -37,11 +37,9 @@ SourceFiles
 #ifndef faD2dt2Scheme_H
 #define faD2dt2Scheme_H
 
-#include "tmp.H"
 #include "dimensionedType.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -49,6 +47,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 template<class Type>
 class faMatrix;
 
@@ -68,21 +67,12 @@ class faD2dt2Scheme
 :
     public refCount
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
+        //- Reference to mesh
         const faMesh& mesh_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        faD2dt2Scheme(const faD2dt2Scheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const faD2dt2Scheme&) = delete;
 
 
 public:
@@ -101,6 +91,15 @@ public:
             (const faMesh& mesh, Istream& schemeData),
             (mesh, schemeData)
         );
+
+
+    // Generated Methods
+
+        //- No copy construct
+        faD2dt2Scheme(const faD2dt2Scheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const faD2dt2Scheme&) = delete;
 
 
     // Constructors
@@ -135,10 +134,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         virtual tmp<GeometricField<Type, faPatchField, areaMesh>> facD2dt2
         (

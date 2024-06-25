@@ -27,15 +27,18 @@ Class
     Foam::processorCyclicFvsPatchField
 
 Description
-    Foam::processorCyclicFvsPatchField
+    This boundary condition enables processor communication across cyclic
+    patches.
+
+    The "value" entry is MUST_READ.
 
 SourceFiles
     processorCyclicFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef processorCyclicFvsPatchField_H
-#define processorCyclicFvsPatchField_H
+#ifndef Foam_processorCyclicFvsPatchField_H
+#define Foam_processorCyclicFvsPatchField_H
 
 #include "coupledFvsPatchField.H"
 #include "processorCyclicFvPatch.H"
@@ -54,7 +57,7 @@ class processorCyclicFvsPatchField
 :
     public coupledFvsPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the processor patch
         const processorCyclicFvPatch& procPatch_;
@@ -83,7 +86,8 @@ public:
             const Field<Type>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is MUST_READ.
         processorCyclicFvsPatchField
         (
             const fvPatch&,
@@ -91,8 +95,7 @@ public:
             const dictionary&
         );
 
-        //- Construct by mapping given processorCyclicFvsPatchField onto a
-        //  new patch
+        //- Construct by mapping given patch field onto a new patch
         processorCyclicFvsPatchField
         (
             const processorCyclicFvsPatchField<Type>&,
@@ -104,15 +107,6 @@ public:
         //- Construct as copy
         processorCyclicFvsPatchField(const processorCyclicFvsPatchField<Type>&);
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const
-        {
-            return tmp<fvsPatchField<Type>>
-            (
-                new processorCyclicFvsPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         processorCyclicFvsPatchField
         (
@@ -120,29 +114,32 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const
+        {
+            return fvsPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
         ) const
         {
-            return tmp<fvsPatchField<Type>>
-            (
-                new processorCyclicFvsPatchField<Type>(*this, iF)
-            );
+            return fvsPatchField<Type>::Clone(*this, iF);
         }
 
 
     //- Destructor
-    virtual ~processorCyclicFvsPatchField();
+    virtual ~processorCyclicFvsPatchField() = default;
 
 
     // Member Functions
 
-        //- Return true if running parallel
+        //- True if running parallel
         virtual bool coupled() const
         {
-            return Pstream::parRun();
+            return UPstream::parRun();
         }
 };
 

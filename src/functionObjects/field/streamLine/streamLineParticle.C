@@ -394,14 +394,14 @@ void Foam::streamLineParticle::readFields(Cloud<streamLineParticle>& c)
 
     IOField<label> lifeTime
     (
-        c.fieldIOobject("lifeTime", IOobject::MUST_READ),
+        c.newIOobject("lifeTime", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, lifeTime);
 
     vectorFieldIOField sampledPositions
     (
-        c.fieldIOobject("sampledPositions", IOobject::MUST_READ),
+        c.newIOobject("sampledPositions", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, sampledPositions);
@@ -425,12 +425,12 @@ void Foam::streamLineParticle::writeFields(const Cloud<streamLineParticle>& c)
 
     IOField<label> lifeTime
     (
-        c.fieldIOobject("lifeTime", IOobject::NO_READ),
+        c.newIOobject("lifeTime", IOobject::NO_READ),
         np
     );
     vectorFieldIOField sampledPositions
     (
-        c.fieldIOobject("sampledPositions", IOobject::NO_READ),
+        c.newIOobject("sampledPositions", IOobject::NO_READ),
         np
     );
 

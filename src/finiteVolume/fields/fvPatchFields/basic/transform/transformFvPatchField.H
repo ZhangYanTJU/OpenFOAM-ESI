@@ -30,15 +30,16 @@ Group
     grpGenericBoundaryConditions
 
 Description
-    Foam::transformFvPatchField
+    Intermediate layer (not used directly as a user boundary condition).
+    The "value" entry is NO_READ, NO_WRITE.
 
 SourceFiles
     transformFvPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef transformFvPatchField_H
-#define transformFvPatchField_H
+#ifndef Foam_transformFvPatchField_H
+#define Foam_transformFvPatchField_H
 
 #include "fvPatchField.H"
 
@@ -56,7 +57,6 @@ class transformFvPatchField
 :
     public fvPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -72,7 +72,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         transformFvPatchField
         (
             const fvPatch&,
@@ -96,15 +97,15 @@ public:
             const transformFvPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const = 0;
-
         //- Construct as copy setting internal field reference
         transformFvPatchField
         (
             const transformFvPatchField<Type>&,
             const DimensionedField<Type, volMesh>&
         );
+
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const = 0;
 
         //- Construct and return a clone setting internal field reference
         virtual tmp<fvPatchField<Type>> clone

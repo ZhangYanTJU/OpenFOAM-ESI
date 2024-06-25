@@ -90,10 +90,10 @@ Foam::boundaryToCell::boundaryToCell(const polyMesh& mesh)
 Foam::boundaryToCell::boundaryToCell
 (
     const polyMesh& mesh,
-    const dictionary&
+    const dictionary& dict
 )
 :
-    topoSetCellSource(mesh)
+    topoSetCellSource(mesh, dict)
 {}
 
 

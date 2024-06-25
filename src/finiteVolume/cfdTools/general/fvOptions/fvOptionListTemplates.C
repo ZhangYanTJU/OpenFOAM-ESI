@@ -42,8 +42,8 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::fv::optionList::source
 {
     checkApplied();
 
-    tmp<fvMatrix<Type>> tmtx(new fvMatrix<Type>(field, ds));
-    fvMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<fvMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fv::option& source : *this)
     {
@@ -51,7 +51,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::fv::optionList::source
 
         if (fieldi != -1)
         {
-            addProfiling(fvopt, "fvOption()." + source.name());
+            addProfiling(fvopt, "fvOption().", source.name());
 
             source.setApplied(fieldi);
 
@@ -129,8 +129,8 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::fv::optionList::operator()
         rho.dimensions()*field.dimensions()/dimTime*dimVolume
     );
 
-    tmp<fvMatrix<Type>> tmtx(new fvMatrix<Type>(field, ds));
-    fvMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<fvMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fv::option& source : *this)
     {
@@ -138,7 +138,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::fv::optionList::operator()
 
         if (fieldi != -1)
         {
-            addProfiling(fvopt, "fvOption()." + source.name());
+            addProfiling(fvopt, "fvOption().", source.name());
 
             source.setApplied(fieldi);
 
@@ -198,8 +198,8 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::fv::optionList::operator()
        /dimTime*dimVolume
     );
 
-    tmp<fvMatrix<Type>> tmtx(new fvMatrix<Type>(field, ds));
-    fvMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<fvMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fv::option& source : *this)
     {
@@ -207,7 +207,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::fv::optionList::operator()
 
         if (fieldi != -1)
         {
-            addProfiling(fvopt, "fvOption()." + source.name());
+            addProfiling(fvopt, "fvOption().", source.name());
 
             source.setApplied(fieldi);
 
@@ -321,7 +321,7 @@ void Foam::fv::optionList::constrain(fvMatrix<Type>& eqn)
 
         if (fieldi != -1)
         {
-            addProfiling(fvopt, "fvOption::constrain." + eqn.psi().name());
+            addProfiling(fvopt, "fvOption::constrain.", eqn.psi().name());
 
             source.setApplied(fieldi);
 
@@ -364,7 +364,7 @@ void Foam::fv::optionList::correct
 
         if (fieldi != -1)
         {
-            addProfiling(fvopt, "fvOption::correct." + source.name());
+            addProfiling(fvopt, "fvOption::correct.", source.name());
 
             source.setApplied(fieldi);
 
@@ -407,7 +407,7 @@ void Foam::fv::optionList::postProcessSens
 
         if (fieldi != -1)
         {
-            addProfiling(fvopt, "fvOption::postProcessSens." + source.name());
+            addProfiling(fvopt, "fvOption::postProcessSens.", source.name());
 
             const bool ok = source.isActive();
 
@@ -447,7 +447,10 @@ void Foam::fv::optionList::postProcessAuxSens
         if (fieldi != -1)
         {
             addProfiling
-                (fvopt, "fvOption::postProcessAuxSens." + source.name());
+            (
+                fvopt,
+                "fvOption::postProcessAuxSens.", source.name()
+            );
 
             const bool ok = source.isActive();
 

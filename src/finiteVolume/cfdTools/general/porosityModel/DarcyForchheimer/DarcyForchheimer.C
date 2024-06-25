@@ -126,31 +126,17 @@ void Foam::porosityModels::DarcyForchheimer::calcTransformModelData()
     {
         volTensorField Dout
         (
-            IOobject
-            (
-                typeName + ":D",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            mesh_.newIOobject(IOobject::scopedName(typeName, "D")),
             mesh_,
             dimensionedTensor(dXYZ_.dimensions(), Zero)
         );
+
         volTensorField Fout
         (
-            IOobject
-            (
-                typeName + ":F",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            mesh_.newIOobject(IOobject::scopedName(typeName, "F")),
             mesh_,
             dimensionedTensor(fXYZ_.dimensions(), Zero)
         );
-
 
         forAll(cellZoneIDs_, zonei)
         {

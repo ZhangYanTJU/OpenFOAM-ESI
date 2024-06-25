@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,30 +73,30 @@ void Foam::DampingModels::Relaxation<CloudType>::cacheFields(const bool store)
         const fvMesh& mesh = this->owner().mesh();
         const word& cloudName = this->owner().name();
 
-        const AveragingMethod<scalar>& volumeAverage =
+        const auto& volumeAverage =
             mesh.lookupObject<AveragingMethod<scalar>>
             (
-                cloudName + ":volumeAverage"
+                IOobject::scopedName(cloudName, "volumeAverage")
             );
-        const AveragingMethod<scalar>& radiusAverage =
+        const auto& radiusAverage =
             mesh.lookupObject<AveragingMethod<scalar>>
             (
-                cloudName + ":radiusAverage"
+                IOobject::scopedName(cloudName, "radiusAverage")
             );
-        const AveragingMethod<vector>& uAverage =
+        const auto& uAverage =
             mesh.lookupObject<AveragingMethod<vector>>
             (
-                cloudName + ":uAverage"
+                IOobject::scopedName(cloudName, "uAverage")
             );
-        const AveragingMethod<scalar>& uSqrAverage =
+        const auto& uSqrAverage =
             mesh.lookupObject<AveragingMethod<scalar>>
             (
-                cloudName + ":uSqrAverage"
+                IOobject::scopedName(cloudName, "uSqrAverage")
             );
-        const AveragingMethod<scalar>& frequencyAverage =
+        const auto& frequencyAverage =
             mesh.lookupObject<AveragingMethod<scalar>>
             (
-                cloudName + ":frequencyAverage"
+                IOobject::scopedName(cloudName, "frequencyAverage")
             );
 
         uAverage_ = &uAverage;
@@ -106,7 +107,7 @@ void Foam::DampingModels::Relaxation<CloudType>::cacheFields(const bool store)
             (
                 IOobject
                 (
-                    cloudName + ":oneByTimeScaleAverage",
+                    IOobject::scopedName(cloudName, "oneByTimeScaleAverage"),
                     this->owner().db().time().timeName(),
                     mesh
                 ),

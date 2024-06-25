@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,20 +28,67 @@ License
 #include "CStringList.H"
 #include "Ostream.H"
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+int Foam::CStringList::reset
+(
+    std::initializer_list<const char* const> input
+)
+{
+    clear();
+
+    if (!input.size())
+    {
+        // Special handling of an empty list
+        argv_ = new char*[1];
+        argv_[0] = nullptr;     // Final nullptr terminator
+        return 0;
+    }
+
+    // Count overall required string length, including each trailing nul char
+    for (const char* const s : input)
+    {
+        // nbytes_ += Foam::string::length(s) + 1
+        nbytes_ += (s ? strlen(s) : 0) + 1;
+    }
+    --nbytes_;  // Do not include final nul char in overall count
+
+    argv_ = new char*[input.size()+1];  // Extra +1 for terminating nullptr
+    data_ = new char[nbytes_+1];        // Extra +1 for terminating nul char
+
+    argv_[0] = data_;   // Starts here
+
+    for (const char* const s : input)
+    {
+        char *next = stringCopy(argv_[argc_], s);
+        argv_[++argc_] = next;  // The start of next string
+    }
+
+    argv_[argc_] = nullptr;     // Final nullptr terminator
+
+    return argc_;
+}
+
+
+
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const CStringList& list)
 {
     const int n = list.size();
 
-    for (int i = 0, space = 0; i < n; ++i)
+    bool separator = false;
+
+    for (int i = 0; i < n; ++i)
     {
         const char* p = list.get(i);
 
         if (p && *p)
         {
-            if (space++) os << ' ';
+            if (separator) os << ' ';
             os << p;
+
+            separator = true;
         }
     }
 

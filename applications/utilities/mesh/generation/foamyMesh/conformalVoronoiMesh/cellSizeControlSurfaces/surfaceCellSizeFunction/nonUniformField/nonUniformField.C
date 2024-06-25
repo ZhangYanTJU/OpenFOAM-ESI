@@ -110,7 +110,8 @@ Foam::scalar Foam::nonUniformField::interpolate
 {
     const face& faceHitByPt = surfaceTriMesh_.triSurface::operator[](index);
 
-    const pointField& pts = surfaceTriMesh_.points();
+    const tmp<pointField> tpoints(surfaceTriMesh_.points());
+    const pointField& pts = tpoints();
 //    const Map<label>& pMap = surfaceTriMesh_.meshPointMap();
 
     triPointRef tri

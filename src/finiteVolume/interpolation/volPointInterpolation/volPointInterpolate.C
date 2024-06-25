@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -107,8 +107,7 @@ void Foam::volPointInterpolation::addSeparated
         }
     }
 
-    // Wait for outstanding requests
-    // (commsType == UPstream::commsTypes::nonBlocking)
+    // Wait for outstanding requests (non-blocking)
     UPstream::waitRequests(startOfRequests);
 
     forAll(pfbf, patchi)
@@ -224,45 +223,34 @@ void Foam::volPointInterpolation::interpolateDimensionedInternalField
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::volPointInterpolation::flatBoundaryField
+Foam::tmp<Foam::Field<Type>>
+Foam::volPointInterpolation::flatBoundaryField
 (
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
-    const fvMesh& mesh = vf.mesh();
-    const fvBoundaryMesh& bm = mesh.boundary();
+    const polyBoundaryMesh& pbm = vf.mesh().boundaryMesh();
 
-    tmp<Field<Type>> tboundaryVals
-    (
-        new Field<Type>(mesh.nBoundaryFaces())
-    );
-    Field<Type>& boundaryVals = tboundaryVals.ref();
+    auto tboundaryVals = tmp<Field<Type>>::New(pbm.nFaces(), Foam::zero{});
+    auto& values = tboundaryVals.ref();
 
     forAll(vf.boundaryField(), patchi)
     {
-        label bFacei = bm[patchi].patch().start() - mesh.nInternalFaces();
+        const auto& pp = pbm[patchi];
+        const auto& pfld = vf.boundaryField()[patchi];
+
+        // Note: restrict transcribing to actual size of the patch field
+        // - handles "empty" patch type etc.
+
+        SubList<Type> slice(values, pfld.size(), pp.offset());
 
         if
         (
-           !isA<emptyFvPatch>(bm[patchi])
-        && !vf.boundaryField()[patchi].coupled()
+            !isA<emptyPolyPatch>(pp)
+         && !pfld.coupled()
         )
         {
-            SubList<Type>
-            (
-                boundaryVals,
-                vf.boundaryField()[patchi].size(),
-                bFacei
-            ) = vf.boundaryField()[patchi];
-        }
-        else
-        {
-            const polyPatch& pp = bm[patchi].patch();
-
-            forAll(pp, i)
-            {
-                boundaryVals[bFacei++] = Zero;
-            }
+            slice = pfld;
         }
     }
 
@@ -570,8 +558,8 @@ Foam::volPointInterpolation::interpolate
     if (!pfPtr)
     {
         solution::cachePrintMessage("Calculating and caching", name, vf);
-        pfPtr = interpolate(vf, name, false).ptr();
 
+        pfPtr = interpolate(vf, name, false).ptr();
         regIOobject::store(pfPtr);
     }
     else

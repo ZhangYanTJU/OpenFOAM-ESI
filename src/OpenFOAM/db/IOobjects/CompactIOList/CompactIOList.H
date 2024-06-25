@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,7 +43,6 @@ SourceFiles
 #define Foam_CompactIOList_H
 
 #include "IOList.H"
-#include "regIOobject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -76,12 +75,10 @@ class CompactIOList
 {
     // Private Member Functions
 
-        //- Read according to header type
-        void readFromStream();
-
         //- Read if IOobject flags set. Return true if read.
-        //  Reads according to the header type
-        bool readContents();
+        //- Reads according to the header type.
+        //  Return true if read.
+        bool readIOcontents();
 
         //- Has too many elements in it?
         bool overflows() const;
@@ -130,7 +127,7 @@ public:
             const bool writeOnProc
         ) const;
 
-        virtual bool writeData(Ostream&) const;
+        virtual bool writeData(Ostream& os) const;
 
 
     // Member Operators
@@ -140,23 +137,6 @@ public:
 
         //- Copy or move assignment of entries
         using List<T>::operator=;
-
-
-    // IOstream operators
-
-        //- Read List from Istream, discarding contents of existing List.
-        friend Istream& operator>> <T, BaseType>
-        (
-            Istream&,
-            CompactIOList<T, BaseType>&
-        );
-
-        // Write List to Ostream.
-        friend Ostream& operator<< <T, BaseType>
-        (
-            Ostream&,
-            const CompactIOList<T, BaseType>&
-        );
 };
 
 

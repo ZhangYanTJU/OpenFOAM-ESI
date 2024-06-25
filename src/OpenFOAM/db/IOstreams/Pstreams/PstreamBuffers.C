@@ -563,7 +563,7 @@ Foam::label Foam::PstreamBuffers::maxNonLocalRecvCount
             if (excludeProci != proci)
             {
                 label len(recvBuffers_[proci].size() - recvPositions_[proci]);
-                maxLen = max(maxLen, len);
+                maxLen = Foam::max(maxLen, len);
             }
         }
     }

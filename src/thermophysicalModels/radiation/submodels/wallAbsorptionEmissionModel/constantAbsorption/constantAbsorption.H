@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018, 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,10 +37,11 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef radiation_constantAbsorption_H
-#define radiation_constantAbsorption_H
+#ifndef Foam_radiation_constantAbsorption_H
+#define Foam_radiation_constantAbsorption_H
 
 #include "wallAbsorptionEmissionModel.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,10 +65,10 @@ class constantAbsorption
         dictionary coeffsDict_;
 
         //- Absorptivity coefficient
-        scalar a_;
+        autoPtr<Function1<scalar>> a_;
 
         //- Emissivity coefficient
-        scalar e_;
+        autoPtr<Function1<scalar>> e_;
 
 
 public:
@@ -92,8 +93,8 @@ public:
         tmp<scalarField> a
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Return absorptivity on face
@@ -109,8 +110,8 @@ public:
         tmp<scalarField> e
         (
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Return emission coefficient

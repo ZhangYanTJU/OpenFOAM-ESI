@@ -76,7 +76,8 @@ void incompressibleAdjointMeanFlowVars::setMeanFields()
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 paInst()
             )
@@ -91,7 +92,8 @@ void incompressibleAdjointMeanFlowVars::setMeanFields()
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 UaInst()
             )
@@ -106,7 +108,8 @@ void incompressibleAdjointMeanFlowVars::setMeanFields()
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 phiaInst()
             )

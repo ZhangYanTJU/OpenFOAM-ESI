@@ -35,7 +35,7 @@ Description
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::lduMatrix::H(const Field<Type>& psi) const
 {
-    auto tHpsi = tmp<Field<Type>>::New(lduAddr().size(), Zero);
+    auto tHpsi = tmp<Field<Type>>::New(lduAddr().size(), Foam::zero{});
 
     if (lowerPtr_ || upperPtr_)
     {

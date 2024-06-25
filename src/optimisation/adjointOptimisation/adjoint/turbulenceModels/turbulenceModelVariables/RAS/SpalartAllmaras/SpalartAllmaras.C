@@ -80,22 +80,17 @@ tmp<volScalarField> SpalartAllmaras::nutJacobianVar1
     const singlePhaseTransportModel& laminarTransport
 ) const
 {
-    auto tnutJacobian = tmp<volScalarField>::New
+    auto tnutJacobian = volScalarField::New
     (
-        IOobject
-        (
-            "nutJacobianVar1",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "nutJacobianVar1",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimless, Zero)
     );
     auto& nutJacobian = tnutJacobian.ref();
 
-    const volScalarField& nu = laminarTransport.nu();
+    const tmp<volScalarField> tnu(laminarTransport.nu());
+    const volScalarField& nu = tnu();
     const volScalarField& nuTilda = TMVar1();
 
     volScalarField chi(nuTilda/nu);

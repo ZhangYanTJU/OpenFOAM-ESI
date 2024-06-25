@@ -192,7 +192,7 @@ Foam::codedFixedValuePointPatchField<Type>::codedFixedValuePointPatchField
         this->extrapolateInternal();
 
         // Evaluate to assign a value
-        this->evaluate(Pstream::commsTypes::blocking);
+        this->evaluate(Pstream::commsTypes::buffered);
     }
 }
 
@@ -237,9 +237,9 @@ Foam::codedFixedValuePointPatchField<Type>::redirectPatchField() const
         // Construct a patch
         // Make sure to construct the patchfield with up-to-date value
 
-        OStringStream os;
+        OCharStream os;
         this->writeValueEntry(os);
-        IStringStream is(os.str());
+        ISpanStream is(os.view());
         dictionary constructDict(is);
 
         constructDict.set("type", name_);

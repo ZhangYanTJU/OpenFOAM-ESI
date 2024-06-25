@@ -42,8 +42,7 @@ namespace Foam
 const Foam::objectRegistry& Foam::lduMesh::thisDb() const
 {
     NotImplemented;
-    const objectRegistry* orPtr_ = nullptr;
-    return *orPtr_;
+    return NullObjectRef<objectRegistry>();
 }
 
 

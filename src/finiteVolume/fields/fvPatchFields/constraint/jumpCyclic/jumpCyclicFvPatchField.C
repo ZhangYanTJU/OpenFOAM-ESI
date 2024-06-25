@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,14 +60,11 @@ Foam::jumpCyclicFvPatchField<Type>::jumpCyclicFvPatchField
     const fvPatch& p,
     const DimensionedField<Type, volMesh>& iF,
     const dictionary& dict,
-    const bool valueRequired
+    const bool needValue
 )
 :
-    cyclicFvPatchField<Type>(p, iF, dict, valueRequired)
-{
-    // Call this evaluation in derived classes
-    //this->evaluate(Pstream::commsTypes::blocking);
-}
+    cyclicFvPatchField<Type>(p, iF, dict, needValue)
+{}
 
 
 template<class Type>

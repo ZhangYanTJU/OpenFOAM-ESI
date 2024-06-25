@@ -170,7 +170,7 @@ variablesSet::allocateRenamedField
 {
     typedef GeometricField<Type, PatchField, GeoMesh> fieldType;
     autoPtr<fieldType> returnField(nullptr);
-    if (bf.valid())
+    if (bf)
     {
         const word timeName = bf().mesh().time().timeName();
         returnField.reset

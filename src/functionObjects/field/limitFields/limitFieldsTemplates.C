@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,22 +49,36 @@ bool Foam::functionObjects::limitFields::limitField(const word& fieldName)
 
     if (withBounds_ & limitType::CLAMP_MIN)
     {
-        volScalarField mField(typeName + ":mag" + field.name(), mag(field));
+        auto tmField = volScalarField::New
+        (
+            IOobject::scopedName(typeName, "mag" + field.name()),
+            IOobject::NO_REGISTER,
+            mag(field)
+        );
+        auto& mField = tmField.ref();
+
         Log << " min(|" << gMin(mField) << "|)";
         //field.normalise();
         field /= mag(field) + eps;
         mField.clamp_min(min_);
-        field *= mField;
+        field *= tmField;
     }
 
     if (withBounds_ & limitType::CLAMP_MAX)
     {
-        volScalarField mField(typeName + ":mag" + field.name(), mag(field));
+        auto tmField = volScalarField::New
+        (
+            IOobject::scopedName(typeName, "mag" + field.name()),
+            IOobject::NO_REGISTER,
+            mag(field)
+        );
+        auto& mField = tmField.ref();
+
         Log << " max(|" << gMax(mField) << "|)";
         //field.normalise();
         field /= mag(field) + eps;
         mField.clamp_max(max_);
-        field *= mField;
+        field *= tmField;
     }
 
     return true;

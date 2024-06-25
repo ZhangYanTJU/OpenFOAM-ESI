@@ -2698,37 +2698,14 @@ void Foam::polyMeshAdder::add
             const polyMesh& mesh = meshes[meshi];
             const cellZoneMesh& cellZones = mesh.cellZones();
 
-            // Precalc offset zones
-            labelList newZoneID(mesh.nCells(), -1);
-
-            forAll(cellZones, zonei)
-            {
-                const labelList& cellLabels = cellZones[zonei];
-
-                for (const label celli : cellLabels)
-                {
-                    if (newZoneID[celli] != -1)
-                    {
-                        WarningInFunction
-                            << "Cell:" << celli
-                            << " centre:" << mesh.cellCentres()[celli]
-                            << " is in two zones:"
-                            << cellZones[newZoneID[celli]].name()
-                            << " and " << cellZones[zonei].name() << endl
-                            << "    This is not supported."
-                            << " Continuing with first zone only." << endl;
-                    }
-                    else
-                    {
-                        newZoneID[celli] = cellZoneMap[meshi][zonei];
-                    }
-                }
-            }
-
             // Add cells in mesh order
             cellProcAddressing[meshi].setSize(mesh.nCells());
+            DynamicList<label> zones;
             for (label celli = 0; celli < mesh.nCells(); celli++)
             {
+                // Get current zones and renumber
+                cellZones.whichZones(celli, zones);
+                inplaceRenumber(cellZoneMap[meshi], zones);
                 // Add cell from cell
                 cellProcAddressing[meshi][celli] = meshMod.addCell
                 (
@@ -2736,7 +2713,7 @@ void Foam::polyMeshAdder::add
                     -1,
                     -1,
                     celli,
-                    newZoneID[celli]
+                    zones
                 );
             }
         }
@@ -2755,30 +2732,21 @@ void Foam::polyMeshAdder::add
             const pointField& points = mesh.points();
             const pointZoneMesh& pointZones = mesh.pointZones();
 
-            // Precalc offset zones
-            labelList newZoneID(points.size(), -1);
-
-            forAll(pointZones, zonei)
-            {
-                const labelList& pointLabels = pointZones[zonei];
-
-                for (const label pointi : pointLabels)
-                {
-                    newZoneID[pointi] = pointZoneMap[meshi][zonei];
-                }
-            }
-
             // Add points in mesh order
             const labelList& myUniquePoints = uniquePoints[meshi];
+            DynamicList<label> zones;
             for (const label pointi : myUniquePoints)
             {
+                // Get current zones and renumber
+                pointZones.whichZones(pointi, zones);
+                inplaceRenumber(pointZoneMap[meshi], zones);
                 // Rewrite the addressing (should already be compact) just in
                 // case the polyTopoChange does some special ordering
                 pointProcAddressing[meshi][pointi] = meshMod.addPoint
                 (
                     points[pointi],
                     pointi,
-                    newZoneID[pointi],
+                    zones,
                     true
                 );
             }
@@ -2813,21 +2781,8 @@ void Foam::polyMeshAdder::add
             const labelList& faceNeighbour = mesh.faceNeighbour();
             const faceZoneMesh& faceZones = mesh.faceZones();
 
-            // Precalc offset zones
-            labelList newZoneID(faces.size(), -1);
-            boolList zoneFlip(faces.size(), false);
-
-            forAll(faceZones, zonei)
-            {
-                const labelList& faceLabels = faceZones[zonei];
-                const boolList& flipMap = faceZones[zonei].flipMap();
-
-                forAll(faceLabels, facei)
-                {
-                    newZoneID[faceLabels[facei]] = faceZoneMap[meshi][zonei];
-                    zoneFlip[faceLabels[facei]] = flipMap[facei];
-                }
-            }
+            DynamicList<label> zones;
+            DynamicList<bool> flips;
 
             // Add faces in mesh order
 
@@ -2846,14 +2801,28 @@ void Foam::polyMeshAdder::add
                 {
                     newFace[fp] = pointProcAddressing[meshi][f[fp]];
                 }
+
+                // Get current zones and renumber
+                faceZones.whichZones(facei, zones);
+                flips.clear();
+                forAll(zones, i)
+                {
+                    const label zonei = zones[i];
+                    const label index = faceZones[zonei].localID(facei);
+                    flips.append(faceZones[zonei].flipMap()[index]);
+                }
+                inplaceRenumber(faceZoneMap[meshi], zones);
+
                 bool flipFaceFlux = false;
-                bool flip = zoneFlip[facei];
                 if (newNei < newOwn)
                 {
                     std::swap(newOwn, newNei);
-                    newFace = newFace.reverseFace();
+                    newFace.flip();
                     flipFaceFlux = !flipFaceFlux;
-                    flip = !flip;
+                    for (bool& flip : flips)
+                    {
+                        flip = !flip;
+                    }
                 }
 
                 const label newFacei = meshMod.addFace
@@ -2866,8 +2835,8 @@ void Foam::polyMeshAdder::add
                     facei,                      // masterFaceID
                     flipFaceFlux,               // flipFaceFlux
                     -1,                         // patchID
-                    newZoneID[facei],           // zoneID
-                    flip                        // zoneFlip
+                    zones,                      // zoneIDs
+                    flips                       // zoneFlips
                 );
 
                 faceProcAddressing[meshi][facei] = newFacei;
@@ -2892,6 +2861,17 @@ void Foam::polyMeshAdder::add
                 const label newOwn =
                     cellProcAddressing[meshi][faceOwner[facei]];
 
+                faceZones.whichZones(facei, zones);
+                flips.clear();
+                forAll(zones, i)
+                {
+                    const label zonei = zones[i];
+                    const label index = faceZones[zonei].localID(facei);
+                    flips.append(faceZones[zonei].flipMap()[index]);
+                }
+                inplaceRenumber(faceZoneMap[meshi], zones);
+
+
                 // Neighbour mesh face
                 const auto& nbrMesh = meshes[nbrMeshi];
                 const label nbrFacei = nbrMesh.nInternalFaces()+nbrBFacei;
@@ -2912,7 +2892,6 @@ void Foam::polyMeshAdder::add
                         newFace[fp] = pointProcAddressing[meshi][f[fp]];
                     }
                     const bool flipFaceFlux = false;
-                    const bool flip = zoneFlip[facei];
                     const label newFacei = meshMod.addFace
                     (
                         newFace,
@@ -2923,8 +2902,8 @@ void Foam::polyMeshAdder::add
                         facei,                      // masterFaceID
                         flipFaceFlux,               // flipFaceFlux
                         -1,                         // patchID
-                        newZoneID[facei],           // zoneID
-                        flip                        // zoneFlip
+                        zones,                      // zoneIDs
+                        flips                       // zoneFlips
                     );
 
                     faceProcAddressing[meshi][facei] = newFacei;
@@ -2960,6 +2939,18 @@ void Foam::polyMeshAdder::add
                                 newFace[fp] = pointProcAddressing[meshi][f[fp]];
                             }
 
+                            faceZones.whichZones(facei, zones);
+                            flips.clear();
+                            forAll(zones, i)
+                            {
+                                const label zonei = zones[i];
+                                const label index =
+                                    faceZones[zonei].localID(facei);
+                                flips.append(faceZones[zonei].flipMap()[index]);
+                            }
+                            inplaceRenumber(faceZoneMap[meshi], zones);
+
+
                             const label newFacei = meshMod.addFace
                             (
                                 newFace,
@@ -2970,8 +2961,8 @@ void Foam::polyMeshAdder::add
                                 facei,                      // masterFaceID
                                 false,                      // flipFaceFlux
                                 newPatchi,                  // patchID
-                                newZoneID[facei],           // zoneID
-                                zoneFlip[facei]             // zoneFlip
+                                zones,                      // zoneID
+                                flips                       // zoneFlip
                             );
 
                             faceProcAddressing[meshi][facei] = newFacei;

@@ -134,13 +134,6 @@ inline Foam::autoPtr<Foam::List<T>> Foam::List<T>::clone() const
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T>
-inline const Foam::List<T>& Foam::List<T>::null()
-{
-    return NullObjectRef<List<T>>();
-}
-
-
-template<class T>
 inline void Foam::List<T>::clear()
 {
     if (this->v_)

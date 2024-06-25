@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2019-2020,2023 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,11 +59,12 @@ Foam::combustionModels::EDC<ReactionThermo>::EDC
     (
         IOobject
         (
-            this->thermo().phasePropertyName(typeName + ":kappa"),
+            this->thermo().phaseScopedName(typeName, "kappa"),
             this->mesh().time().timeName(),
             this->mesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         this->mesh(),
         dimensionedScalar(dimless, Zero)
@@ -86,23 +87,23 @@ void Foam::combustionModels::EDC<ReactionThermo>::correct()
     if (this->active())
     {
         tmp<volScalarField> tepsilon(this->turbulence().epsilon());
-        const volScalarField& epsilon = tepsilon();
+        const auto& epsilon = tepsilon();
 
         tmp<volScalarField> tmu(this->turbulence().mu());
-        const volScalarField& mu = tmu();
+        const auto& mu = tmu();
 
         tmp<volScalarField> tk(this->turbulence().k());
-        const volScalarField& k = tk();
+        const auto& k = tk();
 
         tmp<volScalarField> trho(this->rho());
-        const volScalarField& rho = trho();
+        const auto& rho = trho();
 
         scalarField tauStar(epsilon.size(), Zero);
 
         if (version_ == EDCversions::v2016)
         {
             tmp<volScalarField> ttc(this->chemistryPtr_->tc());
-            const volScalarField& tc = ttc();
+            const auto& tc = ttc();
 
             forAll(tauStar, i)
             {
@@ -199,22 +200,12 @@ template<class ReactionThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::combustionModels::EDC<ReactionThermo>::Qdot() const
 {
-    tmp<volScalarField> tQdot
+    auto tQdot = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                this->thermo().phasePropertyName(typeName + ":Qdot"),
-                this->mesh().time().timeName(),
-                this->mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
-        )
+        this->thermo().phaseScopedName(typeName, "Qdot"),
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );
 
     if (this->active())

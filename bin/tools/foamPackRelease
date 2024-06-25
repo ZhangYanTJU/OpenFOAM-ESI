@@ -6,7 +6,7 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
-#     Copyright (C) 2019-2023 OpenCFD Ltd.
+#     Copyright (C) 2019-2024 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -48,8 +48,16 @@ options:
   -name=NAME        Stem for tar-file (default: auto)
   -output=DIR       Output directory (default: ".")
   -prefix=NAME      Prefix directory within tar-file (default: auto)
-  -pkg-modules      Only package submodules - exclude OpenFOAM
-  -no-modules       Exclude submodules
+  -pkg-modules      Package 'modules' exclusively (no OpenFOAM)
+  -pkg-plugins      Package 'plugins' exclusively (no OpenFOAM)
+  -no-extras        Exclude 'modules, plugins,...' from source pack
+  -no-modules       Exclude 'modules' from source pack (default: off)
+  -no-plugins       Exclude 'plugins' from source pack (default: on)
+  -all-extras       Include 'modules, plugins,...' into source pack
+  -with-modules     Include 'modules' into source pack (default: on)
+  -with-plugins     Include 'plugins' into source pack (default: off)
+  -modules=name1,.. Include specifed 'modules' into source pack
+  -plugins=name1,.. Include specifed 'plugins' into source pack
   -no-patch         Ignore '_patch' number for output tar-file
   -no-prefix        Do not prefix subdirectory
   -no-compress      Disable compression
@@ -67,7 +75,7 @@ Script generator for packing OpenFOAM sources and submodules.
 Eg,
 
     $Script -output=some-dir origin/master > create-tar-file
-    sh ./create-tar-file
+    bash ./create-tar-file
 
     $Script -tgz origin/master | bash
 
@@ -90,11 +98,16 @@ die()
 
 
 #-------------------------------------------------------------------------------
-outputDir="."
+outputDir='.'
 versionSeparator='_'
 withPatchNum=true
-unset compress packageApi withSource withModules prefixDir tarName
-unset gitbase
+# Default selections
+select_source=true
+select_modules=true
+select_plugins=false
+
+unset compress gitbase packageApi prefixDir tarName
+
 
 # Cleanup tarName to remove trailing '.tar', detect compression etc
 cleanTarName() {
@@ -117,7 +130,7 @@ cleanTarName() {
 while [ "$#" -gt 0 ]
 do
     case "$1" in
-    -h | -help*)
+    -h | -help* | --help*)
         printHelp
         ;;
     -debian | -debian=[0-9]*)
@@ -146,13 +159,43 @@ do
         prefixDir="${1#*=}"
         prefixDir="${prefixDir%/}"
         ;;
-    -pkg-modules)
-        withModules=true
-        withSource=false
+    -all-extras)
+        select_modules=true
+        select_plugins=true
+        ;;
+    -with-modules)
+        select_modules=true
+        ;;
+    -modules=*)
+        select_modules="${1#*=}"
+        : "${select_modules:=true}"
+        ;;
+    -with-plugins)
+        select_plugins=true
+        ;;
+    -plugins=*)
+        select_plugins="${1#*=}"
+        : "${select_plugins:=true}"
+        ;;
+    -no-extras)
+        select_modules=false
+        select_plugins=false
         ;;
     -no-modules)
-        withModules=false
-        withSource=true
+        select_modules=false
+        ;;
+    -no-plugins)
+        select_plugins=false
+        ;;
+    -pkg-modules)  # Package modules exclusively
+        select_modules=true
+        select_plugins=false
+        select_source=false
+        ;;
+    -pkg-plugins)  # Package plugins exclusively
+        select_modules=false
+        select_plugins=true
+        select_source=false
         ;;
     -no-patch)
         withPatchNum=false
@@ -291,9 +334,15 @@ fi
 if [ -z "$prefixDir" ]
 then
     prefixDir="OpenFOAM-v${packageApi}"
-    if [ "$withSource" = false ]
+    if [ "$select_source" = false ]
     then
-        prefixDir="OpenFOAM-modules-v${packageApi}"
+        # Either -pkg-modules or -pkg-plugins, not both
+        if [ "$select_modules" != false ]
+        then
+            prefixDir="OpenFOAM-modules-v${packageApi}"
+        else
+            prefixDir="OpenFOAM-plugins-v${packageApi}"
+        fi
     fi
 elif [ "$prefixDir" = false ]
 then
@@ -320,9 +369,15 @@ case "$tarName" in
 
 ('')
     tarName="OpenFOAM-v${packageApi}"
-    if [ "$withSource" = false ]
+    if [ "$select_source" = false ]
     then
-        tarName="OpenFOAM-modules-v${packageApi}"
+        # Either -pkg-modules or -pkg-plugins, not both
+        if [ "$select_modules" != false ]
+        then
+            tarName="OpenFOAM-modules-v${packageApi}"
+        else
+            tarName="OpenFOAM-plugins-v${packageApi}"
+        fi
     fi
 
     if [ "$withPatchNum" = false ]
@@ -362,48 +417,56 @@ echo 'tar -cf "$outputDir/$tarName.tar" -T /dev/null'
 echo
 echo 'buildInfo="${prefixDir}${prefixDir:+@}META-INFO@build-info"'
 echo 'manifest0="${prefixDir}${prefixDir:+@}META-INFO@manifest.txt"'
-echo 'manifest1="${prefixDir}${prefixDir:+@}META-INFO@modules-manifest.txt"'
-echo '#--------'
+echo 'manifest1="${prefixDir}${prefixDir:+@}META-INFO@manifest-modules.txt"'
+echo 'manifest2="${prefixDir}${prefixDir:+@}META-INFO@manifest-plugins.txt"'
 
 #------------------------------------------------------------------------------
-# Sort out particulars related to modules
-if [ "$withModules" = false ]
+# Sort out particulars related to modules, source
+
+if [ "$select_source" = false ]
 then
-    echo '# No modules'
-    echo 'unset manifest1'
+    echo 'unset buildInfo manifest0  # No source'
 fi
 
-if [ "$withSource" = false ]
+if [ "$select_modules" = false ]
 then
-    echo '# No OpenFOAM source (package modules exclusively)'
-    echo 'unset buildInfo'
-    echo 'unset manifest0'
+    echo 'unset manifest1  # No modules'
 fi
 
+if [ "$select_plugins" = false ]
+then
+    echo 'unset manifest2  # No plugins'
+fi
+
+echo '#--------'
 echo 'set -x'
 echo
 
 #------------------------------------------------------------------------------
-# OpenFOAM sources
-if [ "$withSource" != false ]
+# OpenFOAM sources (unless explicitly excluded)
+
+if [ "$select_source" != false ]
 then
     echo 'git -c tar.umask=0022 archive --format=tar ${prefixDir:+--prefix="$prefixDir/"} -o "$outputDir/$tarName.tar" "$head"'
 
     # Tag build information with underscore to distinguish from "real" build
     # information when git is available.
-    echo 'echo build="${build:+_}$build" > "$outputDir/$buildInfo"'
-
+    echo echo 'build="${build:+_}$build" > "$outputDir/$buildInfo"'
+    echo
+    echo '# source'
+    echo 'manifestFile="$manifest0"'
     echo '{'
     echo '  echo api="$api"'
     echo '  echo patch="$patch"'
     echo '  echo head="$head"'
     echo '  echo'
     echo '  git ls-tree -r "$head"'
-    echo '} > "$outputDir/$manifest0"'
+    echo '} > "$outputDir/${manifestFile:?}"'
+    echo 'unset manifestFile'
 fi
 
 #------------------------------------------------------------------------------
-# Add in modules
+# OpenFOAM modules/plugins
 
 # Recursive addition of submodule content.
 # NB: must be called from within the respective parent directory.
@@ -411,11 +474,15 @@ fi
 #
 #    packModule abc  (implied cd)
 #       packModule abc/def
-#          packModule abc/def/hij
+#          packModule abc/def/ghi
 #
 packModule()
 {
     local parent="$1"
+    local filter="$2"
+
+    # Using filter=true means accept everything
+    if [ "$filter" = true ]; then unset filter; fi
 
     (
         if [ -n "$parent" ]
@@ -424,34 +491,51 @@ packModule()
         fi
 
         git ls-tree -d HEAD | \
-        while read mode gittype sha1 module
+        while read mode gittype sha1 moduleName
         do
             [ "$gittype" == commit ] || continue
 
-            case "$module" in
+            case "$moduleName" in
             (. | ./)
                 echo
                 echo "# ----"
-                echo "# module $parent : not initialized?"
+                echo "# submodule $parent : not initialized?"
                 echo "# ----"
                 continue
                 ;;
             esac
 
             # Fully qualified
-            module="$parent${parent:+/}$module"
+            module="$parent${parent:+/}$moduleName"
+            moduleName="${moduleName##*/}"
 
             echo
-            echo "# module"
+            echo "# submodule"
             echo "module='$module'"
             echo "commit='$sha1'"
-            echo "tmpTarFile='$tarName-${module##*/}.tar'"
+
+            # Simplistic filtering
+            if [ -n "$filter" ] && [ "${filter/$moduleName/}" = "$filter" ]
+            then
+                echo "# ----"
+                echo '{'
+                echo '  echo'
+                echo '  echo "$module"'
+                echo '  echo commit="$commit"'
+                echo '  echo "# not exported"'
+                echo '  echo'
+                echo '} >> "$outputDir/${manifestFile:?}"'
+                continue
+            fi
+
+            # Intermediate tar file for module contents
+            echo "tmpTarFile='$tarName-$moduleName.tar'"
             echo "# ----"
             echo '('
             echo '  cd "$module" || exit'
             echo '  newPrefix="$prefixDir${prefixDir:+/}$module"'
             echo '  git -c tar.umask=0022 archive --format=tar --prefix="$newPrefix/" -o "$outputDir/$tmpTarFile" "$commit" || exit'
-            # Without {test,tests,validation} directories (potentially large)
+            echo '  # Without {test,tests,validation} directories (potentially large)'
             echo '  tar --delete -f "$outputDir/$tmpTarFile" "$newPrefix/test" "$newPrefix/tests" "$newPrefix/validation" 2>/dev/null'
             echo '  tar -Af "$outputDir/$tarName.tar" "$outputDir/$tmpTarFile"'
             echo '  {'
@@ -461,32 +545,58 @@ packModule()
             echo '    echo'
             echo '    # Without {test,tests,validation} directories'
             echo '    git ls-tree -r "$commit" | sed -e '"'"'/\t\(test\|\tests\|validation\)\//d'"'"
-            echo '  } >> "$outputDir/$manifest1"'
+            echo '  } >> "$outputDir/${manifestFile:?}"'
             echo ')'
-            # Remove tmp tar file, even if git archive failed (creates zero-sized tar)
+            echo "# ----"
             echo 'rm -f "$outputDir/$tmpTarFile"'
 
+            # No filter for lower levels...
             packModule "$module"
         done
     )
 }
 
 
-if [ "$withModules" != false ]
+# modules/
+if [ "$select_modules" != false ]
 then
     echo
-    echo '# Modules'
+    echo '# modules/'
+    echo 'manifestFile="$manifest1"'
     echo '{'
     echo '  echo "# OpenFOAM modules"'
     echo '  echo api="$api"'
     echo '  echo patch="$patch"'
     echo '  echo head="$head"'
-    echo '} > "$outputDir/$manifest1"'
+    echo '} > "$outputDir/${manifestFile:?}"'
 
-    packModule modules
+    # With all or specified modules
+    packModule modules "$select_modules"
 
     echo
-    echo '{ echo; echo "# End"; } >> "$outputDir/$manifest1"'
+    echo '{ echo; echo "# End"; } >> "$outputDir/${manifestFile:?}"'
+    echo 'unset manifestFile'
+fi
+
+# plugins/
+if [ "$select_plugins" != false ]
+then
+    echo
+    echo '# plugins/'
+    echo 'manifestFile="$manifest2"'
+    echo '{'
+    echo '  echo "# OpenFOAM plugins"'
+    echo '  echo api="$api"'
+    echo '  echo patch="$patch"'
+    echo '  echo head="$head"'
+    echo '} > "$outputDir/${manifestFile:?}"'
+
+    # With all or specified plugins
+    packModule plugins "$select_plugins"
+
+    echo
+    echo '{ echo; echo "# End"; } >> "$outputDir/${manifestFile:?}"'
+    echo 'unset manifestFile'
 fi
 
 #------------------------------------------------------------------------------
@@ -494,10 +604,10 @@ fi
 # Decode '@' in the names as '/' directory separator
 
 echo
-echo "echo 'Adding build-info and manifest files'"
+echo echo 'Adding build-info and manifest files'
 echo 'if pushd "$outputDir"; then'
-echo "tar --owner=root --group=root --append --transform='s|@|/|g' -v -f \"\$tarName.tar\" \"\$buildInfo\" \"\$manifest0\" \"\$manifest1\""
-echo 'rm -f "$buildInfo" "$manifest0" "$manifest1"'
+echo "tar --owner=root --group=root --append --transform='s|@|/|g' -v -f \"\$tarName.tar\" \"\$buildInfo\" \"\$manifest0\" \"\$manifest1\" \"\$manifest2\""
+echo 'rm -f "$buildInfo" "$manifest0" "$manifest1" "$manifest2"'
 echo 'popd; fi'
 
 echo
@@ -509,18 +619,18 @@ echo "# -----------------------"
 # Compression
 
 case "$compress" in
-    ('')
+('')
     echo "No compression requested" 1>&2
     ;;
 
-    (gz | gzip)
+(gz | gzip)
     echo "Using gzip compression" 1>&2
     echo 'gzip -f -9 "$outputDir/$tarName.tar"'
     echo
     echo '# End of compression'
     ;;
 
-    (tgz)
+(tgz)
     echo "Using gzip compression with tgz ending" 1>&2
     echo 'gzip -c -9 "$outputDir/$tarName.tar" > "$outputDir/$tarName.tgz"'
     echo 'rm -f "$outputDir/$tarName.tar"'
@@ -528,28 +638,28 @@ case "$compress" in
     echo '# End of compression'
     ;;
 
-    (bz | bzip | bzip2)
+(bz | bzip | bzip2)
     echo "Using bzip2 compression" 1>&2
     echo 'bzip2 -f -9 "$outputDir/$tarName.tar"'
     echo
     echo '# End of compression'
     ;;
 
-    (xz)
+(xz)
     echo "Using xz compression" 1>&2
     echo 'xz -f -9 "$outputDir/$tarName.tar"'
     echo
     echo '# End of compression'
     ;;
 
-    (zst | zstd)
+(zst | zstd)
     echo "Using zstd compression" 1>&2
     echo 'zstd --rm -f -9 "$outputDir/$tarName.tar"'
     echo
     echo '# End of compression'
     ;;
 
-    (*)
+(*)
     echo "Unknown compression scheme: $compress" 1>&2
     ;;
 esac

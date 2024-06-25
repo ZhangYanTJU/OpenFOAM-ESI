@@ -158,13 +158,11 @@ Foam::tmp<Foam::volSymmTensorField> Foam::relativeVelocityModel::tauDm() const
     // Calculate the relative velocity of the continuous phase w.r.t the mean
     volVectorField Ucm(betad*Udm_/betac);
 
-    return tmp<volSymmTensorField>
+    return volSymmTensorField::New
     (
-        new volSymmTensorField
-        (
-            "tauDm",
-            betad*sqr(Udm_) + betac*sqr(Ucm)
-        )
+        "tauDm",
+        IOobject::NO_REGISTER,
+        betad*sqr(Udm_) + betac*sqr(Ucm)
     );
 }
 

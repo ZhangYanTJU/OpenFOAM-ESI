@@ -9,6 +9,7 @@ It is likely incomplete...
 - Yu Ankun
 - Tetsuo Aoyagi
 - Akira Azami
+- Pete Bachant
 - William Bainbridge
 - Gabriel Barajas
 - Kutalmis Bercin

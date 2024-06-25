@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,6 +31,7 @@ License
 #include "polyMesh.H"
 #include "emptyPolyPatch.H"
 #include "processorPolyPatch.H"
+#include "stringListOps.H"   // For stringListOps::findMatching()
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -432,6 +433,11 @@ void Foam::ensightMesh::write
     bool parallel
 ) const
 {
+    if (UPstream::master())
+    {
+        os.beginGeometry();
+    }
+
     // The internalMesh, cellZones
     for (const label id : cellZoneParts_.sortedToc())
     {
@@ -448,6 +454,19 @@ void Foam::ensightMesh::write
     for (const label id : faceZoneParts_.sortedToc())
     {
         faceZoneParts_[id].write(os, mesh_, parallel);
+    }
+
+    // No geometry parts written?
+    // - with lagrangian-only output the VTK EnsightReader still
+    //   needs a volume geometry, and ensight usually does too
+    if
+    (
+        cellZoneParts_.empty()
+     && boundaryParts_.empty()
+     && faceZoneParts_.empty()
+    )
+    {
+        ensightCells::writeBox(os, mesh_.bounds());
     }
 }
 

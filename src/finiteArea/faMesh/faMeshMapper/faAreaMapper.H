@@ -38,14 +38,11 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faAreaMapper_H
-#define faAreaMapper_H
+#ifndef Foam_faAreaMapper_H
+#define Foam_faAreaMapper_H
 
 #include "morphFieldMapper.H"
 #include "faMesh.H"
-#include "faceMapper.H"
-#include "HashSet.H"
-#include "mapPolyMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -60,7 +57,7 @@ class faAreaMapper
 :
     public morphFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh mapper
         const faMesh& mesh_;
@@ -68,38 +65,46 @@ class faAreaMapper
         //- Reference to mapPolyMesh
         const mapPolyMesh& mpm_;
 
+        //- Size before mapping (old mesh size)
+        const label sizeBeforeMapping_;
+
         //- Is the mapping direct
         bool direct_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         mutable bool hasUnmapped_;
 
-        //- Old mesh size
-        label sizeBeforeMapping_;
+        //- New face labels after mapping
+        mutable std::unique_ptr<labelList> newFaceLabelsPtr_;
 
         //- New face labels after mapping
-        mutable labelList* newFaceLabelsPtr_;
-
-        //- New face labels after mapping
-        mutable labelList* newFaceLabelsMapPtr_;
+        mutable std::unique_ptr<labelList> newFaceLabelsMapPtr_;
 
 
         //- Direct addressing (only one form of addressing is used)
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one form of addressing is used)
-        mutable labelListList* interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpAddrPtr_;
 
         //- Interpolation weights
-        mutable scalarListList* weightsPtr_;
+        mutable std::unique_ptr<scalarListList> weightsPtr_;
 
         //- Inserted faces
-        mutable labelList* insertedObjectLabelsPtr_;
+        mutable std::unique_ptr<labelList> insertedObjectsPtr_;
 
 
     // Private Member Functions
+
+        //- Calculate addressing
+        void calcAddressing() const;
+
+
+public:
+
+    // Generated Methods
 
         //- No copy construct
         faAreaMapper(const faAreaMapper&) = delete;
@@ -107,21 +112,15 @@ class faAreaMapper
         //- No copy assignment
         void operator=(const faAreaMapper&) = delete;
 
-        //- Calculate addressing
-        void calcAddressing() const;
 
-        //- Clear out local storage
-        void clearOut();
+    // Constructors
 
-
-public:
-
-    //- Construct from components
-    faAreaMapper
-    (
-        const faMesh& mesh,
-        const mapPolyMesh& mpm
-    );
+        //- Construct from components
+        faAreaMapper
+        (
+            const faMesh& mesh,
+            const mapPolyMesh& mpm
+        );
 
 
     //- Destructor

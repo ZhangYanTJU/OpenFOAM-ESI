@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2019 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -149,6 +149,60 @@ Foam::HashTable<Foam::wordHashSet> Foam::objectRegistry::classes() const
 {
     return classesImpl(*this, predicates::always());
 }
+
+
+Foam::IOobject Foam::objectRegistry::newIOobject
+(
+    const word& name,
+    IOobjectOption ioOpt
+) const
+{
+    return IOobject
+    (
+        name,
+        time().timeName(),  // instance
+        *this,
+        ioOpt
+    );
+}
+
+
+Foam::IOobject Foam::objectRegistry::newIOobject
+(
+    const word& name,
+    IOobjectOption::readOption rOpt,
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption regOpt
+) const
+{
+    return IOobject
+    (
+        name,
+        time().timeName(),  // instance
+        *this,
+        IOobjectOption(rOpt, wOpt, regOpt)
+    );
+}
+
+
+// FUTURE?
+//
+// Foam::IOobject Foam::objectRegistry::newIOobject_constant
+// (
+//     const word& name,
+//     IOobjectOption::readOption rOpt,
+//     IOobjectOption::writeOption wOpt,
+//     IOobjectOption::registerOption regOpt
+// ) const
+// {
+//     return IOobject
+//     (
+//         name,
+//         time().constant(),  // instance
+//         *this,
+//         IOobjectOption(rOpt, wOpt, regOpt)
+//     );
+// }
 
 
 Foam::label Foam::objectRegistry::count(const char* clsName) const

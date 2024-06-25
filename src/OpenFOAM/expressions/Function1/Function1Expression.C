@@ -115,7 +115,7 @@ Type Foam::Function1Types::Function1Expression<Type>::integrate
 ) const
 {
     NotImplemented;
-    return Zero;
+    return Type();
 }
 
 

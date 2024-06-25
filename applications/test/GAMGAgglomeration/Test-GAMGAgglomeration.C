@@ -70,7 +70,10 @@ int main(int argc, char *argv[])
     );
 
     labelList cellToCoarse(identity(mesh.nCells()));
-    labelListList coarseToCell(invertOneToMany(mesh.nCells(), cellToCoarse));
+    CompactListList<label> coarseToCell
+    (
+        invertOneToManyCompact(mesh.nCells(), cellToCoarse)
+    );
 
     ++runTime;
 
@@ -78,16 +81,11 @@ int main(int argc, char *argv[])
     {
         volScalarField scalarAgglomeration
         (
-            IOobject
-            (
-                "agglomeration",
-                runTime.timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
+            mesh.thisDb().newIOobject("agglomeration"),
             mesh,
-            dimensionedScalar(dimless, Zero)
+            Foam::zero{},
+            dimless,
+            fvPatchFieldBase::zeroGradientType()
         );
         scalarField& fld = scalarAgglomeration.primitiveFieldRef();
         forAll(fld, celli)
@@ -142,31 +140,23 @@ int main(int argc, char *argv[])
         }
 
 
-        forAll(addr, fineI)
+        forAll(addr, finei)
         {
-            const labelList& cellLabels = coarseToCell[fineI];
-            forAll(cellLabels, i)
-            {
-                cellToCoarse[cellLabels[i]] = addr[fineI];
-            }
+            labelUIndList(cellToCoarse, coarseToCell[finei]) = addr[finei];
         }
-        coarseToCell = invertOneToMany(coarseSize, cellToCoarse);
+        coarseToCell = invertOneToManyCompact(coarseSize, cellToCoarse);
 
         // Write agglomeration
         {
             volScalarField scalarAgglomeration
             (
-                IOobject
-                (
-                    "agglomeration",
-                    runTime.timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
+                mesh.thisDb().newIOobject("agglomeration"),
                 mesh,
-                dimensionedScalar(dimless, Zero)
+                Foam::zero{},
+                dimless,
+                fvPatchFieldBase::zeroGradientType()
             );
+
             scalarField& fld = scalarAgglomeration.primitiveFieldRef();
             forAll(fld, celli)
             {
@@ -193,9 +183,9 @@ int main(int argc, char *argv[])
             }
 
             // Determine coarse cc
-            forAll(coarseToCell, coarseI)
+            forAll(coarseToCell, coarsei)
             {
-                const labelList& cellLabels = coarseToCell[coarseI];
+                const auto& cellLabels = coarseToCell[coarsei];
 
                 point coarseCc = average
                 (
@@ -204,10 +194,8 @@ int main(int argc, char *argv[])
                 meshTools::writeOBJ(str, coarseCc);
                 vertI++;
 
-                forAll(cellLabels, i)
+                for (label celli : cellLabels)
                 {
-                    label celli = cellLabels[i];
-
                     str << "l " << celli+1 << ' ' << vertI << nl;
                 }
             }

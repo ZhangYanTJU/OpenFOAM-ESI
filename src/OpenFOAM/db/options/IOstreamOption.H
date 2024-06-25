@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,9 +35,6 @@ Description
 
     The compression (UNCOMPRESSED | COMPRESSED) is typically controlled
     by switch values (true/false, on/off, ...).
-
-    Additionally, some enumerations are defined (APPEND, NON_APPEND, ...)
-    that are useful, verbose alternatives to bool values.
 
 SourceFiles
     IOstreamOption.C
@@ -84,11 +81,14 @@ public:
             COMPRESSED          //!< compression = true
         };
 
-        //- File appending (NON_APPEND | APPEND)
+        //- File appending (NO_APPEND | APPEND_APP | APPEND_ATE)
         enum appendType : char
         {
-            NON_APPEND = 0,     //!< append = false
-            APPEND              //!< append = true
+            NO_APPEND = 0,      //!< no append (truncates existing)
+            APPEND_APP,         //!< append (seek end each write)
+            APPEND_ATE,         //!< append (seek end after open)
+            NON_APPEND = NO_APPEND,     //!< old name for NO_APPEND
+            APPEND = APPEND_APP         //!< old name for APPEND_APP
         };
 
         //- Atomic operations (output)

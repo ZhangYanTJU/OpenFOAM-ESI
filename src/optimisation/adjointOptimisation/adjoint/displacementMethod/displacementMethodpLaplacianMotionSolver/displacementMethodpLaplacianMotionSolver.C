@@ -65,9 +65,9 @@ displacementMethodpLaplacianMotionSolver
                 "dynamicMeshDict",
                 mesh.time().constant(),
                 mesh,
-                IOobject::MUST_READ_IF_MODIFIED,
-                IOobject::AUTO_WRITE,
-                false
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             )
         ).subDict("pLaplacianMotionSolverCoeffs").getOrDefault<bool>
         (

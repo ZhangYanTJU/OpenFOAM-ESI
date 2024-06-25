@@ -32,13 +32,13 @@ Description
 
     Use UOPstream to stream data into buffers, call finishedSends() to
     notify that data is in buffers and then use IUPstream to get data out
-    of received buffers. Works with both blocking and non-blocking. Does
+    of received buffers. Works with both buffered and non-blocking. Does
     not make much sense with scheduled since there you would not need these
     explicit buffers.
 
     Example usage:
     \code
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         for (const int proci : UPstream::allProcs())
         {
@@ -51,7 +51,7 @@ Description
             }
         }
 
-        pBufs.finishedSends();   // no-op for blocking
+        pBufs.finishedSends();   // no-op for buffered
 
         for (const int proci : UPstream::allProcs())
         {
@@ -68,7 +68,7 @@ Description
     one-to-all and all-to-one communication patterns.
     For example,
     \code
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         if (UPstream::master())
         {
@@ -96,7 +96,7 @@ Description
 
     For example,
     \code
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         pBufs.initRegisterSend();
 

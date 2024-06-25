@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef edgeMeshFormat_H
-#define edgeMeshFormat_H
+#ifndef Foam_edgeMeshFormat_H
+#define Foam_edgeMeshFormat_H
 
 #include "edgeMesh.H"
 #include "Ostream.H"
@@ -60,15 +60,6 @@ class edgeMeshFormat
 :
     public edgeMesh
 {
-    // Private Member Functions
-
-        //- No copy construct
-        edgeMeshFormat(const edgeMeshFormat&) = delete;
-
-        //- No copy assignment
-        void operator=(const edgeMeshFormat&) = delete;
-
-
 protected:
 
     // Protected Member Functions
@@ -87,7 +78,7 @@ public:
     // Constructors
 
         //- Construct from file name
-        explicit edgeMeshFormat(const fileName&);
+        explicit edgeMeshFormat(const fileName& filename);
 
 
     // Selectors
@@ -134,7 +125,7 @@ public:
     // Member Functions
 
         //- Read from file
-        virtual bool read(const fileName& name);
+        virtual bool read(const fileName& filename) override;
 
         //- Write edge mesh to file
         virtual void write
@@ -142,7 +133,19 @@ public:
             const fileName& name,
             IOstreamOption streamOpt = IOstreamOption(),
             const dictionary& options = dictionary::null
-        ) const
+        ) const override
+        {
+            write(name, *this, streamOpt, options);
+        }
+
+        //- Write edge mesh to file
+        virtual void write
+        (
+            const fileName& name,
+            const word& fileType,  /* ignored */
+            IOstreamOption streamOpt = IOstreamOption(),
+            const dictionary& options = dictionary::null
+        ) const override
         {
             write(name, *this, streamOpt, options);
         }

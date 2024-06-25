@@ -254,11 +254,7 @@ Foam::pointMVCWeight::pointMVCWeight
 {
     // Addressing - face vertices to local points and vice versa
     const labelList& toGlobal = mesh.cellPoints()[cellIndex_];
-    Map<label> toLocal(2*toGlobal.size());
-    forAll(toGlobal, i)
-    {
-        toLocal.insert(toGlobal[i], i);
-    }
+    Map<label> toLocal(invertToMap(toGlobal));
 
 
     // Initialise weights

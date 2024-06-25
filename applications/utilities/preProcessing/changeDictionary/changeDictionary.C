@@ -80,7 +80,6 @@ Usage
 #include "IOobjectList.H"
 #include "IOPtrList.H"
 #include "volFields.H"
-#include "stringListOps.H"
 #include "timeSelector.H"
 
 using namespace Foam;
@@ -189,7 +188,7 @@ labelList findMatches
     const HashTable<wordList>& shortcuts,
     const wordList& shortcutNames,
     const wordList& thisKeys,
-    const keyType& key
+    const wordRe& key
 )
 {
     labelList matches;
@@ -197,20 +196,20 @@ labelList findMatches
     if (key.isPattern())
     {
         // Wildcard match
-        matches = findStrings(key, thisKeys);
+        matches = wordRes::matching(key, thisKeys);
     }
     else if (shortcuts.size())
     {
         // See if patchGroups expand to valid thisKeys
-        labelList indices = findStrings(key, shortcutNames);
+        labelList indices = wordRes::matching(key, shortcutNames);
 
         for (const label idx : indices)
         {
             const word& name = shortcutNames[idx];
             const wordList& keys = shortcuts[name];
-            forAll(keys, j)
+            for (const word& k : keys)
             {
-                const label index = thisKeys.find(keys[j]);
+                const label index = thisKeys.find(k);
                 if (index != -1)
                 {
                     matches.append(index);

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,6 +85,7 @@ SourceFiles
 #define Foam_globalMeshData_H
 
 #include "processorTopology.H"
+#include "globalIndex.H"
 #include "labelPair.H"
 #include "indirectPrimitivePatch.H"
 
@@ -98,7 +99,6 @@ class polyMesh;
 class mapDistribute;
 template<class T> class CompactListList;
 template<class T> class EdgeMap;
-class globalIndex;
 class globalIndexAndTransform;
 class bitSet;
 
@@ -114,16 +114,18 @@ class globalMeshData
         const polyMesh& mesh_;
 
 
-        // Data related to the complete mesh
+    // Data related to the complete mesh
 
-            //- Total number of points in the complete mesh
-            label nTotalPoints_;
+        //- Global numbering for mesh points.
+        //- Not compensated for duplicate points!
+        globalIndex globalMeshPointAddr_;
 
-            //- Total number of faces in the complete mesh
-            label nTotalFaces_;
+        //- Global numbering for mesh faces.
+        //- Not compensated for duplicate faces!
+        globalIndex globalMeshFaceAddr_;
 
-            //- Total number of cells in the complete mesh
-            label nTotalCells_;
+        //- Global numbering for mesh cells.
+        globalIndex globalMeshCellAddr_;
 
 
         // Processor patch addressing (be careful if not running in parallel!)
@@ -357,24 +359,44 @@ public:
                 return !processorPatches_.empty();
             }
 
-            //- Return total number of points in decomposed mesh.
+            //- Global numbering for \b mesh points.
+            //- Not compensated for duplicate points!
+            const globalIndex& globalMeshPointAddr() const noexcept
+            {
+                return globalMeshPointAddr_;
+            }
+
+            //- Global numbering for \b mesh faces.
+            //- Not compensated for duplicate faces!
+            const globalIndex& globalMeshFaceAddr() const noexcept
+            {
+                return globalMeshFaceAddr_;
+            }
+
+            //- Global numbering for \b mesh cells.
+            const globalIndex& globalMeshCellAddr() const noexcept
+            {
+                return globalMeshCellAddr_;
+            }
+
+            //- Total global number of \b mesh points.
             //- Not compensated for duplicate points!
             label nTotalPoints() const noexcept
             {
-                return nTotalPoints_;
+                return globalMeshPointAddr_.totalSize();
             }
 
-            //- Return total number of faces in decomposed mesh.
+            //- Total global number of \b mesh faces.
             //- Not compensated for duplicate faces!
             label nTotalFaces() const noexcept
             {
-                return nTotalFaces_;
+                return globalMeshFaceAddr_.totalSize();
             }
 
-            //- Return total number of cells in decomposed mesh.
+            //- Total global number of \b mesh cells.
             label nTotalCells() const noexcept
             {
-                return nTotalCells_;
+                return globalMeshCellAddr_.totalSize();
             }
 
 
@@ -425,7 +447,7 @@ public:
             const labelList& sharedPointLabels() const;
 
             //- Return addressing into the complete globally shared points
-            //  list
+            //- list
             //  Note: It is assumed that a (never constructed) complete
             //  list of globally shared points exists.  The set of shared
             //  points on the current processor is a subset of all shared
@@ -435,27 +457,28 @@ public:
             const labelList& sharedPointAddr() const;
 
             //- Return shared point global labels. Tries to read
-            //  'pointProcAddressing' and returns list or -1 if none
-            //  available.
+            //- 'pointProcAddressing' and returns list or -1 if none
+            //- available.
             const labelList& sharedPointGlobalLabels() const;
 
             //- Collect coordinates of shared points on all processors.
-            //  (does parallel communication!)
+            //- (does parallel communication!)
             //  Note: not valid for cyclicParallel since shared cyclic points
             //  are merged into single global point. (use geometricSharedPoints
             //  instead)
             pointField sharedPoints() const;
 
             //- Like sharedPoints but keeps cyclic points separate.
-            //  (does geometric merging; uses matchTol_*bb as merging tolerance)
-            //  Use sharedPoints() instead.
+            //- (does geometric merging; uses matchTol_*bb as merging tolerance)
+            //- Use sharedPoints() instead.
             pointField geometricSharedPoints() const;
 
 
 
         // Globally shared edge addressing
 
-            //- Return number of globally shared edges. Demand-driven
+            //- Return number of globally shared edges.
+            //  Demand-driven
             //  calculation so call needs to be synchronous among processors!
             label nGlobalEdges() const;
 
@@ -464,8 +487,8 @@ public:
             //  calculation so call needs to be synchronous among processors!
             const labelList& sharedEdgeLabels() const;
 
-            //- Return addressing into the complete globally shared edge
-            //  list. The set of shared
+            //- Return addressing into the complete globally shared edge list.
+            //  The set of shared
             //  edges on the current processor is a subset of all shared
             //  edges. Shared edge addressing gives the index in the
             //  list of all globally shared edges for each of the locally
@@ -614,6 +637,7 @@ public:
 
         //- Determine (local or global) cellCells from mesh agglomeration.
         //  Agglomeration is local to the processor.
+        //
         //  - parallel = false
         //    Resulting connections are in local cell indices.
         //    Coupled across cyclics but not processor patches.
@@ -623,9 +647,14 @@ public:
         static void calcCellCells
         (
             const polyMesh& mesh,
-            const labelList& agglom,
+            //! The cell agglomeration, negative agglomeration are excluded
+            //! from the sub-mesh
+            const labelUList& agglom,
+            //! The number of unique, agglomerated cells
             const label nLocalCoarse,
-            const bool parallel,  //!< Use global cell ids in parallel
+            //! Use global cell ids in parallel
+            const bool parallel,
+            //! [out] the mesh connectivity as CSR
             CompactListList<label>& cellCells
         );
 
@@ -635,11 +664,76 @@ public:
         static void calcCellCells
         (
             const polyMesh& mesh,
-            const labelList& agglom,
+            //! The cell agglomeration, negative agglomeration are excluded
+            //! from the sub-mesh
+            const labelUList& agglom,
+            //! The number of unique, agglomerated cells
             const label nLocalCoarse,
-            const bool parallel,  //!< Use global cell ids in parallel
+            //! Use global cell ids in parallel
+            const bool parallel,
+            //! [out] the mesh connectivity as CSR
             CompactListList<label>& cellCells,
+            //! [out] the connectivity weights (face area)
             CompactListList<scalar>& cellCellWeights
+        );
+
+        //- Determine (local or global) mesh connectivity
+        //
+        //  - parallel = false
+        //    Resulting connections are in local cell indices.
+        //    Coupled across cyclics but not processor patches.
+        //  - parallel = true
+        //    Resulting connections are in global cell indices.
+        //    Coupled across cyclics and processor patches.
+        static void calcCellCells
+        (
+            const polyMesh& mesh,
+            //! [out] the mesh connectivity as CSR
+            CompactListList<label>& cellCells,
+            //! Use global cell ids in parallel
+            const bool parallel = false
+        );
+
+        //- Determine (local or global) sub-mesh connectivity
+        //
+        //  - parallel = false
+        //    Resulting connections are in local cell indices.
+        //    Coupled across cyclics but not processor patches.
+        //  - parallel = true
+        //    Resulting connections are in global cell indices.
+        //    Coupled across cyclics and processor patches.
+        //
+        //  \return the cellMap
+        static labelList calcCellCells
+        (
+            const polyMesh& mesh,
+            //! The cell-subset
+            const bitSet& selectedCells,
+            //! [out] the mesh connectivity as CSR
+            CompactListList<label>& cellCells,
+            //! Use global cell ids in parallel
+            const bool parallel = false
+        );
+
+        //- Determine (local or global) sub-mesh connectivity
+        //
+        //  - parallel = false
+        //    Resulting connections are in local cell indices.
+        //    Coupled across cyclics but not processor patches.
+        //  - parallel = true
+        //    Resulting connections are in global cell indices.
+        //    Coupled across cyclics and processor patches.
+        //
+        //  \return the cellMap
+        static labelList calcCellCells
+        (
+            const polyMesh& mesh,
+            //! The cell-subset
+            const labelUList& selectedCells,
+            //! [out] the mesh connectivity as CSR
+            CompactListList<label>& cellCells,
+            //! Use global cell ids in parallel
+            const bool parallel = false
         );
 };
 

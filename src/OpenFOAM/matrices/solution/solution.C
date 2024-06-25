@@ -36,6 +36,7 @@ License
 namespace Foam
 {
     defineDebugSwitchWithName(solution, "solution", 0);
+    registerDebugSwitchWithName(solution, solution, "solution");
 }
 
 // List of sub-dictionaries to rewrite
@@ -106,26 +107,28 @@ void Foam::solution::read(const dictionary& dict)
         fieldRelaxDefault_ = Function1<scalar>::NewIfPresent
         (
             "default",
-            fieldRelaxDict_
+            fieldRelaxDict_,
+            &db()
         );
         if (!fieldRelaxDefault_)
         {
             fieldRelaxDefault_.reset
             (
-                new Function1Types::Constant<scalar>("default", 0)
+                new Function1Types::Constant<scalar>("default", 0, &db())
             );
         }
 
         eqnRelaxDefault_ = Function1<scalar>::NewIfPresent
         (
             "default",
-            eqnRelaxDict_
+            eqnRelaxDict_,
+            &db()
         );
         if (!eqnRelaxDefault_)
         {
             eqnRelaxDefault_.reset
             (
-                new Function1Types::Constant<scalar>("default", 0)
+                new Function1Types::Constant<scalar>("default", 0, &db())
             );
         }
 
@@ -239,7 +242,7 @@ Foam::label Foam::solution::upgradeSolverDict
     // recast primitive entries into dictionary entries
     for (const entry& dEntry : dict)
     {
-        if (!dEntry.isDict())
+        if (dEntry.isStream())
         {
             ITstream& is = dEntry.stream();
             word name(is);
@@ -254,11 +257,12 @@ Foam::label Foam::solution::upgradeSolverDict
             // transform primitiveEntry with settings -> dictionaryEntry
             for (const word& dictName : subDictNames)
             {
-                entry* eptr = subdict.findEntry(dictName, keyType::LITERAL);
+                ITstream* streamPtr =
+                    subdict.findStream(dictName, keyType::LITERAL);
 
-                if (eptr && !eptr->isDict())
+                if (streamPtr)
                 {
-                    ITstream& is = eptr->stream();
+                    auto& is = *streamPtr;
                     is >> name;
 
                     if (!is.eof())
@@ -341,18 +345,33 @@ bool Foam::solution::relaxField(const word& name, scalar& factor) const
             fieldRelaxCache_,  // cache
             name,
             fieldRelaxDict_,
-            keyType::REGEX
+            keyType::REGEX,
+            &db()
         )().value(time().timeOutputValue());
+
+        DebugInfo
+            << "Field relaxation factor for " << name
+            << " is " << factor
+            << " (from Function1)" << endl;
 
         return true;
     }
     else if (fieldRelaxDict_.found("default") && fieldRelaxDefault_)
     {
         factor = fieldRelaxDefault_->value(time().timeOutputValue());
+
+        DebugInfo
+            << "Field relaxation factor for " << name
+            << " is " << factor
+            << " (from default " << eqnRelaxDefault_->type() << ')' << endl;
+
         return true;
     }
 
     // Fallthrough - nothing found
+
+    DebugInfo<< "No field relaxation factor for " << name << endl;
+
     return false;
 }
 
@@ -368,18 +387,33 @@ bool Foam::solution::relaxEquation(const word& name, scalar& factor) const
             eqnRelaxCache_,  // cache
             name,
             eqnRelaxDict_,
-            keyType::REGEX
+            keyType::REGEX,
+            &db()
         )().value(time().timeOutputValue());
+
+        DebugInfo
+            << "Equation relaxation factor for " << name
+            << " is " << factor
+            << " (from Function1)" << endl;
 
         return true;
     }
     else if (eqnRelaxDict_.found("default") && eqnRelaxDefault_)
     {
         factor = eqnRelaxDefault_->value(time().timeOutputValue());
+
+        DebugInfo
+            << "Equation relaxation factor for " << name
+            << " is " << factor
+            << " (from default " << eqnRelaxDefault_->type() << ')' << endl;
+
         return true;
     }
 
     // Fallthrough - nothing found
+
+    DebugInfo<< "No equation relaxation factor for " << name << endl;
+
     return false;
 }
 

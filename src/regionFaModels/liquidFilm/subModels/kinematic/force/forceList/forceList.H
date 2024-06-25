@@ -29,6 +29,34 @@ Class
 Description
     List container for film sources
 
+Usage
+    Example of the model specification:
+    \verbatim
+    {
+        // Mandatory entries
+        forces
+        (
+            <forceModel1>
+            <forceModel2>
+            ...
+        );
+
+        <forceModel1>Coeffs
+        {
+            ...
+        }
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property     | Description                   | Type  | Reqd | Deflt
+      forces       | List of force models          | list  | yes  | -
+    \endtable
+
 SourceFiles
     forceList.C
 
@@ -37,9 +65,7 @@ SourceFiles
 #ifndef forceList_H
 #define forceList_H
 
-#include "PtrList.H"
 #include "force.H"
-#include "faCFD.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

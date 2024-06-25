@@ -39,7 +39,7 @@ namespace Foam
 
 Foam::cellAspectRatio::cellAspectRatio(const polyMesh& mesh)
 :
-    MeshObject<polyMesh, Foam::MoveableMeshObject, cellAspectRatio>(mesh)
+    MeshObject_type(mesh)
 {
     calcAspectRatio();
 }

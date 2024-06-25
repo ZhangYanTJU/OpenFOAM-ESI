@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -126,9 +126,8 @@ Foam::topoBitSet::topoBitSet
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER
         ),
-        label(0)  // zero-sized (unallocated) labelHashSet
-    ),
-    selected_()
+        Foam::zero{}  // Empty labelHashSet (initialCapacity = 0)
+    )
 {}
 
 
@@ -178,6 +177,12 @@ Foam::topoBitSet::topoBitSet
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::topoBitSet::contains(const label id) const
+{
+    return selected_.test(id);
+}
+
+
 bool Foam::topoBitSet::found(const label id) const
 {
     return selected_.test(id);
@@ -218,9 +223,12 @@ void Foam::topoBitSet::invert(const label maxLen)
 void Foam::topoBitSet::subset(const topoSet& set)
 {
     // Only retain entries found in both sets
-    if (isA<topoBitSet>(set))
+
+    const auto* topoBitsPtr = isA<topoBitSet>(set);
+
+    if (topoBitsPtr)
     {
-        selected_ &= refCast<const topoBitSet>(set).selected_;
+        selected_ &= topoBitsPtr->selected_;
     }
     else if (set.empty())
     {
@@ -239,12 +247,30 @@ void Foam::topoBitSet::subset(const topoSet& set)
 }
 
 
+void Foam::topoBitSet::subset(const labelUList& elems)
+{
+    // Only retain entries found in both sets
+    bitSet newLabels(selected_.size());
+
+    for (const label id : elems)
+    {
+        if (selected_.test(id))
+        {
+            newLabels.set(id);
+        }
+    }
+    selected_.transfer(newLabels);
+}
+
+
 void Foam::topoBitSet::addSet(const topoSet& set)
 {
     // Add entries to the set
-    if (isA<topoBitSet>(set))
+    const auto* topoBitsPtr = isA<topoBitSet>(set);
+
+    if (topoBitsPtr)
     {
-        selected_ |= refCast<const topoBitSet>(set).selected_;
+        selected_ |= topoBitsPtr->selected_;
     }
     else
     {
@@ -256,12 +282,20 @@ void Foam::topoBitSet::addSet(const topoSet& set)
 }
 
 
+void Foam::topoBitSet::addSet(const labelUList& elems)
+{
+    selected_.set(elems);
+}
+
+
 void Foam::topoBitSet::subtractSet(const topoSet& set)
 {
     // Subtract entries from the set
-    if (isA<topoBitSet>(set))
+    const auto* topoBitsPtr = isA<topoBitSet>(set);
+
+    if (topoBitsPtr)
     {
-        selected_ -= refCast<const topoBitSet>(set).selected_;
+        selected_ -= topoBitsPtr->selected_;
     }
     else
     {
@@ -270,6 +304,12 @@ void Foam::topoBitSet::subtractSet(const topoSet& set)
             selected_.unset(id);
         }
     }
+}
+
+
+void Foam::topoBitSet::subtractSet(const labelUList& elems)
+{
+    selected_.unset(elems);
 }
 
 

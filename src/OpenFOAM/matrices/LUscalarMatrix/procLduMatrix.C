@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,25 +43,14 @@ Foam::procLduMatrix::procLduMatrix
     lowerAddr_(ldum.lduAddr().lowerAddr()),
     diag_(ldum.diag()),
     upper_(ldum.upper()),
-    lower_(ldum.lower())
+    lower_(ldum.lower()),
+    interfaces_(interfaces.count_nonnull())
 {
     label nInterfaces = 0;
 
     forAll(interfaces, i)
     {
-        if (interfaces.set(i))
-        {
-            nInterfaces++;
-        }
-    }
-
-    interfaces_.setSize(nInterfaces);
-
-    nInterfaces = 0;
-
-    forAll(interfaces, i)
-    {
-        if (interfaces.set(i))
+        if (interfaces.test(i))
         {
             interfaces_.set
             (
@@ -73,32 +63,52 @@ Foam::procLduMatrix::procLduMatrix
             );
         }
     }
-
 }
 
 
 Foam::procLduMatrix::procLduMatrix(Istream& is)
-:
-    upperAddr_(is),
-    lowerAddr_(is),
-    diag_(is),
-    upper_(is),
-    lower_(is),
-    interfaces_(is)
-{}
+{
+    read(is);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+// void Foam::procLduMatrix::clear()
+// {
+//     upperAddr_.clear();
+//     lowerAddr_.clear();
+//     diag_.clear();
+//     upper_.clear();
+//     lower_.clear();
+//     interfaces_.clear();
+// }
+
+
+void Foam::procLduMatrix::read(Istream& is)
+{
+    is >> upperAddr_ >> lowerAddr_ >> diag_ >> upper_ >> lower_ >> interfaces_;
+}
+
+
+void Foam::procLduMatrix::write(Ostream& os) const
+{
+    os << upperAddr_ << lowerAddr_ << diag_ << upper_ << lower_ << interfaces_;
+}
 
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
-Foam::Ostream& Foam::operator<<(Ostream& os, const procLduMatrix& cldum)
+Foam::Istream& Foam::operator>>(Istream& is, procLduMatrix& mat)
 {
-    os  << cldum.upperAddr_
-        << cldum.lowerAddr_
-        << cldum.diag_
-        << cldum.upper_
-        << cldum.lower_
-        << cldum.interfaces_;
+    mat.read(is);
+    return is;
+}
 
+
+Foam::Ostream& Foam::operator<<(Ostream& os, const procLduMatrix& mat)
+{
+    mat.write(os);
     return os;
 }
 

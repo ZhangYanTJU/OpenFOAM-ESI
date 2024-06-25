@@ -25,10 +25,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "correctedLnGrad.H"
 #include "areaFields.H"
 #include "edgeFields.H"
-#include "linearEdgeInterpolation.H"
 #include "gaussFaGrad.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

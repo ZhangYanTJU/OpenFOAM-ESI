@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -117,7 +117,7 @@ Foam::label Foam::ptscotchDecomp::decompose
     labelList& decomp
 ) const
 {
-    const SCOTCH_Num numCells = max(0, (xadj.size()-1));
+    const SCOTCH_Num numCells = Foam::max(0, (xadj.size()-1));
 
     // Addressing
     ConstPrecisionAdaptor<SCOTCH_Num, label, List> adjncy_param(adjncy);
@@ -559,17 +559,10 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     //   adjncy      : contains neighbours (= edges in graph)
     //   xadj(celli) : start of information in adjncy for celli
 
+    // Global mesh connectivity
     CompactListList<label> cellCells;
-    globalMeshData::calcCellCells
-    (
-        mesh,
-        identity(mesh.nCells()),
-        mesh.nCells(),
-        true,
-        cellCells
-    );
+    globalMeshData::calcCellCells(mesh, cellCells, true);
 
-    // Decompose using default weights
     labelList decomp;
     decompose
     (
@@ -606,13 +599,14 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     // Make Metis CSR (Compressed Storage Format) storage
     //   adjncy      : contains neighbours (= edges in graph)
     //   xadj(celli) : start of information in adjncy for celli
+
     CompactListList<label> cellCells;
     globalMeshData::calcCellCells
     (
         mesh,
         agglom,
         agglomPoints.size(),
-        true,
+        true,       // Global mesh connectivity
         cellCells
     );
 
@@ -654,7 +648,6 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     //   adjncy      : contains neighbours (= edges in graph)
     //   xadj(celli) : start of information in adjncy for celli
 
-    // Decompose using default weights
     labelList decomp;
     decompose
     (
@@ -692,7 +685,6 @@ Foam::labelList Foam::ptscotchDecomp::decompose
 
     auto cellCells(CompactListList<label>::pack(globalCellCells));
 
-    // Decompose using default weights
     labelList decomp;
     decompose
     (

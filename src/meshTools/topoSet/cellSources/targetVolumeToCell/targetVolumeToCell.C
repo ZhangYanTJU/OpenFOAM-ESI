@@ -133,13 +133,13 @@ void Foam::targetVolumeToCell::combine(topoSet& set, const bool add) const
                 << maskSetName_ << endl;
         }
 
-        maskSet = false;
-        cellSet subset(mesh_, maskSetName_);
-
+        cellSet subset(mesh_, maskSetName_, IOobject::NO_REGISTER);
         const labelHashSet& cellLabels = subset;
+
+        maskSet = false;
         maskSet.setMany(cellLabels.begin(), cellLabels.end());
 
-        nTotCells = returnReduce(subset.size(), sumOp<label>());
+        nTotCells = returnReduce(cellLabels.size(), sumOp<label>());
     }
 
 
@@ -301,13 +301,10 @@ Foam::targetVolumeToCell::targetVolumeToCell
     const dictionary& dict
 )
 :
-    targetVolumeToCell
-    (
-        mesh,
-        dict.getCheck<scalar>("volume", scalarMinMax::ge(0)),
-        dict.get<vector>("normal"),
-        dict.getOrDefault<word>("set", "")
-    )
+    topoSetCellSource(mesh, dict),
+    vol_(dict.getCheck<scalar>("volume", scalarMinMax::ge(0))),
+    normal_(dict.get<vector>("normal")),
+    maskSetName_(dict.getOrDefault<word>("set", ""))
 {}
 
 

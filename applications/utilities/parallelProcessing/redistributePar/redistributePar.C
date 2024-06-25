@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,6 +102,7 @@ Usage
 #include "faMeshSubset.H"
 #include "faMeshTools.H"
 #include "faMeshDistributor.H"
+#include "faMeshesRegistry.H"
 #include "parFaFieldDistributorCache.H"
 
 #include "redistributeLagrangian.H"
@@ -906,11 +907,25 @@ autoPtr<mapDistributePolyMesh> redistributeAndWrite
     }
 
 
+    // If faMeshesRegistry exists, it is also owned by the polyMesh and will
+    // be destroyed by clearGeom() in fvMeshDistribute::distribute()
+    //
+    // Rescue faMeshesRegistry from destruction by temporarily moving
+    // it to be locally owned.
+    std::unique_ptr<faMeshesRegistry> faMeshesRegistry_saved
+    (
+        faMeshesRegistry::Release(mesh)
+    );
+
     // Mesh distribution engine
     fvMeshDistribute distributor(mesh);
 
     // Do all the distribution of mesh and fields
     autoPtr<mapDistributePolyMesh> distMap = distributor.distribute(decomp);
+
+    // Restore ownership onto the polyMesh
+    faMeshesRegistry::Store(std::move(faMeshesRegistry_saved));
+
 
     // Print some statistics
     InfoOrPout<< "After distribution:" << endl;
@@ -951,8 +966,8 @@ autoPtr<mapDistributePolyMesh> redistributeAndWrite
     }
 
 
-    // Set the minimum write precision
-    IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    IOstream::minPrecision(10);
 
 
     if (!overwrite)
@@ -1598,7 +1613,8 @@ int main(int argc, char *argv[])
             );
             const fileName areaMeshSubDir
             (
-                polyMesh::regionName(regionName) / faMesh::meshSubDir
+                // Assume single-region area mesh
+                faMesh::meshDir(regionName, word::null)
             );
 
             InfoOrPout
@@ -2501,7 +2517,8 @@ int main(int argc, char *argv[])
             );
             const fileName areaMeshSubDir
             (
-                polyMesh::regionName(regionName) / faMesh::meshSubDir
+                // Assume single-region area mesh
+                faMesh::meshDir(regionName, word::null)
             );
 
             InfoOrPout

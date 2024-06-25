@@ -90,31 +90,6 @@ bool Foam::functionObjects::age::converged
 }
 
 
-template<class GeoField>
-Foam::autoPtr<GeoField>
-Foam::functionObjects::age::newField
-(
-    const word& baseName,
-    const wordList patches
-) const
-{
-    return autoPtr<GeoField>::New
-    (
-        IOobject
-        (
-            scopedName(baseName),
-            time_.timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh_,
-        dimensioned<typename GeoField::value_type>(dimTime, Zero),
-        patches
-    );
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::functionObjects::age::age

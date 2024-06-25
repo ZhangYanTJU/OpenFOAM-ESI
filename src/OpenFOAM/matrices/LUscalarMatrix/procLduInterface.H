@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,10 +50,11 @@ namespace Foam
 class lduInterfaceField;
 class procLduInterface;
 
+Istream& operator>>(Istream&, procLduInterface&);
 Ostream& operator<<(Ostream&, const procLduInterface&);
 
 /*---------------------------------------------------------------------------*\
-                           Class procLduInterface Declaration
+                      Class procLduInterface Declaration
 \*---------------------------------------------------------------------------*/
 
 class procLduInterface
@@ -68,6 +70,7 @@ class procLduInterface
 
 public:
 
+    //- Friendship
     friend class LUscalarMatrix;
 
 
@@ -85,7 +88,8 @@ public:
             const scalarField& coeffs
         );
 
-        procLduInterface(Istream& is);
+        //- Read construct from Istream
+        explicit procLduInterface(Istream& is);
 
         autoPtr<procLduInterface> clone()
         {
@@ -99,8 +103,12 @@ public:
         }
 
 
-    // Ostream Operator
+    // IO Operations
 
+        void read(Istream& is);
+        void write(Ostream& os) const;
+
+        friend Istream& operator>>(Istream&, procLduInterface&);
         friend Ostream& operator<<(Ostream&, const procLduInterface&);
 };
 

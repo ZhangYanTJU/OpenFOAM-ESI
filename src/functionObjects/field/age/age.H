@@ -141,14 +141,6 @@ class age
         //- Return true if convergence is reached
         bool converged(const int nCorr, const scalar initialResidual) const;
 
-        //- Create and allocate a new zero geometric field
-        template<class GeoField>
-        autoPtr<GeoField> newField
-        (
-            const word& baseName,
-            const wordList
-        ) const;
-
 
 public:
 

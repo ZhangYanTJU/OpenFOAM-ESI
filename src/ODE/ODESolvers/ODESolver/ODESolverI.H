@@ -27,36 +27,19 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
-inline Foam::label Foam::ODESolver::nEqns() const
-{
-    return n_;
-}
-
-
-inline Foam::scalarField& Foam::ODESolver::absTol()
-{
-    return absTol_;
-}
-
-
-inline Foam::scalarField& Foam::ODESolver::relTol()
-{
-    return relTol_;
-}
-
-
 template<class Type>
 inline void Foam::ODESolver::resizeField(UList<Type>& f, const label n)
 {
-    f.shallowCopy(UList<Type>(f.begin(), n));
+    // shallowResize
+    f.shallowCopy(f.data(), n);
 }
 
 
 template<class Type>
 inline void Foam::ODESolver::resizeField(UList<Type>& f) const
 {
-    resizeField(f, n_);
+    // shallowResize
+    f.shallowCopy(f.data(), n_);
 }
 
 

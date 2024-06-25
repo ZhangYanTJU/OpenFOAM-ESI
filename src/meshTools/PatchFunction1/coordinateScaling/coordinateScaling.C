@@ -51,7 +51,7 @@ Foam::coordinateScaling<Type>::coordinateScaling
     {
         const word key("scale" + Foam::name(dir+1));
 
-        auto scaling = Function1<Type>::NewIfPresent(key, dict);
+        auto scaling = Function1<Type>::NewIfPresent(key, dict, &obr);
 
         if (scaling)
         {

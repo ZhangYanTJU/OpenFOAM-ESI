@@ -237,7 +237,8 @@ void Foam::valuePointPatchField<Type>::operator=
     const pointPatchField<Type>& ptf
 )
 {
-    Field<Type>::operator=(this->patchInternalField());
+    // pointPatchField has no values to copy, assign internal values
+    this->extrapolateInternal();
 }
 
 
@@ -277,7 +278,8 @@ void Foam::valuePointPatchField<Type>::operator==
     const pointPatchField<Type>& ptf
 )
 {
-    Field<Type>::operator=(this->patchInternalField());
+    // pointPatchField has no values to copy, assign internal values
+    this->extrapolateInternal();
 }
 
 

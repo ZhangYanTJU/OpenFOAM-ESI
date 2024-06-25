@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "pointMapper.H"
-#include "demandDrivenData.H"
 #include "pointMesh.H"
 #include "mapPolyMesh.H"
 
@@ -37,9 +37,9 @@ void Foam::pointMapper::calcAddressing() const
     if
     (
         directAddrPtr_
-     || interpolationAddrPtr_
+     || interpAddrPtr_
      || weightsPtr_
-     || insertedPointLabelsPtr_
+     || insertedObjectsPtr_
     )
     {
         FatalErrorInFunction
@@ -51,160 +51,226 @@ void Foam::pointMapper::calcAddressing() const
     {
         // Direct addressing, no weights
 
-        directAddrPtr_ = new labelList(mpm_.pointMap());
-        labelList& directAddr = *directAddrPtr_;
+        directAddrPtr_ = std::make_unique<labelList>
+        (
+            // No retired points, so pointMap().size() == mapperLen_ anyhow
+            labelList::subList(mpm_.pointMap(), mapperLen_)
+        );
+        auto& directAddr = *directAddrPtr_;
 
-        // Not necessary to resize the list as there are no retired points
-        // directAddr.setSize(pMesh_.size());
+        insertedObjectsPtr_ = std::make_unique<labelList>();
+        auto& inserted = *insertedObjectsPtr_;
 
-        insertedPointLabelsPtr_ = new labelList(pMesh_.size());
-        labelList& insertedPoints = *insertedPointLabelsPtr_;
-
-        label nInsertedPoints = 0;
-
-        forAll(directAddr, pointi)
+        // The nInsertedObjects_ already counted in the constructor
+        if (nInsertedObjects_)
         {
-            if (directAddr[pointi] < 0)
-            {
-                // Found inserted point
-                directAddr[pointi] = 0;
-                insertedPoints[nInsertedPoints] = pointi;
-                nInsertedPoints++;
-            }
-        }
+            inserted.resize(nInsertedObjects_);
 
-        insertedPoints.setSize(nInsertedPoints);
+            label nInserted = 0;
+            forAll(directAddr, i)
+            {
+                if (directAddr[i] < 0)
+                {
+                    // Found inserted
+                    directAddr[i] = 0;
+                    inserted[nInserted] = i;
+                    ++nInserted;
+
+                    // TBD: check (nInsertedObjects_ < nInserted)?
+                    #ifdef FULLDEBUG
+                    if (nInsertedObjects_ < nInserted)
+                    {
+                        FatalErrorInFunction
+                            << "Unexpected insert of more than "
+                            << nInsertedObjects_ << " items\n"
+                            << abort(FatalError);
+                    }
+                    #endif
+                }
+            }
+            // TBD: check (nInserted < nInsertedObjects_)?
+            #ifdef FULLDEBUG
+            if (nInserted < nInsertedObjects_)
+            {
+                WarningInFunction
+                    << "Found " << nInserted << " instead of "
+                    << nInsertedObjects_ << " items to insert\n";
+            }
+            #endif
+            // The resize should be unnecessary
+            inserted.resize(nInserted);
+        }
     }
     else
     {
         // Interpolative addressing
 
-        interpolationAddrPtr_ = new labelListList(pMesh_.size());
-        labelListList& addr = *interpolationAddrPtr_;
+        interpAddrPtr_ = std::make_unique<labelListList>(mapperLen_);
+        auto& addr = *interpAddrPtr_;
 
-        weightsPtr_ = new scalarListList(pMesh_.size());
-        scalarListList& w = *weightsPtr_;
+        weightsPtr_ = std::make_unique<scalarListList>(mapperLen_);
+        auto& wght = *weightsPtr_;
+
+
+        // Set the addressing and uniform weight
+        const auto setAddrWeights = [&]
+        (
+            const List<objectMap>& maps,
+            const char * const nameOfMap
+        )
+        {
+            for (const objectMap& map : maps)
+            {
+                // Get index, addressing
+                const label pointi = map.index();
+                const labelList& mo = map.masterObjects();
+                if (mo.empty()) continue;  // safety
+
+                if (addr[pointi].size())
+                {
+                    FatalErrorInFunction
+                        << "Master point " << pointi
+                        << " already mapped, cannot apply "
+                        << nameOfMap
+                        << flatOutput(mo) << abort(FatalError);
+                }
+
+                // Map from masters, uniform weights
+                addr[pointi] = mo;
+                wght[pointi] = scalarList(mo.size(), 1.0/mo.size());
+            }
+        };
+
 
         // Points created from other points (i.e. points merged into it).
-        const List<objectMap>& cfc = mpm_.pointsFromPointsMap();
 
-        forAll(cfc, cfcI)
+        setAddrWeights(mpm_.pointsFromPointsMap(), "point points");
+
+
+        // Do mapped points.
+        // - may already have been set, so check if addressing still empty().
+
         {
-            // Get addressing
-            const labelList& mo = cfc[cfcI].masterObjects();
+            const labelList& map = mpm_.pointMap();
 
-            label pointi = cfc[cfcI].index();
-
-            if (addr[pointi].size())
+            for (label pointi = 0; pointi < mapperLen_; ++pointi)
             {
-                FatalErrorInFunction
-                    << "Master point " << pointi
-                    << " mapped from points " << mo
-                    << " already destination of mapping." << abort(FatalError);
-            }
+                const label mappedi = map[pointi];
 
-            // Map from masters, uniform weights
-            addr[pointi] = mo;
-            w[pointi] = scalarList(mo.size(), 1.0/mo.size());
-        }
-
-
-        // Do mapped points. Note that can already be set from pointsFromPoints
-        // so check if addressing size still zero.
-
-        const labelList& cm = mpm_.pointMap();
-
-        forAll(cm, pointi)
-        {
-            if (cm[pointi] > -1 && addr[pointi].empty())
-            {
-                // Mapped from a single point
-                addr[pointi] = labelList(1, cm[pointi]);
-                w[pointi] = scalarList(1, scalar(1));
+                if (mappedi >= 0 && addr[pointi].empty())
+                {
+                    // Mapped from a single point
+                    addr[pointi].resize(1, mappedi);
+                    wght[pointi].resize(1, 1.0);
+                }
             }
         }
 
         // Grab inserted points (for them the size of addressing is still zero)
 
-        insertedPointLabelsPtr_ = new labelList(pMesh_.size());
-        labelList& insertedPoints = *insertedPointLabelsPtr_;
+        insertedObjectsPtr_ = std::make_unique<labelList>();
+        auto& inserted = *insertedObjectsPtr_;
 
-        label nInsertedPoints = 0;
-
-        forAll(addr, pointi)
+        // The nInsertedObjects_ already counted in the constructor
+        if (nInsertedObjects_)
         {
-            if (addr[pointi].empty())
+            inserted.resize(nInsertedObjects_);
+
+            label nInserted = 0;
+            forAll(addr, i)
             {
-                // Mapped from a dummy point. Take point 0 with weight 1.
-                addr[pointi] = labelList(1, Zero);
-                w[pointi] = scalarList(1, scalar(1));
+                if (addr[i].empty())
+                {
+                    // Mapped from dummy point 0
+                    addr[i].resize(1, 0);
+                    wght[i].resize(1, 1.0);
 
-                insertedPoints[nInsertedPoints] = pointi;
-                nInsertedPoints++;
+                    inserted[nInserted] = i;
+                    ++nInserted;
+
+                    // TBD: check (nInsertedObjects_ < nInserted)?
+                    #ifdef FULLDEBUG
+                    if (nInsertedObjects_ < nInserted)
+                    {
+                        FatalErrorInFunction
+                            << "Unexpected insert of more than "
+                            << nInsertedObjects_ << " items\n"
+                            << abort(FatalError);
+                    }
+                    #endif
+                }
             }
+            // TBD: check (nInserted < nInsertedObjects_)?
+            #ifdef FULLDEBUG
+            if (nInserted < nInsertedObjects_)
+            {
+                WarningInFunction
+                    << "Found " << nInserted << " instead of "
+                    << nInsertedObjects_ << " items to insert\n";
+            }
+            #endif
+            // The resize should be unnecessary
+            inserted.resize(nInserted);
         }
-
-        insertedPoints.setSize(nInsertedPoints);
     }
 }
 
 
-void Foam::pointMapper::clearOut()
-{
-    deleteDemandDrivenData(directAddrPtr_);
-    deleteDemandDrivenData(interpolationAddrPtr_);
-    deleteDemandDrivenData(weightsPtr_);
-    deleteDemandDrivenData(insertedPointLabelsPtr_);
-}
+// void Foam::pointMapper::clearOut()
+// {
+//     directAddrPtr_.reset(nullptr);
+//     interpAddrPtr_.reset(nullptr);
+//     weightsPtr_.reset(nullptr);
+//     insertedObjectsPtr_.reset(nullptr);
+// }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::pointMapper::pointMapper(const pointMesh& pMesh, const mapPolyMesh& mpm)
 :
-    pMesh_(pMesh),
     mpm_(mpm),
-    insertedPoints_(true),
-    direct_(false),
-    directAddrPtr_(nullptr),
-    interpolationAddrPtr_(nullptr),
-    weightsPtr_(nullptr),
-    insertedPointLabelsPtr_(nullptr)
+    mapperLen_(pMesh.size()),
+    nInsertedObjects_(0),
+    direct_
+    (
+        // Mapping without interpolation?
+        mpm.pointsFromPointsMap().empty()
+    )
 {
-    // Check for possibility of direct mapping
-    if (mpm_.pointsFromPointsMap().empty())
+    const auto& directMap = mpm_.pointMap();
+
+    if (!mapperLen_)
     {
+        // Empty mesh
         direct_ = true;
+        nInsertedObjects_ = 0;
+    }
+    else if (direct_)
+    {
+        // Number of inserted points (-ve values)
+        nInsertedObjects_ = std::count_if
+        (
+            directMap.cbegin(),
+            directMap.cbegin(mapperLen_),
+            [](label i) { return (i < 0); }
+        );
     }
     else
     {
-        direct_ = false;
-    }
+        // Check if there are inserted points with no owner
+        // (check all lists)
 
-    // Check for inserted points
-    if (direct_ && (mpm_.pointMap().empty() || min(mpm_.pointMap()) > -1))
-    {
-        insertedPoints_ = false;
-    }
-    else
-    {
-        //Check if there are inserted points with no owner
+        bitSet unmapped(mapperLen_, true);
 
-        // Make a copy of the point map, add the entries for points from points
-        // and check for left-overs
-        labelList cm(pMesh_.size(), -1);
+        unmapped.unset(directMap);  // direct mapped
 
-        const List<objectMap>& cfc = mpm_.pointsFromPointsMap();
-
-        forAll(cfc, cfcI)
+        for (const objectMap& map : mpm_.pointsFromPointsMap())
         {
-            cm[cfc[cfcI].index()] = 0;
+            if (!map.empty()) unmapped.unset(map.index());
         }
 
-        if (min(cm) < 0)
-        {
-            insertedPoints_ = true;
-        }
+        nInsertedObjects_ = label(unmapped.count());
     }
 }
 
@@ -212,15 +278,14 @@ Foam::pointMapper::pointMapper(const pointMesh& pMesh, const mapPolyMesh& mpm)
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::pointMapper::~pointMapper()
-{
-    clearOut();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::label Foam::pointMapper::size() const
 {
+    // OR:  return mapperLen_;
     return mpm_.pointMap().size();
 }
 
@@ -266,12 +331,12 @@ const Foam::labelListList& Foam::pointMapper::addressing() const
             << abort(FatalError);
     }
 
-    if (!interpolationAddrPtr_)
+    if (!interpAddrPtr_)
     {
         calcAddressing();
     }
 
-    return *interpolationAddrPtr_;
+    return *interpAddrPtr_;
 }
 
 
@@ -295,30 +360,19 @@ const Foam::scalarListList& Foam::pointMapper::weights() const
 
 const Foam::labelList& Foam::pointMapper::insertedObjectLabels() const
 {
-    if (!insertedPointLabelsPtr_)
+    if (!insertedObjectsPtr_)
     {
-        if (!insertedObjects())
+        if (!nInsertedObjects_)
         {
-            // There are no inserted points
-            insertedPointLabelsPtr_ = new labelList(0);
+            // No inserted objects will be created
+            return labelList::null();
         }
-        else
-        {
-            calcAddressing();
-        }
+
+        calcAddressing();
     }
 
-    return *insertedPointLabelsPtr_;
+    return *insertedObjectsPtr_;
 }
-
-
-// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
-
-
-// * * * * * * * * * * * * * * * Friend Functions  * * * * * * * * * * * * * //
-
-
-// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
 
 
 // ************************************************************************* //

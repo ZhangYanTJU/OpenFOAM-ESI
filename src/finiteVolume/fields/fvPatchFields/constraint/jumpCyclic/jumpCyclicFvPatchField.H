@@ -34,6 +34,8 @@ Description
     This boundary condition provides a base class for coupled-cyclic
     conditions with a specified 'jump' (or offset) between the values
 
+    The "value" entry is NO_READ.
+
 See also
     Foam::cyclicFvPatchField
 
@@ -42,8 +44,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef jumpCyclicFvPatchField_H
-#define jumpCyclicFvPatchField_H
+#ifndef Foam_jumpCyclicFvPatchField_H
+#define Foam_jumpCyclicFvPatchField_H
 
 #include "cyclicFvPatchField.H"
 
@@ -61,7 +63,6 @@ class jumpCyclicFvPatchField
 :
     public cyclicFvPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -77,13 +78,14 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         jumpCyclicFvPatchField
         (
             const fvPatch&,
             const DimensionedField<Type, volMesh>&,
             const dictionary&,
-            const bool valueRequired = true
+            const bool needValue = true  //!< evaluate
         );
 
         //- Construct by mapping given jumpCyclicFvPatchField onto a new patch

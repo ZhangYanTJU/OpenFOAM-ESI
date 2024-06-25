@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,11 +30,11 @@ License
 #include "Random.H"
 #include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(randomRenumber, 0);
+    defineTypeName(randomRenumber);
 
     addToRunTimeSelectionTable
     (
@@ -45,7 +45,38 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+labelList randomMap(const label nCells)
+{
+    Random rndGen(0);
+
+    // Full coverage
+    labelList newToOld(Foam::identity(nCells));
+
+    // Fisher-Yates shuffle algorithm
+    for (label i = nCells - 1; i > 0; --i)
+    {
+        label j = rndGen.position<label>(0, i);
+        std::swap(newToOld[i], newToOld[j]);
+    }
+
+    return newToOld;
+}
+
+} // End namespace Foam
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::randomRenumber::randomRenumber()
+:
+    renumberMethod()
+{}
+
 
 Foam::randomRenumber::randomRenumber(const dictionary& dict)
 :
@@ -57,52 +88,46 @@ Foam::randomRenumber::randomRenumber(const dictionary& dict)
 
 Foam::labelList Foam::randomRenumber::renumber
 (
-    const pointField& points
+    const label nCells
 ) const
 {
-    Random rndGen(0);
-
-    labelList newToOld(identity(points.size()));
-
-    for (label iter = 0; iter < 10; iter++)
-    {
-        forAll(newToOld, i)
-        {
-            label j = rndGen.position<label>(0, newToOld.size()-1);
-            std::swap(newToOld[i], newToOld[j]);
-        }
-    }
-    return newToOld;
+    return randomMap(nCells);
 }
 
 
 Foam::labelList Foam::randomRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField& points
+    const pointField& cellCentres
 ) const
 {
-    return renumber(points);
+    return randomMap(cellCentres.size());
 }
 
 
 Foam::labelList Foam::randomRenumber::renumber
 (
-    const CompactListList<label>& cellCells,
-    const pointField& points
+    const polyMesh& mesh
 ) const
 {
-    return renumber(points);
+    return randomMap(mesh.nCells());
 }
 
 
 Foam::labelList Foam::randomRenumber::renumber
 (
-    const labelListList& cellCells,
-    const pointField& points
+    const CompactListList<label>& cellCells
 ) const
 {
-    return renumber(points);
+    return randomMap(cellCells.size());
+}
+
+
+Foam::labelList Foam::randomRenumber::renumber
+(
+    const labelListList& cellCells
+) const
+{
+    return randomMap(cellCells.size());
 }
 
 

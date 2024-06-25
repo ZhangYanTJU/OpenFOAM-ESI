@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,7 +33,7 @@ template<class Type>
 Foam::wordList Foam::functionObjects::vtkCloud::writeFields
 (
     autoPtr<vtk::formatter>& format,
-    const objectRegistry& obrTmp,
+    const objectRegistry& obr,
     const label nTotParcels
 ) const
 {
@@ -55,16 +55,22 @@ Foam::wordList Foam::functionObjects::vtkCloud::writeFields
     // Fields are not always on all processors (eg, multi-component parcels).
     // Thus need to resolve names between all processors.
 
-    wordList fieldNames(obrTmp.names<IOField<Type>>());
+    wordList fieldNames =
+    (
+        selectFields_.size()
+      ? obr.names<IOField<Type>>(selectFields_)
+      : obr.names<IOField<Type>>()
+    );
+
     Pstream::combineReduce(fieldNames, ListOps::uniqueEqOp<word>());
     Foam::sort(fieldNames);  // Consistent order
 
     for (const word& fieldName : fieldNames)
     {
-        const List<Type>* fldPtr = obrTmp.findObject<IOField<Type>>(fieldName);
-        const List<Type>& values = (fldPtr ? *fldPtr : List<Type>());
+        const List<Type>* fldPtr = obr.findObject<IOField<Type>>(fieldName);
+        const List<Type>& values = (fldPtr ? *fldPtr : List<Type>::null());
 
-        if (Pstream::master())
+        if (UPstream::master())
         {
             if (std::is_same<label, typename pTraits<Type>::cmptType>::value)
             {
@@ -93,7 +99,7 @@ Foam::wordList Foam::functionObjects::vtkCloud::writeFields
             vtk::writeListParallel(format.ref(), values);
         }
 
-        if (Pstream::master())
+        if (UPstream::master())
         {
             // Non-legacy
             format().flush();

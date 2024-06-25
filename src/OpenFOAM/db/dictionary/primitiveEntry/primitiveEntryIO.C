@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -333,16 +333,16 @@ Foam::Ostream& Foam::operator<<
 
     e.print(os);
 
-    constexpr label nPrintTokens = 10;
+    const label nPrintTokens = Foam::min(label(10), label(e.size()));
 
     os  << "    primitiveEntry '" << e.keyword() << "' comprises ";
 
-    for (label i=0; i<min(e.size(), nPrintTokens); ++i)
+    for (label i = 0; i < nPrintTokens; ++i)
     {
         os  << nl << "        " << e[i].info();
     }
 
-    if (e.size() > nPrintTokens)
+    if (10 < e.size())
     {
         os  << " ...";
     }

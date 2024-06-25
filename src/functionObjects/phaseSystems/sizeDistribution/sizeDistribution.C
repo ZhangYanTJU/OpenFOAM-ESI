@@ -243,7 +243,7 @@ Foam::functionObjects::sizeDistribution::filterField
     const scalarField& field
 ) const
 {
-    return tmp<scalarField>(new scalarField(field, cellId_));
+    return tmp<scalarField>::New(field, cellId_);
 }
 
 

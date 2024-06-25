@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -52,27 +52,27 @@ void testMapDistribute()
 
     // Generate random data.
     List<Tuple2<label, List<scalar>>> complexData(100);
-    forAll(complexData, i)
+    for (auto& data : complexData)
     {
-        complexData[i].first() = rndGen.position(0, Pstream::nProcs()-1);
-        complexData[i].second().setSize(3);
-        complexData[i].second()[0] = 1;
-        complexData[i].second()[1] = 2;
-        complexData[i].second()[2] = 3;
+        data.first() = rndGen.position(0, UPstream::nProcs()-1);
+        data.second().resize(3);
+        data.second()[0] = 1;
+        data.second()[1] = 2;
+        data.second()[2] = 3;
     }
 
     // Send all ones to processor indicated by .first()
 
     // Count how many to send
-    labelList nSend(Pstream::nProcs(), Zero);
-    forAll(complexData, i)
+    labelList nSend(UPstream::nProcs(), Foam::zero{});
+    for (const auto& data : complexData)
     {
-        const label proci = complexData[i].first();
+        const label proci = data.first();
         nSend[proci]++;
     }
 
     // Collect items to be sent
-    labelListList sendMap(Pstream::nProcs());
+    labelListList sendMap(UPstream::nProcs());
     forAll(sendMap, proci)
     {
         sendMap[proci].resize_nocopy(nSend[proci]);
@@ -116,40 +116,35 @@ void testTransfer(const T& input)
 {
     T data = input;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         Perr<<"test transfer (" << (typeid(T).name()) << "): ";
         perrInfo(data) << nl << endl;
-    }
 
-    if (Pstream::master())
-    {
-        for (const int slave : Pstream::subProcs())
+        for (const int proci : UPstream::subProcs())
         {
-            Perr<< "master receiving from slave " << slave << endl;
-            IPstream fromSlave(Pstream::commsTypes::blocking, slave);
-            fromSlave >> data;
+            Perr<< "master receiving from proc:" << proci << endl;
+            IPstream::recv(data, proci);
             perrInfo(data) << endl;
         }
 
-        for (const int slave : Pstream::subProcs())
+        for (const int proci : UPstream::subProcs())
         {
-            Perr<< "master sending to slave " << slave << endl;
-            OPstream toSlave(Pstream::commsTypes::blocking, slave);
-            toSlave << data;
+            Perr<< "master sending to proc:" << proci << endl;
+            OPstream os(UPstream::commsTypes::buffered, proci);
+            os  << data;
         }
     }
     else
     {
         {
-            Perr<< "slave sending to master " << Pstream::masterNo() << endl;
-            OPstream toMaster(Pstream::commsTypes::blocking, Pstream::masterNo());
-            toMaster << data;
+            Perr<< "proc sending to master" << endl;
+            OPstream os(UPstream::commsTypes::buffered, UPstream::masterNo());
+            os  << data;
         }
 
-        Perr<< "slave receiving from master " << Pstream::masterNo() << endl;
-        IPstream fromMaster(Pstream::commsTypes::blocking, Pstream::masterNo());
-        fromMaster >> data;
+        Perr<< "proc receiving from master" << endl;
+        IPstream::recv(data, UPstream::masterNo());
         perrInfo(data) << endl;
     }
 }
@@ -160,49 +155,35 @@ void testTokenized(const T& data)
 {
     token tok;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
-        Perr<<"test tokenized \"" << data << "\"" << nl << endl;
-    }
+        Perr<< "test tokenized \"" << data << "\"" << nl << endl;
 
-    if (Pstream::master())
-    {
-        for (const int slave : Pstream::subProcs())
+        for (const int proci : UPstream::subProcs())
         {
-            Perr<< "master receiving from slave " << slave << endl;
-            IPstream fromSlave(Pstream::commsTypes::blocking, slave);
-            fromSlave >> tok;
+            Perr<< "master receiving from proc:" << proci << endl;
+            IPstream::recv(tok, proci);
             Perr<< tok.info() << endl;
         }
 
-        for (const int slave : Pstream::subProcs())
+        for (const int proci : UPstream::subProcs())
         {
-            Perr<< "master sending to slave " << slave << endl;
-            OPstream toSlave(Pstream::commsTypes::blocking, slave);
-            toSlave << data;
+            Perr<< "master sending to proc:" << proci << endl;
+            OPstream os(UPstream::commsTypes::buffered, proci);
+            os  << tok;
         }
     }
     else
     {
         {
-            Perr<< "slave sending to master " << Pstream::masterNo() << endl;
-            OPstream toMaster
-            (
-                Pstream::commsTypes::blocking,
-                Pstream::masterNo()
-            );
-
-            toMaster << data;
+            Perr<< "proc sending to master" << endl;
+            OPstream os(UPstream::commsTypes::buffered, UPstream::masterNo());
+            os  << tok;
         }
 
-        Perr<< "slave receiving from master " << Pstream::masterNo() << endl;
-        IPstream fromMaster
-        (
-            Pstream::commsTypes::blocking,
-            Pstream::masterNo()
-        );
+        Perr<< "proc receiving from master" << endl;
+        IPstream::recv(tok, UPstream::masterNo());
 
-        fromMaster >> tok;
         Perr<< tok.info() << endl;
     }
 }
@@ -212,12 +193,14 @@ void testTokenized(const T& data)
 
 int main(int argc, char *argv[])
 {
+    argList::noCheckProcessorDirectories();
+
     #include "setRootCase.H"
     #include "createTime.H"
 
     testMapDistribute();
 
-    if (!Pstream::parRun())
+    if (!UPstream::parRun())
     {
         Info<< "\nWarning: not parallel - skipping further tests\n" << endl;
         return 0;

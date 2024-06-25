@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -219,14 +219,14 @@ void readPoints
                 << endl;
         }
 
-        point pt;
         is.getLine(line);
-        pt[0] = readUnvScalar(line.substr(0, 25));
-        pt[1] = readUnvScalar(line.substr(25, 25));
-        pt[2] = readUnvScalar(line.substr(50, 25));
 
-        unvPointID.append(pointi);
-        points.append(pt);
+        unvPointID.push_back(pointi);
+        point& p = points.emplace_back();
+
+        p.x() = readUnvScalar(line.substr(0, 25));
+        p.y() = readUnvScalar(line.substr(25, 25));
+        p.z() = readUnvScalar(line.substr(50, 25));
     }
 
     points.shrink();
@@ -847,7 +847,7 @@ int main(int argc, char *argv[])
 
     labelList own(boundaryFaces.size(), -1);
     labelList nei(boundaryFaces.size(), -1);
-    Map<label> faceToCell[2];
+    Pair<Map<label>> faceToCell;
 
     {
         // Can use face::symmHasher or use sorted indices instead
@@ -996,12 +996,7 @@ int main(int argc, char *argv[])
         labelHashSet alreadyOnBoundary;
 
         // Construct map from boundaryFaceIndices
-        Map<label> boundaryFaceToIndex(boundaryFaceIndices.size());
-
-        forAll(boundaryFaceIndices, i)
-        {
-            boundaryFaceToIndex.insert(boundaryFaceIndices[i], i);
-        }
+        Map<label> boundaryFaceToIndex(invertToMap(boundaryFaceIndices));
 
         forAll(patchFaceVerts, patchi)
         {
@@ -1216,20 +1211,13 @@ int main(int argc, char *argv[])
                 {
                     const label old = oldIndizes[i];
                     label noveau = -1;
-                    label c1 = -1, c2 = -1;
-                    if (faceToCell[0].found(old))
-                    {
-                        c1 = faceToCell[0][old];
-                    }
-                    if (faceToCell[1].found(old))
-                    {
-                        c2 = faceToCell[1][old];
-                    }
+
+                    label c1 = faceToCell[0].lookup(old, -1);
+                    label c2 = faceToCell[1].lookup(old, -1);
+
                     if (c1 < c2)
                     {
-                        label tmp = c1;
-                        c1 = c2;
-                        c2 = tmp;
+                        std::swap(c1, c2);
                     }
                     if (c2 == -1)
                     {
@@ -1280,8 +1268,8 @@ int main(int argc, char *argv[])
         Info << endl;
     }
 
-    // Set the precision of the points data to 10
-    IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    IOstream::minPrecision(10);
 
     mesh.write();
 

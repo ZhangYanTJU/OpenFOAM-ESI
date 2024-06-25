@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,6 +56,9 @@ namespace Foam
 //- Implementation details for UPstream/Pstream/MPI etc.
 namespace PstreamDetail {}
 
+//- Interface handling for UPstream/Pstream/MPI etc.
+namespace PstreamUtils {}
+
 /*---------------------------------------------------------------------------*\
                           Class UPstream Declaration
 \*---------------------------------------------------------------------------*/
@@ -70,15 +73,17 @@ public:
     //- Communications types
     enum class commsTypes : char
     {
-        blocking,       //!< "blocking"    : (MPI_Bsend, MPI_Recv)
-        scheduled,      //!< "scheduled"   : (MPI_Send, MPI_Recv)
-        nonBlocking     //!< "nonBlocking" : (MPI_Isend, MPI_Irecv)
+        buffered,       //!< "buffered"                 : (MPI_Bsend, MPI_Recv)
+        scheduled,      //!< "scheduled" (MPI standard) : (MPI_Send, MPI_Recv)
+        nonBlocking,    //!< "nonBlocking" (immediate)  : (MPI_Isend, MPI_Irecv)
+        // Aliases
+        blocking = buffered  //!< compatibility name for buffered
     };
 
     //- Enumerated names for the communication types
     static const Enum<commsTypes> commsTypeNames;
 
-    //- Different MPI-send modes (ignored for commsTypes::blocking)
+    //- Different MPI-send modes (ignored for commsTypes::buffered)
     enum class sendModes : char
     {
         normal,         //!< (MPI_Send, MPI_Isend)
@@ -87,6 +92,9 @@ public:
 
 
     // Public Classes
+
+        //- Wrapper for MPI_Comm
+        class Communicator;  // Forward Declaration
 
         //- Wrapper for MPI_Request
         class Request;  // Forward Declaration
@@ -557,14 +565,14 @@ public:
 
         //- Probe for an incoming message.
         //
-        //  \param commsType    Blocking or not
+        //  \param commsType    Non-blocking or not
         //  \param fromProcNo   The source rank (negative == ANY_SOURCE)
         //  \param tag          The source message tag
         //  \param communicator The communicator index
         //
         //  \returns source rank and message size (bytes)
         //      and (-1, 0) on failure
-        static std::pair<int,int> probeMessage
+        static std::pair<int,int64_t> probeMessage
         (
             const UPstream::commsTypes commsType,
             const int fromProcNo,
@@ -895,21 +903,32 @@ public:
         );
 
         //- Communication schedule for tree all-to-master (proc 0)
-        static const List<commsStruct>& treeCommunication
+        static const List<commsStruct>&
+        treeCommunication
         (
             const label communicator = worldComm
         );
 
-        //- Communication schedule for linear/tree all-to-master (proc 0).
-        //- Chooses based on the value of UPstream::nProcsSimpleSum
+        //- Communication schedule for all-to-master (proc 0) as
+        //- linear/tree/none with switching based on UPstream::nProcsSimpleSum
+        //- and the is_parallel() state
         static const List<commsStruct>& whichCommunication
         (
             const label communicator = worldComm
         )
         {
+            const label np
+            (
+                parRun_ && is_rank(communicator)  // cf. is_parallel()
+              ? nProcs(communicator)
+              : 0
+            );
+
             return
             (
-                nProcs(communicator) < nProcsSimpleSum
+                np <= 1
+              ? List<commsStruct>::null()
+              : np < nProcsSimpleSum
               ? linearCommunication(communicator)
               : treeCommunication(communicator)
             );
@@ -1138,7 +1157,7 @@ public:
         //  On master input list length == nProcs, ignored on other procs.
         //  \n
         //  For \b non-parallel :
-        //  returns the first list element (or zero).
+        //  returns the first list element (or default initialized).
         template<class T>
         static T listScatterValues
         (
@@ -1191,6 +1210,7 @@ public:
 
         //- Process index of first sub-process
         //  \deprecated(2020-09) use subProcs() method instead
+        FOAM_DEPRECATED_FOR(2020-09, "subProcs() method")
         static constexpr int firstSlave() noexcept
         {
             return 1;
@@ -1198,6 +1218,7 @@ public:
 
         //- Process index of last sub-process
         //  \deprecated(2020-09) use subProcs() method instead
+        FOAM_DEPRECATED_FOR(2020-09, "subProcs() or allProcs() method")
         static int lastSlave(const label communicator = worldComm)
         {
             return nProcs(communicator) - 1;
@@ -1206,11 +1227,118 @@ public:
 
 
 /*---------------------------------------------------------------------------*\
+                   Class UPstream::Communicator Declaration
+\*---------------------------------------------------------------------------*/
+
+//- An opaque wrapper for MPI_Comm with a vendor-independent
+//- representation without any \c <mpi.h> header.
+//  The MPI standard states that MPI_Comm is always an opaque object.
+//  Generally it is either an integer (eg, mpich) or a pointer (eg, openmpi).
+class UPstream::Communicator
+{
+public:
+
+    // Public Types
+
+        //- Storage for MPI_Comm (as integer or pointer)
+        typedef std::intptr_t value_type;
+
+
+private:
+
+    // Private Data
+
+        //- The MPI_Comm (as wrapped value)
+        value_type value_;
+
+public:
+
+    // Generated Methods
+
+        //- Copy construct
+        Communicator(const Communicator&) noexcept = default;
+
+        //- Move construct
+        Communicator(Communicator&&) noexcept = default;
+
+        //- Copy assignment
+        Communicator& operator=(const Communicator&) noexcept = default;
+
+        //- Move assignment
+        Communicator& operator=(Communicator&&) noexcept = default;
+
+
+    // Member Operators
+
+        //- Test for equality
+        bool operator==(const Communicator& rhs) const noexcept
+        {
+            return (value_ == rhs.value_);
+        }
+
+        //- Test for inequality
+        bool operator!=(const Communicator& rhs) const noexcept
+        {
+            return (value_ != rhs.value_);
+        }
+
+
+    // Constructors
+
+        //- Default construct as MPI_COMM_NULL
+        Communicator() noexcept;
+
+        //- Construct from MPI_Comm (as pointer type)
+        explicit Communicator(const void* p) noexcept
+        :
+            value_(reinterpret_cast<value_type>(p))
+        {}
+
+        //- Construct from MPI_Comm (as integer type)
+        explicit Communicator(value_type val) noexcept
+        :
+            value_(val)
+        {}
+
+
+    // Factory Methods
+
+        //- Transcribe internally indexed communicator to wrapped value.
+        //  Example,
+        //  \code
+        //  PstreamUtils::Cast::to_mpi
+        //  (
+        //      UPstream::Communicator::lookup(UPstream::commWorld())
+        //  )
+        //  \endcode
+        static Communicator lookup(const label comm);
+
+
+    // Member Functions
+
+        //- Return raw value
+        value_type value() const noexcept { return value_; }
+
+        //- Return as pointer value
+        const void* pointer() const noexcept
+        {
+            return reinterpret_cast<const void*>(value_);
+        }
+
+        //- True if not equal to MPI_COMM_NULL
+        bool good() const noexcept;
+
+        //- Reset to default constructed value (MPI_COMM_NULL)
+        void reset() noexcept;
+};
+
+
+/*---------------------------------------------------------------------------*\
                       Class UPstream::Request Declaration
 \*---------------------------------------------------------------------------*/
 
 //- An opaque wrapper for MPI_Request with a vendor-independent
-//- representation independent of any \c <mpi.h> header
+//- representation without any \c <mpi.h> header.
 //  The MPI standard states that MPI_Request is always an opaque object.
 //  Generally it is either an integer (eg, mpich) or a pointer (eg, openmpi).
 class UPstream::Request

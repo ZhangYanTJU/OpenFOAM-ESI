@@ -405,12 +405,6 @@ inline Foam::label Foam::bitSet::find_next(label pos) const
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline const Foam::bitSet& Foam::bitSet::null()
-{
-    return NullObjectRef<bitSet>();
-}
-
-
 inline bool Foam::bitSet::all() const
 {
     if (empty()) return true;  // SIC. boost convention

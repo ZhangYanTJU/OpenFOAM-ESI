@@ -59,13 +59,6 @@ Foam::PatchFunction1<Type>::PatchFunction1
 
 
 template<class Type>
-Foam::PatchFunction1<Type>::PatchFunction1(const PatchFunction1<Type>& rhs)
-:
-    PatchFunction1<Type>(rhs, rhs.patch())
-{}
-
-
-template<class Type>
 Foam::PatchFunction1<Type>::PatchFunction1
 (
     const PatchFunction1<Type>& rhs,
@@ -74,6 +67,13 @@ Foam::PatchFunction1<Type>::PatchFunction1
 :
     patchFunction1Base(pp, rhs.name(), rhs.faceValues()),
     coordSys_(rhs.coordSys_)
+{}
+
+
+template<class Type>
+Foam::PatchFunction1<Type>::PatchFunction1(const PatchFunction1<Type>& rhs)
+:
+    PatchFunction1<Type>(rhs, rhs.patch())
 {}
 
 

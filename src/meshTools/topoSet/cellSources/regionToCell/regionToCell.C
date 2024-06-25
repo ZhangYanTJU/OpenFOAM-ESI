@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -346,18 +346,31 @@ void Foam::regionToCell::combine(topoSet& set, const bool add) const
     // Note: wip. Select cells first
     boolList selectedCell(mesh_.nCells(), true);
 
-    if (setName_.size() && setName_ != "none")
+    if (!setName_.empty() && setName_ != "none")
     {
-        Info<< "    Loading subset " << setName_
-            << " to delimit search region."
-            << endl;
-
-        cellSet subSet(mesh_, setName_);
-
-        selectedCell = false;
-        for (const label celli : subSet)
+        if (isZone_)
         {
-            selectedCell[celli] = true;
+            Info<< "    Using cellZone " << setName_
+                << " to delimit search region." << nl;
+
+            selectedCell = false;
+            for (const label celli : mesh_.cellZones()[setName_])
+            {
+                selectedCell[celli] = true;
+            }
+        }
+        else
+        {
+            Info<< "    Loading cellSet " << setName_
+                << " to delimit search region." << nl;
+
+            cellSet subSet(mesh_, setName_, IOobject::NO_REGISTER);
+
+            selectedCell = false;
+            for (const label celli : subSet)
+            {
+                selectedCell[celli] = true;
+            }
         }
     }
 
@@ -392,6 +405,7 @@ Foam::regionToCell::regionToCell
 :
     topoSetCellSource(mesh),
     setName_(setName),
+    isZone_(false),
     insidePoints_(insidePoints),
     nErode_(nErode)
 {}
@@ -403,14 +417,25 @@ Foam::regionToCell::regionToCell
     const dictionary& dict
 )
 :
-    topoSetCellSource(mesh),
-    setName_(dict.getOrDefault<word>("set", "none")),
+    topoSetCellSource(mesh, dict),
+    setName_(),
+    isZone_(false),
     insidePoints_
     (
         dict.getCompat<pointField>("insidePoints", {{ "insidePoint", 0 }})
     ),
     nErode_(dict.getCheckOrDefault<label>("nErode", 0, labelMinMax::ge(0)))
-{}
+{
+    // A single "set" or "zone" only
+    if (!dict.readIfPresent("set", setName_))
+    {
+        // Optional entry
+        if (dict.readIfPresent("zone", setName_))
+        {
+            isZone_ = true;
+        }
+    }
+}
 
 
 Foam::regionToCell::regionToCell
@@ -421,6 +446,7 @@ Foam::regionToCell::regionToCell
 :
     topoSetCellSource(mesh),
     setName_(checkIs(is)),
+    isZone_(false),
     insidePoints_(checkIs(is)),
     nErode_(readLabel(checkIs(is)))
 {}

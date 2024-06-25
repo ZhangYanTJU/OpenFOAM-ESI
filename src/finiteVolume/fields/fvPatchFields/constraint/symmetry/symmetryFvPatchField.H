@@ -69,7 +69,6 @@ class symmetryFvPatchField
 :
     public basicSymmetryFvPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -108,15 +107,6 @@ public:
             const symmetryFvPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new symmetryFvPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         symmetryFvPatchField
         (
@@ -124,16 +114,19 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return fvPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>
-            (
-                new symmetryFvPatchField<Type>(*this, iF)
-            );
+            return fvPatchField<Type>::Clone(*this, iF);
         }
 };
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -158,7 +158,7 @@ extern const NullObject* nullObjectPtr;
 
 // IOstream Operators
 
-//- Read from Istream consumes no content
+//- Read from Istream consumes no content, does not change NullObject
 inline Istream& operator>>(Istream& is, const NullObject&) noexcept
 {
     return is;
@@ -173,31 +173,48 @@ inline Ostream& operator<<(Ostream& os, const NullObject&) noexcept
 
 // Global Functions
 
-//- Pointer (of type T) to the nullObject
+//- Const pointer (of type T) to the nullObject
 template<class T>
-inline const T* NullObjectPtr()
+inline const T* NullObjectPtr() noexcept
 {
     return reinterpret_cast<const T*>(nullObjectPtr);
 }
 
-//- Reference (of type T) to the nullObject
+//- Non-const pointer (of type T) to the nullObject.
+//- Only use when nothing will be written into it!
 template<class T>
-inline const T& NullObjectRef()
+inline T* NullObjectPtr_constCast() noexcept
+{
+    return reinterpret_cast<T*>(const_cast<NullObject*>(nullObjectPtr));
+}
+
+
+//- Const reference (of type T) to the nullObject
+template<class T>
+inline const T& NullObjectRef() noexcept
 {
     return *reinterpret_cast<const T*>(nullObjectPtr);
+}
+
+//- Non-const reference (of type T) to the nullObject
+//- Only use when nothing will be written into it!
+template<class T>
+inline T& NullObjectRef_constCast() noexcept
+{
+    return *reinterpret_cast<T*>(const_cast<NullObject*>(nullObjectPtr));
 }
 
 
 //- True if ptr is a pointer (of type T) to the nullObject
 template<class T>
-inline bool isNull(const T* ptr)
+inline bool isNull(const T* ptr) noexcept
 {
     return ptr == NullObjectPtr<T>();
 }
 
 //- True if obj is a reference (of type T) to the nullObject
 template<class T>
-inline bool isNull(const T& obj)
+inline bool isNull(const T& obj) noexcept
 {
     return &obj == NullObjectPtr<T>();
 }
@@ -205,14 +222,14 @@ inline bool isNull(const T& obj)
 
 //- True if ptr is not a pointer (of type T) to the nullObject
 template<class T>
-inline bool notNull(const T* ptr)
+inline bool notNull(const T* ptr) noexcept
 {
     return ptr != NullObjectPtr<T>();
 }
 
 //- True if obj is not a reference (of type T) to the nullObject
 template<class T>
-inline bool notNull(const T& obj)
+inline bool notNull(const T& obj) noexcept
 {
     return &obj != NullObjectPtr<T>();
 }

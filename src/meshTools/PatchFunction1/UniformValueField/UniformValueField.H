@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,8 +40,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef PatchFunction1Types_UniformValueField_H
-#define PatchFunction1Types_UniformValueField_H
+#ifndef Foam_PatchFunction1Types_UniformValueField_H
+#define Foam_PatchFunction1Types_UniformValueField_H
 
 #include "PatchFunction1.H"
 #include "Function1.H"
@@ -92,9 +92,6 @@ public:
             const bool faceValues = true
         );
 
-        //- Copy construct
-        explicit UniformValueField(const UniformValueField<Type>& rhs);
-
         //- Copy construct setting patch
         explicit UniformValueField
         (
@@ -102,22 +99,19 @@ public:
             const polyPatch& pp
         );
 
-        //- Construct and return a clone
+        //- Copy construct
+        explicit UniformValueField(const UniformValueField<Type>& rhs);
+
+        //- Return a clone
         virtual tmp<PatchFunction1<Type>> clone() const
         {
-            return tmp<PatchFunction1<Type>>
-            (
-                new UniformValueField<Type>(*this)
-            );
+            return PatchFunction1<Type>::Clone(*this);
         }
 
-        //- Construct and return a clone setting patch
+        //- Return a clone, setting the patch
         virtual tmp<PatchFunction1<Type>> clone(const polyPatch& pp) const
         {
-            return tmp<PatchFunction1<Type>>
-            (
-                new UniformValueField<Type>(*this, pp)
-            );
+            return PatchFunction1<Type>::Clone(*this, pp);
         }
 
 

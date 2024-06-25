@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,79 +60,66 @@ Foam::lduMatrix::normTypesNames_
 
 Foam::lduMatrix::lduMatrix(const lduMesh& mesh)
 :
-    lduMesh_(mesh),
-    lowerPtr_(nullptr),
-    diagPtr_(nullptr),
-    upperPtr_(nullptr)
+    lduMesh_(mesh)
 {}
 
 
 Foam::lduMatrix::lduMatrix(const lduMatrix& A)
 :
-    lduMesh_(A.lduMesh_),
-    lowerPtr_(nullptr),
-    diagPtr_(nullptr),
-    upperPtr_(nullptr)
+    lduMesh_(A.lduMesh_)
 {
-    if (A.lowerPtr_)
-    {
-        lowerPtr_ = new scalarField(*(A.lowerPtr_));
-    }
-
     if (A.diagPtr_)
     {
-        diagPtr_ = new scalarField(*(A.diagPtr_));
+        diagPtr_ = std::make_unique<scalarField>(*(A.diagPtr_));
     }
 
     if (A.upperPtr_)
     {
-        upperPtr_ = new scalarField(*(A.upperPtr_));
+        upperPtr_ = std::make_unique<scalarField>(*(A.upperPtr_));
+    }
+
+    if (A.lowerPtr_)
+    {
+        lowerPtr_ = std::make_unique<scalarField>(*(A.lowerPtr_));
     }
 }
 
 
-Foam::lduMatrix::lduMatrix(lduMatrix& A, bool reuse)
+Foam::lduMatrix::lduMatrix(lduMatrix&& A)
 :
     lduMesh_(A.lduMesh_),
-    lowerPtr_(nullptr),
-    diagPtr_(nullptr),
-    upperPtr_(nullptr)
+    diagPtr_(std::move(A.diagPtr_)),
+    lowerPtr_(std::move(A.lowerPtr_)),
+    upperPtr_(std::move(A.upperPtr_))
+{}
+
+
+Foam::lduMatrix::lduMatrix(lduMatrix& A, bool reuse)
+:
+    lduMesh_(A.lduMesh_)
 {
     if (reuse)
     {
-        if (A.lowerPtr_)
-        {
-            lowerPtr_ = A.lowerPtr_;
-            A.lowerPtr_ = nullptr;
-        }
-
-        if (A.diagPtr_)
-        {
-            diagPtr_ = A.diagPtr_;
-            A.diagPtr_ = nullptr;
-        }
-
-        if (A.upperPtr_)
-        {
-            upperPtr_ = A.upperPtr_;
-            A.upperPtr_ = nullptr;
-        }
+        diagPtr_ = std::move(A.diagPtr_);
+        upperPtr_ = std::move(A.upperPtr_);
+        lowerPtr_ = std::move(A.lowerPtr_);
     }
     else
     {
-        if (A.lowerPtr_)
-        {
-            lowerPtr_ = new scalarField(*(A.lowerPtr_));
-        }
-
+        // Copy assignment
         if (A.diagPtr_)
         {
-            diagPtr_ = new scalarField(*(A.diagPtr_));
+            diagPtr_ = std::make_unique<scalarField>(*(A.diagPtr_));
         }
 
         if (A.upperPtr_)
         {
-            upperPtr_ = new scalarField(*(A.upperPtr_));
+            upperPtr_ = std::make_unique<scalarField>(*(A.upperPtr_));
+        }
+
+        if (A.lowerPtr_)
+        {
+            lowerPtr_ = std::make_unique<scalarField>(*(A.lowerPtr_));
         }
     }
 }
@@ -140,160 +127,43 @@ Foam::lduMatrix::lduMatrix(lduMatrix& A, bool reuse)
 
 Foam::lduMatrix::lduMatrix(const lduMesh& mesh, Istream& is)
 :
-    lduMesh_(mesh),
-    lowerPtr_(nullptr),
-    diagPtr_(nullptr),
-    upperPtr_(nullptr)
+    lduMesh_(mesh)
 {
-    Switch hasLow(is);
-    Switch hasDiag(is);
-    Switch hasUp(is);
+    bool withLower, withDiag, withUpper;
 
-    if (hasLow)
+    is >> withLower >> withDiag >> withUpper;
+
+    if (withLower)
     {
-        lowerPtr_ = new scalarField(is);
+        lowerPtr_ = std::make_unique<scalarField>(is);
     }
-    if (hasDiag)
+    if (withDiag)
     {
-        diagPtr_ = new scalarField(is);
+        diagPtr_ = std::make_unique<scalarField>(is);
     }
-    if (hasUp)
+    if (withUpper)
     {
-        upperPtr_ = new scalarField(is);
+        upperPtr_ = std::make_unique<scalarField>(is);
     }
 }
 
 
-Foam::lduMatrix::~lduMatrix()
-{
-    if (lowerPtr_)
-    {
-        delete lowerPtr_;
-    }
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::word Foam::lduMatrix::matrixTypeName() const
+{
     if (diagPtr_)
     {
-        delete diagPtr_;
+        return
+        (
+            (!upperPtr_)
+          ? (!lowerPtr_ ? "diagonal" : "diagonal-lower")
+          : (!lowerPtr_ ? "symmetric" : "asymmetric")
+        );
     }
 
-    if (upperPtr_)
-    {
-        delete upperPtr_;
-    }
-}
-
-
-Foam::scalarField& Foam::lduMatrix::lower()
-{
-    if (!lowerPtr_)
-    {
-        if (upperPtr_)
-        {
-            lowerPtr_ = new scalarField(*upperPtr_);
-        }
-        else
-        {
-            lowerPtr_ = new scalarField(lduAddr().lowerAddr().size(), Zero);
-        }
-    }
-
-    return *lowerPtr_;
-}
-
-
-Foam::scalarField& Foam::lduMatrix::diag()
-{
-    if (!diagPtr_)
-    {
-        diagPtr_ = new scalarField(lduAddr().size(), Zero);
-    }
-
-    return *diagPtr_;
-}
-
-
-Foam::scalarField& Foam::lduMatrix::upper()
-{
-    if (!upperPtr_)
-    {
-        if (lowerPtr_)
-        {
-            upperPtr_ = new scalarField(*lowerPtr_);
-        }
-        else
-        {
-            upperPtr_ = new scalarField(lduAddr().lowerAddr().size(), Zero);
-        }
-    }
-
-    return *upperPtr_;
-}
-
-
-Foam::scalarField& Foam::lduMatrix::lower(const label nCoeffs)
-{
-    if (!lowerPtr_)
-    {
-        if (upperPtr_)
-        {
-            lowerPtr_ = new scalarField(*upperPtr_);
-        }
-        else
-        {
-            lowerPtr_ = new scalarField(nCoeffs, Zero);
-        }
-    }
-
-    return *lowerPtr_;
-}
-
-
-Foam::scalarField& Foam::lduMatrix::diag(const label size)
-{
-    if (!diagPtr_)
-    {
-        diagPtr_ = new scalarField(size, Zero);
-    }
-
-    return *diagPtr_;
-}
-
-
-Foam::scalarField& Foam::lduMatrix::upper(const label nCoeffs)
-{
-    if (!upperPtr_)
-    {
-        if (lowerPtr_)
-        {
-            upperPtr_ = new scalarField(*lowerPtr_);
-        }
-        else
-        {
-            upperPtr_ = new scalarField(nCoeffs, Zero);
-        }
-    }
-
-    return *upperPtr_;
-}
-
-
-const Foam::scalarField& Foam::lduMatrix::lower() const
-{
-    if (!lowerPtr_ && !upperPtr_)
-    {
-        FatalErrorInFunction
-            << "lowerPtr_ or upperPtr_ unallocated"
-            << abort(FatalError);
-    }
-
-    if (lowerPtr_)
-    {
-        return *lowerPtr_;
-    }
-    else
-    {
-        return *upperPtr_;
-    }
+    // is empty (or just wrong)
+    return (!upperPtr_ && !lowerPtr_ ? "empty" : "ill-defined");
 }
 
 
@@ -310,23 +180,161 @@ const Foam::scalarField& Foam::lduMatrix::diag() const
 }
 
 
-const Foam::scalarField& Foam::lduMatrix::upper() const
+Foam::scalarField& Foam::lduMatrix::diag()
 {
-    if (!lowerPtr_ && !upperPtr_)
+    if (!diagPtr_)
     {
-        FatalErrorInFunction
-            << "lowerPtr_ or upperPtr_ unallocated"
-            << abort(FatalError);
+        diagPtr_ =
+            std::make_unique<scalarField>(lduAddr().size(), Foam::zero{});
     }
 
+    return *diagPtr_;
+}
+
+
+Foam::scalarField& Foam::lduMatrix::diag(label size)
+{
+    if (!diagPtr_)
+    {
+        // if (size < 0)
+        // {
+        //     size = lduAddr().size();
+        // }
+        diagPtr_ = std::make_unique<scalarField>(size, Foam::zero{});
+    }
+
+    return *diagPtr_;
+}
+
+
+const Foam::scalarField& Foam::lduMatrix::upper() const
+{
     if (upperPtr_)
     {
         return *upperPtr_;
     }
     else
     {
+        if (!lowerPtr_)
+        {
+            FatalErrorInFunction
+                << "lowerPtr_ and upperPtr_ unallocated"
+                << abort(FatalError);
+        }
+
         return *lowerPtr_;
     }
+}
+
+
+Foam::scalarField& Foam::lduMatrix::upper()
+{
+    if (!upperPtr_)
+    {
+        if (lowerPtr_)
+        {
+            upperPtr_ = std::make_unique<scalarField>(*lowerPtr_);
+        }
+        else
+        {
+            upperPtr_ =
+                std::make_unique<scalarField>
+                (
+                    lduAddr().lowerAddr().size(),
+                    Foam::zero{}
+                );
+        }
+    }
+
+    return *upperPtr_;
+}
+
+
+Foam::scalarField& Foam::lduMatrix::upper(label nCoeffs)
+{
+    if (!upperPtr_)
+    {
+        if (lowerPtr_)
+        {
+            upperPtr_ = std::make_unique<scalarField>(*lowerPtr_);
+        }
+        else
+        {
+            // if (nCoeffs < 0)
+            // {
+            //     nCoeffs = lduAddr().lowerAddr().size();
+            // }
+            upperPtr_ = std::make_unique<scalarField>(nCoeffs, Foam::zero{});
+        }
+    }
+
+    return *upperPtr_;
+}
+
+
+const Foam::scalarField& Foam::lduMatrix::lower() const
+{
+    if (lowerPtr_)
+    {
+        return *lowerPtr_;
+    }
+    else
+    {
+        if (!upperPtr_)
+        {
+            FatalErrorInFunction
+                << "lowerPtr_ and upperPtr_ unallocated"
+                << abort(FatalError);
+        }
+
+        return *upperPtr_;
+    }
+}
+
+
+Foam::scalarField& Foam::lduMatrix::lower()
+{
+    if (!lowerPtr_)
+    {
+        if (upperPtr_)
+        {
+            lowerPtr_ = std::make_unique<scalarField>(*upperPtr_);
+        }
+        else
+        {
+            lowerPtr_ =
+                std::make_unique<scalarField>
+                (
+                    lduAddr().lowerAddr().size(),
+                    Foam::zero{}
+                );
+        }
+    }
+
+    return *lowerPtr_;
+}
+
+
+Foam::scalarField& Foam::lduMatrix::lower(label nCoeffs)
+{
+    if (!lowerPtr_)
+    {
+        if (upperPtr_)
+        {
+            lowerPtr_ = std::make_unique<scalarField>(*upperPtr_);
+        }
+        else
+        {
+            // if (nCoeffs < 0)
+            // {
+            //     nCoeffs = lduAddr().lowerAddr().size();
+            // }
+            lowerPtr_ =
+                std::make_unique<scalarField>(nCoeffs, Foam::zero{});
+        }
+    }
+
+    return *lowerPtr_;
 }
 
 
@@ -377,28 +385,25 @@ void Foam::lduMatrix::setResidualField
 
 // * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
 
-Foam::Ostream& Foam::operator<<(Ostream& os, const lduMatrix& ldum)
+Foam::Ostream& Foam::operator<<(Ostream& os, const lduMatrix& mat)
 {
-    Switch hasLow = ldum.hasLower();
-    Switch hasDiag = ldum.hasDiag();
-    Switch hasUp = ldum.hasUpper();
+    os  << mat.hasLower() << token::SPACE
+        << mat.hasDiag() << token::SPACE
+        << mat.hasUpper() << token::SPACE;
 
-    os  << hasLow << token::SPACE << hasDiag << token::SPACE
-        << hasUp << token::SPACE;
-
-    if (hasLow)
+    if (mat.hasLower())
     {
-        os  << ldum.lower();
+        os  << mat.lower();
     }
 
-    if (hasDiag)
+    if (mat.hasDiag())
     {
-        os  << ldum.diag();
+        os  << mat.diag();
     }
 
-    if (hasUp)
+    if (mat.hasUpper())
     {
-        os  << ldum.upper();
+        os  << mat.upper();
     }
 
     os.check(FUNCTION_NAME);
@@ -413,54 +418,50 @@ Foam::Ostream& Foam::operator<<
     const InfoProxy<lduMatrix>& iproxy
 )
 {
-    const auto& ldum = *iproxy;
+    const auto& mat = *iproxy;
 
-    Switch hasLow = ldum.hasLower();
-    Switch hasDiag = ldum.hasDiag();
-    Switch hasUp = ldum.hasUpper();
+    os  << "Lower:" << Switch::name(mat.hasLower())
+        << " Diag:" << Switch::name(mat.hasDiag())
+        << " Upper:" << Switch::name(mat.hasUpper()) << endl;
 
-    os  << "Lower:" << hasLow
-        << " Diag:" << hasDiag
-        << " Upper:" << hasUp << endl;
-
-    if (hasLow)
+    if (mat.hasLower())
     {
-        os  << "lower:" << ldum.lower().size() << endl;
+        os  << "lower:" << mat.lower().size() << endl;
     }
-    if (hasDiag)
+    if (mat.hasDiag())
     {
-        os  << "diag :" << ldum.diag().size() << endl;
+        os  << "diag :" << mat.diag().size() << endl;
     }
-    if (hasUp)
+    if (mat.hasUpper())
     {
-        os  << "upper:" << ldum.upper().size() << endl;
+        os  << "upper:" << mat.upper().size() << endl;
     }
 
 
-    //if (hasLow)
+    //if (hasLower)
     //{
     //    os  << "lower contents:" << endl;
-    //    forAll(ldum.lower(), i)
+    //    forAll(mat.lower(), i)
     //    {
-    //        os  << "i:" << i << "\t" << ldum.lower()[i] << endl;
+    //        os  << "i:" << i << "\t" << mat.lower()[i] << endl;
     //    }
     //    os  << endl;
     //}
     //if (hasDiag)
     //{
     //    os  << "diag contents:" << endl;
-    //    forAll(ldum.diag(), i)
+    //    forAll(mat.diag(), i)
     //    {
-    //        os  << "i:" << i << "\t" << ldum.diag()[i] << endl;
+    //        os  << "i:" << i << "\t" << mat.diag()[i] << endl;
     //    }
     //    os  << endl;
     //}
-    //if (hasUp)
+    //if (hasUpper)
     //{
     //    os  << "upper contents:" << endl;
-    //    forAll(ldum.upper(), i)
+    //    forAll(mat.upper(), i)
     //    {
-    //        os  << "i:" << i << "\t" << ldum.upper()[i] << endl;
+    //        os  << "i:" << i << "\t" << mat.upper()[i] << endl;
     //    }
     //    os  << endl;
     //}

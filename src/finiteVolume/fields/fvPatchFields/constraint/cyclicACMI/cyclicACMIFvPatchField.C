@@ -109,7 +109,21 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
                 << exit(FatalIOError);
         }
 
-        this->evaluate(Pstream::commsTypes::blocking);
+        // Tricky: avoid call to evaluate without call to initEvaluate.
+        // For now just disable the localConsistency to make it use the
+        // old logic (ultimately calls the fully self contained
+        // patchNeighbourField)
+
+        int& consistency =
+            GeometricField<Type, fvPatchField, volMesh>::
+            Boundary::localConsistency;
+
+        const int oldConsistency = consistency;
+        consistency = 0;
+
+        this->evaluate(Pstream::commsTypes::buffered);
+
+        consistency = oldConsistency;
     }
 }
 
@@ -903,7 +917,8 @@ Foam::cyclicACMIFvPatchField<Type>::coeffs
         matrix.lduMeshAssembly().cellBoundMap()[mat][index].size()
     );
 
-    Field<scalar> mapCoeffs(nSubFaces, Zero);
+    auto tmapCoeffs = tmp<Field<scalar>>::New(nSubFaces, Zero);
+    auto& mapCoeffs = tmapCoeffs.ref();
 
     const scalarListList& srcWeight =
         cyclicACMIPatch_.cyclicACMIPatch().AMI().srcWeights();
@@ -928,7 +943,7 @@ Foam::cyclicACMIFvPatchField<Type>::coeffs
         }
     }
 
-    return tmp<Field<scalar>>(new Field<scalar>(mapCoeffs));
+    return tmapCoeffs;
 }
 
 

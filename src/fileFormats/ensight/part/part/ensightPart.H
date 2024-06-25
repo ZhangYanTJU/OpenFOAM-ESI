@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ensightPart_H
-#define ensightPart_H
+#ifndef Foam_ensightPart_H
+#define Foam_ensightPart_H
 
 #include "ensightGeoFile.H"
 #include "labelList.H"

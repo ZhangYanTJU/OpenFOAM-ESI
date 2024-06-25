@@ -59,7 +59,17 @@ class FitData
 :
     public MeshObject<fvMesh, MoveableMeshObject, FitDataType>
 {
-    // Private data
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            MoveableMeshObject,
+            FitDataType
+        > MeshObject_type;
+
+
+    // Private Data
 
         //- The stencil the fit is based on
         const ExtendedStencil& stencil_;

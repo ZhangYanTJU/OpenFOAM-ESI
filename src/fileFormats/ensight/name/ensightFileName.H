@@ -41,8 +41,8 @@ Note
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ensightFileName_H
-#define ensightFileName_H
+#ifndef Foam_ensightFileName_H
+#define Foam_ensightFileName_H
 
 #include "fileName.H"
 #include "word.H"
@@ -80,6 +80,9 @@ public:
 
         //- Copy construct from std::string
         inline explicit FileName(const std::string& s);
+
+        //- Move construct from std::string
+        inline explicit FileName(std::string&& s);
 
 
     // Member Functions

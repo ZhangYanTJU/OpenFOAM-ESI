@@ -62,18 +62,15 @@ Foam::cellToPoint::cellActionNames_
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::cellToPoint::combine
+template<class Selector>
+void Foam::cellToPoint::combineImpl
 (
     topoSet& set,
     const bool add,
-    const word& setName
+    const Selector& cellLabels
 ) const
 {
-    // Load the set
-    cellSet loadedSet(mesh_, setName);
-    const labelHashSet& cellLabels = loadedSet;
-
-    // Add all point from cells in loadedSet
+    // Add all points from given cells
     for (const label celli : cellLabels)
     {
         const labelList& cFaces = mesh_.cells()[celli];
@@ -88,6 +85,30 @@ void Foam::cellToPoint::combine
 }
 
 
+void Foam::cellToPoint::combine
+(
+    topoSet& set,
+    const bool add,
+    const word& setName
+) const
+{
+    if (isZone_)
+    {
+        const labelList& cellLabels = mesh_.cellZones()[setName];
+
+        combineImpl(set, add, cellLabels);
+    }
+    else
+    {
+        // Load the set
+        cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
+        const labelHashSet& cellLabels = loadedSet;
+
+        combineImpl(set, add, cellLabels);
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::cellToPoint::cellToPoint
@@ -98,7 +119,8 @@ Foam::cellToPoint::cellToPoint
 )
 :
     topoSetPointSource(mesh),
-    names_(one{}, setName),
+    names_(Foam::one{}, setName),
+    isZone_(false),
     option_(option)
 {}
 
@@ -109,17 +131,11 @@ Foam::cellToPoint::cellToPoint
     const dictionary& dict
 )
 :
-    topoSetPointSource(mesh),
+    topoSetPointSource(mesh, dict),
     names_(),
+    isZone_(topoSetSource::readNames(dict, names_)),
     option_(cellActionNames_.get("option", dict))
-{
-    // Look for 'sets' or 'set'
-    if (!dict.readIfPresent("sets", names_))
-    {
-        names_.resize(1);
-        dict.readEntry("set", names_.front());
-    }
-}
+{}
 
 
 Foam::cellToPoint::cellToPoint
@@ -129,7 +145,8 @@ Foam::cellToPoint::cellToPoint
 )
 :
     topoSetPointSource(mesh),
-    names_(one{}, word(checkIs(is))),
+    names_(Foam::one{}, word(checkIs(is))),
+    isZone_(false),
     option_(cellActionNames_.read(checkIs(is)))
 {}
 
@@ -146,7 +163,8 @@ void Foam::cellToPoint::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Adding points in cell sets: "
+            Info<< "    Adding points in cell "
+                << (isZone_ ? "zones: " : "sets: ")
                 << flatOutput(names_) << nl;
         }
 
@@ -159,7 +177,8 @@ void Foam::cellToPoint::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Removing points in cell sets: "
+            Info<< "    Removing points in cell "
+                << (isZone_ ? "zones: " : "sets: ")
                 << flatOutput(names_) << nl;
         }
 

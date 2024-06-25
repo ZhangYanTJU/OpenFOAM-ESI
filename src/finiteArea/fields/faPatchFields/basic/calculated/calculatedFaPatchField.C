@@ -90,19 +90,19 @@ Foam::calculatedFaPatchField<Type>::calculatedFaPatchField
 
 
 template<class Type>
-template<class AnyType>
-Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::NewCalculatedType
+Foam::tmp<Foam::faPatchField<Type>>
+Foam::faPatchField<Type>::NewCalculatedType
 (
-    const faPatchField<AnyType>& pf
+    const faPatch& p
 )
 {
-    auto* patchTypeCtor = patchConstructorTable(pf.patch().type());
+    auto* patchTypeCtor = patchConstructorTable(p.type());
 
     if (patchTypeCtor)
     {
         return patchTypeCtor
         (
-            pf.patch(),
+            p,
             DimensionedField<Type, areaMesh>::null()
         );
     }
@@ -112,11 +112,23 @@ Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::NewCalculatedType
         (
             new calculatedFaPatchField<Type>
             (
-                pf.patch(),
+                p,
                 DimensionedField<Type, areaMesh>::null()
             )
         );
     }
+}
+
+
+template<class Type>
+template<class AnyType>
+Foam::tmp<Foam::faPatchField<Type>>
+Foam::faPatchField<Type>::NewCalculatedType
+(
+    const faPatchField<AnyType>& pf
+)
+{
+    return NewCalculatedType(pf.patch());
 }
 
 

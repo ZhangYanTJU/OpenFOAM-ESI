@@ -113,7 +113,7 @@ Foam::label Foam::scotchDecomp::decomposeSerial
     labelList& decomp
 ) const
 {
-    const SCOTCH_Num numCells = max(0, (xadj.size()-1));
+    const SCOTCH_Num numCells = Foam::max(0, (xadj.size()-1));
 
     // Addressing
     ConstPrecisionAdaptor<SCOTCH_Num, label, List> adjncy_param(adjncy);

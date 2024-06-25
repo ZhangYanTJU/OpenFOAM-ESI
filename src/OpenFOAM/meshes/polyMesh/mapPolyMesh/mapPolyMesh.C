@@ -257,7 +257,7 @@ Foam::mapPolyMesh::mapPolyMesh
         oldCellVolumesPtr_ = oldCellVolumesPtr.clone();
     }
 
-    if (oldPatchStarts_.size() > 0)
+    if (oldPatchStarts_.size())
     {
         // Calculate old patch sizes
         for (label patchi = 0; patchi < oldPatchStarts_.size() - 1; patchi++)

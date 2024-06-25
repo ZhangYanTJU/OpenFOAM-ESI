@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -81,26 +82,17 @@ inline Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::pyrolysisChemistryModel<CompType, SolidThermo, GasThermo>::
 RRg() const
 {
-    tmp<volScalarField::Internal> tRRg
+    auto tRRg = DimensionedField<scalar, volMesh>::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                "RRg",
-                this->time().timeName(),
-                this->mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            this->mesh(),
-            dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
-        )
+        "RRg",
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
+    auto& RRg = tRRg.ref();
 
     if (this->chemistry_)
     {
-        volScalarField::Internal& RRg = tRRg.ref();
         for (label i=0; i < nGases_; i++)
         {
             RRg += RRg_[i];

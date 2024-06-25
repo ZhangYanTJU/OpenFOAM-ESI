@@ -183,8 +183,12 @@ public:
 
     // Static Functions
 
-        //- Return a UList reference to a nullObject
-        inline static const UList<T>& null();
+        //- Return a null UList (reference to a nullObject).
+        //- Behaves like an empty UList.
+        static const UList<T>& null() noexcept
+        {
+            return NullObjectRef<UList<T>>();
+        }
 
 
     // Public Classes
@@ -366,6 +370,9 @@ public:
 
         //- Copy the pointer and size
         inline void shallowCopy(T* __restrict__ ptr, const label len) noexcept;
+
+        //- Copy nullptr and zero size
+        inline void shallowCopy(std::nullptr_t) noexcept;
 
         //- Copy the pointer and size held by the given UList
         inline void shallowCopy(const UList<T>& list) noexcept;

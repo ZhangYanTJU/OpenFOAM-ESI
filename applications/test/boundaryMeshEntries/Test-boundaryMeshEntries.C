@@ -53,46 +53,37 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
     #include "createTime.H"
 
-    fileName coherentInst;
+    word coherentInst;
     coherentInst =
     (
         runTime.findInstance
         (
             polyMesh::meshSubDir,
             "coherent",
-            IOobject::READ_IF_PRESENT
+            IOobject::READ_IF_PRESENT,
+            word::null,  // No stop instance
+            false        // No "constant" fallback (word::null instead)
         )
     );
 
-    // Unfortunately with READ_IF_PRESENT, cannot tell if the file
-    // was actually found or not
-
-    Info<< "check: " << (coherentInst/polyMesh::meshSubDir/"coherent") << nl;
-
-    if (!Foam::isFile(coherentInst/polyMesh::meshSubDir/"coherent"))
-    {
-        coherentInst.clear();
-    }
-
-    Info<< "found coherent: " << coherentInst << nl;
+    Info<< "Found coherent \"" << coherentInst << '"' << nl;
 
     PtrList<entry> entries;
 
     if (!coherentInst.empty())
     {
-        IOdictionary coherent
-        (
-            IOobject
+        dictionary coherent =
+            IOdictionary::readContents
             (
-                "coherent",
-                coherentInst,
-                polyMesh::meshSubDir,
-                runTime,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            )
-        );
+                IOobject
+                (
+                    "coherent",
+                    coherentInst,
+                    polyMesh::meshSubDir,
+                    runTime,
+                    IOobject::MUST_READ
+                )
+            );
 
         ITstream& is = coherent.lookup("boundary");
         is >> entries;
@@ -105,7 +96,7 @@ int main(int argc, char *argv[])
     Info<< "size: "  << polyBoundaryMeshEntries::patchSizes(entries) << nl;
     Info<< nl;
 
-    fileName boundaryInst;
+    word boundaryInst;
     boundaryInst =
     (
         runTime.findInstance
@@ -116,7 +107,7 @@ int main(int argc, char *argv[])
         )
     );
 
-    Info<< "found boundary: " << boundaryInst << nl;
+    Info<< "Found boundary: \"" << boundaryInst << '"' << nl;
 
     polyBoundaryMeshEntries pbm
     (

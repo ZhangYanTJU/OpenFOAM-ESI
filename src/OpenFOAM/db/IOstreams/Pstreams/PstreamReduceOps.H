@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,28 +47,6 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Reduce inplace (cf. MPI Allreduce)
-//- using specified communication schedule.
-template<class T, class BinaryOp>
-void reduce
-(
-    const List<UPstream::commsStruct>& comms,
-    T& value,
-    const BinaryOp& bop,
-    const int tag,
-    const label comm
-)
-{
-    if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
-    {
-        Pout<< "** reducing:" << value << " with comm:" << comm << endl;
-        error::printStack(Pout);
-    }
-    Pstream::gather(comms, value, bop, tag, comm);
-    Pstream::broadcast(value, comm);
-}
-
-
-//- Reduce inplace (cf. MPI Allreduce)
 //- using linear/tree communication schedule
 template<class T, class BinaryOp>
 void reduce
@@ -81,7 +59,13 @@ void reduce
 {
     if (UPstream::is_parallel(comm))
     {
-        Foam::reduce(UPstream::whichCommunication(comm), value, bop, tag, comm);
+        if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
+        {
+            Perr<< "** reducing:" << value << " with comm:" << comm << endl;
+            error::printStack(Perr);
+        }
+        Pstream::gather(value, bop, tag, comm);
+        Pstream::broadcast(value, comm);
     }
 }
 
@@ -436,8 +420,7 @@ Pstream_SumReduce(double);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Convenience wrappers for some reduction operations
-// - defined after all specialisations are known
+// Convenience wrappers - defined after all specialisations are known
 
 //- Perform reduction on a copy, using specified binary operation
 //  \return the resulting value

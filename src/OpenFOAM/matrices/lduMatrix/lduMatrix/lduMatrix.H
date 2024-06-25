@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,13 +57,14 @@ SourceFiles
 #include "primitiveFieldsFwd.H"
 #include "FieldField.H"
 #include "lduInterfaceFieldPtrsList.H"
+#include "solverPerformance.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 #include "runTimeSelectionTables.H"
-#include "solverPerformance.H"
 #include "InfoProxy.H"
 #include "Enum.H"
 #include "profilingTrigger.H"
+#include <functional>  // For reference_wrapper
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -89,8 +90,14 @@ class lduMatrix
         //const lduMesh& lduMesh_;
         std::reference_wrapper<const lduMesh> lduMesh_;
 
-        //- Coefficients (not including interfaces)
-        scalarField *lowerPtr_, *diagPtr_, *upperPtr_;
+        //- Diagonal coefficients
+        std::unique_ptr<scalarField> diagPtr_;
+
+        //- Off-diagonal coefficients (not including interfaces)
+        std::unique_ptr<scalarField> lowerPtr_;
+
+        //- Off-diagonal coefficients (not including interfaces)
+        std::unique_ptr<scalarField> upperPtr_;
 
 
 public:
@@ -115,6 +122,7 @@ public:
         static const scalar defaultTolerance;
 
 
+    // -----------------------------------------------------------------------
     //- Abstract base-class for lduMatrix solvers
     class solver
     {
@@ -331,6 +339,7 @@ public:
     };
 
 
+    // -----------------------------------------------------------------------
     //- Abstract base-class for lduMatrix smoothers
     class smoother
     {
@@ -478,6 +487,7 @@ public:
     };
 
 
+    // -----------------------------------------------------------------------
     //- Abstract base-class for lduMatrix preconditioners
     class preconditioner
     {
@@ -582,6 +592,8 @@ public:
     };
 
 
+    // -----------------------------------------------------------------------
+
     // Static Data
 
         // Declare name of the class and its debug switch
@@ -590,101 +602,101 @@ public:
 
     // Constructors
 
-        //- Construct given an LDU addressed mesh.
-        //  The coefficients are initially empty for subsequent setting.
-        lduMatrix(const lduMesh&);
+        //- Construct (without coefficients) for an LDU addressed mesh.
+        //  Not yet 'explicit' (legacy code may rely on implicit construct)
+        lduMatrix(const lduMesh& mesh);
 
-        //- Construct as copy
+        //- Copy construct
         lduMatrix(const lduMatrix&);
+
+        //- Move construct
+        lduMatrix(lduMatrix&&);
 
         //- Construct as copy or re-use as specified.
         lduMatrix(lduMatrix&, bool reuse);
 
         //- Construct given an LDU addressed mesh and an Istream
         //- from which the coefficients are read
-        lduMatrix(const lduMesh&, Istream&);
+        lduMatrix(const lduMesh& mesh, Istream& is);
 
 
     //- Destructor
-    ~lduMatrix();
+    ~lduMatrix() = default;
 
 
     // Member Functions
 
-        // Access to addressing
+    // Addressing
 
-            //- Return the LDU mesh from which the addressing is obtained
-            const lduMesh& mesh() const noexcept
-            {
-                return lduMesh_;
-            }
+        //- Return the LDU mesh from which the addressing is obtained
+        const lduMesh& mesh() const noexcept
+        {
+            return lduMesh_;
+        }
 
-            //- Set the LDU mesh containing the addressing is obtained
-            void setLduMesh(const lduMesh& m)
-            {
-                lduMesh_ = m;
-            }
+        //- Set the LDU mesh containing the addressing
+        void setLduMesh(const lduMesh& m)
+        {
+            lduMesh_ = m;
+        }
 
-            //- Return the LDU addressing
-            const lduAddressing& lduAddr() const
-            {
-                return mesh().lduAddr();
-            }
+        //- Return the LDU addressing
+        const lduAddressing& lduAddr() const
+        {
+            return mesh().lduAddr();
+        }
 
-            //- Return the patch evaluation schedule
-            const lduSchedule& patchSchedule() const
-            {
-                return lduAddr().patchSchedule();
-            }
-
-
-        // Access to coefficients
-
-            scalarField& lower();
-            scalarField& diag();
-            scalarField& upper();
-
-            // Size with externally provided sizes (for constructing with 'fake'
-            // mesh in GAMG)
-
-                scalarField& lower(const label size);
-                scalarField& diag(const label nCoeffs);
-                scalarField& upper(const label nCoeffs);
+        //- Return the patch evaluation schedule
+        const lduSchedule& patchSchedule() const
+        {
+            return mesh().lduAddr().patchSchedule();
+        }
 
 
-            const scalarField& lower() const;
-            const scalarField& diag() const;
-            const scalarField& upper() const;
+    // Coefficients
 
-            bool hasDiag() const noexcept
-            {
-                return (diagPtr_);
-            }
+        const scalarField& diag() const;
+        const scalarField& upper() const;
+        const scalarField& lower() const;
 
-            bool hasUpper() const noexcept
-            {
-                return (upperPtr_);
-            }
+        scalarField& diag();
+        scalarField& upper();
+        scalarField& lower();
 
-            bool hasLower() const noexcept
-            {
-                return (lowerPtr_);
-            }
+        // Size with externally provided sizes
+        // (for constructing with 'fake' mesh in GAMG)
 
-            bool diagonal() const noexcept
-            {
-                return (diagPtr_ && !lowerPtr_ && !upperPtr_);
-            }
+        scalarField& diag(label size);
+        scalarField& upper(label nCoeffs);
+        scalarField& lower(label nCoeffs);
 
-            bool symmetric() const noexcept
-            {
-                return (diagPtr_ && (!lowerPtr_ && upperPtr_));
-            }
 
-            bool asymmetric() const noexcept
-            {
-                return (diagPtr_ && lowerPtr_ && upperPtr_);
-            }
+    // Characteristics
+
+        //- The matrix type (empty, diagonal, symmetric, ...)
+        word matrixTypeName() const;
+
+        bool hasDiag() const noexcept { return bool(diagPtr_); }
+        bool hasUpper() const noexcept { return bool(upperPtr_); }
+        bool hasLower() const noexcept { return bool(lowerPtr_); }
+
+        //- Matrix has diagonal only
+        bool diagonal() const noexcept
+        {
+            return (diagPtr_ && !lowerPtr_ && !upperPtr_);
+        }
+
+        //- Matrix is symmetric
+        bool symmetric() const noexcept
+        {
+            return (diagPtr_ && !lowerPtr_ && upperPtr_);
+        }
+
+        //- Matrix is asymmetric (ie, full)
+        bool asymmetric() const noexcept
+        {
+            return (diagPtr_ && lowerPtr_ && upperPtr_);
+        }
 
 
         // Operations
@@ -801,7 +813,11 @@ public:
 
     // Member Operators
 
+        //- Copy assignment
         void operator=(const lduMatrix&);
+
+        //- Move assignment
+        void operator=(lduMatrix&&);
 
         void negate();
 

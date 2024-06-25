@@ -35,14 +35,12 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faDivScheme_H
-#define faDivScheme_H
+#ifndef Foam_faDivScheme_H
+#define Foam_faDivScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
 #include "linearEdgeInterpolation.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -50,9 +48,8 @@ SourceFiles
 namespace Foam
 {
 
-template<class Type>
-class faMatrix;
-
+// Forward Declarations
+template<class Type> class faMatrix;
 class faMesh;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -69,22 +66,15 @@ class divScheme
 :
     public refCount
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
+        //- Reference to mesh
         const faMesh& mesh_;
+
+        //- Edge interpolation scheme
         tmp<edgeInterpolationScheme<Type>> tinterpScheme_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        divScheme(const divScheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const divScheme&) = delete;
 
 
 public:
@@ -101,6 +91,15 @@ public:
         );
 
 
+    // Generated Methods
+
+        //- No copy construct
+        divScheme(const divScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const divScheme&) = delete;
+
+
     // Constructors
 
         //- Construct from mesh
@@ -113,9 +112,23 @@ public:
         //- Construct from mesh and Istream
         divScheme(const faMesh& mesh, Istream& is)
         :
-            mesh_(mesh),
-            tinterpScheme_(edgeInterpolationScheme<Type>::New(mesh, is))
-        {}
+            mesh_(mesh)
+        {
+            if (is.eof())
+            {
+                tinterpScheme_.reset
+                (
+                    new linearEdgeInterpolation<Type>(mesh)
+                );
+            }
+            else
+            {
+                tinterpScheme_.reset
+                (
+                    edgeInterpolationScheme<Type>::New(mesh, is)
+                );
+            }
+        }
 
 
     // Selectors
@@ -129,16 +142,13 @@ public:
 
 
     //- Destructor
-    virtual ~divScheme();
+    virtual ~divScheme() = default;
 
 
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         virtual tmp
         <

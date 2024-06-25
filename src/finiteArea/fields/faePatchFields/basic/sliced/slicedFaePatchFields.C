@@ -26,8 +26,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "slicedFaePatchFields.H"
-#include "addToRunTimeSelectionTable.H"
 #include "faePatchFields.H"
+#include "edgeFaMesh.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

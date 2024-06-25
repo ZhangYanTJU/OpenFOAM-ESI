@@ -554,7 +554,8 @@ int main(int argc, char *argv[])
                 {
                     autoPtr<ensightGeoFile> os =
                         ensCase.newGeometry(hasMovingMesh);
-                    ensMesh.write(os);
+
+                    ensMesh.write(os.ref());
                 }
 
                 // finite-area
@@ -562,7 +563,8 @@ int main(int argc, char *argv[])
                 {
                     autoPtr<ensightGeoFile> os =
                         ensFaCasePtr->newGeometry(hasMovingMesh);
-                    ensFaMeshPtr->write(os);
+
+                    ensFaMeshPtr->write(os.ref());
                 }
             }
 
@@ -576,6 +578,20 @@ int main(int argc, char *argv[])
 
             // Volume, internal, point fields
             #include "convertVolumeFields.H"
+
+            // The finite-area objects at this time
+            IOobjectList faObjects;
+
+            if (ensFaMeshPtr)
+            {
+                faObjects =
+                    IOobjectList(ensFaMeshPtr->mesh(), runTime.timeName());
+
+                faObjects.filterObjects
+                (
+                    availableFaRegionObjectNames[regioni]
+                );
+            }
 
             // The finiteArea fields
             #include "convertAreaFields.H"

@@ -96,7 +96,8 @@ void Foam::rotatedBoxToCell::combine(topoSet& set, const bool add) const
 
     // Check whether cell centre is inside all faces of box.
 
-    const pointField& ctrs = mesh_.cellCentres();
+    const tmp<pointField> tctrs(this->transform(mesh_.cellCentres()));
+    const pointField& ctrs = tctrs();
 
     forAll(ctrs, celli)
     {
@@ -146,14 +147,11 @@ Foam::rotatedBoxToCell::rotatedBoxToCell
     const dictionary& dict
 )
 :
-    rotatedBoxToCell
-    (
-        mesh,
-        dict.get<point>("origin"),
-        dict.get<vector>("i"),
-        dict.get<vector>("j"),
-        dict.get<vector>("k")
-    )
+    topoSetCellSource(mesh, dict),
+    origin_(dict.get<point>("origin")),
+    i_(dict.get<vector>("i")),
+    j_(dict.get<vector>("j")),
+    k_(dict.get<vector>("k"))
 {}
 
 

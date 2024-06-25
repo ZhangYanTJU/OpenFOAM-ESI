@@ -69,7 +69,8 @@ void Foam::clipPlaneToCell::combine(topoSet& set, const bool add) const
 {
     // Cell centres above the plane
 
-    const pointField& ctrs = mesh_.cellCentres();
+    const tmp<pointField> tctrs(this->transform(mesh_.cellCentres()));
+    const pointField& ctrs = tctrs();
 
     forAll(ctrs, elemi)
     {
@@ -102,12 +103,9 @@ Foam::clipPlaneToCell::clipPlaneToCell
     const dictionary& dict
 )
 :
-    clipPlaneToCell
-    (
-        mesh,
-        dict.get<vector>("point"),
-        dict.get<vector>("normal")
-    )
+    topoSetCellSource(mesh, dict),
+    point_(dict.get<vector>("point")),
+    normal_(dict.get<vector>("normal"))
 {}
 
 

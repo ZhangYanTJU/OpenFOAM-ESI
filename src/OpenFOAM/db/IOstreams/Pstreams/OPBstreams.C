@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +34,7 @@ License
 Foam::UOPBstream::UOPBstream
 (
     const UPstream::commsTypes commsType,
-    const int toProcNo,
+    const int rootProcNo,
     DynamicList<char>& sendBuf,
     const int tag,
     const label comm,
@@ -42,14 +42,23 @@ Foam::UOPBstream::UOPBstream
     IOstreamOption::streamFormat fmt
 )
 :
-    UOPstreamBase(commsType, toProcNo, sendBuf, tag, comm, sendAtDestruct, fmt)
+    UOPstreamBase
+    (
+        commsType,              // irrelevant
+        rootProcNo,             // normally UPstream::masterNo()
+        sendBuf,
+        tag,                    // irrelevant
+        comm,
+        sendAtDestruct,
+        fmt
+    )
 {}
 
 
 Foam::OPBstream::OPBstream
 (
     const UPstream::commsTypes commsType,
-    const int toProcNo,
+    const int rootProcNo,
     const label bufSize,
     const int tag,
     const label comm,
@@ -59,10 +68,10 @@ Foam::OPBstream::OPBstream
     Pstream(commsType, bufSize),
     UOPBstream
     (
-        commsType,
-        toProcNo,
+        commsType,              // irrelevant
+        rootProcNo,             // normally UPstream::masterNo()
         Pstream::transferBuf_,
-        tag,
+        tag,                    // irrelevant
         comm,
         true,  // sendAtDestruct
         fmt
@@ -72,7 +81,7 @@ Foam::OPBstream::OPBstream
 
 Foam::OPBstream::OPBstream
 (
-    const int toProcNo,
+    const int rootProcNo,
     const label comm,
     IOstreamOption::streamFormat fmt
 )
@@ -80,7 +89,25 @@ Foam::OPBstream::OPBstream
     OPBstream
     (
         UPstream::commsTypes::scheduled,    // irrelevant
-        toProcNo,
+        rootProcNo,
+        label(0),  // bufSize
+        UPstream::msgType(),                // irrelevant
+        comm,
+        fmt
+    )
+{}
+
+
+Foam::OPBstream::OPBstream
+(
+    const label comm,
+    IOstreamOption::streamFormat fmt
+)
+:
+    OPBstream
+    (
+        UPstream::commsTypes::scheduled,    // irrelevant
+        UPstream::masterNo(),  // rootProcNo
         label(0),  // bufSize
         UPstream::msgType(),                // irrelevant
         comm,

@@ -429,8 +429,11 @@ public:
 
     // Static Member Functions
 
-        //- Return a PDRblock reference to a nullObject
-        static const PDRblock& null();
+        //- Return a null PDRblock (reference to a nullObject).
+        static const PDRblock& null() noexcept
+        {
+            return NullObjectRef<PDRblock>();
+        }
 
 
     // Constructors

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,16 +101,10 @@ public:
     // Member Functions
 
         //- The tokens
-        const DynamicList<token>& tokens() const noexcept
-        {
-            return *this;
-        }
+        const DynamicList<token>& tokens() const noexcept { return *this; }
 
         //- The tokens
-        DynamicList<token>& tokens() noexcept
-        {
-            return *this;
-        }
+        DynamicList<token>& tokens() noexcept { return *this; }
 
 
     // Write
@@ -187,16 +181,18 @@ public:
 
     // Stream State Functions
 
-        //- Get flags of output stream
-        virtual ios_base::fmtflags flags() const override
+        //- Return current stream flags.
+        //- Dummy for token stream, returns 0.
+        virtual std::ios_base::fmtflags flags() const override
         {
-            return ios_base::fmtflags(0);
+            return std::ios_base::fmtflags(0);
         }
 
-        //- Set flags of stream - ignored
-        std::ios_base::fmtflags flags(const ios_base::fmtflags) override
+        //- Set stream flags, return old stream flags.
+        //- Dummy for token stream, returns 0.
+        std::ios_base::fmtflags flags(std::ios_base::fmtflags) override
         {
-            return ios_base::fmtflags(0);
+            return std::ios_base::fmtflags(0);
         }
 
         //- Flush stream
@@ -249,19 +245,19 @@ public:
 
     // Other
 
+        //- Rewind the output stream to position 0 (non-virtual!)
+        //- and adjust the stream status (open/good/eof ...)
         //- Reset the output buffer and rewind the stream
-        void reset()
-        {
-            this->rewind();
-        }
-
-        //- Rewind the output stream
-        virtual void rewind()
+        void reset() noexcept
         {
             DynamicList<token>::clear();
             setOpened();
             setGood();
         }
+
+        //- Rewind the output stream to position 0
+        //- and adjust the stream status (open/good/eof ...)
+        virtual void rewind() { OTstream::reset(); }
 
         //- Print stream description to Ostream
         void print(Ostream& os) const override;

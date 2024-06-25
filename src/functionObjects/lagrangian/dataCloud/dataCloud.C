@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -52,11 +52,15 @@ bool Foam::functionObjects::dataCloud::writeCloud
     const word& cloudName
 )
 {
-    const auto* objPtr = mesh_.findObject<cloud>(cloudName);
-    if (!objPtr)
+    applyFilter_ = false;
+
+    const auto* cloudPtr = mesh_.findObject<cloud>(cloudName);
+    if (!cloudPtr)
     {
         return false;
     }
+
+    const auto& currCloud = *cloudPtr;
 
     objectRegistry obrTmp
     (
@@ -71,7 +75,7 @@ bool Foam::functionObjects::dataCloud::writeCloud
         )
     );
 
-    objPtr->writeObjects(obrTmp);
+    currCloud.writeObjects(obrTmp);
 
     const auto* pointsPtr = cloud::findIOPosition(obrTmp);
 
@@ -86,7 +90,10 @@ bool Foam::functionObjects::dataCloud::writeCloud
 
 
     // Number of parcels (locally)
-    label nParcels = (applyFilter_ ? parcelAddr_.count() : pointsPtr->size());
+    const label nParcels
+    (
+        applyFilter_ ? parcelAddr_.count() : pointsPtr->size()
+    );
 
     // Total number of parcels on all processes
     const label nTotParcels = returnReduce(nParcels, sumOp<label>());
@@ -104,9 +111,9 @@ bool Foam::functionObjects::dataCloud::writeCloud
         return false;
     }
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
-        mkDir(outputName.path());
+        Foam::mkDir(outputName.path());
     }
 
     return
@@ -163,12 +170,15 @@ bool Foam::functionObjects::dataCloud::read(const dictionary& dict)
 
     selectClouds_.clear();
     dict.readIfPresent("clouds", selectClouds_);
+    selectClouds_.uniq();
 
     if (selectClouds_.empty())
     {
-        selectClouds_.resize(1);
-        selectClouds_.first() =
-            dict.getOrDefault<word>("cloud", cloud::defaultName);
+        word cloudName;
+        if (dict.readIfPresent("cloud", cloudName))
+        {
+            selectClouds_.push_back(std::move(cloudName));
+        }
     }
 
     dict.readEntry("field", fieldName_);
@@ -209,7 +219,12 @@ bool Foam::functionObjects::dataCloud::execute()
 
 bool Foam::functionObjects::dataCloud::write()
 {
-    const wordList cloudNames(mesh_.sortedNames<cloud>(selectClouds_));
+    const wordList cloudNames
+    (
+        selectClouds_.empty()
+      ? mesh_.sortedNames<cloud>()
+      : mesh_.sortedNames<cloud>(selectClouds_)
+    );
 
     if (cloudNames.empty())
     {

@@ -94,10 +94,10 @@ void Foam::ThermoParcel<ParcelType>::readFields(CloudType& c)
 
     ParcelType::readFields(c);
 
-    IOField<scalar> T(c.fieldIOobject("T", IOobject::MUST_READ), readOnProc);
+    IOField<scalar> T(c.newIOobject("T", IOobject::MUST_READ), readOnProc);
     c.checkFieldIOobject(c, T);
 
-    IOField<scalar> Cp(c.fieldIOobject("Cp", IOobject::MUST_READ), readOnProc);
+    IOField<scalar> Cp(c.newIOobject("Cp", IOobject::MUST_READ), readOnProc);
     c.checkFieldIOobject(c, Cp);
 
 
@@ -121,8 +121,8 @@ void Foam::ThermoParcel<ParcelType>::writeFields(const CloudType& c)
     const label np = c.size();
     const bool writeOnProc = c.size();
 
-    IOField<scalar> T(c.fieldIOobject("T", IOobject::NO_READ), np);
-    IOField<scalar> Cp(c.fieldIOobject("Cp", IOobject::NO_READ), np);
+    IOField<scalar> T(c.newIOobject("T", IOobject::NO_READ), np);
+    IOField<scalar> Cp(c.newIOobject("Cp", IOobject::NO_READ), np);
 
     label i = 0;
     for (const ThermoParcel<ParcelType>& p : c)

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,8 +86,17 @@ public:
 
     // Factory Methods
 
-        //- Read and return contents. The IOobject will not be registered
+        //- Read and return contents, testing for "dictionary" type.
+        //- The IOobject will not be registered
         static dictionary readContents(const IOobject& io);
+
+        //- Read and return contents, testing for expected type.
+        //- The IOobject will not be registered
+        static dictionary readContents
+        (
+            const IOobject& io,
+            const word& wantedType
+        );
 
 
     //- Destructor
@@ -96,14 +105,14 @@ public:
 
     // Member Functions
 
-        //- Is object global
+        //- The object is not global
         virtual bool global() const
         {
             return false;
         }
 
         //- Return complete path + object name if the file exists
-        //  in the case otherwise null
+        //- in the case otherwise null
         virtual fileName filePath() const
         {
             // Use default (local only) search strategy

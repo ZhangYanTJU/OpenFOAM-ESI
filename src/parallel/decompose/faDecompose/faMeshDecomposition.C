@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,6 +35,7 @@ License
 #include "OSspecific.H"
 #include "Map.H"
 #include "SLList.H"
+#include "ListOps.H"
 #include "globalMeshData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -275,17 +276,9 @@ void Foam::faMeshDecomposition::decomposeMesh()
             ioAddr.rename("faceProcAddressing");
             labelIOList fvFaceProcAddressing(ioAddr);
 
-            fvFaceProcAddressingHash.reserve(fvFaceProcAddressing.size());
+            fvFaceProcAddressingHash = invertToMap(fvFaceProcAddressing);
+        }
 
-            forAll(fvFaceProcAddressing, facei)
-            {
-                 fvFaceProcAddressingHash.insert
-                 (
-                     fvFaceProcAddressing[facei],
-                     facei
-                 );
-            }
-        };
 
         const labelList& curProcFaceAddressing = procFaceAddressing_[procI];
 
@@ -1116,12 +1109,8 @@ bool Foam::faMeshDecomposition::writeDecomposition()
     Info<< "\nConstructing processor FA meshes" << endl;
 
     // Make a lookup map for globally shared points
-    Map<label> sharedPointLookup(2*globallySharedPoints_.size());
+    Map<label> sharedPointLookup(invertToMap(globallySharedPoints_));
 
-    forAll(globallySharedPoints_, pointi)
-    {
-        sharedPointLookup.insert(globallySharedPoints_[pointi], pointi);
-    }
 
     label maxProcFaces = 0;
     label totProcFaces = 0;
@@ -1250,8 +1239,8 @@ bool Foam::faMeshDecomposition::writeDecomposition()
         // Add boundary patches
         procMesh.addFaPatches(procPatches);
 
-        // Set the precision of the points data to 10
-        IOstream::defaultPrecision(10);
+        // More precision (for points data)
+        IOstream::minPrecision(10);
 
         procMesh.write();
 

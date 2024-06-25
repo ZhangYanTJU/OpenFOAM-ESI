@@ -58,7 +58,8 @@ void Foam::faceReflecting::initialise(const dictionary& coeffs)
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 mesh_,
                 dimensionedScalar(dimMass/pow3(dimTime), Zero)
@@ -393,17 +394,8 @@ void Foam::faceReflecting::calculate()
     PtrList<List<scalarField>> patcha(patches.size());
     forAll(patchr, patchi)
     {
-        patchr.set
-        (
-            patchi,
-            new List<scalarField>(nBands)
-        );
-
-        patcha.set
-        (
-            patchi,
-            new List<scalarField>(nBands)
-        );
+        patchr.emplace_set(patchi, nBands);
+        patcha.emplace_set(patchi, nBands);
     }
 
     // Fill patchr

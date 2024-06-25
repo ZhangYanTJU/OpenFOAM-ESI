@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,11 +47,12 @@ Foam::rhoThermo::rhoThermo(const fvMesh& mesh, const word& phaseName)
     (
         IOobject
         (
-            phasePropertyName("thermo:rho"),
+            phaseScopedName("thermo", "rho"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimDensity
@@ -61,11 +62,12 @@ Foam::rhoThermo::rhoThermo(const fvMesh& mesh, const word& phaseName)
     (
         IOobject
         (
-            phasePropertyName("thermo:psi"),
+            phaseScopedName("thermo", "psi"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionSet(0, -2, 2, 0, 0)
@@ -75,11 +77,12 @@ Foam::rhoThermo::rhoThermo(const fvMesh& mesh, const word& phaseName)
     (
         IOobject
         (
-            phasePropertyName("thermo:mu"),
+            phaseScopedName("thermo", "mu"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionSet(1, -1, -1, 0, 0)
@@ -99,11 +102,12 @@ Foam::rhoThermo::rhoThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:rho"),
+            phaseScopedName("thermo", "rho"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimDensity
@@ -113,11 +117,12 @@ Foam::rhoThermo::rhoThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:psi"),
+            phaseScopedName("thermo", "psi"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionSet(0, -2, 2, 0, 0)
@@ -127,11 +132,12 @@ Foam::rhoThermo::rhoThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:mu"),
+            phaseScopedName("thermo", "mu"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionSet(1, -1, -1, 0, 0)
@@ -151,11 +157,12 @@ Foam::rhoThermo::rhoThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:rho"),
+            phaseScopedName("thermo", "rho"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimDensity
@@ -165,11 +172,12 @@ Foam::rhoThermo::rhoThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:psi"),
+            phaseScopedName("thermo", "psi"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionSet(0, -2, 2, 0, 0)
@@ -179,11 +187,12 @@ Foam::rhoThermo::rhoThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:mu"),
+            phaseScopedName("thermo", "mu"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionSet(1, -1, -1, 0, 0)

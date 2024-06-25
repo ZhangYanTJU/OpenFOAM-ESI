@@ -95,15 +95,6 @@ public:
             const basicSymmetryFaPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<faPatchField<Type>> clone() const
-        {
-            return tmp<faPatchField<Type>>
-            (
-                new basicSymmetryFaPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         basicSymmetryFaPatchField
         (
@@ -111,20 +102,23 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<faPatchField<Type>> clone() const
+        {
+            return faPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<faPatchField<Type>> clone
         (
             const DimensionedField<Type, areaMesh>& iF
         ) const
         {
-            return tmp<faPatchField<Type>>
-            (
-                new basicSymmetryFaPatchField<Type>(*this, iF)
-            );
+            return faPatchField<Type>::Clone(*this, iF);
         }
 
 
-    // Member functions
+    // Member Functions
 
         // Evaluation functions
 
@@ -136,11 +130,17 @@ public:
             //  HJ, 30/Jun/2009
             virtual void evaluate
             (
-                const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
+                const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
             );
 
             //- Return face-gradient transform diagonal
             virtual tmp<Field<Type>> snGradTransformDiag() const;
+
+
+    // Member Operators
+
+        //- Inherit assignment operators
+        using transformFaPatchField<Type>::operator=;
 };
 
 

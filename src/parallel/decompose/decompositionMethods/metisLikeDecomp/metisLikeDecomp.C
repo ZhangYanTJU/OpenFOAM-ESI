@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,7 +59,7 @@ Foam::label Foam::metisLikeDecomp::decomposeGeneral
     }
 
     // Protect against zero-sized offset list
-    const label numCells = max(0, (xadj.size()-1));
+    const label numCells = Foam::max(0, (xadj.size()-1));
 
     const globalIndex globalAdjncy(adjncy.size());
     const globalIndex globalCells(numCells);
@@ -224,17 +224,10 @@ Foam::labelList Foam::metisLikeDecomp::decompose
             << exit(FatalError);
     }
 
+    // Global mesh connectivity
     CompactListList<label> cellCells;
-    globalMeshData::calcCellCells
-    (
-        mesh,
-        identity(mesh.nCells()),
-        mesh.nCells(),
-        true,
-        cellCells
-    );
+    globalMeshData::calcCellCells(mesh, cellCells, true);
 
-    // Decompose using default weights
     labelList decomp;
     decomposeGeneral
     (
@@ -274,11 +267,10 @@ Foam::labelList Foam::metisLikeDecomp::decompose
         mesh,
         agglom,
         agglomPoints.size(),
-        true,
+        true,        // Global mesh connectivity
         cellCells
     );
 
-    // Decompose using default weights
     labelList decomp;
     decomposeGeneral
     (
@@ -313,7 +305,6 @@ Foam::labelList Foam::metisLikeDecomp::decompose
     //   adjncy      : contains neighbours (= edges in graph)
     //   xadj(celli) : start of information in adjncy for celli
 
-    // Decompose using default weights
     labelList decomp;
     decomposeGeneral
     (
@@ -349,7 +340,6 @@ Foam::labelList Foam::metisLikeDecomp::decompose
 
     auto cellCells(CompactListList<label>::pack(globalCellCells));
 
-    // Decompose using default weights
     labelList decomp;
     decomposeGeneral
     (

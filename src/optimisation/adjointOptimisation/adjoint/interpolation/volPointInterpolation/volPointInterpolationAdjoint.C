@@ -297,10 +297,7 @@ void Foam::volPointInterpolationAdjoint::makeWeights()
 
 Foam::volPointInterpolationAdjoint::volPointInterpolationAdjoint(const fvMesh& vm)
 :
-    MeshObject<fvMesh, Foam::UpdateableMeshObject, volPointInterpolationAdjoint>
-    (
-        vm
-    )
+    MeshObject_type(vm)
 {
     makeWeights();
 }

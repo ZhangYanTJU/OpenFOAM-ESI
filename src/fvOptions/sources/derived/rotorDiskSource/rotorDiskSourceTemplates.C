@@ -178,37 +178,28 @@ void Foam::fv::rotorDiskSource::writeField
     const bool writeNow
 ) const
 {
-    typedef GeometricField<Type, fvPatchField, volMesh> FieldType;
-
     if (mesh_.time().writeTime() || writeNow)
     {
-        auto tfield = tmp<FieldType>::New
+        if (cells_.size() != values.size())
+        {
+            FatalErrorInFunction
+                << "Size mismatch. Number of cells "
+                << cells_.size() << " != number of values "
+                << values.size() << nl
+                << abort(FatalError);
+        }
+
+        auto tfield = GeometricField<Type, fvPatchField, volMesh>::New
         (
-            IOobject
-            (
-                name,
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            name,
+            IOobject::NO_REGISTER,
             mesh_,
             dimensioned<Type>(dimless, Zero)
         );
 
         auto& field = tfield.ref().primitiveFieldRef();
 
-        if (cells_.size() != values.size())
-        {
-            FatalErrorInFunction
-                << abort(FatalError);
-        }
-
-        forAll(cells_, i)
-        {
-            const label celli = cells_[i];
-            field[celli] = values[i];
-        }
+        UIndirectList<Type>(field, cells_) = values;
 
         tfield().write();
     }

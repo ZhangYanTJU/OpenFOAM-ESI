@@ -60,7 +60,15 @@ Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
     sampleIndex_(-1, -1),
     sampleAverage_(Zero, Zero),
     sampleValues_(),
-    offset_(Function1<Type>::NewIfPresent("offset", dict))
+    offset_
+    (
+        Function1<Type>::NewIfPresent
+        (
+            "offset",
+            dict,
+            patchFunction1Base::whichDb()
+        )
+    )
 {
     if (fieldTableName_.empty())
     {
@@ -170,16 +178,6 @@ Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
 template<class Type>
 Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
 (
-    const MappedFile<Type>& rhs
-)
-:
-    MappedFile<Type>(rhs, rhs.patch())
-{}
-
-
-template<class Type>
-Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
-(
     const MappedFile<Type>& rhs,
     const polyPatch& pp
 )
@@ -212,6 +210,16 @@ Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
         readerPtr_ = surfaceReader::New(readerFormat_, fName);
     }
 }
+
+
+template<class Type>
+Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
+(
+    const MappedFile<Type>& rhs
+)
+:
+    MappedFile<Type>(rhs, rhs.patch())
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

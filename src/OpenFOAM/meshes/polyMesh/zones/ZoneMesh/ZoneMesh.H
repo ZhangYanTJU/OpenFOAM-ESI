@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,6 +76,10 @@ class ZoneMesh
         //- Demand-driven: map of zone labels for given element
         mutable std::unique_ptr<Map<label>> zoneMapPtr_;
 
+        //- Demand-driven: map of additional zone labels for given element.
+        //  Only populated if overlapping zones
+        mutable std::unique_ptr<labelListList> additionalMapPtr_;
+
         //- Demand-driven: list of zone ids per group
         mutable std::unique_ptr<HashTable<labelList>> groupIDsPtr_;
 
@@ -102,7 +106,7 @@ class ZoneMesh
 
         //- Return true if contents were read
         //- (controlled by IOobject readOption flags).
-        bool readContents(const bool allowOptionalRead);
+        bool readIOcontents(const bool allowOptionalRead);
 
 
 public:
@@ -189,6 +193,14 @@ public:
         //- Given a global object index, return the zone it is in.
         //  If object does not belong to any zones, return -1
         label whichZone(const label objectIndex) const;
+
+        //- Given a global object index, return (in argument) its zones.
+        //  Returns number of zones (0 if object does not belong to any zones)
+        label whichZones
+        (
+            const label objectIndex,
+            DynamicList<label>& zones
+        ) const;
 
         //- Return a list of zone types
         wordList types() const;

@@ -166,23 +166,8 @@ void Foam::meshRefinement::collectAndPrint
 {
     const globalIndex globalPoints(points.size());
 
-    pointField allPoints;
-    globalPoints.gather
-    (
-        points,
-        allPoints,
-        UPstream::msgType(),
-        Pstream::commsTypes::blocking
-    );
-
-    List<T> allData;
-    globalPoints.gather
-    (
-        data,
-        allData,
-        UPstream::msgType(),
-        Pstream::commsTypes::blocking
-    );
+    pointField allPoints(globalPoints.gather(points));
+    List<T> allData(globalPoints.gather(data));
 
 
     scalarField magAllPoints(mag(allPoints-point(-0.317, 0.117, 0.501)));

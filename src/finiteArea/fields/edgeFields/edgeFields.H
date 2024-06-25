@@ -48,7 +48,6 @@ SourceFiles
 #include "faMesh.H"
 #include "faePatchFields.H"
 #include "edgeFieldsFwd.H"
-#include "calculatedFaePatchFields.H"
 
 #endif
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -68,7 +68,7 @@ class polyTopoChanger
     // Private Member Functions
 
         //- Read if IOobject flags set, set modifiers. Return true if read.
-        bool readContents();
+        bool readIOcontents();
 
         //- No copy construct
         polyTopoChanger(const polyTopoChanger&) = delete;

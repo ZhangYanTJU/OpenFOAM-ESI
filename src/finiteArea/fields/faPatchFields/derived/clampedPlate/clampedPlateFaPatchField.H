@@ -115,15 +115,6 @@ public:
             const clampedPlateFaPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<faPatchField<Type>> clone() const
-        {
-            return tmp<faPatchField<Type>>
-            (
-                new clampedPlateFaPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         clampedPlateFaPatchField
         (
@@ -131,16 +122,19 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<faPatchField<Type>> clone() const
+        {
+            return faPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<faPatchField<Type>> clone
         (
             const DimensionedField<Type, areaMesh>& iF
         ) const
         {
-            return tmp<faPatchField<Type>>
-            (
-                new clampedPlateFaPatchField<Type>(*this, iF)
-            );
+            return faPatchField<Type>::Clone(*this, iF);
         }
 
 
@@ -155,16 +149,13 @@ public:
             //- Return gradient at boundary
             virtual tmp<Field<Type>> snGrad() const
             {
-                return tmp<Field<Type>>
-                (
-                    new Field<Type>(this->size(), Zero)
-                );
+                return tmp<Field<Type>>::New(this->size(), Foam::zero{});
             }
 
             //- Evaluate the patch field
             virtual void evaluate
             (
-                const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
+                const Pstream::commsTypes commsType=Pstream::commsTypes::buffered
             );
 
             //- Return the matrix diagonal coefficients corresponding to the
@@ -192,7 +183,7 @@ public:
 
         // IO
 
-            //- Write
+            //- Write includes "value" entry
             virtual void write(Ostream&) const;
 };
 

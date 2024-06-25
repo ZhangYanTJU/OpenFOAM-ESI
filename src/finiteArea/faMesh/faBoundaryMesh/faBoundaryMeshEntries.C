@@ -45,8 +45,7 @@ Foam::faBoundaryMeshEntries::faBoundaryMeshEntries(const IOobject& io)
         IOobject(io, IOobjectOption::NO_REGISTER)
     )
 {
-    // readContents()
-
+    // readIOcontents()
     if (isReadRequired() || (isReadOptional() && headerOk()))
     {
         // Read as entries
@@ -184,7 +183,7 @@ void Foam::faBoundaryMeshEntries::writeEntry(Ostream& os) const
 
 void Foam::faBoundaryMeshEntries::writeEntry
 (
-    const keyType& keyword,
+    const word& keyword,
     Ostream& os
 ) const
 {

@@ -31,8 +31,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fvBoundaryMeshMapper_H
-#define fvBoundaryMeshMapper_H
+#ifndef Foam_fvBoundaryMeshMapper_H
+#define Foam_fvBoundaryMeshMapper_H
 
 #include "PtrList.H"
 #include "fvPatchMapper.H"

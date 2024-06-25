@@ -67,7 +67,7 @@ Foam::dictionary Foam::adjointSolver::designVarsDict() const
                 mesh_,
                 IOobject::MUST_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             )
         ).subDict("optimisation").subDict("designVariables");
 }
@@ -270,7 +270,7 @@ void Foam::adjointSolver::updatePrimalBasedQuantities()
 
 bool Foam::adjointSolver::writeData(Ostream& os) const
 {
-    if (sensitivities_.valid())
+    if (sensitivities_.good())
     {
         sensitivities_().writeEntry("sensitivities", os);
     }

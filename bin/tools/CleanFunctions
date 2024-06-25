@@ -181,7 +181,7 @@ cleanCase()
     # Debug output (blockMesh, decomposePar)
     rm -f \
         blockTopology.vtu blockFaces.vtp blockTopology.obj blockCentres.obj \
-        cellDist.vtu \
+        cellDist.vtu decomposePar.vtu renumberMesh.vtu \
         0/cellDist
 
     # From mpirunDebug

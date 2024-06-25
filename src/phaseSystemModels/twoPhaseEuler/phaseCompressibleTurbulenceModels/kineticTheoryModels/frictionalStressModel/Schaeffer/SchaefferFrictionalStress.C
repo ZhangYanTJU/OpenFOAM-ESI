@@ -120,25 +120,14 @@ Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::nu
 {
     const volScalarField& alpha = phase;
 
-    tmp<volScalarField> tnu
+    auto tnu = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Schaeffer:nu",
-                phase.mesh().time().timeName(),
-                phase.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            phase.mesh(),
-            dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), Zero)
-        )
+        IOobject::scopedName("Schaeffer", "nu"),
+        IOobject::NO_REGISTER,
+        phase.mesh(),
+        dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), Zero)
     );
-
-    volScalarField& nuf = tnu.ref();
+    auto& nuf = tnu.ref();
 
     forAll(D, celli)
     {
@@ -154,7 +143,8 @@ Foam::kineticTheoryModels::frictionalStressModels::Schaeffer::nu
     }
 
     const fvPatchList& patches = phase.mesh().boundary();
-    const volVectorField& U = phase.U();
+    const tmp<volVectorField> tU(phase.U());
+    const volVectorField& U = tU();
 
     volScalarField::Boundary& nufBf = nuf.boundaryFieldRef();
 

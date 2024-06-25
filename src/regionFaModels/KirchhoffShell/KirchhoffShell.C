@@ -27,8 +27,6 @@ License
 
 #include "KirchhoffShell.H"
 #include "addToRunTimeSelectionTable.H"
-#include "fvPatchFields.H"
-#include "zeroGradientFaPatchFields.H"
 #include "subCycle.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -41,7 +39,6 @@ namespace regionModels
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 defineTypeNameAndDebug(KirchhoffShell, 0);
-
 addToRunTimeSelectionTable(vibrationShellModel, KirchhoffShell, dictionary);
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -52,32 +49,35 @@ bool KirchhoffShell::init(const dictionary& dict)
     return true;
 }
 
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 void KirchhoffShell::solveDisplacement()
 {
-    if (debug)
-    {
-        InfoInFunction << endl;
-    }
+    DebugInFunction << endl;
 
     const Time& time = primaryMesh().time();
 
-    areaScalarField solidMass(rho()*h_);
-    areaScalarField solidD(D()/solidMass);
+    // Create operand fields for solid physics
+    const areaScalarField solidMass(rho()*h_);
+    const areaScalarField solidD(D()/solidMass);
 
-    // Save old times
-    areaScalarField w0(w_.oldTime());
-    areaScalarField w00(w_.oldTime().oldTime());
+    // Deep copy old times of shell displacement field
+    auto tw0 = tmp<areaScalarField>::New(w_.oldTime());
+    auto tw00 = tmp<areaScalarField>::New(w_.oldTime().oldTime());
 
+    // Flag terms to avoid redundant time-derivative calculations
+    const bool f0_enabled = (f0_.value() != scalar(0));
+    const bool f1_enabled = (f1_.value() != scalar(0));
+    const bool f2_enabled = (f2_.value() != scalar(0));
+
+    // Restore various old fields in sub-cycling, if need be
     if (nSubCycles_ > 1)
     {
-        // Restore the oldTime in sub-cycling
         w_.oldTime() = w0_;
         w_.oldTime().oldTime() = w00_;
-        laplaceW_.oldTime() = laplaceW0_;
-        laplace2W_.oldTime() = laplace2W0_;
-     }
+
+        if (f0_enabled) laplaceW_.oldTime() = laplaceW0_;
+        if (f2_enabled) laplace2W_.oldTime() = laplace2W0_;
+    }
 
     for
     (
@@ -89,32 +89,35 @@ void KirchhoffShell::solveDisplacement()
        !(++wSubCycle).end();
     )
     {
-
         laplaceW_ = fac::laplacian(w_);
         laplace2W_ = fac::laplacian(laplaceW_);
 
         faScalarMatrix wEqn
         (
             fam::d2dt2(w_)
-         +  f1_*fam::ddt(w_)
-         -  f0_*sqrt(solidD)*fac::ddt(laplaceW_)
-         +  solidD*(laplace2W_ + f2_*fac::ddt(laplace2W_))
+          + solidD*laplace2W_
         ==
             ps_/solidMass
           + faOptions()(solidMass, w_, dimLength/sqr(dimTime))
         );
 
+        // Avoid time-derivative calculations for f terms, if possible
+        if (f0_enabled) wEqn -= f0_*sqrt(solidD)*fac::ddt(laplaceW_);
+        if (f1_enabled) wEqn += f1_*fam::ddt(w_);
+        if (f2_enabled) wEqn += f2_*solidD*fac::ddt(laplace2W_);
+
         faOptions().constrain(wEqn);
 
         wEqn.solve();
 
+        // Cache various old fields inside the sub-cycling
         if (wSubCycle.index() >= wSubCycle.nSubCycles())
         {
-            // Cache oldTimes inside the sub-cycling
             w0_ = w_.oldTime();
             w00_ = w_.oldTime().oldTime();
-            laplaceW0_ = laplaceW_.oldTime();
-            laplace2W0_ = laplace2W_.oldTime();
+
+            if (f0_enabled) laplaceW0_ = laplaceW_.oldTime();
+            if (f2_enabled) laplace2W0_ = laplace2W_.oldTime();
 
             // Update shell acceleration
             a_ = fac::d2dt2(w_);
@@ -123,9 +126,9 @@ void KirchhoffShell::solveDisplacement()
 
     Info<< w_.name() << " min/max   = " << gMinMax(w_) << endl;
 
-    // Restore old time in main time
-    w_.oldTime() = w0;
-    w_.oldTime().oldTime() = w00;
+    // Steal the deep-copy of old times to restore the shell displacement
+    w_.oldTime() = tw0;
+    w_.oldTime().oldTime() = tw00;
 
     faOptions().correct(w_);
 }
@@ -141,11 +144,6 @@ KirchhoffShell::KirchhoffShell
 )
 :
     vibrationShellModel(modelType, mesh, dict),
-    f0_("f0", dimless, dict),
-    f1_("f1", inv(dimTime), dict),
-    f2_("f2", dimTime, dict),
-    nNonOrthCorr_(1),
-    nSubCycles_(1),
     ps_
     (
         IOobject
@@ -248,7 +246,12 @@ KirchhoffShell::KirchhoffShell
         ),
         regionMesh(),
         dimensionedScalar(inv(pow3(dimLength)), Zero)
-    )
+    ),
+    f0_("f0", dimless, dict),
+    f1_("f1", inv(dimTime), dict),
+    f2_("f2", dimTime, dict),
+    nNonOrthCorr_(1),
+    nSubCycles_(1)
 {
     init(dict);
 }
@@ -261,10 +264,10 @@ void KirchhoffShell::preEvolveRegion()
 
 void KirchhoffShell::evolveRegion()
 {
-    nNonOrthCorr_ = solution().get<label>("nNonOrthCorr");
-    nSubCycles_ = solution().get<label>("nSubCycles");
+    nNonOrthCorr_ = solution().getLabel("nNonOrthCorr");
+    nSubCycles_ = solution().getLabel("nSubCycles");
 
-    for (int nonOrth=0; nonOrth<=nNonOrthCorr_; nonOrth++)
+    for (int nonOrth=0; nonOrth <= nNonOrthCorr_; ++nonOrth)
     {
         solveDisplacement();
     }
@@ -282,23 +285,13 @@ const tmp<areaScalarField> KirchhoffShell::D() const
 
 const tmp<areaScalarField> KirchhoffShell::rho() const
 {
-    return tmp<areaScalarField>
+    return areaScalarField::New
     (
-        new areaScalarField
-        (
-            IOobject
-            (
-                "rhos",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            regionMesh(),
-            dimensionedScalar("rho", dimDensity, solid().rho()),
-            faPatchFieldBase::zeroGradientType()
-        )
+        "rhos",
+        IOobjectOption::NO_REGISTER,
+        regionMesh(),
+        dimensionedScalar("rho", dimDensity, solid().rho()),
+        faPatchFieldBase::zeroGradientType()
     );
 }
 

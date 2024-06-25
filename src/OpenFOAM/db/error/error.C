@@ -123,7 +123,7 @@ bool Foam::error::useAbort()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::error::error(const string& title)
+Foam::error::error(const char* title)
 :
     std::exception(),
     messageStream(title, messageStream::FATAL),
@@ -131,7 +131,7 @@ Foam::error::error(const string& title)
     sourceFileName_("unknown"),
     sourceFileLineNumber_(0),
     throwing_(false),
-    messageStreamPtr_(new OStringStream())
+    messageStreamPtr_(nullptr)
 {}
 
 
@@ -143,7 +143,7 @@ Foam::error::error(const dictionary& errDict)
     sourceFileName_(errDict.get<string>("sourceFileName")),
     sourceFileLineNumber_(errDict.get<label>("sourceFileLineNumber")),
     throwing_(false),
-    messageStreamPtr_(new OStringStream())
+    messageStreamPtr_(nullptr)
 {}
 
 
@@ -155,8 +155,13 @@ Foam::error::error(const error& err)
     sourceFileName_(err.sourceFileName_),
     sourceFileLineNumber_(err.sourceFileLineNumber_),
     throwing_(err.throwing_),
-    messageStreamPtr_(new OStringStream(*err.messageStreamPtr_))
-{}
+    messageStreamPtr_(nullptr)
+{
+    if (err.messageStreamPtr_ && (err.messageStreamPtr_->count() > 0))
+    {
+        messageStreamPtr_.reset(new OStringStream(*err.messageStreamPtr_));
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -176,7 +181,7 @@ Foam::OSstream& Foam::error::operator()
     sourceFileName_.clear();
     sourceFileLineNumber_ = -1;
 
-    return operator OSstream&();
+    return this->stream();
 }
 
 
@@ -251,7 +256,7 @@ void Foam::error::exiting(const int errNo, const bool isAbort)
             error errorException(*this);
 
             // Reset the message buffer for the next error message
-            messageStreamPtr_->reset();
+            error::clear();
 
             throw errorException;
             return;
@@ -322,8 +327,11 @@ void Foam::error::simpleExit(const int errNo, const bool isAbort)
 
 Foam::OSstream& Foam::error::stream()
 {
-    // Don't need (messageStreamPtr_) check - always allocated
-    if (!messageStreamPtr_->good())
+    if (!messageStreamPtr_)
+    {
+        messageStreamPtr_ = std::make_unique<OStringStream>();
+    }
+    else if (!messageStreamPtr_->good())
     {
         Perr<< nl
             << "error::stream() : error stream has failed"
@@ -337,13 +345,21 @@ Foam::OSstream& Foam::error::stream()
 
 Foam::string Foam::error::message() const
 {
-    return messageStreamPtr_->str();
+    if (messageStreamPtr_)
+    {
+        return messageStreamPtr_->str();
+    }
+
+    return string();
 }
 
 
 void Foam::error::clear() const
 {
-    return messageStreamPtr_->reset();
+    if (messageStreamPtr_)
+    {
+        messageStreamPtr_->reset();
+    }
 }
 
 
@@ -384,7 +400,7 @@ void Foam::error::write(Ostream& os, const bool withTitle) const
 
     const label lineNo = sourceFileLineNumber();
 
-    if (error::level >= 2 && lineNo && !functionName().empty())
+    if (messageStream::level >= 2 && lineNo && !functionName().empty())
     {
         os  << nl << nl
             << "    From " << functionName().c_str() << nl;

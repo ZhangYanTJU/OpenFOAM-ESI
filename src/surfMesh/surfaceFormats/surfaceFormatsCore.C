@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,7 +30,7 @@ License
 #include "Time.H"
 #include "ListOps.H"
 #include "surfMesh.H"
-#include "stringListOps.H"
+#include "stringListOps.H"   // For stringListOps::findMatching()
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

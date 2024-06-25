@@ -62,7 +62,8 @@ Foam::MassTransferPhaseSystem<BasePhaseSystem>::MassTransferPhaseSystem
                         this->mesh().time().timeName(),
                         this->mesh(),
                         IOobject::NO_READ,
-                        IOobject::AUTO_WRITE
+                        IOobject::AUTO_WRITE,
+                        IOobject::REGISTER
                     ),
                     this->mesh(),
                     dimensionedScalar(dimDensity/dimTime, Zero)
@@ -85,16 +86,10 @@ Foam::MassTransferPhaseSystem<BasePhaseSystem>::calculateL
     const volScalarField& T
 ) const
 {
-    auto tL = tmp<volScalarField>::New
+    auto tL = volScalarField::New
     (
-        IOobject
-        (
-            "tL",
-            this->mesh().time().timeName(),
-            this->mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "tL",
+        IOobject::NO_REGISTER,
         this->mesh(),
         dimensionedScalar(dimEnergy/dimMass, Zero)
     );
@@ -137,14 +132,10 @@ Foam::MassTransferPhaseSystem<BasePhaseSystem>::dmdt
     const phasePairKey& key
 ) const
 {
-    auto tdmdt = tmp<volScalarField>::New
+    auto tdmdt = volScalarField::New
     (
-        IOobject
-        (
-            "dmdt",
-            this->mesh().time().timeName(),
-            this->mesh()
-        ),
+        "dmdt",
+        IOobject::NO_REGISTER,
         this->mesh(),
         dimensionedScalar(dimDensity/dimTime, Zero)
     );
@@ -188,40 +179,28 @@ Foam::MassTransferPhaseSystem<BasePhaseSystem>::heatTransfer
                 const phasePairKey keyki(phasek.name(), phasei.name(), true);
 
                 // Net mass transfer from k to i phase
-                auto tdmdtNetki = tmp<volScalarField>::New
+                auto tdmdtNetki = volScalarField::New
                 (
-                    IOobject
-                    (
-                        "tdmdtYki",
-                        this->mesh().time().timeName(),
-                        this->mesh()
-                    ),
+                    "tdmdtYki",
+                    IOobject::NO_REGISTER,
                     this->mesh(),
                     dimensionedScalar(dimDensity/dimTime, Zero)
                 );
                 auto& dmdtNetki = tdmdtNetki.ref();
 
-                auto tSp = tmp<volScalarField>::New
+                auto tSp = volScalarField::New
                 (
-                    IOobject
-                    (
-                        "Sp",
-                        this->mesh().time().timeName(),
-                        this->mesh()
-                    ),
+                    "Sp",
+                    IOobject::NO_REGISTER,
                     this->mesh(),
                     dimensionedScalar(dimDensity/dimTime/dimTemperature, Zero)
                 );
                 auto& Sp = tSp.ref();
 
-                auto tSu = tmp<volScalarField>::New
+                auto tSu = volScalarField::New
                 (
-                    IOobject
-                    (
-                        "Su",
-                        this->mesh().time().timeName(),
-                        this->mesh()
-                    ),
+                    "Su",
+                    IOobject::NO_REGISTER,
                     this->mesh(),
                     dimensionedScalar(dimDensity/dimTime, Zero)
                 );
@@ -311,27 +290,19 @@ Foam::MassTransferPhaseSystem<BasePhaseSystem>::volTransfer
     auto teqn = tmp<fvScalarMatrix>::New(p, dimVolume/dimTime);
     auto& eqn = teqn.ref();
 
-    auto tSp = tmp<volScalarField>::New
+    auto tSp = volScalarField::New
     (
-        IOobject
-        (
-            "Sp",
-            this->mesh().time().timeName(),
-            this->mesh()
-        ),
+        "Sp",
+        IOobject::NO_REGISTER,
         this->mesh(),
         dimensionedScalar(dimless/dimTime/dimPressure, Zero)
     );
     auto& Sp = tSp.ref();
 
-    auto tSu = tmp<volScalarField>::New
+    auto tSu = volScalarField::New
     (
-        IOobject
-        (
-            "Su",
-            this->mesh().time().timeName(),
-            this->mesh()
-        ),
+        "Su",
+        IOobject::NO_REGISTER,
         this->mesh(),
         dimensionedScalar(dimless/dimTime, Zero)
     );

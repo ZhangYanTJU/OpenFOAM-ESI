@@ -67,10 +67,10 @@ public:
         //- Construct from dictionary
         CaCO3(const dictionary& dict);
 
-        //- Construct and return clone
+        //- Return a clone
         virtual autoPtr<solidProperties> clone() const
         {
-            return autoPtr<solidProperties>::NewFrom<CaCO3>(*this);
+            return solidProperties::Clone(*this);
         }
 
 

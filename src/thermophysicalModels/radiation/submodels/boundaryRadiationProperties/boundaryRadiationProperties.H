@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef boundaryRadiationProperties_H
-#define boundaryRadiationProperties_H
+#ifndef Foam_boundaryRadiationProperties_H
+#define Foam_boundaryRadiationProperties_H
 
 #include "MeshObject.H"
 #include "boundaryRadiationPropertiesPatch.H"
@@ -45,6 +45,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class fvMesh;
 
 namespace radiation
@@ -59,10 +60,20 @@ class boundaryRadiationProperties
     public MeshObject
     <
         fvMesh,
-        Foam::GeometricMeshObject,
+        GeometricMeshObject,
         boundaryRadiationProperties
     >
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            GeometricMeshObject,
+            boundaryRadiationProperties
+        > MeshObject_type;
+
+
     // Private Data
 
         //- Per patch the boundaryRadiationProperties
@@ -83,7 +94,7 @@ public:
     // Constructors
 
         //- Construct given fvMesh
-        explicit boundaryRadiationProperties(const fvMesh&);
+        explicit boundaryRadiationProperties(const fvMesh& mesh);
 
 
     // Member Functions
@@ -109,8 +120,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary emissivity on face
@@ -128,8 +139,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary absorptivity on face
@@ -147,8 +158,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary transmissivity on face
@@ -180,8 +191,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary diffuse reflectivity on face
@@ -199,8 +210,8 @@ public:
         (
             const label patchI,
             const label bandI = 0,
-            vectorField* incomingDirection = nullptr,
-            scalarField* T = nullptr
+            const vectorField* incomingDirection = nullptr,
+            const scalarField* T = nullptr
         ) const;
 
         //- Access boundary specular reflectivity on face

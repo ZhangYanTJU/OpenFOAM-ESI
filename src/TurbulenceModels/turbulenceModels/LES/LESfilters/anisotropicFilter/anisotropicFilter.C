@@ -182,19 +182,12 @@ Foam::tmp<Foam::volSymmTensorField> Foam::anisotropicFilter::operator()
 {
     correctBoundaryConditions(unFilteredField);
 
-    tmp<volSymmTensorField> tmpFilteredField
+    auto tmpFilteredField = volSymmTensorField::New
     (
-        new volSymmTensorField
-        (
-            IOobject
-            (
-                "anisotropicFilteredSymmTensorField",
-                mesh().time().timeName(),
-                mesh()
-            ),
-            mesh(),
-            unFilteredField().dimensions()
-        )
+        "anisotropicFilteredSymmTensorField",
+        IOobject::NO_REGISTER,
+        mesh(),
+        unFilteredField().dimensions()
     );
 
     for (direction d=0; d<symmTensor::nComponents; d++)
@@ -218,19 +211,12 @@ Foam::tmp<Foam::volTensorField> Foam::anisotropicFilter::operator()
 {
     correctBoundaryConditions(unFilteredField);
 
-    tmp<volTensorField> tmpFilteredField
+    auto tmpFilteredField = volTensorField::New
     (
-        new volTensorField
-        (
-            IOobject
-            (
-                "anisotropicFilteredTensorField",
-                mesh().time().timeName(),
-                mesh()
-            ),
-            mesh(),
-            unFilteredField().dimensions()
-        )
+        "anisotropicFilteredTensorField",
+        IOobject::NO_REGISTER,
+        mesh(),
+        unFilteredField().dimensions()
     );
 
     for (direction d=0; d<tensor::nComponents; d++)

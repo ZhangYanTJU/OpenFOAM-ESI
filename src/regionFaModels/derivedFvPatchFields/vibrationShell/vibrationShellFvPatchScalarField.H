@@ -30,23 +30,25 @@ Group
     grpVibrationBoundaryConditions
 
 Description
+    This boundary condition provides a coupled acoustic pressure condition
+    between a primary region (3D mesh) and a vibration shell model (2D mesh).
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <masterPatchName>
     {
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         type                vibrationShell;
 
-        // Mandatory/Optional (inherited) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property | Description                      | Type  | Reqd | Dflt
+      Property | Description                      | Type  | Reqd | Deflt
       type     | Type name: vibrationShell        | word  | yes  | -
     \endtable
 
@@ -62,7 +64,6 @@ SourceFiles
 #ifndef vibrationShellFvPatchScalarField_H
 #define vibrationShellFvPatchScalarField_H
 
-#include "autoPtr.H"
 #include "vibrationShellModel.H"
 #include "mixedFvPatchFields.H"
 
@@ -87,7 +88,7 @@ class vibrationShellFvPatchScalarField
 
     // Private Data
 
-        //- The vibration shell
+        //- The vibration shell model
         autoPtr<baffleType> baffle_;
 
         //- Dictionary
@@ -127,15 +128,6 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new vibrationShellFvPatchScalarField(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         vibrationShellFvPatchScalarField
         (
@@ -143,16 +135,19 @@ public:
             const DimensionedField<scalar, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
-        virtual tmp<fvPatchScalarField> clone
+        //- Return a clone
+        virtual tmp<fvPatchField<scalar>> clone() const
+        {
+            return fvPatchField<scalar>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
+        virtual tmp<fvPatchField<scalar>> clone
         (
             const DimensionedField<scalar, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchScalarField>
-            (
-                new vibrationShellFvPatchScalarField(*this, iF)
-            );
+            return fvPatchField<scalar>::Clone(*this, iF);
         }
 
 

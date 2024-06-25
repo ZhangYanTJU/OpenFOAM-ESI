@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -102,6 +102,16 @@ actions
         action  new;
         source  boxToCell;
         box     (0.04 0 0)(0.06 100 100);
+    }
+
+    // Example: create faceZone from explicit contents. Assumes faceZone same
+    //          orientation as face (flipMap is false)
+    {
+        name    f0;
+        type    faceZoneSet;
+        action  new;
+        source  labelToFace;
+        value   (2);
     }
 );
 

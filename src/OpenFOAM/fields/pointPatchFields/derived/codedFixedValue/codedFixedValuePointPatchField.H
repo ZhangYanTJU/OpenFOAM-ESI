@@ -209,15 +209,6 @@ public:
             const codedFixedValuePointPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchField<Type>> clone() const
-        {
-            return autoPtr<pointPatchField<Type>>
-            (
-                new codedFixedValuePointPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         codedFixedValuePointPatchField
         (
@@ -225,20 +216,19 @@ public:
             const DimensionedField<Type, pointMesh>&
         );
 
+        //- Return a clone
+        virtual autoPtr<pointPatchField<Type>> clone() const
+        {
+            return pointPatchField<Type>::Clone(*this);
+        }
+
         //- Construct and return a clone setting internal field reference
         virtual autoPtr<pointPatchField<Type>> clone
         (
             const DimensionedField<Type, pointMesh>& iF
         ) const
         {
-            return autoPtr<pointPatchField<Type>>
-            (
-                new codedFixedValuePointPatchField<Type>
-                (
-                    *this,
-                    iF
-                )
-            );
+            return pointPatchField<Type>::Clone(*this, iF);
         }
 
 
@@ -253,7 +243,7 @@ public:
         //- Evaluate the patch field, sets updated() to false
         virtual void evaluate
         (
-            const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
+            const Pstream::commsTypes commsType=Pstream::commsTypes::buffered
         );
 
         //- Write

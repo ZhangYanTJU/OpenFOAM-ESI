@@ -59,7 +59,7 @@ Foam::freePiston::freePiston
     ),
     pistonPositionTime_
     (
-        Function1<scalar>::New("pistonPositionTime", dict_)
+        Function1<scalar>::New("pistonPositionTime", dict_, &db())
     )
 {}
 

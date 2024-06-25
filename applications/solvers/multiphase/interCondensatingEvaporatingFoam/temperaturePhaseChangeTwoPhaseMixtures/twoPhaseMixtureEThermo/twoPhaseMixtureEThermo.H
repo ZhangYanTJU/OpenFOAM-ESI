@@ -86,14 +86,14 @@ public:
         virtual volScalarField& he()
         {
             NotImplemented;
-            return p();
+            return const_cast<volScalarField&>(volScalarField::null());
         }
 
         //- Return access to the internal energy field [J/Kg]
         virtual const volScalarField& he() const
         {
             NotImplemented;
-            return p();
+            return volScalarField::null();
         }
 
         //- Enthalpy/Internal energy
@@ -182,7 +182,7 @@ public:
         ) const
         {
             NotImplemented;
-            return tmp<scalarField>::New(p);
+            return nullptr;
         }
 
         //- Return Cv of the mixture
@@ -205,7 +205,7 @@ public:
         ) const
         {
             NotImplemented;
-            return tmp<scalarField>::New(p);
+            return nullptr;
         }
 
         //- Gamma = Cp/Cv []

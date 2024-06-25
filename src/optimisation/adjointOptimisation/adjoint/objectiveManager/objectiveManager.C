@@ -254,19 +254,21 @@ bool objectiveManager::writeObjectives
     const bool valid
 )
 {
-    if (weightedObjectiveFile_.valid())
+    if (weightedObjectiveFile_)
     {
+        auto& os = weightedObjectiveFile_();
+
         unsigned int width = IOstream::defaultPrecision() + 5;
-        weightedObjectiveFile_()
+
+        os
             << setw(4) << mesh_.time().timeName() << " "
             << setw(width) << weightedObjective << " ";
 
         for (objective& objI : objectives_)
         {
-            weightedObjectiveFile_()
-                << setw(width) << objI.JCycle() << " ";
+            os  << setw(width) << objI.JCycle() << " ";
         }
-        weightedObjectiveFile_() << endl;
+        os  << endl;
     }
 
     return writeObjectives();

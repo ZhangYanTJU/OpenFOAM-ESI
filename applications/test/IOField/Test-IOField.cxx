@@ -188,8 +188,6 @@ int main(int argc, char *argv[])
     argList::addBoolOption("label", "Use label for tests (default)");
     argList::addBoolOption("ref", "Test writing by ref");
 
-    #include "addTimeOptions.H"
-
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createPolyMesh.H"
@@ -280,7 +278,6 @@ int main(int argc, char *argv[])
         {
             IOFieldRef<vector>(ioOutput, mesh.points()).write();
         }
-
     }
 
 

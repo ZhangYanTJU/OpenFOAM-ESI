@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,9 +77,10 @@ Foam::tmp<Foam::pointScalarField> Foam::functionObjects::streamFunction::calc
         pMesh,
         dimensionedScalar(phi.dimensions(), Zero)
     );
-    pointScalarField& streamFunction = tstreamFunction.ref();
+    auto& streamFunction = tstreamFunction.ref();
 
-    labelList visitedPoint(mesh_.nPoints(), Zero);
+
+    bitSet visitedPoint(mesh_.nPoints());
 
     label nVisited = 0;
     label nVisitedOld = 0;
@@ -87,10 +88,10 @@ Foam::tmp<Foam::pointScalarField> Foam::functionObjects::streamFunction::calc
     const faceUList& faces = mesh_.faces();
     const pointField& points = mesh_.points();
 
-    label nInternalFaces = mesh_.nInternalFaces();
+    const label nInternalFaces = mesh_.nInternalFaces();
 
     vectorField unitAreas(mesh_.faceAreas());
-    unitAreas /= mag(unitAreas);
+    unitAreas.normalise();
 
     const polyPatchList& patches = mesh_.boundaryMesh();
 
@@ -104,44 +105,57 @@ Foam::tmp<Foam::pointScalarField> Foam::functionObjects::streamFunction::calc
     {
         found = false;
 
+        // Check boundary faces first
         forAll(patches, patchi)
         {
-            const primitivePatch& bouFaces = patches[patchi];
+            const auto& pp = patches[patchi];
+            const auto& patchPhi = phi.boundaryField()[patchi];
 
-            if (!isType<emptyPolyPatch>(patches[patchi]))
+            // Skip empty, symmetry patches etc
+            if
+            (
+                patchPhi.empty()
+             || isType<emptyPolyPatch>(pp)
+             || isType<symmetryPlanePolyPatch>(pp)
+             || isType<symmetryPolyPatch>(pp)
+             || isType<wedgePolyPatch>(pp)
+            )
             {
-                forAll(bouFaces, facei)
+                continue;
+            }
+
+            forAll(pp, facei)
+            {
+                const auto& f = pp[facei];
+
+                if (magSqr(patchPhi[facei]) < SMALL)
                 {
-                    if (magSqr(phi.boundaryField()[patchi][facei]) < SMALL)
+                    // Zero flux face found
+                    found = true;
+
+                    for (const label pointi : f)
                     {
-                        const labelList& zeroPoints = bouFaces[facei];
-
-                        // Zero flux face found
-                        found = true;
-
-                        forAll(zeroPoints, pointi)
+                        if (visitedPoint.test(pointi))
                         {
-                            if (visitedPoint[zeroPoints[pointi]] == 1)
-                            {
-                                found = false;
-                                break;
-                            }
-                        }
-
-                        if (found)
-                        {
-                            Log << "        Zero face: patch: " << patchi
-                                << " face: " << facei << endl;
-
-                            forAll(zeroPoints, pointi)
-                            {
-                                streamFunction[zeroPoints[pointi]] = 0;
-                                visitedPoint[zeroPoints[pointi]] = 1;
-                                nVisited++;
-                            }
-
+                            found = false;
                             break;
                         }
+                    }
+
+                    if (found)
+                    {
+                        Log << "        Zero face: patch: " << patchi
+                            << " face: " << facei << endl;
+
+                        for (const label pointi : f)
+                        {
+                            visitedPoint.set(pointi);
+                            ++nVisited;
+
+                            streamFunction[pointi] = 0;
+                        }
+
+                        break;
                     }
                 }
             }
@@ -152,20 +166,17 @@ Foam::tmp<Foam::pointScalarField> Foam::functionObjects::streamFunction::calc
         if (!found)
         {
             Log << "        Zero flux boundary face not found. "
-                << "Using cell as a reference."
-                << endl;
+                << "Using cell as a reference." << endl;
 
-            const cellList& c = mesh_.cells();
-
-            forAll(c, ci)
+            for (const cell& c : mesh_.cells())
             {
-                labelList zeroPoints = c[ci].labels(mesh_.faces());
+                labelList zeroPoints = c.labels(mesh_.faces());
 
                 bool found = true;
 
-                forAll(zeroPoints, pointi)
+                for (const label pointi : zeroPoints)
                 {
-                    if (visitedPoint[zeroPoints[pointi]] == 1)
+                    if (visitedPoint.test(pointi))
                     {
                         found = false;
                         break;
@@ -174,11 +185,12 @@ Foam::tmp<Foam::pointScalarField> Foam::functionObjects::streamFunction::calc
 
                 if (found)
                 {
-                    forAll(zeroPoints, pointi)
+                    for (const label pointi : zeroPoints)
                     {
-                        streamFunction[zeroPoints[pointi]] = 0.0;
-                        visitedPoint[zeroPoints[pointi]] = 1;
-                        nVisited++;
+                        visitedPoint.set(pointi);
+                        ++nVisited;
+
+                        streamFunction[pointi] = 0;
                     }
 
                     break;
@@ -201,132 +213,136 @@ Foam::tmp<Foam::pointScalarField> Foam::functionObjects::streamFunction::calc
         {
             finished = true;
 
-            for (label facei = nInternalFaces; facei<faces.size(); facei++)
+            scalar currentStreamValue(0);
+            point currentStreamPoint(Zero);
+
+            // Boundary faces first
+            forAll(patches, patchi)
             {
-                const labelList& curBPoints = faces[facei];
-                bool bPointFound = false;
+                const auto& pp = patches[patchi];
+                const auto& patchPhi = phi.boundaryField()[patchi];
 
-                scalar currentBStream = 0.0;
-                vector currentBStreamPoint(0, 0, 0);
-
-                forAll(curBPoints, pointi)
+                // Skip empty, symmetry patches etc
+                if
+                (
+                    patchPhi.empty()
+                 || isType<emptyPolyPatch>(pp)
+                 || isType<symmetryPlanePolyPatch>(pp)
+                 || isType<symmetryPolyPatch>(pp)
+                 || isType<wedgePolyPatch>(pp)
+                )
                 {
-                    // Check if the point has been visited
-                    if (visitedPoint[curBPoints[pointi]] == 1)
-                    {
-                        // The point has been visited
-                        currentBStream = streamFunction[curBPoints[pointi]];
-                        currentBStreamPoint = points[curBPoints[pointi]];
-
-                        bPointFound = true;
-
-                        break;
-                    }
+                    continue;
                 }
 
-                if (bPointFound)
+                forAll(pp, facei)
                 {
-                    // Sort out other points on the face
-                    forAll(curBPoints, pointi)
+                    const auto& f = pp[facei];
+
+                    // Check if the point has been visited
+                    bool pointFound = false;
+
+                    for (const label pointi : f)
                     {
-                        // Check if the point has been visited
-                        if (visitedPoint[curBPoints[pointi]] == 0)
+                        if (visitedPoint.test(pointi))
                         {
-                            label patchNo =
-                                mesh_.boundaryMesh().whichPatch(facei);
+                            // The point has been visited
+                            currentStreamValue = streamFunction[pointi];
+                            currentStreamPoint = points[pointi];
 
-                            if
+                            pointFound = true;
+                            break;
+                        }
+                    }
+
+                    if (!pointFound)
+                    {
+                        finished = false;
+                        continue;
+                    }
+
+
+                    // Sort out other points on the face
+                    for (const label pointi : f)
+                    {
+                        // If the point has not yet been visited
+                        if (!visitedPoint.test(pointi))
+                        {
+                            vector edgeHat =
                             (
-                                !isType<emptyPolyPatch>(patches[patchNo])
-                             && !isType<symmetryPlanePolyPatch>
-                                 (patches[patchNo])
-                             && !isType<symmetryPolyPatch>(patches[patchNo])
-                             && !isType<wedgePolyPatch>(patches[patchNo])
-                            )
+                                points[pointi] - currentStreamPoint
+                            );
+                            edgeHat.replace(slabDir, 0);
+                            edgeHat.normalise();
+
+                            const vector& nHat = unitAreas[facei];
+
+                            if (edgeHat.y() > VSMALL)
                             {
-                                label faceNo =
-                                    mesh_.boundaryMesh()[patchNo]
-                                   .whichFace(facei);
+                                visitedPoint.set(pointi);
+                                ++nVisited;
 
-                                vector edgeHat =
-                                    points[curBPoints[pointi]]
-                                  - currentBStreamPoint;
-                                edgeHat.replace(slabDir, 0);
-                                edgeHat.normalise();
+                                streamFunction[pointi] =
+                                (
+                                    currentStreamValue
+                                  + patchPhi[facei]*sign(nHat.x())
+                                );
+                            }
+                            else if (edgeHat.y() < -VSMALL)
+                            {
+                                visitedPoint.set(pointi);
+                                ++nVisited;
 
-                                vector nHat = unitAreas[facei];
-
-                                if (edgeHat.y() > VSMALL)
+                                streamFunction[pointi] =
+                                (
+                                    currentStreamValue
+                                  - patchPhi[facei]*sign(nHat.x())
+                                );
+                            }
+                            else
+                            {
+                                if (edgeHat.x() > VSMALL)
                                 {
-                                    visitedPoint[curBPoints[pointi]] = 1;
-                                    nVisited++;
+                                    visitedPoint.set(pointi);
+                                    ++nVisited;
 
-                                    streamFunction[curBPoints[pointi]] =
-                                        currentBStream
-                                      + phi.boundaryField()[patchNo][faceNo]
-                                       *sign(nHat.x());
+                                    streamFunction[pointi] =
+                                    (
+                                        currentStreamValue
+                                      + patchPhi[facei]*sign(nHat.y())
+                                    );
                                 }
-                                else if (edgeHat.y() < -VSMALL)
+                                else if (edgeHat.x() < -VSMALL)
                                 {
-                                    visitedPoint[curBPoints[pointi]] = 1;
-                                    nVisited++;
+                                    visitedPoint.set(pointi);
+                                    ++nVisited;
 
-                                    streamFunction[curBPoints[pointi]] =
-                                        currentBStream
-                                      - phi.boundaryField()[patchNo][faceNo]
-                                       *sign(nHat.x());
-                                }
-                                else
-                                {
-                                    if (edgeHat.x() > VSMALL)
-                                    {
-                                        visitedPoint[curBPoints[pointi]] = 1;
-                                        nVisited++;
-
-                                        streamFunction[curBPoints[pointi]] =
-                                            currentBStream
-                                          + phi.boundaryField()[patchNo][faceNo]
-                                           *sign(nHat.y());
-                                    }
-                                    else if (edgeHat.x() < -VSMALL)
-                                    {
-                                        visitedPoint[curBPoints[pointi]] = 1;
-                                        nVisited++;
-
-                                        streamFunction[curBPoints[pointi]] =
-                                            currentBStream
-                                          - phi.boundaryField()[patchNo][faceNo]
-                                           *sign(nHat.y());
-                                    }
+                                    streamFunction[pointi] =
+                                    (
+                                        currentStreamValue
+                                      - patchPhi[facei]*sign(nHat.y())
+                                    );
                                 }
                             }
                         }
                     }
                 }
-                else
-                {
-                    finished = false;
-                }
             }
 
-            for (label facei=0; facei<nInternalFaces; facei++)
+            // Internal faces next
+            for (label facei = 0; facei < nInternalFaces; ++facei)
             {
-                // Get the list of point labels for the face
-                const labelList& curPoints = faces[facei];
+                const auto& f = faces[facei];
 
                 bool pointFound = false;
 
-                scalar currentStream = 0.0;
-                point currentStreamPoint(0, 0, 0);
-
-                forAll(curPoints, pointi)
+                for (const label pointi : f)
                 {
                     // Check if the point has been visited
-                    if (visitedPoint[curPoints[pointi]] == 1)
+                    if (visitedPoint.test(pointi))
                     {
-                        // The point has been visited
-                        currentStream = streamFunction[curPoints[pointi]];
-                        currentStreamPoint = points[curPoints[pointi]];
+                        currentStreamValue = streamFunction[pointi];
+                        currentStreamPoint = points[pointi];
                         pointFound = true;
 
                         break;
@@ -336,36 +352,42 @@ Foam::tmp<Foam::pointScalarField> Foam::functionObjects::streamFunction::calc
                 if (pointFound)
                 {
                     // Sort out other points on the face
-                    forAll(curPoints, pointi)
+                    for (const label pointi : f)
                     {
-                        // Check if the point has been visited
-                        if (visitedPoint[curPoints[pointi]] == 0)
+                        // If the point has not yet been visited
+                        if (!visitedPoint.test(pointi))
                         {
                             vector edgeHat =
-                                points[curPoints[pointi]] - currentStreamPoint;
+                            (
+                                points[pointi] - currentStreamPoint
+                            );
 
                             edgeHat.replace(slabDir, 0);
                             edgeHat.normalise();
 
-                            vector nHat = unitAreas[facei];
+                            const vector& nHat = unitAreas[facei];
 
                             if (edgeHat.y() > VSMALL)
                             {
-                                visitedPoint[curPoints[pointi]] = 1;
-                                nVisited++;
+                                visitedPoint.set(pointi);
+                                ++nVisited;
 
-                                streamFunction[curPoints[pointi]] =
-                                  currentStream
-                                + phi[facei]*sign(nHat.x());
+                                streamFunction[pointi] =
+                                (
+                                    currentStreamValue
+                                  + phi[facei]*sign(nHat.x())
+                                );
                             }
                             else if (edgeHat.y() < -VSMALL)
                             {
-                                visitedPoint[curPoints[pointi]] = 1;
-                                nVisited++;
+                                visitedPoint.set(pointi);
+                                ++nVisited;
 
-                                streamFunction[curPoints[pointi]] =
-                                  currentStream
-                                - phi[facei]*sign(nHat.x());
+                                streamFunction[pointi] =
+                                (
+                                    currentStreamValue
+                                  - phi[facei]*sign(nHat.x())
+                                );
                             }
                         }
                     }
@@ -397,7 +419,7 @@ Foam::tmp<Foam::pointScalarField> Foam::functionObjects::streamFunction::calc
     const scalar thickness = vector(slabNormal) & mesh_.bounds().span();
 
     streamFunction /= thickness;
-    streamFunction.boundaryFieldRef() = 0.0;
+    streamFunction.boundaryFieldRef() = Zero;
 
     return tstreamFunction;
 }

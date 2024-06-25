@@ -51,6 +51,7 @@ Description
 #include "emptyPolyPatch.H"
 #include "processorPolyPatch.H"
 #include "ListListOps.H"
+#include "stringListOps.H"  // For stringListOps::findMatching()
 #include "indirectPrimitivePatch.H"
 #include "globalMeshData.H"
 #include "globalIndex.H"

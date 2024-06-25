@@ -103,8 +103,8 @@ void Foam::domainDecomposition::processInterCyclics
                     if (interPatchFaces[proci][interI].size() > oldSz)
                     {
                         // Added faces to this interface. Add an entry
-                        append(subPatchIDs[proci][interI], patchi);
-                        append(subPatchStarts[proci][interI], oldSz);
+                        subPatchIDs[proci][interI].append(patchi);
+                        subPatchStarts[proci][interI].append(oldSz);
                     }
                 }
             }

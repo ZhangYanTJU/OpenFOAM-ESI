@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -95,19 +95,6 @@ bool skipSection(IFstream& inFile)
     while (line.size() < 4 || line.substr(0, 4) != "$End");
 
     return true;
-}
-
-
-void renumber
-(
-    const Map<label>& mshToFoam,
-    labelList& labels
-)
-{
-    forAll(labels, labelI)
-    {
-        labels[labelI] = mshToFoam[labels[labelI]];
-    }
 }
 
 
@@ -587,7 +574,7 @@ void readCellsLegacy
         {
             lineStr >> triPoints[0] >> triPoints[1] >> triPoints[2];
 
-            renumber(mshToFoam, triPoints);
+            inplaceRenumber(mshToFoam, triPoints);
 
             const auto regFnd = physToPatch.cfind(regPhys);
 
@@ -620,7 +607,7 @@ void readCellsLegacy
                 >> quadPoints[0] >> quadPoints[1] >> quadPoints[2]
                 >> quadPoints[3];
 
-            renumber(mshToFoam, quadPoints);
+            inplaceRenumber(mshToFoam, quadPoints);
 
             const auto regFnd = physToPatch.cfind(regPhys);
 
@@ -662,7 +649,7 @@ void readCellsLegacy
                 >> tetPoints[0] >> tetPoints[1] >> tetPoints[2]
                 >> tetPoints[3];
 
-            renumber(mshToFoam, tetPoints);
+            inplaceRenumber(mshToFoam, tetPoints);
 
             cells[celli++].reset(tet, tetPoints);
 
@@ -683,7 +670,7 @@ void readCellsLegacy
                 >> pyrPoints[0] >> pyrPoints[1] >> pyrPoints[2]
                 >> pyrPoints[3] >> pyrPoints[4];
 
-            renumber(mshToFoam, pyrPoints);
+            inplaceRenumber(mshToFoam, pyrPoints);
 
             cells[celli++].reset(pyr, pyrPoints);
 
@@ -704,7 +691,7 @@ void readCellsLegacy
                 >> prismPoints[0] >> prismPoints[1] >> prismPoints[2]
                 >> prismPoints[3] >> prismPoints[4] >> prismPoints[5];
 
-            renumber(mshToFoam, prismPoints);
+            inplaceRenumber(mshToFoam, prismPoints);
 
             cells[celli].reset(prism, prismPoints);
 
@@ -745,7 +732,7 @@ void readCellsLegacy
                 >> hexPoints[4] >> hexPoints[5]
                 >> hexPoints[6] >> hexPoints[7];
 
-            renumber(mshToFoam, hexPoints);
+            inplaceRenumber(mshToFoam, hexPoints);
 
             cells[celli].reset(hex, hexPoints);
 
@@ -929,7 +916,7 @@ void readCells
                 IStringStream lineStr(line);
                 lineStr >> elemID >> triPoints[0] >> triPoints[1] >> triPoints[2];
 
-                renumber(mshToFoam, triPoints);
+                inplaceRenumber(mshToFoam, triPoints);
 
                 const auto regFnd = physToPatch.cfind(regPhys);
 
@@ -967,7 +954,7 @@ void readCells
                     >> quadPoints[0] >> quadPoints[1] >> quadPoints[2]
                     >> quadPoints[3];
 
-                renumber(mshToFoam, quadPoints);
+                inplaceRenumber(mshToFoam, quadPoints);
 
                 const auto regFnd = physToPatch.cfind(regPhys);
 
@@ -1017,7 +1004,7 @@ void readCells
                     >> tetPoints[0] >> tetPoints[1] >> tetPoints[2]
                     >> tetPoints[3];
 
-                renumber(mshToFoam, tetPoints);
+                inplaceRenumber(mshToFoam, tetPoints);
 
                 cells[celli++].reset(tet, tetPoints);
             }
@@ -1044,7 +1031,7 @@ void readCells
                     >> pyrPoints[0] >> pyrPoints[1] >> pyrPoints[2]
                     >> pyrPoints[3] >> pyrPoints[4];
 
-                renumber(mshToFoam, pyrPoints);
+                inplaceRenumber(mshToFoam, pyrPoints);
 
                 cells[celli++].reset(pyr, pyrPoints);
             }
@@ -1071,7 +1058,7 @@ void readCells
                     >> prismPoints[0] >> prismPoints[1] >> prismPoints[2]
                     >> prismPoints[3] >> prismPoints[4] >> prismPoints[5];
 
-                renumber(mshToFoam, prismPoints);
+                inplaceRenumber(mshToFoam, prismPoints);
 
                 cells[celli].reset(prism, prismPoints);
 
@@ -1118,7 +1105,7 @@ void readCells
                     >> hexPoints[4] >> hexPoints[5]
                     >> hexPoints[6] >> hexPoints[7];
 
-                renumber(mshToFoam, hexPoints);
+                inplaceRenumber(mshToFoam, hexPoints);
 
                 cells[celli].reset(hex, hexPoints);
 
@@ -1582,7 +1569,7 @@ int main(int argc, char *argv[])
 
     //Get polyMesh to write to constant
 
-    runTime.setTime(instant(runTime.constant()), 0);
+    runTime.setTime(instant(0, runTime.constant()), 0);
 
     repatcher.repatch();
 
@@ -1704,8 +1691,8 @@ int main(int argc, char *argv[])
         repatcher.changePatches(newPatches);
     }
 
-    // Set the precision of the points data to 10
-    IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    IOstream::minPrecision(10);
 
     mesh.write();
 

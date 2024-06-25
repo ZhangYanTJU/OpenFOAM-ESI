@@ -192,7 +192,7 @@ void Foam::filmPyrolysisVelocityCoupledFvPatchVectorField::updateCoeffs()
     }
 
     const scalarField UAvePyr(-phiPyr/patch().magSf());
-    const vectorField& nf = patch().nf();
+    tmp<vectorField> nf(patch().nf());
 
 
     // Evaluate velocity

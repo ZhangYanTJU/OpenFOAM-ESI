@@ -33,14 +33,16 @@ Description
     This boundary condition provides an 'empty' condition for reduced
     dimensions cases, i.e. 1- and 2-D geometries.  Apply this condition to
     patches whose normal is aligned to geometric directions that do not
-    constitue solution directions.
+    constitute solution directions.
+
+    The "value" entry is NO_READ, NO_WRITE.
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        type            empty;
+        type    empty;
     }
     \endverbatim
 
@@ -84,7 +86,8 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is NO_READ.
         emptyFvPatchField
         (
             const fvPatch&,
@@ -107,15 +110,6 @@ public:
             const emptyFvPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new emptyFvPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         emptyFvPatchField
         (
@@ -123,16 +117,19 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return fvPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>
-            (
-                new emptyFvPatchField<Type>(*this, iF)
-            );
+            return fvPatchField<Type>::Clone(*this, iF);
         }
 
 
@@ -197,6 +194,12 @@ public:
             {
                 return tmp<Field<Type>>::New();
             }
+
+
+    // Member Functions
+
+        //- Write without "value" entry!
+        virtual void write(Ostream&) const;
 };
 
 

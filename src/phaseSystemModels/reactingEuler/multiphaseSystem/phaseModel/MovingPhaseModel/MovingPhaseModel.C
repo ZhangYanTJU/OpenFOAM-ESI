@@ -48,41 +48,29 @@ template<class BasePhaseModel>
 Foam::tmp<Foam::surfaceScalarField>
 Foam::MovingPhaseModel<BasePhaseModel>::phi(const volVectorField& U) const
 {
-    word phiName(IOobject::groupName("phi", this->name()));
-
-    IOobject phiHeader
+    IOobject io
     (
-        phiName,
+        IOobject::groupName("phi", this->name()),
         U.mesh().time().timeName(),
         U.mesh(),
-        IOobject::NO_READ
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE,
+        IOobject::REGISTER
     );
 
-    if (phiHeader.typeHeaderOk<surfaceScalarField>(true))
+    if (io.typeHeaderOk<surfaceScalarField>(true))
     {
-        Info<< "Reading face flux field " << phiName << endl;
+        Info<< "Reading face flux field " << io.name() << endl;
 
-        return tmp<surfaceScalarField>
-        (
-            new surfaceScalarField
-            (
-                IOobject
-                (
-                    phiName,
-                    U.mesh().time().timeName(),
-                    U.mesh(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                U.mesh()
-            )
-        );
+        return tmp<surfaceScalarField>::New(io, U.mesh());
     }
     else
     {
-        Info<< "Calculating face flux field " << phiName << endl;
+        Info<< "Calculating face flux field " << io.name() << endl;
 
-        wordList phiTypes
+        io.readOpt(IOobject::NO_READ);
+
+        wordList patchTypes
         (
             U.boundaryField().size(),
             fvsPatchFieldBase::calculatedType()
@@ -97,25 +85,15 @@ Foam::MovingPhaseModel<BasePhaseModel>::phi(const volVectorField& U) const
              || isA<partialSlipFvPatchVectorField>(U.boundaryField()[i])
             )
             {
-                phiTypes[i] = fixedValueFvPatchScalarField::typeName;
+                patchTypes[i] = fixedValueFvPatchScalarField::typeName;
             }
         }
 
-        return tmp<surfaceScalarField>
+        return tmp<surfaceScalarField>::New
         (
-            new surfaceScalarField
-            (
-                IOobject
-                (
-                    phiName,
-                    U.mesh().time().timeName(),
-                    U.mesh(),
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                fvc::flux(U),
-                phiTypes
-            )
+            io,
+            fvc::flux(U),
+            patchTypes
         );
     }
 }
@@ -140,7 +118,8 @@ Foam::MovingPhaseModel<BasePhaseModel>::MovingPhaseModel
             fluid.mesh().time().timeName(),
             fluid.mesh(),
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         fluid.mesh()
     ),
@@ -283,7 +262,8 @@ Foam::tmp<Foam::fvVectorMatrix>
 Foam::MovingPhaseModel<BasePhaseModel>::UEqn()
 {
     const volScalarField& alpha = *this;
-    const volScalarField& rho = this->thermo().rho();
+    const tmp<volScalarField> trho = this->thermo().rho();
+    const volScalarField& rho = trho();
 
     return
     (
@@ -303,14 +283,13 @@ Foam::MovingPhaseModel<BasePhaseModel>::UfEqn()
     // As the "normal" U-eqn but without the ddt terms
 
     const volScalarField& alpha = *this;
-    const volScalarField& rho = this->thermo().rho();
 
     return
     (
         fvm::div(alphaRhoPhi_, U_)
       - fvm::Sp(fvc::div(alphaRhoPhi_), U_)
       + fvm::SuSp(- this->continuityErrorSources(), U_)
-      + this->fluid().MRF().DDt(alpha*rho, U_)
+      + this->fluid().MRF().DDt(alpha*this->thermo().rho(), U_)
       + turbulence_->divDevRhoReff(U_)
     );
 }

@@ -114,10 +114,10 @@ public:
         //- Construct from dictionary
         CH4N2O(const dictionary& dict);
 
-        //- Construct and return clone
+        //- Return a clone
         virtual autoPtr<liquidProperties> clone() const
         {
-            return autoPtr<liquidProperties>::NewFrom<CH4N2O>(*this);
+            return liquidProperties::Clone(*this);
         }
 
 

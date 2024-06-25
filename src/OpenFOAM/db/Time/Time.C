@@ -730,14 +730,15 @@ Foam::word Foam::Time::timeName(const scalar t, const int precision)
 
 Foam::word Foam::Time::findInstance
 (
-    const fileName& dir,
+    const fileName& directory,
     const word& name,
     IOobjectOption::readOption rOpt,
-    const word& stopInstance
+    const word& stopInstance,
+    const bool constant_fallback
 ) const
 {
-    // Note: name might be empty!
-    IOobject startIO(name, timeName(), dir, *this, rOpt);
+    // Note: name can empty (ie, search for directory only)
+    IOobject startIO(name, timeName(), directory, *this, rOpt);
 
     IOobject io
     (
@@ -745,45 +746,11 @@ Foam::word Foam::Time::findInstance
         (
             startIO,
             timeOutputValue(),
-            stopInstance
+            stopInstance,
+            constant_fallback
         )
     );
     return io.instance();
-}
-
-
-Foam::word Foam::Time::findInstancePath
-(
-    const fileName& directory,
-    const instant& t
-) const
-{
-    // Simplified version: use findTimes (readDir + sort). The expensive
-    // bit is the readDir, not the sorting. Tbd: avoid calling findInstancePath
-    // from filePath.
-
-    instantList timeDirs = findTimes(path(), constant());
-    // Note:
-    // - times will include constant (with value 0) as first element.
-    //   For backwards compatibility make sure to find 0 in preference
-    //   to constant.
-    // - list is sorted so could use binary search
-
-    forAllReverse(timeDirs, i)
-    {
-        if (t.equal(timeDirs[i].value()))
-        {
-            return timeDirs[i].name();
-        }
-    }
-
-    return word::null;
-}
-
-
-Foam::word Foam::Time::findInstancePath(const instant& t) const
-{
-    return findInstancePath(path(), t);
 }
 
 

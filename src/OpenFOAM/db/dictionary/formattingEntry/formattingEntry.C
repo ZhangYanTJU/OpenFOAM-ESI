@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2023 Sergey Lesnik
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,7 +35,7 @@ namespace Foam
 {
 
 // Write tokens without keyword, suppress/ignore bad tokens.
-// Mostly like primitiveEntry::write(os, false);
+// Mostly like primitiveEntry::write(os, true);
 
 static void writeTokens(Ostream& os, const tokenList& toks)
 {
@@ -56,11 +56,11 @@ static void writeTokens(Ostream& os, const tokenList& toks)
             started = true;
         }
 
-        // Output token with direct handling in Ostream(s),
-        // or use normal '<<' output operator
+        // Token output via direct handling in Ostream(s),
+        // or normal '<<' output operator
         if (!os.write(tok))
         {
-            os  << tok;
+            os << tok;
         }
 
         if (tok.isCharData())
@@ -73,18 +73,10 @@ static void writeTokens(Ostream& os, const tokenList& toks)
             if (s.starts_with("//") && !s.ends_with('\n'))
             {
                 os << '\n';
-                started = false;  // already have newline as separator
+                started = false;  // Does not need further space separator
             }
         }
     }
-
-    // Always finish up with a newline?
-    // eg,
-    //
-    //   if (started)
-    //   {
-    //       os  << nl;
-    //   }
 }
 
 } // End namespace Foam
@@ -141,7 +133,10 @@ Foam::formattingEntry::formattingEntry
 
 void Foam::formattingEntry::write(Ostream& os) const
 {
-    writeTokens(os, *this);
+    if (active_)
+    {
+        writeTokens(os, *this);
+    }
 }
 
 

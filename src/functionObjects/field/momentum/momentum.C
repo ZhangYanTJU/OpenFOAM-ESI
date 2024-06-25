@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,13 +71,14 @@ Foam::functionObjects::momentum::newField
             (
                 scopedName(baseName),
                 time_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
+                mesh_.thisDb(),
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
                 registerObject
             ),
             mesh_,
-            dimensioned<typename GeoField::value_type>(dims, Zero)
+            Foam::zero{},  // value
+            dims
         );
 }
 
@@ -445,14 +446,14 @@ bool Foam::functionObjects::momentum::read(const dictionary& dict)
     {
         Info<< "    Momentum fields will be written" << endl;
 
-        mesh_.objectRegistry::store
+        regIOobject::store
         (
             newField<volVectorField>("momentum", dimVelocity*dimMass)
         );
 
         if (hasCsys_)
         {
-            mesh_.objectRegistry::store
+            regIOobject::store
             (
                 newField<volVectorField>("angularMomentum", dimVelocity*dimMass)
             );
@@ -465,7 +466,7 @@ bool Foam::functionObjects::momentum::read(const dictionary& dict)
         {
             Info<< "    Angular velocity will be written" << endl;
 
-            mesh_.objectRegistry::store
+            regIOobject::store
             (
                 newField<volVectorField>("angularVelocity", dimVelocity)
             );

@@ -64,8 +64,8 @@ Foam::radiation::lookup::lookup
 Foam::tmp<Foam::scalarField> Foam::radiation::lookup::e
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New
@@ -88,12 +88,11 @@ Foam::scalar Foam::radiation::lookup::e
 }
 
 
-Foam::tmp<Foam::scalarField>
-Foam::radiation::lookup::a
+Foam::tmp<Foam::scalarField> Foam::radiation::lookup::a
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New
@@ -119,8 +118,8 @@ Foam::scalar Foam::radiation::lookup::a
 Foam::tmp<Foam::scalarField> Foam::radiation::lookup::t
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New
@@ -143,12 +142,11 @@ Foam::scalar Foam::radiation::lookup::t
 }
 
 
-Foam::tmp<Foam::scalarField>
-Foam::radiation::lookup::rSpec
+Foam::tmp<Foam::scalarField> Foam::radiation::lookup::rSpec
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), Zero);
@@ -167,12 +165,11 @@ Foam::scalar Foam::radiation::lookup::rSpec
 }
 
 
-Foam::tmp<Foam::scalarField>
-Foam::radiation::lookup::rDiff
+Foam::tmp<Foam::scalarField> Foam::radiation::lookup::rDiff
 (
     const label bandI,
-    vectorField* dir,
-    scalarField* T
+    const vectorField* dir,
+    const scalarField* T
 ) const
 {
     return tmp<scalarField>::New(pp_.size(), Zero);

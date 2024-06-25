@@ -67,9 +67,19 @@ class GAMGAgglomeration
 :
     public MeshObject<lduMesh, GeometricMeshObject, GAMGAgglomeration>
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            lduMesh,
+            GeometricMeshObject,
+            GAMGAgglomeration
+        > MeshObject_type;
+
+
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Max number of levels
         const label maxLevels_;

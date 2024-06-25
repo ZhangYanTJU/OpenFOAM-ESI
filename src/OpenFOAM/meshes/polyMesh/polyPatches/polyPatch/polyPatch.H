@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,6 +87,9 @@ class polyPatch
 
         //- Demand-driven: global edge addressing
         mutable std::unique_ptr<labelList> mePtr_;
+
+        //- Cached area fraction
+        std::unique_ptr<scalarField> areaFractionPtr_;
 
 
 protected:
@@ -441,9 +444,19 @@ public:
             //- Return face cell centres
             tmp<vectorField> faceCellCentres() const;
 
-            //- Return the area fraction as the ratio of the stored face area
-            //- and the area given by the face points
+            //- Calculate the area fraction as the ratio of the stored face
+            //- area and the area given by the face points.
+            tmp<scalarField> areaFraction(const pointField& points) const;
+
+            //- Return the cached area fraction.
+            //- Usually only set for the non-overlap patches on ACMI.
             tmp<scalarField> areaFraction() const;
+
+            //- Set uniform cached area fraction
+            void areaFraction(const scalar fraction);
+
+            //- Set cached area fraction (non-uniform)
+            void areaFraction(const tmp<scalarField>& fraction);
 
 
         // Addressing into mesh

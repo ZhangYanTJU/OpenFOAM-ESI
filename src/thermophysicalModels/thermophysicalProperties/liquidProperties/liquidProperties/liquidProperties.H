@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef liquidProperties_H
-#define liquidProperties_H
+#ifndef Foam_liquidProperties_H
+#define Foam_liquidProperties_H
 
 #include "thermophysicalProperties.H"
 
@@ -137,7 +137,14 @@ public:
         virtual autoPtr<liquidProperties> clone() const = 0;
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone liquidProperties
+        template<class Derived>
+        static autoPtr<liquidProperties> Clone(const Derived& prop)
+        {
+            return autoPtr<liquidProperties>(new Derived(prop));
+        }
 
         //- Return a pointer to a new liquidProperties created from name
         static autoPtr<liquidProperties> New(const word& name);

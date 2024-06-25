@@ -37,10 +37,8 @@ SourceFiles
 #ifndef lnGradScheme_H
 #define lnGradScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -48,6 +46,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class faMesh;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -64,16 +63,10 @@ class lnGradScheme
 :
     public refCount
 {
-    // Private data
+    // Private Data
 
         //- Hold reference to mesh
         const faMesh& mesh_;
-
-
-    // Private Member Functions
-
-        //- No copy assignment
-        void operator=(const lnGradScheme&) = delete;
 
 
 public:
@@ -88,6 +81,15 @@ public:
             (const faMesh& mesh, Istream& schemeData),
             (mesh, schemeData)
         );
+
+
+    // Generated Methods
+
+        //- No copy construct
+        lnGradScheme(const lnGradScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const lnGradScheme&) = delete;
 
 
     // Constructors
@@ -116,10 +118,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         //- Return the lnGrad of the given cell field
         //  with the given weighting factors
@@ -138,10 +137,7 @@ public:
         ) const = 0;
 
         //- Return true if this scheme uses an explicit correction
-        virtual bool corrected() const
-        {
-            return false;
-        }
+        virtual bool corrected() const { return false; }
 
         //- Return the explicit correction to the lnGrad
         //  for the given field

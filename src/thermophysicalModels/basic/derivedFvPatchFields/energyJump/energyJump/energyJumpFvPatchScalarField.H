@@ -100,15 +100,6 @@ public:
             const energyJumpFvPatchScalarField&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<scalar>> clone() const
-        {
-            return tmp<fvPatchField<scalar>>
-            (
-                new energyJumpFvPatchScalarField(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         energyJumpFvPatchScalarField
         (
@@ -116,16 +107,19 @@ public:
             const DimensionedField<scalar, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<scalar>> clone() const
+        {
+            return fvPatchField<scalar>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<scalar>> clone
         (
             const DimensionedField<scalar, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<scalar>>
-            (
-                new energyJumpFvPatchScalarField(*this, iF)
-            );
+            return fvPatchField<scalar>::Clone(*this, iF);
         }
 
 

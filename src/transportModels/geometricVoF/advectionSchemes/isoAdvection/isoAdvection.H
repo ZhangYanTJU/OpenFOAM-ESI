@@ -355,15 +355,15 @@ public:
             //- Return mass flux
             tmp<surfaceScalarField> getRhoPhi
             (
-                const dimensionedScalar rho1,
-                const dimensionedScalar rho2
+                const dimensionedScalar& rho1,
+                const dimensionedScalar& rho2
             ) const
             {
-                return tmp<surfaceScalarField>
+                return surfaceScalarField::New
                 (
-                    new surfaceScalarField
+                    "rhoPhi",
+                    IOobject::NO_REGISTER,
                     (
-                        "rhoPhi",
                         (rho1 - rho2)*dVf_/mesh_.time().deltaT() + rho2*phi_
                     )
                 );
@@ -376,14 +376,14 @@ public:
                 const volScalarField& rho2
             )
             {
-                return tmp<surfaceScalarField>
-                (
-                new surfaceScalarField
+                return surfaceScalarField::New
                 (
                     "rhoPhi",
-                    fvc::interpolate(rho1 - rho2)*alphaPhi_
-                    + fvc::interpolate(rho2)*phi_
-                )
+                    IOobject::NO_REGISTER,
+                    (
+                        fvc::interpolate(rho1 - rho2)*alphaPhi_
+                      + fvc::interpolate(rho2)*phi_
+                    )
                 );
             }
 

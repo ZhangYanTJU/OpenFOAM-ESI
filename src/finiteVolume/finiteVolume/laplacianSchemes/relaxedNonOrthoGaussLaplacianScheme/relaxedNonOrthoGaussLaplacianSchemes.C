@@ -66,7 +66,7 @@ fvmLaplacian                                                                   \
         const word corrName(tCorr().name());                                   \
         tmp<SType> tfaceFluxCorrection(gammaMagSf*tCorr);                      \
                                                                                \
-        tmp<SType> trelaxedCorrection(new SType(tfaceFluxCorrection()));       \
+        auto trelaxedCorrection = tmp<SType>::New(tfaceFluxCorrection());      \
                                                                                \
         const word oldName(corrName + "_0");                                   \
         const scalar relax(vf.mesh().equationRelaxationFactor(corrName));      \
@@ -98,7 +98,7 @@ fvmLaplacian                                                                   \
                                                                                \
         if (mesh.fluxRequired(vf.name()))                                      \
         {                                                                      \
-            fvm.faceFluxCorrectionPtr() = trelaxedCorrection.ptr();            \
+            fvm.faceFluxCorrectionPtr(trelaxedCorrection.ptr());               \
         }                                                                      \
     }                                                                          \
                                                                                \

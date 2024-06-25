@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2018 OpenFOAM Foundation
-    Copyright (C) 2020-2021,2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -68,20 +68,13 @@ CrankNicolsonDdtScheme<Type>::DDt0Field<GeoField>::DDt0Field
 (
     const IOobject& io,
     const fvMesh& mesh,
-    const dimensioned<typename GeoField::value_type>& dimType
+    const typename GeoField::value_type& value,
+    const dimensionSet& dims
 )
 :
-    GeoField(io, mesh, dimType),
+    GeoField(io, mesh, value, dims),
     startTimeIndex_(mesh.time().timeIndex())
 {}
-
-
-template<class Type>
-template<class GeoField>
-label CrankNicolsonDdtScheme<Type>::DDt0Field<GeoField>::startTimeIndex() const
-{
-    return startTimeIndex_;
-}
 
 
 template<class Type>
@@ -127,7 +120,7 @@ CrankNicolsonDdtScheme<Type>::ddt0_
             (
                 name,
                 startTimeName,
-                mesh()
+                mesh().thisDb()
             ).template typeHeaderOk<DDt0Field<GeoField>>(true)
         )
         {
@@ -139,9 +132,10 @@ CrankNicolsonDdtScheme<Type>::ddt0_
                     (
                         name,
                         startTimeName,
-                        mesh(),
+                        mesh().thisDb(),
                         IOobject::MUST_READ,
-                        IOobject::AUTO_WRITE
+                        IOobject::AUTO_WRITE,
+                        IOobject::REGISTER
                     ),
                     mesh()
                 )
@@ -159,25 +153,21 @@ CrankNicolsonDdtScheme<Type>::ddt0_
                         mesh().time().timeName(),
                         mesh().thisDb(),
                         IOobject::NO_READ,
-                        IOobject::AUTO_WRITE
+                        IOobject::AUTO_WRITE,
+                        IOobject::REGISTER
                     ),
                     mesh(),
-                    dimensioned<typename GeoField::value_type>
-                    (
-                        dims/dimTime,
-                        Zero
-                    )
+                    Foam::zero{},  // value
+                    dims/dimTime
                 )
             );
         }
     }
 
-    DDt0Field<GeoField>& ddt0 = static_cast<DDt0Field<GeoField>&>
+    return static_cast<DDt0Field<GeoField>&>
     (
         mesh().objectRegistry::template lookupObjectRef<GeoField>(name)
     );
-
-    return ddt0;
 }
 
 
@@ -369,7 +359,8 @@ CrankNicolsonDdtScheme<Type>::fvcDdt
         (
             ddtIOobject,
             mesh(),
-            dimensioned<Type>(dt.dimensions()/dimTime, Zero)
+            Foam::zero{},  // value
+            (dt.dimensions()/dimTime)
         )
     );
 

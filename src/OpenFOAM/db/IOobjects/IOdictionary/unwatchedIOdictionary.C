@@ -97,7 +97,7 @@ Foam::label Foam::unwatchedIOdictionary::addWatch(const fileName& f)
 {
     label index = -1;
 
-    if (readOpt() == IOobject::MUST_READ_IF_MODIFIED)
+    if (readOpt() == IOobjectOption::READ_MODIFIED)
     {
         index = files_.find(f);
 
@@ -113,7 +113,7 @@ Foam::label Foam::unwatchedIOdictionary::addWatch(const fileName& f)
 
 void Foam::unwatchedIOdictionary::addWatch()
 {
-    if (readOpt() == IOobject::MUST_READ_IF_MODIFIED)
+    if (readOpt() == IOobjectOption::READ_MODIFIED)
     {
         fileName f = filePath();
         if (f.empty())

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -106,7 +106,9 @@ void Foam::CellZoneInjection<CloudType>::setPositions
     }
 
     // Parallel operation manipulations
+    const label myProci = UPstream::myProcNo();
     globalIndex globalPositions(positions.size());
+
     List<vector> allPositions(globalPositions.totalSize(), point::max);
     List<label> allInjectorCells(globalPositions.totalSize(), -1);
     List<label> allInjectorTetFaces(globalPositions.totalSize(), -1);
@@ -116,8 +118,7 @@ void Foam::CellZoneInjection<CloudType>::setPositions
     SubList<vector>
     (
         allPositions,
-        globalPositions.localSize(Pstream::myProcNo()),
-        globalPositions.localStart(Pstream::myProcNo())
+        globalPositions.range(myProci)
     ) = positions;
 
     Pstream::listCombineReduce(allPositions, minEqOp<point>());
@@ -126,20 +127,17 @@ void Foam::CellZoneInjection<CloudType>::setPositions
     SubList<label>
     (
         allInjectorCells,
-        globalPositions.localSize(Pstream::myProcNo()),
-        globalPositions.localStart(Pstream::myProcNo())
+        globalPositions.range(myProci)
     ) = injectorCells;
     SubList<label>
     (
         allInjectorTetFaces,
-        globalPositions.localSize(Pstream::myProcNo()),
-        globalPositions.localStart(Pstream::myProcNo())
+        globalPositions.range(myProci)
     ) = injectorTetFaces;
     SubList<label>
     (
         allInjectorTetPts,
-        globalPositions.localSize(Pstream::myProcNo()),
-        globalPositions.localStart(Pstream::myProcNo())
+        globalPositions.range(myProci)
     ) = injectorTetPts;
 
     // Transfer data

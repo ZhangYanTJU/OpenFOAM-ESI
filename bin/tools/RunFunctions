@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2015-2023 OpenCFD Ltd.
+#     Copyright (C) 2015-2024 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -501,9 +501,9 @@ cloneParallelCase()
 }
 
 
-# Overwrite 0/ with the contents of 0.orig/ if it exists.
-# The -processor option to do the processor directories instead
-#
+# If 0.orig/ exists, copy (overwrite) into 0/ [ie, serial case]
+# * -processor : copy into processor directories instead
+# * -all : copy into serial and processor directories
 restore0Dir()
 {
     if [ ! -d 0.orig ]
@@ -513,35 +513,27 @@ restore0Dir()
     fi
 
     case "$1" in
-    -proc | -processor | -processors)
-        echo "Restore 0/ from 0.orig/  [processor directories]"
+    (-all | -proc | -processor*)
+        if [ "$1" = "-all" ]
+        then
+            echo "Restore 0/ from 0.orig/  [serial/processor dirs]" 1>&2
+            \rm -rf 0
+            \cp -r 0.orig 0 2>/dev/null
+        else
+            echo "Restore 0/ from 0.orig/  [processor dirs]" 1>&2
+        fi
 
         \ls -d processor* | xargs -I {} \rm -rf ./{}/0
         \ls -d processor* | xargs -I {} \cp -r 0.orig ./{}/0 > /dev/null 2>&1
-
-        # Remove '#include' directives from field dictionaries
-        # for collated format
-        if [ "$1" = "-processors" ]
-        then
-        (
-            echo "Filter #include directives in processors/0:"
-            \cd processors/0 2>/dev/null || exit 0
-            for file in $(grep -l "#include" * 2>/dev/null)
-            do
-                foamDictionary "$file" > "$file.$$." && mv "$file.$$." "$file"
-                echo "    $file"
-            done | tr -d '\n'
-            echo
-        )
-        fi
         ;;
 
-    *)
-        echo "Restore 0/ from 0.orig/"
+    (*)
+        echo "Restore 0/ from 0.orig/" 1>&2
         \rm -rf 0
         \cp -r 0.orig 0 2>/dev/null
         ;;
     esac
+    return 0
 }
 
 

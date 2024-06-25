@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,8 +35,8 @@ Description
 #ifndef Foam_OSHA1stream_H
 #define Foam_OSHA1stream_H
 
-#include "OSstream.H"
 #include "SHA1.H"
+#include "OSstream.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -114,33 +114,6 @@ public:
 };
 
 
-namespace Detail
-{
-
-/*---------------------------------------------------------------------------*\
-                Class Detail::OSHA1streamAllocator Declaration
-\*---------------------------------------------------------------------------*/
-
-//- An allocator for holding Foam::osha1stream
-class OSHA1streamAllocator
-{
-protected:
-
-    // Protected Data
-
-        //- The output stream
-        Foam::osha1stream stream_;
-
-
-    // Constructors
-
-        //- Default construct
-        OSHA1streamAllocator() = default;
-};
-
-} // End namespace Detail
-
-
 /*---------------------------------------------------------------------------*\
                          Class OSHA1stream Declaration
 \*---------------------------------------------------------------------------*/
@@ -148,10 +121,12 @@ protected:
 //- The output stream for calculating SHA1 digests
 class OSHA1stream
 :
-    public Detail::OSHA1streamAllocator,
-    public OSstream
+    public Foam::Detail::StreamAllocator<Foam::osha1stream>,
+    public Foam::OSstream
 {
-    typedef Detail::OSHA1streamAllocator allocator_type;
+    typedef
+        Foam::Detail::StreamAllocator<Foam::osha1stream>
+        allocator_type;
 
 public:
 

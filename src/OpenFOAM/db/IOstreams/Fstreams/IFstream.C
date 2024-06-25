@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,6 +34,119 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(IFstream, 0);
+}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::DynamicList<char>
+Foam::IFstream::readContents(IFstream& ifs)
+{
+    DynamicList<char> buffer;
+
+    const auto inputSize = ifs.fileSize();
+
+    if (inputSize <= 0)
+    {
+        // Nothing to read
+    }
+    else if (IOstreamOption::COMPRESSED == ifs.compression())
+    {
+        auto& iss = ifs.stdStream();
+
+        // For compressed files, no idea how large the result will be.
+        // So read chunk-wise.
+        // Using the compressed size for the chunk size:
+        // 50% compression = 2 iterations
+        // 66% compression = 3 iterations
+        // ...
+
+        const uint64_t chunkSize =
+        (
+            (inputSize <= 1024)
+          ? uint64_t(4096)
+          : uint64_t(2*inputSize)
+        );
+
+        uint64_t beg = 0;
+
+        for (int iter = 1; iter < 100000; ++iter)
+        {
+            // Manual resizing to use incremental vs doubling
+            buffer.setCapacity(label(iter * chunkSize));
+            buffer.resize(buffer.capacity());
+
+            ifs.readRaw(buffer.data() + beg, chunkSize);
+            const std::streamsize nread = iss.gcount();
+
+            if
+            (
+                nread < 0
+             || nread == std::numeric_limits<std::streamsize>::max()
+            )
+            {
+                // Failed, but treat as normal 'done'
+                buffer.resize(label(beg));
+                break;
+            }
+            else
+            {
+                beg += uint64_t(nread);
+                if (nread >= 0 && uint64_t(nread) < chunkSize)
+                {
+                    // normalExit = true;
+                    buffer.resize(label(beg));
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        // UNCOMPRESSED
+        {
+            auto& iss = ifs.stdStream();
+
+            buffer.setCapacity(label(inputSize));
+            buffer.resize(buffer.capacity());
+
+            ifs.readRaw(buffer.data(), buffer.size_bytes());
+            const std::streamsize nread = iss.gcount();
+
+            if
+            (
+                nread < 0
+             || nread == std::numeric_limits<std::streamsize>::max()
+            )
+            {
+                // Failed, but treat as normal 'done'
+                buffer.clear();
+            }
+            else
+            {
+                buffer.resize(label(nread));  // Safety
+            }
+        }
+    }
+
+    return buffer;
+}
+
+
+Foam::DynamicList<char>
+Foam::IFstream::readContents(const fileName& pathname)
+{
+    if (!pathname.empty())
+    {
+        IFstream ifs(pathname, IOstreamOption::BINARY);
+
+        if (ifs.good())
+        {
+            return readContents(ifs);
+        }
+    }
+
+    return DynamicList<char>();
 }
 
 
@@ -197,7 +310,7 @@ Foam::IFstream& Foam::IFstream::operator()() const
         else
         {
             FatalIOErrorInFunction(*this)
-                << "file " << this->name() << " does not exist"
+                << "File " << this->name() << " does not exist"
                 << exit(FatalIOError);
         }
     }

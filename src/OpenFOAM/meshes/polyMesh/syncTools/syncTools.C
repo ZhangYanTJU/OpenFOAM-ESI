@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,34 +34,34 @@ void Foam::syncTools::swapBoundaryCellPositions
 (
     const polyMesh& mesh,
     const UList<point>& cellData,
-    List<point>& neighbourCellData
+    List<point>& neighbourCellData,
+    const bool parRun
 )
 {
     if (cellData.size() != mesh.nCells())
     {
         FatalErrorInFunction
-            << "Number of cell values " << cellData.size()
-            << " is not equal to the number of cells in the mesh "
-            << mesh.nCells() << abort(FatalError);
+            << "Number of values " << cellData.size()
+            << " != number of cells " << mesh.nCells() << nl
+            << abort(FatalError);
     }
-
-    const polyBoundaryMesh& patches = mesh.boundaryMesh();
 
     neighbourCellData.resize(mesh.nBoundaryFaces());
 
-    for (const polyPatch& pp : patches)
+    for (const polyPatch& pp : mesh.boundaryMesh())
     {
-        label bFacei = pp.start()-mesh.nInternalFaces();
+        const auto& faceCells = pp.faceCells();
 
-        const labelUList& faceCells = pp.faceCells();
-
-        for (const label celli : faceCells)
-        {
-            neighbourCellData[bFacei] = cellData[celli];
-            ++bFacei;
-        }
+        // ie, boundarySlice() = patchInternalList()
+        SubList<point>
+        (
+            neighbourCellData,
+            faceCells.size(),
+            pp.offset()
+        ) = UIndirectList<point>(cellData, faceCells);
     }
-    syncTools::swapBoundaryFacePositions(mesh, neighbourCellData);
+
+    syncTools::swapBoundaryFacePositions(mesh, neighbourCellData, parRun);
 }
 
 
@@ -127,9 +127,7 @@ Foam::bitSet Foam::syncTools::getMasterFaces(const polyMesh& mesh)
 {
     bitSet isMaster(mesh.nFaces(), true);
 
-    const polyBoundaryMesh& patches = mesh.boundaryMesh();
-
-    for (const polyPatch& pp : patches)
+    for (const polyPatch& pp : mesh.boundaryMesh())
     {
         if (pp.coupled())
         {
@@ -151,9 +149,7 @@ Foam::bitSet Foam::syncTools::getInternalOrMasterFaces
 {
     bitSet isMaster(mesh.nFaces(), true);
 
-    const polyBoundaryMesh& patches = mesh.boundaryMesh();
-
-    for (const polyPatch& pp : patches)
+    for (const polyPatch& pp : mesh.boundaryMesh())
     {
         if (pp.coupled())
         {
@@ -179,9 +175,7 @@ Foam::bitSet Foam::syncTools::getInternalOrCoupledFaces
 {
     bitSet isMaster(mesh.nFaces(), true);
 
-    const polyBoundaryMesh& patches = mesh.boundaryMesh();
-
-    for (const polyPatch& pp : patches)
+    for (const polyPatch& pp : mesh.boundaryMesh())
     {
         if (!pp.coupled())
         {

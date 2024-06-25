@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -93,29 +93,34 @@ void Foam::fileFormats::ensightMeshReader::readIDs
 (
     ensightReadFile& is,
     const bool doRead,
-    const label nShapes,
+    const label elemCount,
     labelList& foamToElem,
     Map<label>& elemToFoam
 ) const
 {
-    const label sz = foamToElem.size();
-    foamToElem.resize(sz+nShapes);
+    const label begElem = foamToElem.size();
+    const label endElem = begElem + elemCount;
+
+    foamToElem.resize(foamToElem.size()+elemCount);
+
     if (doRead)
     {
-        elemToFoam.reserve(elemToFoam.size()+nShapes);
-        for (label shapei = 0; shapei < nShapes; shapei++)
+        elemToFoam.reserve(elemToFoam.size()+elemCount);
+
+        for (label elemi = begElem; elemi < endElem; ++elemi)
         {
-            label elemi;
-            is.read(elemi);
-            foamToElem[sz+shapei] = elemi;
-            elemToFoam.insert(elemi, sz+shapei);
+            label id;
+            is.read(id);
+            foamToElem[elemi] = id;
+            elemToFoam.insert(id, elemi);
         }
     }
     else
     {
-        for (label shapei = 0; shapei < nShapes; shapei++)
+        // identity
+        for (label elemi = begElem; elemi < endElem; ++elemi)
         {
-            foamToElem[sz+shapei] = sz+shapei;
+            foamToElem[elemi] = elemi;
         }
     }
 }
@@ -209,37 +214,54 @@ bool Foam::fileFormats::ensightMeshReader::readGoldPart
     // Work
     DynamicList<label> verts;
 
-    string line;
+    string buffer;
     while (is.good())
     {
         do
         {
-            is.readKeyword(line);
+            // Get entire line/string
+            is.read(buffer);
         }
-        while (line.empty() && is.good());
+        while (buffer.empty() && is.good());
 
-        const auto split = stringOps::splitSpace(line);
+        if (!is.good())
+        {
+            break;
+        }
+        else if (buffer.contains("BEGIN TIME STEP"))
+        {
+            // Graciously handle a miscued start
+            continue;
+        }
+        else if (buffer.contains("END TIME STEP"))
+        {
+            // END TIME STEP is a valid means to terminate input
+            break;
+        }
+        const auto split = stringOps::splitSpace(buffer);
 
-        if (split.size() == 0)
+        if (split.empty())
         {
             continue;
         }
 
-        if (split[0] == "part")
+        const auto keyword(split[0].str());
+
+        if (keyword == "part")
         {
             return false;
         }
-        else if (split[0] == "node_ids")
+        else if (keyword == "node_ids")
         {
             const label nPoints = points.size();
-            // Ignore for now
-            for (label i = 0; i < nPoints; i++)
+            // Ignore point ids
+            for (label pointi = 0; pointi < nPoints; ++pointi)
             {
-                label index;
-                is.read(index);
+                label id;
+                is.read(id);
             }
         }
-        else if (split[0] == "coordinates")
+        else if (keyword == "coordinates")
         {
             label nPoints;
             is.read(nPoints);
@@ -257,207 +279,205 @@ bool Foam::fileFormats::ensightMeshReader::readGoldPart
                 nodeIdToPoints
             );
 
-            points.setSize(nPoints);
 
-            for (label pointi = 0; pointi < nPoints; pointi++)
-            {
-                is.read(points[pointi].x());
-            }
-            for (label pointi = 0; pointi < nPoints; pointi++)
-            {
-                is.read(points[pointi].y());
-            }
-            for (label pointi = 0; pointi < nPoints; pointi++)
-            {
-                is.read(points[pointi].z());
-            }
+            is.readPoints(nPoints, points);
         }
-        else if (split[0] == "tetra4")
+        else if (keyword == "tetra4")
         {
-            label nShapes;
-            is.read(nShapes);
+            label elemCount;
+            is.read(elemCount);
 
-            Pout<< indent<< "tetra4 " << nShapes
+            Pout<< indent<< "tetra4 " << elemCount
                 << " starting at line " << is.lineNumber()
                 << " position " << is.stdStream().tellg() << endl;
-
-            const label celli = cells.size();
-            cells.resize(celli+nShapes);
 
             readIDs
             (
                 is,
                 read_elem_ids,
-                nShapes,
+                elemCount,
                 cellToElemIds,
                 elemIdToCells
             );
 
+            // Extend and fill the new trailing portion
+            const label startElemi = cells.size();
+            cells.resize(startElemi+elemCount);
+            faceListList::subList myElements = cells.slice(startElemi);
+
             const auto& model = cellModel::ref(cellModel::TET);
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (auto& cellFaces : myElements)
             {
                 readVerts(is, 4, nodeIdToPoints, verts);
                 if (setHandedness_)
                 {
                     setHandedness(model, verts, points);
                 }
-                const cellShape cellVerts(model, verts);
-                cells[celli+shapei] = cellVerts.faces();
+                cellFaces = cellShape(model, verts).faces();
             }
         }
-        else if (split[0] == "pyramid5")
+        else if (keyword == "pyramid5")
         {
-            label nShapes;
-            is.read(nShapes);
+            label elemCount;
+            is.read(elemCount);
 
-            Pout<< indent<< "pyramid5 " << nShapes
+            Pout<< indent<< "pyramid5 " << elemCount
                 << " starting at line " << is.lineNumber()
                 << " position " << is.stdStream().tellg() << endl;
-
-            const label celli = cells.size();
-            cells.resize(celli+nShapes);
 
             readIDs
             (
                 is,
                 read_elem_ids,
-                nShapes,
+                elemCount,
                 cellToElemIds,
                 elemIdToCells
             );
 
+            // Extend and fill the new trailing portion
+            const label startElemi = cells.size();
+            cells.resize(startElemi+elemCount);
+            faceListList::subList myElements = cells.slice(startElemi);
+
             const auto& model = cellModel::ref(cellModel::PYR);
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (auto& cellFaces : myElements)
             {
                 readVerts(is, 5, nodeIdToPoints, verts);
                 if (setHandedness_)
                 {
                     setHandedness(model, verts, points);
                 }
-                const cellShape cellVerts(model, verts);
-                cells[celli+shapei] = cellVerts.faces();
+                cellFaces = cellShape(model, verts).faces();
             }
         }
-        else if (split[0] == "penta6")
+        else if (keyword == "penta6")
         {
-            label nShapes;
-            is.read(nShapes);
+            label elemCount;
+            is.read(elemCount);
 
-            Pout<< indent<< "penta6 " << nShapes
+            Pout<< indent<< "penta6 " << elemCount
                 << " starting at line " << is.lineNumber()
                 << " position " << is.stdStream().tellg() << endl;
-
-            const label celli = cells.size();
-            cells.resize(celli+nShapes);
 
             readIDs
             (
                 is,
                 read_elem_ids,
-                nShapes,
+                elemCount,
                 cellToElemIds,
                 elemIdToCells
             );
 
+            // Extend and fill the new trailing portion
+            const label startElemi = cells.size();
+            cells.resize(startElemi+elemCount);
+            faceListList::subList myElements = cells.slice(startElemi);
+
             const auto& model = cellModel::ref(cellModel::PRISM);
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (auto& cellFaces : myElements)
             {
                 readVerts(is, 6, nodeIdToPoints, verts);
                 if (setHandedness_)
                 {
                     setHandedness(model, verts, points);
                 }
-                const cellShape cellVerts(model, verts);
-                cells[celli+shapei] = cellVerts.faces();
+                cellFaces = cellShape(model, verts).faces();
             }
         }
-        else if (split[0] == "hexa8")
+        else if (keyword == "hexa8")
         {
-            label nShapes;
-            is.read(nShapes);
+            label elemCount;
+            is.read(elemCount);
 
-            Pout<< indent<< "hexa8 " << nShapes
+            Pout<< indent<< "hexa8 " << elemCount
                 << " starting at line " << is.lineNumber()
                 << " position " << is.stdStream().tellg() << endl;
-
-            const label celli = cells.size();
-            cells.resize(celli+nShapes);
 
             readIDs
             (
                 is,
                 read_elem_ids,
-                nShapes,
+                elemCount,
                 cellToElemIds,
                 elemIdToCells
             );
 
+            // Extend and fill the new trailing portion
+            const label startElemi = cells.size();
+            cells.resize(startElemi+elemCount);
+            faceListList::subList myElements = cells.slice(startElemi);
+
             const auto& model = cellModel::ref(cellModel::HEX);
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (auto& cellFaces : myElements)
             {
                 readVerts(is, 8, nodeIdToPoints, verts);
                 if (setHandedness_)
                 {
                     setHandedness(model, verts, points);
                 }
-                const cellShape cellVerts(model, verts);
-                cells[celli+shapei] = cellVerts.faces();
+                cellFaces = cellShape(model, verts).faces();
             }
         }
-        else if (split[0] == "nfaced")
+        else if (keyword == "nfaced")
         {
-            label nShapes;
-            is.read(nShapes);
+            label elemCount;
+            is.read(elemCount);
 
-            Pout<< indent<< "nfaced " << nShapes
+            Pout<< indent<< "nfaced " << elemCount
                 << " starting at line " << is.lineNumber()
                 << " position " << is.stdStream().tellg() << endl;
-
-            const label celli = cells.size();
-            cells.resize(celli+nShapes);
 
             readIDs
             (
                 is,
                 read_elem_ids,
-                nShapes,
+                elemCount,
                 cellToElemIds,
                 elemIdToCells
             );
 
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            // Extend and fill the new trailing portion
+            const label startElemi = cells.size();
+            cells.resize(startElemi+elemCount);
+            faceListList::subList myElements = cells.slice(startElemi);
+
+            for (auto& cellFaces : myElements)
             {
                 label nFaces;
                 is.read(nFaces);
-                faceList& cellFaces = cells[celli+shapei];
-                cellFaces.setSize(nFaces);
+                cellFaces.resize(nFaces);
             }
 
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (auto& cellFaces : myElements)
             {
-                faceList& cellFaces = cells[celli+shapei];
-                forAll(cellFaces, cellFacei)
+                for (face& f : cellFaces)
                 {
                     label nVerts;
                     is.read(nVerts);
-                    cellFaces[cellFacei].setSize(nVerts);
+                    f.resize(nVerts);
                 }
             }
 
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (faceList& cellFaces : myElements)
             {
-                faceList& cellFaces = cells[celli+shapei];
-                forAll(cellFaces, cellFacei)
+                for (face& f : cellFaces)
                 {
-                    face& f = cellFaces[cellFacei];
                     readVerts(is, f.size(), nodeIdToPoints, verts);
                     f.labelList::operator=(verts);
+                }
+            }
 
-                    forAll(f, fp)
+            // Full check
+            forAll(myElements, elemi)
+            {
+                for (const face& f : myElements[elemi])
+                {
+                    for (label pointi : f)
                     {
-                        if (f[fp] < 0 || f[fp] >= points.size())
+                        if (pointi < 0 || pointi >= points.size())
                         {
-                            FatalErrorInFunction<< "Face:" << shapei
+                            FatalErrorInFunction
+                                << "Face:" << elemi
                                 << " verts:" << f
                                 << " indexes outside points:" << points.size()
                                 << exit(FatalError);
@@ -466,107 +486,104 @@ bool Foam::fileFormats::ensightMeshReader::readGoldPart
                 }
             }
         }
-        else if (split[0] == "tria3")
+        else if (keyword == "tria3")
         {
-            label nShapes;
-            is.read(nShapes);
+            label elemCount;
+            is.read(elemCount);
 
-            Pout<< indent << "tria3 " << nShapes
+            Pout<< indent << "tria3 " << elemCount
                 << " starting at line " << is.lineNumber()
                 << " position " << is.stdStream().tellg() << endl;
-
-            const label facei = faces.size();
 
             readIDs
             (
                 is,
                 read_elem_ids,
-                nShapes,
+                elemCount,
                 faceToElemIDs,
                 elemIdToFaces
             );
 
-            faces.setSize(facei+nShapes);
+            // Extend and fill the new trailing portion
+            const label startElemi = cells.size();
+            faces.resize(startElemi+elemCount, face(3));  // <- tria3
+            faceList::subList myElements = faces.slice(startElemi);
 
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (face& f : myElements)
             {
-                auto& f = faces[facei+shapei];
-                f.setSize(3);
                 readVerts(is, f.size(), nodeIdToPoints, verts);
                 f.labelList::operator=(verts);
             }
         }
-        else if (split[0] == "quad4")
+        else if (keyword == "quad4")
         {
-            label nShapes;
-            is.read(nShapes);
+            label elemCount;
+            is.read(elemCount);
 
-            Pout<< indent << "quad4 " << nShapes
+            Pout<< indent << "quad4 " << elemCount
                 << " starting at line " << is.lineNumber()
                 << " position " << is.stdStream().tellg() << endl;
-
-            const label facei = faces.size();
 
             readIDs
             (
                 is,
                 read_elem_ids,
-                nShapes,
+                elemCount,
                 faceToElemIDs,
                 elemIdToFaces
             );
 
-            faces.setSize(facei+nShapes);
+            // Extend and fill the new trailing portion
+            const label startElemi = cells.size();
+            faces.resize(startElemi+elemCount, face(4));  // <- quad4
+            faceList::subList myElements = faces.slice(startElemi);
 
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (face& f : myElements)
             {
-                auto& f = faces[facei+shapei];
-                f.setSize(4);
                 readVerts(is, f.size(), nodeIdToPoints, verts);
                 f.labelList::operator=(verts);
             }
         }
-        else if (split[0] == "nsided")
+        else if (keyword == "nsided")
         {
-            label nShapes;
-            is.read(nShapes);
+            label elemCount;
+            is.read(elemCount);
 
-            Pout<< indent << "nsided " << nShapes
+            Pout<< indent << "nsided " << elemCount
                 << " starting at line " << is.lineNumber()
                 << " position " << is.stdStream().tellg() << endl;
-
-            const label facei = faces.size();
 
             readIDs
             (
                 is,
                 read_elem_ids,
-                nShapes,
+                elemCount,
                 faceToElemIDs,
                 elemIdToFaces
             );
 
-            faces.setSize(facei+nShapes);
+            // Extend and fill the new trailing portion
+            const label startElemi = cells.size();
+            faces.resize(startElemi+elemCount);
+            faceList::subList myElements = faces.slice(startElemi);
 
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (face& f : myElements)
             {
-                auto& f = faces[facei+shapei];
                 label nVerts;
                 is.read(nVerts);
-                f.setSize(nVerts);
+                f.resize(nVerts);
             }
 
-            for (label shapei = 0; shapei < nShapes; shapei++)
+            for (face& f : myElements)
             {
-                auto& f = faces[facei+shapei];
                 readVerts(is, f.size(), nodeIdToPoints, verts);
                 f.labelList::operator=(verts);
             }
         }
         else
         {
-            WarningInFunction << "Unhandled key " << string(split[0])
-                << " from line " << line
+            WarningInFunction << "Unhandled key " << keyword
+                << " from line " << buffer
                 << " starting at line " << is.lineNumber()
                 << " position " << is.stdStream().tellg() << endl;
         }
@@ -584,16 +601,21 @@ bool Foam::fileFormats::ensightMeshReader::readGeometry
     const scalar scaleFactor
 )
 {
+    // Auto-detect ascii/binary format,
+    // skips any initial "BEGIN TIME STEP"
+
     ensightReadFile is(geometryFile_);
 
-    // Skip 'binary' tag
-    is.readBinaryHeader();
 
-    string header;
-    is.read(header);
-    Info<< "Ensight : " << header << endl;
-    is.read(header);
-    Info<< "Ensight : " << header << endl;
+    string buffer;
+
+    // Ensight Geometry File
+    is.read(buffer);
+    Info<< "Ensight : " << buffer << nl;
+
+    // Description - 1
+    is.read(buffer);
+    Info<< "Ensight : " << buffer << nl;
 
 
     bool read_node_ids = false;
@@ -623,61 +645,72 @@ bool Foam::fileFormats::ensightMeshReader::readGeometry
 
 
     // Parse all
-    string line;
+    SubStrings<string> split;
+
     while (is.good())
     {
         do
         {
-            is.readKeyword(line);
+            // Get entire line/string
+            is.read(buffer);
         }
-        while (line.empty() && is.good());
-        const auto split = stringOps::splitSpace(line);
+        while (buffer.empty() && is.good());
+        if (buffer.contains("END TIME STEP"))
+        {
+            // END TIME STEP is a valid means to terminate input
+            break;
+        }
+        split = stringOps::splitSpace(buffer);
 
-        if (split[0] == "extents")
+        if (split.empty())
         {
-            point min;
-            point max;
-            is.read(min.x());
-            is.read(max.x());
-            is.read(min.y());
-            is.read(max.y());
-            is.read(min.z());
-            is.read(max.z());
-            Pout<< indent
-                << "Read extents " << boundBox(min, max)
-                << endl;
+            continue;
         }
-        else if (split[0] == "node")
+
+        const auto keyword(split[0].str());
+
+        if (keyword == "extents")
         {
-            word id(split[1]);
-            word op(split[2]);
+            // Optional extents (xmin, xmax, ymin, ymax, zmin, zmax)
+
+            boundBox bb;
+            point& min = bb.min();
+            point& max = bb.max();
+
+            is.read(min.x()); is.read(max.x());
+            is.read(min.y()); is.read(max.y());
+            is.read(min.z()); is.read(max.z());
+
+            Pout<< indent << "Read extents " << bb << endl;
+        }
+        else if (keyword == "node")
+        {
+            // "node id (off|assign|given|ignore)"
+            std::string op(split[2]);
             if (op == "given" || op == "ignore")
             {
                 Pout<< indent << "Reading node ids" << endl;
                 read_node_ids = true;
             }
         }
-        else if (split[0] == "element")
+        else if (keyword == "element")
         {
-            word id(split[1]);
-            word op(split[2]);
+            // "element id (off|assign|given|ignore)"
+            std::string op(split[2]);
             if (op == "given" || op == "ignore")
             {
                 Pout<< indent << "Reading element ids" << endl;
                 read_elem_ids = true;
             }
         }
-        else if (split[0] == "part")
+        else if (keyword == "part")
         {
             bool finished = false;
             do
             {
-                // Make space
-                partIDs.emplace_back();
-                is.read(partIDs.back());
-
-                partNames.emplace_back();
-                is.read(partNames.back());
+                // Read part id and name
+                is.read(partIDs.emplace_back());
+                is.read(partNames.emplace_back());
 
                 Pout<< indent
                     << "Reading part " << partIDs.back()
@@ -954,7 +987,7 @@ bool Foam::fileFormats::ensightMeshReader::readGeometry
             const face& f = rotateFace(cFaces[cFacei], rotatedFace);
 
             const auto fFnd = vertsToCell.find(f);
-            if (fFnd)
+            if (fFnd.good())
             {
                 // Already inserted. Internal face.
                 vertsToCell.erase(fFnd);
@@ -1026,7 +1059,12 @@ bool Foam::fileFormats::ensightMeshReader::readGeometry
                 )
             );
 
-            if (!cAndF)
+            if (cAndF.good())
+            {
+                partCellAndFace[patchFacei++] = cAndF.val();
+                vertsToCell.erase(cAndF);
+            }
+            else
             {
                 //WarningInFunction
                 //    << "Did not find face " << facei
@@ -1035,11 +1073,6 @@ bool Foam::fileFormats::ensightMeshReader::readGeometry
                 //    << " rotated:" << rotatedFace
                 //    << " in part " << parti
                 //    << endl;
-            }
-            else
-            {
-                partCellAndFace[patchFacei++] = cAndF();
-                vertsToCell.erase(cAndF);
             }
         }
         partCellAndFace.setSize(patchFacei);

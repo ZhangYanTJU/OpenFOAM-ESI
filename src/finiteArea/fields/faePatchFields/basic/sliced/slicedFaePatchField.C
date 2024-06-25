@@ -112,46 +112,13 @@ Foam::slicedFaePatchField<Type>::slicedFaePatchField
 
 
 template<class Type>
-Foam::tmp<Foam::faePatchField<Type>>
-Foam::slicedFaePatchField<Type>::clone() const
-{
-    return tmp<faePatchField<Type>>
-    (
-        new slicedFaePatchField<Type>(*this)
-    );
-}
-
-
-template<class Type>
 Foam::slicedFaePatchField<Type>::slicedFaePatchField
 (
     const slicedFaePatchField<Type>& ptf
 )
 :
-    faePatchField<Type>
-    (
-        ptf.patch(),
-        ptf.internalField(),
-        Field<Type>()
-    )
-{
-    // Transfer the slice from the argument
-    UList<Type>::shallowCopy(ptf);
-}
-
-
-template<class Type>
-Foam::tmp<Foam::faePatchField<Type>>
-Foam::slicedFaePatchField<Type>::clone
-(
-    const DimensionedField<Type, edgeMesh>& iF
-) const
-{
-    return tmp<faePatchField<Type>>
-    (
-        new slicedFaePatchField<Type>(*this, iF)
-    );
-}
+    slicedFaePatchField<Type>(ptf, ptf.internalField())
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -160,7 +127,17 @@ template<class Type>
 Foam::slicedFaePatchField<Type>::~slicedFaePatchField()
 {
     // Set to nullptr to avoid deletion of underlying field
-    UList<Type>::shallowCopy(UList<Type>());
+    UList<Type>::shallowCopy(nullptr);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::slicedFaePatchField<Type>::write(Ostream& os) const
+{
+    faePatchField<Type>::write(os);
+    faePatchField<Type>::writeValueEntry(os);
 }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -95,9 +95,7 @@ Foam::polyPatch::polyPatch
         bm.mesh().points()
     ),
     start_(start),
-    boundaryMesh_(bm),
-    faceCellsPtr_(nullptr),
-    mePtr_(nullptr)
+    boundaryMesh_(bm)
 {
     if (constraintType(patchType))
     {
@@ -124,9 +122,7 @@ Foam::polyPatch::polyPatch
         bm.mesh().points()
     ),
     start_(start),
-    boundaryMesh_(bm),
-    faceCellsPtr_(nullptr),
-    mePtr_(nullptr)
+    boundaryMesh_(bm)
 {}
 
 
@@ -151,9 +147,7 @@ Foam::polyPatch::polyPatch
         bm.mesh().points()
     ),
     start_(dict.get<label>("startFace")),
-    boundaryMesh_(bm),
-    faceCellsPtr_(nullptr),
-    mePtr_(nullptr)
+    boundaryMesh_(bm)
 {
     if (constraintType(patchType))
     {
@@ -180,9 +174,7 @@ Foam::polyPatch::polyPatch
         bm.mesh().points()
     ),
     start_(pp.start()),
-    boundaryMesh_(bm),
-    faceCellsPtr_(nullptr),
-    mePtr_(nullptr)
+    boundaryMesh_(bm)
 {}
 
 
@@ -207,9 +199,7 @@ Foam::polyPatch::polyPatch
         bm.mesh().points()
     ),
     start_(newStart),
-    boundaryMesh_(bm),
-    faceCellsPtr_(nullptr),
-    mePtr_(nullptr)
+    boundaryMesh_(bm)
 {}
 
 
@@ -234,9 +224,7 @@ Foam::polyPatch::polyPatch
         bm.mesh().points()
     ),
     start_(newStart),
-    boundaryMesh_(bm),
-    faceCellsPtr_(nullptr),
-    mePtr_(nullptr)
+    boundaryMesh_(bm)
 {}
 
 
@@ -245,9 +233,7 @@ Foam::polyPatch::polyPatch(const polyPatch& p)
     patchIdentifier(p),
     primitivePatch(p),
     start_(p.start_),
-    boundaryMesh_(p.boundaryMesh_),
-    faceCellsPtr_(nullptr),
-    mePtr_(nullptr)
+    boundaryMesh_(p.boundaryMesh_)
 {}
 
 
@@ -333,8 +319,8 @@ const Foam::vectorField::subField Foam::polyPatch::faceAreas() const
 
 Foam::tmp<Foam::vectorField> Foam::polyPatch::faceCellCentres() const
 {
-    tmp<vectorField> tcc(new vectorField(size()));
-    vectorField& cc = tcc.ref();
+    auto tcc = tmp<vectorField>::New(size());
+    auto& cc = tcc.ref();
 
     // get reference to global cell centres
     const vectorField& gcc = boundaryMesh_.mesh().cellCentres();
@@ -350,22 +336,53 @@ Foam::tmp<Foam::vectorField> Foam::polyPatch::faceCellCentres() const
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::polyPatch::areaFraction() const
+Foam::tmp<Foam::scalarField> Foam::polyPatch::areaFraction
+(
+    const pointField& points
+) const
 {
-    tmp<scalarField> tfraction(new scalarField(size()));
-    scalarField& fraction = tfraction.ref();
+    auto tfraction = tmp<scalarField>::New(size());
+    auto& fraction = tfraction.ref();
 
     const vectorField::subField faceAreas = this->faceAreas();
-    const pointField& points = this->points();
 
     forAll(*this, facei)
     {
-        const face& curFace = this->operator[](facei);
-        fraction[facei] =
-            mag(faceAreas[facei])/(curFace.mag(points) + ROOTVSMALL);
+        const face& f = this->operator[](facei);
+        fraction[facei] = faceAreas[facei].mag()/(f.mag(points) + ROOTVSMALL);
     }
 
     return tfraction;
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::polyPatch::areaFraction() const
+{
+    if (areaFractionPtr_)
+    {
+        return tmp<scalarField>(*areaFractionPtr_);
+    }
+    return nullptr;
+}
+
+
+void Foam::polyPatch::areaFraction(const scalar fraction)
+{
+    areaFractionPtr_ = std::make_unique<scalarField>(size(), fraction);
+}
+
+
+void Foam::polyPatch::areaFraction(const tmp<scalarField>& fraction)
+{
+    if (fraction)
+    {
+        // Steal or clone
+        areaFractionPtr_.reset(fraction.ptr());
+    }
+    else
+    {
+        areaFractionPtr_.reset(nullptr);
+    }
 }
 
 
@@ -413,6 +430,7 @@ void Foam::polyPatch::clearAddressing()
     primitivePatch::clearPatchMeshAddr();
     faceCellsPtr_.reset(nullptr);
     mePtr_.reset(nullptr);
+    areaFractionPtr_.reset(nullptr);
 }
 
 

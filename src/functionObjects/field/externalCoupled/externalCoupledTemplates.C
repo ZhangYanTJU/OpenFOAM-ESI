@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2021 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +33,7 @@ License
 #include "mixedFvPatchFields.H"
 #include "fixedGradientFvPatchFields.H"
 #include "fixedValueFvPatchFields.H"
+#include "SpanStream.H"
 #include "StringStream.H"
 #include "globalIndex.H"
 
@@ -58,7 +59,7 @@ bool Foam::functionObjects::externalCoupled::readData
     // File only opened on master; contains data for all processors, for all
     // patchIDs.
     autoPtr<IFstream> masterFilePtr;
-    if (Pstream::master())
+    if (UPstream::master())
     {
         const fileName transferFile
         (
@@ -80,13 +81,13 @@ bool Foam::functionObjects::externalCoupled::readData
     }
 
 
-    const wordRes patchSelection(one{}, groupName);
+    const wordRes patchSelection(Foam::one{}, groupName);
 
     label nFound = 0;
 
     for (const fvMesh& mesh : meshes)
     {
-        const volFieldType* vfptr = mesh.findObject<volFieldType>(fieldName);
+        auto* vfptr = mesh.getObjectPtr<volFieldType>(fieldName);
 
         if (!vfptr)
         {
@@ -94,8 +95,7 @@ bool Foam::functionObjects::externalCoupled::readData
         }
         ++nFound;
 
-        typename volFieldType::Boundary& bf =
-            const_cast<volFieldType*>(vfptr)->boundaryFieldRef();
+        auto& bf = vfptr->boundaryFieldRef();
 
         // Get the patches
         const labelList patchIDs
@@ -117,16 +117,18 @@ bool Foam::functionObjects::externalCoupled::readData
                 );
 
                 // Read from master into local stream
-                OStringStream os;
+                std::string lines;
                 readLines
                 (
-                    bf[patchi].size(),      // number of lines to read
+                    bf[patchi].size(),  // number of lines to read
                     masterFilePtr,
-                    os
+                    lines
                 );
 
+                ISpanStream isstr(lines);
+
                 // Pass responsibility for all reading over to bc
-                pf.readData(IStringStream(os.str())());
+                pf.readData(isstr);
 
                 // Update the value from the read coefficient. Bypass any
                 // additional processing by derived type.
@@ -266,51 +268,6 @@ bool Foam::functionObjects::externalCoupled::readData
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::functionObjects::externalCoupled::gatherAndCombine
-(
-    const Field<Type>& fld
-)
-{
-    // Collect values from all processors
-    List<Field<Type>> gatheredValues(Pstream::nProcs());
-    gatheredValues[Pstream::myProcNo()] = fld;
-    Pstream::gatherList(gatheredValues);
-
-
-    auto tresult = tmp<Field<Type>>::New();
-    auto& result = tresult.ref();
-
-    if (Pstream::master())
-    {
-        // Combine values into single field
-        label globalElemi = 0;
-
-        forAll(gatheredValues, lsti)
-        {
-            globalElemi += gatheredValues[lsti].size();
-        }
-
-        result.setSize(globalElemi);
-
-        globalElemi = 0;
-
-        forAll(gatheredValues, lsti)
-        {
-            const Field<Type>& sub = gatheredValues[lsti];
-
-            forAll(sub, elemi)
-            {
-                result[globalElemi++] = sub[elemi];
-            }
-        }
-    }
-
-    return tresult;
-}
-
-
-template<class Type>
 bool Foam::functionObjects::externalCoupled::writeData
 (
     const UPtrList<const fvMesh>& meshes,
@@ -352,14 +309,14 @@ bool Foam::functionObjects::externalCoupled::writeData
     }
 
 
-    const wordRes patchSelection(one{}, groupName);
+    const wordRes patchSelection(Foam::one{}, groupName);
 
     bool headerDone = false;
     label nFound = 0;
 
     for (const fvMesh& mesh : meshes)
     {
-        const volFieldType* vfptr = mesh.findObject<volFieldType>(fieldName);
+        const auto* vfptr = mesh.getObjectPtr<volFieldType>(fieldName);
 
         if (!vfptr)
         {
@@ -367,8 +324,7 @@ bool Foam::functionObjects::externalCoupled::writeData
         }
         ++nFound;
 
-        const typename volFieldType::Boundary& bf =
-            vfptr->boundaryField();
+        const auto& bf = vfptr->boundaryField();
 
         // Get the patches
         const labelList patchIDs
@@ -379,7 +335,7 @@ bool Foam::functionObjects::externalCoupled::writeData
         // Handle column-wise writing of patch data. Supports most easy types
         for (const label patchi : patchIDs)
         {
-            const globalIndex globalFaces(bf[patchi].size());
+            // const globalIndex globalFaces(bf[patchi].size());
 
             if (isA<patchFieldType>(bf[patchi]))
             {
@@ -397,7 +353,7 @@ bool Foam::functionObjects::externalCoupled::writeData
 
                 // Collect contributions from all processors and output them on
                 // master
-                if (Pstream::master())
+                if (UPstream::master())
                 {
                     // Output master data first
                     if (!headerDone)
@@ -407,27 +363,17 @@ bool Foam::functionObjects::externalCoupled::writeData
                     }
                     masterFilePtr() << os.str().c_str();
 
-                    for (const int proci : Pstream::subProcs())
+                    for (const int proci : UPstream::subProcs())
                     {
-                        IPstream fromSlave
-                        (
-                            Pstream::commsTypes::scheduled,
-                            proci
-                        );
+                        string str;
+                        IPstream::recv(str, proci);
 
-                        string str(fromSlave);
                         masterFilePtr() << str.c_str();
                     }
                 }
                 else
                 {
-                    OPstream toMaster
-                    (
-                        Pstream::commsTypes::scheduled,
-                        Pstream::masterNo()
-                    );
-
-                    toMaster << os.str();
+                    OPstream::send(os.str(), UPstream::masterNo());
                 }
             }
             else if (isA<mixedFvPatchField<Type>>(bf[patchi]))
@@ -435,15 +381,21 @@ bool Foam::functionObjects::externalCoupled::writeData
                 const mixedFvPatchField<Type>& pf =
                     refCast<const mixedFvPatchField<Type>>(bf[patchi]);
 
-                Field<Type> value(gatherAndCombine(pf));
-                Field<Type> snGrad(gatherAndCombine(pf.snGrad()()));
-                Field<Type> refValue(gatherAndCombine(pf.refValue()));
-                Field<Type> refGrad(gatherAndCombine(pf.refGrad()));
-                scalarField valueFraction(gatherAndCombine(pf.valueFraction()));
+                const globalIndex glob
+                (
+                    globalIndex::gatherOnly{},
+                    pf.size()
+                );
 
-                if (Pstream::master())
+                Field<Type> value(glob.gather(pf));
+                Field<Type> snGrad(glob.gather(pf.snGrad()()));
+                Field<Type> refValue(glob.gather(pf.refValue()));
+                Field<Type> refGrad(glob.gather(pf.refGrad()));
+                scalarField valueFraction(glob.gather(pf.valueFraction()));
+
+                if (UPstream::master())
                 {
-                    forAll(refValue, facei)
+                    forAll(value, facei)
                     {
                         masterFilePtr()
                             << value[facei] << token::SPACE
@@ -457,9 +409,17 @@ bool Foam::functionObjects::externalCoupled::writeData
             else
             {
                 // Output the value and snGrad
-                Field<Type> value(gatherAndCombine(bf[patchi]));
-                Field<Type> snGrad(gatherAndCombine(bf[patchi].snGrad()()));
-                if (Pstream::master())
+
+                const globalIndex glob
+                (
+                    globalIndex::gatherOnly{},
+                    bf[patchi].size()
+                );
+
+                Field<Type> value(glob.gather(bf[patchi]));
+                Field<Type> snGrad(glob.gather(bf[patchi].snGrad()()));
+
+                if (UPstream::master())
                 {
                     forAll(value, facei)
                     {

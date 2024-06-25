@@ -64,9 +64,9 @@ Foam::topOInterpolationFunction::New
 
     Info<< "topOInterpolationFunction type : " << type << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(type);
+    auto* ctorPtr = dictionaryConstructorTable(type);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
@@ -77,7 +77,7 @@ Foam::topOInterpolationFunction::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<topOInterpolationFunction>(cstrIter()(mesh, dict));
+    return autoPtr<topOInterpolationFunction>(ctorPtr(mesh, dict));
 }
 
 

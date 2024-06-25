@@ -35,21 +35,4 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::meshSearchFACE_CENTRE_TRISMeshObject::meshSearchFACE_CENTRE_TRISMeshObject
-(
-    const polyMesh& mesh
-)
-:
-    MeshObject
-    <
-        polyMesh,
-        Foam::GeometricMeshObject,
-        meshSearchFACE_CENTRE_TRISMeshObject
-    >(mesh),
-    meshSearch(mesh, polyMesh::FACE_CENTRE_TRIS)
-{}
-
-
 // ************************************************************************* //

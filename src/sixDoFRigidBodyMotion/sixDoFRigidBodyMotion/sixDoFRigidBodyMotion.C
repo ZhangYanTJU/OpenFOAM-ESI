@@ -393,8 +393,8 @@ Foam::tmp<Foam::pointField> Foam::sixDoFRigidBodyMotion::transform
         quaternion(Q().T() & initialQ())
     );
 
-    tmp<pointField> tpoints(new pointField(initialPoints));
-    pointField& points = tpoints.ref();
+    auto tpoints = tmp<pointField>::New(initialPoints);
+    auto& points = tpoints.ref();
 
     forAll(points, pointi)
     {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,7 +50,7 @@ Usage
         source      faceToFace;
 
         // Conditional mandatory entries
-        // Select either of the below
+        // Select one of the below
 
         // Option-1
         sets
@@ -61,7 +61,18 @@ Usage
         );
 
         // Option-2
+        zones
+        (
+            <faceZoneName0>
+            <faceZoneName1>
+            ...
+        );
+
+        // Option-3
         set     <faceSetName>;
+
+        // Option-4
+        zone    <faceZoneName>;
     }
     \endverbatim
 
@@ -81,11 +92,13 @@ Usage
       subtract | Remove selected faces from this faceSet
     \endverbatim
 
-    Options for the conditional mandatory entries:
+    Options for the conditional mandatory entries (in order of precedence):
     \verbatim
       Entry    | Description                | Type     | Req'd  | Dflt
       sets     | Names of input faceSets    | wordList | cond'l | -
+      zones    | Names of input faceZones   | wordList | cond'l | -
       set      | Name of input faceSet      | word     | cond'l | -
+      zone     | Name of input faceZone     | word     | cond'l | -
     \endverbatim
 
 Note
@@ -101,8 +114,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faceToFace_H
-#define faceToFace_H
+#ifndef Foam_faceToFace_H
+#define Foam_faceToFace_H
 
 #include "topoSetFaceSource.H"
 
@@ -124,8 +137,11 @@ class faceToFace
         //- Add usage string
         static addToUsageTable usage_;
 
-        //- Names of faceSets to use
+        //- Names of sets or zones to use
         wordList names_;
+
+        //- Is name a set or a zone
+        const bool isZone_;
 
 
 public:

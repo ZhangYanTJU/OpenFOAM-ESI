@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,15 +28,28 @@ Class
     Foam::wedgeFvsPatchField
 
 Description
-    Foam::wedgeFvsPatchField
+    This boundary condition is similar to the cyclic condition, except that
+    it is applied to 2-D geometries.
+
+    The "value" entry is MUST_READ.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type    wedge;
+        value   uniform ...;    // Required value entry
+    }
+    \endverbatim
 
 SourceFiles
     wedgeFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wedgeFvsPatchField_H
-#define wedgeFvsPatchField_H
+#ifndef Foam_wedgeFvsPatchField_H
+#define Foam_wedgeFvsPatchField_H
 
 #include "fvsPatchField.H"
 #include "wedgeFvPatch.H"
@@ -54,7 +68,6 @@ class wedgeFvsPatchField
 :
     public fvsPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -70,7 +83,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is MUST_READ.
         wedgeFvsPatchField
         (
             const fvPatch&,
@@ -93,15 +107,6 @@ public:
             const wedgeFvsPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const
-        {
-            return tmp<fvsPatchField<Type>>
-            (
-                new wedgeFvsPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         wedgeFvsPatchField
         (
@@ -109,17 +114,26 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const
+        {
+            return fvsPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
         ) const
         {
-            return tmp<fvsPatchField<Type>>
-            (
-                new wedgeFvsPatchField<Type>(*this, iF)
-            );
+            return fvsPatchField<Type>::Clone(*this, iF);
         }
+
+
+    // Member Functions
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 };
 
 

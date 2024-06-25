@@ -367,7 +367,7 @@ public:
         ) const
         {
             NotImplemented;
-            return tmp<scalarField>::New(p);
+            return nullptr;
         }
 
         //- Return Cv of the mixture

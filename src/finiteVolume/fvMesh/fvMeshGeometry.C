@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -376,25 +376,22 @@ Foam::tmp<Foam::surfaceVectorField> Foam::fvMesh::delta() const
 {
     DebugInFunction << "Calculating face deltas" << endl;
 
-    tmp<surfaceVectorField> tdelta
+    auto tdelta = tmp<surfaceVectorField>::New
     (
-        new surfaceVectorField
+        IOobject
         (
-            IOobject
-            (
-                "delta",
-                pointsInstance(),
-                meshSubDir,
-                *this,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            "delta",
+            pointsInstance(),
+            meshSubDir,
             *this,
-            dimLength
-        )
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        *this,
+        dimLength
     );
-    surfaceVectorField& delta = tdelta.ref();
+    auto& delta = tdelta.ref();
     delta.setOriented();
 
     const volVectorField& C = this->C();
@@ -406,7 +403,7 @@ Foam::tmp<Foam::surfaceVectorField> Foam::fvMesh::delta() const
         delta[facei] = C[neighbour[facei]] - C[owner[facei]];
     }
 
-    surfaceVectorField::Boundary& deltabf =  delta.boundaryFieldRef();
+    auto& deltabf = delta.boundaryFieldRef();
 
     forAll(deltabf, patchi)
     {
@@ -430,7 +427,7 @@ const Foam::surfaceScalarField& Foam::fvMesh::phi() const
     // mesh motion fluxes if the time has been incremented
     if (!time().subCycling() && phiPtr_->timeIndex() != time().timeIndex())
     {
-        (*phiPtr_) = dimensionedScalar(dimVolume/dimTime, Zero);
+        (*phiPtr_) = dimensionedScalar(dimVolume/dimTime, Foam::zero{});
     }
 
     phiPtr_->setOriented();
@@ -441,17 +438,12 @@ const Foam::surfaceScalarField& Foam::fvMesh::phi() const
 
 Foam::refPtr<Foam::surfaceScalarField> Foam::fvMesh::setPhi()
 {
-    if (!phiPtr_)
-    {
-        return nullptr;
-    }
-    else
-    {
-        // Return non-const reference
-        refPtr<surfaceScalarField> p;
-        p.ref(*phiPtr_);
-        return p;
-    }
+    refPtr<surfaceScalarField> phiref;
+
+    // Return non-const reference, or nullptr if not available
+    phiref.ref(phiPtr_.get());
+
+    return phiref;
 }
 
 

@@ -46,8 +46,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef UnsortedMeshedSurface_H
-#define UnsortedMeshedSurface_H
+#ifndef Foam_UnsortedMeshedSurface_H
+#define Foam_UnsortedMeshedSurface_H
 
 #include "MeshedSurface.H"
 #include "surfZoneIdentifierList.H"

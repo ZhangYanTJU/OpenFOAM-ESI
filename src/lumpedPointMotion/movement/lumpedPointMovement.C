@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1291,7 +1291,7 @@ bool Foam::lumpedPointMovement::writeData
     const Tuple2<scalar, scalar>* timesWritten
 ) const
 {
-    if (!Pstream::master())
+    if (!UPstream::master())
     {
         return false;
     }
@@ -1306,13 +1306,13 @@ bool Foam::lumpedPointMovement::writeData
         writeData(os, forces, moments, outputFormat_, timesWritten);
     }
 
-    // Log output
+    // Log output - simple append to existing
     {
         OFstream os
         (
             coupler().resolveFile(logName_),
             IOstreamOption(),
-            IOstreamOption::APPEND
+            IOstreamOption::APPEND_ATE
         );
 
         writeData(os, forces, moments, outputFormatType::PLAIN, timesWritten);

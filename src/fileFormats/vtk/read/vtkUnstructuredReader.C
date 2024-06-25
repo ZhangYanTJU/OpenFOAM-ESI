@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -888,7 +888,8 @@ void Foam::vtkUnstructuredReader::read(ISstream& inFile)
         {
             string line;
             inFile.getLine(line);
-            IStringStream is(line);
+            ISpanStream is(line);
+
             word dataName(is);
             word dataType(is);
             //label numComp(readLabel(inFile));
@@ -923,7 +924,8 @@ void Foam::vtkUnstructuredReader::read(ISstream& inFile)
             // 'NORMALS Normals float'
             string line;
             inFile.getLine(line);
-            IStringStream is(line);
+            ISpanStream is(line);
+
             word dataName(is);
             word dataType(is);
             DebugInfo
@@ -971,7 +973,8 @@ void Foam::vtkUnstructuredReader::read(ISstream& inFile)
             // 'TEXTURE_COORDINATES TCoords 2 float'
             string line;
             inFile.getLine(line);
-            IStringStream is(line);
+            ISpanStream is(line);
+
             word dataName(is);          //"Tcoords"
             label dim(readLabel(is));
             word dataType(is);

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,7 +71,7 @@ Foam::setToPointZone::setToPointZone
     const dictionary& dict
 )
 :
-    topoSetPointZoneSource(mesh),
+    topoSetPointZoneSource(mesh, dict),
     setName_(dict.get<word>("set"))
 {}
 
@@ -114,7 +114,7 @@ void Foam::setToPointZone::applyToSet
             }
 
             // Load the set
-            pointSet loadedSet(mesh_, setName_);
+            pointSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
             const labelHashSet& pointLabels = loadedSet;
 
             // Start off from copy
@@ -124,7 +124,7 @@ void Foam::setToPointZone::applyToSet
             {
                 if (!zoneSet.found(pointi))
                 {
-                    newAddressing.append(pointi);
+                    newAddressing.push_back(pointi);
                 }
             }
 
@@ -140,16 +140,16 @@ void Foam::setToPointZone::applyToSet
             }
 
             // Load the set
-            pointSet loadedSet(mesh_, setName_);
+            pointSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
 
             // Start off empty
             DynamicList<label> newAddressing(zoneSet.addressing().size());
 
-            forAll(zoneSet.addressing(), i)
+            for (const label pointi : zoneSet.addressing())
             {
-                if (!loadedSet.found(zoneSet.addressing()[i]))
+                if (!loadedSet.found(pointi))
                 {
-                    newAddressing.append(zoneSet.addressing()[i]);
+                    newAddressing.push_back(pointi);
                 }
             }
             zoneSet.addressing().transfer(newAddressing);

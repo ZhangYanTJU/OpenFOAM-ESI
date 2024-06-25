@@ -101,14 +101,10 @@ void realizableKE<BasicTurbulenceModel>::correctNut()
 template<class BasicTurbulenceModel>
 tmp<fvScalarMatrix> realizableKE<BasicTurbulenceModel>::kSource() const
 {
-    return tmp<fvScalarMatrix>
+    return tmp<fvScalarMatrix>::New
     (
-        new fvScalarMatrix
-        (
-            k_,
-            dimVolume*this->rho_.dimensions()*k_.dimensions()
-            /dimTime
-        )
+        k_,
+        dimVolume*this->rho_.dimensions()*k_.dimensions()/dimTime
     );
 }
 
@@ -116,14 +112,10 @@ tmp<fvScalarMatrix> realizableKE<BasicTurbulenceModel>::kSource() const
 template<class BasicTurbulenceModel>
 tmp<fvScalarMatrix> realizableKE<BasicTurbulenceModel>::epsilonSource() const
 {
-    return tmp<fvScalarMatrix>
+    return tmp<fvScalarMatrix>::New
     (
-        new fvScalarMatrix
-        (
-            epsilon_,
-            dimVolume*this->rho_.dimensions()*epsilon_.dimensions()
-            /dimTime
-        )
+        epsilon_,
+        dimVolume*this->rho_.dimensions()*epsilon_.dimensions()/dimTime
     );
 }
 

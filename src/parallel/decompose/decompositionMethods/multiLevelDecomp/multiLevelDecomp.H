@@ -72,7 +72,7 @@ class multiLevelDecomp
 
 
         //- Given connectivity across processors work out connectivity
-        //  for a (consistent) subset
+        //- for a (consistent) subset
         void subsetGlobalCellCells
         (
             const label nDomains,

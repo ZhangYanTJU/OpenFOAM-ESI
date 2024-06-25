@@ -68,7 +68,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregatedOrCoupled
     {
         regionName = psi_.mesh().name() + "::";
     }
-    addProfiling(solve, "fvMatrix::solve." + regionName + psi_.name());
+    addProfiling(solve, "fvMatrix::solve.", regionName, psi_.name());
 
     if (debug)
     {
@@ -363,8 +363,8 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solve()
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::fvMatrix<Type>::residual() const
 {
-    tmp<Field<Type>> tres(new Field<Type>(source_));
-    Field<Type>& res = tres.ref();
+    auto tres = tmp<Field<Type>>::New(source_);
+    auto& res = tres.ref();
 
     addBoundarySource(res);
 

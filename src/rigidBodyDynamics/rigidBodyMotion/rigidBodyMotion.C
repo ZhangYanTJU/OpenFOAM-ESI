@@ -238,8 +238,8 @@ Foam::tmp<Foam::pointField> Foam::RBD::rigidBodyMotion::transformPoints
     // to the current state in the global frame
     spatialTransform X(X0(bodyID).inv() & X00(bodyID));
 
-    tmp<pointField> tpoints(new pointField(initialPoints.size()));
-    pointField& points = tpoints.ref();
+    auto tpoints = tmp<pointField>::New(initialPoints.size());
+    auto& points = tpoints.ref();
 
     forAll(points, i)
     {
@@ -265,8 +265,8 @@ Foam::tmp<Foam::pointField> Foam::RBD::rigidBodyMotion::transformPoints
     // interpolation
     septernion s(X);
 
-    tmp<pointField> tpoints(new pointField(initialPoints));
-    pointField& points = tpoints.ref();
+    auto tpoints = tmp<pointField>::New(initialPoints);
+    auto& points = tpoints.ref();
 
     forAll(points, i)
     {
@@ -314,8 +314,8 @@ Foam::tmp<Foam::pointField> Foam::RBD::rigidBodyMotion::transformPoints
         ss[bi] = septernion(X);
     }
 
-    tmp<pointField> tpoints(new pointField(initialPoints));
-    pointField& points = tpoints.ref();
+    auto tpoints = tmp<pointField>::New(initialPoints);
+    auto& points = tpoints.ref();
 
     List<scalar> w(ss.size());
 

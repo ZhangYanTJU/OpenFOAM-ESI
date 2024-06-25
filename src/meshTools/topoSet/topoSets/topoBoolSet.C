@@ -135,9 +135,8 @@ Foam::topoBoolSet::topoBoolSet
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER
         ),
-        label(0)  // zero-sized (unallocated) labelHashSet
-    ),
-    selected_()
+        Foam::zero{}  // Empty labelHashSet (initialCapacity = 0)
+    )
 {}
 
 
@@ -186,6 +185,12 @@ Foam::topoBoolSet::topoBoolSet
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::topoBoolSet::contains(const label id) const
+{
+    return selected_.test(id);
+}
+
 
 bool Foam::topoBoolSet::found(const label id) const
 {
@@ -250,6 +255,25 @@ void Foam::topoBoolSet::subset(const topoSet& set)
 }
 
 
+void Foam::topoBoolSet::subset(const labelUList& set)
+{
+    // Only retain entries found in both sets
+    if (set.empty())
+    {
+        selected_ = false;
+    }
+    else
+    {
+        const boolList oldSelected(selected_);
+        selected_ = false;
+        for (const label id : set)
+        {
+            selected_[id] = oldSelected[id];
+        }
+    }
+}
+
+
 void Foam::topoBoolSet::addSet(const topoSet& set)
 {
     // Add entries to the set
@@ -260,7 +284,27 @@ void Foam::topoBoolSet::addSet(const topoSet& set)
 }
 
 
+void Foam::topoBoolSet::addSet(const labelUList& set)
+{
+    // Add entries to the set
+    for (const label id : set)
+    {
+        selected_[id] = true;
+    }
+}
+
+
 void Foam::topoBoolSet::subtractSet(const topoSet& set)
+{
+    // Subtract entries from the set
+    for (const label id : set)
+    {
+        selected_.unset(id);
+    }
+}
+
+
+void Foam::topoBoolSet::subtractSet(const labelUList& set)
 {
     // Subtract entries from the set
     for (const label id : set)

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,12 +86,27 @@ Foam::OPstream::OPstream
 {}
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::UOPstream::send()
+{
+    sendAtDestruct_ = false;
+    return bufferIPCsend();
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::UOPstream::~UOPstream()
 {
     if (sendAtDestruct_)
     {
+        // Note: sendAtDestruct_ and nonBlocking is a questionable combination
+        // since the transfer buffer will be destroyed before
+        // the non-blocking send completes!
+        //
+        // Could flag as an error, but not actually used anywhere.
+
         if (!bufferIPCsend())
         {
             FatalErrorInFunction

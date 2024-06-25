@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cellMapper_H
-#define cellMapper_H
+#ifndef Foam_cellMapper_H
+#define Foam_cellMapper_H
 
 #include "morphFieldMapper.H"
 
@@ -46,8 +47,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
-class polyMesh;
+// Forward Declarations
 class mapPolyMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -58,37 +58,44 @@ class cellMapper
 :
     public morphFieldMapper
 {
-    // Private data
-
-        //- Reference to polyMesh
-        const polyMesh& mesh_;
+    // Private Data
 
         //- Reference to mapPolyMesh
         const mapPolyMesh& mpm_;
 
-        //- Are there any inserted (unmapped) cells
-        bool insertedCells_;
+        //- The size of the mapper = polyMesh::nCells()
+        const label mapperLen_;
+
+        //- Number of inserted (unmapped) cells
+        label nInsertedObjects_;
 
         //- Is the mapping direct
         bool direct_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         //- Direct addressing (only one for of addressing is used)
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one for of addressing is used)
-        mutable labelListList* interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpAddrPtr_;
 
         //- Interpolation weights
-        mutable scalarListList* weightsPtr_;
+        mutable std::unique_ptr<scalarListList> weightsPtr_;
 
         //- Inserted cells
-        mutable labelList* insertedCellLabelsPtr_;
+        mutable std::unique_ptr<labelList> insertedObjectsPtr_;
 
 
     // Private Member Functions
+
+        //- Calculate addressing for mapping with inserted cells
+        void calcAddressing() const;
+
+public:
+
+    // Generated Methods
 
         //- No copy construct
         cellMapper(const cellMapper&) = delete;
@@ -97,21 +104,10 @@ class cellMapper
         void operator=(const cellMapper&) = delete;
 
 
-        //- Calculate addressing for mapping with inserted cells
-        void calcAddressing() const;
-
-        //- Clear out local storage
-        void clearOut();
-
-
-public:
-
-    // Static data members
-
     // Constructors
 
         //- Construct from mapPolyMesh
-        cellMapper(const mapPolyMesh& mpm);
+        explicit cellMapper(const mapPolyMesh& mpm);
 
 
     //- Destructor
@@ -120,7 +116,7 @@ public:
 
     // Member Functions
 
-        //- Return size
+        //- The mapper size
         virtual label size() const;
 
         //- Return size before mapping
@@ -132,6 +128,7 @@ public:
             return direct_;
         }
 
+        //- Are there unmapped values?
         virtual bool hasUnmapped() const
         {
             return insertedObjects();
@@ -149,7 +146,7 @@ public:
         //- Are there any inserted cells
         virtual bool insertedObjects() const
         {
-            return insertedCells_;
+            return bool(nInsertedObjects_);
         }
 
         //- Return list of inserted cells

@@ -66,8 +66,6 @@ point radial::operator()
 
     scalar r = R_->value(layer);
 
-Pout<< "** for layer " << layer << " r:" << r << endl;
-
     return r*rsHat;
 }
 

@@ -73,8 +73,12 @@ public:
 
     // Static Functions
 
-        //- Return a null SubList
-        inline static const SubList<T>& null();
+        //- Return a null SubList (reference to a nullObject).
+        //- Behaves like an empty SubList.
+        static const SubList<T>& null() noexcept
+        {
+            return NullObjectRef<SubList<T>>();
+        }
 
 
     // Generated Methods

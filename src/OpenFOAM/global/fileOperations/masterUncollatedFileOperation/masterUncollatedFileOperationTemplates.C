@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,41 +31,6 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-Type Foam::fileOperations::masterUncollatedFileOperation::scatterList
-(
-    const UList<Type>& allValues,
-    const int tag,
-    const label comm
-) const
-{
-    // TBD: more efficient scatter
-    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
-    if (Pstream::master(comm))
-    {
-        for (const int proci : Pstream::subProcs(comm))
-        {
-            UOPstream os(proci, pBufs);
-            os << allValues[proci];
-        }
-    }
-    pBufs.finishedScatters();
-
-    Type value;
-
-    if (Pstream::master(comm))
-    {
-        value = allValues[0];
-    }
-    else
-    {
-        UIPstream is(Pstream::masterNo(), pBufs);
-        is >> value;
-    }
-    return value;
-}
-
-
 template<class Type, class FileOp>
 Type Foam::fileOperations::masterUncollatedFileOperation::masterOp
 (
@@ -81,17 +46,24 @@ Type Foam::fileOperations::masterUncollatedFileOperation::masterOp
             << typeid(FileOp).name()
             << " on " << fName << endl;
     }
-    if (Pstream::parRun())
-    {
-        List<fileName> filePaths(Pstream::nProcs(comm));
-        filePaths[Pstream::myProcNo(comm)] = fName;
-        Pstream::gatherList(filePaths, tag, comm);
 
-        List<Type> result(filePaths.size());
-        if (Pstream::master(comm))
+    if (UPstream::is_parallel(comm))
+    {
+        const label myProci = UPstream::myProcNo(comm);
+        const label numProc = UPstream::nProcs(comm);
+
+        List<fileName> filePaths(numProc);
+        filePaths[myProci] = fName;
+        Pstream::gatherList(filePaths, tag, comm);
+        // OR filePaths = Pstream::listGatherValues(fName, comm, tag)
+
+        List<Type> result;
+        if (UPstream::master(comm))
         {
+            result.resize(numProc);
             result = fop(filePaths[0]);
-            for (label i = 1; i < filePaths.size(); i++)
+
+            for (label i = 1; i < numProc; ++i)
             {
                 if (filePaths[i] != filePaths[0])
                 {
@@ -100,12 +72,10 @@ Type Foam::fileOperations::masterUncollatedFileOperation::masterOp
             }
         }
 
-        return scatterList(result, tag, comm);
+        return Pstream::listScatterValues(result, comm, tag);
     }
-    else
-    {
-        return fop(fName);
-    }
+
+    return fop(fName);
 }
 
 
@@ -124,35 +94,41 @@ Type Foam::fileOperations::masterUncollatedFileOperation::masterOp
         Pout<< "masterUncollatedFileOperation : Operation on src:" << src
             << " dest:" << dest << endl;
     }
-    if (Pstream::parRun())
+
+    if (UPstream::is_parallel(comm))
     {
-        List<fileName> srcs(Pstream::nProcs(comm));
-        srcs[Pstream::myProcNo(comm)] = src;
-        Pstream::gatherList(srcs, tag, comm);
+        const label myProci = UPstream::myProcNo(comm);
+        const label numProc = UPstream::nProcs(comm);
 
-        List<fileName> dests(srcs.size());
-        dests[Pstream::myProcNo(comm)] = dest;
-        Pstream::gatherList(dests, tag, comm);
+        List<Pair<fileName>> filePaths(numProc);
+        filePaths[myProci].first() = src;
+        filePaths[myProci].second() = dest;
+        Pstream::gatherList(filePaths, tag, comm);
+        // OR
+        // Pair<fileName> tup(src, dest);
+        // filePaths = Pstream::listGatherValues(tup, comm, tag)
 
-        List<Type> result(Pstream::nProcs(comm));
-        if (Pstream::master(comm))
+        List<Type> result;
+        if (UPstream::master(comm))
         {
-            result = fop(srcs[0], dests[0]);
-            for (label i = 1; i < srcs.size(); i++)
+            result.resize(numProc);
+            result = fop(filePaths[0].first(), filePaths[0].second());
+
+            for (label i = 1; i < numProc; ++i)
             {
-                if (srcs[i] != srcs[0])
+                // TBD: also check second() ?
+                if (filePaths[i].first() != filePaths[0].first())
                 {
-                    result[i] = fop(srcs[i], dests[i]);
+                    result[i] =
+                        fop(filePaths[i].first(), filePaths[i].second());
                 }
             }
         }
 
-        return scatterList(result, tag, comm);
+        return Pstream::listScatterValues(result, comm, tag);
     }
-    else
-    {
-        return fop(src, dest);
-    }
+
+    return fop(src, dest);
 }
 
 

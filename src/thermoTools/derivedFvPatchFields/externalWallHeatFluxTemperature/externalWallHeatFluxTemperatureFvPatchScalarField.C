@@ -331,7 +331,7 @@ void Foam::externalWallHeatFluxTemperatureFvPatchScalarField::updateCoeffs()
                 Q_->value(this->db().time().timeOutputValue());
 
             refGrad() = (heatPower/gSum(patch().magSf()) + qr)/kappa(Tp);
-            refValue() = 0;
+            refValue() = 293.15;  // prevents FPE, no impact on condition
             valueFraction() = 0;
 
             break;
@@ -342,7 +342,7 @@ void Foam::externalWallHeatFluxTemperatureFvPatchScalarField::updateCoeffs()
                 q_->value(this->db().time().timeOutputValue());
 
             refGrad() = (heatFlux + qr)/kappa(Tp);
-            refValue() = 0;
+            refValue() = 293.15;  // prevents FPE, no impact on condition
             valueFraction() = 0;
 
             break;

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,8 @@ Class
     Foam::ensightGeoFile
 
 Description
-    Specialized Ensight output with extra geometry file header
+    A variant of ensightFile (Ensight writing) that includes
+    the extra geometry file header information.
 
 \*---------------------------------------------------------------------------*/
 
@@ -50,16 +51,18 @@ class ensightGeoFile
 :
     public ensightFile
 {
-    // Private Member Functions
+public:
 
-        //- Initialize outputs the header information and beginGeometry
-        void init();
+    // Static Functions
 
-        //- Start of geometry information
-        void beginGeometry();
+        //- Return a null ensightGeoFile
+        static const ensightGeoFile& null() noexcept
+        {
+            return NullObjectRef<ensightGeoFile>();
+        }
 
-        //- End of geometry information
-        void endGeometry();
+
+    // Generated Methods
 
         //- No copy construct
         ensightGeoFile(const ensightGeoFile&) = delete;
@@ -67,35 +70,58 @@ class ensightGeoFile
         //- No copy assignment
         void operator=(const ensightGeoFile&) = delete;
 
-public:
-
-    // Static Functions
-
-        //- Return a null ensightGeoFile
-        static const ensightGeoFile& null()
-        {
-            return NullObjectRef<ensightGeoFile>();
-        }
-
 
     // Constructors
 
-        //- Construct from path-name.
+        //- Construct from path-name and initialise the binary header.
         //  The path-name is adjusted for valid ensight file naming.
-        explicit ensightGeoFile
+        //  Created as an atomic or in append mode (single-file format).
+        ensightGeoFile
         (
+            //! Append mode: NO_APPEND or APPEND_ATE
+            IOstreamOption::appendType append,
             const fileName& pathname,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
-        //- Construct from path and name.
+        //- Construct from path / name and initialise the binary header.
         //  Only the name portion is adjusted for valid ensight file naming.
+        //  Created as an atomic or in append mode (single-file format).
+        ensightGeoFile
+        (
+            //! Append mode: NO_APPEND or APPEND_ATE
+            IOstreamOption::appendType append,
+            const fileName& path,
+            const fileName& name,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        );
+
+        //- Construct from path-name and initialise the binary header.
+        //  The path-name is adjusted for valid ensight file naming.
+        //  Created as an atomic, non-append mode.
+        //  \note Since 2024-05 does \em not call beginGeometry() !!
+        explicit ensightGeoFile
+        (
+            const fileName& pathname,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        :
+            ensightGeoFile(IOstreamOption::NO_APPEND, pathname, fmt)
+        {}
+
+        //- Construct from path / name and initialise the binary header.
+        //  Only the name portion is adjusted for valid ensight file naming.
+        //  Created as an atomic, non-append mode.
+        //  \note Since 2024-05 does \em not call beginGeometry() !!
         ensightGeoFile
         (
             const fileName& path,
             const fileName& name,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
-        );
+        )
+        :
+            ensightGeoFile(IOstreamOption::NO_APPEND, path, name, fmt)
+        {}
 
 
     //- Destructor
@@ -107,19 +133,13 @@ public:
     // Output
 
         //- Write keyword with trailing newline
-        virtual Ostream& writeKeyword(const keyType& key);
+        virtual Ostream& writeKeyword(const keyType& key) override;
 
 
     // Convenience Output Methods
 
-        //- Begin a part (0-based index).
-        using ensightFile::beginPart;
-
-        //- Begin a "part" (0-based index), with a description.
-        void beginPart(const label index, const std::string& description);
-
-        //- Begin a "coordinates" block
-        void beginCoordinates(const label npoints);
+        //- Start of geometry information
+        void beginGeometry();
 };
 
 

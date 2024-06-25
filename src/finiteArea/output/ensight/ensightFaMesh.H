@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,14 +85,17 @@ class ensightFaMesh
         //- Enforce consistent index/part numbering
         void renumber();
 
+
+public:
+
+    // Generated Methods
+
         //- No copy construct
         ensightFaMesh(const ensightFaMesh&) = delete;
 
         //- No copy assignment
         void operator=(const ensightFaMesh&) = delete;
 
-
-public:
 
     // Constructors
 
@@ -144,18 +147,21 @@ public:
 
     // Output
 
-        //- Write geometry to file. Normally in parallel
+        //- Write geometry to file (normally in parallel).
+        //- Adds beginGeometry() marker.
         void write
         (
             ensightGeoFile& os,
-            bool parallel = Pstream::parRun()
+            bool parallel = UPstream::parRun()
         ) const;
 
-        //- Write geometry to file. Normally in parallel
+        //- Write geometry to file (normally in parallel).
+        //- Adds beginGeometry() marker.
+        FOAM_DEPRECATED_FOR(2024-05, "write(ensightGeoFile&, ...")
         inline void write
         (
             autoPtr<ensightGeoFile>& os,
-            bool parallel = Pstream::parRun()
+            bool parallel = UPstream::parRun()
         ) const;
 };
 

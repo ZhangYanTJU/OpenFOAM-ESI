@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,60 +46,6 @@ SourceFiles
 namespace Foam
 {
 
-namespace Detail
-{
-
-/*---------------------------------------------------------------------------*\
-                Class Detail::StringStreamAllocator Declaration
-\*---------------------------------------------------------------------------*/
-
-//- Allocator for variants of a std stringstream
-template<class StreamType>
-class StringStreamAllocator
-{
-protected:
-
-    // Protected Member Data
-
-        //- The stream type
-        typedef StreamType stream_type;
-
-        //- The input/output stream.
-        stream_type stream_;
-
-
-    // Constructors
-
-        //- Default construct
-        StringStreamAllocator() = default;
-
-        //- Copy construct from string
-        StringStreamAllocator(const std::string& s)
-        :
-            stream_(s)
-        {}
-
-
-public:
-
-    // Member Functions
-
-        //- Get the string - as Foam::string rather than std::string
-        Foam::string str() const
-        {
-            return Foam::string(stream_.str());
-        }
-
-        //- Set the string
-        void str(const std::string& s)
-        {
-            stream_.str(s);
-        }
-};
-
-} // End namespace Detail
-
-
 /*---------------------------------------------------------------------------*\
                         Class IStringStream Declaration
 \*---------------------------------------------------------------------------*/
@@ -107,10 +53,12 @@ public:
 //- Input from string buffer, using a ISstream. Always UNCOMPRESSED.
 class IStringStream
 :
-    public Detail::StringStreamAllocator<std::istringstream>,
-    public ISstream
+    public Foam::Detail::StreamAllocator<std::istringstream>,
+    public Foam::ISstream
 {
-    typedef Detail::StringStreamAllocator<std::istringstream> allocator_type;
+    typedef
+        Foam::Detail::StreamAllocator<std::istringstream>
+        allocator_type;
 
 public:
 
@@ -133,9 +81,11 @@ public:
             IOstreamOption streamOpt = IOstreamOption()
         )
         :
-            allocator_type(s),
+            allocator_type(),
             ISstream(stream_, "input", streamOpt.format(), streamOpt.version())
-        {}
+        {
+            stream_.str(s);
+        }
 
         //- Construct from char*
         explicit IStringStream
@@ -144,19 +94,31 @@ public:
             IOstreamOption streamOpt = IOstreamOption()
         )
         :
-            allocator_type(s),
+            allocator_type(),
             ISstream(stream_, "input", streamOpt.format(), streamOpt.version())
-        {}
+        {
+            stream_.str(s);
+        }
 
         //- Copy construct, copies content and format
         IStringStream(const IStringStream& str)
         :
-            allocator_type(str.str()),
+            allocator_type(),
             ISstream(stream_, str.name(), static_cast<IOstreamOption>(str))
-        {}
+        {
+            stream_.str(str.str());
+        }
 
 
     // Member Functions
+
+        //- Get the string.
+        //- As Foam::string instead of std::string (may change in future)
+        Foam::string str() const { return Foam::string(stream_.str()); }
+
+        //- Set the string
+        void str(const std::string& s) { stream_.str(s); }
+
 
         //- Reset the input buffer and rewind the stream
         virtual void reset(const std::string& s)
@@ -220,10 +182,12 @@ public:
 //- Output to string buffer, using a OSstream. Always UNCOMPRESSED.
 class OStringStream
 :
-    public Detail::StringStreamAllocator<std::ostringstream>,
-    public OSstream
+    public Foam::Detail::StreamAllocator<std::ostringstream>,
+    public Foam::OSstream
 {
-    typedef Detail::StringStreamAllocator<std::ostringstream> allocator_type;
+    typedef
+        Foam::Detail::StreamAllocator<std::ostringstream>
+        allocator_type;
 
 public:
 
@@ -242,12 +206,25 @@ public:
         //- Copy construct, copies content and format
         OStringStream(const OStringStream& str)
         :
-            allocator_type(str.str()),
+            allocator_type(),
             OSstream(stream_, str.name(), static_cast<IOstreamOption>(str))
-        {}
+        {
+            stream_.str(str.str());
+        }
 
 
     // Member Functions
+
+        //- The number of bytes outputted
+        std::streamsize count() { return stream_.tellp(); }
+
+        //- Get the string.
+        //- As Foam::string instead of std::string (may change in future)
+        Foam::string str() const { return Foam::string(stream_.str()); }
+
+        //- Set the string
+        void str(const std::string& s) { stream_.str(s); }
+
 
         //- Reset the output buffer and rewind the stream
         void reset()

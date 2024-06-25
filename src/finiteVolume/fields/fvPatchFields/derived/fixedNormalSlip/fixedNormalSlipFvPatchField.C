@@ -39,7 +39,7 @@ Foam::fixedNormalSlipFvPatchField<Type>::fixedNormalSlipFvPatchField
 )
 :
     parent_bctype(p, iF),
-    fixedValue_(p.size(), Zero),
+    fixedValue_(p.size(), Foam::zero{}),
     writeValue_(false)
 {}
 
@@ -72,6 +72,7 @@ Foam::fixedNormalSlipFvPatchField<Type>::fixedNormalSlipFvPatchField
     writeValue_(dict.getOrDefault("writeValue", false))
 {
     fvPatchFieldBase::readDict(dict);
+
     evaluate();
 }
 
@@ -181,11 +182,13 @@ template<class Type>
 void Foam::fixedNormalSlipFvPatchField<Type>::write(Ostream& os) const
 {
     this->parent_bctype::write(os);
-    fixedValue_.writeEntry("fixedValue", os);
-
     if (writeValue_)
     {
         os.writeEntry("writeValue", "true");
+    }
+    fixedValue_.writeEntry("fixedValue", os);
+    if (writeValue_)
+    {
         fvPatchField<Type>::writeValueEntry(os);
     }
 }

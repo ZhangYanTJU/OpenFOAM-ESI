@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "lduAddressing.H"
-#include "demandDrivenData.H"
 #include "scalarField.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -44,7 +43,7 @@ void Foam::lduAddressing::calcLosort() const
     // Scan the neighbour list to find out how many times the cell
     // appears as a neighbour of the face. Done this way to avoid guessing
     // and resizing list
-    labelList nNbrOfFace(size(), Zero);
+    labelList nNbrOfFace(size(), Foam::zero{});
 
     const labelUList& nbr = upperAddr();
 
@@ -73,9 +72,8 @@ void Foam::lduAddressing::calcLosort() const
     }
 
     // Gather the neighbours into the losort array
-    losortPtr_ = new labelList(nbr.size(), -1);
-
-    labelList& lst = *losortPtr_;
+    losortPtr_ = std::make_unique<labelList>(nbr.size(), -1);
+    auto& lst = *losortPtr_;
 
     // Set counter for losort
     label lstI = 0;
@@ -104,9 +102,8 @@ void Foam::lduAddressing::calcOwnerStart() const
 
     const labelList& own = lowerAddr();
 
-    ownerStartPtr_ = new labelList(size() + 1, own.size());
-
-    labelList& ownStart = *ownerStartPtr_;
+    ownerStartPtr_ = std::make_unique<labelList>(size() + 1, own.size());
+    auto& ownStart = *ownerStartPtr_;
 
     // Set up first lookup by hand
     ownStart[0] = 0;
@@ -139,9 +136,8 @@ void Foam::lduAddressing::calcLosortStart() const
             << abort(FatalError);
     }
 
-    losortStartPtr_ = new labelList(size() + 1, Zero);
-
-    labelList& lsrtStart = *losortStartPtr_;
+    losortStartPtr_ = std::make_unique<labelList>(size() + 1, Foam::zero{});
+    auto& lsrtStart = *losortStartPtr_;
 
     const labelList& nbr = upperAddr();
 
@@ -170,16 +166,6 @@ void Foam::lduAddressing::calcLosortStart() const
 
     // Set up last lookup by hand
     lsrtStart[size()] = nbr.size();
-}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::lduAddressing::~lduAddressing()
-{
-    deleteDemandDrivenData(losortPtr_);
-    deleteDemandDrivenData(ownerStartPtr_);
-    deleteDemandDrivenData(losortStartPtr_);
 }
 
 
@@ -220,9 +206,9 @@ const Foam::labelUList& Foam::lduAddressing::losortStartAddr() const
 
 void Foam::lduAddressing::clearOut()
 {
-    deleteDemandDrivenData(losortPtr_);
-    deleteDemandDrivenData(ownerStartPtr_);
-    deleteDemandDrivenData(losortStartPtr_);
+    losortPtr_.reset(nullptr);
+    ownerStartPtr_.reset(nullptr);
+    losortStartPtr_.reset(nullptr);
 }
 
 
@@ -262,7 +248,7 @@ Foam::Tuple2<Foam::label, Foam::scalar> Foam::lduAddressing::band() const
     const labelUList& owner = lowerAddr();
     const labelUList& neighbour = upperAddr();
 
-    labelList cellBandwidth(size(), Zero);
+    labelList cellBandwidth(size(), Foam::zero{});
 
     forAll(neighbour, facei)
     {

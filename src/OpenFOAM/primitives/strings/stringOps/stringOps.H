@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,10 +70,10 @@ namespace stringOps
     //- Count the number of occurrences of the specified character
     std::string::size_type count(const std::string& s, const char c);
 
-    //- Return true if text matches one of the regular expressions.
-    inline bool match(const UList<wordRe>& patterns, const std::string& text)
+    //- True if text matches one of the selector expressions
+    inline bool match(const UList<wordRe>& selectors, const std::string& text)
     {
-        return wordRes::matcher(patterns)(text);
+        return wordRes::match(selectors, text);
     }
 
     //- Quote any meta-characters in given string
@@ -372,8 +372,13 @@ namespace stringOps
     template<class StringType>
     Foam::SubStrings<StringType> split
     (
+        //! The string to split
         const StringType& str,
+        //! The delimiter for splitting. Ill-defined if NUL character
         const char delim,
+        //! Offset within string to start splitting
+        std::string::size_type pos = 0,
+        //! Retain empty fields
         const bool keepEmpty = false
     );
 
@@ -382,8 +387,13 @@ namespace stringOps
     template<class StringType>
     Foam::SubStrings<StringType> split
     (
+        //! The string to split
         const StringType& str,
+        //! The delimiters for splitting. Ill-defined if empty
         const std::string& delim,
+        //! Offset within string to start splitting
+        std::string::size_type pos = 0,
+        //! Retain empty fields
         const bool keepEmpty = false
     );
 
@@ -393,22 +403,25 @@ namespace stringOps
     template<class StringType>
     Foam::SubStrings<StringType> splitAny
     (
+        //! The string to split
         const StringType& str,
-        const std::string& delim
+        //! The delimiters for splitting. Ill-defined if empty!
+        const std::string& delim,
+        //! Offset within string to start splitting
+        std::string::size_type pos = 0
     );
 
     //- Split string into sub-strings using a fixed field width.
     //  Behaviour is ill-defined if width is zero.
-    //  \param str the string to be split
-    //  \param width the fixed field width for each sub-string
-    //  \param start the optional offset of where to start the splitting.
-    //      Any text prior to start is ignored in the operation.
     template<class StringType>
     Foam::SubStrings<StringType> splitFixed
     (
+        //! The string to split
         const StringType& str,
+        //! Fixed field width for each sub-string
         const std::string::size_type width,
-        const std::string::size_type start = 0
+        //! Offset within string to start splitting
+        std::string::size_type pos = 0
     );
 
     //- Split string into sub-strings at whitespace (TAB, NL, VT, FF, CR, SPC)
@@ -416,23 +429,25 @@ namespace stringOps
     template<class StringType>
     Foam::SubStrings<StringType> splitSpace
     (
-        const StringType& str
+        //! The string to split
+        const StringType& str,
+        //! Offset within string to start splitting
+        std::string::size_type pos = 0
     );
 
     //- Output string with text wrapping.
     //  Always includes a trailing newline, unless the string itself is empty.
-    //
-    //  \param os the output stream
-    //  \param str the text to be output
-    //  \param width the max-width before wrapping
-    //  \param indent indentation for continued lines
-    //  \param escape escape any backslashes on output
     void writeWrapped
     (
+        //! The output stream
         OSstream& os,
+        //! The text to be output
         const std::string& str,
+        //! The max-width before wrapping
         const std::string::size_type width,
+        //! Indentation for continued lines
         const std::string::size_type indent = 0,
+        //! Escape any backslashes on output
         const bool escape = false
     );
 

@@ -91,15 +91,15 @@ void Foam::DSMCParcel<ParcelType>::readFields(Cloud<DSMCParcel<ParcelType>>& c)
 
     ParcelType::readFields(c);
 
-    IOField<vector> U(c.fieldIOobject("U", IOobject::MUST_READ), readOnProc);
+    IOField<vector> U(c.newIOobject("U", IOobject::MUST_READ), readOnProc);
     c.checkFieldIOobject(c, U);
 
-    IOField<scalar> Ei(c.fieldIOobject("Ei", IOobject::MUST_READ), readOnProc);
+    IOField<scalar> Ei(c.newIOobject("Ei", IOobject::MUST_READ), readOnProc);
     c.checkFieldIOobject(c, Ei);
 
     IOField<label> typeId
     (
-        c.fieldIOobject("typeId", IOobject::MUST_READ),
+        c.newIOobject("typeId", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, typeId);
@@ -126,9 +126,9 @@ void Foam::DSMCParcel<ParcelType>::writeFields
     const label np = c.size();
     const bool writeOnProc = c.size();
 
-    IOField<vector> U(c.fieldIOobject("U", IOobject::NO_READ), np);
-    IOField<scalar> Ei(c.fieldIOobject("Ei", IOobject::NO_READ), np);
-    IOField<label> typeId(c.fieldIOobject("typeId", IOobject::NO_READ), np);
+    IOField<vector> U(c.newIOobject("U", IOobject::NO_READ), np);
+    IOField<scalar> Ei(c.newIOobject("Ei", IOobject::NO_READ), np);
+    IOField<label> typeId(c.newIOobject("typeId", IOobject::NO_READ), np);
 
     label i = 0;
     for (const DSMCParcel<ParcelType>& p : c)

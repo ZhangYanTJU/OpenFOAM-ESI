@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2018 OpenCFD Ltd.
+    Copyright (C) 2015-2018, 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,8 +56,8 @@ Foam::radiation::constantAbsorption::constantAbsorption
 :
     wallAbsorptionEmissionModel(dict, pp),
     coeffsDict_(dict),
-    a_(coeffsDict_.get<scalar>("absorptivity")),
-    e_(coeffsDict_.get<scalar>("emissivity"))
+    a_(Function1<scalar>::New("absorptivity", coeffsDict_)),
+    e_(Function1<scalar>::New("emissivity", coeffsDict_))
 {}
 
 
@@ -66,11 +66,27 @@ Foam::radiation::constantAbsorption::constantAbsorption
 Foam::tmp<Foam::scalarField> Foam::radiation::constantAbsorption::a
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
-    return tmp<scalarField>(new scalarField(pp_.size(), a_));
+    if (a_->constant())
+    {
+        // Use arbitrary argument for a_
+        return tmp<scalarField>::New(pp_.size(), a_->value(0));
+    }
+
+    if (T)
+    {
+        return a_->value(*T);
+    }
+
+    FatalErrorInFunction
+        << "Attempted to set 'a' using a non-uniform function of Temperature, "
+        << "but temperature field is unavailable"
+        << abort(FatalError);
+
+    return nullptr;
 }
 
 
@@ -82,18 +98,34 @@ Foam::scalar Foam::radiation::constantAbsorption::a
     const scalar T
 ) const
 {
-    return a_;
+    return a_->value(T);
 }
 
 
 Foam::tmp<Foam::scalarField> Foam::radiation::constantAbsorption::e
 (
     const label bandI,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
-    return tmp<scalarField>(new scalarField(pp_.size(), e_));
+    if (e_->constant())
+    {
+        // Use arbitrary argument for e_
+        return tmp<scalarField>::New(pp_.size(), e_->value(0));
+    }
+
+    if (T)
+    {
+        return e_->value(*T);
+    }
+
+    FatalErrorInFunction
+        << "Attempted to set 'e' using a non-uniform function of Temperature, "
+        << "but temperature field is unavailable"
+        << abort(FatalError);
+
+    return nullptr;
 }
 
 
@@ -105,7 +137,7 @@ Foam::scalar Foam::radiation::constantAbsorption::e
     const scalar T
 ) const
 {
-    return e_;
+    return e_->value(T);
 }
 
 

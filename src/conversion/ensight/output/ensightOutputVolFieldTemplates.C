@@ -49,7 +49,7 @@ bool Foam::ensightOutput::writeVolField
     bool parallel = Pstream::parRun();
 
     const fvMesh& mesh = vf.mesh();
-    const polyBoundaryMesh& bmesh = mesh.boundaryMesh();
+    const polyBoundaryMesh& pbm = mesh.boundaryMesh();
 
     const Map<ensightCells>& cellZoneParts = ensMesh.cellZoneParts();
     const Map<ensightFaces>& faceZoneParts = ensMesh.faceZoneParts();
@@ -69,13 +69,13 @@ bool Foam::ensightOutput::writeVolField
     {
         const ensightFaces& part = boundaryParts[patchId];
 
-        if (patchId < 0 || patchId >= bmesh.size())
+        if (patchId < 0 || patchId >= pbm.size())
         {
             // Future handling of combined patches?
             continue;
         }
 
-        const label patchStart = bmesh[patchId].start();
+        const label patchStart = pbm[patchId].start();
 
         // Either use a flat boundary field for all patches,
         // or patch-local face ids
@@ -107,34 +107,28 @@ bool Foam::ensightOutput::writeVolField
     // Flat boundary field
     // similar to volPointInterpolation::flatBoundaryField()
 
-    Field<Type> flat(mesh.nBoundaryFaces(), Zero);
+    Field<Type> flat(pbm.nFaces(), Foam::zero{});
 
-    const fvBoundaryMesh& bm = mesh.boundary();
     forAll(vf.boundaryField(), patchi)
     {
-        const polyPatch& pp = bm[patchi].patch();
-        const auto& bf = vf.boundaryField()[patchi];
+        const polyPatch& pp = pbm[patchi];
+        const auto& pfld = vf.boundaryField()[patchi];
 
-        if (isA<processorFvPatch>(bm[patchi]))
+        // Note: restrict transcribing to actual size of the patch field
+        // - handles "empty" patch type etc.
+
+        SubList<Type> slice(flat, pfld.size(), pp.offset());
+
+        if (isA<processorPolyPatch>(pp))
         {
             // Use average value for processor faces
             // own cell value = patchInternalField
             // nei cell value = evaluated boundary values
-            SubList<Type>
-            (
-                flat,
-                bf.size(),
-                pp.offset()
-            ) = (0.5 * (bf.patchInternalField() + bf));
+            slice = (0.5 * (pfld.patchInternalField() + pfld));
         }
-        else if (!isA<emptyFvPatch>(bm[patchi]))
+        else if (!isA<emptyPolyPatch>(pp))
         {
-            SubList<Type>
-            (
-                flat,
-                bf.size(),
-                pp.offset()
-            ) = bf;
+            slice = pfld;
         }
     }
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -621,25 +621,14 @@ Foam::pyrolysisChemistryModel<CompType, SolidThermo, GasThermo>::gasHs
     const label index
 ) const
 {
-    tmp<volScalarField> tHs
+    auto tHs = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Hs_" + pyrolisisGases_[index],
-                this->mesh_.time().timeName(),
-                this->mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh_,
-            dimensionedScalar(dimEnergy/dimMass, Zero)
-        )
+        "Hs_" + pyrolisisGases_[index],
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimensionedScalar(dimEnergy/dimMass, Zero)
     );
-
-    volScalarField::Internal& gasHs = tHs.ref();
+    auto& gasHs = tHs.ref();
 
     const GasThermo& mixture = gasThermo_[index];
 

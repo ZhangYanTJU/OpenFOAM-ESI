@@ -440,32 +440,18 @@ void adjointSpalartAllmaras::updatePrimalRelatedFields()
 
 tmp<volScalarField> adjointSpalartAllmaras::allocateMask()
 {
-    tmp<volScalarField> mask;
     if (limitAdjointProduction_)
     {
-        mask = ATCModel::createLimiter(mesh_, coeffDict_);
-    }
-    else
-    {
-        mask = tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                   "unitMask",
-                   mesh_.time().timeName(),
-                   mesh_,
-                   IOobject::NO_READ,
-                   IOobject::NO_WRITE
-                ),
-                mesh_,
-                dimensionedScalar("unit", dimless, scalar(1))
-            )
-        );
+        return ATCModel::createLimiter(mesh_, coeffDict_);
     }
 
-    return mask;
+    return volScalarField::New
+    (
+        "unitMask",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar("unit", dimless, scalar(1))
+    );
 }
 
 
@@ -714,19 +700,12 @@ tmp<volSymmTensorField> adjointSpalartAllmaras::devReff
     const volVectorField& U
 ) const
 {
-    return
-        tmp<volSymmTensorField>::New
-        (
-            IOobject
-            (
-                "devRhoReff",
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-           -nuEff()*devTwoSymm(fvc::grad(U))
-        );
+    return volSymmTensorField::New
+    (
+        "devRhoReff",
+        IOobject::NO_REGISTER,
+        -nuEff()*devTwoSymm(fvc::grad(U))
+    );
 }
 
 
@@ -746,7 +725,10 @@ tmp<fvVectorMatrix> adjointSpalartAllmaras::divDevReff(volVectorField& Ua) const
 tmp<volVectorField> adjointSpalartAllmaras::adjointMeanFlowSource()
 {
     addProfiling
-        (adjointSpalartAllmaras, "adjointSpalartAllmaras::addMomentumSource");
+    (
+        adjointSpalartAllmaras,
+        "adjointSpalartAllmaras::addMomentumSource"
+    );
     // cm formulation
     //return (- nuTilda()*fvc::grad(nuaTilda() - conservativeMomentumSource());
 
@@ -767,10 +749,8 @@ tmp<volScalarField> adjointSpalartAllmaras::nutJacobianTMVar1() const
 
 tmp<scalarField> adjointSpalartAllmaras::diffusionCoeffVar1(label patchI) const
 {
-    tmp<scalarField> tdiffCoeff
-    (
-        new scalarField(mesh_.boundary()[patchI].size(), Zero)
-    );
+    auto tdiffCoeff =
+        tmp<scalarField>::New(mesh_.boundary()[patchI].size(), Zero);
 
     scalarField& diffCoeff = tdiffCoeff.ref();
 
@@ -1066,7 +1046,11 @@ void adjointSpalartAllmaras::nullify()
 void adjointSpalartAllmaras::correct()
 {
     addProfiling
-        (adjointSpalartAllmaras, "adjointSpalartAllmaras::correct");
+    (
+        adjointSpalartAllmaras,
+        "adjointSpalartAllmaras::correct"
+    );
+
     if (!adjointTurbulence_)
     {
         return;

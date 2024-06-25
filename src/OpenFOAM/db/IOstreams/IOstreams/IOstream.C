@@ -114,23 +114,19 @@ void Foam::IOstream::print(Ostream& os, const int streamState) const
 {
     if (streamState == std::ios_base::goodbit)
     {
-        os  << "ios_base::goodbit set : the last operation on stream succeeded"
-            << endl;
+        os  << "goodbit set : the last operation on stream succeeded" << endl;
     }
     else if (streamState & std::ios_base::badbit)
     {
-        os  << "ios_base::badbit set : characters possibly lost"
-            << endl;
+        os  << "badbit set : characters possibly lost" << endl;
     }
     else if (streamState & std::ios_base::failbit)
     {
-        os  << "ios_base::failbit set : some type of formatting error"
-            << endl;
+        os  << "failbit set : some type of formatting error" << endl;
     }
     else if (streamState & std::ios_base::eofbit)
     {
-        os  << "ios_base::eofbit set : at end of stream"
-            << endl;
+        os  << "eofbit set : at end of stream" << endl;
     }
 }
 

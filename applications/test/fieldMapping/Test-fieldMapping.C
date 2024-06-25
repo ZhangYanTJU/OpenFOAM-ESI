@@ -32,6 +32,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
+#include "timeSelector.H"
 #include "fvMesh.H"
 #include "volFields.H"
 #include "Time.H"
@@ -51,22 +52,33 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
-    #include "addTimeOptions.H"
-    argList::addArgument("inflate (true|false)");
+    timeSelector::addOptions_singleTime();  // Single-time options
+
+    argList::addBoolOption
+    (
+        "inflate",
+        "Use inflation/deflation for deleting cells"
+    );
+
     #include "setRootCase.H"
     #include "createTime.H"
+
+    // Allow override of time from specified time options, or no-op
+    timeSelector::setTimeIfPresent(runTime, args);
+
     #include "createMesh.H"
 
-    const Switch inflate(args[1]);
+    const bool inflate = args.found("inflate");
 
     if (inflate)
     {
-        Info<< "Deleting cells using inflation/deflation" << nl << endl;
+        Info<< "Deleting cells using inflation/deflation"
+            << nl << endl;
     }
     else
     {
-        Info<< "Deleting cells, introducing points at new position" << nl
-            << endl;
+        Info<< "Deleting cells, introducing points at new position"
+            << nl << endl;
     }
 
 

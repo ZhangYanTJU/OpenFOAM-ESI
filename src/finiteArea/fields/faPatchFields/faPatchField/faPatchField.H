@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -238,10 +238,30 @@ class faPatchField
     public faPatchFieldBase,
     public Field<Type>
 {
+public:
+
+    // Public Data Types
+
+        //- The patch type for the patch field
+        typedef faPatch Patch;
+
+        //- The value_type for the patch field
+        typedef Type value_type;
+
+        //- The internal field type associated with the patch field
+        typedef DimensionedField<Type, areaMesh> Internal;
+
+        //- Type for a \em calculated patch
+        typedef calculatedFaPatchField<Type> Calculated;
+
+
+private:
+
     // Private Data
 
         //- Reference to internal field
         const DimensionedField<Type, areaMesh>& internalField_;
+
 
 protected:
 
@@ -267,16 +287,6 @@ protected:
 
 
 public:
-
-    //- The internal field type associated with the patch field
-    typedef DimensionedField<Type, areaMesh> Internal;
-
-    //- The patch type for the patch field
-    typedef faPatch Patch;
-
-    //- Type for a \em calculated patch
-    typedef calculatedFaPatchField<Type> Calculated;
-
 
     // Declare run-time constructor selection tables
 
@@ -383,23 +393,56 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct and return a clone
+        //- Clone patch field with its own internal field reference
         virtual tmp<faPatchField<Type>> clone() const
         {
-            return tmp<faPatchField<Type>>(new faPatchField<Type>(*this));
+            return tmp<faPatchField<Type>>
+            (
+                new faPatchField<Type>(*this, this->internalField_)
+            );
         }
 
-        //- Construct and return a clone setting internal field reference
+        //- Clone with an internal field reference
         virtual tmp<faPatchField<Type>> clone
         (
             const DimensionedField<Type, areaMesh>& iF
         ) const
         {
-            return tmp<faPatchField<Type>>(new faPatchField<Type>(*this, iF));
+            return tmp<faPatchField<Type>>
+            (
+                new faPatchField<Type>(*this, iF)
+            );
         }
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a patch field with its own internal field reference
+        template<class DerivedPatchField>
+        static tmp<faPatchField<Type>> Clone
+        (
+            const DerivedPatchField& pf
+        )
+        {
+            return tmp<faPatchField<Type>>
+            (
+                new DerivedPatchField(pf)
+            );
+        }
+
+        //- Clone a patch field with an internal field reference
+        template<class DerivedPatchField>
+        static tmp<faPatchField<Type>> Clone
+        (
+            const DerivedPatchField& pf,
+            const DimensionedField<Type, areaMesh>& iF
+        )
+        {
+            return tmp<faPatchField<Type>>
+            (
+                new DerivedPatchField(pf, iF)
+            );
+        }
 
         //- Return a pointer to a new patchField created on freestore given
         //- patch and internal field
@@ -439,6 +482,13 @@ public:
             const faPatch&,
             const DimensionedField<Type, areaMesh>&,
             const dictionary&
+        );
+
+        //- Return a pointer to a new calculatedFaPatchField created on
+        //- freestore without setting patchField values
+        static tmp<faPatchField<Type>> NewCalculatedType
+        (
+            const faPatch& p
         );
 
         //- Return a pointer to a new calculatedFaPatchField created on
@@ -514,7 +564,7 @@ public:
             virtual void initEvaluate
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
@@ -522,7 +572,7 @@ public:
             virtual void evaluate
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             );
 
             //- Initialise the evaluation of the patch field after a local
@@ -530,7 +580,7 @@ public:
             virtual void initEvaluateLocal
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
@@ -538,7 +588,7 @@ public:
             virtual void evaluateLocal
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,7 +29,6 @@ License
 #include "faBoundaryMesh.H"
 #include "faMesh.H"
 #include "globalIndex.H"
-#include "primitiveMesh.H"
 #include "processorFaPatch.H"
 #include "wordRes.H"
 #include "PtrListOps.H"
@@ -130,14 +129,14 @@ void Foam::faBoundaryMesh::populate(PtrList<entry>&& entries)
 }
 
 
-bool Foam::faBoundaryMesh::readContents(const bool allowOptionalRead)
+bool Foam::faBoundaryMesh::readIOcontents(const bool allowOptionalRead)
 {
     bool updated = false;
     PtrList<entry> entries;
 
     if
     (
-        isReadRequired()
+        this->isReadRequired()
      || (allowOptionalRead && this->isReadOptional() && this->headerOk())
     )
     {
@@ -176,7 +175,7 @@ Foam::faBoundaryMesh::faBoundaryMesh
     regIOobject(io),
     mesh_(mesh)
 {
-    readContents(false);  // allowOptionalRead = false
+    readIOcontents(false);  // allowOptionalRead = false
 }
 
 
@@ -217,7 +216,7 @@ Foam::faBoundaryMesh::faBoundaryMesh
     regIOobject(io),
     mesh_(fam)
 {
-    if (!readContents(true))  // allowOptionalRead = true
+    if (!readIOcontents(true))  // allowOptionalRead = true
     {
         // Nothing read. Use supplied patches
         faPatchList& patches = *this;
@@ -242,7 +241,7 @@ Foam::faBoundaryMesh::faBoundaryMesh
     regIOobject(io),
     mesh_(fam)
 {
-    if (!readContents(true))  // allowOptionalRead = true
+    if (!readIOcontents(true))  // allowOptionalRead = true
     {
         populate(std::move(entries));
     }
@@ -293,7 +292,7 @@ void Foam::faBoundaryMesh::calcGeometry()
 
     if
     (
-        pBufs.commsType() == Pstream::commsTypes::blocking
+        pBufs.commsType() == Pstream::commsTypes::buffered
      || pBufs.commsType() == Pstream::commsTypes::nonBlocking
     )
     {
@@ -944,7 +943,7 @@ void Foam::faBoundaryMesh::movePoints(const pointField& p)
 
     if
     (
-        pBufs.commsType() == Pstream::commsTypes::blocking
+        pBufs.commsType() == Pstream::commsTypes::buffered
      || pBufs.commsType() == Pstream::commsTypes::nonBlocking
     )
     {
@@ -990,7 +989,7 @@ void Foam::faBoundaryMesh::updateMesh()
 
     if
     (
-        pBufs.commsType() == Pstream::commsTypes::blocking
+        pBufs.commsType() == Pstream::commsTypes::buffered
      || pBufs.commsType() == Pstream::commsTypes::nonBlocking
     )
     {
@@ -1059,7 +1058,7 @@ void Foam::faBoundaryMesh::writeEntry(Ostream& os) const
 
 void Foam::faBoundaryMesh::writeEntry
 (
-    const keyType& keyword,
+    const word& keyword,
     Ostream& os
 ) const
 {

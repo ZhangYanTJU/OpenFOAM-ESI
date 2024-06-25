@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -205,8 +205,8 @@ class sampledSurfaces
         //- Per-surface selection of store/write actions
         List<unsigned> actions_;
 
-        //- Cached values of the global number of faces per-surface
-        labelList nFaces_;
+        //- Per-surface status of the surfaces
+        List<bool> hasFaces_;
 
 
     // Private Member Functions
@@ -266,21 +266,12 @@ class sampledSurfaces
         );
 
 
-        //- Get surface from registry if available.
-        //  \return surface or nullptr
-        polySurface* getRegistrySurface(const sampledSurface& s) const;
+        //- Put surface onto registry
+        void storeRegistrySurface(const sampledSurface& s);
 
-        //- Put surface onto registry, when enabled.
-        //  \return surface or nullptr it surface should not be stored
-        polySurface* storeRegistrySurface(const sampledSurface& s);
-
-        //- Remove surface from registry.
-        //  \return True if surface existed and was removed
-        bool removeRegistrySurface(const sampledSurface& s);
-
-        //- Store sampled field onto surface registry if it exists
+        //- Store sampled field onto surface registry (if surface exists)
         template<class Type, class GeoMeshType>
-        bool storeRegistryField
+        void storeRegistryField
         (
             const sampledSurface& s,
             const word& fieldName,
@@ -288,7 +279,8 @@ class sampledSurfaces
             Field<Type>&& values
         );
 
-        //- Test surfaces for condition
+        //- Test surfaces for condition.
+        //- Like std::any_of() but without any iterator requirements
         template<class Container, class Predicate>
         static bool testAny(const Container& items, const Predicate& pred);
 
@@ -347,7 +339,7 @@ public:
 
         //- Enable/disable verbose output
         //  \return old value
-        bool verbose(const bool on) noexcept;
+        bool verbose(bool on) noexcept;
 
         //- Return names of fields to sample
         const wordRes& fieldNames() const noexcept { return fieldSelection_; }
@@ -374,7 +366,7 @@ public:
         static scalar mergeTol() noexcept;
 
         //- Set merge tolerance and return old value
-        static scalar mergeTol(const scalar tol) noexcept;
+        static scalar mergeTol(scalar tol) noexcept;
 };
 
 

@@ -74,17 +74,10 @@ Foam::scalar noFilm::CourantNumber() const
 
 tmp<volScalarField::Internal> noFilm::Srho() const
 {
-    return tmp<volScalarField::Internal>::New
+    return volScalarField::Internal::New
     (
-        IOobject
-        (
-            "noFilm::Srho",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName("noFilm", "Srho"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
@@ -93,17 +86,10 @@ tmp<volScalarField::Internal> noFilm::Srho() const
 
 tmp<volScalarField::Internal> noFilm::Srho(const label i) const
 {
-    return tmp<volScalarField::Internal>::New
+    return volScalarField::Internal::New
     (
-        IOobject
-        (
-            "noFilm::Srho(" + Foam::name(i) + ")",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName("noFilm", "Srho(" + Foam::name(i) + ")"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
@@ -112,17 +98,10 @@ tmp<volScalarField::Internal> noFilm::Srho(const label i) const
 
 tmp<volScalarField::Internal> noFilm::Sh() const
 {
-    return tmp<volScalarField::Internal>::New
+    return volScalarField::Internal::New
     (
-        IOobject
-        (
-            "noFilm::Sh",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName("noFilm", "Sh"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
     );
 
     #include "addRegionOption.H"
+    #include "addFaRegionOption.H"
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createNamedPolyMesh.H"
@@ -90,8 +91,7 @@ int main(int argc, char *argv[])
         faMesh::geometryOrder(geometryOrder);
     }
 
-    // Create
-    faMesh aMesh(mesh);
+    #include "createNamedFaMesh.H"
 
     Info<< "Time = " << runTime.timeName() << nl << endl;
 

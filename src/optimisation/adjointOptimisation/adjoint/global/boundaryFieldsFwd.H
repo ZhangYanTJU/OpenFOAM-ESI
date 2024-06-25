@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef boundaryFieldsFwd_H
-#define boundaryFieldsFwd_H
+#ifndef Foam_boundaryFieldsFwd_H
+#define Foam_boundaryFieldsFwd_H
 
 #include "fieldTypes.H"
 #include "volFields.H"
@@ -50,13 +50,13 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//volFields
+//- volFields
 typedef typename volScalarField::Boundary boundaryScalarField;
 typedef typename volVectorField::Boundary boundaryVectorField;
 typedef typename volTensorField::Boundary boundaryTensorField;
 
-//pointFields - actually a plain list of fields with dimension equal to the
-// number of points per patch
+//- pointFields - actually a plain list of fields with dimension equal to the
+//- number of points per patch
 typedef List<Field<scalar>> pointBoundaryScalarField;
 typedef List<Field<vector>> pointBoundaryVectorField;
 typedef List<Field<tensor>> pointBoundaryTensorField;

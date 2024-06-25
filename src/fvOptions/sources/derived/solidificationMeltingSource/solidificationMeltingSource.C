@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -78,16 +78,9 @@ Foam::fv::solidificationMeltingSource::Cp() const
             {
                 const scalar CpRef = coeffs_.get<scalar>("CpRef");
 
-                return tmp<volScalarField>::New
+                return volScalarField::New
                 (
-                    IOobject
-                    (
-                        name_ + ":Cp",
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::NO_READ,
-                        IOobject::NO_WRITE
-                    ),
+                    IOobject::scopedName(name_, "Cp"),
                     mesh_,
                     dimensionedScalar
                     (
@@ -184,11 +177,12 @@ Foam::fv::solidificationMeltingSource::solidificationMeltingSource
     (
         IOobject
         (
-            name_ + ":alpha1",
+            IOobject::scopedName(name_, "alpha1"),
             mesh.time().timeName(),
             mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionedScalar(dimless, Zero),

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1364,11 +1364,7 @@ Foam::label Foam::meshRefinement::splitFacesUndo
         }
 
         {
-            Map<label> splitFaceToIndex(2*splitFaces.size());
-            forAll(splitFaces, i)
-            {
-                splitFaceToIndex.insert(splitFaces[i], i);
-            }
+            Map<label> splitFaceToIndex(invertToMap(splitFaces));
 
             forAll(map.faceMap(), facei)
             {
@@ -1714,7 +1710,7 @@ Foam::meshRefinement::meshRefinement
         (
             "surfaceIndex",
             mesh_.facesInstance(),
-            fvMesh::meshSubDir,
+            polyMesh::meshSubDir,
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -3437,11 +3433,12 @@ Foam::bitSet Foam::meshRefinement::getMasterPoints
     const labelList& meshPoints
 )
 {
+    const label myProci = UPstream::myProcNo();
     const globalIndex globalPoints(meshPoints.size());
 
     labelList myPoints
     (
-        identity(globalPoints.localSize(), globalPoints.localStart())
+        Foam::identity(globalPoints.range(myProci))
     );
 
     syncTools::syncPointList
@@ -3457,7 +3454,7 @@ Foam::bitSet Foam::meshRefinement::getMasterPoints
     bitSet isPatchMasterPoint(meshPoints.size());
     forAll(meshPoints, pointi)
     {
-        if (myPoints[pointi] == globalPoints.toGlobal(pointi))
+        if (myPoints[pointi] == globalPoints.toGlobal(myProci, pointi))
         {
             isPatchMasterPoint.set(pointi);
         }
@@ -3473,11 +3470,12 @@ Foam::bitSet Foam::meshRefinement::getMasterEdges
     const labelList& meshEdges
 )
 {
+    const label myProci = UPstream::myProcNo();
     const globalIndex globalEdges(meshEdges.size());
 
     labelList myEdges
     (
-        identity(globalEdges.localSize(), globalEdges.localStart())
+        Foam::identity(globalEdges.range(myProci))
     );
 
     syncTools::syncEdgeList
@@ -3493,7 +3491,7 @@ Foam::bitSet Foam::meshRefinement::getMasterEdges
     bitSet isMasterEdge(meshEdges.size());
     forAll(meshEdges, edgei)
     {
-        if (myEdges[edgei] == globalEdges.toGlobal(edgei))
+        if (myEdges[edgei] == globalEdges.toGlobal(myProci, edgei))
         {
             isMasterEdge.set(edgei);
         }
@@ -3805,26 +3803,27 @@ const Foam::dictionary& Foam::meshRefinement::subDict
     enum keyType::option matchOpt
 )
 {
-    const auto finder(dict.csearch(keyword, matchOpt));
+    const dictionary* dictptr = dict.findDict(keyword, matchOpt);
 
-    if (!finder.good())
+    if (!dictptr)
     {
-        auto& err = FatalIOErrorInFunction(dict);
-
-        err << "Entry '" << keyword << "' not found in dictionary "
+        FatalIOErrorInFunction(dict)
+            << "Entry '" << keyword
+            << "' not found (or not a dictionary) in dictionary "
             << dict.relativeName() << nl;
 
         if (noExit)
         {
+            // Dummy return
             return dictionary::null;
         }
         else
         {
-            err << exit(FatalIOError);
+            FatalIOError << exit(FatalIOError);
         }
     }
 
-    return finder.dict();
+    return *dictptr;
 }
 
 
@@ -3840,19 +3839,18 @@ Foam::ITstream& Foam::meshRefinement::lookup
 
     if (!eptr)
     {
-        auto& err = FatalIOErrorInFunction(dict);
-
-        err << "Entry '" << keyword << "' not found in dictionary "
+        FatalIOErrorInFunction(dict)
+            << "Entry '" << keyword << "' not found in dictionary "
             << dict.relativeName() << nl;
 
         if (noExit)
         {
-            // Fake entry
-            return dict.first()->stream();
+            // Dummy return
+            return ITstream::empty_stream();
         }
         else
         {
-            err << exit(FatalIOError);
+            FatalIOError << exit(FatalIOError);
         }
     }
 

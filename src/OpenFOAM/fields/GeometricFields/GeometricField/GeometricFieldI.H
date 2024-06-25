@@ -29,14 +29,6 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, template<class> class PatchField, class GeoMesh>
-inline const Foam::GeometricField<Type, PatchField, GeoMesh>&
-Foam::GeometricField<Type, PatchField, GeoMesh>::null()
-{
-    return NullObjectRef<GeometricField<Type, PatchField, GeoMesh>>();
-}
-
-
-template<class Type, template<class> class PatchField, class GeoMesh>
 inline const typename
 Foam::GeometricField<Type, PatchField, GeoMesh>::Internal&
 Foam::GeometricField<Type, PatchField, GeoMesh>::internalField() const noexcept

@@ -56,22 +56,12 @@ Foam::radiation::noScatter::noScatter
 
 Foam::tmp<Foam::volScalarField> Foam::radiation::noScatter::sigmaEff() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "sigma",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+        "sigma",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 }
 

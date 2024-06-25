@@ -149,12 +149,12 @@ Foam::label Foam::processorColour::colour
     //            mesh.time().timeName(),
     //            mesh,
     //            IOobject::NO_READ,
-    //            IOobject::AUTO_WRITE,
-    //            false
+    //            IOobject::NO_WRITE,
+    //            IOobject::NO_REGISTER
     //        ),
     //        mesh,
     //        dimensionedScalar(dimless, procColour[Pstream::myProcNo()]),
-    //        zeroGradientFvPatchScalarField::typeName
+    //        fvPatchFieldBase::zeroGradientType()
     //    );
     //    volColour.write();
     //}
@@ -279,7 +279,7 @@ Foam::label Foam::processorColour::cellColour
         if
         (
             patches.set(inti)
-        && !isA<const processorLduInterface>(patches[inti])
+        && !isA<processorLduInterface>(patches[inti])
         )
         {
             // 'global' interface. Seed faceCells with patch index
@@ -330,7 +330,7 @@ Foam::label Foam::processorColour::cellColour
 
 Foam::processorColour::processorColour(const lduMesh& mesh)
 :
-    MeshObject<lduMesh, Foam::MoveableMeshObject, processorColour>(mesh)
+    MeshObject_type(mesh)
 {
     nColours_ = colour(mesh, *this);
 }
@@ -340,23 +340,21 @@ Foam::processorColour::processorColour(const lduMesh& mesh)
 
 const Foam::processorColour& Foam::processorColour::New(const lduMesh& mesh)
 {
-    const processorColour* ptr =
-        mesh.thisDb().objectRegistry::template cfindObject<processorColour>
+    auto* ptr =
+        mesh.thisDb().objectRegistry::template getObjectPtr<processorColour>
         (
             processorColour::typeName
         );
 
-    if (ptr)
+    if (!ptr)
     {
-        return *ptr;
+        ptr = new processorColour(mesh);
+
+        //regIOobject::store(static_cast<MoveableMeshObject<lduMesh>*>(ptr));
+        regIOobject::store(ptr);
     }
 
-    processorColour* objectPtr = new processorColour(mesh);
-
-    //regIOobject::store(static_cast<MoveableMeshObject<lduMesh>*>(objectPtr));
-    regIOobject::store(objectPtr);
-
-    return *objectPtr;
+    return *ptr;
 }
 
 

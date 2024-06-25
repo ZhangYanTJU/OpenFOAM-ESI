@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -155,9 +155,9 @@ void Foam::layerAdditionRemoval::removeCellLayer
     }
 
     // Remove all points that will be collapsed
-    forAll(ptc, pointi)
+    for (const label pointi : ptc)
     {
-        ref.setAction(polyRemovePoint(ptc[pointi]));
+        ref.setAction(polyRemovePoint(pointi));
     }
 
     // Grab all faces coming off points to be deleted.  If the face
@@ -167,15 +167,10 @@ void Foam::layerAdditionRemoval::removeCellLayer
     // Make a map of all point to be removed, giving the master point label
     // for each of them
 
-    Map<label> removedPointMap(2*ptc.size());
-
     const labelList& meshPoints =
-        mesh.faceZones()[faceZoneID_.index()]().meshPoints();
+        mesh.faceZones()[faceZoneID_.index()].patch().meshPoints();
 
-    forAll(ptc, pointi)
-    {
-        removedPointMap.insert(ptc[pointi], meshPoints[pointi]);
-    }
+    Map<label> removedPointMap(ptc, meshPoints);
 
     const labelListList& pf = mesh.pointFaces();
 

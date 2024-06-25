@@ -111,13 +111,13 @@ public:
             const fvPatch& p,
             const DimensionedField<Type, volMesh>& iF,
             const dictionary& dict,
-            const bool valueReqd
+            const bool needValue
         )
         :
             fixedValueFvPatchField
             (
                 p, iF, dict,
-                (valueReqd? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
+                (needValue? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
             )
         {}
 
@@ -137,15 +137,6 @@ public:
             const fixedValueFvPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new fixedValueFvPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         fixedValueFvPatchField
         (
@@ -153,16 +144,19 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return fvPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>
-            (
-                new fixedValueFvPatchField<Type>(*this, iF)
-            );
+            return fvPatchField<Type>::Clone(*this, iF);
         }
 
 
@@ -173,6 +167,9 @@ public:
 
         //- False: this patch field is not altered by assignment.
         virtual bool assignable() const { return false; }
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 
 
         // Evaluation functions
@@ -200,11 +197,7 @@ public:
             virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
 
 
-        //- Write
-        virtual void write(Ostream&) const;
-
-
-    // Member operators
+    // Member Operators
 
         virtual void operator=(const UList<Type>&) {}
 

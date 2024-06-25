@@ -184,7 +184,7 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
     labelListList sendMap;
 
     // Transfer buffers
-    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     {
         // List of lists of particles to be transferred for all of the

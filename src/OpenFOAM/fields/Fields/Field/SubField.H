@@ -69,8 +69,12 @@ public:
 
     // Static Member Functions
 
-        //- Return nullObject reference SubField
-        inline static const SubField<Type>& null();
+        //- Return a null SubField (reference to a nullObject).
+        //- Behaves like an empty SubField.
+        static const SubField<Type>& null() noexcept
+        {
+            return NullObjectRef<SubField<Type>>();
+        }
 
 
     // Constructors

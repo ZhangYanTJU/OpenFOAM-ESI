@@ -41,8 +41,8 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::source
 {
     checkApplied();
 
-    tmp<faMatrix<Type>> tmtx(new faMatrix<Type>(field, ds));
-    faMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<faMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fa::option& source : *this)
     {
@@ -50,7 +50,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::source
 
         if (fieldi != -1)
         {
-            addProfiling(faopt, "faOption()." + source.name());
+            addProfiling(faopt, "faOption().", source.name());
 
             source.setApplied(fieldi);
 
@@ -132,8 +132,8 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
         rho.dimensions()*field.dimensions()/dimTime*dimArea
     );
 
-    tmp<faMatrix<Type>> tmtx(new faMatrix<Type>(field, ds));
-    faMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<faMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fa::option& source : *this)
     {
@@ -141,7 +141,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
 
         if (fieldi != -1)
         {
-            addProfiling(faopt, "faOption()." + source.name());
+            addProfiling(faopt, "faOption().", source.name());
 
             source.setApplied(fieldi);
 
@@ -184,8 +184,8 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
 
     const dimensionSet dsMat(ds*dimArea);
 
-    tmp<faMatrix<Type>> tmtx(new faMatrix<Type>(field, dsMat));
-    faMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<faMatrix<Type>>::New(field, dsMat);
+    auto& mtx = tmtx.ref();
 
     for (fa::option& source : *this)
     {
@@ -193,7 +193,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
 
         if (fieldi != -1)
         {
-            addProfiling(faopt, "faOption()." + source.name());
+            addProfiling(faopt, "faOption().", source.name());
 
             source.setApplied(fieldi);
 
@@ -256,7 +256,7 @@ void Foam::fa::optionList::constrain(faMatrix<Type>& eqn)
 
         if (fieldi != -1)
         {
-            addProfiling(faopt, "faOption::constrain." + eqn.psi().name());
+            addProfiling(faopt, "faOption::constrain.", eqn.psi().name());
 
             source.setApplied(fieldi);
 
@@ -299,7 +299,7 @@ void Foam::fa::optionList::correct
 
         if (fieldi != -1)
         {
-            addProfiling(faopt, "faOption::correct." + source.name());
+            addProfiling(faopt, "faOption::correct.", source.name());
 
             source.setApplied(fieldi);
 

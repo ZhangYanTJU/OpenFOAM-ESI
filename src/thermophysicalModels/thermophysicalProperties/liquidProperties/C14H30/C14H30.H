@@ -114,10 +114,10 @@ public:
         //- Construct from dictionary
         C14H30(const dictionary& dict);
 
-        //- Construct and return clone
+        //- Return a clone
         virtual autoPtr<liquidProperties> clone() const
         {
-            return autoPtr<liquidProperties>::NewFrom<C14H30>(*this);
+            return liquidProperties::Clone(*this);
         }
 
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -149,7 +149,7 @@ public:
         //- Return clone
         virtual autoPtr<coordinateSystem> clone() const
         {
-            return autoPtr<coordinateSystem>::NewFrom<indirect>(*this);
+            return coordinateSystem::Clone(*this);
         }
 
 

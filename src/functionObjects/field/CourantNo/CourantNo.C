@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,7 +88,7 @@ bool Foam::functionObjects::CourantNo::calc()
                 (
                     resultName_,
                     mesh_.time().timeName(),
-                    mesh_,
+                    mesh_.thisDb(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE,
                     IOobject::REGISTER
@@ -97,7 +97,7 @@ bool Foam::functionObjects::CourantNo::calc()
                 dimensionedScalar(dimless, Zero),
                 fvPatchFieldBase::zeroGradientType()
             );
-            mesh_.objectRegistry::store(resultPtr);
+            regIOobject::store(resultPtr);
         }
         auto& Co = *resultPtr;
 

@@ -139,7 +139,7 @@ void Foam::radiation::MarshakRadiationFvPatchScalarField::updateCoeffs()
 
     const tmp<scalarField> temissivity
     (
-        boundaryRadiation.emissivity(patch().index())
+        boundaryRadiation.emissivity(patch().index(), 0, nullptr, &Tp)
     );
 
     const scalarField& emissivity = temissivity();

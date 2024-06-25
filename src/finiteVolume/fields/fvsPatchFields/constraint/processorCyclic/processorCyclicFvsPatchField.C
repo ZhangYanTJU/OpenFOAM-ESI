@@ -122,11 +122,4 @@ Foam::processorCyclicFvsPatchField<Type>::processorCyclicFvsPatchField
 {}
 
 
-// * * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * //
-
-template<class Type>
-Foam::processorCyclicFvsPatchField<Type>::~processorCyclicFvsPatchField()
-{}
-
-
 // ************************************************************************* //

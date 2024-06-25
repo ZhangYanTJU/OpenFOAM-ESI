@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,8 @@ Class
     Foam::IFstream
 
 Description
-    Input from file stream, using an ISstream
+    Input from file stream as an ISstream, normally using \c std::ifstream
+    for the actual input.
 
 SourceFiles
     IFstream.C
@@ -41,6 +42,7 @@ SourceFiles
 #include "ISstream.H"
 #include "className.H"
 #include "fstreamPointer.H"
+#include "DynamicList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,7 +56,7 @@ namespace Foam
 class IFstream
 :
     private Foam::ifstreamPointer,
-    public ISstream
+    public Foam::ISstream
 {
 public:
 
@@ -84,6 +86,16 @@ public:
 
     //- Destructor
     ~IFstream() = default;
+
+
+    // Static Functions
+
+        //- Get file contents from specified file (compressed/uncompressed).
+        //- Returns an empty list if the file cannot be opened.
+        static DynamicList<char> readContents(const fileName& pathname);
+
+        //- Get file contents from IFstream (assumed to be rewound)
+        static DynamicList<char> readContents(IFstream& ifs);
 
 
     // Member Functions

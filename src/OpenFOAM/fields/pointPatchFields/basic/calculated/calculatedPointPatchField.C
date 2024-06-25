@@ -78,14 +78,13 @@ Foam::calculatedPointPatchField<Type>::calculatedPointPatchField
 
 
 template<class Type>
-template<class Type2>
 Foam::autoPtr<Foam::pointPatchField<Type>>
 Foam::pointPatchField<Type>::NewCalculatedType
 (
-    const pointPatchField<Type2>& pf
+    const pointPatch& p
 )
 {
-    auto* patchTypeCtor = patchConstructorTable(pf.patch().type());
+    auto* patchTypeCtor = patchConstructorTable(p.type());
 
     if (patchTypeCtor)
     {
@@ -93,8 +92,8 @@ Foam::pointPatchField<Type>::NewCalculatedType
         (
             patchTypeCtor
             (
-                pf.patch(),
-                Field<Type>::null()
+                p,
+                DimensionedField<Type, pointMesh>::null()
             )
         );
     }
@@ -104,11 +103,23 @@ Foam::pointPatchField<Type>::NewCalculatedType
         (
             new calculatedPointPatchField<Type>
             (
-                pf.patch(),
-                Field<Type>::null()
+                p,
+                DimensionedField<Type, pointMesh>::null()
             )
         );
     }
+}
+
+
+template<class Type>
+template<class AnyType>
+Foam::autoPtr<Foam::pointPatchField<Type>>
+Foam::pointPatchField<Type>::NewCalculatedType
+(
+    const pointPatchField<AnyType>& pf
+)
+{
+    return NewCalculatedType(pf.patch());
 }
 
 

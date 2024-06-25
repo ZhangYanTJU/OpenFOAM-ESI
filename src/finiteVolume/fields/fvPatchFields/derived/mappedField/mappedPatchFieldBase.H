@@ -233,7 +233,7 @@ public:
 
 
     //- Destructor
-    virtual ~mappedPatchFieldBase<Type>() = default;
+    virtual ~mappedPatchFieldBase() = default;
 
 
     // Member Functions

@@ -126,77 +126,77 @@ void Foam::KinematicParcel<ParcelType>::readFields(CloudType& c)
 
     IOField<label> active
     (
-        c.fieldIOobject("active", IOobject::MUST_READ),
+        c.newIOobject("active", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, active);
 
     IOField<label> typeId
     (
-        c.fieldIOobject("typeId", IOobject::MUST_READ),
+        c.newIOobject("typeId", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, typeId);
 
     IOField<scalar> nParticle
     (
-        c.fieldIOobject("nParticle", IOobject::MUST_READ),
+        c.newIOobject("nParticle", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, nParticle);
 
     IOField<scalar> d
     (
-        c.fieldIOobject("d", IOobject::MUST_READ),
+        c.newIOobject("d", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, d);
 
     IOField<scalar> dTarget
     (
-        c.fieldIOobject("dTarget", IOobject::MUST_READ),
+        c.newIOobject("dTarget", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, dTarget);
 
     IOField<vector> U
     (
-        c.fieldIOobject("U", IOobject::MUST_READ),
+        c.newIOobject("U", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, U);
 
     IOField<scalar> rho
     (
-        c.fieldIOobject("rho", IOobject::MUST_READ),
+        c.newIOobject("rho", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, rho);
 
     IOField<scalar> age
     (
-        c.fieldIOobject("age", IOobject::MUST_READ),
+        c.newIOobject("age", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, age);
 
     IOField<scalar> tTurb
     (
-        c.fieldIOobject("tTurb", IOobject::MUST_READ),
+        c.newIOobject("tTurb", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, tTurb);
 
     IOField<vector> UTurb
     (
-        c.fieldIOobject("UTurb", IOobject::MUST_READ),
+        c.newIOobject("UTurb", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, UTurb);
 
     IOField<vector> UCorrect
     (
-        c.fieldIOobject("UCorrect", IOobject::MUST_READ),
+        c.newIOobject("UCorrect", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, UCorrect);
@@ -231,21 +231,21 @@ void Foam::KinematicParcel<ParcelType>::writeFields(const CloudType& c)
     const label np = c.size();
     const bool writeOnProc = c.size();
 
-    IOField<label> active(c.fieldIOobject("active", IOobject::NO_READ), np);
-    IOField<label> typeId(c.fieldIOobject("typeId", IOobject::NO_READ), np);
+    IOField<label> active(c.newIOobject("active", IOobject::NO_READ), np);
+    IOField<label> typeId(c.newIOobject("typeId", IOobject::NO_READ), np);
     IOField<scalar> nParticle
     (
-        c.fieldIOobject("nParticle", IOobject::NO_READ),
+        c.newIOobject("nParticle", IOobject::NO_READ),
         np
     );
-    IOField<scalar> d(c.fieldIOobject("d", IOobject::NO_READ), np);
-    IOField<scalar> dTarget(c.fieldIOobject("dTarget", IOobject::NO_READ), np);
-    IOField<vector> U(c.fieldIOobject("U", IOobject::NO_READ), np);
-    IOField<scalar> rho(c.fieldIOobject("rho", IOobject::NO_READ), np);
-    IOField<scalar> age(c.fieldIOobject("age", IOobject::NO_READ), np);
-    IOField<scalar> tTurb(c.fieldIOobject("tTurb", IOobject::NO_READ), np);
-    IOField<vector> UTurb(c.fieldIOobject("UTurb", IOobject::NO_READ), np);
-    IOField<vector> UCorrect(c.fieldIOobject("UCorrect", IOobject::NO_READ), np);
+    IOField<scalar> d(c.newIOobject("d", IOobject::NO_READ), np);
+    IOField<scalar> dTarget(c.newIOobject("dTarget", IOobject::NO_READ), np);
+    IOField<vector> U(c.newIOobject("U", IOobject::NO_READ), np);
+    IOField<scalar> rho(c.newIOobject("rho", IOobject::NO_READ), np);
+    IOField<scalar> age(c.newIOobject("age", IOobject::NO_READ), np);
+    IOField<scalar> tTurb(c.newIOobject("tTurb", IOobject::NO_READ), np);
+    IOField<vector> UTurb(c.newIOobject("UTurb", IOobject::NO_READ), np);
+    IOField<vector> UCorrect(c.newIOobject("UCorrect", IOobject::NO_READ), np);
 
     label i = 0;
 

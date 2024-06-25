@@ -65,23 +65,28 @@ SlicedGeometricField<Type, fvPatchField, slicedFvPatchField, volMesh>;
 // Typedefs
 
 typedef
-SlicedGeometricField<scalar, fvPatchField, slicedFvPatchField, volMesh>
+    SlicedGeometricField
+    <scalar, fvPatchField, slicedFvPatchField, volMesh>
     slicedVolScalarField;
 
 typedef
-SlicedGeometricField<vector, fvPatchField, slicedFvPatchField, volMesh>
+    SlicedGeometricField
+    <vector, fvPatchField, slicedFvPatchField, volMesh>
     slicedVolVectorField;
 
 typedef
-SlicedGeometricField<sphericalTensor, fvPatchField, slicedFvPatchField, volMesh>
+    SlicedGeometricField
+    <sphericalTensor, fvPatchField, slicedFvPatchField, volMesh>
     slicedVolSphericalTensorField;
 
 typedef
-SlicedGeometricField<symmTensor, fvPatchField, slicedFvPatchField, volMesh>
+    SlicedGeometricField
+    <symmTensor, fvPatchField, slicedFvPatchField, volMesh>
     slicedVolSymmTensorField;
 
 typedef
-SlicedGeometricField<tensor, fvPatchField, slicedFvPatchField, volMesh>
+    SlicedGeometricField
+    <tensor, fvPatchField, slicedFvPatchField, volMesh>
     slicedVolTensorField;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -27,15 +27,27 @@ Class
     Foam::symmetryPlaneFvsPatchField
 
 Description
-    Foam::symmetryPlaneFvsPatchField
+    This boundary condition enforces a symmetryPlane constraint
+
+    The "value" entry is MUST_READ.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type    symmetryPlane;
+        value   ...;
+    }
+    \endverbatim
 
 SourceFiles
     symmetryPlaneFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef symmetryPlaneFvsPatchField_H
-#define symmetryPlaneFvsPatchField_H
+#ifndef Foam_symmetryPlaneFvsPatchField_H
+#define Foam_symmetryPlaneFvsPatchField_H
 
 #include "fvsPatchField.H"
 #include "symmetryPlaneFvPatch.H"
@@ -54,7 +66,6 @@ class symmetryPlaneFvsPatchField
 :
     public fvsPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -70,7 +81,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is MUST_READ.
         symmetryPlaneFvsPatchField
         (
             const fvPatch&,
@@ -78,8 +90,7 @@ public:
             const dictionary&
         );
 
-        //- Construct by mapping given symmetryPlaneFvsPatchField
-        //  onto a new patch
+        //- Construct by mapping given patch field onto a new patch
         symmetryPlaneFvsPatchField
         (
             const symmetryPlaneFvsPatchField<Type>&,
@@ -94,15 +105,6 @@ public:
             const symmetryPlaneFvsPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const
-        {
-            return tmp<fvsPatchField<Type>>
-            (
-                new symmetryPlaneFvsPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         symmetryPlaneFvsPatchField
         (
@@ -110,17 +112,26 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const
+        {
+            return fvsPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
         ) const
         {
-            return tmp<fvsPatchField<Type>>
-            (
-                new symmetryPlaneFvsPatchField<Type>(*this, iF)
-            );
+            return fvsPatchField<Type>::Clone(*this, iF);
         }
+
+
+    // Member Functions
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 };
 
 

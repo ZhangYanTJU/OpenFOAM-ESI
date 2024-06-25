@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,16 +56,14 @@ class pointBitSet
 public:
 
     //- Runtime type information
-    TypeName("pointBitSet");
+    TypeNameNoDebug("pointBitSet");
 
 
     // Constructors
 
-        //- Construct with nPoints elements, all elements unset
-        explicit pointBitSet(const polyMesh& mesh);
-
-        //- Construct with nPoints elements, using initial val
-        pointBitSet(const polyMesh& mesh, const bool val);
+        //- Construct with nPoints elements,
+        //- all elements unset or initial value
+        explicit pointBitSet(const polyMesh& mesh, const bool val);
 
         //- Copy construct from bitset, resizing to nPoints elements as required
         pointBitSet(const polyMesh& mesh, const bitSet& bits);

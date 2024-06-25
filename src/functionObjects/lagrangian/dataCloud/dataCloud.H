@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,10 +48,10 @@ Description
     \heading Basic Usage
     \table
         Property     | Description                      | Required | Default
-        type         | Type name: dataCloud             | yes   |
+        type         | Type name: dataCloud             | yes |
         clouds       | List of clouds (name or regex)   | no  |
-        cloud        | Cloud name                       | no  | defaultCloud
-        field        | Name of the field                | yes   |
+        cloud        | Cloud name                       | no  |
+        field        | Name of the field                | yes |
         selection    | Parcel selection control         | no  | empty-dict
     \endtable
 
@@ -103,7 +103,7 @@ class dataCloud
     public fvMeshFunctionObject,
     public Foam::Detail::parcelSelection
 {
-    // Private data
+    // Private Data
 
         //- The printf format for zero-padding names
         string printf_;
@@ -177,7 +177,7 @@ class dataCloud
         bool writeField
         (
             const fileName& outputName,
-            const objectRegistry& obrTmp
+            const objectRegistry& obr
         ) const;
 
 

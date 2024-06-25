@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -814,8 +814,8 @@ void Foam::PDRblock::writeBlockMeshDict(const IOobject& io) const
         << "Generate blockMeshDict: "
         << iodict.db().time().relativePath(os.name()) << endl;
 
-    // Set precision for points to 10
-    os.precision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    os.precision(Foam::max(10u, IOstream::defaultPrecision()));
 
     iodict.writeHeader(os);
 

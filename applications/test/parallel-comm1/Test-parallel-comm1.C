@@ -50,37 +50,37 @@ scalar sumReduce
 )
 {
     scalar sum = 0;
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
         if (UPstream::master(comm))
         {
-            // Add master value and all slaves
+            // Add master value and all sub-procs
             sum = localValue;
 
-            for (const int slave : UPstream::subProcs(comm))
+            for (const int proci : UPstream::subProcs(comm))
             {
-                scalar slaveValue;
+                scalar procValue;
                 UIPstream::read
                 (
-                    Pstream::commsTypes::blocking,
-                    slave,
-                    reinterpret_cast<char*>(&slaveValue),
+                    UPstream::commsTypes::buffered,
+                    proci,
+                    reinterpret_cast<char*>(&procValue),
                     sizeof(scalar),
                     UPstream::msgType(),    // tag
                     comm                    // communicator
                 );
 
-                sum += slaveValue;
+                sum += procValue;
             }
 
-            // Send back to slaves
+            // Send back
 
-            for (const int slave : UPstream::subProcs(comm))
+            for (const int proci : UPstream::subProcs(comm))
             {
                 UOPstream::write
                 (
-                    UPstream::commsTypes::blocking,
-                    slave,
+                    UPstream::commsTypes::buffered,
+                    proci,
                     reinterpret_cast<const char*>(&sum),
                     sizeof(scalar),
                     UPstream::msgType(),    // tag
@@ -93,7 +93,7 @@ scalar sumReduce
             {
                 UOPstream::write
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     UPstream::masterNo(),
                     reinterpret_cast<const char*>(&localValue),
                     sizeof(scalar),
@@ -105,7 +105,7 @@ scalar sumReduce
             {
                 UIPstream::read
                 (
-                    UPstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     UPstream::masterNo(),
                     reinterpret_cast<char*>(&sum),
                     sizeof(scalar),

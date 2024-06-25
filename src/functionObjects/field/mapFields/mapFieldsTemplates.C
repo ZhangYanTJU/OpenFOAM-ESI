@@ -36,48 +36,42 @@ void Foam::functionObjects::mapFields::evaluateConstraintTypes
     GeometricField<Type, fvPatchField, volMesh>& fld
 ) const
 {
-    auto& fldBf = fld.boundaryFieldRef();
+    auto& bfld = fld.boundaryFieldRef();
 
     const UPstream::commsTypes commsType = UPstream::defaultCommsType;
-    const label startOfRequests = UPstream::nRequests();
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
-        forAll(fldBf, patchi)
-        {
-            fvPatchField<Type>& tgtField = fldBf[patchi];
+        const label startOfRequests = UPstream::nRequests();
 
+        for (auto& pfld : bfld)
+        {
             if
             (
-                tgtField.type() == tgtField.patch().patch().type()
-             && polyPatch::constraintType(tgtField.patch().patch().type())
+                pfld.type() == pfld.patch().patch().type()
+             && polyPatch::constraintType(pfld.patch().patch().type())
             )
             {
-                tgtField.initEvaluate(commsType);
+                pfld.initEvaluate(commsType);
             }
         }
 
-        // Wait for outstanding requests
-        if (commsType == UPstream::commsTypes::nonBlocking)
-        {
-            UPstream::waitRequests(startOfRequests);
-        }
+        // Wait for outstanding requests (non-blocking)
+        UPstream::waitRequests(startOfRequests);
 
-        forAll(fldBf, patchi)
+        for (auto& pfld : bfld)
         {
-            fvPatchField<Type>& tgtField = fldBf[patchi];
-
             if
             (
-                tgtField.type() == tgtField.patch().patch().type()
-             && polyPatch::constraintType(tgtField.patch().patch().type())
+                pfld.type() == pfld.patch().patch().type()
+             && polyPatch::constraintType(pfld.patch().patch().type())
             )
             {
-                tgtField.evaluate(commsType);
+                pfld.evaluate(commsType);
             }
         }
     }
@@ -89,22 +83,21 @@ void Foam::functionObjects::mapFields::evaluateConstraintTypes
         for (const auto& schedEval : patchSchedule)
         {
             const label patchi = schedEval.patch;
-
-            fvPatchField<Type>& tgtField = fldBf[patchi];
+            auto& pfld = bfld[patchi];
 
             if
             (
-                tgtField.type() == tgtField.patch().patch().type()
-             && polyPatch::constraintType(tgtField.patch().patch().type())
+                pfld.type() == pfld.patch().patch().type()
+             && polyPatch::constraintType(pfld.patch().patch().type())
             )
             {
                 if (schedEval.init)
                 {
-                    tgtField.initEvaluate(commsType);
+                    pfld.initEvaluate(commsType);
                 }
                 else
                 {
-                    tgtField.evaluate(commsType);
+                    pfld.evaluate(commsType);
                 }
             }
         }

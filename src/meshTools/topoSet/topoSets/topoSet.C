@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -140,6 +140,30 @@ Foam::fileName Foam::topoSet::localPath
 }
 
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+bool Foam::topoSet::readIOcontents
+(
+    const word& wantedType,
+    labelHashSet& contents
+)
+{
+    if (isReadRequired() || (isReadOptional() && headerOk()))
+    {
+        Istream& is = readStream(wantedType);
+
+        if (is.good())
+        {
+            is >> contents;
+            close();
+        }
+        return true;
+    }
+
+    return false;
+}
+
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 // Update stored cell numbers using map.
@@ -200,10 +224,8 @@ void Foam::topoSet::updateLabels(const labelUList& map)
 }
 
 
-void Foam::topoSet::check(const label maxSize)
+void Foam::topoSet::checkLabels(const labelUList& labels, const label maxSize)
 {
-    const labelHashSet& labels = *this;
-
     for (const label oldId : labels)
     {
         if (oldId < 0 || oldId >= maxSize)
@@ -211,21 +233,41 @@ void Foam::topoSet::check(const label maxSize)
             FatalErrorInFunction
                 << "Illegal content " << oldId << " of set:" << name()
                 << " of type " << type() << nl
-                << "Value should be between [0," << maxSize << ')'
-                << endl
+                << "Value should be between [0," << maxSize << ')' << nl
                 << abort(FatalError);
         }
     }
 }
 
 
-// Write maxElem elements, starting at iter. Updates iter and elemI.
-void Foam::topoSet::writeDebug
+void Foam::topoSet::checkLabels(const labelHashSet& labels, const label maxSize)
+{
+    for (const label oldId : labels)
+    {
+        if (oldId < 0 || oldId >= maxSize)
+        {
+            FatalErrorInFunction
+                << "Illegal content " << oldId << " of set:" << name()
+                << " of type " << type() << nl
+                << "Value should be between [0," << maxSize << ')' << nl
+                << abort(FatalError);
+        }
+    }
+}
+
+
+void Foam::topoSet::check(const label maxSize)
+{
+    checkLabels(*this, maxSize);
+}
+
+
+// Write maxElem elements, starting at iter. Updates iter
+Foam::label Foam::topoSet::writeDebug
 (
     Ostream& os,
     const label maxElem,
-    topoSet::const_iterator& iter,
-    label& elemI
+    labelHashSet::const_iterator& iter
 ) const
 {
     label n = 0;
@@ -239,19 +281,19 @@ void Foam::topoSet::writeDebug
         os << iter.key() << ' ';
 
         ++n;
-        ++elemI;
     }
+
+    return n;
 }
 
 
-// Write maxElem elements, starting at iter. Updates iter and elemI.
-void Foam::topoSet::writeDebug
+// Write maxElem elements, starting at iter. Updates iter
+Foam::label Foam::topoSet::writeDebug
 (
     Ostream& os,
     const pointField& coords,
     const label maxElem,
-    topoSet::const_iterator& iter,
-    label& elemI
+    labelHashSet::const_iterator& iter
 ) const
 {
     label n = 0;
@@ -265,8 +307,9 @@ void Foam::topoSet::writeDebug
         os << iter.key() << coords[iter.key()] << ' ';
 
         ++n;
-        ++elemI;
     }
+
+    return n;
 }
 
 
@@ -283,22 +326,20 @@ void Foam::topoSet::writeDebug
     os  << "Set bounding box: min = "
         << bb.min() << "    max = " << bb.max() << " metres." << nl << endl;
 
-    label n = 0;
-
-    topoSet::const_iterator iter = this->cbegin();
+    labelHashSet::const_iterator iter = labelHashSet::cbegin();
 
     if (size() <= maxLen)
     {
-        writeDebug(os, coords, maxLen, iter, n);
+        writeDebug(os, coords, maxLen, iter);
     }
     else
     {
-        label halfLen = maxLen/2;
+        const label halfLen = maxLen/2;
 
         os  << "Size larger than " << maxLen << ". Printing first and last "
             << halfLen << " elements:" << nl << endl;
 
-        writeDebug(os, coords, halfLen, iter, n);
+        label n = writeDebug(os, coords, halfLen, iter);
 
         os  << nl << "  .." << nl << endl;
 
@@ -307,7 +348,7 @@ void Foam::topoSet::writeDebug
             ++iter;
         }
 
-        writeDebug(os, coords, halfLen, iter, n);
+        writeDebug(os, coords, halfLen, iter);
     }
 }
 
@@ -319,7 +360,8 @@ Foam::IOobject Foam::topoSet::findIOobject
     const polyMesh& mesh,
     const word& name,
     IOobjectOption::readOption rOpt,
-    IOobjectOption::writeOption wOpt
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
 )
 {
     IOobject io
@@ -329,13 +371,14 @@ Foam::IOobject Foam::topoSet::findIOobject
         (
             mesh.meshDir()/"sets",
             word::null,
-            IOobject::READ_IF_PRESENT,
+            IOobjectOption::READ_IF_PRESENT,
             mesh.facesInstance()
         ),
         polyMesh::meshSubDir/"sets",
         mesh,
         rOpt,
-        wOpt
+        wOpt,
+        reg
     );
 
     if (!io.typeHeaderOk<topoSet>(false) && disallowGenericSets != 0)
@@ -353,7 +396,8 @@ Foam::IOobject Foam::topoSet::findIOobject
     const Time& runTime,
     const word& name,
     IOobjectOption::readOption rOpt,
-    IOobjectOption::writeOption wOpt
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
 )
 {
     return IOobject
@@ -364,6 +408,8 @@ Foam::IOobject Foam::topoSet::findIOobject
             polyMesh::meshSubDir/"sets",
             word::null,
             IOobject::MUST_READ,
+
+            // The stop instance with "polyMesh/faces"
             runTime.findInstance
             (
                 polyMesh::meshSubDir,
@@ -374,7 +420,8 @@ Foam::IOobject Foam::topoSet::findIOobject
         polyMesh::meshSubDir/"sets",
         runTime,
         rOpt,
-        wOpt
+        wOpt,
+        reg
     );
 }
 
@@ -385,97 +432,20 @@ Foam::topoSet::topoSet(const IOobject& io, const word& wantedType)
 :
     regIOobject(io)
 {
-    if (isReadRequired() || (isReadOptional() && headerOk()))
-    {
-        if (readStream(wantedType).good())
-        {
-            readStream(wantedType) >> static_cast<labelHashSet&>(*this);
-
-            close();
-        }
-    }
+    readIOcontents(wantedType, static_cast<labelHashSet&>(*this));
 }
 
 
-Foam::topoSet::topoSet
-(
-    const polyMesh& mesh,
-    const word& wantedType,
-    const word& name,
-    IOobjectOption::readOption rOpt,
-    IOobjectOption::writeOption wOpt
-)
+Foam::topoSet::topoSet(const IOobject& io, const Foam::zero)
 :
-    regIOobject(findIOobject(mesh, name, rOpt, wOpt))
-{
-    if (isReadRequired() || (isReadOptional() && headerOk()))
-    {
-        if (readStream(wantedType).good())
-        {
-            readStream(wantedType) >> static_cast<labelHashSet&>(*this);
-
-            close();
-        }
-    }
-}
-
-
-Foam::topoSet::topoSet
-(
-    const polyMesh& mesh,
-    const word& name,
-    const label size,
-    IOobjectOption::writeOption wOpt
-)
-:
-    regIOobject(findIOobject(mesh, name, IOobject::NO_READ, wOpt)),
-    labelHashSet(size)
+    regIOobject(io)
 {}
 
 
-Foam::topoSet::topoSet
-(
-    const polyMesh& mesh,
-    const word& name,
-    const labelHashSet& labels,
-    IOobjectOption::writeOption wOpt
-)
-:
-    regIOobject(findIOobject(mesh, name, IOobject::NO_READ, wOpt)),
-    labelHashSet(labels)
-{}
-
-
-Foam::topoSet::topoSet
-(
-    const polyMesh& mesh,
-    const word& name,
-    labelHashSet&& labels,
-    IOobjectOption::writeOption wOpt
-)
-:
-    regIOobject(findIOobject(mesh, name, IOobject::NO_READ, wOpt)),
-    labelHashSet(std::move(labels))
-{}
-
-
-Foam::topoSet::topoSet
-(
-    const polyMesh& mesh,
-    const word& name,
-    const labelUList& labels,
-    IOobjectOption::writeOption wOpt
-)
-:
-    regIOobject(findIOobject(mesh, name, IOobject::NO_READ, wOpt)),
-    labelHashSet(labels)
-{}
-
-
-Foam::topoSet::topoSet(const IOobject& io, const label size)
+Foam::topoSet::topoSet(const IOobject& io, const label initialCapacity)
 :
     regIOobject(io),
-    labelHashSet(size)
+    labelHashSet(initialCapacity)
 {}
 
 
@@ -493,11 +463,89 @@ Foam::topoSet::topoSet(const IOobject& io, labelHashSet&& labels)
 {}
 
 
+Foam::topoSet::topoSet
+(
+    const polyMesh& mesh,
+    const word& wantedType,
+    const word& name,
+    IOobjectOption::readOption rOpt,
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
+)
+:
+    regIOobject(findIOobject(mesh, name, rOpt, wOpt, reg))
+{
+    readIOcontents(wantedType, static_cast<labelHashSet&>(*this));
+}
+
+
+Foam::topoSet::topoSet
+(
+    const polyMesh& mesh,
+    const word& name,
+    const label initialCapacity,
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
+)
+:
+    regIOobject(findIOobject(mesh, name, IOobject::NO_READ, wOpt, reg)),
+    labelHashSet(initialCapacity)
+{}
+
+
+Foam::topoSet::topoSet
+(
+    const polyMesh& mesh,
+    const word& name,
+    const labelHashSet& labels,
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
+)
+:
+    regIOobject(findIOobject(mesh, name, IOobject::NO_READ, wOpt, reg)),
+    labelHashSet(labels)
+{}
+
+
+Foam::topoSet::topoSet
+(
+    const polyMesh& mesh,
+    const word& name,
+    labelHashSet&& labels,
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
+)
+:
+    regIOobject(findIOobject(mesh, name, IOobject::NO_READ, wOpt, reg)),
+    labelHashSet(std::move(labels))
+{}
+
+
+Foam::topoSet::topoSet
+(
+    const polyMesh& mesh,
+    const word& name,
+    const labelUList& labels,
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
+)
+:
+    regIOobject(findIOobject(mesh, name, IOobject::NO_READ, wOpt, reg)),
+    labelHashSet(labels)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::topoSet::contains(const label id) const
+{
+    return static_cast<const labelHashSet&>(*this).contains(id);
+}
+
 
 bool Foam::topoSet::found(const label id) const
 {
-    return static_cast<const labelHashSet&>(*this).found(id);
+    return static_cast<const labelHashSet&>(*this).contains(id);
 }
 
 
@@ -534,13 +582,13 @@ void Foam::topoSet::invert(const label maxLen)
     );
 
     clear();  // Maybe don't trust the previous move operation
-    reserve(max(64, (maxLen - original.size())));
+    reserve(Foam::max(64, (maxLen - original.size())));
 
-    for (label id=0; id < maxLen; ++id)
+    for (label id = 0; id < maxLen; ++id)
     {
-        if (!original.found(id))
+        if (!original.contains(id))
         {
-            this->set(id);
+            labelHashSet::set(id);
         }
     }
 }
@@ -553,10 +601,38 @@ void Foam::topoSet::subset(const topoSet& set)
 }
 
 
+void Foam::topoSet::subset(const labelUList& elems)
+{
+    // Only retain entries found in both sets
+    auto& currentSet = static_cast<labelHashSet&>(*this);
+
+    DynamicList<label> newElems(Foam::min(elems.size(), currentSet.size()));
+
+    for (const label elem : elems)
+    {
+        if (currentSet.contains(elem))
+        {
+            newElems.push_back(elem);
+        }
+    }
+    if (newElems.size() < currentSet.size())
+    {
+        currentSet = newElems;
+    }
+}
+
+
 void Foam::topoSet::addSet(const topoSet& set)
 {
     // Add entries to the set
     static_cast<labelHashSet&>(*this) |= set;
+}
+
+
+void Foam::topoSet::addSet(const labelUList& elems)
+{
+    // Add entries to the set
+    static_cast<labelHashSet&>(*this).set(elems);
 }
 
 
@@ -567,9 +643,10 @@ void Foam::topoSet::subtractSet(const topoSet& set)
 }
 
 
-void Foam::topoSet::deleteSet(const topoSet& set)
+void Foam::topoSet::subtractSet(const labelUList& elems)
 {
-    this->subtractSet(set);
+    // Subtract entries from the set
+    static_cast<labelHashSet&>(*this).unset(elems);
 }
 
 
@@ -581,22 +658,20 @@ void Foam::topoSet::sync(const polyMesh&)
 
 void Foam::topoSet::writeDebug(Ostream& os, const label maxLen) const
 {
-    label n = 0;
-
-    topoSet::const_iterator iter = this->cbegin();
+    labelHashSet::const_iterator iter = labelHashSet::cbegin();
 
     if (size() <= maxLen)
     {
-        writeDebug(os, maxLen, iter, n);
+        writeDebug(os, maxLen, iter);
     }
     else
     {
-        label halfLen = maxLen/2;
+        const label halfLen = maxLen/2;
 
         os  << "Size larger than " << maxLen << ". Printing first and last "
             << halfLen << " elements:" << nl << endl;
 
-        writeDebug(os, halfLen, iter, n);
+        label n = writeDebug(os, halfLen, iter);
 
         os  << nl << "  .." << nl << endl;
 
@@ -605,7 +680,7 @@ void Foam::topoSet::writeDebug(Ostream& os, const label maxLen) const
             ++iter;
         }
 
-        writeDebug(os, halfLen, iter, n);
+        writeDebug(os, halfLen, iter);
     }
 }
 

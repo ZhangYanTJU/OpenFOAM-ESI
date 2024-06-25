@@ -41,6 +41,10 @@ void Foam::setUpdater::updateSets(const mapPolyMesh& map)
     // Update all sets in memory
     //
 
+    // Note: objectRegistry::lookupClass() instead of
+    // objectRegistry::csorted() since it is also used to check
+    // contains() in the next bit of code
+
     const HashTable<const SetType*> sets
     (
         map.mesh().objectRegistry::lookupClass<const SetType>()

@@ -182,7 +182,7 @@ void Foam::Cloud<ParticleType>::move
 
     // Allocate transfer buffers,
     // automatic clearStorage when UIPstream closes is disabled.
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
     pBufs.allowClearRecv(false);
 
     // Cache of opened UOPstream wrappers

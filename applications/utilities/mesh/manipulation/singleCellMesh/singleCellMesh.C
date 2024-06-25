@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,26 +53,33 @@ using namespace Foam;
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Name of region to create
-const string singleCellName = "singleCell";
+const word singleCellName = "singleCell";
 
 
 template<class GeoField>
-void interpolateFields
+wordList interpolateFields
 (
-    const singleCellFvMesh& scMesh,
+    const singleCellFvMesh& subsetter,
     const PtrList<GeoField>& flds
 )
 {
+    wordList names(flds.size());
+
     forAll(flds, i)
     {
-        tmp<GeoField> scFld = scMesh.interpolate(flds[i]);
-        GeoField* scFldPtr = scFld.ptr();
-        scFldPtr->writeOpt(IOobject::AUTO_WRITE);
-        scFldPtr->store();
+        GeoField* subFld = subsetter.interpolate(flds[i]).ptr();
+
+        subFld->writeOpt(IOobject::AUTO_WRITE);
+        subFld->store();
+
+        names[i] = subFld->name();
     }
+
+    return names;
 }
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
@@ -94,7 +101,7 @@ int main(int argc, char *argv[])
     if (regionName == singleCellName)
     {
         FatalErrorInFunction
-            << "Cannot convert region " << singleCellName
+            << "Cannot convert region " << regionName
             << " since result would overwrite it. Please rename your region."
             << exit(FatalError);
     }
@@ -111,7 +118,8 @@ int main(int argc, char *argv[])
                 mesh.pointsInstance(),
                 runTime,
                 IOobject::NO_READ,
-                IOobject::AUTO_WRITE
+                IOobject::AUTO_WRITE,
+                IOobject::NO_REGISTER
             ),
             mesh
         )
@@ -131,18 +139,27 @@ int main(int argc, char *argv[])
     }
 
 
-    forAll(timeDirs, timeI)
+    // List of stored objects to clear prior to reading
+    DynamicList<word> storedObjects;
+
+    forAll(timeDirs, timei)
     {
-        runTime.setTime(timeDirs[timeI], timeI);
+        runTime.setTime(timeDirs[timei], timei);
 
         Info<< nl << "Time = " << runTime.timeName() << endl;
 
+        // Purge any previously interpolated fields
+        if (!storedObjects.empty())
+        {
+            static_cast<objectRegistry&>(scMesh()).erase(storedObjects);
+            storedObjects.clear();
+        }
 
         // Check for new mesh
         if (mesh.readUpdate() != polyMesh::UNCHANGED)
         {
             Info<< "Detected changed mesh. Recreating singleCell mesh." << endl;
-            scMesh.clear(); // remove any registered objects
+            scMesh.reset(nullptr);  // first free any stored objects
             scMesh.reset
             (
                 new singleCellFvMesh
@@ -153,43 +170,37 @@ int main(int argc, char *argv[])
                         mesh.pointsInstance(),
                         runTime,
                         IOobject::NO_READ,
-                        IOobject::AUTO_WRITE
+                        IOobject::AUTO_WRITE,
+                        IOobject::NO_REGISTER
                     ),
                     mesh
                 )
             );
         }
 
-
         // Read objects in time directory
         IOobjectList objects(mesh, runTime.timeName());
+        storedObjects.reserve(objects.size());
 
-        // Read vol fields.
-        PtrList<volScalarField> vsFlds;
-        ReadFields(mesh, objects, vsFlds);
+        // Read fvMesh fields, map and store the interpolated fields
+        #define doLocalCode(GeoField)                                         \
+        {                                                                     \
+            PtrList<GeoField> flds;                                           \
+            ReadFields(mesh, objects, flds);                                  \
+            storedObjects.push_back(interpolateFields(scMesh(), flds));       \
+        }
 
-        PtrList<volVectorField> vvFlds;
-        ReadFields(mesh, objects, vvFlds);
+        doLocalCode(volScalarField);
+        doLocalCode(volVectorField);
+        doLocalCode(volSphericalTensorField);
+        doLocalCode(volSymmTensorField);
+        doLocalCode(volTensorField);
 
-        PtrList<volSphericalTensorField> vstFlds;
-        ReadFields(mesh, objects, vstFlds);
-
-        PtrList<volSymmTensorField> vsymtFlds;
-        ReadFields(mesh, objects, vsymtFlds);
-
-        PtrList<volTensorField> vtFlds;
-        ReadFields(mesh, objects, vtFlds);
-
-        // Map and store the fields on the scMesh.
-        interpolateFields(scMesh(), vsFlds);
-        interpolateFields(scMesh(), vvFlds);
-        interpolateFields(scMesh(), vstFlds);
-        interpolateFields(scMesh(), vsymtFlds);
-        interpolateFields(scMesh(), vtFlds);
-
+        #undef doLocalCode
 
         // Write
-        Info<< "Writing mesh to time " << runTime.timeName() << endl;
+        Info<< "Writing " << singleCellName
+            << " mesh/fields to time " << runTime.timeName() << endl;
         scMesh().write();
     }
 

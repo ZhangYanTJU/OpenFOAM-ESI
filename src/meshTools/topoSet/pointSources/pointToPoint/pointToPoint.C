@@ -60,7 +60,8 @@ Foam::pointToPoint::pointToPoint
 )
 :
     topoSetPointSource(mesh),
-    names_(one{}, setName)
+    names_(Foam::one{}, setName),
+    isZone_(false)
 {}
 
 
@@ -70,16 +71,10 @@ Foam::pointToPoint::pointToPoint
     const dictionary& dict
 )
 :
-    topoSetPointSource(mesh),
-    names_()
-{
-    // Look for 'sets' or 'set'
-    if (!dict.readIfPresent("sets", names_))
-    {
-        names_.resize(1);
-        dict.readEntry("set", names_.front());
-    }
-}
+    topoSetPointSource(mesh, dict),
+    names_(),
+    isZone_(topoSetSource::readNames(dict, names_))
+{}
 
 
 Foam::pointToPoint::pointToPoint
@@ -89,7 +84,8 @@ Foam::pointToPoint::pointToPoint
 )
 :
     topoSetPointSource(mesh),
-    names_(one{}, word(checkIs(is)))
+    names_(Foam::one{}, word(checkIs(is))),
+    isZone_(false)
 {}
 
 
@@ -105,30 +101,46 @@ void Foam::pointToPoint::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Adding all elements of point sets: "
+            Info<< "    Adding all elements of point "
+                << (isZone_ ? "zones: " : "sets: ")
                 << flatOutput(names_) << nl;
         }
 
         for (const word& setName : names_)
         {
-            pointSet loadedSet(mesh_, setName);
+            if (isZone_)
+            {
+                set.addSet(mesh_.pointZones()[setName]);
+            }
+            else
+            {
+                pointSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
 
-            set.addSet(loadedSet);
+                set.addSet(loadedSet);
+            }
         }
     }
     else if (action == topoSetSource::SUBTRACT)
     {
         if (verbose_)
         {
-            Info<< "    Removing all elements of point sets: "
+            Info<< "    Removing all elements of point "
+                << (isZone_ ? "zones: " : "sets: ")
                 << flatOutput(names_) << nl;
         }
 
         for (const word& setName : names_)
         {
-            pointSet loadedSet(mesh_, setName);
+            if (isZone_)
+            {
+                set.subtractSet(mesh_.pointZones()[setName]);
+            }
+            else
+            {
+                pointSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
 
-            set.subtractSet(loadedSet);
+                set.subtractSet(loadedSet);
+            }
         }
     }
 }

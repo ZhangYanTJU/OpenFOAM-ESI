@@ -1,8 +1,8 @@
 [submodule "cfmesh"]
-	path = modules/cfmesh
+	path = plugins/cfmesh
 	url = https://develop.openfoam.com/Community/integration-cfmesh.git
 [submodule "avalanche"]
-	path = modules/avalanche
+	path = plugins/avalanche
 	url = https://develop.openfoam.com/Community/avalanche.git
 [submodule "adios"]
 	path = modules/adios
@@ -18,5 +18,8 @@
 	path = modules/external-solver
 	url = https://develop.openfoam.com/Modules/external-solver.git
 [submodule "turbulence-community"]
-	path = modules/turbulence-community
+	path = plugins/turbulence-community
 	url = https://gitlab.com/openfoam/community/tc-turbulence/turbulence-community.git
+[submodule "plugins/data-community"]
+	path = plugins/data-community
+	url = https://gitlab.com/openfoam/community/sig-data-modelling/data-community.git

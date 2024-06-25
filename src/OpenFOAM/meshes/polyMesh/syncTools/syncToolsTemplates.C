@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,6 +79,8 @@ void Foam::syncTools::combine
 }
 
 
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
 template<class T, class CombineOp, class TransformOp>
 void Foam::syncTools::syncPointMap
 (
@@ -94,7 +96,7 @@ void Foam::syncTools::syncPointMap
     const globalMeshData& pd = mesh.globalData();
 
     // Values on shared points. Keyed on global shared index.
-    Map<T> sharedPointValues(0);
+    Map<T> sharedPointValues;
 
     if (pd.nGlobalPoints() > 0)
     {
@@ -130,7 +132,7 @@ void Foam::syncTools::syncPointMap
         // Presize according to number of processor patches
         // (global topology information may not yet be available...)
         DynamicList<label> neighbProcs(patches.nProcessorPatches());
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         // Reduce communication by only sending non-zero data,
         // but with multiply-connected processor/processor
@@ -205,7 +207,7 @@ void Foam::syncTools::syncPointMap
                     continue;
                 }
 
-                Map<T> nbrPatchInfo(0);
+                Map<T> nbrPatchInfo;
                 {
                     UIPstream fromNbr(nbrProci, pBufs);
                     fromNbr >> nbrPatchInfo;
@@ -324,8 +326,8 @@ void Foam::syncTools::syncPointMap
                 // Receive the edges using shared points from other procs
                 for (const int proci : UPstream::subProcs())
                 {
-                    IPstream fromProc(UPstream::commsTypes::scheduled, proci);
-                    Map<T> nbrValues(fromProc);
+                    Map<T> nbrValues;
+                    IPstream::recv(nbrValues, proci);
 
                     // Merge neighbouring values with my values
                     forAllConstIters(nbrValues, iter)
@@ -343,12 +345,7 @@ void Foam::syncTools::syncPointMap
             else
             {
                 // Send to master
-                OPstream toMaster
-                (
-                    UPstream::commsTypes::scheduled,
-                    UPstream::masterNo()
-                );
-                toMaster << sharedPointValues;
+                OPstream::send(sharedPointValues, UPstream::masterNo());
             }
 
             // Broadcast: send merged values to all
@@ -359,11 +356,7 @@ void Foam::syncTools::syncPointMap
         // pointValues (keyed on mesh points).
 
         // Map from global shared index to meshpoint
-        Map<label> sharedToMeshPoint(2*sharedPtAddr.size());
-        forAll(sharedPtAddr, i)
-        {
-            sharedToMeshPoint.insert(sharedPtAddr[i], sharedPtLabels[i]);
-        }
+        Map<label> sharedToMeshPoint(sharedPtAddr, sharedPtLabels);
 
         forAllConstIters(sharedToMeshPoint, iter)
         {
@@ -403,7 +396,7 @@ void Foam::syncTools::syncEdgeMap
         // Presize according to number of processor patches
         // (global topology information may not yet be available...)
         DynamicList<label> neighbProcs(patches.nProcessorPatches());
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         // Reduce communication by only sending non-zero data,
         // but with multiply-connected processor/processor
@@ -481,7 +474,7 @@ void Foam::syncTools::syncEdgeMap
                     continue;
                 }
 
-                EdgeMap<T> nbrPatchInfo(0);
+                EdgeMap<T> nbrPatchInfo;
                 {
                     UIPstream fromNbr(nbrProci, pBufs);
                     fromNbr >> nbrPatchInfo;
@@ -497,7 +490,7 @@ void Foam::syncTools::syncEdgeMap
                 forAllConstIters(nbrPatchInfo, nbrIter)
                 {
                     const edge& e = nbrIter.key();
-                    const edge meshEdge(meshPts[e[0]], meshPts[e[1]]);
+                    const edge meshEdge(meshPts, e);
 
                     combine
                     (
@@ -544,7 +537,7 @@ void Foam::syncTools::syncEdgeMap
 
                 {
                     const edge& e0 = edgesA[twoEdges[0]];
-                    const edge meshEdge0(meshPtsA[e0[0]], meshPtsA[e0[1]]);
+                    const edge meshEdge0(meshPtsA, e0);
 
                     const auto iter = edgeValues.cfind(meshEdge0);
 
@@ -555,7 +548,7 @@ void Foam::syncTools::syncEdgeMap
                 }
                 {
                     const edge& e1 = edgesB[twoEdges[1]];
-                    const edge meshEdge1(meshPtsB[e1[0]], meshPtsB[e1[1]]);
+                    const edge meshEdge1(meshPtsB, e1);
 
                     const auto iter = edgeValues.cfind(meshEdge1);
 
@@ -582,7 +575,7 @@ void Foam::syncTools::syncEdgeMap
                 if (half1Fnd.good())
                 {
                     const edge& e0 = edgesA[twoEdges[0]];
-                    const edge meshEdge0(meshPtsA[e0[0]], meshPtsA[e0[1]]);
+                    const edge meshEdge0(meshPtsA, e0);
 
                     combine
                     (
@@ -598,7 +591,7 @@ void Foam::syncTools::syncEdgeMap
                 if (half0Fnd.good())
                 {
                     const edge& e1 = edgesB[twoEdges[1]];
-                    const edge meshEdge1(meshPtsB[e1[0]], meshPtsB[e1[1]]);
+                    const edge meshEdge1(meshPtsB, e1);
 
                     combine
                     (
@@ -622,11 +615,7 @@ void Foam::syncTools::syncEdgeMap
     const labelList& sharedPtLabels = pd.sharedPointLabels();
 
     // 1. Create map from meshPoint to globalShared index.
-    Map<label> meshToShared(2*sharedPtLabels.size());
-    forAll(sharedPtLabels, i)
-    {
-        meshToShared.insert(sharedPtLabels[i], sharedPtAddr[i]);
-    }
+    Map<label> meshToShared(sharedPtLabels, sharedPtAddr);
 
     // Values on shared points. From two sharedPtAddr indices to a value.
     EdgeMap<T> sharedEdgeValues(meshToShared.size());
@@ -695,8 +684,8 @@ void Foam::syncTools::syncEdgeMap
             // Receive the edges using shared points from other procs
             for (const int proci : UPstream::subProcs())
             {
-                IPstream fromProc(UPstream::commsTypes::scheduled, proci);
-                EdgeMap<T> nbrValues(fromProc);
+                EdgeMap<T> nbrValues;
+                IPstream::recv(nbrValues, proci);
 
                 // Merge neighbouring values with my values
                 forAllConstIters(nbrValues, iter)
@@ -714,14 +703,7 @@ void Foam::syncTools::syncEdgeMap
         else
         {
             // Send to master
-            {
-                OPstream toMaster
-                (
-                    UPstream::commsTypes::scheduled,
-                    UPstream::masterNo()
-                );
-                toMaster << sharedEdgeValues;
-            }
+            OPstream::send(sharedEdgeValues, UPstream::masterNo());
         }
 
         // Broadcast: send merged values to all
@@ -769,8 +751,8 @@ void Foam::syncTools::syncPointList
     {
         FatalErrorInFunction
             << "Number of values " << pointValues.size()
-            << " is not equal to the number of points in the mesh "
-            << mesh.nPoints() << abort(FatalError);
+            << " != number of points " << mesh.nPoints() << nl
+            << abort(FatalError);
     }
 
     mesh.globalData().syncPointData(pointValues, cop, top);
@@ -792,8 +774,8 @@ void Foam::syncTools::syncPointList
     {
         FatalErrorInFunction
             << "Number of values " << pointValues.size()
-            << " is not equal to the number of meshPoints "
-            << meshPoints.size() << abort(FatalError);
+            << " != number of meshPoints " << meshPoints.size() << nl
+            << abort(FatalError);
     }
     const globalMeshData& gd = mesh.globalData();
     const indirectPrimitivePatch& cpp = gd.coupledPatch();
@@ -849,8 +831,8 @@ void Foam::syncTools::syncEdgeList
     {
         FatalErrorInFunction
             << "Number of values " << edgeValues.size()
-            << " is not equal to the number of edges in the mesh "
-            << mesh.nEdges() << abort(FatalError);
+            << " != number of edges " << mesh.nEdges() << nl
+            << abort(FatalError);
     }
 
     const edgeList& edges = mesh.edges();
@@ -935,7 +917,7 @@ template<class T, class CombineOp, class TransformOp, class FlipOp>
 void Foam::syncTools::syncEdgeList
 (
     const polyMesh& mesh,
-    const labelList& meshEdges,
+    const labelUList& meshEdges,
     List<T>& edgeValues,
     const CombineOp& cop,
     const T& nullValue,
@@ -947,8 +929,8 @@ void Foam::syncTools::syncEdgeList
     {
         FatalErrorInFunction
             << "Number of values " << edgeValues.size()
-            << " is not equal to the number of meshEdges "
-            << meshEdges.size() << abort(FatalError);
+            << " != number of meshEdges " << meshEdges.size() << nl
+            << abort(FatalError);
     }
     const edgeList& edges = mesh.edges();
     const globalMeshData& gd = mesh.globalData();
@@ -966,7 +948,7 @@ void Foam::syncTools::syncEdgeList
         const auto iter = mpm.cfind(meshEdgei);
         if (iter.good())
         {
-            const label cppEdgei = iter();
+            const label cppEdgei = iter.val();
             const edge& cppE = cppEdges[cppEdgei];
             const edge& meshE = edges[meshEdgei];
 
@@ -1012,7 +994,7 @@ void Foam::syncTools::syncEdgeList
         const auto iter = mpm.cfind(meshEdgei);
         if (iter.good())
         {
-            label cppEdgei = iter();
+            label cppEdgei = iter.val();
             const edge& cppE = cppEdges[cppEdgei];
             const edge& meshE = edges[meshEdgei];
 
@@ -1049,14 +1031,13 @@ void Foam::syncTools::syncBoundaryFaceList
     {
         FatalErrorInFunction
             << "Number of values " << faceValues.size()
-            << " is not equal to the number of boundary faces in the mesh "
-            << mesh.nBoundaryFaces() << nl
+            << " != number of boundary faces " << mesh.nBoundaryFaces() << nl
             << abort(FatalError);
     }
 
     const polyBoundaryMesh& patches = mesh.boundaryMesh();
 
-    if (parRun)
+    if (parRun && UPstream::parRun())
     {
         // Avoid mesh.globalData() - possible race condition
 
@@ -1124,7 +1105,7 @@ void Foam::syncTools::syncBoundaryFaceList
             }
 
             // Wait for all comms to finish
-            Pstream::waitRequests(startRequest);
+            UPstream::waitRequests(startRequest);
 
             // Combine with existing data
             for (const polyPatch& pp : patches)
@@ -1161,7 +1142,7 @@ void Foam::syncTools::syncBoundaryFaceList
         else
         {
             DynamicList<label> neighbProcs;
-            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+            PstreamBuffers pBufs;
 
             // Send
             for (const polyPatch& pp : patches)
@@ -1294,20 +1275,20 @@ void Foam::syncTools::syncFaceList
     {
         FatalErrorInFunction
             << "Number of values " << faceValues.size()
-            << " is not equal to the number of "
+            << " != number of "
             << (isBoundaryOnly ? "boundary" : "mesh") << " faces "
-            << ((mesh.nFaces() - boundaryOffset)) << nl
+            << (mesh.nFaces() - boundaryOffset) << nl
             << abort(FatalError);
     }
 
     const polyBoundaryMesh& patches = mesh.boundaryMesh();
 
-    if (parRun)
+    if (parRun && UPstream::parRun())
     {
         const label startRequest = UPstream::nRequests();
 
         // Receive buffers
-        PtrList<PackedList<Width>> recvInfos(patches.size());
+        PtrList<PackedList<Width>> recvBufs(patches.size());
 
         // Set up reads
         for (const polyPatch& pp : patches)
@@ -1318,23 +1299,21 @@ void Foam::syncTools::syncFaceList
             {
                 const auto& procPatch = *ppp;
                 const label patchi = pp.index();
-                const label patchSize = pp.size();
 
-                recvInfos.set(patchi, new PackedList<Width>(patchSize));
-                PackedList<Width>& recvInfo = recvInfos[patchi];
+                auto& recvbuf = recvBufs.emplace_set(patchi, pp.size());
 
                 UIPstream::read
                 (
                     UPstream::commsTypes::nonBlocking,
                     procPatch.neighbProcNo(),
-                    recvInfo.data_bytes(),
-                    recvInfo.size_bytes()
+                    recvbuf.data_bytes(),
+                    recvbuf.size_bytes()
                 );
             }
         }
 
         // Send buffers
-        PtrList<PackedList<Width>> sendInfos(patches.size());
+        PtrList<PackedList<Width>> sendBufs(patches.size());
 
         // Set up writes
         for (const polyPatch& pp : patches)
@@ -1346,24 +1325,16 @@ void Foam::syncTools::syncFaceList
                 const auto& procPatch = *ppp;
                 const label patchi = pp.index();
 
-                const labelRange range
-                (
-                    pp.start()-boundaryOffset,
-                    pp.size()
-                );
-                sendInfos.set
-                (
-                    patchi,
-                    new PackedList<Width>(faceValues, range)
-                );
-                PackedList<Width>& sendInfo = sendInfos[patchi];
+                const labelRange range(pp.start()-boundaryOffset, pp.size());
+
+                auto& sendbuf = sendBufs.emplace_set(patchi, faceValues, range);
 
                 UOPstream::write
                 (
                     UPstream::commsTypes::nonBlocking,
                     procPatch.neighbProcNo(),
-                    sendInfo.cdata_bytes(),
-                    sendInfo.size_bytes()
+                    sendbuf.cdata_bytes(),
+                    sendbuf.size_bytes()
                 );
             }
         }
@@ -1381,13 +1352,13 @@ void Foam::syncTools::syncFaceList
                 const label patchi = pp.index();
                 const label patchSize = pp.size();
 
-                const PackedList<Width>& recvInfo = recvInfos[patchi];
+                const auto& recvbuf = recvBufs[patchi];
 
                 // Combine (bitwise)
                 label bFacei = pp.start()-boundaryOffset;
                 for (label i = 0; i < patchSize; ++i)
                 {
-                    unsigned int recvVal = recvInfo[i];
+                    unsigned int recvVal = recvbuf[i];
                     unsigned int faceVal = faceValues[bFacei];
 
                     cop(faceVal, recvVal);
@@ -1440,15 +1411,16 @@ void Foam::syncTools::swapBoundaryCellList
 (
     const polyMesh& mesh,
     const UList<T>& cellData,
-    List<T>& neighbourCellData
+    List<T>& neighbourCellData,
+    const bool parRun
 )
 {
     if (cellData.size() != mesh.nCells())
     {
         FatalErrorInFunction
             << "Number of cell values " << cellData.size()
-            << " is not equal to the number of cells in the mesh "
-            << mesh.nCells() << abort(FatalError);
+            << " != number of cells " << mesh.nCells() << nl
+            << abort(FatalError);
     }
 
     const polyBoundaryMesh& patches = mesh.boundaryMesh();
@@ -1457,15 +1429,18 @@ void Foam::syncTools::swapBoundaryCellList
 
     for (const polyPatch& pp : patches)
     {
-        label bFacei = pp.offset();
+        const auto& faceCells = pp.faceCells();
 
-        for (const label celli : pp.faceCells())
-        {
-            neighbourCellData[bFacei] = cellData[celli];
-            ++bFacei;
-        }
+        // ie, boundarySlice() = patchInternalList()
+        SubList<T>
+        (
+            neighbourCellData,
+            faceCells.size(),
+            pp.offset()
+        ) = UIndirectList<T>(cellData, faceCells);
     }
-    syncTools::swapBoundaryFaceList(mesh, neighbourCellData);
+
+    syncTools::swapBoundaryFaceList(mesh, neighbourCellData, parRun);
 }
 
 
@@ -1499,10 +1474,17 @@ template<unsigned Width>
 void Foam::syncTools::swapFaceList
 (
     const polyMesh& mesh,
-    PackedList<Width>& faceValues
+    PackedList<Width>& faceValues,
+    const bool parRun
 )
 {
-    syncFaceList(mesh, faceValues, eqOp<unsigned int>());
+    syncFaceList
+    (
+        mesh,
+        faceValues,
+        eqOp<unsigned int>(),
+        parRun
+    );
 }
 
 
@@ -1510,10 +1492,17 @@ template<unsigned Width>
 void Foam::syncTools::swapBoundaryFaceList
 (
     const polyMesh& mesh,
-    PackedList<Width>& faceValues
+    PackedList<Width>& faceValues,
+    const bool parRun
 )
 {
-    syncBoundaryFaceList(mesh, faceValues, eqOp<unsigned int>());
+    syncBoundaryFaceList
+    (
+        mesh,
+        faceValues,
+        eqOp<unsigned int>(),
+        parRun
+    );
 }
 
 
@@ -1530,8 +1519,8 @@ void Foam::syncTools::syncPointList
     {
         FatalErrorInFunction
             << "Number of values " << pointValues.size()
-            << " is not equal to the number of points in the mesh "
-            << mesh.nPoints() << abort(FatalError);
+            << " != number of points " << mesh.nPoints() << nl
+            << abort(FatalError);
     }
 
     const globalMeshData& gd = mesh.globalData();
@@ -1573,8 +1562,8 @@ void Foam::syncTools::syncEdgeList
     {
         FatalErrorInFunction
             << "Number of values " << edgeValues.size()
-            << " is not equal to the number of edges in the mesh "
-            << mesh.nEdges() << abort(FatalError);
+            << " != number of edges " << mesh.nEdges() << nl
+            << abort(FatalError);
     }
 
     const globalMeshData& gd = mesh.globalData();

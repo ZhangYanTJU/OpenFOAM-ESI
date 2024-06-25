@@ -240,9 +240,9 @@ int main(int argc, char *argv[])
     // Read set construct info from dictionary
     List<namedDictionary> actionEntries(topoSetDict.lookup("actions"));
 
-    forAll(timeDirs, timeI)
+    forAll(timeDirs, timei)
     {
-        runTime.setTime(timeDirs[timeI], timeI);
+        runTime.setTime(timeDirs[timei], timei);
         Info<< "Time = " << runTime.timeName() << endl;
 
         // Optionally re-read mesh

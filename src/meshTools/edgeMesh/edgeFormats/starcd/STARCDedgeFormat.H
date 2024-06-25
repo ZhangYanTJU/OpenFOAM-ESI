@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,8 +41,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef STARCDedgeFormat_H
-#define STARCDedgeFormat_H
+#ifndef Foam_STARCDedgeFormat_H
+#define Foam_STARCDedgeFormat_H
 
 #include "edgeMesh.H"
 #include "STARCDCore.H"
@@ -74,14 +74,6 @@ class STARCDedgeFormat
             const edgeList& edges,
             label starCellId = 1  // 1-based cellId
         );
-
-
-        //- No copy construct
-        STARCDedgeFormat(const STARCDedgeFormat&) = delete;
-
-        //- No copy assignment
-        void operator=(const STARCDedgeFormat&) = delete;
-
 
 protected:
 
@@ -118,7 +110,7 @@ public:
 
     // Static Functions
 
-        //- Write edge mesh to file
+        //- Write edge mesh to file in STARCD format
         static void write
         (
             const fileName& filename,
@@ -131,7 +123,7 @@ public:
     // Member Functions
 
         //- Read from file
-        virtual bool read(const fileName& name);
+        virtual bool read(const fileName& name) override;
 
         //- Write to file
         virtual void write
@@ -139,7 +131,19 @@ public:
             const fileName& name,
             IOstreamOption streamOpt = IOstreamOption(),
             const dictionary& options = dictionary::null
-        ) const
+        ) const override
+        {
+            write(name, *this, streamOpt, options);
+        }
+
+        //- Write to file
+        virtual void write
+        (
+            const fileName& name,
+            const word& fileType,  /* ignored */
+            IOstreamOption streamOpt = IOstreamOption(),
+            const dictionary& options = dictionary::null
+        ) const override
         {
             write(name, *this, streamOpt, options);
         }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,7 +70,7 @@ Foam::IOstreamOption::floatFormatEnum
 
     if (!fmtName.empty())
     {
-        const auto iter = floatFormatNames.cfind(fmtName);
+        auto iter = floatFormatNames.cfind(fmtName);
 
         if (iter.good())
         {
@@ -79,10 +79,19 @@ Foam::IOstreamOption::floatFormatEnum
 
         // Fall-through to warning
 
-        WarningInFunction
-            << "Unknown float format specifier '" << fmtName
-            << "' using '" << floatFormatNames[deflt]
-            << "' from " << floatFormatNames << nl;
+        auto& err = WarningInFunction
+            << "Unknown float format '" << fmtName << "' using ";
+
+        iter = floatFormatNames.cfind(deflt);
+        if (iter.good())
+        {
+            err << '\'' << iter.key() << '\'';
+        }
+        else
+        {
+            err << "value=" << int(deflt);
+        }
+        err << " from " << floatFormatNames << nl;
     }
 
     return deflt;
@@ -112,7 +121,7 @@ Foam::IOstreamOption::formatEnum
 
     if (!fmtName.empty())
     {
-        const auto iter = formatNames.cfind(fmtName);
+        auto iter = formatNames.cfind(fmtName);
 
         if (iter.good())
         {
@@ -121,10 +130,19 @@ Foam::IOstreamOption::formatEnum
 
         // Fall-through to warning
 
-        WarningInFunction
-            << "Unknown stream format specifier '" << fmtName
-            << "' using '" << formatNames[deflt]
-            << "' from " << formatNames << nl;
+        auto& err = WarningInFunction
+            << "Unknown stream format '" << fmtName << "' using ";
+
+        iter = formatNames.cfind(deflt);
+        if (iter.good())
+        {
+            err << '\'' << iter.key() << '\'';
+        }
+        else
+        {
+            err << "value=" << int(deflt);
+        }
+        err << " from " << formatNames << nl;
     }
 
     return deflt;

@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2016-2023 OpenCFD Ltd.
+#     Copyright (C) 2016-2024 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -74,10 +74,19 @@ ThirdParty)
 
     case "$WM_COMPILER" in
     Gcc)    gcc_version="$default_gcc_version" ;;
+    Gcc141*) gcc_version=gcc-14.1.0 ;;
+    Gcc133*) gcc_version=gcc-13.3.0 ;;
+    Gcc132*) gcc_version=gcc-13.2.0 ;;
+    Gcc131*) gcc_version=gcc-13.1.0 ;;
+    Gcc123*) gcc_version=gcc-12.3.0 ;;
+    Gcc122*) gcc_version=gcc-12.2.0 ;;
     Gcc121*) gcc_version=gcc-12.1.0 ;;
+    Gcc114*) gcc_version=gcc-11.4.0 ;;
     Gcc113*) gcc_version=gcc-11.3.0 ;;
     Gcc112*) gcc_version=gcc-11.2.0 ;;
-    Gcc111*) gcc_version=gcc-11.1.1 ;;
+    Gcc111*) gcc_version=gcc-11.1.0 ;;
+    Gcc105*) gcc_version=gcc-10.5.0 ;;
+    Gcc104*) gcc_version=gcc-10.4.0 ;;
     Gcc103*) gcc_version=gcc-10.3.0 ;;
     Gcc102*) gcc_version=gcc-10.2.0 ;;
     Gcc101*) gcc_version=gcc-10.1.0 ;;
@@ -112,7 +121,11 @@ ThirdParty)
     #ancient# Gcc48*) gcc_version=gcc-4.8.5 ;;
 
     Clang)    clang_version="$default_clang_version" ;;
-    Clang140*) clang_version=llvm-14.0.5 ;;
+    Clang181*) clang_version=llvm-18.1.6 ;;
+    Clang170*) clang_version=llvm-17.0.6 ;;
+    Clang160*) clang_version=llvm-16.0.6 ;;
+    Clang150*) clang_version=llvm-15.0.7 ;;
+    Clang140*) clang_version=llvm-14.0.6 ;;
     Clang130*) clang_version=llvm-13.0.1 ;;
     Clang120*) clang_version=llvm-12.0.1 ;;
     Clang111*) clang_version=llvm-11.1.0 ;;

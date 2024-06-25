@@ -95,7 +95,8 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- Not implemented
         slicedFaPatchField
         (
             const faPatch&,
@@ -103,8 +104,8 @@ public:
             const dictionary&
         );
 
-        //- Construct by mapping the given sliced patch field
-        //- onto a new patch
+        //- Construct by mapping the given patch field onto a new patch.
+        //- Not implemented
         slicedFaPatchField
         (
             const slicedFaPatchField<Type>&,
@@ -116,9 +117,6 @@ public:
         //- Construct as copy
         slicedFaPatchField(const slicedFaPatchField<Type>&);
 
-        //- Construct and return a clone
-        virtual tmp<faPatchField<Type>> clone() const;
-
         //- Construct as copy setting internal field reference
         slicedFaPatchField
         (
@@ -126,15 +124,24 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<faPatchField<Type>> clone() const
+        {
+            return faPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<faPatchField<Type>> clone
         (
             const DimensionedField<Type, areaMesh>& iF
-        ) const;
+        ) const
+        {
+            return faPatchField<Type>::Clone(*this, iF);
+        }
 
 
-    //- Destructor
-    virtual ~slicedFaPatchField<Type>();
+    //- Destructor, resets pointers to avoid deletion of underlying field
+    virtual ~slicedFaPatchField();
 
 
     // Member Functions
@@ -171,7 +178,7 @@ public:
             virtual void initEvaluate
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 
@@ -179,7 +186,7 @@ public:
             virtual void evaluate
             (
                 const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
+                    Pstream::commsTypes::buffered
             )
             {}
 

@@ -160,34 +160,27 @@ Foam::label Foam::cuttingPlane::calcCellCuts
     }
 
 
-    if (debug && isA<fvMesh>(mesh))
+    const fvMesh* fvMeshPtr = nullptr;
+    if (debug && (fvMeshPtr = isA<fvMesh>(mesh)) != nullptr)
     {
-        const auto& fvmesh = dynamicCast<const fvMesh>(mesh);
-
-        volScalarField cCuts
+        auto tcellCutsDebug = volScalarField::New
         (
-            IOobject
-            (
-                "cuttingPlane.cellCuts",
-                fvmesh.time().timeName(),
-                fvmesh.time(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            fvmesh,
-            dimensionedScalar(dimless, Zero)
+            "cuttingPlane.cellCuts",
+            IOobjectOption::NO_REGISTER,
+            *fvMeshPtr,
+            dimensionedScalar(dimless, Foam::zero{})
         );
+        auto& cellCutsDebug = tcellCutsDebug.ref();
 
-        auto& cCutsFld = cCuts.primitiveFieldRef();
+        auto& fld = cellCutsDebug.primitiveFieldRef();
 
         for (const label celli : cellCuts)
         {
-            cCutsFld[celli] = 1;
+            fld[celli] = 1;
         }
 
-        Pout<< "Writing cut types:" << cCuts.objectPath() << endl;
-        cCuts.write();
+        Pout<< "Writing cut types:" << cellCutsDebug.objectPath() << endl;
+        cellCutsDebug.write();
     }
 
 

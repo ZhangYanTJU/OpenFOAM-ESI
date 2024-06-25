@@ -56,8 +56,6 @@ void Foam::pointConstraints::makePatchPatchAddressing()
     const polyMesh& mesh = pMesh();
 
     const pointBoundaryMesh& pbm = pMesh.boundary();
-    const polyBoundaryMesh& bm = mesh.boundaryMesh();
-
 
     // first count the total number of patch-patch points
 
@@ -65,9 +63,15 @@ void Foam::pointConstraints::makePatchPatchAddressing()
 
     forAll(pbm, patchi)
     {
-        if (!isA<emptyPointPatch>(pbm[patchi]) && !pbm[patchi].coupled())
+        const auto* fpp = isA<facePointPatch>(pbm[patchi]);
+        if
+        (
+            fpp
+         && !isA<emptyPointPatch>(pbm[patchi])
+         && !pbm[patchi].coupled()
+        )
         {
-            const labelList& bp = bm[patchi].boundaryPoints();
+            const labelList& bp = fpp->patch().boundaryPoints();
 
             nPatchPatchPoints += bp.size();
 
@@ -103,9 +107,15 @@ void Foam::pointConstraints::makePatchPatchAddressing()
 
     forAll(pbm, patchi)
     {
-        if (!isA<emptyPointPatch>(pbm[patchi]) && !pbm[patchi].coupled())
+        const auto* fpp = isA<facePointPatch>(pbm[patchi]);
+        if
+        (
+            fpp
+         && !isA<emptyPointPatch>(pbm[patchi])
+         && !pbm[patchi].coupled()
+        )
         {
-            const labelList& bp = bm[patchi].boundaryPoints();
+            const labelList& bp = fpp->patch().boundaryPoints();
             const labelList& meshPoints = pbm[patchi].meshPoints();
 
             forAll(bp, pointi)
@@ -163,9 +173,15 @@ void Foam::pointConstraints::makePatchPatchAddressing()
         // Copy from patchPatch constraints into coupledConstraints.
         forAll(pbm, patchi)
         {
-            if (!isA<emptyPointPatch>(pbm[patchi]) && !pbm[patchi].coupled())
+            const auto* fpp = isA<facePointPatch>(pbm[patchi]);
+            if
+            (
+                fpp
+             && !isA<emptyPointPatch>(pbm[patchi])
+             && !pbm[patchi].coupled()
+            )
             {
-                const labelList& bp = bm[patchi].boundaryPoints();
+                const labelList& bp = fpp->patch().boundaryPoints();
                 const labelList& meshPoints = pbm[patchi].meshPoints();
 
                 forAll(bp, pointi)
@@ -338,7 +354,7 @@ void Foam::pointConstraints::makePatchPatchAddressing()
 
 Foam::pointConstraints::pointConstraints(const pointMesh& pm)
 :
-    MeshObject<pointMesh, Foam::UpdateableMeshObject, pointConstraints>(pm)
+    MeshObject_type(pm)
 {
     if (debug)
     {

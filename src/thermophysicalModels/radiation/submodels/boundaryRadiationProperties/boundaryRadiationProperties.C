@@ -46,12 +46,8 @@ Foam::radiation::boundaryRadiationProperties::boundaryRadiationProperties
     const fvMesh& mesh
 )
 :
-    MeshObject
-    <
-        fvMesh,
-        Foam::GeometricMeshObject,
-        boundaryRadiationProperties
-    >(mesh),
+    MeshObject_type(mesh),
+
     radBoundaryPropertiesPtrList_(mesh.boundary().size()),
     radZonePropertiesPtrList_(mesh.faceZones().size())
 {
@@ -189,8 +185,8 @@ Foam::radiation::boundaryRadiationProperties::emissivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))
@@ -209,7 +205,7 @@ Foam::radiation::boundaryRadiationProperties::emissivity
         << "Please add it"
         << exit(FatalError);
 
-    return tmp<scalarField>::New();
+    return nullptr;
 }
 
 
@@ -248,8 +244,8 @@ Foam::radiation::boundaryRadiationProperties::absorptivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))
@@ -262,13 +258,13 @@ Foam::radiation::boundaryRadiationProperties::absorptivity
         );
     }
 
-     FatalErrorInFunction
-         << "Patch : " << mesh().boundaryMesh()[patchi].name()
-         << " is not found in the boundaryRadiationProperties. "
-         << "Please add it"
-         << exit(FatalError);
+    FatalErrorInFunction
+        << "Patch : " << mesh().boundaryMesh()[patchi].name()
+        << " is not found in the boundaryRadiationProperties. "
+        << "Please add it"
+        << exit(FatalError);
 
-    return tmp<scalarField>::New();
+    return nullptr;
 }
 
 
@@ -307,8 +303,8 @@ Foam::radiation::boundaryRadiationProperties::transmissivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))
@@ -327,7 +323,7 @@ Foam::radiation::boundaryRadiationProperties::transmissivity
         << "Please add it"
         << exit(FatalError);
 
-    return tmp<scalarField>::New();
+    return nullptr;
 }
 
 
@@ -389,12 +385,12 @@ Foam::radiation::boundaryRadiationProperties::zoneTransmissivity
     }
 
     FatalErrorInFunction
-         << "Zone : " << mesh().faceZones()[zonei].name()
-         << " is not found in the boundaryRadiationProperties. "
-         << "Please add it"
-         << exit(FatalError);
+        << "Zone : " << mesh().faceZones()[zonei].name()
+        << " is not found in the boundaryRadiationProperties. "
+        << "Please add it"
+        << exit(FatalError);
 
-    return tmp<scalarField>::New();
+    return nullptr;
 }
 
 
@@ -403,8 +399,8 @@ Foam::radiation::boundaryRadiationProperties::diffReflectivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))
@@ -423,7 +419,7 @@ Foam::radiation::boundaryRadiationProperties::diffReflectivity
         << "Please add it"
         << exit(FatalError);
 
-    return tmp<scalarField>::New();
+    return nullptr;
 }
 
 
@@ -462,8 +458,8 @@ Foam::radiation::boundaryRadiationProperties::specReflectivity
 (
     const label patchi,
     const label bandi,
-    vectorField* incomingDirection,
-    scalarField* T
+    const vectorField* incomingDirection,
+    const scalarField* T
 ) const
 {
     if (radBoundaryPropertiesPtrList_.set(patchi))
@@ -482,7 +478,7 @@ Foam::radiation::boundaryRadiationProperties::specReflectivity
         << "Please add it"
         << exit(FatalError);
 
-    return tmp<scalarField>::New();
+    return nullptr;
 }
 
 

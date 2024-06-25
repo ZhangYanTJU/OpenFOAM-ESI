@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -383,9 +383,6 @@ void Foam::multiLevelDecomp::decompose
     {
         // Recurse
 
-        // Determine points per domain
-        labelListList domainToPoints(invertOneToMany(nCurrDomains, dist));
-
         // Extract processor+local index from point-point addressing
         if (debug && Pstream::master())
         {
@@ -510,7 +507,7 @@ void Foam::multiLevelDecomp::decompose
                 // Count the number inbetween blocks of nNext size
 
                 label nPoints = 0;
-                labelList nOutsideConnections(nCurrDomains, Zero);
+                labelList nOutsideConnections(nCurrDomains, Foam::zero{});
                 forAll(pointPoints, pointi)
                 {
                     if ((dist[pointi] / nNext) == blockI)
@@ -611,18 +608,18 @@ Foam::labelList Foam::multiLevelDecomp::decompose
     const scalarField& cWeights
 ) const
 {
+    labelList finalDecomp(cc.size(), Foam::zero{});
+    labelList cellMap(Foam::identity(cc.size()));
+
     CompactListList<label> cellCells;
     globalMeshData::calcCellCells
     (
         mesh,
-        identity(cc.size()),
-        cc.size(),
-        true,
+        cellMap,
+        cellMap.size(),
+        true,       // Global mesh connectivity
         cellCells
     );
-
-    labelList finalDecomp(cc.size(), Foam::zero{});
-    labelList cellMap(identity(cc.size()));
 
     decompose
     (
@@ -648,7 +645,7 @@ Foam::labelList Foam::multiLevelDecomp::decompose
 ) const
 {
     labelList finalDecomp(cc.size(), Foam::zero{});
-    labelList cellMap(identity(cc.size()));
+    labelList cellMap(Foam::identity(cc.size()));
 
     decompose
     (
@@ -674,7 +671,7 @@ Foam::labelList Foam::multiLevelDecomp::decompose
 ) const
 {
     labelList finalDecomp(cc.size(), Foam::zero{});
-    labelList cellMap(identity(cc.size()));
+    labelList cellMap(Foam::identity(cc.size()));
 
     decompose
     (

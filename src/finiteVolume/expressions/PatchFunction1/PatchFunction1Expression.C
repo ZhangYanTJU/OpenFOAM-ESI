@@ -65,16 +65,6 @@ Foam::PatchFunction1Types::PatchExprField<Type>::PatchExprField
 template<class Type>
 Foam::PatchFunction1Types::PatchExprField<Type>::PatchExprField
 (
-    const PatchExprField<Type>& rhs
-)
-:
-    PatchExprField<Type>(rhs, rhs.patch())
-{}
-
-
-template<class Type>
-Foam::PatchFunction1Types::PatchExprField<Type>::PatchExprField
-(
     const PatchExprField<Type>& rhs,
     const polyPatch& pp
 )
@@ -83,6 +73,16 @@ Foam::PatchFunction1Types::PatchExprField<Type>::PatchExprField
     dict_(rhs.dict_),  // Deep copy
     valueExpr_(rhs.valueExpr_),
     driver_(fvPatch::lookupPatch(this->patch()), rhs.driver_, dict_)
+{}
+
+
+template<class Type>
+Foam::PatchFunction1Types::PatchExprField<Type>::PatchExprField
+(
+    const PatchExprField<Type>& rhs
+)
+:
+    PatchExprField<Type>(rhs, rhs.patch())
 {}
 
 

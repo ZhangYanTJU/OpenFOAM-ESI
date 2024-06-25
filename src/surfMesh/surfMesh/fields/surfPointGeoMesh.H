@@ -28,7 +28,7 @@ Class
     Foam::surfPointGeoMesh
 
 Description
-    The surfMesh GeoMesh (for holding fields).
+    The surfMesh GeoMesh for point fields.
 
     Similar to surfGeoMesh, but refers to the surface points.
 

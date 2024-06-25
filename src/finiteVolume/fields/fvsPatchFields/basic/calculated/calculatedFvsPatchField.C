@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -120,14 +120,24 @@ Foam::fvsPatchField<Type>::NewCalculatedType
 
 
 template<class Type>
-template<class Type2>
+template<class AnyType>
 Foam::tmp<Foam::fvsPatchField<Type>>
 Foam::fvsPatchField<Type>::NewCalculatedType
 (
-    const fvsPatchField<Type2>& pf
+    const fvsPatchField<AnyType>& pf
 )
 {
     return NewCalculatedType(pf.patch());
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::calculatedFvsPatchField<Type>::write(Ostream& os) const
+{
+    fvsPatchField<Type>::write(os);
+    fvsPatchField<Type>::writeValueEntry(os);
 }
 
 

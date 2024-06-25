@@ -54,8 +54,8 @@ Usage
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef opaqueReflective_H
-#define opaqueReflective_H
+#ifndef Foam_radiation_opaqueReflective_H
+#define Foam_radiation_opaqueReflective_H
 
 #include "boundaryRadiationPropertiesPatch.H"
 
@@ -106,8 +106,8 @@ public:
         virtual tmp<scalarField> e
         (
             const label bandI,
-            vectorField* incomingDirection,
-            scalarField* T
+            const vectorField* incomingDirection,
+            const scalarField* T
         ) const;
 
         //- Return emissivity on face
@@ -123,8 +123,8 @@ public:
         virtual tmp<scalarField> a
         (
             const label bandI,
-            vectorField* incomingDirection,
-            scalarField* T
+            const vectorField* incomingDirection,
+            const scalarField* T
         ) const;
 
         //- Return absorptivity on face
@@ -140,8 +140,8 @@ public:
         virtual tmp<scalarField> t
         (
             const label bandI,
-            vectorField* incomingDirection,
-            scalarField* T
+            const vectorField* incomingDirection,
+            const scalarField* T
         ) const;
 
         //- Return transmissivity on face
@@ -157,8 +157,8 @@ public:
         virtual tmp<scalarField> rSpec
         (
             const label bandI,
-            vectorField* incomingDirection,
-            scalarField* T
+            const vectorField* incomingDirection,
+            const scalarField* T
         ) const;
 
         //- Return specular reflectivity on face
@@ -174,8 +174,8 @@ public:
         virtual tmp<scalarField> rDiff
         (
             const label bandI,
-            vectorField* incomingDirection ,
-            scalarField* T
+            const vectorField* incomingDirection,
+            const scalarField* T
         ) const;
 
         //- Return diffusive reflectivity on face

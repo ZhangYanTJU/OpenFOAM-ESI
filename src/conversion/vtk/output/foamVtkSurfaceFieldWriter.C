@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,34 +26,39 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "foamVtkSurfaceFieldWriter.H"
-#include "emptyFvsPatchFields.H"
 #include "fvsPatchFields.H"
 #include "surfaceFields.H"
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
-Foam::List<Foam::vector> Foam::vtk::surfaceFieldWriter::flattenBoundary
-(
-    const surfaceVectorField& field
-) const
+namespace Foam
 {
-    // Boundary field - flatten
 
-    List<vector> flat(mesh_.nBoundaryFaces(), Zero);
+// Flatten boundary field values into a contiguous list
+template<class Type>
+static List<Type> flattenBoundary
+(
+    const GeometricField<Type, fvsPatchField, surfaceMesh>& field
+)
+{
+    const polyBoundaryMesh& pbm = field.mesh().boundaryMesh();
+
+    List<Type> flat(pbm.nFaces(), Foam::zero{});
 
     forAll(field.boundaryField(), patchi)
     {
-        const polyPatch& pp = mesh_.boundaryMesh()[patchi];
+        const polyPatch& pp = pbm[patchi];
         const auto& pfld = field.boundaryField()[patchi];
 
-        if (!isA<emptyFvsPatchVectorField>(pfld))
-        {
-            SubList<vector>(flat, pp.size(), pp.offset()) = pfld;
-        }
+        // Note: restrict transcribing to actual size of the patch field
+        // - handles "empty" patch type etc.
+        SubList<Type>(flat, pfld.size(), pp.offset()) = pfld;
     }
 
     return flat;
 }
+
+} // End namespace Foam
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

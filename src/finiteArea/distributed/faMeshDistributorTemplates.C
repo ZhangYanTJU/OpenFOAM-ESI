@@ -26,8 +26,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Time.H"
-#include "emptyFaPatchField.H"
-#include "emptyFaePatchField.H"
+#include "faPatchFields.H"
+#include "faePatchFields.H"
 #include "IOobjectList.H"
 #include "polyMesh.H"
 #include "polyPatch.H"
@@ -49,10 +49,6 @@ Foam::faMeshDistributor::distributeField
     const GeometricField<Type, faPatchField, areaMesh>& fld
 ) const
 {
-    typedef typename
-        GeometricField<Type, faPatchField, areaMesh>::Patch
-        PatchFieldType;
-
     if (tgtMesh_.boundary().size() && patchEdgeMaps_.empty())
     {
         createPatchMaps();
@@ -87,7 +83,7 @@ Foam::faMeshDistributor::distributeField
 
     // Create patchFields by remote mapping
 
-    PtrList<PatchFieldType> newPatchFields(tgtMesh_.boundary().size());
+    PtrList<faPatchField<Type>> newPatchFields(tgtMesh_.boundary().size());
 
     const auto& bfld = fld.boundaryField();
 
@@ -107,11 +103,11 @@ Foam::faMeshDistributor::distributeField
             newPatchFields.set
             (
                 patchi,
-                PatchFieldType::New
+                faPatchField<Type>::New
                 (
                     bfld[patchi],
                     tgtMesh_.boundary()[patchi],
-                    DimensionedField<Type, areaMesh>::null(),
+                    faPatchField<Type>::Internal::null(),
                     mapper
                 )
             );
@@ -127,11 +123,11 @@ Foam::faMeshDistributor::distributeField
             newPatchFields.set
             (
                 patchi,
-                PatchFieldType::New
+                faPatchField<Type>::New
                 (
-                    emptyFaPatchField<Type>::typeName,
+                    faPatchFieldBase::emptyType(),
                     tgtMesh_.boundary()[patchi],
-                    DimensionedField<Type, areaMesh>::null()
+                    faPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -158,11 +154,7 @@ Foam::faMeshDistributor::distributeField
     const GeometricField<Type, faePatchField, edgeMesh>& fld
 ) const
 {
-    typedef typename
-        GeometricField<Type, faePatchField, edgeMesh>::Patch
-        PatchFieldType;
-
-    if (!internalEdgeMap_)
+    if (!internalEdgeMapPtr_)
     {
         createInternalEdgeMap();
     }
@@ -173,7 +165,7 @@ Foam::faMeshDistributor::distributeField
     const distributedFieldMapper mapper
     (
         labelUList::null(),
-        *(internalEdgeMap_)
+        *(internalEdgeMapPtr_)
     );
 
     DimensionedField<Type, edgeMesh> internalField
@@ -197,7 +189,7 @@ Foam::faMeshDistributor::distributeField
 
     // Create patchFields by remote mapping
 
-    PtrList<PatchFieldType> newPatchFields(tgtMesh_.boundary().size());
+    PtrList<faePatchField<Type>> newPatchFields(tgtMesh_.boundary().size());
 
     const auto& bfld = fld.boundaryField();
 
@@ -217,11 +209,11 @@ Foam::faMeshDistributor::distributeField
             newPatchFields.set
             (
                 patchi,
-                PatchFieldType::New
+                faePatchField<Type>::New
                 (
                     bfld[patchi],
                     tgtMesh_.boundary()[patchi],
-                    DimensionedField<Type, edgeMesh>::null(),
+                    faePatchField<Type>::Internal::null(),
                     mapper
                 )
             );
@@ -237,11 +229,11 @@ Foam::faMeshDistributor::distributeField
             newPatchFields.set
             (
                 patchi,
-                PatchFieldType::New
+                faePatchField<Type>::New
                 (
-                    emptyFaePatchField<Type>::typeName,
+                    faePatchFieldBase::emptyType(),
                     tgtMesh_.boundary()[patchi],
-                    DimensionedField<Type, edgeMesh>::null()
+                    faePatchField<Type>::Internal::null()
                 )
             );
         }

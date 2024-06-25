@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,6 +57,11 @@ const Foam::word Foam::fieldTypes::calculatedType
 const Foam::word Foam::fieldTypes::extrapolatedCalculatedType
 (
     Foam::fieldTypes::extrapolatedCalculatedTypeName_()
+);
+
+const Foam::word Foam::fieldTypes::processorType
+(
+    Foam::fieldTypes::processorTypeName_()
 );
 
 const Foam::word Foam::fieldTypes::zeroGradientType

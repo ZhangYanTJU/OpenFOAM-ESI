@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef gaussFaLaplacianScheme_H
-#define gaussFaLaplacianScheme_H
+#ifndef Foam_gaussFaLaplacianScheme_H
+#define Foam_gaussFaLaplacianScheme_H
 
 #include "faLaplacianScheme.H"
 
@@ -59,7 +59,13 @@ class gaussLaplacianScheme
 :
     public fa::laplacianScheme<Type>
 {
-    // Private Member Functions
+public:
+
+    //- Runtime type information
+    TypeName("Gauss");
+
+
+    // Generated Methods
 
         //- No copy construct
         gaussLaplacianScheme(const gaussLaplacianScheme&) = delete;
@@ -68,15 +74,9 @@ class gaussLaplacianScheme
         void operator=(const gaussLaplacianScheme&) = delete;
 
 
-public:
-
-    //- Runtime type information
-    TypeName("Gauss");
-
-
     // Constructors
 
-        //- Construct null
+        //- Construct from mesh
         gaussLaplacianScheme(const faMesh& mesh)
         :
             laplacianScheme<Type>(mesh)

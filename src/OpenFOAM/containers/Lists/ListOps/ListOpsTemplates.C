@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,6 +66,27 @@ void Foam::inplaceRenumber
         if (input[i] >= 0)
         {
             input[i] = oldToNew[input[i]];
+        }
+    }
+}
+
+
+template<class IntListType>
+void Foam::inplaceRenumber
+(
+    const Map<label>& oldToNew,
+    IntListType& input
+)
+{
+    const label len = input.size();
+
+    for (label i = 0; i < len; ++i)
+    {
+        const auto fnd = oldToNew.cfind(input[i]);
+
+        if (fnd.good())
+        {
+            input[i] = fnd.val();
         }
     }
 }
@@ -224,7 +245,7 @@ void Foam::inplaceReorder
     const bool prune
 )
 {
-    input = reorder(oldToNew, input, prune);
+    input = Foam::reorder(oldToNew, input, prune);
 
     // Verify address (for movable refs)
     // Info<< "now have " << name(input.cdata()) << nl;
@@ -707,7 +728,7 @@ void Foam::invertManyToMany
 )
 {
     // The output list sizes
-    labelList sizes(len, Zero);
+    labelList sizes(len, Foam::zero{});
 
     for (const InputIntListType& sublist : input)
     {

@@ -39,13 +39,12 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faEdgeMapper_H
-#define faEdgeMapper_H
+#ifndef Foam_faEdgeMapper_H
+#define Foam_faEdgeMapper_H
 
 #include "morphFieldMapper.H"
 #include "faMesh.H"
 #include "faceMapper.H"
-#include "HashSet.H"
 #include "mapPolyMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -61,27 +60,37 @@ class faEdgeMapper
 :
     public morphFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh
-        const faMesh& mesh_;
+        // currently unused:  const faMesh& mesh_;
 
         //- Reference to mapPolyMesh
-        //const mapPolyMesh& mpm_;
+        // currently unused:  const mapPolyMesh& mpm_;
 
-        //- Old mesh size
-        label sizeBeforeMapping_;
+        //- The size of the mapper = mesh_.nInternalEdges()
+        const label mapperLen_;
+
+        //- Size before mapping (old mesh size)
+        const label sizeBeforeMapping_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         mutable bool hasUnmapped_;
 
         //- Direct addressing
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
 
     // Private Member Functions
+
+        //- Calculate addressing
+        void calcAddressing() const;
+
+public:
+
+    // Generated Methods
 
         //- No copy construct
         faEdgeMapper(const faEdgeMapper&) = delete;
@@ -89,21 +98,15 @@ class faEdgeMapper
         //- No copy assignment
         void operator=(const faEdgeMapper&) = delete;
 
-        //- Calculate addressing
-        void calcAddressing() const;
 
-        //- Clear out local storage
-        void clearOut();
+    // Constructors
 
-
-public:
-
-    //- Construct from components
-    faEdgeMapper
-    (
-        const faMesh& mesh,
-        const mapPolyMesh& mpm
-    );
+        //- Construct from components
+        faEdgeMapper
+        (
+            const faMesh& mesh,
+            const mapPolyMesh& mpm
+        );
 
 
     //- Destructor
@@ -112,11 +115,8 @@ public:
 
     // Member Functions
 
-        //- Return size
-        virtual label size() const
-        {
-            return mesh_.nInternalEdges();
-        }
+        //- Return mapper size
+        virtual label size() const;
 
         //- Return size of field before mapping
         virtual label sizeBeforeMapping() const
@@ -144,13 +144,13 @@ public:
         //- Return interpolation weights
         virtual const scalarListList& weights() const;
 
-        //- Are there any inserted faces
+        //- Are there any inserted edges
         virtual bool insertedObjects() const
         {
             return false;
         }
 
-        //- Return list of inserted faces
+        //- Return list of inserted edges
         virtual const labelList& insertedObjectLabels() const
         {
             return labelList::null();

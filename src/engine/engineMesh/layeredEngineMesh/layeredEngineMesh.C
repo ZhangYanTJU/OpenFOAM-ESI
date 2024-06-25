@@ -85,28 +85,28 @@ void Foam::layeredEngineMesh::move()
         }
     }
 
-    if (engineDB_.foundObject<surfaceScalarField>("phi"))
+
+    auto* phiPtr = engineDB_.getObjectPtr<surfaceScalarField>("phi");
+
+    if (phiPtr)
     {
-        surfaceScalarField& phi =
-            engineDB_.lookupObjectRef<surfaceScalarField>("phi");
+        auto& phi = *phiPtr;
 
-        const volScalarField& rho =
-            engineDB_.lookupObject<volScalarField>("rho");
+        const auto& rho = engineDB_.lookupObject<volScalarField>("rho");
+        const auto& U = engineDB_.lookupObject<volVectorField>("U");
 
-        const volVectorField& U =
-            engineDB_.lookupObject<volVectorField>("U");
-
-        bool absolutePhi = false;
-        if (moving())
+        const bool absolutePhi = moving();
+        if (absolutePhi)
         {
+            // cf. fvc::makeAbsolute
             phi += fvc::interpolate(rho)*fvc::meshPhi(rho, U);
-            absolutePhi = true;
         }
 
         movePoints(newPoints);
 
         if (absolutePhi)
         {
+            // cf. fvc::makeRelative
             phi -= fvc::interpolate(rho)*fvc::meshPhi(rho, U);
         }
     }

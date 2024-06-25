@@ -65,6 +65,16 @@ class decompositionModel
     >,
     public IOdictionary
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            polyMesh,
+            UpdateableMeshObject,
+            decompositionModel
+        > MeshObject_type;
+
+
     // Private Data
 
         mutable autoPtr<decompositionMethod> decomposerPtr_;

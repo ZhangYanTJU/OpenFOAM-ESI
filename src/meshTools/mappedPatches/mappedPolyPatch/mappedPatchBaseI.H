@@ -255,25 +255,6 @@ Foam::mappedPatchBase::updateMeshTime() const
 }
 
 
-inline bool Foam::mappedPatchBase::upToDate() const
-{
-    const polyMesh& thisMesh = patch_.boundaryMesh().mesh();
-
-    if (sameWorld())
-    {
-        return
-            sampleMesh().upToDatePoints(updateSampleMeshTime())
-         && thisMesh.upToDatePoints(updateMeshTime());
-    }
-    else
-    {
-        // If not the same world we do not know what the other side is doing
-        // so only check our local side
-        return thisMesh.upToDatePoints(updateMeshTime());
-    }
-}
-
-
 inline const Foam::mapDistribute& Foam::mappedPatchBase::map() const
 {
     if (!upToDate())

@@ -27,15 +27,27 @@ Class
     Foam::cyclicFvsPatchField
 
 Description
-    Foam::cyclicFvsPatchField
+    This boundary condition enforces a cyclic condition between a pair of
+    boundaries.
+
+    The "value" entry is NO_READ, but is written.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type            cyclic;
+    }
+    \endverbatim
 
 SourceFiles
     cyclicFvsPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cyclicFvsPatchField_H
-#define cyclicFvsPatchField_H
+#ifndef Foam_cyclicFvsPatchField_H
+#define Foam_cyclicFvsPatchField_H
 
 #include "coupledFvsPatchField.H"
 #include "cyclicFvPatch.H"
@@ -46,7 +58,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class cyclicFvsPatch Declaration
+                     Class cyclicFvsPatchField Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
@@ -54,7 +66,7 @@ class cyclicFvsPatchField
 :
     public coupledFvsPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the cyclic patch
         const cyclicFvPatch& cyclicPatch_;
@@ -75,7 +87,8 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct from patch, internal field and dictionary
+        //- Construct from patch, internal field and dictionary.
+        //- The "value" entry is MUST_READ.
         cyclicFvsPatchField
         (
             const fvPatch&,
@@ -98,15 +111,6 @@ public:
             const cyclicFvsPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const
-        {
-            return tmp<fvsPatchField<Type>>
-            (
-                new cyclicFvsPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         cyclicFvsPatchField
         (
@@ -114,16 +118,19 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const
+        {
+            return fvsPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
         ) const
         {
-            return tmp<fvsPatchField<Type>>
-            (
-                new cyclicFvsPatchField<Type>(*this, iF)
-            );
+            return fvsPatchField<Type>::Clone(*this, iF);
         }
 };
 

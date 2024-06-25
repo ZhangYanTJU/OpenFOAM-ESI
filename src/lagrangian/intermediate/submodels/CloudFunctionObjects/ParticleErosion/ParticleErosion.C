@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "ParticleErosion.H"
+#include "wordRes.H"
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 
@@ -110,15 +111,15 @@ Foam::ParticleErosion<CloudType>::ParticleErosion
     );
 
     labelHashSet uniqIds;
-    for (const wordRe& re : patchNames)
+    for (const wordRe& select : patchNames)
     {
-        labelList ids = findMatchingStrings(re, allPatchNames);
+        labelList ids = wordRes::matching(select, allPatchNames);
 
         if (ids.empty())
         {
             WarningInFunction
-                << "Cannot find any patch names matching " << re
-                << endl;
+                << "Cannot find any patch names matching "
+                << select << nl;
         }
 
         uniqIds.insert(ids);

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,31 +31,74 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, class GeoMeshType>
-void Foam::surfMesh::storeField
+Foam::DimensionedField<Type, GeoMeshType>&
+Foam::surfMesh::newField
+(
+    const word& fieldName,
+    const dimensionSet& dims
+)
+{
+    typedef DimensionedField<Type, GeoMeshType> fieldType;
+
+    const objectRegistry& fieldDb = *this;
+
+    auto* fldptr = fieldDb.getObjectPtr<fieldType>(fieldName);
+
+    if (fldptr)
+    {
+        fldptr->dimensions().reset(dims);  // Dimensions may have changed
+        fldptr->field() = Foam::zero{};
+    }
+    else
+    {
+        fldptr = new fieldType
+        (
+            fieldDb.newIOobject
+            (
+                fieldName,
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
+            ),
+            *this,
+            Foam::zero{},
+            dims
+        );
+
+        regIOobject::store(fldptr);
+    }
+
+    return *fldptr;
+}
+
+
+template<class Type, class GeoMeshType>
+Foam::DimensionedField<Type, GeoMeshType>&
+Foam::surfMesh::storeField
 (
     const word& fieldName,
     const dimensionSet& dims,
     const Field<Type>& values
 )
 {
+    typedef DimensionedField<Type, GeoMeshType> fieldType;
+
     const objectRegistry& fieldDb = *this;
 
-    auto* dimfield =
-        fieldDb.getObjectPtr<DimensionedField<Type, GeoMeshType>>(fieldName);
+    auto* fldptr = fieldDb.getObjectPtr<fieldType>(fieldName);
 
-    if (dimfield)
+    if (fldptr)
     {
-        dimfield->dimensions().reset(dims);  // Dimensions may have changed
-        dimfield->field() = values;
+        fldptr->dimensions().reset(dims);  // Dimensions may have changed
+        fldptr->field() = values;
     }
     else
     {
-        dimfield = new DimensionedField<Type, GeoMeshType>
+        fldptr = new fieldType
         (
-            IOobject
+            fieldDb.newIOobject
             (
                 fieldName,
-                fieldDb,
                 IOobjectOption::NO_READ,
                 IOobjectOption::NO_WRITE,
                 IOobjectOption::REGISTER
@@ -65,37 +108,40 @@ void Foam::surfMesh::storeField
             values
         );
 
-        dimfield->store();
+        regIOobject::store(fldptr);
     }
+
+    return *fldptr;
 }
 
 
 template<class Type, class GeoMeshType>
-void Foam::surfMesh::storeField
+Foam::DimensionedField<Type, GeoMeshType>&
+Foam::surfMesh::storeField
 (
     const word& fieldName,
     const dimensionSet& dims,
     Field<Type>&& values
 )
 {
+    typedef DimensionedField<Type, GeoMeshType> fieldType;
+
     const objectRegistry& fieldDb = *this;
 
-    auto* dimfield =
-        fieldDb.getObjectPtr<DimensionedField<Type, GeoMeshType>>(fieldName);
+    auto* fldptr = fieldDb.getObjectPtr<fieldType>(fieldName);
 
-    if (dimfield)
+    if (fldptr)
     {
-        dimfield->dimensions().reset(dims);  // Dimensions may have changed
-        dimfield->field() = std::move(values);
+        fldptr->dimensions().reset(dims);  // Dimensions may have changed
+        fldptr->field() = std::move(values);
     }
     else
     {
-        dimfield = new DimensionedField<Type, GeoMeshType>
+        fldptr = new fieldType
         (
-            IOobject
+            fieldDb.newIOobject
             (
                 fieldName,
-                fieldDb,
                 IOobjectOption::NO_READ,
                 IOobjectOption::NO_WRITE,
                 IOobjectOption::REGISTER
@@ -105,8 +151,10 @@ void Foam::surfMesh::storeField
             std::move(values)
         );
 
-        dimfield->store();
+        regIOobject::store(fldptr);
     }
+
+    return *fldptr;
 }
 
 

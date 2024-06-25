@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -183,8 +183,7 @@ public:
             pointer eptr_;
 
 
-            //- Construct for the given dictionary context.
-            //  Allow implicit conversion
+            //- Implicit construct for the given dictionary context
             Searcher(dict_pointer dict) noexcept
             :
                 dict_(dict),
@@ -212,6 +211,7 @@ public:
             bool good() const noexcept { return eptr_; }
 
             //- True if entry was found
+            //  \deprecated(2019-01) - prefer good() method
             bool found() const noexcept { return eptr_; }
 
             //- The containing dictionary context
@@ -229,18 +229,31 @@ public:
                 return (eptr_ && eptr_->dictPtr());
             }
 
+            //- True if found entry is a stream.
+            bool isStream() const noexcept
+            {
+                return (eptr_ && eptr_->streamPtr());
+            }
+
             //- Pointer to the found entry as a dictionary, nullptr otherwise
             dict_pointer dictPtr() const noexcept
             {
-                return eptr_ ? eptr_->dictPtr() : nullptr;
+                return (eptr_ ? eptr_->dictPtr() : nullptr);
             }
 
-            //- Reference the found entry as a dictionary.
-            //  (Error if not found, or not a dictionary).
-            dict_reference dict() const
+            //- Pointer to the found entry as a stream, nullptr otherwise
+            ITstream* streamPtr() const noexcept
             {
-                return eptr_->dict();
+                return (eptr_ ? eptr_->streamPtr() : nullptr);
             }
+
+            //- Return the found entry as a dictionary.
+            //- Error if not found, or not a dictionary.
+            dict_reference dict() const { return eptr_->dict(); }
+
+            //- Return the found entry as a ITstream.
+            //- Error if not found, or not a stream.
+            ITstream& stream() const { return eptr_->stream(); }
 
             //- Permit an explicit cast to the other (const/non-const) searcher
             explicit operator const Searcher<!Const>&() const
@@ -249,16 +262,10 @@ public:
             }
 
             //- A pointer to the entry (nullptr if not found)
-            pointer operator->() const noexcept
-            {
-                return eptr_;
-            }
+            pointer operator->() const noexcept { return eptr_; }
 
             //- A reference to the entry (Error if not found)
-            reference operator*() const
-            {
-                return *eptr_;
-            }
+            reference operator*() const { return *eptr_; }
         };
 
 
@@ -557,7 +564,7 @@ public:
         ) const;
 
         //- Find and return a sub-dictionary pointer if present
-        //- (and a sub-dictionary) otherwise return nullptr.
+        //- (and it is a dictionary) otherwise return nullptr.
         //
         //  \param keyword the keyword to search for
         //  \param matchOpt search mode (default: non-recursive with patterns)
@@ -570,7 +577,7 @@ public:
         ) const;
 
         //- Find and return a sub-dictionary pointer if present
-        //- (and a sub-dictionary) otherwise return nullptr.
+        //- (and it is a dictionary) otherwise return nullptr.
         //
         //  \param keyword the keyword to search for
         //  \param matchOpt search mode (default: non-recursive with patterns)
@@ -582,13 +589,14 @@ public:
             enum keyType::option matchOpt = keyType::REGEX
         );
 
-        //- Find a sub-dictionary.
+        //- Find and return an entry stream if present
+        //- (and it is a stream) otherwise return nullptr.
         //
         //  \param keyword the keyword to search for
         //  \param matchOpt search mode (default: non-recursive with patterns)
         //
-        //  \return true if the sub-dictionary was found
-        inline bool isDict
+        //  \return pointer to ITstream or a nullptr
+        inline ITstream* findStream
         (
             const word& keyword,
             enum keyType::option matchOpt = keyType::REGEX
@@ -1283,7 +1291,7 @@ public:
 
     // Shortcuts - when a templated classes also inherits from a dictionary
 
-        #undef defineDictionaryGetter
+        #undef  defineDictionaryGetter
         #define defineDictionaryGetter(Func, Type)                            \
             /*! \brief Same as get\<Type\>(const word&, keyType::option) */   \
             Type Func                                                         \
@@ -1307,6 +1315,18 @@ public:
 
     // Housekeeping
 
+        //- Check for existence of a sub-dictionary.
+        //- Generally prefer findDict() for more flexibility.
+        FOAM_DEPRECATED_STRICT(2024-05, "findDict()")
+        bool isDict
+        (
+            const word& keyword,
+            enum keyType::option matchOpt = keyType::REGEX
+        ) const
+        {
+            return static_cast<bool>(findDict(keyword, matchOpt));
+        }
+
         //- Same as getOrDefault()
         template<class T>
         FOAM_DEPRECATED_STRICT(2019-06, "getOrDefault()")
@@ -1319,7 +1339,6 @@ public:
         {
             return getOrDefault<T>(keyword, deflt, matchOpt);
         }
-
 
         //- Same as getOrAdd()
         template<class T>

@@ -37,7 +37,7 @@ Foam::designVariables::activeDesignVariables() const
 
 bool Foam::designVariables::isMaxInitChangeSet() const
 {
-    return maxInitChange_.valid();
+    return bool(maxInitChange_);
 }
 
 

@@ -27,20 +27,23 @@ Class
     Foam::regionFaModels::KirchhoffShell
 
 Description
+    Vibration-shell finite-area model.
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        // Mandatory/Optional entries
-        ...
-
         // Mandatory entries
         vibrationShellModel   KirchhoffShell;
-        f0                    0.04;
-        f1                    0.0;
-        f2                    0.0;
+        f0                    <scalar>;
+        f1                    <scalar>;
+        f2                    <scalar>;
+
+        // Inherited entries
+        ...
+        nNonOrthCorr          <int>;    // read from another dict
+        nSubCycles            <int>;
     }
     \endverbatim
 
@@ -66,7 +69,6 @@ SourceFiles
 
 #include "volFieldsFwd.H"
 #include "vibrationShellModel.H"
-#include "faMesh.H"
 #include "faCFD.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -86,64 +88,54 @@ class KirchhoffShell
 {
     // Private Data
 
+        // Source term fields
+
+        //- External surface source [Pa]
+        const areaScalarField ps_;
+
+        //- Thickness [m]
+        areaScalarField h_;
+
+        //- Laplace of the displacement
+        areaScalarField laplaceW_;
+
+        //- Laplace of the Laplace for the displacement
+        areaScalarField laplace2W_;
+
+        //- Cache w.oldTime() in sub-cycling
+        areaScalarField w0_;
+
+        //- Cache w.oldTime.oldTime() in sub-cycling
+        areaScalarField w00_;
+
+        //- Cache laplaceW.oldTime() in sub-cycling
+        areaScalarField laplaceW0_;
+
+        //- Cache laplace2.oldTime() in sub-cycling
+        areaScalarField laplace2W0_;
+
+
+        // Solution parameters
+
         //- Damping coefficients [1/s]
-        dimensionedScalar f0_;
-        dimensionedScalar f1_;
-        dimensionedScalar f2_;
+        const dimensionedScalar f0_;
+        const dimensionedScalar f1_;
+        const dimensionedScalar f2_;
+
+        //- Number of non orthogonal correctors
+        label nNonOrthCorr_;
+
+        //- Sub cycles
+        label nSubCycles_;
 
 
     // Private Member Functions
 
-        //- Initialise KirchhoffShell
+        //- Initialise Kirchhoff shell model
         bool init(const dictionary& dict);
 
-
-protected:
-
-    // Protected Data
-
-        // Solution parameters
-
-            //- Number of non orthogonal correctors
-            label nNonOrthCorr_;
-
-            //- Sub cycles
-            label nSubCycles_;
-
-
-        // Source term fields
-
-            //- External surface source [Pa]
-            areaScalarField ps_;
-
-            //- Thickness [m]
-            areaScalarField h_;
-
-            //- Laplace of the displacement
-            areaScalarField laplaceW_;
-
-            //- Laplace of the Laplace for the displacement
-            areaScalarField laplace2W_;
-
-            //- Cache w.oldTime() in sub-cycling
-            areaScalarField w0_;
-
-            //- Cache w.oldTime.oldTime() in sub-cycling
-            areaScalarField w00_;
-
-            //- Cache laplaceW.oldTime() in sub-cycling
-            areaScalarField laplaceW0_;
-
-            //- Cache laplace2.oldTime() in sub-cycling
-            areaScalarField laplace2W0_;
-
-
-    // Protected Member Functions
-
-        // Equations
-
-            //- Solve energy equation
-            void solveDisplacement();
+        //- Solve energy equation
+        void solveDisplacement();
 
 
 public:

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,6 +29,25 @@ License
 #include "globalIndex.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+// Cannot use non-blocking for non-contiguous data.
+// template<class Type>
+// inline Foam::UPstream::commsTypes getCommsType
+// (
+//     const UPstream::commsTypes preferred
+// )
+// {
+//     return
+//     (
+//         (
+//             !is_contiguous<Type>::value
+//          && UPstream::commsTypes::nonBlocking == preferred
+//         )
+//       ? UPstream::commsTypes::scheduled
+//       : preferred
+//     );
+// }
+
 
 template<class Addr>
 Foam::labelList
@@ -115,8 +134,7 @@ void Foam::globalIndex::gatherValues
 {
     // low-level: no parRun guard
 
-    // Automatically change from nonBlocking to scheduled for
-    // non-contiguous data.
+    // Cannot use non-blocking for non-contiguous data.
     const UPstream::commsTypes commsType =
     (
         (
@@ -152,8 +170,7 @@ void Foam::globalIndex::gatherValues
             }
             else
             {
-                IPstream fromProc(commsType, procIDs[i], 0, tag, comm);
-                fromProc >> allValues[i];
+                IPstream::recv(allValues[i], procIDs[i], tag, comm);
             }
         }
     }
@@ -175,8 +192,7 @@ void Foam::globalIndex::gatherValues
         }
         else
         {
-            OPstream toMaster(commsType, masterProci, 0, tag, comm);
-            toMaster << localValue;
+            OPstream::send(localValue, commsType, masterProci, tag, comm);
         }
     }
 
@@ -202,8 +218,7 @@ void Foam::globalIndex::gather
 {
     // low-level: no parRun guard
 
-    // Automatically change from nonBlocking to scheduled for
-    // non-contiguous data.
+    // Cannot use non-blocking for non-contiguous data.
     const UPstream::commsTypes commsType =
     (
         (
@@ -252,8 +267,7 @@ void Foam::globalIndex::gather
             }
             else
             {
-                IPstream fromProc(commsType, procIDs[i], 0, tag, comm);
-                fromProc >> procSlot;
+                IPstream::recv(procSlot, procIDs[i], tag, comm);
             }
         }
     }
@@ -277,8 +291,7 @@ void Foam::globalIndex::gather
         }
         else
         {
-            OPstream toMaster(commsType, masterProci, 0, tag, comm);
-            toMaster << fld;
+            OPstream::send(fld, commsType, masterProci, tag, comm);
         }
     }
 
@@ -322,8 +335,7 @@ void Foam::globalIndex::gather
         return;
     }
 
-    // Automatically change from nonBlocking to scheduled for
-    // non-contiguous data.
+    // Cannot use non-blocking for non-contiguous data.
     const UPstream::commsTypes commsType =
     (
         (
@@ -362,8 +374,7 @@ void Foam::globalIndex::gather
             }
             else
             {
-                IPstream fromProc(commsType, procIDs[i], 0, tag, comm);
-                fromProc >> procSlot;
+                IPstream::recv(procSlot, procIDs[i], tag, comm);
             }
         }
     }
@@ -375,8 +386,7 @@ void Foam::globalIndex::gather
         }
         else
         {
-            OPstream toMaster(commsType, masterProci, 0, tag, comm);
-            toMaster << fld;
+            OPstream::send(fld, commsType, masterProci, tag, comm);
         }
     }
 
@@ -907,8 +917,7 @@ void Foam::globalIndex::scatter
 {
     // low-level: no parRun guard
 
-    // Automatically change from nonBlocking to scheduled for
-    // non-contiguous data.
+    // Cannot use non-blocking for non-contiguous data.
     const UPstream::commsTypes commsType =
     (
         (
@@ -947,8 +956,7 @@ void Foam::globalIndex::scatter
             }
             else
             {
-                OPstream toProc(commsType, procIDs[i], 0, tag, comm);
-                toProc << procSlot;
+                OPstream::send(procSlot, commsType, procIDs[i], tag, comm);
             }
         }
 
@@ -984,8 +992,7 @@ void Foam::globalIndex::scatter
         }
         else
         {
-            IPstream fromMaster(commsType, masterProci, 0, tag, comm);
-            fromMaster >> fld;
+            IPstream::recv(fld, masterProci, tag, comm);
         }
     }
 
@@ -1085,7 +1092,7 @@ void Foam::globalIndex::get
         );
 
         // Send local indices to individual processors as local index
-        PstreamBuffers sendBufs(UPstream::commsTypes::nonBlocking, tag, comm);
+        PstreamBuffers sendBufs(comm, tag);
 
         for (const auto proci : validBins)
         {
@@ -1102,7 +1109,7 @@ void Foam::globalIndex::get
         sendBufs.finishedSends();
 
 
-        PstreamBuffers returnBufs(UPstream::commsTypes::nonBlocking, tag, comm);
+        PstreamBuffers returnBufs(comm, tag);
 
         for (const int proci : sendBufs.allProcs())
         {

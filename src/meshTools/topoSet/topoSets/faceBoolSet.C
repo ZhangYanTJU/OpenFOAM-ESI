@@ -35,7 +35,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(faceBoolSet, 0);
+    defineTypeName(faceBoolSet);
 }
 
 

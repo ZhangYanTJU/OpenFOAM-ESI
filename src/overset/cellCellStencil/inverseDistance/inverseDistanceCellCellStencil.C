@@ -1970,7 +1970,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
 
     const globalIndex globalCells(mesh_.nCells());
 
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     // Mark holes (in allCellTypes)
     for (label srcI = 0; srcI < meshParts.size()-1; srcI++)

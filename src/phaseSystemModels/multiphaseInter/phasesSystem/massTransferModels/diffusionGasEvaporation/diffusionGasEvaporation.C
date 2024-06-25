@@ -144,32 +144,26 @@ Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>
 
     updateInterface(T);
 
-    auto tRhog = tmp<volScalarField>::New
+    auto tRhog = volScalarField::New
     (
-        IOobject
-        (
-            "tRhog",
-            mesh.time().timeName(),
-            mesh
-        ),
+        "tRhog",
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedScalar(dimDensity, Zero)
     );
-    volScalarField& rhog = tRhog.ref();
+    auto& rhog = tRhog.ref();
+
     rhog = this->pair().to().rho();
 
-    auto tDvg = tmp<volScalarField>::New
+    auto tDvg = volScalarField::New
     (
-        IOobject
-        (
-            "tDvg",
-            mesh.time().timeName(),
-            mesh
-        ),
+        "tDvg",
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedScalar(sqr(dimLength)/dimTime, Zero)
     );
-    volScalarField& Dvg = tDvg.ref();
+    auto& Dvg = tDvg.ref();
+
     Dvg = this->Dto(speciesName);
 
     tmp<volScalarField> tpSat = saturationModelPtr_->pSat(T);

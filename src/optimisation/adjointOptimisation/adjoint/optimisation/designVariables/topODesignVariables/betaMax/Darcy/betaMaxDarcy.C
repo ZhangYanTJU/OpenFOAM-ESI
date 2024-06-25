@@ -58,12 +58,12 @@ Foam::betaMaxDarcy::betaMaxDarcy
         (
             IOobject
             (
-                 "transportProperties",
-                 mesh.time().constant(),
-                 mesh,
-                 IOobject::MUST_READ,
-                 IOobject::NO_WRITE,
-                 false
+                "transportProperties",
+                mesh.time().constant(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             )
         ).get<dimensionedScalar>("nu").value();
 

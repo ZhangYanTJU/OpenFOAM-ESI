@@ -31,11 +31,16 @@ Group
     grpGenericBoundaryConditions
 
 Description
-    This boundary condition is not designed to be evaluated; it is assmued
+    This boundary condition is not designed to be evaluated; it is assumed
     that the value is assigned via field assignment, and not via a call to
     e.g. \c updateCoeffs or \c evaluate.
 
 Usage
+    \table
+        Property     | Description             | Required  | Default
+        value        | field value             | yes |
+    \endtable
+
     Example of the boundary condition specification:
     \verbatim
     <patchName>
@@ -99,13 +104,13 @@ public:
             const fvPatch& p,
             const DimensionedField<Type, volMesh>& iF,
             const dictionary& dict,
-            const bool valueReqd
+            const bool needValue
         )
         :
             calculatedFvPatchField
             (
                 p, iF, dict,
-                (valueReqd? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
+                (needValue? IOobjectOption::MUST_READ : IOobjectOption::NO_READ)
             )
         {}
 
@@ -124,15 +129,6 @@ public:
             const calculatedFvPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new calculatedFvPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         calculatedFvPatchField
         (
@@ -140,16 +136,19 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return fvPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>
-            (
-                new calculatedFvPatchField<Type>(*this, iF)
-            );
+            return fvPatchField<Type>::Clone(*this, iF);
         }
 
 
@@ -184,7 +183,7 @@ public:
             tmp<Field<Type>> gradientBoundaryCoeffs() const;
 
 
-        //- Write
+        //- Write includes "value" entry
         virtual void write(Ostream&) const;
 };
 

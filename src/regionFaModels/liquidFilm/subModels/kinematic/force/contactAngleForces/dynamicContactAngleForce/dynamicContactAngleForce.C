@@ -27,6 +27,8 @@ License
 
 #include "dynamicContactAngleForce.H"
 #include "addToRunTimeSelectionTable.H"
+#include "Function1.H"
+#include "distributionModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

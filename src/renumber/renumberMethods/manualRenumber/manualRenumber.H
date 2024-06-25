@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,22 +55,16 @@ class manualRenumber
 
         fileName dataFile_;
 
-
-    // Private Member Functions
-
-        //- No copy construct
-        manualRenumber(const manualRenumber&) = delete;
-
-        //- No copy assignment
-        void operator=(const manualRenumber&) = delete;
-
 public:
 
     //- Runtime type information
-    TypeName("manual");
+    TypeNameNoDebug("manual");
 
 
     // Constructors
+
+        //- Construct with given data file
+        explicit manualRenumber(const fileName& file);
 
         //- Construct given the renumber dictionary
         explicit manualRenumber(const dictionary& dict);
@@ -82,41 +76,35 @@ public:
 
     // Member Functions
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        virtual labelList renumber(const pointField&) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+        //- The renumbering method needs a polyMesh (for its IOobject)
+        virtual bool needs_mesh() const { return true; }
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Uses mesh for regIOobject
+
+    // With mesh topology
+
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- using the mesh for its IOobject and instance.
+        virtual labelList renumber(const polyMesh& mesh) const;
+
+
+    // With explicit topology - Not implemented!
+
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- Not implemented!
         virtual labelList renumber
         (
-            const polyMesh& mesh,
-            const pointField& cc
-        ) const;
-
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        virtual labelList renumber
-        (
-            const CompactListList<label>& cellCells,
-            const pointField& cellCentres
+            const CompactListList<label>& cellCells
         ) const
         {
             NotImplemented;
             return labelList();
         }
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- Not implemented!
         virtual labelList renumber
         (
-            const labelListList& cellCells,
-            const pointField& cellCentres
+            const labelListList& cellCells
         ) const
         {
             NotImplemented;

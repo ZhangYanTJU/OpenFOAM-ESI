@@ -66,13 +66,13 @@ int main(int argc, char *argv[])
 
             for (const entry& dEntry : dict)
             {
-                if (!dEntry.isStream())
+                if (dEntry.isStream())
                 {
-                    continue;
+                    List<namedDictionary> list(dEntry.stream());
+
+                    Info<< "input: " << dEntry << nl
+                        << "list: " << list << nl;
                 }
-                Info<< "input: " << dEntry << nl;
-                List<namedDictionary> list(dEntry.stream());
-                Info<< "list: " << list << nl;
             }
         }
     }

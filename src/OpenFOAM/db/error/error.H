@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -120,7 +120,10 @@ public:
     // Constructors
 
         //- Construct from title string
-        explicit error(const string& title);
+        explicit error(const char* title);
+
+        //- Construct from title string
+        explicit error(const std::string& title) : error(title.c_str()) {}
 
         //- Construct from dictionary
         explicit error(const dictionary& errDict);
@@ -161,7 +164,7 @@ public:
         //- The accumulated error message
         string message() const;
 
-        //- Clear any messages
+        //- Clear any accumulated error messages
         void clear() const;
 
         //- The currently defined function name for output messages
@@ -315,7 +318,10 @@ public:
     // Constructors
 
         //- Construct from title string
-        explicit IOerror(const string& title);
+        explicit IOerror(const char* title);
+
+        //- Construct from title string
+        explicit IOerror(const std::string& title) : IOerror(title.c_str()) {}
 
         //- Construct from dictionary
         explicit IOerror(const dictionary& errDict);
@@ -412,7 +418,7 @@ public:
             const char* sourceFileName,
             const int sourceFileLineNumber,
             const IOstream& ioStream,
-            const string& msg
+            const std::string& msg
         );
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,6 +58,7 @@ Description
 #include "axisAngleRotation.H"
 #include "EulerCoordinateRotation.H"
 #include "MeshedSurfaces.H"
+#include "cylindricalCS.H"
 
 using namespace Foam;
 using namespace Foam::coordinateRotations;
@@ -257,6 +258,12 @@ int main(int argc, char *argv[])
         "type",
         "Output format (default: use file extension)"
     );
+    argList::addOption
+    (
+        "cylToCart",
+        "(originVec axisVec directionVec)",
+        "Tranform cylindrical coordinates to cartesian coordinates"
+    );
 
     // Backward compatibility and with transformPoints
     argList::addOptionCompat("write-scale", {"scale", -2006});
@@ -277,7 +284,8 @@ int main(int argc, char *argv[])
             "rollPitchYaw",
             "yawPitchRoll",
             "read-scale",
-            "write-scale"
+            "write-scale",
+            "cylToCart"
         });
 
         if (!args.count(operationNames))
@@ -460,6 +468,24 @@ int main(int argc, char *argv[])
 
     // Output scaling
     applyScaling(points, getScalingOpt("write-scale", args));
+
+    // Conversion to cylindrical coords
+    if (args.found("cylToCart"))
+    {
+        vectorField n1n2(args.lookup("cylToCart")());
+        n1n2[1].normalise();
+        n1n2[2].normalise();
+
+        cylindricalCS ccs
+            (
+                "ccs",
+                n1n2[0],
+                n1n2[1],
+                n1n2[2]
+            );
+
+        points = ccs.globalPosition(points);
+    }
 
     surf1.movePoints(points);
     surf1.write(exportName, writeFileType);

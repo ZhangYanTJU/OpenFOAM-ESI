@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,6 +46,7 @@ namespace Foam
 
 // Forward Declarations
 class bitSet;
+class boundBox;
 class polyMesh;
 template<class T> class InfoProxy;
 
@@ -273,12 +274,24 @@ public:
         virtual void writeDict(Ostream& os, const bool full=false) const;
 
         //- Write geometry, using a mesh reference (serial only)
+        //- No beginGeometry() marker.
         virtual void write
         (
             ensightGeoFile& os,
             const polyMesh& mesh,
             bool parallel
         ) const;
+
+        //- Write bounding box geometry.
+        //- All parameters are only relevant on master
+        //- No beginGeometry() marker.
+        static void writeBox
+        (
+            ensightGeoFile& os,
+            const boundBox& bb,
+            const label partIndex = 0,
+            const word& partName = "geometry-box"
+        );
 };
 
 

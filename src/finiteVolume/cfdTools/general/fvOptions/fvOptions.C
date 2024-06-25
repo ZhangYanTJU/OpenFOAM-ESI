@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,7 +102,7 @@ Foam::fv::options::options
 
 Foam::fv::options& Foam::fv::options::New(const fvMesh& mesh)
 {
-    options* ptr = mesh.thisDb().getObjectPtr<options>(typeName);
+    auto* ptr = mesh.thisDb().getObjectPtr<options>(typeName);
 
     if (!ptr)
     {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,17 +27,29 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "renumberMethod.H"
+#include "dlLibraryTable.H"
 #include "globalMeshData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(renumberMethod, 0);
+    defineTypeName(renumberMethod);
     defineRunTimeSelectionTable(renumberMethod, dictionary);
 }
 
+
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
+
+Foam::wordList Foam::renumberMethod::supportedMethods()
+{
+    if (dictionaryConstructorTablePtr_)
+    {
+        return dictionaryConstructorTablePtr_->sortedToc();
+    }
+    return wordList();
+}
+
 
 Foam::autoPtr<Foam::renumberMethod> Foam::renumberMethod::New
 (
@@ -47,6 +59,9 @@ Foam::autoPtr<Foam::renumberMethod> Foam::renumberMethod::New
     const word methodType(dict.get<word>("method"));
 
     //Info<< "Selecting renumberMethod " << methodType << endl;
+
+    // Load any additional libs (verbose = false)
+    dlLibraryTable::libs().open("libs", dict, false);
 
     auto* ctorPtr = dictionaryConstructorTable(methodType);
 
@@ -67,42 +82,14 @@ Foam::autoPtr<Foam::renumberMethod> Foam::renumberMethod::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::labelList Foam::renumberMethod::renumber
-(
-    const polyMesh& mesh,
-    const pointField& points
-) const
+Foam::labelList Foam::renumberMethod::renumber(const label nCells) const
 {
-    CompactListList<label> cellCells;
-    globalMeshData::calcCellCells
-    (
-        mesh,
-        identity(mesh.nCells()),
-        mesh.nCells(),
-        false,                      // local only
-        cellCells
-    );
-
-    return renumber(cellCells, points);
+    NotImplemented;
+    return labelList();
 }
 
 
-Foam::labelList Foam::renumberMethod::renumber
-(
-    const CompactListList<label>& cellCells,
-    const pointField& points
-) const
-{
-    return renumber(cellCells.unpack(), points);
-}
-
-
-Foam::labelList Foam::renumberMethod::renumber
-(
-    const labelList& cellCells,
-    const labelList& offsets,
-    const pointField& cc
-) const
+Foam::labelList Foam::renumberMethod::renumber(const pointField& cc) const
 {
     NotImplemented;
     return labelList();
@@ -111,8 +98,21 @@ Foam::labelList Foam::renumberMethod::renumber
 
 Foam::labelList Foam::renumberMethod::renumber
 (
+    const polyMesh& mesh
+) const
+{
+    // Local mesh connectivity
+    CompactListList<label> cellCells;
+    globalMeshData::calcCellCells(mesh, cellCells);
+
+    return renumber(cellCells);
+}
+
+
+Foam::labelList Foam::renumberMethod::renumber
+(
     const polyMesh& mesh,
-    const labelList& fineToCoarse,
+    const labelUList& fineToCoarse,
     const pointField& coarsePoints
 ) const
 {
@@ -121,16 +121,13 @@ Foam::labelList Foam::renumberMethod::renumber
     (
         mesh,
         fineToCoarse,
-        coarsePoints.size(),
-        false,                      // local only
+        coarsePoints.size(),   // nLocalCoarse
+        false,  // local only (parallel = false)
         coarseCellCells
     );
 
     // Renumber based on agglomerated points
-    labelList coarseDistribution
-    (
-        renumber(coarseCellCells, coarsePoints)
-    );
+    labelList coarseDistribution = renumber(coarseCellCells);
 
     // From coarse back to fine for original mesh
     return labelList(coarseDistribution, fineToCoarse);

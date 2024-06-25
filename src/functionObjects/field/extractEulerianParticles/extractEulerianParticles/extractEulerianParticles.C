@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -531,9 +531,10 @@ bool Foam::functionObjects::extractEulerianParticles::execute()
     const volScalarField& alpha =
         mesh_.lookupObject<volScalarField>(alphaName_);
 
-    const surfaceScalarField alphaf
+    auto talphaf = surfaceScalarField::New
     (
-        typeName + ":alphaf",
+        IOobject::scopedName(typeName, "alphaf"),
+        IOobject::NO_REGISTER,
         fvc::interpolate(alpha)
     );
 
@@ -546,7 +547,7 @@ bool Foam::functionObjects::extractEulerianParticles::execute()
 
     // Set the blocked faces, i.e. where alpha > alpha threshold value
     boolList blockedFaces(fz.size(), false);
-    setBlockedFaces(alphaf, fz, blockedFaces);
+    setBlockedFaces(talphaf(), fz, blockedFaces);
 
     // Split the  faceZone according to the blockedFaces
     // - Returns a list of (disconnected) region index per face zone face
@@ -567,7 +568,7 @@ bool Foam::functionObjects::extractEulerianParticles::execute()
 
     // Process latest region information
     tmp<surfaceScalarField> tphi = phiU();
-    accumulateParticleInfo(alphaf, tphi(), regionFaceIDs, fz);
+    accumulateParticleInfo(talphaf(), tphi(), regionFaceIDs, fz);
 
     Log << "    Collected particles   : " << nCollectedParticles_ << nl
         << "    Collected volume      : " << collectedVolume_ << nl

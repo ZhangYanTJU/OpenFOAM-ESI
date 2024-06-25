@@ -113,7 +113,8 @@ Foam::RASModels::kineticTheoryModel::kineticTheoryModel
             U.time().timeName(),
             U.mesh(),
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         U.mesh()
     ),
@@ -168,7 +169,8 @@ Foam::RASModels::kineticTheoryModel::kineticTheoryModel
             U.time().timeName(),
             U.mesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         U.mesh(),
         dimensionedScalar(dimViscosity, Zero)
@@ -244,18 +246,11 @@ Foam::RASModels::kineticTheoryModel::omega() const
 Foam::tmp<Foam::volSymmTensorField>
 Foam::RASModels::kineticTheoryModel::R() const
 {
-    return tmp<volSymmTensorField>
+    return volSymmTensorField::New
     (
-        new volSymmTensorField
+        IOobject::groupName("R", U_.group()),
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                IOobject::groupName("R", U_.group()),
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
           - (nut_)*devTwoSymm(fvc::grad(U_))
           - (lambda_*fvc::div(phi_))*symmTensor::I
         )
@@ -266,7 +261,8 @@ Foam::RASModels::kineticTheoryModel::R() const
 Foam::tmp<Foam::volScalarField>
 Foam::RASModels::kineticTheoryModel::pPrime() const
 {
-    const volScalarField& rho = phase_.rho();
+    const tmp<volScalarField> trho(phase_.rho());
+    const volScalarField& rho = trho();
 
     tmp<volScalarField> tpPrime
     (
@@ -322,20 +318,13 @@ Foam::RASModels::kineticTheoryModel::devRhoReff
     const volVectorField& U
 ) const
 {
-    return tmp<volSymmTensorField>
+    return volSymmTensorField::New
     (
-        new volSymmTensorField
+        IOobject::groupName("devRhoReff", U.group()),
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                IOobject::groupName("devRhoReff", U.group()),
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
           - (rho_*nut_)
-           *devTwoSymm(fvc::grad(U))
+          * devTwoSymm(fvc::grad(U))
           - ((rho_*lambda_)*fvc::div(phi_))*symmTensor::I
         )
     );
@@ -365,11 +354,13 @@ void Foam::RASModels::kineticTheoryModel::correct()
 {
     // Local references
     volScalarField alpha(max(alpha_, scalar(0)));
-    const volScalarField& rho = phase_.rho();
+    const tmp<volScalarField> trho(phase_.rho());
+    const volScalarField& rho = trho();
     const surfaceScalarField& alphaRhoPhi = alphaRhoPhi_;
     const volVectorField& U = U_;
-    const volVectorField& Uc_ =
+    const tmp<volVectorField> tUc =
         refCast<const twoPhaseSystem>(phase_.fluid()).otherPhase(phase_).U();
+    const volVectorField& Uc = tUc();
 
     const scalar sqrtPi = sqrt(constant::mathematical::pi);
     dimensionedScalar ThetaSmall("ThetaSmall", Theta_.dimensions(), 1e-6);
@@ -421,7 +412,7 @@ void Foam::RASModels::kineticTheoryModel::correct()
         volScalarField J2
         (
             "J2",
-            0.25*sqr(beta)*da*magSqr(U - Uc_)
+            0.25*sqr(beta)*da*magSqr(U - Uc)
            /(
                max(alpha, residualAlpha_)*rho
               *sqrtPi*(ThetaSqrt + ThetaSmallSqrt)

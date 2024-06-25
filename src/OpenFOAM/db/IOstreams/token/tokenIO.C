@@ -57,6 +57,14 @@ static OS& printTokenInfo(OS& os, const token& tok)
             os  << "punctuation '" << tok.pToken() << '\'';
         break;
 
+        // case token::tokenType::INT32:
+        //     os  << "int32 " << tok.int32Token();
+        // break;
+        //
+        // case token::tokenType::INT64:
+        //     os  << "int64 " << tok.int64Token();
+        // break;
+
         case token::tokenType::LABEL:
             os  << "label " << tok.labelToken();
         break;
@@ -146,6 +154,9 @@ Foam::word Foam::token::name(const token::tokenType tokType)
         case token::tokenType::BOOL: return "bool";
         case token::tokenType::FLAG: return "flag";
         case token::tokenType::PUNCTUATION: return "punctuation";
+
+        // case token::tokenType::INT32: return "int32";
+        // case token::tokenType::INT64: return "int64";
         case token::tokenType::LABEL: return "label";
         case token::tokenType::FLOAT: return "float";
         case token::tokenType::DOUBLE: return "double";

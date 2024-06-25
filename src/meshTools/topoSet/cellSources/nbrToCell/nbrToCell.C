@@ -74,6 +74,7 @@ void Foam::nbrToCell::combine(topoSet& set, const bool add) const
     }
 
     const cellList& cells = mesh().cells();
+
     const polyBoundaryMesh& patches = mesh_.boundaryMesh();
 
     boolList isCoupled(mesh_.nBoundaryFaces(), false);
@@ -136,7 +137,8 @@ Foam::nbrToCell::nbrToCell
     const dictionary& dict
 )
 :
-    nbrToCell(mesh, dict.getCheck<label>("neighbours", labelMinMax::ge(1)))
+    topoSetCellSource(mesh, dict),
+    minNbrs_(dict.getCheck<label>("neighbours", labelMinMax::ge(1)))
 {}
 
 

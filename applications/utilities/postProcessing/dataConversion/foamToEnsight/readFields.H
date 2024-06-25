@@ -164,9 +164,10 @@ tmp<VolumeField<Type>> makeZeroGradientField
 //  ignore fields that are not available for all time-steps
 label checkData
 (
-    const fvMesh& mesh,
+    const objectRegistry& obr,
     const instantList& timeDirs,
-    wordList& objectNames
+    wordList& objectNames,
+    const fileName& local = fileName::null
 );
 
 

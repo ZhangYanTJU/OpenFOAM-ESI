@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,7 +71,7 @@ Foam::setToCellZone::setToCellZone
     const dictionary& dict
 )
 :
-    topoSetCellZoneSource(mesh),
+    topoSetCellZoneSource(mesh, dict),
     setName_(dict.get<word>("set"))
 {}
 
@@ -114,16 +114,16 @@ void Foam::setToCellZone::applyToSet
             }
 
             // Load the sets
-            cellSet fSet(mesh_, setName_);
+            cellSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
 
             // Start off from copy
             DynamicList<label> newAddressing(zoneSet.addressing());
 
-            for (const label celli : fSet)
+            for (const label celli : loadedSet)
             {
                 if (!zoneSet.found(celli))
                 {
-                    newAddressing.append(celli);
+                    newAddressing.push_back(celli);
                 }
             }
 
@@ -139,16 +139,16 @@ void Foam::setToCellZone::applyToSet
             }
 
             // Load the set
-            cellSet loadedSet(mesh_, setName_);
+            cellSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
 
             // Start off empty
             DynamicList<label> newAddressing(zoneSet.addressing().size());
 
-            forAll(zoneSet.addressing(), i)
+            for (const label celli : zoneSet.addressing())
             {
-                if (!loadedSet.found(zoneSet.addressing()[i]))
+                if (!loadedSet.found(celli))
                 {
-                    newAddressing.append(zoneSet.addressing()[i]);
+                    newAddressing.push_back(celli);
                 }
             }
             zoneSet.addressing().transfer(newAddressing);

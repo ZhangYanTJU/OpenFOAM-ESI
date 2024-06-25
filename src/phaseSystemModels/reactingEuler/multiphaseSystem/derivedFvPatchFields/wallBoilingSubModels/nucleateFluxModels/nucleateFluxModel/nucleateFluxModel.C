@@ -50,9 +50,9 @@ Foam::wallBoilingModels::nucleateFluxModel::New
 
     Info<< "Selecting nucleateFluxModel: " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.good())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
@@ -63,7 +63,7 @@ Foam::wallBoilingModels::nucleateFluxModel::New
         ) << abort(FatalIOError);
     }
 
-    return cstrIter()(dict);
+    return ctorPtr(dict);
 }
 
 

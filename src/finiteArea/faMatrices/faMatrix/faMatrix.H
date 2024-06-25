@@ -46,10 +46,6 @@ Author
 #include "areaFields.H"
 #include "edgeFields.H"
 #include "lduMatrix.H"
-#include "tmp.H"
-#include "autoPtr.H"
-#include "dimensionedTypes.H"
-#include "className.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -155,7 +151,7 @@ private:
         FieldField<Field, Type> boundaryCoeffs_;
 
         //- Face flux field for non-orthogonal correction
-        mutable faceFluxFieldType* faceFluxCorrectionPtr_;
+        mutable std::unique_ptr<faceFluxFieldType> faceFluxCorrectionPtr_;
 
 
 protected:
@@ -357,13 +353,18 @@ public:
             }
 
             //- Declare return type of the faceFluxCorrectionPtr() function
-            typedef GeometricField<Type, faePatchField, edgeMesh>
-                *faceFluxFieldPtrType;
+            typedef std::unique_ptr<faceFluxFieldType> faceFluxFieldPtrType;
 
             //- Return pointer to face-flux non-orthogonal correction field
             faceFluxFieldPtrType& faceFluxCorrectionPtr()
             {
                 return faceFluxCorrectionPtr_;
+            }
+
+            //- Set pointer to face-flux non-orthogonal correction field
+            void faceFluxCorrectionPtr(faceFluxFieldType* flux)
+            {
+                faceFluxCorrectionPtr_.reset(flux);
             }
 
             //- True if face-flux non-orthogonal correction field exists

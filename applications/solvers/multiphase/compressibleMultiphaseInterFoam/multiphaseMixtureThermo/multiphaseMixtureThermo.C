@@ -99,7 +99,8 @@ Foam::multiphaseMixtureThermo::multiphaseMixtureThermo
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimless, Zero)
@@ -998,19 +999,12 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseMixtureThermo::K
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseMixtureThermo::nearInterface() const
 {
-    tmp<volScalarField> tnearInt
+    auto tnearInt = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "nearInterface",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar(dimless, Zero)
-        )
+        "nearInterface",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless, Zero)
     );
 
     for (const phaseModel& phase : phases_)

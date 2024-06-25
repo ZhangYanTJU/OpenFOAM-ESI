@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,41 +57,15 @@ Foam::scalar Foam::sampledSurfaces::mergeTol_ = 1e-10;
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-Foam::polySurface* Foam::sampledSurfaces::getRegistrySurface
-(
-    const sampledSurface& s
-) const
-{
-    return s.getRegistrySurface
-    (
-        storedObjects(),
-        IOobject::groupName(name(), s.name())
-    );
-}
-
-
-Foam::polySurface* Foam::sampledSurfaces::storeRegistrySurface
+void Foam::sampledSurfaces::storeRegistrySurface
 (
     const sampledSurface& s
 )
 {
-    return s.storeRegistrySurface
+    s.storeRegistrySurface
     (
         storedObjects(),
-        IOobject::groupName(name(), s.name())
-    );
-}
-
-
-bool Foam::sampledSurfaces::removeRegistrySurface
-(
-    const sampledSurface& s
-)
-{
-    return s.removeRegistrySurface
-    (
-        storedObjects(),
-        IOobject::groupName(name(), s.name())
+        IOobject::groupName(name(), s.name())  // surfaceName
     );
 }
 
@@ -101,7 +75,7 @@ Foam::IOobjectList Foam::sampledSurfaces::preCheckFields()
     wordList allFields;    // Just needed for warnings
     HashTable<wordHashSet> selected;
 
-    IOobjectList objects(0);
+    IOobjectList objects;
 
     if (loadFromFiles_)
     {
@@ -129,7 +103,7 @@ Foam::IOobjectList Foam::sampledSurfaces::preCheckFields()
     {
         if (!ListOps::found(allFields, fieldSelection_[i]))
         {
-            missed.append(i);
+            missed.push_back(i);
         }
     }
 
@@ -153,11 +127,11 @@ Foam::IOobjectList Foam::sampledSurfaces::preCheckFields()
         const word& clsName = iter.key();
         const label n = iter.val().size();
 
-        if (fieldTypes::volume.found(clsName))
+        if (fieldTypes::volume.contains(clsName))
         {
             nVolumeFields += n;
         }
-        else if (fieldTypes::surface.found(clsName))
+        else if (fieldTypes::surface.contains(clsName))
         {
             nSurfaceFields += n;
         }
@@ -224,13 +198,7 @@ Foam::sampledSurfaces::sampledSurfaces
     outputPath_
     (
         time_.globalPath()/functionObject::outputPrefix/name
-    ),
-    fieldSelection_(),
-    sampleFaceScheme_(),
-    sampleNodeScheme_(),
-    writers_(),
-    actions_(),
-    nFaces_()
+    )
 {
     outputPath_.clean();  // Remove unneeded ".."
 
@@ -254,13 +222,7 @@ Foam::sampledSurfaces::sampledSurfaces
     outputPath_
     (
         time_.globalPath()/functionObject::outputPrefix/name
-    ),
-    fieldSelection_(),
-    sampleFaceScheme_(),
-    sampleNodeScheme_(),
-    writers_(),
-    actions_(),
-    nFaces_()
+    )
 {
     outputPath_.clean();  // Remove unneeded ".."
 
@@ -270,7 +232,7 @@ Foam::sampledSurfaces::sampledSurfaces
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::sampledSurfaces::verbose(const bool on) noexcept
+bool Foam::sampledSurfaces::verbose(bool on) noexcept
 {
     bool old(verbose_);
     verbose_ = on;
@@ -285,7 +247,7 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
     PtrList<sampledSurface>::clear();
     writers_.clear();
     actions_.clear();
-    nFaces_.clear();
+    hasFaces_.clear();
     fieldSelection_.clear();
 
     verbose_ = dict.getOrDefault("verbose", false);
@@ -312,7 +274,6 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
 
         actions_.resize(surfs.size(), ACTION_WRITE); // Default action
         writers_.resize(surfs.size());
-        nFaces_.resize(surfs.size(), Zero);
 
         label surfi = 0;
 
@@ -385,7 +346,6 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
 
         actions_.resize(surfs.size(), ACTION_WRITE); // Default action
         writers_.resize(surfs.size());
-        nFaces_.resize(surfs.size(), Zero);
 
         label surfi = 0;
 
@@ -436,10 +396,11 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
 
     // Have some surfaces, so sort out which fields are needed and report
 
+    hasFaces_.resize_nocopy(surfs.size());
+    hasFaces_ = false;
+
     if (surfs.size())
     {
-        nFaces_.resize(surfs.size(), Zero);
-
         dict.readEntry("fields", fieldSelection_);
         fieldSelection_.uniq();
 
@@ -466,7 +427,7 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
         Info<< nl;
     }
 
-    if (debug && Pstream::master())
+    if (debug && UPstream::master())
     {
         Pout<< "sample fields:" << fieldSelection_ << nl
             << "sample surfaces:" << nl << '(' << nl;
@@ -499,12 +460,15 @@ bool Foam::sampledSurfaces::performAction(unsigned request)
             if (s.update())
             {
                 writers_[surfi].expire();
+                hasFaces_[surfi] = false;
             }
 
-            nFaces_[surfi] = returnReduce(s.faces().size(), sumOp<label>());
+            if (!hasFaces_[surfi])
+            {
+                hasFaces_[surfi] = returnReduceOr(s.faces().size());
+            }
 
-            ok = ok || nFaces_[surfi];
-
+            ok = ok || hasFaces_[surfi];
 
             // Store surfaces (even empty ones) otherwise we miss geometry
             // updates.
@@ -536,7 +500,7 @@ bool Foam::sampledSurfaces::performAction(unsigned request)
     {
         const sampledSurface& s = (*this)[surfi];
 
-        if (((request & actions_[surfi]) & ACTION_WRITE) && nFaces_[surfi])
+        if (((request & actions_[surfi]) & ACTION_WRITE) && hasFaces_[surfi])
         {
             surfaceWriter& outWriter = writers_[surfi];
 
@@ -589,7 +553,7 @@ bool Foam::sampledSurfaces::performAction(unsigned request)
         testAny
         (
             surfaces(),
-            [] (const sampledSurface& s) { return s.withSurfaceFields(); }
+            [](const sampledSurface& s) { return s.withSurfaceFields(); }
         )
     )
     {
@@ -604,7 +568,7 @@ bool Foam::sampledSurfaces::performAction(unsigned request)
     // Finish this time step
     forAll(writers_, surfi)
     {
-        if (((request & actions_[surfi]) & ACTION_WRITE) && nFaces_[surfi])
+        if (((request & actions_[surfi]) & ACTION_WRITE) && hasFaces_[surfi])
         {
             // Write geometry if no fields were written so that we still
             // can have something to look at
@@ -688,7 +652,7 @@ bool Foam::sampledSurfaces::expire(const bool force)
     // Dimension as fraction of mesh bounding box
     const scalar mergeDim = mergeTol_ * mesh_.bounds().mag();
 
-    label nChanged = 0;
+    bool changed = false;
 
     forAll(*this, surfi)
     {
@@ -701,16 +665,16 @@ bool Foam::sampledSurfaces::expire(const bool force)
         }
         if (s.expire())
         {
-            ++nChanged;
+            changed = true;
         }
 
         writers_[surfi].expire();
         writers_[surfi].mergeDim(mergeDim);
-        nFaces_[surfi] = 0;
+        hasFaces_[surfi] = false;
     }
 
     // True if any surfaces just expired
-    return nChanged;
+    return changed;
 }
 
 
@@ -721,7 +685,7 @@ bool Foam::sampledSurfaces::update()
         return false;
     }
 
-    label nUpdated = 0;
+    bool changed = false;
 
     forAll(*this, surfi)
     {
@@ -729,14 +693,13 @@ bool Foam::sampledSurfaces::update()
 
         if (s.update())
         {
-            ++nUpdated;
+            changed = true;
             writers_[surfi].expire();
+            hasFaces_[surfi] = returnReduceOr(s.faces().size());
         }
-
-        nFaces_[surfi] = returnReduce(s.faces().size(), sumOp<label>());
     }
 
-    return nUpdated;
+    return changed;
 }
 
 
@@ -746,9 +709,9 @@ Foam::scalar Foam::sampledSurfaces::mergeTol() noexcept
 }
 
 
-Foam::scalar Foam::sampledSurfaces::mergeTol(const scalar tol) noexcept
+Foam::scalar Foam::sampledSurfaces::mergeTol(scalar tol) noexcept
 {
-    const scalar old(mergeTol_);
+    scalar old(mergeTol_);
     mergeTol_ = tol;
     return old;
 }

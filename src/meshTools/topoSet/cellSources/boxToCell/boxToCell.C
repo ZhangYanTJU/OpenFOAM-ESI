@@ -92,7 +92,8 @@ static void readBoxDim(const dictionary& dict, treeBoundBox& bb)
 
 void Foam::boxToCell::combine(topoSet& set, const bool add) const
 {
-    const pointField& ctrs = mesh_.cellCentres();
+    const tmp<pointField> tctrs(this->transform(mesh_.cellCentres()));
+    const pointField& ctrs = tctrs();
 
     forAll(ctrs, elemi)
     {
@@ -138,7 +139,7 @@ Foam::boxToCell::boxToCell
     const dictionary& dict
 )
 :
-    topoSetCellSource(mesh),
+    topoSetCellSource(mesh, dict),
     bbs_()
 {
     // Accept 'boxes', 'box' or 'min/max'

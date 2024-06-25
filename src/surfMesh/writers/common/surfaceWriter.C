@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -84,32 +84,75 @@ Foam::dictionary Foam::surfaceWriter::formatOptions
 
 
 Foam::autoPtr<Foam::surfaceWriter>
+Foam::surfaceWriter::TryNew(const word& writeType)
+{
+    // Without dictionary options
+    {
+        auto* ctorPtr = wordConstructorTable(writeType);
+
+        if (ctorPtr)
+        {
+            return autoPtr<surfaceWriter>(ctorPtr());
+        }
+    }
+
+    // Fallback to proxy writer...
+    return surfaceWriters::proxyWriter::TryNew(writeType);
+}
+
+
+Foam::autoPtr<Foam::surfaceWriter>
+Foam::surfaceWriter::TryNew
+(
+    const word& writeType,
+    const dictionary& writeOpts
+)
+{
+    // With dictionary options
+    {
+        auto* ctorPtr = wordDictConstructorTable(writeType);
+
+        if (ctorPtr)
+        {
+            return autoPtr<surfaceWriter>(ctorPtr(writeOpts));
+        }
+    }
+
+    // Without dictionary options
+    {
+        auto* ctorPtr = wordConstructorTable(writeType);
+
+        if (ctorPtr)
+        {
+            return autoPtr<surfaceWriter>(ctorPtr());
+        }
+    }
+
+    // Fallback to proxy writer...
+    return surfaceWriters::proxyWriter::TryNew(writeType, writeOpts);
+}
+
+
+Foam::autoPtr<Foam::surfaceWriter>
 Foam::surfaceWriter::New(const word& writeType)
 {
-    // Constructors without dictionary options
-    auto* ctorPtr = wordConstructorTable(writeType);
+    autoPtr<surfaceWriter> writer
+    (
+        surfaceWriter::TryNew(writeType)
+    );
 
-    if (!ctorPtr)
+    if (!writer)
     {
-        if (MeshedSurfaceProxy<face>::canWriteType(writeType))
-        {
-            // Generally unknown, but handle via 'proxy' handler
-            return autoPtr<surfaceWriter>
-            (
-                new surfaceWriters::proxyWriter(writeType)
-            );
-        }
-
         FatalErrorInFunction
             << "Unknown write type \"" << writeType << "\"\n\n"
             << "Valid write types : "
             << flatOutput(wordConstructorTablePtr_->sortedToc()) << nl
             << "Valid proxy types : "
-            << MeshedSurfaceProxy<face>::writeTypes() << endl
+            << flatOutput(MeshedSurfaceProxy<face>::writeTypes()) << endl
             << exit(FatalError);
     }
 
-    return autoPtr<surfaceWriter>(ctorPtr());
+    return writer;
 }
 
 
@@ -120,41 +163,23 @@ Foam::surfaceWriter::New
     const dictionary& writeOpts
 )
 {
-    // Constructors with dictionary options
+    autoPtr<surfaceWriter> writer
+    (
+        surfaceWriter::TryNew(writeType, writeOpts)
+    );
+
+    if (!writer)
     {
-        auto* ctorPtr = wordDictConstructorTable(writeType);
-
-        if (ctorPtr)
-        {
-            return autoPtr<surfaceWriter>(ctorPtr(writeOpts));
-        }
-    }
-
-
-    // Constructors without dictionary options
-    auto* ctorPtr = wordConstructorTable(writeType);
-
-    if (!ctorPtr)
-    {
-        if (MeshedSurfaceProxy<face>::canWriteType(writeType))
-        {
-            // Generally unknown, but handle via 'proxy' handler
-            return autoPtr<surfaceWriter>
-            (
-                new surfaceWriters::proxyWriter(writeType, writeOpts)
-            );
-        }
-
         FatalErrorInFunction
             << "Unknown write type \"" << writeType << "\"\n\n"
             << "Valid write types : "
-            << wordConstructorTablePtr_->sortedToc() << nl
+            << flatOutput(wordConstructorTablePtr_->sortedToc()) << nl
             << "Valid proxy types : "
-            << MeshedSurfaceProxy<face>::writeTypes() << endl
+            << flatOutput(MeshedSurfaceProxy<face>::writeTypes()) << endl
             << exit(FatalError);
     }
 
-    return autoPtr<surfaceWriter>(ctorPtr());
+    return writer;
 }
 
 
@@ -687,7 +712,7 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::adjustFieldTemplate
         // Rotate fields (vector and non-spherical tensors)
         if
         (
-            (pTraits<Type>::rank != 0 && pTraits<Type>::nComponents > 1)
+            (is_vectorspace<Type>::value && pTraits<Type>::nComponents > 1)
          && geometryTransform_.good()
          && !geometryTransform_.R().is_identity()
         )

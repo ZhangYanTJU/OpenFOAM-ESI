@@ -37,33 +37,34 @@ Usage
     \verbatim
     <patchName>
     {
-        // Mandatory/Optional (inherited) entries
-        ...
-
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         thermalShellModel   thermalShell;
         thermo
         {
             // subdictionary entries
         }
 
-        // Mandatory/Optional (derived) entries
+        // Optional entries
+        qr                  <word>;
+        thickness           <scalar>;
+
+        // Inherited entries
         ...
+        nNonOrthCorr        <int>;    // read from another dict
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property   | Description                      | Type  | Reqd | Dflt
-      thermalShellModel | Type name: thermalShell   | word  | yes  | -
+      Property   | Description                      | Type  | Reqd   | Deflt
+      thermalShellModel | Type name: thermalShell   | word  | yes    | -
       thermo     | Solid thermal properties         | dictionary | yes | -
+      qr         | Name of radiative heat flux field | word | no     | none
+      thickness  | Uniform film thickness [m]       | scalar | choice | -
     \endtable
 
     The inherited entries are elaborated in:
       - \link thermalShellModel.H \endlink
-
-See also
-  - Foam::regionModels::thermalShellModels::thermalShellModel
 
 SourceFiles
     thermalShell.C
@@ -77,7 +78,6 @@ SourceFiles
 #include "volFieldsFwd.H"
 #include "thermalShellModel.H"
 #include "solidProperties.H"
-#include "faMesh.H"
 #include "faCFD.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -122,16 +122,16 @@ protected:
 
         // Source term fields
 
-            //- External surface energy source  / [J/m2/s]
+            //- External surface energy source [J/m2/s]
             areaScalarField qs_;
 
-            //- Thickness
+            //- Film thickness [m]
             areaScalarField h_;
 
             //- Name of the primary region radiative flux
             const word qrName_;
 
-            //- Uniform thickness
+            //- Uniform film thickness [m]
             scalar thickness_;
 
 
@@ -177,7 +177,7 @@ public:
             //- Return the film specific heat capacity [J/kg/K]
             const tmp<areaScalarField> Cp() const;
 
-            //- Return density [Kg/m3]
+            //- Return density [kg/m3]
             const tmp<areaScalarField> rho() const;
 
             //- Return thermal conductivity [W/m/K]

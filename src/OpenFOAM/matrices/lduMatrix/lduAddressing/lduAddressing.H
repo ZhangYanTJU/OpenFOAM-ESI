@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -123,22 +123,16 @@ class lduAddressing
     //- Demand-driven data
 
         //- Losort addressing
-        mutable labelList* losortPtr_;
+        mutable std::unique_ptr<labelList> losortPtr_;
 
         //- Owner start addressing
-        mutable labelList* ownerStartPtr_;
+        mutable std::unique_ptr<labelList> ownerStartPtr_;
 
         //- Losort start addressing
-        mutable labelList* losortStartPtr_;
+        mutable std::unique_ptr<labelList> losortStartPtr_;
 
 
     // Private Member Functions
-
-        //- No copy construct
-        lduAddressing(const lduAddressing&) = delete;
-
-        //- No copy assignment
-        void operator=(const lduAddressing&) = delete;
 
         //- Calculate losort
         void calcLosort() const;
@@ -152,24 +146,32 @@ class lduAddressing
 
 public:
 
-    //- Construct with size (number of equations)
-    explicit lduAddressing(const label nEqns)
-    :
-        size_(nEqns),
-        losortPtr_(nullptr),
-        ownerStartPtr_(nullptr),
-        losortStartPtr_(nullptr)
-    {}
+    // Generated Methods
+
+        //- No copy construct
+        lduAddressing(const lduAddressing&) = delete;
+
+        //- No copy assignment
+        void operator=(const lduAddressing&) = delete;
+
+
+    // Constructors
+
+        //- Construct with size (number of equations)
+        explicit lduAddressing(const label nEqns) noexcept
+        :
+            size_(nEqns)
+        {}
 
 
     //- Destructor
-    virtual ~lduAddressing();
+    virtual ~lduAddressing() = default;
 
 
     // Member Functions
 
         //- Return number of equations
-        label size() const
+        label size() const noexcept
         {
             return size_;
         }

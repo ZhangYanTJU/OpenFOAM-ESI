@@ -89,18 +89,22 @@ createZeroBoundaryPtr
         Boundary;
 
     // Make sure that the patchFields to be generated will be of type
-    // calculated, even if they are of constraint type
+    // calculated, even if they are of constraint type.
     // Necessary to avoid unexpected behaviour when computing sensitivities
     // on symmetry patches (not a good practice either way)
     const fvBoundaryMesh& bm = mesh.boundary();
     wordList actualPatchTypes(bm.size(), word::null);
-    forAll(actualPatchTypes, pI)
+    forAll(actualPatchTypes, patchi)
     {
-        auto patchTypeCstrIter =
-            fvPatchField<Type>::patchConstructorTablePtr_->cfind(bm[pI].type());
-        if (patchTypeCstrIter.good())
+        if
+        (
+            fvPatchField<Type>::patchConstructorTablePtr_->contains
+            (
+                bm[patchi].type()
+            )
+        )
         {
-            actualPatchTypes[pI] = bm[pI].type();
+            actualPatchTypes[patchi] = bm[patchi].type();
         }
     }
 
@@ -109,7 +113,7 @@ createZeroBoundaryPtr
         new Boundary
         (
             mesh.boundary(),
-            mesh.V()*pTraits<Type>::zero,  // Dummy internal field,
+            DimensionedField<Type, volMesh>::null(),
             wordList(bm.size(), fvPatchFieldBase::calculatedType()),
             actualPatchTypes
         )

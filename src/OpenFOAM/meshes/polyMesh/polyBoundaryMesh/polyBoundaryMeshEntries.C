@@ -46,8 +46,7 @@ Foam::polyBoundaryMeshEntries::polyBoundaryMeshEntries(const IOobject& io)
         IOobject(io, IOobjectOption::NO_REGISTER)
     )
 {
-    // readContents()
-
+    // readIOcontents()
     if (isReadRequired() || (isReadOptional() && headerOk()))
     {
         // Read as entries
@@ -215,7 +214,7 @@ void Foam::polyBoundaryMeshEntries::writeEntry(Ostream& os) const
 
 void Foam::polyBoundaryMeshEntries::writeEntry
 (
-    const keyType& keyword,
+    const word& keyword,
     Ostream& os
 ) const
 {

@@ -273,10 +273,18 @@ Foam::primitiveEntry::primitiveEntry
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::ITstream* Foam::primitiveEntry::streamPtr() const noexcept
+{
+    ITstream* ptr = const_cast<primitiveEntry*>(this);
+    ptr->seek(0);
+    return ptr;
+}
+
+
 Foam::ITstream& Foam::primitiveEntry::stream() const
 {
     ITstream& is = const_cast<primitiveEntry&>(*this);
-    is.rewind();
+    is.seek(0);
     return is;
 }
 

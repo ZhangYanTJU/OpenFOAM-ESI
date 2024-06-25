@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef divScheme_H
-#define divScheme_H
+#ifndef Foam_divScheme_H
+#define Foam_divScheme_H
 
 #include "tmp.H"
 #include "volFieldsFwd.H"
@@ -71,12 +71,12 @@ class divScheme
 :
     public refCount
 {
-
 protected:
 
     // Protected data
 
         const fvMesh& mesh_;
+
         tmp<surfaceInterpolationScheme<Type>> tinterpScheme_;
 
 
@@ -120,8 +120,23 @@ public:
         divScheme(const fvMesh& mesh, Istream& is)
         :
             mesh_(mesh),
-            tinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, is))
-        {}
+            tinterpScheme_(nullptr)
+        {
+            if (is.eof())
+            {
+                tinterpScheme_.reset
+                (
+                    new linear<Type>(mesh)
+                );
+            }
+            else
+            {
+                tinterpScheme_.reset
+                (
+                    surfaceInterpolationScheme<Type>::New(mesh, is)
+                );
+            }
+        }
 
 
     // Selectors

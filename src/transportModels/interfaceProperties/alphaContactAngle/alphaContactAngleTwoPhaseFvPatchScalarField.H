@@ -136,7 +136,7 @@ public:
         );
 
 
-    // Member functions
+    // Member Functions
 
         //- Return the contact angle
         virtual tmp<scalarField> theta
@@ -148,11 +148,17 @@ public:
         //- Evaluate the patch field
         virtual void evaluate
         (
-            const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
+            const Pstream::commsTypes commsType=Pstream::commsTypes::buffered
         );
 
         //- Write
         virtual void write(Ostream& os) const;
+
+
+    // Member Operators
+
+        //- Inherit assignment operators
+        using fvPatchField<scalar>::operator=;
 };
 
 

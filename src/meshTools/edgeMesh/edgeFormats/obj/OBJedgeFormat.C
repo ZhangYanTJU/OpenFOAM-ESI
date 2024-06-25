@@ -120,7 +120,7 @@ bool Foam::fileFormats::OBJedgeFormat::read(const fileName& filename)
             line += this->getLineNoComment(is);
         }
 
-        const SubStrings<string> tokens = stringOps::splitSpace(line);
+        const auto tokens = stringOps::splitSpace(line);
 
         // Require command and some arguments
         if (tokens.size() < 2)

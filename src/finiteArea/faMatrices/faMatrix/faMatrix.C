@@ -28,12 +28,9 @@ License
 
 #include "areaFields.H"
 #include "edgeFields.H"
-#include "calculatedFaPatchFields.H"
 #include "extrapolatedCalculatedFaPatchFields.H"
-#include "zeroGradientFaPatchFields.H"
 #include "IndirectList.H"
 #include "UniformList.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -50,7 +47,7 @@ void Foam::faMatrix<Type>::addToInternalField
     {
         FatalErrorInFunction
             << "addressing (" << addr.size()
-            << ") and field (" << pf.size() << ") are different sizes" << endl
+            << ") and field (" << pf.size() << ") are different sizes"
             << abort(FatalError);
     }
 
@@ -88,7 +85,7 @@ void Foam::faMatrix<Type>::subtractFromInternalField
     {
         FatalErrorInFunction
             << "addressing (" << addr.size()
-            << ") and field (" << pf.size() << ") are different sizes" << endl
+            << ") and field (" << pf.size() << ") are different sizes"
             << abort(FatalError);
     }
 
@@ -193,8 +190,7 @@ Foam::faMatrix<Type>::faMatrix
     dimensions_(ds),
     source_(psi.size(), Zero),
     internalCoeffs_(psi.mesh().boundary().size()),
-    boundaryCoeffs_(psi.mesh().boundary().size()),
-    faceFluxCorrectionPtr_(nullptr)
+    boundaryCoeffs_(psi.mesh().boundary().size())
 {
     DebugInFunction
         << "constructing faMatrix<Type> for field " << psi_.name()
@@ -234,19 +230,17 @@ Foam::faMatrix<Type>::faMatrix(const faMatrix<Type>& fam)
     dimensions_(fam.dimensions_),
     source_(fam.source_),
     internalCoeffs_(fam.internalCoeffs_),
-    boundaryCoeffs_(fam.boundaryCoeffs_),
-    faceFluxCorrectionPtr_(nullptr)
+    boundaryCoeffs_(fam.boundaryCoeffs_)
 {
     DebugInFunction
         << "Copying faMatrix<Type> for field " << psi_.name() << endl;
 
     if (fam.faceFluxCorrectionPtr_)
     {
-        faceFluxCorrectionPtr_ =
-            new GeometricField<Type, faePatchField, edgeMesh>
-            (
-                *(fam.faceFluxCorrectionPtr_)
-            );
+        faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
+        (
+            *(fam.faceFluxCorrectionPtr_)
+        );
     }
 }
 
@@ -259,8 +253,7 @@ Foam::faMatrix<Type>::faMatrix(const tmp<faMatrix<Type>>& tmat)
     dimensions_(tmat().dimensions_),
     source_(tmat.constCast().source_, tmat.movable()),
     internalCoeffs_(tmat.constCast().internalCoeffs_, tmat.movable()),
-    boundaryCoeffs_(tmat.constCast().boundaryCoeffs_, tmat.movable()),
-    faceFluxCorrectionPtr_(nullptr)
+    boundaryCoeffs_(tmat.constCast().boundaryCoeffs_, tmat.movable())
 {
     DebugInFunction
         << "Copy/Move faMatrix<Type> for field " << psi_.name() << endl;
@@ -269,16 +262,15 @@ Foam::faMatrix<Type>::faMatrix(const tmp<faMatrix<Type>>& tmat)
     {
         if (tmat.movable())
         {
-            faceFluxCorrectionPtr_ = tmat().faceFluxCorrectionPtr_;
-            tmat().faceFluxCorrectionPtr_ = nullptr;
-        }
-        else
-        {
             faceFluxCorrectionPtr_ =
-                new GeometricField<Type, faePatchField, edgeMesh>
-                (
-                    *(tmat().faceFluxCorrectionPtr_)
-                );
+                std::move(tmat.constCast().faceFluxCorrectionPtr_);
+        }
+        else if (tmat().faceFluxCorrectionPtr_)
+        {
+            faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
+            (
+                *(tmat().faceFluxCorrectionPtr_)
+            );
         }
     }
 
@@ -293,8 +285,6 @@ Foam::faMatrix<Type>::~faMatrix()
 {
     DebugInFunction
         << "Destroying faMatrix<Type> for field " << psi_.name() << endl;
-
-    deleteDemandDrivenData(faceFluxCorrectionPtr_);
 }
 
 
@@ -791,9 +781,10 @@ void Foam::faMatrix<Type>::operator=(const faMatrix<Type>& famv)
     }
     else if (famv.faceFluxCorrectionPtr_)
     {
-        faceFluxCorrectionPtr_ =
-            new GeometricField<Type, faePatchField, edgeMesh>
-            (*famv.faceFluxCorrectionPtr_);
+        faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
+        (
+            *famv.faceFluxCorrectionPtr_
+        );
     }
 }
 
@@ -838,8 +829,7 @@ void Foam::faMatrix<Type>::operator+=(const faMatrix<Type>& famv)
     }
     else if (famv.faceFluxCorrectionPtr_)
     {
-        faceFluxCorrectionPtr_ = new
-        GeometricField<Type, faePatchField, edgeMesh>
+        faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
         (
             *famv.faceFluxCorrectionPtr_
         );
@@ -872,9 +862,10 @@ void Foam::faMatrix<Type>::operator-=(const faMatrix<Type>& famv)
     }
     else if (famv.faceFluxCorrectionPtr_)
     {
-        faceFluxCorrectionPtr_ =
-            new GeometricField<Type, faePatchField, edgeMesh>
-            (-*famv.faceFluxCorrectionPtr_);
+        faceFluxCorrectionPtr_ = std::make_unique<faceFluxFieldType>
+        (
+            -*famv.faceFluxCorrectionPtr_
+        );
     }
 }
 
@@ -1207,7 +1198,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, B, "+");
-    tmp<faMatrix<Type>> tC(new faMatrix<Type>(A));
+    auto tC = tmp<faMatrix<Type>>::New(A);
     tC.ref() += B;
     return tC;
 }
@@ -1262,7 +1253,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::operator-
     const faMatrix<Type>& A
 )
 {
-    tmp<faMatrix<Type>> tC(new faMatrix<Type>(A));
+    auto tC = tmp<faMatrix<Type>>::New(A);
     tC.ref().negate();
     return tC;
 }
@@ -1288,7 +1279,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, B, "-");
-    tmp<faMatrix<Type>> tC(new faMatrix<Type>(A));
+    auto tC = tmp<faMatrix<Type>>::New(A);
     tC.ref() -= B;
     return tC;
 }

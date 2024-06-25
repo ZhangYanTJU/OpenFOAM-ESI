@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -808,6 +808,7 @@ Foam::functionObjects::propellerInfo::propellerInfo
 )
 :
     forces(name, runTime, dict, false),
+    dict_(dict),
     radius_(0),
     URefPtr_(nullptr),
     rotationMode_(rotationMode::SPECIFIED),
@@ -827,7 +828,8 @@ Foam::functionObjects::propellerInfo::propellerInfo
     interpolationScheme_("cell"),
     wakeFilePtr_(nullptr),
     axialWakeFilePtr_(nullptr),
-    nanValue_(pTraits<scalar>::min)
+    nanValue_(pTraits<scalar>::min),
+    initialised_(false)
 {
     if (readFields)
     {
@@ -855,12 +857,11 @@ bool Foam::functionObjects::propellerInfo::read(const dictionary& dict)
 {
     if (forces::read(dict))
     {
+        dict_ = dict;
+
         radius_ = dict.getScalar("radius");
         URefPtr_.reset(Function1<scalar>::New("URef", dict, &mesh_));
         rotationMode_ = rotationModeNames_.get("rotationMode", dict);
-
-        // Must be set before setting the surface
-        setCoordinateSystem(dict);
 
         writePropellerPerformance_ =
             dict.get<bool>("writePropellerPerformance");
@@ -868,8 +869,6 @@ bool Foam::functionObjects::propellerInfo::read(const dictionary& dict)
         writeWakeFields_ = dict.get<bool>("writeWakeFields");
         if (writeWakeFields_)
         {
-            setSampleDiskSurface(dict);
-
             dict.readIfPresent("interpolationScheme", interpolationScheme_);
 
             dict.readIfPresent("nanValue", nanValue_);
@@ -884,6 +883,19 @@ bool Foam::functionObjects::propellerInfo::read(const dictionary& dict)
 
 bool Foam::functionObjects::propellerInfo::execute()
 {
+    if (!initialised_)
+    {
+        // Must be set before setting the surface
+        setCoordinateSystem(dict_);
+
+        if (writeWakeFields_)
+        {
+            setSampleDiskSurface(dict_);
+        }
+
+        initialised_ = true;
+    }
+
     calcForcesMoments();
 
     createFiles();

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,7 +67,7 @@ Foam::fvMeshSubset::interpolate
                 new emptyFvPatchField<Type>
                 (
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, volMesh>::null()
+                    fvPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -80,7 +80,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     fvPatchFieldBase::calculatedType(),
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, volMesh>::null()
+                    fvPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -159,7 +159,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     vf.boundaryField()[basePatchId],
                     subPatch,
-                    result(),
+                    result.internalField(),
                     mapper
                 )
             );
@@ -248,7 +248,7 @@ Foam::fvMeshSubset::interpolate
                 new emptyFvsPatchField<Type>
                 (
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, surfaceMesh>::null()
+                    fvsPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -261,7 +261,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     fvsPatchFieldBase::calculatedType(),
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, surfaceMesh>::null()
+                    fvsPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -435,7 +435,7 @@ Foam::fvMeshSubset::interpolate
                 new emptyPointPatchField<Type>
                 (
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, pointMesh>::null()
+                    pointPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -448,7 +448,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     pointPatchFieldBase::calculatedType(),
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, pointMesh>::null()
+                    pointPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -493,11 +493,8 @@ Foam::fvMeshSubset::interpolate
             const labelList& meshPoints = basePatch.meshPoints();
 
             // Make addressing from mesh to patch point
-            Map<label> meshPointMap(2*meshPoints.size());
-            forAll(meshPoints, localI)
-            {
-                meshPointMap.insert(meshPoints[localI], localI);
-            }
+            Map<label> meshPointMap(invertToMap(meshPoints));
+
 
             // Find which subpatch points originate from which patch point
             const pointPatch& subPatch = sMesh.boundary()[patchi];
@@ -515,7 +512,7 @@ Foam::fvMeshSubset::interpolate
 
                 if (iter.good())
                 {
-                    directAddressing[localI] = *iter;
+                    directAddressing[localI] = iter.val();
                 }
             }
 
@@ -526,7 +523,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     vf.boundaryField()[patchMap[patchi]],
                     subPatch,
-                    result(),
+                    result.internalField(),
                     directPointPatchFieldMapper(directAddressing)
                 )
             );

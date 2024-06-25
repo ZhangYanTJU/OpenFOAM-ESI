@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -230,13 +230,16 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
 )
 {
     // Modified findInstance which also looks in parent directory
+
     word instance
     (
         io.time().findInstance
         (
             io.local(),
             word::null,
-            IOobject::READ_IF_PRESENT
+            IOobject::READ_IF_PRESENT,
+            word::null,             // No stop instance
+            !UPstream::parRun()     // Fallback to "constant" for non-parallel
         )
     );
 
@@ -246,47 +249,56 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
     }
 
 
+    // The rest of this code is only when parRun == true ...
+
     // Replicate findInstance operation but now on parent directory
 
     // Search in parent directory
     fileName parentDir =
-        io.rootPath()/io.time().globalCaseName()
-       /io.instance()/io.db().dbDir()/io.local()/io.name();
+    (
+        io.rootPath()/io.globalCaseName()
+       /io.instance()/io.db().dbDir()/io.local()/io.name()
+    );
 
     if (fileHandler().isDir(parentDir))
     {
         return io.instance();
     }
 
-    instantList ts = io.time().times();
-    label instanceI;
 
     const scalar startValue = io.time().timeOutputValue();
 
-    for (instanceI = ts.size()-1; instanceI >= 0; --instanceI)
+    instantList ts = io.time().times();
+
+    label instIndex = ts.size()-1;
+
+    // Backward search for first time that is <= startValue
+    for (; instIndex >= 0; --instIndex)
     {
-        if (ts[instanceI].value() <= startValue)
+        if (ts[instIndex].value() <= startValue)
         {
             break;
         }
     }
 
-    // continue searching from here
-    for (; instanceI >= 0; --instanceI)
+    // Continue searching from here
+    for (; instIndex >= 0; --instIndex)
     {
         // Shortcut: if actual directory is the timeName we've already tested it
-        if (ts[instanceI].name() == io.instance())
+        if (ts[instIndex].name() == io.instance())
         {
             continue;
         }
 
-        fileName parentDir =
-            io.rootPath()/io.time().globalCaseName()
-           /ts[instanceI].name()/io.db().dbDir()/io.local()/io.name();
+        parentDir =
+        (
+            io.rootPath()/io.globalCaseName()
+           /ts[instIndex].name()/io.db().dbDir()/io.local()/io.name()
+        );
 
         if (fileHandler().isDir(parentDir))
         {
-            return ts[instanceI].name();
+            return ts[instIndex].name();
         }
     }
 
@@ -301,9 +313,11 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
         // constant function of the time, because the latter points to
         // the case constant directory in parallel cases
 
-        fileName parentDir =
-            io.rootPath()/io.time().globalCaseName()
-           /io.time().constant()/io.db().dbDir()/io.local()/io.name();
+        parentDir =
+        (
+            io.rootPath()/io.globalCaseName()
+           /io.time().constant()/io.db().dbDir()/io.local()/io.name()
+        );
 
         if (fileHandler().isDir(parentDir))
         {
@@ -311,11 +325,15 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
         }
     }
 
-    FatalErrorInFunction
-        << "Cannot find directory " << io.local() << " in times " << ts
-        << exit(FatalError);
+    // FatalErrorInFunction
+    //     << "Cannot find directory " << io.local() << " in times " << ts
+    //     << exit(FatalError);
+    //
+    // return word::null;
 
-    return word::null;
+    // Nothing found in parent?
+    // - treat like regular findInstance with "constant" fallback
+    return io.time().constant();
 }
 
 
@@ -1814,6 +1832,11 @@ Foam::distributedTriSurfaceMesh::independentlyDistributedBbs
         // Now combine for all processors and convert to correct format.
         forAll(bbs, proci)
         {
+            // Inflate a bit for if triangle coincide with processor boundaries
+            for (auto& bb : bbs[proci])
+            {
+                bb.grow(mergeDist_);
+            }
             Pstream::listCombineGather(bbs[proci], plusEqOp<boundBox>());
         }
         Pstream::broadcast(bbs);
@@ -1864,6 +1887,11 @@ Foam::distributedTriSurfaceMesh::independentlyDistributedBbs
         // Now combine for all processors and convert to correct format.
         forAll(bbs, proci)
         {
+            // Inflate a bit for if triangle coincide with processor boundaries
+            for (auto& bb : bbs[proci])
+            {
+                bb.grow(mergeDist_);
+            }
             Pstream::listCombineGather(bbs[proci], plusEqOp<boundBox>());
         }
         Pstream::broadcast(bbs);
@@ -2165,6 +2193,11 @@ Foam::distributedTriSurfaceMesh::independentlyDistributedBbs
         // Now combine for all processors and convert to correct format.
         forAll(bbs, proci)
         {
+            // Inflate a bit for if triangle coincide with processor boundaries
+            for (auto& bb : bbs[proci])
+            {
+                bb.grow(mergeDist_);
+            }
             Pstream::listCombineGather(bbs[proci], plusEqOp<boundBox>());
         }
         Pstream::broadcast(bbs);
@@ -2724,16 +2757,16 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh
         distributionTypeNames_.readIfPresent
         (
             "distributionType",
-            dict_,
+            dict,
             distType_
         );
 
         // Merge distance
-        dict_.readIfPresent("mergeDistance", mergeDist_);
+        dict.readIfPresent("mergeDistance", mergeDist_);
 
         // Distribution type
         bool closed;
-        if (dict_.readIfPresent<bool>("closed", closed))
+        if (dict.readIfPresent<bool>("closed", closed))
         {
             surfaceClosed_ = closed;
         }
@@ -2741,7 +2774,7 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh
         outsideVolType_ = volumeType::names.getOrDefault
         (
             "outsideVolumeType",
-            dict_,
+            dict,
             outsideVolType_
         );
     }
@@ -4751,7 +4784,7 @@ void Foam::distributedTriSurfaceMesh::distribute
     // Send all
     // ~~~~~~~~
 
-    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs;
 
     forAll(faceSendMap, proci)
     {

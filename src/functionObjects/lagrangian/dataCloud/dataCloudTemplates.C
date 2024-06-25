@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,7 +77,7 @@ void Foam::functionObjects::dataCloud::writeListParallel
     const List<Type>& field
 )
 {
-    if (Pstream::master())
+    if (UPstream::master())
     {
         writeList(os, points, field);
 
@@ -85,9 +85,9 @@ void Foam::functionObjects::dataCloud::writeListParallel
         Field<Type> recvField;
 
         // Receive and write
-        for (const int proci : Pstream::subProcs())
+        for (const int proci : UPstream::subProcs())
         {
-            IPstream fromProc(Pstream::commsTypes::blocking, proci);
+            IPstream fromProc(UPstream::commsTypes::scheduled, proci);
 
             fromProc >> recvPoints >> recvField;
 
@@ -99,8 +99,8 @@ void Foam::functionObjects::dataCloud::writeListParallel
         // Send to master
         OPstream toMaster
         (
-            Pstream::commsTypes::blocking,
-            Pstream::masterNo()
+            UPstream::commsTypes::scheduled,
+            UPstream::masterNo()
         );
 
         toMaster
@@ -134,7 +134,7 @@ void Foam::functionObjects::dataCloud::writeListParallel
     const bitSet& selected
 )
 {
-    if (Pstream::master())
+    if (UPstream::master())
     {
         writeList(os, points, field, selected);
 
@@ -142,9 +142,9 @@ void Foam::functionObjects::dataCloud::writeListParallel
         Field<Type> recvField;
 
         // Receive and write
-        for (const int proci : Pstream::subProcs())
+        for (const int proci : UPstream::subProcs())
         {
-            IPstream fromProc(Pstream::commsTypes::blocking, proci);
+            IPstream fromProc(UPstream::commsTypes::scheduled, proci);
 
             fromProc >> recvPoints >> recvField;
 
@@ -156,8 +156,8 @@ void Foam::functionObjects::dataCloud::writeListParallel
         // Send to master
         OPstream toMaster
         (
-            Pstream::commsTypes::blocking,
-            Pstream::masterNo()
+            UPstream::commsTypes::scheduled,
+            UPstream::masterNo()
         );
 
         toMaster
@@ -171,10 +171,10 @@ template<class Type>
 bool Foam::functionObjects::dataCloud::writeField
 (
     const fileName& outputName,
-    const objectRegistry& obrTmp
+    const objectRegistry& obr
 ) const
 {
-    const auto* pointsPtr = cloud::findIOPosition(obrTmp);
+    const auto* pointsPtr = cloud::findIOPosition(obr);
 
     if (!pointsPtr)
     {
@@ -185,8 +185,8 @@ bool Foam::functionObjects::dataCloud::writeField
     // Fields are not always on all processors (eg, multi-component parcels).
     // Thus need to resolve between all processors.
 
-    const List<Type>* fldPtr = obrTmp.findObject<IOField<Type>>(fieldName_);
-    const List<Type>& values = (fldPtr ? *fldPtr : List<Type>());
+    const List<Type>* fldPtr = obr.findObject<IOField<Type>>(fieldName_);
+    const List<Type>& values = (fldPtr ? *fldPtr : List<Type>::null());
 
     if (!returnReduceOr(fldPtr != nullptr))
     {
@@ -195,7 +195,7 @@ bool Foam::functionObjects::dataCloud::writeField
 
     autoPtr<OFstream> osPtr;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         osPtr.reset(new OFstream(outputName));
         osPtr->precision(precision_);

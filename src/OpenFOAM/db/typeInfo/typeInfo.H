@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,9 +24,6 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Typedef
-    Foam::typeInfo
-
 Description
     Basic run-time type information using word as the type's name.
     Used to enhance the standard RTTI to cover I/O.
@@ -36,18 +33,20 @@ Description
         type()
     \endcode
 
-    The reference type cast template function:
-    \code
-        refCast<Type>(r)
-    \endcode
-    wraps dynamic_cast to handle failed casts and generate a FatalError.
-
-    The isA function:
+    The isA functions:
     \code
         isA<Type>(obj)
+        isA_constCast<Type>(obj)
     \endcode
-    returns const pointer to the cast object, nullptr if cast is not possible
-    (can be tested as a bool).
+    which return const or non-const pointers to the cast object,
+    nullptr if cast is not possible (can be tested as a bool).
+
+    The reference type cast template function:
+    \code
+        refCast<Type>(obj)
+        refConstCast<Type>(obj)
+    \endcode
+    wraps dynamic_cast to handle failed casts and generate a FatalError.
 
 \*---------------------------------------------------------------------------*/
 
@@ -80,14 +79,25 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
-//- Check if dynamic_cast to \c Type is possible.
-//  The template types should \em not include any \c const qualifier.
-//  \returns const pointer to cast object, nullptr if cast is not possible
+//- Attempt dynamic_cast to \c Type.
+//  \note The template types should \em not include any \c const qualifier.
+//  \return const pointer to cast object, nullptr if cast is not possible
 template<class Type, class U>
 inline const Type* isA(const U& obj)
 {
     const U* p = &obj;
     return dynamic_cast<const Type*>(p);
+}
+
+
+//- Attempt dynamic_cast to \c Type followed by a const_cast of the result.
+//  \note The template types should \em not include any \c const qualifier.
+//  \return non-const pointer to cast object, nullptr if cast is not possible
+template<class Type, class U>
+inline Type* isA_constCast(const U& obj)
+{
+    const U* p = &obj;
+    return const_cast<Type*>(dynamic_cast<const Type*>(p));
 }
 
 
@@ -139,10 +149,10 @@ inline Type& dynamicCast(U& obj, const dictionary& dict)
 }
 
 
-//- A dynamic_cast (for references).
-//- Generates a FatalError on failed casts and uses the virtual type()
-//- method for error messages.
-//  Respects the constness of the template types.
+//- A dynamic_cast (for references) to \c Type reference.
+//  \note Respects the constness of the template types.
+//  \return reference to cast object, or FatalError on failed casts
+//      and use the virtual type() method for error messages.
 template<class Type, class U>
 inline Type& refCast(U& obj)
 {
@@ -158,6 +168,29 @@ inline Type& refCast(U& obj)
     }
 
     return *casted;
+}
+
+
+//- A dynamic_cast (for const references) to \c Type reference,
+//- followed by a const_cast of the result.
+//  \note The template types should \em not include any \c const qualifier.
+//  \return non-const reference to cast object, or FatalError on failed casts
+//      and use the virtual type() method for error messages.
+template<class Type, class U>
+inline Type& refConstCast(const U& obj)
+{
+    const U* p = &obj;
+    const Type* casted = dynamic_cast<const Type*>(p);
+
+    if (!casted)
+    {
+        FatalErrorInFunction
+            << "Attempt to cast type " << obj.type()
+            << " to type " << Type::typeName
+            << abort(FatalError);
+    }
+
+    return const_cast<Type&>(*casted);
 }
 
 
@@ -204,6 +237,8 @@ inline Type& refCast(U& obj, const label index)
     return *casted;
 }
 
+
+// * * * * * * * * * * * * * * * * Functors  * * * * * * * * * * * * * * * * //
 
 //- Test if dynamic_cast to Type is possible, as a functor
 template<class Type>

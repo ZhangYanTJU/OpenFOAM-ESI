@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,6 +35,9 @@ Description
 #include "labelList.H"
 #include "scalarList.H"
 #include "DynamicList.H"
+#include "labelField.H"
+#include "scalarField.H"
+#include "SubField.H"
 #include "SpanStream.H"
 #include "formattingEntry.H"
 
@@ -90,7 +93,7 @@ int main(int argc, char *argv[])
     {
         // This also works, but not actually using the autoPtr directly
 
-        autoPtr<token::Compound<labelList>> ptr
+        autoPtr<token::compound> ptr
         (
             new token::Compound<labelList>(identity(10, -9))
         );
@@ -131,44 +134,50 @@ int main(int argc, char *argv[])
         Info<< "resized: "
             << ctok1.info() << nl << ctok1 << endl;
 
-        const scalarList* listptr = ctok1.compoundToken().isA<scalarList>();
-        if (listptr)
         {
-            for (scalar& val : const_cast<scalarList&>(*listptr))
+            // Using isA<> on compoundToken()
+            const auto* listptr = ctok1.compoundToken().isA<scalarList>();
+            if (listptr)
             {
-                val *= 5;
-            }
+                // sneaky, SubField bypasses const!
+                scalarField::subField fld(*listptr);
+                fld *= 5;
 
-            Info<< "multiplied List<scalar>: "
-                << ctok1.info() << nl << ctok1 << endl;
+                Info<< "multiplied List<scalar>: "
+                    << ctok1.info() << nl << ctok1 << endl;
+            }
         }
 
-        listptr = ctok1.isCompound<scalarList>();
-        if (listptr)
         {
-            for (scalar& val : const_cast<scalarList&>(*listptr))
-            {
-                val /= 2;
-            }
+            // Using isCompound<...> - combined check
 
-            Info<< "divided List<scalar>: "
-                << ctok1.info() << nl << ctok1 << endl;
+            const auto* listptr = ctok1.isCompound<scalarList>();
+            if (listptr)
+            {
+                scalarField::subField fld(*listptr);
+                fld /= 2;
+
+                Info<< "divided List<scalar>: "
+                    << ctok1.info() << nl << ctok1 << endl;
+            }
         }
 
-        const labelList* listptr2 = ctok1.isCompound<labelList>();
-        if (listptr2)
         {
-            for (label& val : const_cast<labelList&>(*listptr2))
-            {
-                val /= 2;
-            }
+            // Using isCompound<...> - combined check
 
-            Info<< "divided List<label>: "
-                << ctok1.info() << nl << ctok1 << endl;
-        }
-        else
-        {
-            Info<< "compound is not List<label>" << nl;
+            const auto* listptr = ctok1.isCompound<labelList>();
+            if (listptr)
+            {
+                labelField::subField fld(*listptr);
+                fld /= 2;
+
+                Info<< "divided List<label>: "
+                    << ctok1.info() << nl << ctok1 << endl;
+            }
+            else
+            {
+                Info<< "compound is not List<label>" << nl;
+            }
         }
 
         Info<< "Before fill_zero: " << ctok1 << endl;
@@ -183,63 +192,43 @@ int main(int argc, char *argv[])
             auto& ct = ctok1.refCompoundToken();
 
             ct.resize(20);
-            bool handled = true;
+            bool handled = false;
 
             switch (ct.typeCode())
             {
-                case token::tokenType::BOOL :
-                {
-                    UList<bool> cmpts
-                    (
-                        reinterpret_cast<bool*>(ct.data_bytes()),
-                        label(ct.size_bytes() / sizeof(bool))
-                    );
-                    cmpts = false;
+                #undef  doLocalCode
+                #define doLocalCode(TokenType, cmptType, cmptValue)           \
+                                                                              \
+                case TokenType :                                              \
+                {                                                             \
+                    UList<cmptType> cmpts                                     \
+                    (                                                         \
+                        reinterpret_cast<cmptType*>(ct.data_bytes()),         \
+                        label(ct.size_bytes() / sizeof(cmptType))             \
+                    );                                                        \
+                    cmpts = cmptValue;                                        \
+                    handled = true;                                           \
+                    break;                                                    \
                 }
-                break;
 
-                case token::tokenType::LABEL :
-                {
-                    UList<label> cmpts
-                    (
-                        reinterpret_cast<label*>(ct.data_bytes()),
-                        label(ct.size_bytes() / sizeof(label))
-                    );
-                    cmpts = 123;
-                }
-                break;
+                doLocalCode(token::tokenType::BOOL, bool, false);
+                doLocalCode(token::tokenType::LABEL, label, 123);
+                doLocalCode(token::tokenType::FLOAT, float, 2.7);
+                doLocalCode(token::tokenType::DOUBLE, double, 3.1415);
 
-                case token::tokenType::FLOAT :
-                {
-                    UList<float> cmpts
-                    (
-                        reinterpret_cast<float*>(ct.data_bytes()),
-                        label(ct.size_bytes() / sizeof(float))
-                    );
-                    cmpts = 2.7;
-                }
-                break;
+                #undef doLocalCode
 
-                case token::tokenType::DOUBLE :
-                {
-                    UList<double> cmpts
-                    (
-                        reinterpret_cast<double*>(ct.data_bytes()),
-                        label(ct.size_bytes() / sizeof(double))
-                    );
-                    cmpts = 3.1415;
-                }
-                break;
-
-                default:
-                    handled = false;
-                    break;
+                default : break;
             }
 
 
             if (handled)
             {
                 Info<< "assigned: " << ctok1 << nl;
+            }
+            else
+            {
+                Info<< "Warning: not handled!" << nl;
             }
         }
     }
@@ -325,6 +314,65 @@ int main(int argc, char *argv[])
         formattingEntry entry3(23345, obuf.view().data(), obuf.view().size());
         Info<< "printing entry3: " << entry3.keyword() << nl;
         Info<< "content" << nl << entry3 << nl;
+    }
+
+
+    {
+        primitiveEntry entry0("entry");
+
+        Info<< "empty: " << entry0 << nl;
+
+        // populate
+        {
+            tokenList& toks = entry0.stream();
+            toks.resize(2);
+            toks[0] = word("nonuniform");
+            toks[1] = token::Compound<scalarList>::New(10, scalar(1));
+        }
+
+        Info<< entry0 << nl;
+
+        // Modify contents
+        for (auto& tok : entry0.stream())
+        {
+            if (tok.isCompound<scalarList>())
+            {
+                tok.refCompoundToken<scalarList>() = 2;
+            }
+        }
+
+        Info<< entry0 << nl;
+
+
+        // Find and 'capture' contents
+
+        {
+            typedef List<scalar> ListType;
+
+            auto* inputDataPtr =
+                const_cast<ListType*>(entry0.stream().findCompound<ListType>());
+
+            if (inputDataPtr)
+            {
+                Info<< "found input data" << nl;
+                Info<< entry0 << nl;
+
+                ListType inputData(std::move(*inputDataPtr));
+
+                Info<< "input data, after move" << nl;
+                Info<< entry0 << nl;
+
+                ListType replaceData(5, scalar(3.145));
+
+                // some manipulation
+                replaceData.back() = scalar(1.414);
+
+                inputDataPtr->swap(replaceData);
+                Info<< "with replaced values" << nl;
+            }
+        }
+
+        Info<< entry0 << nl;
     }
 
     return 0;

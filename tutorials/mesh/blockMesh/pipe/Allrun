@@ -11,4 +11,8 @@ cp -f \
 
 runApplication blockMesh
 
+restore0Dir
+
+runApplication $(getApplication)
+
 #------------------------------------------------------------------------------

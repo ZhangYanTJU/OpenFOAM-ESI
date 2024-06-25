@@ -377,14 +377,16 @@ void Foam::regionsToCell::combine(topoSet& set, const bool add) const
     // Note: wip. Select cells first
     boolList selectedCell(mesh_.nCells(), true);
 
-    if (setName_.size() && setName_ != "none")
+    if (!setName_.empty() && setName_ != "none")
     {
-        Info<< "    Loading subset " << setName_ << " to delimit search region."
-            << endl;
-        cellSet subSet(mesh_, setName_);
+        Info<< "    Loading subset " << setName_
+            << " to delimit search region." << nl;
+
+        cellSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
+        const labelHashSet& cellLabels = loadedSet;
 
         selectedCell = false;
-        for (const label celli : static_cast<const labelHashSet&>(subSet))
+        for (const label celli : cellLabels)
         {
             selectedCell[celli] = true;
         }

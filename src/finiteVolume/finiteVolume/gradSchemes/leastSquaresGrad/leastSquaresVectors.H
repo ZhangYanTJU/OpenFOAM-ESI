@@ -55,6 +55,16 @@ class leastSquaresVectors
 :
     public MeshObject<fvMesh, MoveableMeshObject, leastSquaresVectors>
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            MoveableMeshObject,
+            leastSquaresVectors
+        > MeshObject_type;
+
+
     // Private Data
 
         //- Owner least-squares gradient vectors

@@ -131,7 +131,8 @@ void incompressibleVars::setMeanFields()
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 pInst()
             )
@@ -146,7 +147,8 @@ void incompressibleVars::setMeanFields()
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 UInst()
             )
@@ -161,7 +163,8 @@ void incompressibleVars::setMeanFields()
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 phiInst()
             )

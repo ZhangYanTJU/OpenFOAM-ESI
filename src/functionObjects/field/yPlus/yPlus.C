@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,7 +86,7 @@ Foam::functionObjects::yPlus::yPlus
             (
                 scopedName(typeName),
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -96,7 +96,7 @@ Foam::functionObjects::yPlus::yPlus
         )
     );
 
-    mesh_.objectRegistry::store(yPlusPtr);
+    regIOobject::store(yPlusPtr);
 }
 
 

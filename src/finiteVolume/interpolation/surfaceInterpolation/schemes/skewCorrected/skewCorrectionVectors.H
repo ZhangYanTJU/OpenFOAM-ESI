@@ -46,6 +46,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class fvMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -56,7 +57,17 @@ class skewCorrectionVectors
 :
     public MeshObject<fvMesh, MoveableMeshObject, skewCorrectionVectors>
 {
-    // Private data
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            MoveableMeshObject,
+            skewCorrectionVectors
+        > MeshObject_type;
+
+
+    // Private Data
 
         //- Is mesh skew
         bool skew_;
@@ -75,6 +86,7 @@ public:
 
     // Constructors
 
+        //- Construct given fvMesh
         explicit skewCorrectionVectors(const fvMesh& mesh);
 
 
@@ -82,7 +94,7 @@ public:
     virtual ~skewCorrectionVectors();
 
 
-    // Member functions
+    // Member Functions
 
         //- Return whether mesh is skew or not
         bool skew() const

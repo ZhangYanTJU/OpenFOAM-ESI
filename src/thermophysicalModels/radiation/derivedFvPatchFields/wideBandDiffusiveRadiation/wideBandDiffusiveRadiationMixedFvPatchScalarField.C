@@ -167,15 +167,17 @@ updateCoeffs()
         boundaryRadiationProperties::New(internalField().mesh());
 
 
+    const auto& Tp = radiation.T().boundaryField()[patchi];
+
     const tmp<scalarField> temissivity
     (
-        boundaryRadiation.emissivity(patch().index(), lambdaId)
+        boundaryRadiation.emissivity(patchi, lambdaId, nullptr, &Tp)
     );
     const scalarField& emissivity = temissivity();
 
     const tmp<scalarField> ttransmissivity
     (
-        boundaryRadiation.transmissivity(patch().index(), lambdaId)
+        boundaryRadiation.transmissivity(patchi, lambdaId, nullptr, &Tp)
     );
     const scalarField& transmissivity = ttransmissivity();
 
@@ -217,7 +219,7 @@ updateCoeffs()
              const volScalarField& qSec =
                 this->db().lookupObject<volScalarField>(qSecName);
 
-            Ir += qSec.boundaryField()[patch().index()];
+            Ir += qSec.boundaryField()[patchi];
         }
     }
 

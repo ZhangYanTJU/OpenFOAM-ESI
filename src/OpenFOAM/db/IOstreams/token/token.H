@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -105,9 +105,9 @@ public:
         CHAR_DATA,        //!< String-variant: plain character content
 
         // Aliases
-        FLOAT_SCALAR = FLOAT,
-        DOUBLE_SCALAR = DOUBLE,
-        VERBATIMSTRING = VERBATIM
+        FLOAT_SCALAR = FLOAT,       //!< compatibility name for FLOAT
+        DOUBLE_SCALAR = DOUBLE,     //!< compatibility name for DOUBLE
+        VERBATIMSTRING = VERBATIM   //!< compatibility name for VERBATIM
     };
 
 
@@ -222,7 +222,8 @@ public:
                 const bool readContent = true
             );
 
-            //- Check if dynamic_cast to \c Type is possible.
+            //- Attempt dynamic_cast to \c Type
+            //- returns nullptr if cast is not possible
             template<class Type>
             const Type* isA() const
             {
@@ -279,6 +280,9 @@ public:
             //- of the underlying data content
             virtual direction nComponents() const = 0;
 
+            //- The vector-space rank associated with the data content
+            virtual direction rank() const = 0;
+
             //- Pointer to the underlying data as byte data
             virtual const char* cdata_bytes() const = 0;
 
@@ -333,10 +337,10 @@ public:
         TypeNameNoDebug("Compound<T>");
 
         //- No copy construct
-        Compound<T>(const Compound<T>&) = delete;
+        Compound(const Compound<T>&) = delete;
 
         //- No copy assignment
-        Compound<T>& operator=(const Compound<T>&) = delete;
+        void operator=(const Compound<T>&) = delete;
 
         // Constructors
 
@@ -364,11 +368,13 @@ public:
 
         // Selectors
 
-            //- Construct autoPtr compound type with forwarding arguments
+            //- Construct autoPtr compound with forwarding arguments.
+            //  The return type is compound, not Compound since that
+            //  is what the token interface requires.
             template<class... Args>
-            static autoPtr<Compound<T>> New(Args&&... args)
+            static autoPtr<compound> New(Args&&... args)
             {
-                return autoPtr<Compound<T>>
+                return autoPtr<compound>
                 (
                     new Compound<T>(T(std::forward<Args>(args)...))
                 );
@@ -383,7 +389,7 @@ public:
                 return T::size();
             }
 
-            //- Change the size of the underlying container content
+            //- Change the size of the underlying content
             virtual void resize(const label n)
             {
                 T::resize(n);
@@ -417,6 +423,12 @@ public:
             virtual direction nComponents() const
             {
                 return pTraits_nComponents<value_type>();
+            }
+
+            //- The vector-space rank associated with the data content
+            virtual direction rank() const
+            {
+                return pTraits_rank<value_type>();
             }
 
             //- Pointer to the underlying data as byte data
@@ -474,7 +486,7 @@ private:
         //- The token type
         tokenType type_;
 
-        //- Line number in the file the token was read from
+        //- The file line number where the token was read from
         label line_;
 
 
@@ -516,6 +528,8 @@ public:
         inline explicit token(punctuationToken p, label lineNum=0) noexcept;
 
         //- Construct label token
+        //- \note Use boolean() static method for creating a \b bool token
+        //- since \c bool and \c int are otherwise indistinguishable
         inline explicit token(const label val, label lineNum=0) noexcept;
 
         //- Construct float token
@@ -541,7 +555,7 @@ public:
         //  No character stripping
         inline explicit token(tokenType typ, const std::string&, label line=0);
 
-        //- Copy construct word/string token with the specified variant.
+        //- Move construct word/string token with the specified variant.
         //  A invalid word/string variant type is silently treated as STRING.
         //  No character stripping
         inline explicit token(tokenType typ, std::string&&, label line=0);
@@ -635,7 +649,7 @@ public:
         inline bool isLabel() const noexcept;
 
         //- True if token is LABEL and equal to parameter
-        inline bool isLabel(const label val) const noexcept;
+        inline bool isLabel(const label value) const noexcept;
 
         //- Token is FLOAT
         inline bool isFloat() const noexcept;
@@ -748,7 +762,14 @@ public:
         inline const compound& compoundToken() const;
 
         //- Return reference to compound token. Fatal if the wrong type.
+        //- No checks for \em released or \em pending states
         inline compound& refCompoundToken();
+
+        //- Return reference to the underlying encapsulated container
+        //- (eg, \c List<label> etc) of a compound token.
+        //- No checks for \em released or \em pending states
+        template<class Type>
+        inline Type& refCompoundToken();
 
         //- Default construct the specified compound type and read from stream.
         //  A no-op and returns false if compound type is unknown.

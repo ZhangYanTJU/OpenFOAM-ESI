@@ -413,7 +413,7 @@ Foam::labelList Foam::decompositionMethod::decompose
         mesh,
         fineToCoarse,
         coarsePoints.size(),
-        true,                       // use global cell labels
+        true,        // Global mesh connectivity
         coarseCellCells
     );
 
@@ -589,7 +589,7 @@ Foam::labelList Foam::decompositionMethod::decompose
     // If we average the region centre instead, cyclics could cause
     // the average domain centre to be outside of domain.
 
-    scalarField regionWeights(localRegion.nLocalRegions(), Zero);
+    scalarField regionWeights(localRegion.nLocalRegions(), Foam::zero{});
 
     pointField regionCentres(localRegion.nLocalRegions(), point::max);
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,55 +46,53 @@ static const char* headerTypeCompat = "IOPtrList<coordinateSystem>";
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::coordinateSystems::readFromStream(const bool readOnProc)
-{
-    Istream& is = readStream(word::null, readOnProc);
-
-    if (readOnProc)
-    {
-        if (headerClassName() == typeName)
-        {
-            this->readIstream(is, coordinateSystem::iNew());
-            close();
-        }
-        else if (headerClassName() == headerTypeCompat)
-        {
-            // Older (1806 and earlier) header name
-            if (error::master())
-            {
-                std::cerr
-                    << "--> FOAM IOWarning :" << nl
-                    << "    Found header class name '" << headerTypeCompat
-                    << "' instead of '" << typeName << "'" << nl;
-
-                error::warnAboutAge("header class", 1806);
-            }
-
-            this->readIstream(is, coordinateSystem::iNew());
-            close();
-        }
-        else
-        {
-            FatalIOErrorInFunction(is)
-                << "unexpected class name " << headerClassName()
-                << " expected " << typeName
-                << " or " << headerTypeCompat << nl
-                << "    while reading object " << name()
-                << exit(FatalIOError);
-        }
-    }
-}
-
-
-bool Foam::coordinateSystems::readContents()
+bool Foam::coordinateSystems::readIOcontents()
 {
     if (isReadRequired() || (isReadOptional() && headerOk()))
     {
-        readFromStream();
-        return true;
+        // Attempt reading
+    }
+    else
+    {
+        return false;
     }
 
-    return false;
+
+    // Do reading
+    Istream& is = readStream(word::null);
+
+    if (headerClassName() == typeName)
+    {
+        this->readIstream(is, coordinateSystem::iNew());
+        close();
+    }
+    else if (headerClassName() == headerTypeCompat)
+    {
+        // Older (1806 and earlier) header name
+        if (error::master())
+        {
+            std::cerr
+                << "--> FOAM IOWarning :" << nl
+                << "    Found header class name '" << headerTypeCompat
+                << "' instead of '" << typeName << "'" << nl;
+
+            error::warnAboutAge("header class", 1806);
+        }
+
+        this->readIstream(is, coordinateSystem::iNew());
+        close();
+    }
+    else
+    {
+        FatalIOErrorInFunction(is)
+            << "Unexpected class name " << headerClassName()
+            << " expected " << typeName
+            << " or " << headerTypeCompat << nl
+            << "    while reading object " << name()
+            << exit(FatalIOError);
+    }
+
+    return true;
 }
 
 
@@ -102,10 +100,9 @@ bool Foam::coordinateSystems::readContents()
 
 Foam::coordinateSystems::coordinateSystems(const IOobject& io)
 :
-    regIOobject(io),
-    PtrList<coordinateSystem>()
+    regIOobject(io)
 {
-    readContents();
+    readIOcontents();
 }
 
 
@@ -131,10 +128,9 @@ Foam::coordinateSystems::coordinateSystems
     const PtrList<coordinateSystem>& content
 )
 :
-    regIOobject(io),
-    PtrList<coordinateSystem>()
+    regIOobject(io)
 {
-    if (!readContents())
+    if (!readIOcontents())
     {
         static_cast<PtrList<coordinateSystem>&>(*this) = content;
     }
@@ -150,7 +146,7 @@ Foam::coordinateSystems::coordinateSystems
     regIOobject(io),
     PtrList<coordinateSystem>(std::move(content))
 {
-    readContents();
+    readIOcontents();
 }
 
 

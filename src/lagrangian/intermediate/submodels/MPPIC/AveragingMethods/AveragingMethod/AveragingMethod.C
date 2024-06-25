@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -146,50 +146,41 @@ bool Foam::AveragingMethod<Type>::write(const bool writeOnProc) const
     Field<scalar> pointVolume(mesh_.nPoints(), Zero);
 
     // output fields
-    GeometricField<Type, fvPatchField, volMesh> cellValue
+    auto tcellValue = GeometricField<Type, fvPatchField, volMesh>::New
     (
-        IOobject
-        (
-            this->name() + ":cellValue",
-            this->time().timeName(),
-            mesh_
-        ),
+        IOobject::scopedName(this->name(), "cellValue"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensioned<Type>(dimless, Zero)
     );
-    GeometricField<TypeGrad, fvPatchField, volMesh> cellGrad
+    auto& cellValue = tcellValue.ref();
+
+    auto tcellGrad = GeometricField<TypeGrad, fvPatchField, volMesh>::New
     (
-        IOobject
-        (
-            this->name() + ":cellGrad",
-            this->time().timeName(),
-            mesh_
-        ),
+        IOobject::scopedName(this->name(), "cellGrad"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensioned<TypeGrad>(dimless, Zero)
     );
-    GeometricField<Type, pointPatchField, pointMesh> pointValue
+    auto& cellGrad = tcellGrad.ref();
+
+    auto tpointValue = GeometricField<Type, pointPatchField, pointMesh>::New
     (
-        IOobject
-        (
-            this->name() + ":pointValue",
-            this->time().timeName(),
-            mesh_
-        ),
+        IOobject::scopedName(this->name(), "pointValue"),
+        IOobject::NO_REGISTER,
         pointMesh_,
         dimensioned<Type>(dimless, Zero)
     );
-    GeometricField<TypeGrad, pointPatchField, pointMesh> pointGrad
+    auto& pointValue = tpointValue.ref();
+
+    auto tpointGrad = GeometricField<TypeGrad, pointPatchField, pointMesh>::New
     (
-        IOobject
-        (
-            this->name() + ":pointGrad",
-            this->time().timeName(),
-            mesh_
-        ),
+        IOobject::scopedName(this->name(), "pointGrad"),
+        IOobject::NO_REGISTER,
         pointMesh_,
         dimensioned<TypeGrad>(dimless, Zero)
     );
+    auto& pointGrad = tpointGrad.ref();
 
     // Barycentric coordinates of the tet vertices
     const FixedList<barycentric, 4>

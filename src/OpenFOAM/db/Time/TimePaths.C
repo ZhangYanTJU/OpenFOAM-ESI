@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -128,9 +128,60 @@ Foam::instantList Foam::TimePaths::times() const
 }
 
 
+Foam::word Foam::TimePaths::findInstancePath
+(
+    const UList<instant>& timeDirs,
+    const instant& t
+)
+{
+    // Note:
+    // - timeDirs will include constant (with value 0) as first element.
+    //   For backwards compatibility make sure to find 0 in preference
+    //   to constant.
+    // - list is sorted so could use binary search
+
+    forAllReverse(timeDirs, i)
+    {
+        if (t.equal(timeDirs[i].value()))
+        {
+            return timeDirs[i].name();
+        }
+    }
+
+    return word();
+}
+
+
+// Foam::word Foam::Time::findInstancePath
+// (
+//     const fileName& directory,
+//     const instant& t
+// ) const
+// {
+//     // Simplified version: use findTimes (readDir + sort).
+//     // The expensive bit is the readDir, not the sorting.
+//     // TBD: avoid calling findInstancePath from filePath.
+//
+//     instantList timeDirs = findTimes(directory, constant());
+//
+//     return findInstancePath(timeDirs, i);
+// }
+
+
+Foam::word Foam::TimePaths::findInstancePath(const instant& t) const
+{
+    // Simplified version: use findTimes (readDir + sort).
+    // The expensive bit is the readDir, not the sorting.
+    // TBD: avoid calling findInstancePath from filePath.
+
+    instantList timeDirs = findTimes(path(), constant());
+    return findInstancePath(timeDirs, t);
+}
+
+
 Foam::label Foam::TimePaths::findClosestTimeIndex
 (
-    const instantList& timeDirs,
+    const UList<instant>& timeDirs,
     const scalar t,
     const word& constantDirName
 )

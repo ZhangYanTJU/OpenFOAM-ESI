@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -176,7 +176,7 @@ private:
         );
 
         //- Read if IOobject flags set. Return true if read.
-        bool readContents();
+        bool readIOcontents();
 
         //- Check consistency of structure, i.e. indices into splitCells_.
         void checkIndices() const;

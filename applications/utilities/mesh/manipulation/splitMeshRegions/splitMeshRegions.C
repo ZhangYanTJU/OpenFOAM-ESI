@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -295,9 +295,7 @@ void addToInterface
     else
     {
         // Create new interface of size 1.
-        Map<label> zoneToSize;
-        zoneToSize.insert(zoneID, 1);
-        regionsToSize.insert(interface, zoneToSize);
+        regionsToSize(interface).insert(zoneID, 1);
     }
 }
 
@@ -376,16 +374,15 @@ void getInterfaceSizes
     }
 
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
-        if (Pstream::master())
+        if (UPstream::master())
         {
             // Receive and add to my sizes
-            for (const int slave : Pstream::subProcs())
+            for (const int proci : UPstream::subProcs())
             {
-                IPstream fromSlave(Pstream::commsTypes::blocking, slave);
-
-                EdgeMap<Map<label>> slaveSizes(fromSlave);
+                EdgeMap<Map<label>> slaveSizes;
+                IPstream::recv(slaveSizes, proci);
 
                 forAllConstIters(slaveSizes, slaveIter)
                 {
@@ -423,15 +420,8 @@ void getInterfaceSizes
         }
         else
         {
-            // Send to master
-            {
-                OPstream toMaster
-                (
-                    Pstream::commsTypes::blocking,
-                    Pstream::masterNo()
-                );
-                toMaster << regionsToSize;
-            }
+            // send to master
+            OPstream::send(regionsToSize, UPstream::masterNo());
         }
     }
 
@@ -484,18 +474,10 @@ void getInterfaceSizes
                     zoneName + "_" + name1 + "_to_" + name0
                 );
             }
-            interfaceSizes[nInterfaces] = infoIter();
 
-            if (regionsToInterface.found(e))
-            {
-                regionsToInterface[e].insert(zoneID, nInterfaces);
-            }
-            else
-            {
-                Map<label> zoneAndInterface;
-                zoneAndInterface.insert(zoneID, nInterfaces);
-                regionsToInterface.insert(e, zoneAndInterface);
-            }
+            interfaceSizes[nInterfaces] = infoIter();
+            regionsToInterface(e).insert(zoneID, nInterfaces);
+
             nInterfaces++;
         }
     }

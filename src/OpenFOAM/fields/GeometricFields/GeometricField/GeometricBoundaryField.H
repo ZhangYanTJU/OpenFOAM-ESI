@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,12 +49,6 @@ SourceFiles
 namespace Foam
 {
 
-// Forward Declarations
-class dictionary;
-
-template<class Type, template<class> class PatchField, class GeoMesh>
-class GeometricField;
-
 /*---------------------------------------------------------------------------*\
                    Class GeometricBoundaryField Declaration
 \*---------------------------------------------------------------------------*/
@@ -73,6 +67,9 @@ public:
 
         //- The internal field type associated with the boundary fields
         typedef DimensionedField<Type, GeoMesh> Internal;
+
+        //- This boundary field type
+        typedef GeometricBoundaryField<Type, PatchField, GeoMesh> Boundary;
 
         //- The patch field type for the boundary fields
         typedef PatchField<Type> Patch;
@@ -117,7 +114,7 @@ public:
         GeometricBoundaryField
         (
             const BoundaryMesh& bmesh,
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const word& patchFieldType = PatchField<Type>::calculatedType()
         );
 
@@ -127,7 +124,7 @@ public:
         GeometricBoundaryField
         (
             const BoundaryMesh& bmesh,
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const wordList& wantedPatchTypes,
             const wordList& actualPatchTypes = wordList()
         );
@@ -137,14 +134,14 @@ public:
         GeometricBoundaryField
         (
             const BoundaryMesh& bmesh,
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const PtrList<PatchField<Type>>& ptfl
         );
 
         //- Construct as copy, setting the reference to the internal field
         GeometricBoundaryField
         (
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const GeometricBoundaryField<Type, PatchField, GeoMesh>& btf
         );
 
@@ -152,7 +149,7 @@ public:
         //- and resetting type of field for given patch IDs
         GeometricBoundaryField
         (
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const GeometricBoundaryField<Type, PatchField, GeoMesh>& btf,
             const labelList& patchIDs,
             const word& patchFieldName
@@ -169,7 +166,7 @@ public:
         GeometricBoundaryField
         (
             const BoundaryMesh& bmesh,
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const dictionary& dict
         );
 
@@ -177,33 +174,51 @@ public:
     // Member Functions
 
         //- Read the boundary field
-        void readField
-        (
-            const DimensionedField<Type, GeoMesh>& field,
-            const dictionary& dict
-        );
+        void readField(const Internal& iField, const dictionary& dict);
 
         //- Update the boundary condition coefficients
         void updateCoeffs();
 
-        //- Evaluate boundary conditions
-        void evaluate();
+        //- Evaluate boundary conditions for each patch field.
+        //- Uses specified or default comms.
+        void evaluate
+        (
+            const UPstream::commsTypes commsType = UPstream::defaultCommsType
+        );
 
-        //- Evaluate boundary conditions after change in local values
-        void evaluateLocal();
+        //- Evaluate boundary conditions for patch fields matching the
+        //- given predicate. Uses specified or default comms.
+        template<class UnaryPredicate>
+        void evaluate_if
+        (
+            const UnaryPredicate& pred,
+            const UPstream::commsTypes commsType = UPstream::defaultCommsType
+        );
 
-        //- Evaluate boundary conditions on a subset of coupled patches
+        //- Evaluate boundary conditions after change in local values.
+        //- Uses specified or default comms.
+        void evaluateLocal
+        (
+            const UPstream::commsTypes commsType = UPstream::defaultCommsType
+        );
+
+        //- Evaluate boundary conditions on coupled patches of given type.
+        //- Uses specified or default comms.
         template<class CoupledPatchType>
-        void evaluateCoupled();
+        void evaluateCoupled
+        (
+            const UPstream::commsTypes commsType = UPstream::defaultCommsType
+        );
 
-        //- Evaluate boundary conditions for selected patches
-        void evaluateSelected(const UList<label>& patchIDs);
+        //- Evaluate boundary conditions for selected patches.
+        //- Uses non-blocking comms.
+        void evaluateSelected(const labelUList& patchIDs);
 
         //- Return a list of the patch types
         wordList types() const;
 
         //- Return boundary field of values neighbouring the boundary
-        GeometricBoundaryField boundaryInternalField() const;
+        tmp<GeometricBoundaryField> boundaryInternalField() const;
 
         //- Return a list of pointers for each patch field with only those
         //- pointing to interfaces being set
@@ -213,14 +228,17 @@ public:
         //- pointing to interfaces being set
         lduInterfaceFieldPtrsList scalarInterfaces() const;
 
+        //- Helper: check if field has been evaluated. See instantiations.
+        bool check() const;
+
+
+    // Write
+
         //- Write boundary field as dictionary entry
         void writeEntry(const word& keyword, Ostream& os) const;
 
         //- Write dictionary entries of the individual boundary fields.
         void writeEntries(Ostream& os) const;
-
-        //- Helper: check if field has been evaluated. See instantiations.
-        bool check() const;
 
 
     // Member Operators

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -149,9 +149,6 @@ public:
             const bool faceValues = true
         );
 
-        //- Copy construct
-        explicit Sampled(const Sampled<Type>& rhs);
-
         //- Copy construct setting patch
         explicit Sampled
         (
@@ -159,22 +156,19 @@ public:
             const polyPatch& pp
         );
 
-        //- Construct and return a clone
+        //- Copy construct
+        explicit Sampled(const Sampled<Type>& rhs);
+
+        //- Return a clone
         virtual tmp<PatchFunction1<Type>> clone() const
         {
-            return tmp<PatchFunction1<Type>>
-            (
-                new Sampled<Type>(*this)
-            );
+            return PatchFunction1<Type>::Clone(*this);
         }
 
-        //- Construct and return a clone setting patch
+        //- Return a clone, setting the patch
         virtual tmp<PatchFunction1<Type>> clone(const polyPatch& pp) const
         {
-            return tmp<PatchFunction1<Type>>
-            (
-                new Sampled<Type>(*this, pp)
-            );
+            return PatchFunction1<Type>::Clone(*this, pp);
         }
 
 

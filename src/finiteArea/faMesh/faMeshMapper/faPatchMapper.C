@@ -26,12 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "faPatchMapper.H"
-#include "faPatch.H"
-#include "faBoundaryMesh.H"
-#include "faMesh.H"
 #include "mapPolyMesh.H"
-#include "faceMapper.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -47,8 +42,8 @@ void Foam::faPatchMapper::calcAddressing() const
     // Compatibility change  HJ, 12/Aug/2017
     hasUnmapped_ = false;
 
-    directAddrPtr_ = new labelList(patch_.size(), Zero);
-    labelList& addr = *directAddrPtr_;
+    directAddrPtr_ = std::make_unique<labelList>(patch_.size(), Foam::zero{});
+    auto& addr = *directAddrPtr_;
 
     // Make a map of old edgeFaces, giving edge index in patch given the new
     // face label next to the patch
@@ -72,9 +67,11 @@ void Foam::faPatchMapper::calcAddressing() const
 
     forAll(ef, efI)
     {
-        if (edgeIndexLookup.found(ef[efI]))
+        const auto iter = edgeIndexLookup.cfind(ef[efI]);
+
+        if (iter.good())
         {
-            addr[efI] = edgeIndexLookup[ef[efI]];
+            addr[efI] = iter.val();
         }
         else
         {
@@ -88,11 +85,11 @@ void Foam::faPatchMapper::calcAddressing() const
 }
 
 
-void Foam::faPatchMapper::clearOut()
-{
-    deleteDemandDrivenData(directAddrPtr_);
-    hasUnmapped_ = false;
-}
+// void Foam::faPatchMapper::clearOut()
+// {
+//     directAddrPtr_.reset(nullptr);
+//     hasUnmapped_ = false;
+// }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -107,17 +104,14 @@ Foam::faPatchMapper::faPatchMapper
     mpm_(mpm),
     sizeBeforeMapping_(patch.size()),
     oldEdgeFaces_(patch.edgeFaces()),
-    hasUnmapped_(false),
-    directAddrPtr_(nullptr)
+    hasUnmapped_(false)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::faPatchMapper::~faPatchMapper()
-{
-    clearOut();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

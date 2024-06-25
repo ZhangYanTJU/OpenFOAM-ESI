@@ -108,15 +108,6 @@ public:
             const ${typeName}FixedValuePointPatch${FieldType}&
         );
 
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchField<${TemplateType}>> clone() const
-        {
-            return autoPtr<pointPatchField<${TemplateType}>>
-            (
-                new ${typeName}FixedValuePointPatch${FieldType}(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         ${typeName}FixedValuePointPatch${FieldType}
         (
@@ -124,16 +115,19 @@ public:
             const DimensionedField<${TemplateType}, pointMesh>&
         );
 
+        //- Return a clone
+        virtual autoPtr<pointPatchField<${TemplateType}>> clone() const
+        {
+            return pointPatchField<${TemplateType}>::Clone(*this);
+        }
+
         //- Construct and return a clone setting internal field reference
         virtual autoPtr<pointPatchField<${TemplateType}>> clone
         (
             const DimensionedField<${TemplateType}, pointMesh>& iF
         ) const
         {
-            return autoPtr<pointPatchField<${TemplateType}>>
-            (
-                new ${typeName}FixedValuePointPatch${FieldType}(*this, iF)
-            );
+            return pointPatchField<${TemplateType}>::Clone(*this, iF);
         }
 
 

@@ -41,8 +41,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef edgeMesh_H
-#define edgeMesh_H
+#ifndef Foam_edgeMesh_H
+#define Foam_edgeMesh_H
 
 #include "pointField.H"
 #include "edgeList.H"

@@ -221,9 +221,10 @@ void detectSelfIntersections
     const edgeList& edges = s.edges();
     const indexedOctree<treeDataTriSurface>& tree = s.tree();
     const labelList& meshPoints = s.meshPoints();
-    const pointField& points = s.points();
+    const tmp<pointField> tpoints(s.points());
+    const pointField& points = tpoints();
 
-    isEdgeIntersecting.setSize(edges.size());
+    isEdgeIntersecting.resize_nocopy(edges.size());
     isEdgeIntersecting = false;
 
     forAll(edges, edgeI)
@@ -311,7 +312,8 @@ label detectIntersectionPoints
         detectSelfIntersections(s, isEdgeIntersecting);
 
         const edgeList& edges = s.edges();
-        const pointField& points = s.points();
+        const tmp<pointField> tpoints(s.points());
+        const pointField& points = tpoints();
 
         forAll(edges, edgeI)
         {
@@ -358,8 +360,8 @@ tmp<scalarField> avg
     const scalarField& edgeWeights
 )
 {
-    tmp<scalarField> tres(new scalarField(s.nPoints(), Zero));
-    scalarField& res = tres.ref();
+    auto tres = tmp<scalarField>::New(s.nPoints(), Zero);
+    auto& res = tres.ref();
 
     scalarField sumWeight(s.nPoints(), Zero);
 
@@ -836,9 +838,10 @@ int main(int argc, char *argv[])
         // Do some smoothing (Lloyds algorithm)
         lloydsSmoothing(nSmooth, s, isFeaturePoint, edgeStat, isAffectedPoint);
 
-
         // Update pointDisplacement
-        const pointField& pts = s.points();
+        const tmp<pointField> tpoints(s.points());
+        const pointField& pts = tpoints();
+
         forAll(meshPoints, i)
         {
             label meshPointI = meshPoints[i];

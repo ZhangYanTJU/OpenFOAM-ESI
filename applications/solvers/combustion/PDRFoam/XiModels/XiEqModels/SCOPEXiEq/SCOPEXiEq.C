@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -75,8 +76,10 @@ Foam::XiEqModels::SCOPEXiEq::~SCOPEXiEq()
 
 Foam::tmp<Foam::volScalarField> Foam::XiEqModels::SCOPEXiEq::XiEq() const
 {
-    const volScalarField& k = turbulence_.k();
-    const volScalarField& epsilon = turbulence_.epsilon();
+    const tmp<volScalarField> tk(turbulence_.k());
+    const volScalarField& k = tk();
+    const tmp<volScalarField> tepsilon(turbulence_.epsilon());
+    const volScalarField& epsilon = tepsilon();
 
     volScalarField up(sqrt((2.0/3.0)*k));
     if (subGridSchelkin_)
@@ -91,23 +94,14 @@ Foam::tmp<Foam::volScalarField> Foam::XiEqModels::SCOPEXiEq::XiEq() const
     volScalarField K(0.157*upBySu/sqrt(Rl));
     volScalarField Ma(MaModel.Ma());
 
-    tmp<volScalarField> tXiEq
+    auto tXiEq = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "XiEq",
-                epsilon.time().timeName(),
-                epsilon.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            epsilon.mesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+        "XiEq",
+        IOobject::NO_REGISTER,
+        epsilon.mesh(),
+        dimensionedScalar(dimless, Zero)
     );
-    volScalarField& xieq = tXiEq.ref();
+    auto& xieq = tXiEq.ref();
 
     forAll(xieq, celli)
     {

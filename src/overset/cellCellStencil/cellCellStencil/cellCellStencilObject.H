@@ -32,8 +32,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cellCellStencilObject_H
-#define cellCellStencilObject_H
+#ifndef Foam_cellCellStencilObject_H
+#define Foam_cellCellStencilObject_H
 
 #include "cellCellStencil.H"
 #include "MeshObject.H"
@@ -43,13 +43,10 @@ SourceFiles
 namespace Foam
 {
 
+// Typedefs
 class cellCellStencilObject;
-typedef MeshObject
-<
-    fvMesh,
-    Foam::MoveableMeshObject,
-    cellCellStencilObject
-> Stencil;
+typedef MeshObject<fvMesh, MoveableMeshObject, cellCellStencilObject> Stencil;
+
 
 /*---------------------------------------------------------------------------*\
                   Class cellCellStencilObject Declaration
@@ -57,10 +54,20 @@ typedef MeshObject
 
 class cellCellStencilObject
 :
-    public Stencil,
+    public MeshObject<fvMesh, MoveableMeshObject, cellCellStencilObject>,
     public cellCellStencil
 {
-    // Private data
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            MoveableMeshObject,
+            cellCellStencilObject
+        > MeshObject_type;
+
+
+    // Private Data
 
         autoPtr<cellCellStencil> stencilPtr_;
 
@@ -68,6 +75,7 @@ class cellCellStencilObject
 public:
 
     TypeName("cellCellStencilObject");
+
 
     // Constructors
 
@@ -78,12 +86,8 @@ public:
             const bool update = true
         )
         :
-            MeshObject
-            <
-                fvMesh,
-                Foam::MoveableMeshObject,
-                cellCellStencilObject
-            >(mesh),
+            MeshObject_type(mesh),
+
             cellCellStencil(mesh),
             stencilPtr_
             (

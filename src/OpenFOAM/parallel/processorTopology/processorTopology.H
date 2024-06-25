@@ -118,7 +118,7 @@ public:
     // Constructors
 
         //- Default construct (empty)
-        processorTopology();
+        processorTopology() noexcept;
 
 
     // Static Functions

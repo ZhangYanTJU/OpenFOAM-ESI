@@ -144,7 +144,7 @@ tmp<fvPatchScalarField>
 boundaryAdjointContribution::turbulentDiffusivity() const
 {
     NotImplemented;
-    return tmp<fvPatchScalarField>(nullptr);
+    return nullptr;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

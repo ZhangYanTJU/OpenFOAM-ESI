@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,46 +32,77 @@ License
 #include "processorPolyPatch.H"
 #include "syncTools.H"
 
-// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
-void Foam::globalMeshData::calcCellCells
+namespace Foam
+{
+
+// NOTE: the AgglomerationType is anything that behaves like a List with
+// an operator[] and provides coverage in the (0-nCells) range.
+// - identityOp() does this
+
+template<class AgglomerationType>
+static void calcCellCellsImpl
 (
     const polyMesh& mesh,
-    const labelList& agglom,
+    const AgglomerationType& agglom,
     const label nLocalCoarse,
     const bool parallel,
-    CompactListList<label>& cellCells
+    CompactListList<label>& cellCells,
+    CompactListList<scalar>* cellCellWeightsPtr = nullptr
 )
 {
     const labelList& faceOwner = mesh.faceOwner();
     const labelList& faceNeigh = mesh.faceNeighbour();
     const polyBoundaryMesh& pbm = mesh.boundaryMesh();
 
-    // FUTURE? treat empty agglomeration like an identity map
-
     // Global cell numbers (agglomerated numbering)
     const label myProci = UPstream::myProcNo(UPstream::worldComm);
     const globalIndex globalAgglom(nLocalCoarse, UPstream::worldComm, parallel);
 
-
     // The agglomerated owner per boundary faces (global numbering)
     // from the other side (of coupled patches)
 
-    labelList globalNeighbour(agglom, pbm.faceOwner());
-    globalAgglom.inplaceToGlobal(myProci, globalNeighbour);
-    syncTools::swapBoundaryFaceList(mesh, globalNeighbour);
+    labelList globalNeighbour;
+    {
+        const label myAgglomOffset = globalAgglom.localStart(myProci);
+
+        const labelList::subList bndFaceOwner = pbm.faceOwner();
+
+        const label nBoundaryFaces = bndFaceOwner.size();
+
+        globalNeighbour.resize(nBoundaryFaces);
+
+        for (label bfacei = 0; bfacei < nBoundaryFaces; ++bfacei)
+        {
+            label val = agglom[bndFaceOwner[bfacei]];
+            if (val >= 0)
+            {
+                // Only offset 'real' (non-negative) agglomerations
+                val += myAgglomOffset;
+            }
+            globalNeighbour[bfacei] = val;
+        }
+    }
+
+    // Swap boundary neighbour information:
+    // - cyclics and (optionally) processor
+    syncTools::swapBoundaryFaceList(mesh, globalNeighbour, parallel);
 
 
     // Count number of faces (internal + coupled)
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // Number of faces per coarse cell
-    labelList nFacesPerCell(nLocalCoarse, Zero);
+    labelList nFacesPerCell(nLocalCoarse, Foam::zero{});
 
     for (label facei = 0; facei < mesh.nInternalFaces(); ++facei)
     {
         const label own = agglom[faceOwner[facei]];
         const label nei = agglom[faceNeigh[facei]];
+
+        // Negative agglomeration (exclude from subset)
+        if (own < 0 || nei < 0) continue;
 
         ++nFacesPerCell[own];
         ++nFacesPerCell[nei];
@@ -81,12 +112,15 @@ void Foam::globalMeshData::calcCellCells
     {
         if (pp.coupled() && (parallel || !isA<processorPolyPatch>(pp)))
         {
-            label bFacei = pp.start()-mesh.nInternalFaces();
+            const label bndOffset = mesh.nInternalFaces();
 
             for (const label facei : pp.range())
             {
                 const label own = agglom[faceOwner[facei]];
-                const label globalNei = globalNeighbour[bFacei];
+                const label globalNei = globalNeighbour[facei-bndOffset];
+
+                // Negative agglomeration (exclude from subset)
+                if (own < 0 || globalNei < 0) continue;
 
                 if
                 (
@@ -96,8 +130,6 @@ void Foam::globalMeshData::calcCellCells
                 {
                     ++nFacesPerCell[own];
                 }
-
-                ++bFacei;
             }
         }
     }
@@ -107,11 +139,24 @@ void Foam::globalMeshData::calcCellCells
     // ~~~~~~~~~~~~~~~~~~~~~~~
 
     cellCells.resize_nocopy(nFacesPerCell);
-
     nFacesPerCell = 0;  // Restart the count
 
-    labelList& m = cellCells.values();
+
+    // CSR indexing
     const labelList& offsets = cellCells.offsets();
+
+    // CSR connections
+    labelList& connect = cellCells.values();
+
+
+    // CSR connection weights
+    scalarList weights;
+    if (cellCellWeightsPtr)
+    {
+        cellCellWeightsPtr->clear();
+        weights.resize(cellCells.totalSize());
+    }
+
 
     // For internal faces is just offsetted owner and neighbour
     for (label facei = 0; facei < mesh.nInternalFaces(); ++facei)
@@ -119,11 +164,20 @@ void Foam::globalMeshData::calcCellCells
         const label own = agglom[faceOwner[facei]];
         const label nei = agglom[faceNeigh[facei]];
 
+        // Negative agglomeration (exclude from subset)
+        if (own < 0 || nei < 0) continue;
+
         const label ownIndex = offsets[own] + nFacesPerCell[own]++;
         const label neiIndex = offsets[nei] + nFacesPerCell[nei]++;
 
-        m[ownIndex] = globalAgglom.toGlobal(myProci, nei);
-        m[neiIndex] = globalAgglom.toGlobal(myProci, own);
+        connect[ownIndex] = globalAgglom.toGlobal(myProci, nei);
+        connect[neiIndex] = globalAgglom.toGlobal(myProci, own);
+
+        if (!weights.empty())
+        {
+            weights[ownIndex] = Foam::mag(mesh.faceAreas()[facei]);
+            weights[neiIndex] = weights[ownIndex];
+        }
     }
 
     // For boundary faces is offsetted coupled neighbour
@@ -131,12 +185,15 @@ void Foam::globalMeshData::calcCellCells
     {
         if (pp.coupled() && (parallel || !isA<processorPolyPatch>(pp)))
         {
-            label bFacei = pp.start()-mesh.nInternalFaces();
+            const label bndOffset = mesh.nInternalFaces();
 
             for (const label facei : pp.range())
             {
                 const label own = agglom[faceOwner[facei]];
-                const label globalNei = globalNeighbour[bFacei];
+                const label globalNei = globalNeighbour[facei-bndOffset];
+
+                // Negative agglomeration (exclude from subset)
+                if (own < 0 || globalNei < 0) continue;
 
                 if
                 (
@@ -146,10 +203,13 @@ void Foam::globalMeshData::calcCellCells
                 {
                     const label ownIndex = offsets[own] + nFacesPerCell[own]++;
 
-                    m[ownIndex] = globalNei;
-                }
+                    connect[ownIndex] = globalNei;
 
-                ++bFacei;
+                    if (!weights.empty())
+                    {
+                        weights[ownIndex] = Foam::mag(mesh.faceAreas()[facei]);
+                    }
+                }
             }
         }
     }
@@ -164,13 +224,12 @@ void Foam::globalMeshData::calcCellCells
 
     if (!cellCells.empty())
     {
-        label newIndex = 0;
-        labelHashSet nbrCells;
-
-        labelList& m = cellCells.values();
+        // Need non-const access to CSR indexing
         labelList& offsets = cellCells.offsets();
 
         label startIndex = offsets[0];
+        label newIndex = 0;
+        labelHashSet nbrCells;
 
         const label nCellCells = cellCells.size();
 
@@ -189,9 +248,15 @@ void Foam::globalMeshData::calcCellCells
 
             for (label i = startIndex; i < endIndex; ++i)
             {
-                if (nbrCells.insert(m[i]))
+                if (nbrCells.insert(connect[i]))
                 {
-                    m[newIndex] = m[i];
+                    connect[newIndex] = connect[i];
+
+                    if (!weights.empty())
+                    {
+                        weights[newIndex] = weights[i];
+                    }
+
                     ++newIndex;
                 }
             }
@@ -199,8 +264,22 @@ void Foam::globalMeshData::calcCellCells
             offsets[celli+1] = newIndex;
         }
 
-        m.resize(newIndex);
+        connect.resize(newIndex);
+        if (!weights.empty())
+        {
+            weights.resize(newIndex);
+        }
     }
+
+
+    // CSR connection weights
+    // - addressing is identical to the connections
+    if (cellCellWeightsPtr)
+    {
+        cellCellWeightsPtr->offsets() = cellCells.offsets();
+        cellCellWeightsPtr->values() = std::move(weights);
+    }
+
 
     //forAll(cellCells, celli)
     //{
@@ -218,183 +297,194 @@ void Foam::globalMeshData::calcCellCells
     //}
 }
 
+} // End namespace Foam
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
 void Foam::globalMeshData::calcCellCells
 (
     const polyMesh& mesh,
-    const labelList& agglom,
+    const labelUList& agglom,
+    const label nLocalCoarse,
+    const bool parallel,
+    CompactListList<label>& cellCells
+)
+{
+    calcCellCellsImpl
+    (
+        mesh,
+        agglom,
+        nLocalCoarse,
+        parallel,
+        cellCells
+    );
+}
+
+
+void Foam::globalMeshData::calcCellCells
+(
+    const polyMesh& mesh,
+    const labelUList& agglom,
     const label nLocalCoarse,
     const bool parallel,
     CompactListList<label>& cellCells,
     CompactListList<scalar>& cellCellWeights
 )
 {
-    const labelList& faceOwner = mesh.faceOwner();
-    const labelList& faceNeigh = mesh.faceNeighbour();
-    const polyBoundaryMesh& pbm = mesh.boundaryMesh();
-
-    // FUTURE? treat empty agglomeration like an identity map
-
-    // Global cell numbers (agglomerated numbering)
-    const label myProci = UPstream::myProcNo(UPstream::worldComm);
-    const globalIndex globalAgglom(nLocalCoarse, UPstream::worldComm, parallel);
-
-
-    // The agglomerated owner per boundary faces (global numbering)
-    // from the other side (of coupled patches)
-
-    labelList globalNeighbour(agglom, pbm.faceOwner());
-    globalAgglom.inplaceToGlobal(myProci, globalNeighbour);
-    syncTools::swapBoundaryFaceList(mesh, globalNeighbour);
+    calcCellCellsImpl
+    (
+        mesh,
+        agglom,
+        nLocalCoarse,
+        parallel,
+        cellCells,
+       &cellCellWeights
+    );
+}
 
 
-    // Count number of faces (internal + coupled)
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Convenience forms
 
-    // Number of faces per coarse cell
-    labelList nFacesPerCell(nLocalCoarse, Zero);
+void Foam::globalMeshData::calcCellCells
+(
+    const polyMesh& mesh,
+    CompactListList<label>& cellCells,
+    const bool parallel
+)
+{
+    calcCellCellsImpl
+    (
+        mesh,
+        Foam::identityOp{},
+        mesh.nCells(),
+        parallel,
+        cellCells
+    );
+}
 
-    for (label facei = 0; facei < mesh.nInternalFaces(); ++facei)
+
+Foam::labelList Foam::globalMeshData::calcCellCells
+(
+    const polyMesh& mesh,
+    const bitSet& selectedCells,
+    CompactListList<label>& cellCells,
+    const bool parallel
+)
+{
+    const label nCells = mesh.nCells();
+
+    labelList agglom(nCells, -1);
+    labelList cellMap;
+
+    // First pass - sorted order without duplicates
+    label nCompact = 0;
+    for (const label celli : selectedCells)
     {
-        const label own = agglom[faceOwner[facei]];
-        const label nei = agglom[faceNeigh[facei]];
-
-        ++nFacesPerCell[own];
-        ++nFacesPerCell[nei];
+        // A bitSet has no negatives/duplicates, so just check the upper range
+        if (celli >= nCells)
+        {
+            break;
+        }
+        else
+        {
+            agglom[celli] = celli;
+            ++nCompact;
+        }
     }
 
-    for (const polyPatch& pp : pbm)
+    // Second pass - finalize mappings
+    if (nCompact)
     {
-        if (pp.coupled() && (parallel || !isA<processorPolyPatch>(pp)))
+        cellMap.resize(nCompact);
+        nCompact = 0;
+
+        for (label& celli : agglom)
         {
-            label bFacei = pp.start()-mesh.nInternalFaces();
-
-            for (const label facei : pp.range())
+            if (celli >= 0)
             {
-                const label own = agglom[faceOwner[facei]];
-                const label globalNei = globalNeighbour[bFacei];
+                cellMap[nCompact] = celli;
+                celli = nCompact;
+                ++nCompact;
 
-                if
-                (
-                   !globalAgglom.isLocal(myProci, globalNei)
-                 || globalAgglom.toLocal(myProci, globalNei) != own
-                )
+                if (nCompact == cellMap.size())
                 {
-                    ++nFacesPerCell[own];
+                    break;  // Early termination
                 }
-
-                ++bFacei;
             }
         }
     }
 
+    globalMeshData::calcCellCells
+    (
+        mesh,
+        agglom,
+        nCompact,   // == cellMap.size()
+        parallel,
+        cellCells
+    );
 
-    // Fill in offset and data
-    // ~~~~~~~~~~~~~~~~~~~~~~~
+    return cellMap;
+}
 
-    cellCells.resize_nocopy(nFacesPerCell);
-    cellCellWeights.resize_nocopy(nFacesPerCell);
 
-    nFacesPerCell = 0;  // Restart the count
+Foam::labelList Foam::globalMeshData::calcCellCells
+(
+    const polyMesh& mesh,
+    const labelUList& selectedCells,
+    CompactListList<label>& cellCells,
+    const bool parallel
+)
+{
+    const label nCells = mesh.nCells();
 
-    labelList& m = cellCells.values();
-    scalarList& w = cellCellWeights.values();
-    const labelList& offsets = cellCells.offsets();
+    labelList agglom(nCells, -1);
+    labelList cellMap;
 
-    // For internal faces is just offsetted owner and neighbour
-    for (label facei = 0; facei < mesh.nInternalFaces(); ++facei)
+    // First pass - creates a sorted order without duplicates
+    label nCompact = 0;
+    for (const label celli : selectedCells)
     {
-        const label own = agglom[faceOwner[facei]];
-        const label nei = agglom[faceNeigh[facei]];
-
-        const label ownIndex = offsets[own] + nFacesPerCell[own]++;
-        const label neiIndex = offsets[nei] + nFacesPerCell[nei]++;
-
-        m[ownIndex] = globalAgglom.toGlobal(myProci, nei);
-        m[neiIndex] = globalAgglom.toGlobal(myProci, own);
-
-        w[ownIndex] = mag(mesh.faceAreas()[facei]);
-        w[neiIndex] = w[ownIndex];
+        // Check cell is in range, and squash out duplicates
+        if (celli >= 0 && celli < nCells && agglom[celli] < 0)
+        {
+            agglom[celli] = celli;
+            ++nCompact;
+        }
     }
 
-    // For boundary faces is offsetted coupled neighbour
-    for (const polyPatch& pp : pbm)
+    // Second pass - finalize mappings
+    if (nCompact)
     {
-        if (pp.coupled() && (parallel || !isA<processorPolyPatch>(pp)))
+        cellMap.resize(nCompact);
+        nCompact = 0;
+
+        for (label& celli : agglom)
         {
-            label bFacei = pp.start()-mesh.nInternalFaces();
-
-            for (const label facei : pp.range())
+            if (celli >= 0)
             {
-                const label own = agglom[faceOwner[facei]];
-                const label globalNei = globalNeighbour[bFacei];
+                cellMap[nCompact] = celli;
+                celli = nCompact;
+                ++nCompact;
 
-                if
-                (
-                   !globalAgglom.isLocal(myProci, globalNei)
-                 || globalAgglom.toLocal(myProci, globalNei) != own
-                )
+                if (nCompact == cellMap.size())
                 {
-                    const label ownIndex = offsets[own] + nFacesPerCell[own]++;
-
-                    m[ownIndex] = globalNei;
-                    w[ownIndex] = mag(mesh.faceAreas()[facei]);
+                    break;  // Early termination
                 }
-
-                ++bFacei;
             }
         }
     }
 
+    globalMeshData::calcCellCells
+    (
+        mesh,
+        agglom,
+        nCompact,   // == cellMap.size()
+        parallel,
+        cellCells
+    );
 
-    // Check for duplicates connections between cells
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Done as postprocessing step since we now have cellCells.
-
-    // NB: Because of agglomeration, self-connections will occur
-    //     and must be filtered out.
-
-    if (!cellCells.empty())
-    {
-        label newIndex = 0;
-        labelHashSet nbrCells;
-
-        labelList& m = cellCells.values();
-        scalarList& w = cellCellWeights.values();
-        labelList& offsets = cellCells.offsets();
-
-        label startIndex = offsets[0];
-
-        const label nCellCells = cellCells.size();
-
-        for (label celli = 0; celli < nCellCells; ++celli)
-        {
-            const label self = globalAgglom.toGlobal(myProci, celli);
-
-            nbrCells.clear();
-            nbrCells.insert(self);
-
-            const label endIndex = offsets[celli+1];
-
-            for (label i = startIndex; i < endIndex; ++i)
-            {
-                if (nbrCells.insert(m[i]))
-                {
-                    m[newIndex] = m[i];
-                    w[newIndex] = w[i];
-                    ++newIndex;
-                }
-            }
-            startIndex = endIndex;
-            offsets[celli+1] = newIndex;
-        }
-
-        m.resize(newIndex);
-        w.resize(newIndex);
-
-        // Weights has identical offsets as cellCells
-        cellCellWeights.offsets() = cellCells.offsets();
-    }
+    return cellMap;
 }
 
 

@@ -63,23 +63,15 @@ Foam::swarmCorrections::noSwarm::~noSwarm()
 
 Foam::tmp<Foam::volScalarField> Foam::swarmCorrections::noSwarm::Cs() const
 {
-    const fvMesh& mesh(this->pair_.phase1().mesh());
+    const fvMesh& mesh = this->pair_.phase1().mesh();
 
-    return
-        tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "one",
-                    mesh.time().timeName(),
-                    mesh
-                ),
-                mesh,
-                dimensionedScalar("one", dimless, 1)
-            )
-        );
+    return volScalarField::New
+    (
+        "one",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimensionedScalar("one", dimless, 1)
+    );
 }
 
 

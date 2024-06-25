@@ -364,7 +364,7 @@ Foam::interfaceTrackingFvMesh::pointDisplacement()
             {
                 OPstream toNeighbProc
                 (
-                    Pstream::commsTypes::blocking,
+                    Pstream::commsTypes::buffered,
                     procPatch.neighbProcNo()
                 );
 
@@ -375,7 +375,7 @@ Foam::interfaceTrackingFvMesh::pointDisplacement()
             {
                 IPstream fromNeighbProc
                 (
-                    Pstream::commsTypes::blocking,
+                    Pstream::commsTypes::buffered,
                     procPatch.neighbProcNo()
                 );
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,8 +33,10 @@ Description
 
 SourceFiles
     regIOobject.C
+    regIOobjectI.H
     regIOobjectRead.C
     regIOobjectWrite.C
+    regIOobjectMetaData.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -170,7 +172,7 @@ public:
             //      or was newly registered
             bool checkIn();
 
-            //- Remove all file watches and remove object from registry
+            //- Remove object from registry, and remove all file watches
             //  \return true if object was registered and was removed
             bool checkOut();
 
@@ -194,6 +196,12 @@ public:
             //  \return reference to the stored object
             template<class Type>
             inline static Type& store(Type* p);
+
+            //- Transfer pointer ownership to its registry.
+            //  Resets (clears) the parameter.
+            //  \return reference to the stored object
+            template<class Type>
+            inline static Type& store(std::unique_ptr<Type>&& ptr);
 
             //- Transfer pointer ownership to its registry.
             //  Resets (clears) the parameter.

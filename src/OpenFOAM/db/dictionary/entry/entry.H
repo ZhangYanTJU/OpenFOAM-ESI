@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -193,16 +193,10 @@ public:
     // Member Functions
 
         //- Return keyword
-        const keyType& keyword() const noexcept
-        {
-            return keyword_;
-        }
+        const keyType& keyword() const noexcept { return keyword_; }
 
         //- Return non-const access to keyword
-        keyType& keyword() noexcept
-        {
-            return keyword_;
-        }
+        keyType& keyword() noexcept { return keyword_; }
 
         //- Return the entry name
         virtual const fileName& name() const = 0;
@@ -220,40 +214,34 @@ public:
         virtual label endLineNumber() const = 0;
 
 
-        //- Return true if this entry is a stream
-        virtual bool isStream() const noexcept
-        {
-            return false;
-        }
+        //- True if this entry is a stream
+        virtual bool isStream() const noexcept { return this->streamPtr(); }
+
+        //- Return pointer to token stream, if it is a primitive entry,
+        //- otherwise return nullptr
+        virtual ITstream* streamPtr() const noexcept { return nullptr; }
 
         //- Return token stream, if entry is a primitive entry
         virtual ITstream& stream() const = 0;
 
 
-        //- Return true if this entry is a dictionary
-        virtual bool isDict() const noexcept
-        {
-            return this->dictPtr();
-        }
+        //- True if this entry is a dictionary
+        virtual bool isDict() const noexcept { return this->dictPtr(); }
 
-        //- Return pointer to dictionary, if entry is a dictionary.
-        //  Return nullptr if the entry is not a dictionary.
-        virtual const dictionary* dictPtr() const noexcept
-        {
-            return nullptr;
-        }
+        //- Return pointer to dictionary, if entry is a dictionary,
+        //- otherwise return nullptr.
+        virtual const dictionary* dictPtr() const noexcept { return nullptr; }
 
-        //- Return non-const pointer to dictionary, if entry is a dictionary
-        //  Return nullptr if the entry is not a dictionary.
-        virtual dictionary* dictPtr() noexcept
-        {
-            return nullptr;
-        }
+        //- Return non-const pointer to dictionary, if entry is a dictionary,
+        //- otherwise return nullptr.
+        virtual dictionary* dictPtr() noexcept { return nullptr; }
 
-        //- Return dictionary, if entry is a dictionary
+        //- Return dictionary, if entry is a dictionary,
+        //- otherwise Fatal.
         virtual const dictionary& dict() const = 0;
 
-        //- Return non-const access to dictionary, if entry is a dictionary
+        //- Return non-const access to dictionary, if entry is a dictionary,
+        //- otherwise Fatal.
         virtual dictionary& dict() = 0;
 
 

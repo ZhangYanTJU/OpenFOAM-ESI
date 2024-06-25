@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014-2018 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,11 +71,12 @@ Foam::aspectRatioModels::constantAspectRatio::~constantAspectRatio()
 Foam::tmp<Foam::volScalarField>
 Foam::aspectRatioModels::constantAspectRatio::E() const
 {
-    const fvMesh& mesh(this->pair_.phase1().mesh());
+    const fvMesh& mesh = this->pair_.phase1().mesh();
 
     return volScalarField::New
     (
-        aspectRatioModel::typeName + ":E",
+        IOobject::scopedName(aspectRatioModel::typeName, "E"),
+        IOobject::NO_REGISTER,
         mesh,
         E0_
     );

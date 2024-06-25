@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -174,7 +174,7 @@ void Foam::fvMeshSubset::doCoupledPatches
 
     if (syncPar && UPstream::parRun())
     {
-        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs;
 
         // Send face usage across processor patches
         if (!nCellsUsingFace.empty())
@@ -569,7 +569,8 @@ void Foam::fvMeshSubset::reset(const Foam::zero)
             );
         }
 
-        newSubMesh.addFvPatches(newPatches);
+        // Add patches - make sure we don't trigger any parallel side effects
+        newSubMesh.addFvPatches(newPatches, false);
     }
 
 

@@ -242,6 +242,12 @@ Foam::functionObjects::interfaceHeight::interfaceHeight
 {
     read(dict);
     resetNames({"height", "position"});
+
+    if (Pstream::master())
+    {
+        writeFileHeader(fileID::heightFile);
+        writeFileHeader(fileID::positionFile);
+    }
 }
 
 

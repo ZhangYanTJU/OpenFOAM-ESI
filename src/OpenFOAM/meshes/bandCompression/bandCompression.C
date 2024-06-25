@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +28,8 @@ License
 
 #include "bandCompression.H"
 #include "bitSet.H"
+#include "polyMesh.H"
+#include "globalMeshData.H"
 #include "CircularBuffer.H"
 #include "CompactListList.H"
 #include "DynamicList.H"
@@ -157,6 +159,13 @@ Foam::labelList cuthill_mckee_algorithm
         }
     }
 
+    // Debug:
+    // - the peak capacity of queuedCells approximates the
+    //   maximum intermediate bandwidth
+    #if 0
+    Pout<< "bandCompression: peak-capacity=" << queuedCells.capacity() << nl;
+    #endif
+
     // Now we have new-to-old in newOrder.
     return newOrder;
 }
@@ -173,10 +182,10 @@ Foam::labelList Foam::meshTools::bandCompression
 )
 {
     // Protect against zero-sized offset list
-    const label nOldCells = max(0, (offsets.size()-1));
+    const label nOldCells = Foam::max(0, (offsets.size()-1));
 
     // Count number of neighbours
-    labelList numNbrs(nOldCells, Zero);
+    labelList numNbrs(nOldCells, Foam::zero{});
     for (label celli = 0; celli < nOldCells; ++celli)
     {
         const label beg = offsets[celli];
@@ -304,13 +313,29 @@ Foam::labelList Foam::meshTools::bandCompression
         }
     }
 
-    // Now we have new-to-old in newOrder.
+    // Debug:
+    // - the peak capacity of queuedCells approximates the
+    //   maximum intermediate bandwidth
+    #if 0
+    Pout<< "bandCompression: peak-capacity=" << queuedCells.capacity() << nl;
+    #endif
 
+    // Now we have new-to-old in newOrder.
     return newOrder;
 }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+Foam::labelList Foam::meshTools::bandCompression(const polyMesh& mesh)
+{
+    // Local mesh connectivity
+    CompactListList<label> cellCells;
+    globalMeshData::calcCellCells(mesh, cellCells);
+
+    return cuthill_mckee_algorithm(cellCells);
+}
+
 
 Foam::labelList Foam::meshTools::bandCompression
 (

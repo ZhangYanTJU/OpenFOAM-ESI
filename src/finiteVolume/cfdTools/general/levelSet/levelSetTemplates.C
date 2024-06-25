@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,21 +45,14 @@ Foam::tmp<Foam::DimensionedField<Type, Foam::volMesh>> Foam::levelSetAverage
     const DimensionedField<Type, pointMesh>& negativeP
 )
 {
-    tmp<DimensionedField<Type, volMesh>> tResult
+    auto tresult = DimensionedField<Type, volMesh>::New
     (
-        new DimensionedField<Type, volMesh>
-        (
-            IOobject
-            (
-                positiveC.name() + ":levelSetAverage",
-                mesh.time().timeName(),
-                mesh
-            ),
-            mesh,
-            dimensioned<Type>(positiveC.dimensions(), Zero)
-        )
+        IOobject::scopedName(positiveC.name(), "levelSetAverage"),
+        mesh,
+        Foam::zero{}, // value
+        positiveC.dimensions()
     );
-    DimensionedField<Type, volMesh>& result = tResult.ref();
+    auto& result = tresult.ref();
 
     forAll(result, cI)
     {
@@ -114,7 +107,7 @@ Foam::tmp<Foam::DimensionedField<Type, Foam::volMesh>> Foam::levelSetAverage
         result[cI] = r/v;
     }
 
-    return tResult;
+    return tresult;
 }
 
 
@@ -132,8 +125,8 @@ Foam::tmp<Foam::Field<Type>> Foam::levelSetAverage
 {
     typedef typename outerProduct<Type, vector>::type sumType;
 
-    tmp<Field<Type>> tResult(new Field<Type>(patch.size(), Zero));
-    Field<Type>& result = tResult.ref();
+    auto tResult = tmp<Field<Type>>::New(patch.size(), Zero);
+    auto& result = tResult.ref();
 
     forAll(result, fI)
     {

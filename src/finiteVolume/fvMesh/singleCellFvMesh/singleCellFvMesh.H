@@ -29,7 +29,7 @@ Class
 
 Description
     fvMesh as subset of other mesh. Consists of one cell and all original
-    bounday faces. Useful when manipulating boundary data. Single internal
+    boundary faces. Useful when manipulating boundary data. Single internal
     cell only needed to be able to manipulate in a standard way.
 
 SourceFiles
@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef singleCellFvMesh_H
-#define singleCellFvMesh_H
+#ifndef Foam_singleCellFvMesh_H
+#define Foam_singleCellFvMesh_H
 
 #include "fvPatchFieldMapper.H"
 #include "fvMesh.H"
@@ -58,8 +58,9 @@ class singleCellFvMesh
 :
     public fvMesh
 {
-    // Private data
+    // Private Data
 
+        //- Fine patch face to agglomeration index addressing
         const labelListIOList patchFaceAgglomeration_;
 
         //- From patch faces back to agglomeration or fine mesh
@@ -179,35 +180,44 @@ public:
 
     // Member Functions
 
-        bool agglomerate() const
+        bool agglomerate() const noexcept
         {
-            return patchFaceAgglomeration_.size() > 0;
+            return !patchFaceAgglomeration_.empty();
+        }
+
+        //- Fine patch face to agglomeration index addressing
+        const labelListList& patchFaceAgglomeration() const noexcept
+        {
+            return patchFaceAgglomeration_;
         }
 
         //- From patchFace on this back to original mesh or agglomeration
-        const labelListList& patchFaceMap() const
+        const labelListList& patchFaceMap() const noexcept
         {
             return patchFaceMap_;
         }
 
         //- From point on this back to original mesh
-        const labelList& pointMap() const
+        const labelList& pointMap() const noexcept
         {
             return pointMap_;
         }
 
         //- From face on original mesh to face on this
-        const labelList& reverseFaceMap() const
+        const labelList& reverseFaceMap() const noexcept
         {
             return reverseFaceMap_;
         }
 
         //- From point on original mesh to point on this (or -1 for removed
         //- points)
-        const labelList& reversePointMap() const
+        const labelList& reversePointMap() const noexcept
         {
             return reversePointMap_;
         }
+
+        //- Interpolate for overset (unused)
+        using fvMesh::interpolate;
 
         //- Map volField. Internal field set to average, patch fields straight
         //- copies.
@@ -217,7 +227,6 @@ public:
         (
             const GeometricField<Type, fvPatchField, volMesh>&
         ) const;
-
 };
 
 

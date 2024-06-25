@@ -130,9 +130,10 @@ Foam::incompressibleTwoPhaseMixture::mu() const
         clamp(alpha1_, zero_one{})
     );
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
         "mu",
+        IOobject::NO_REGISTER,
         limitedAlpha1*rho1_*nuModel1_->nu()
       + (scalar(1) - limitedAlpha1)*rho2_*nuModel2_->nu()
     );
@@ -155,9 +156,10 @@ Foam::incompressibleTwoPhaseMixture::muf() const
         clamp(fvc::interpolate(alpha1_), zero_one{})
     );
 
-    return tmp<surfaceScalarField>::New
+    return surfaceScalarField::New
     (
         "muf",
+        IOobject::NO_REGISTER,
         alpha1f*rho1_*fvc::interpolate(nuModel1_->nu())
       + (scalar(1) - alpha1f)*rho2_*fvc::interpolate(nuModel2_->nu())
     );
@@ -172,9 +174,10 @@ Foam::incompressibleTwoPhaseMixture::nuf() const
         clamp(fvc::interpolate(alpha1_), zero_one{})
     );
 
-    return tmp<surfaceScalarField>::New
+    return surfaceScalarField::New
     (
         "nuf",
+        IOobject::NO_REGISTER,
         (
             alpha1f*rho1_*fvc::interpolate(nuModel1_->nu())
           + (scalar(1) - alpha1f)*rho2_*fvc::interpolate(nuModel2_->nu())

@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
 
         // Add some more entries
         {
+            label idx = 0;
             dictionary subdict;
 
             subdict.add("key", 100);
@@ -72,23 +73,30 @@ int main(int argc, char *argv[])
 
             subdict.add
             (
-                new formattingEntry(10, "// comment - without newline.")
+                new formattingEntry(++idx, "// comment - without newline.")
             );
 
             subdict.add
             (
                 // NB newline must be part of the content!
-                new formattingEntry(11, "// some comment - with newline?\n")
+                new formattingEntry(++idx, "// some comment - with newline?\n")
             );
 
             subdict.add
             (
                 // NB newline must be part of the content!
-                new formattingEntry(12, "/* other comment */\n")
+                new formattingEntry(++idx, "/* other comment */\n")
             );
+
+            // Other - invisible
+            subdict.add(new formattingEntry(++idx, token(123), false));
+
+            // Other - visible (probably not what anyone wants!)
+            subdict.add(new formattingEntry(++idx, token(456)));
 
             subdict.add("val", 42);
 
+            Info<< "subdict keys:" << flatOutput(subdict.toc()) << nl;
             dict.add("subdict", std::move(subdict));
         }
 

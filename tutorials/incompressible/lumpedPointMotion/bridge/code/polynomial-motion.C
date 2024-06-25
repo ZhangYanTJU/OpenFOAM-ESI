@@ -534,7 +534,7 @@ int main(int argc, char *argv[])
 
     #include "createTime.H"
 
-    runTime.setTime(instant(runTime.constant()), 0);
+    runTime.setTime(instant(0, runTime.constant()), 0);
 
     #include "createNamedMesh.H"
 

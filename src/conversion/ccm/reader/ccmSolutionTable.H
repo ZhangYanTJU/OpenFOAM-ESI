@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,6 +42,7 @@ namespace Foam
 namespace ccm
 {
 
+// Forward Declarations
 class fieldEntry;
 class fieldTable;
 class solutionEntry;
@@ -55,14 +56,16 @@ Ostream& operator<<(Ostream& os, const solutionEntry& entry);
 \*---------------------------------------------------------------------------*/
 
 //- A linked-list that is searchable by the 'name()' of the items
-template<class T>
+template<class Type>
 class namesList
 :
-    public SLList<T>
+    public SLList<Type>
 {
 public:
-    using const_iterator = typename SLList<T>::const_iterator;
-    using iterator = typename SLList<T>::iterator;
+
+    using const_iterator = typename SLList<Type>::const_iterator;
+    using iterator = typename SLList<Type>::iterator;
+
 
     // Constructors
 
@@ -72,12 +75,12 @@ public:
 
     // Access
 
-        //- Return true if a list element has a name that matches key
+        //- True if a list element has a name that matches key
         bool found(const word& key) const
         {
-            forAllConstIters(*this, iter)
+            for (const Type& item : *this)
             {
-                if (iter().name() == key)
+                if (item.name() == key)
                 {
                     return true;
                 }
@@ -87,18 +90,22 @@ public:
         }
 
 
-        //- Find a list element has a name matching key
+        //- Find list element by name
         iterator find(const word& key)
         {
-            forAllIters(*this, iter)
+            const auto last = SLList<Type>::end();
+
+            iterator iter = SLList<Type>::begin();
+
+            for (; (iter != last); ++iter)
             {
-                if (iter().name() == key)
+                if ((*iter).name() == key)
                 {
-                    return iter;
+                    break;
                 }
             }
 
-            return SLList<T>::end();
+            return iter;
         }
 
 
@@ -109,20 +116,22 @@ public:
             const wordRes& deny = wordRes()
         ) const
         {
-            List<word> matched(SLList<T>::size());
+            List<word> matched(SLList<Type>::size());
 
-            label matchi = 0;
-            forAllConstIters(*this, iter)
+            label count = 0;
+
+            for (const Type& item : *this)
             {
-                const word& name = iter().name();
+                const word& name = item.name();
 
                 if (allow.match(name) && !deny.match(name))
                 {
-                    matched[matchi++] = name;
+                    matched[count] = name;
+                    ++count;
                 }
             }
-            matched.resize(matchi);
 
+            matched.resize(count);
             return matched;
         }
 };
@@ -181,34 +190,19 @@ public:
     // Access
 
         //- The field name (PROSTAR short name)
-        const word& name() const
-        {
-            return name_;
-        }
+        const word& name() const noexcept { return name_; }
 
         //- The full field name
-        const string& fullName() const
-        {
-            return fullName_;
-        }
+        const string& fullName() const noexcept { return fullName_; }
 
         //- The field units
-        const string& units() const
-        {
-            return units_;
-        }
+        const string& units() const noexcept { return units_; }
 
         //- The max cell id for the field
-        label maxCellId() const
-        {
-            return maxCellId_;
-        }
+        label maxCellId() const noexcept { return maxCellId_; }
 
         //- The max face id for the field
-        label maxFaceId() const
-        {
-            return maxFaceId_;
-        }
+        label maxFaceId() const noexcept { return maxFaceId_; }
 
 
     // Edit
@@ -223,21 +217,21 @@ public:
         }
 
         //- Set the max cell Id for the field
-        void maxCellId(const int newMax)
+        void maxCellId(const int val)
         {
-            if (maxCellId_ < newMax)
+            if (maxCellId_ < val)
             {
-                maxCellId_ = newMax;
+                maxCellId_ = val;
             }
         }
 
 
         //- Set the max face Id for the field
-        void maxFaceId(const int newMax)
+        void maxFaceId(const int val)
         {
-            if (maxFaceId_ < newMax)
+            if (maxFaceId_ < val)
             {
-                maxFaceId_ = newMax;
+                maxFaceId_ = val;
             }
         }
 
@@ -299,22 +293,13 @@ public:
     // Access
 
         //- The solution name
-        const word& name() const
-        {
-            return name_;
-        }
+        const word& name() const noexcept { return name_; }
 
         //- The solution iteration/timestep
-        label iteration() const
-        {
-            return iter_;
-        }
+        label iteration() const noexcept { return iter_; }
 
         //- The solution time (sec)
-        scalar timeValue() const
-        {
-            return time_;
-        }
+        scalar timeValue() const noexcept { return time_; }
 
 
     // IOstream Operators
@@ -356,11 +341,8 @@ public:
 
     // Constructor
 
-        //- Null construct
-        fieldTable()
-        :
-            namesList<fieldEntry>()
-        {}
+        //- Default construct
+        fieldTable() = default;
 
 
     // Access
@@ -368,36 +350,36 @@ public:
         //- The maximum cell Id referenced in the list
         label maxCellId() const
         {
-            label maxId = 0;
-            forAllConstIters(*this, iter)
+            label result = 0;
+            for (const auto& item : *this)
             {
-                const label currMax = iter().maxCellId();
+                const label val = item.maxCellId();
 
-                if (maxId < currMax)
+                if (result < val)
                 {
-                    maxId = currMax;
+                    result = val;
                 }
             }
 
-            return maxId;
+            return result;
         }
 
 
         //- The maximum face Id referenced in the list
         label maxFaceId() const
         {
-            label maxId = 0;
-            forAllConstIters(*this, iter)
+            label result = 0;
+            for (const auto& item : *this)
             {
-                const label currMax = iter().maxFaceId();
+                const label val = item.maxFaceId();
 
-                if (maxId < currMax)
+                if (result < val)
                 {
-                    maxId = currMax;
+                    result = val;
                 }
             }
 
-            return maxId;
+            return result;
         }
 
 

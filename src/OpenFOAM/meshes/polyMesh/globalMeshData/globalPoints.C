@@ -1136,8 +1136,8 @@ Foam::globalPoints::globalPoints
     meshToProcPoint_(nPatchPoints_)
 {
     // Empty patch maps to signal storing mesh point labels
-    Map<label> meshToPatchPoint(0);
-    labelList patchToMeshPoint(0);
+    Map<label> meshToPatchPoint;
+    labelList patchToMeshPoint;
 
     calculateSharedPoints
     (

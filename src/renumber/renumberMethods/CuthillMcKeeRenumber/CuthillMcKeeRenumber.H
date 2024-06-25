@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,10 @@ Class
     Foam::CuthillMcKeeRenumber
 
 Description
-    Cuthill-McKee renumbering
+    Cuthill-McKee renumbering (CM or RCM)
+
+SeeAlso
+    Foam::meshTools::bandCompression
 
 SourceFiles
     CuthillMcKeeRenumber.C
@@ -53,28 +56,27 @@ class CuthillMcKeeRenumber
 {
     // Private Data
 
-        const bool reverse_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        CuthillMcKeeRenumber(const CuthillMcKeeRenumber&) = delete;
-
-        //- No copy assignment
-        void operator=(const CuthillMcKeeRenumber&) = delete;
+        //- Use reverse indexing
+        bool reverse_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("CuthillMcKee");
+    TypeNameNoDebug("CuthillMcKee");
 
 
     // Constructors
 
+        //- Default construct, optionally with reverse
+        explicit CuthillMcKeeRenumber(const bool reverse = false);
+
         //- Construct given the renumber dictionary
         explicit CuthillMcKeeRenumber(const dictionary& dict);
+
+        //- Construct given the renumber dictionary (ignored)
+        //- and specified reverse handling
+        CuthillMcKeeRenumber(const dictionary& dict, const bool reverse);
 
 
     //- Destructor
@@ -83,52 +85,65 @@ public:
 
     // Member Functions
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  This is only defined for geometric renumberMethods.
-        virtual labelList renumber(const pointField&) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+        //- Toggle reverse on/off
+        void reverse(bool on) noexcept { reverse_ = on; }
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Use the mesh connectivity (if needed)
+
+    // With mesh topology
+
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- using the mesh to determine the connectivity.
         virtual labelList renumber
         (
-            const polyMesh& mesh,
-            const pointField& cc
+            //! Mesh connectivity (see globalMeshData::calcCellCells)
+            const polyMesh& mesh
         ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Connectivity in losort addressing (= neighbour + offsets into
-        //  neighbour)
+
+    // With explicit topology
+
+        //- Return the cell visit order (from ordered back to original cell id).
         virtual labelList renumber
         (
-            const labelList& cellCells,
-            const labelList& offsets,
-            const pointField& cc
+            //! Mesh connectivity
+            const CompactListList<label>& cellCells
         ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+        //- Return the cell visit order (from ordered back to original cell id).
         virtual labelList renumber
         (
-            const CompactListList<label>& cellCells,
-            const pointField& cellCentres
+            //! Mesh connectivity
+            const labelListList& cellCells
         ) const;
+};
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  The connectivity is equal to mesh.cellCells() except
-        //  - the connections are across coupled patches
-        virtual labelList renumber
-        (
-            const labelListList& cellCells,
-            const pointField& cellCentres
-        ) const;
+
+/*---------------------------------------------------------------------------*\
+                   Class reverseCuthillMcKeeRenumber Declaration
+\*---------------------------------------------------------------------------*/
+
+//- Reverse Cuthill-McKee renumbering
+class reverseCuthillMcKeeRenumber
+:
+    public CuthillMcKeeRenumber
+{
+public:
+
+    //- Runtime type information
+    TypeNameNoDebug("reverseCuthillMcKee");
+
+
+    // Constructors
+
+        //- Default construct
+        reverseCuthillMcKeeRenumber();
+
+        //- Construct given the renumber dictionary (ignored)
+        explicit reverseCuthillMcKeeRenumber(const dictionary& dict);
+
+
+    //- Destructor
+    virtual ~reverseCuthillMcKeeRenumber() = default;
 };
 
 

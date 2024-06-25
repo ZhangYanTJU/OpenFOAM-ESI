@@ -61,8 +61,8 @@ multiBandZoneAbsorptionEmission
     emiCoeffs_(maxBands_),
     nBands_(0),
     zoneAbsorptivity_(),
-    zoneEmisivity_(),
-    zoneCells_()
+    zoneEmissivity_(),
+    zoneIds_()
 {
     coeffsDict_.readEntry("absorptivity", absCoeffs_);
     coeffsDict_.readEntry("emissivity", emiCoeffs_);
@@ -71,11 +71,11 @@ multiBandZoneAbsorptionEmission
     const dictionary& zoneDict = coeffsDict_.subDict("zones");
 
     zoneDict.readEntry("absorptivity", zoneAbsorptivity_);
-    zoneDict.readEntry("emissivity", zoneEmisivity_);
+    zoneDict.readEntry("emissivity", zoneEmissivity_);
 
-    zoneCells_.setSize(zoneAbsorptivity_.size(), -1);
+    zoneIds_.resize(zoneAbsorptivity_.size(), -1);
 
-    label i = 0;
+    label numZones = 0;
     forAllConstIters(zoneAbsorptivity_, iter)
     {
         label zoneID = mesh.cellZones().findZoneID(iter.key());
@@ -86,9 +86,10 @@ multiBandZoneAbsorptionEmission
                 << "Valid cellZones are " << mesh.cellZones().names()
                 << exit(FatalError);
         }
-        zoneCells_[i++] = zoneID;
+        zoneIds_[numZones] = zoneID;
+        ++numZones;
     }
-
+    // zoneIds_.resize(numZones);
 }
 
 
@@ -107,41 +108,26 @@ Foam::radiation::multiBandZoneAbsorptionEmission::aCont
     const label bandI
 ) const
 {
-    tmp<volScalarField> ta
+    auto ta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "a",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("a", dimless/dimLength, absCoeffs_[bandI])
-        )
+        "a",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar("a", dimless/dimLength, absCoeffs_[bandI])
     );
+    scalarField& a = ta.ref().primitiveFieldRef();
 
-    volScalarField& a = ta.ref();
-
-    forAll(zoneCells_, zonei)
+    for (const label zonei : zoneIds_)
     {
-        const cellZone& cZone = mesh().cellZones()[zoneCells_[zonei]];
+        const cellZone& zn = mesh().cellZones()[zonei];
+        const auto iter = zoneAbsorptivity_.cfind(zn.name());
 
-        tmp<volScalarField> tzoneAbs(a*0.0);
-        volScalarField& zoneAbs = tzoneAbs.ref();
-
-        const scalarList& abs = zoneAbsorptivity_.find(cZone.name())();
-
-        forAll(cZone, i)
+        if (iter.good())  // Check is redundant (cannot fail)
         {
-            label cellId = cZone[i];
-            zoneAbs[cellId] = abs[bandI] - absCoeffs_[bandI];
-        }
+            const scalarList& absorb = iter.val();
 
-        a += zoneAbs;
+            UIndirectList<scalar>(a, zn) = absorb[bandI];
+        }
     }
 
     return ta;
@@ -154,42 +140,27 @@ Foam::radiation::multiBandZoneAbsorptionEmission::eCont
     const label bandI
 ) const
 {
-    tmp<volScalarField> te
+    auto te = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "e",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("e", dimless/dimLength, emiCoeffs_[bandI])
-        )
+        "e",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar("e", dimless/dimLength, emiCoeffs_[bandI])
     );
+    scalarField& e = te.ref().primitiveFieldRef();
 
-    volScalarField& e = te.ref();
-
-    forAll(zoneCells_, zonei)
+    for (const label zonei : zoneIds_)
     {
-        const cellZone& cZone = mesh().cellZones()[zoneCells_[zonei]];
+        const cellZone& zn = mesh().cellZones()[zonei];
+        const auto iter = zoneEmissivity_.cfind(zn.name());
 
-        tmp<volScalarField> tzoneEm(e*0.0);
-        volScalarField& zoneEm = tzoneEm.ref();
-
-        const scalarList& emi = zoneEmisivity_.find(cZone.name())();
-
-        forAll(cZone, i)
+        if (iter.good())  // Check is redundant (cannot fail)
         {
-            label cellId = cZone[i];
-            zoneEm[cellId] = emi[bandI] - emiCoeffs_[bandI];
-        }
-        e += zoneEm;
-    }
+            const scalarList& emit = iter.val();
 
+            UIndirectList<scalar>(e, zn) = emit[bandI];
+        }
+    }
 
     return te;
 }
@@ -201,24 +172,13 @@ Foam::radiation::multiBandZoneAbsorptionEmission::ECont
     const label bandI
 ) const
 {
-    tmp<volScalarField> E
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "E",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "E",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
-
-    return E;
 }
 
 

@@ -60,7 +60,7 @@ Foam::faMeshSubset::interpolate
             (
                 faPatchFieldBase::calculatedType(),
                 sMesh.boundary()[patchi],
-                DimensionedField<Type, areaMesh>::null()
+                faPatchField<Type>::Internal::null()
             )
         );
     }
@@ -167,7 +167,7 @@ Foam::faMeshSubset::interpolate
             (
                 faePatchFieldBase::calculatedType(),
                 sMesh.boundary()[patchi],
-                DimensionedField<Type, edgeMesh>::null()
+                faePatchField<Type>::Internal::null()
             )
         );
     }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +32,7 @@ License
 
 #include "FaceInteraction.H"
 #include "FacePostProcessing.H"
+#include "FreezeParticles.H"
 #include "ParticleCollector.H"
 #include "ParticleErosion.H"
 #include "ParticleTracks.H"
@@ -56,6 +57,7 @@ License
                                                                                \
     makeCloudFunctionObjectType(FaceInteraction, CloudType);                   \
     makeCloudFunctionObjectType(FacePostProcessing, CloudType);                \
+    makeCloudFunctionObjectType(FreezeParticles, CloudType);                   \
     makeCloudFunctionObjectType(ParticleCollector, CloudType);                 \
     makeCloudFunctionObjectType(ParticleErosion, CloudType);                   \
     makeCloudFunctionObjectType(ParticleTracks, CloudType);                    \

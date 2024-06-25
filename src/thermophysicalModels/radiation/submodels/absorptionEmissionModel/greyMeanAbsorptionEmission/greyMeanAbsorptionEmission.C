@@ -194,25 +194,15 @@ Foam::radiation::greyMeanAbsorptionEmission::aCont(const label bandI) const
     const volScalarField& p = thermo_.p();
 
 
-    tmp<volScalarField> ta
+    auto ta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "aCont" + name(bandI),
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar(dimless/dimLength, Zero),
-            fvPatchFieldBase::extrapolatedCalculatedType()
-        )
+        "aCont" + name(bandI),
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar(dimless/dimLength, Zero),
+        fvPatchFieldBase::extrapolatedCalculatedType()
     );
-
-    scalarField& a = ta.ref().primitiveFieldRef();
+    auto& a = ta.ref().primitiveFieldRef();
 
     forAll(a, celli)
     {
@@ -275,21 +265,12 @@ Foam::radiation::greyMeanAbsorptionEmission::eCont(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::greyMeanAbsorptionEmission::ECont(const label bandI) const
 {
-    tmp<volScalarField> E
+    auto E = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "ECont" + name(bandI),
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "ECont" + name(bandI),
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
 
     const volScalarField* QdotPtr = mesh_.findObject<volScalarField>("Qdot");

@@ -109,9 +109,6 @@ public:
         //- Construct as copy
         slicedFaePatchField(const slicedFaePatchField<Type>&);
 
-        //- Construct and return a clone
-        virtual tmp<faePatchField<Type>> clone() const;
-
         //- Construct as copy setting internal field reference
         slicedFaePatchField
         (
@@ -119,21 +116,33 @@ public:
             const DimensionedField<Type, edgeMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<faePatchField<Type>> clone() const
+        {
+            return faePatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<faePatchField<Type>> clone
         (
             const DimensionedField<Type, edgeMesh>& iF
-        ) const;
+        ) const
+        {
+            return faePatchField<Type>::Clone(*this, iF);
+        }
 
 
-    //- Destructor
-    virtual ~slicedFaePatchField<Type>();
+    //- Destructor, resets pointers to avoid deletion of underlying field
+    virtual ~slicedFaePatchField();
 
 
     // Member Functions
 
         //- True: this patch field fixes a value.
         virtual bool fixesValue() const { return true; }
+
+        //- Write includes "value" entry
+        virtual void write(Ostream&) const;
 
 
     // Member Operators

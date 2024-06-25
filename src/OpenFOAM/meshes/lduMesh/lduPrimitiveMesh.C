@@ -105,12 +105,14 @@ Foam::labelListList Foam::lduPrimitiveMesh::globalCellCells
     const lduAddressing& addr = mesh.lduAddr();
     lduInterfacePtrsList interfaces = mesh.interfaces();
 
+    const label myProci = UPstream::myProcNo(mesh.comm());
+
     const labelList globalIndices
     (
-        identity
+        Foam::identity
         (
             addr.size(),
-            globalNumbering.localStart(UPstream::myProcNo(mesh.comm()))
+            globalNumbering.localStart(myProci)
         )
     );
 
@@ -1342,12 +1344,7 @@ void Foam::lduPrimitiveMesh::gather
     (void)mesh.lduAddr().patchSchedule();
 
     // Use PstreamBuffers
-    PstreamBuffers pBufs
-    (
-        Pstream::commsTypes::nonBlocking,
-        UPstream::msgType(),
-        comm
-    );
+    PstreamBuffers pBufs(comm);
 
     // Send to master
     if (!Pstream::master(comm))

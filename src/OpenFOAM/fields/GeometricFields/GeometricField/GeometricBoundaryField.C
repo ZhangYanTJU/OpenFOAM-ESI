@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -91,7 +91,7 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
             }
         }
 
-        // Wait for outstanding requests
+        // Wait for outstanding requests (non-blocking)
         UPstream::waitRequests(startOfRequests);
 
         for (auto& pfld : bfld)
@@ -189,14 +189,11 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
 template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
 (
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const dictionary& dict
 )
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
+    // DebugInFunction << nl;
 
     // Clear the boundary field if already initialised
     this->clear();
@@ -210,7 +207,9 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
 
     for (const entry& dEntry : dict)
     {
-        if (dEntry.isDict() && dEntry.keyword().isLiteral())
+        const auto* subdict = dEntry.dictPtr();
+
+        if (subdict && dEntry.keyword().isLiteral())
         {
             const label patchi = bmesh_.findPatchID(dEntry.keyword());
 
@@ -222,11 +221,11 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
                     PatchField<Type>::New
                     (
                         bmesh_[patchi],
-                        field,
-                        dEntry.dict()
+                        iField,
+                        *subdict
                     )
                 );
-                nUnset--;
+                --nUnset;
             }
         }
     }
@@ -245,8 +244,9 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
     for (auto iter = dict.crbegin(); iter != dict.crend(); ++iter)
     {
         const entry& dEntry = *iter;
+        const auto* subdict = dEntry.dictPtr();
 
-        if (dEntry.isDict() && dEntry.keyword().isLiteral())
+        if (subdict && dEntry.keyword().isLiteral())
         {
             const labelList patchIds =
                 bmesh_.indices(dEntry.keyword(), true); // use patchGroups
@@ -261,8 +261,8 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
                         PatchField<Type>::New
                         (
                             bmesh_[patchi],
-                            field,
-                            dEntry.dict()
+                            iField,
+                            *subdict
                         )
                     );
                 }
@@ -285,15 +285,15 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
                     (
                         emptyPolyPatch::typeName,
                         bmesh_[patchi],
-                        field
+                        iField
                     )
                 );
             }
             else
             {
-                bool found = dict.found(bmesh_[patchi].name());
+                const auto* subdict = dict.findDict(bmesh_[patchi].name());
 
-                if (found)
+                if (subdict)
                 {
                     this->set
                     (
@@ -301,8 +301,8 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
                         PatchField<Type>::New
                         (
                             bmesh_[patchi],
-                            field,
-                            dict.subDict(bmesh_[patchi].name())
+                            iField,
+                            *subdict
                         )
                     );
                 }
@@ -353,17 +353,14 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
     const BoundaryMesh& bmesh,
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const word& patchFieldType
 )
 :
     FieldField<PatchField, Type>(bmesh.size()),
     bmesh_(bmesh)
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
+    // DebugInFunction << nl;
 
     forAll(bmesh_, patchi)
     {
@@ -374,7 +371,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
             (
                 patchFieldType,
                 bmesh_[patchi],
-                field
+                iField
             )
         );
     }
@@ -385,7 +382,7 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
     const BoundaryMesh& bmesh,
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const wordList& patchFieldTypes,
     const wordList& constraintTypes
 )
@@ -393,10 +390,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
     FieldField<PatchField, Type>(bmesh.size()),
     bmesh_(bmesh)
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
+    // DebugInFunction << nl;
 
     if
     (
@@ -424,7 +418,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
                     patchFieldTypes[patchi],
                     constraintTypes[patchi],
                     bmesh_[patchi],
-                    field
+                    iField
                 )
             );
         }
@@ -440,7 +434,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
                 (
                     patchFieldTypes[patchi],
                     bmesh_[patchi],
-                    field
+                    iField
                 )
             );
         }
@@ -452,21 +446,18 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
     const BoundaryMesh& bmesh,
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const PtrList<PatchField<Type>>& ptfl
 )
 :
     FieldField<PatchField, Type>(bmesh.size()),
     bmesh_(bmesh)
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
+    // DebugInFunction << nl;
 
     forAll(bmesh_, patchi)
     {
-        this->set(patchi, ptfl[patchi].clone(field));
+        this->set(patchi, ptfl[patchi].clone(iField));
     }
 }
 
@@ -474,21 +465,18 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const GeometricBoundaryField<Type, PatchField, GeoMesh>& btf
 )
 :
     FieldField<PatchField, Type>(btf.size()),
     bmesh_(btf.bmesh_)
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
+    // DebugInFunction << nl;
 
     forAll(bmesh_, patchi)
     {
-        this->set(patchi, btf[patchi].clone(field));
+        this->set(patchi, btf[patchi].clone(iField));
     }
 }
 
@@ -496,7 +484,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const GeometricBoundaryField<Type, PatchField, GeoMesh>& btf,
     const labelList& patchIDs,
     const word& patchFieldType
@@ -505,10 +493,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
     FieldField<PatchField, Type>(btf.size()),
     bmesh_(btf.bmesh_)
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
+    // DebugInFunction << nl;
 
     for (const label patchi : patchIDs)
     {
@@ -519,7 +504,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
             (
                 patchFieldType,
                 bmesh_[patchi],
-                field
+                iField
             )
         );
     }
@@ -528,7 +513,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
     {
         if (!this->set(patchi))
         {
-            this->set(patchi, btf[patchi].clone(field));
+            this->set(patchi, btf[patchi].clone(iField));
         }
     }
 }
@@ -542,26 +527,21 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 :
     FieldField<PatchField, Type>(btf),
     bmesh_(btf.bmesh_)
-{
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
-}
+{}
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
     const BoundaryMesh& bmesh,
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const dictionary& dict
 )
 :
     FieldField<PatchField, Type>(bmesh.size()),
     bmesh_(bmesh)
 {
-    readField(field, dict);
+    readField(iField, dict);
 }
 
 
@@ -570,10 +550,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::updateCoeffs()
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
+    // DebugInFunction << nl;
 
     for (auto& pfld : *this)
     {
@@ -583,32 +560,26 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::updateCoeffs()
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
-void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate()
+void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate
+(
+    const UPstream::commsTypes commsType
+)
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
-
-    const UPstream::commsTypes commsType = UPstream::defaultCommsType;
-    const label startOfRequests = UPstream::nRequests();
-
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
+        const label startOfRequests = UPstream::nRequests();
+
         for (auto& pfld : *this)
         {
             pfld.initEvaluate(commsType);
         }
 
-        // Wait for outstanding requests
-        if (commsType == Pstream::commsTypes::nonBlocking)
-        {
-            UPstream::waitRequests(startOfRequests);
-        }
+        // Wait for outstanding requests (non-blocking)
+        UPstream::waitRequests(startOfRequests);
 
         for (auto& pfld : *this)
         {
@@ -638,8 +609,74 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate()
     else
     {
         FatalErrorInFunction
-            << "Unsupported communications type "
-            << UPstream::commsTypeNames[commsType]
+            << "Unsupported communications type " << int(commsType) << nl
+            << exit(FatalError);
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<class UnaryPredicate>
+void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate_if
+(
+    const UnaryPredicate& pred,
+    const UPstream::commsTypes commsType
+)
+{
+    if
+    (
+        commsType == UPstream::commsTypes::buffered
+     || commsType == UPstream::commsTypes::nonBlocking
+    )
+    {
+        const label startOfRequests = UPstream::nRequests();
+
+        for (auto& pfld : *this)
+        {
+            if (pred(pfld))
+            {
+                pfld.initEvaluate(commsType);
+            }
+        }
+
+        // Wait for outstanding requests (non-blocking)
+        UPstream::waitRequests(startOfRequests);
+
+        for (auto& pfld : *this)
+        {
+            if (pred(pfld))
+            {
+                pfld.evaluate(commsType);
+            }
+        }
+    }
+    else if (commsType == UPstream::commsTypes::scheduled)
+    {
+        const lduSchedule& patchSchedule =
+            bmesh_.mesh().globalData().patchSchedule();
+
+        for (const auto& schedEval : patchSchedule)
+        {
+            const label patchi = schedEval.patch;
+            auto& pfld = (*this)[patchi];
+
+            if (pred(pfld))
+            {
+                if (schedEval.init)
+                {
+                    pfld.initEvaluate(commsType);
+                }
+                else
+                {
+                    pfld.evaluate(commsType);
+                }
+            }
+        }
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Unsupported communications type " << int(commsType) << nl
             << exit(FatalError);
     }
 }
@@ -648,58 +685,60 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate()
 template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateSelected
 (
-    const UList<label>& patchIDs
+    const labelUList& patchIDs
 )
 {
+    const label startOfRequests = UPstream::nRequests();
+
     for (const label patchi : patchIDs)
     {
-        auto& pf = (*this)[patchi];
+        auto& pfld = (*this)[patchi];
 
-        DebugInfo<< "Updating " << pf.patch().name() << endl;
+        DebugInfo<< "Updating " << pfld.patch().name() << endl;
 
-        const label startOfRequests = UPstream::nRequests();
+        pfld.initEvaluate(UPstream::commsTypes::nonBlocking);
+    }
 
-        pf.initEvaluate(UPstream::commsTypes::nonBlocking);
+    // Wait for outstanding requests (non-blocking)
+    UPstream::waitRequests(startOfRequests);
 
-        UPstream::waitRequests(startOfRequests);
+    for (const label patchi : patchIDs)
+    {
+        auto& pfld = (*this)[patchi];
 
-        pf.evaluate(UPstream::commsTypes::nonBlocking);
+        pfld.evaluate(UPstream::commsTypes::nonBlocking);
     }
 }
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
-void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal()
+void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal
+(
+    const UPstream::commsTypes commsType
+)
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
+    // DebugInFunction << nl;
 
     if (!localConsistency)
     {
         return;
     }
 
-    const UPstream::commsTypes commsType = UPstream::defaultCommsType;
-    const label startOfRequests = UPstream::nRequests();
-
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
+        const label startOfRequests = UPstream::nRequests();
+
         for (auto& pfld : *this)
         {
             pfld.initEvaluateLocal(commsType);
         }
 
-        // Wait for outstanding requests
-        if (commsType == Pstream::commsTypes::nonBlocking)
-        {
-            UPstream::waitRequests(startOfRequests);
-        }
+        // Wait for outstanding requests (non-blocking)
+        UPstream::waitRequests(startOfRequests);
 
         for (auto& pfld : *this)
         {
@@ -729,8 +768,7 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal()
     else
     {
         FatalErrorInFunction
-            << "Unsupported communications type "
-            << UPstream::commsTypeNames[commsType]
+            << "Unsupported communications type " << int(commsType) << nl
             << exit(FatalError);
     }
 }
@@ -738,24 +776,33 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal()
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 template<class CoupledPatchType>
-void
-Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>
-::evaluateCoupled()
+void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateCoupled
+(
+    const UPstream::commsTypes commsType
+)
 {
-    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
-    ///{
-    ///    InfoInFunction << nl;
-    ///}
+    // Alternative (C++14)
+    //
+    // this->evaluate_if
+    // (
+    //     [](const auto& pfld) -> bool
+    //     {
+    //         const auto* cpp = isA<CoupledPatchType>(pfld.patch());
+    //         return (cpp && cpp->coupled());
+    //     },
+    //     commsType
+    // );
 
-    const UPstream::commsTypes commsType = UPstream::defaultCommsType;
-    const label startOfRequests = UPstream::nRequests();
+    // DebugInFunction << nl;
 
     if
     (
-        commsType == UPstream::commsTypes::blocking
+        commsType == UPstream::commsTypes::buffered
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
+        const label startOfRequests = UPstream::nRequests();
+
         for (auto& pfld : *this)
         {
             const auto* cpp = isA<CoupledPatchType>(pfld.patch());
@@ -766,11 +813,8 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>
             }
         }
 
-        // Wait for outstanding requests
-        if (commsType == UPstream::commsTypes::nonBlocking)
-        {
-            UPstream::waitRequests(startOfRequests);
-        }
+        // Wait for outstanding requests (non-blocking)
+        UPstream::waitRequests(startOfRequests);
 
         for (auto& pfld : *this)
         {
@@ -810,8 +854,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>
     else
     {
         FatalErrorInFunction
-            << "Unsupported communications type "
-            << UPstream::commsTypeNames[commsType]
+            << "Unsupported communications type " << int(commsType) << nl
             << exit(FatalError);
     }
 }
@@ -835,18 +878,24 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::types() const
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
-Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>
+Foam::tmp<Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::
 boundaryInternalField() const
 {
-    GeometricBoundaryField<Type, PatchField, GeoMesh> result(*this);
+    auto tresult = tmp<GeometricBoundaryField<Type, PatchField, GeoMesh>>::New
+    (
+        DimensionedField<Type, GeoMesh>::null(),
+        *this
+    );
+
+    auto& result = tresult;
 
     forAll(result, patchi)
     {
         result[patchi] == this->operator[](patchi).patchInternalField();
     }
 
-    return result;
+    return tresult;
 }
 
 
@@ -858,13 +907,11 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::interfaces() const
 
     forAll(list, patchi)
     {
-        const auto* lduPtr =
-            isA<LduInterfaceField<Type>>(this->operator[](patchi));
-
-        if (lduPtr)
-        {
-            list.set(patchi, lduPtr);
-        }
+        list.set
+        (
+            patchi,
+            isA<LduInterfaceField<Type>>(this->operator[](patchi))
+        );
     }
 
     return list;
@@ -880,13 +927,11 @@ scalarInterfaces() const
 
     forAll(list, patchi)
     {
-        const auto* lduPtr =
-            isA<lduInterfaceField>(this->operator[](patchi));
-
-        if (lduPtr)
-        {
-            list.set(patchi, lduPtr);
-        }
+        list.set
+        (
+            patchi,
+            isA<lduInterfaceField>(this->operator[](patchi))
+        );
     }
 
     return list;

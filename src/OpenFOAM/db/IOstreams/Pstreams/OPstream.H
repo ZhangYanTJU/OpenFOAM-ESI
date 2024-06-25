@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,6 +71,50 @@ public:
             const label comm = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
+
+
+    // Static Functions
+
+        //- Serialize a value and send (buffered/blocking or standard mode).
+        //- Uses \c operator<< for serialization
+        template<class Type>
+        static void send
+        (
+            const Type& value,
+            //! blocking or scheduled only!
+            const UPstream::commsTypes commsType,
+            const int toProcNo,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        {
+            OPstream os(commsType, toProcNo, 0, tag, comm, fmt);
+            os << value;
+        }
+
+        //- Serialize a value and send (standard mode).
+        //- Uses \c operator<< for serialization
+        template<class Type>
+        static void send
+        (
+            const Type& value,
+            const int toProcNo,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        {
+            OPstream::send
+            (
+                value,
+                UPstream::commsTypes::scheduled,  // ie, MPI_Send()
+                toProcNo,
+                tag,
+                comm,
+                fmt
+            );
+        }
 };
 
 
@@ -100,14 +144,39 @@ public:
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
-        //- Construct for broadcast root with optional communicator,
-        //- write format
-        explicit OPBstream
+        //- Construct for broadcast root and communicator,
+        //- with optional write format
+        OPBstream
         (
             const int rootProcNo,           //!< normally UPstream::masterNo()
+            const label comm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        );
+
+        //- Construct with optional communicator and write format.
+        //- Uses UPstream::masterNo() root
+        explicit OPBstream
+        (
             const label comm = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
+
+
+    // Static Functions
+
+        //- Serialize a value and broadcast (root == UPstream::masterNo()).
+        //- Uses \c operator<< for serialization
+        template<class Type>
+        static void send
+        (
+            const Type& value,
+            const label comm = UPstream::worldComm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        {
+            OPBstream os(comm, fmt);
+            os << value;
+        }
 };
 
 

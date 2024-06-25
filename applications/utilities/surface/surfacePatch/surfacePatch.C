@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -130,8 +130,13 @@ int main(int argc, char *argv[])
 
                 for (const entry& e : regionsDict)
                 {
-                    const keyType& regionName = e.keyword();
+                    const wordRe regionName(e.keyword());
                     const dictionary& regionDict = e.dict();
+
+                    labelList regionIDs
+                    (
+                        wordRes::matching(regionName, surf.regions())
+                    );
 
                     autoPtr<searchableSurfaceModifier> modifier
                     (
@@ -142,9 +147,6 @@ int main(int argc, char *argv[])
                             regionDict
                         )
                     );
-
-                    labelList regionIDs =
-                        findStrings(regionName, surf.regions());
 
                     if (modifier().modify(regionIDs, surf))
                     {

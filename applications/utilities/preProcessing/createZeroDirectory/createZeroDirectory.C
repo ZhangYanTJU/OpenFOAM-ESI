@@ -143,17 +143,10 @@ void createFieldFiles
 
         dictionary field;
 
-        fileName regionPath = "/";
-
-        if (!regionName.empty())
-        {
-            regionPath += regionName + '/';
-        }
-
         field.add
         (
             "#include",
-            "$FOAM_CASE/system" + regionPath + "caseProperties"
+            "<system>"/regionName/"caseProperties"
         );
 
         field.add("dimensions", fieldDimensions[i]);
@@ -173,15 +166,22 @@ void createFieldFiles
 
         // Expand all of the dictionary redirections and remove unnecessary
         // entries
-        OStringStream os;
-        os  << field;
 
-        entry::disableFunctionEntries = 0;
-        dictionary field2(IStringStream(os.str())());
-        entry::disableFunctionEntries = 1;
-        field2.remove("#include");
-        field2.remove("initialConditions");
-        field2.remove("boundaryConditions");
+        dictionary field2;
+
+        {
+            OCharStream os;
+            os  << field;
+            ISpanStream is(os.view());
+
+            entry::disableFunctionEntries = 0;
+            is >> field2;
+            entry::disableFunctionEntries = 1;
+
+            field2.remove("#include");
+            field2.remove("initialConditions");
+            field2.remove("boundaryConditions");
+        }
 
         // Construct and write field dictionary. Note use of localIOdictionary
         localIOdictionary fieldOut
@@ -192,7 +192,9 @@ void createFieldFiles
                 "0",
                 regionName,
                 runTime,
-                IOobject::NO_READ
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             ),
             field2
         );
@@ -235,7 +237,8 @@ int main(int argc, char *argv[])
             runTime.system(),
             runTime,
             IOobject::MUST_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
         )
     );
 

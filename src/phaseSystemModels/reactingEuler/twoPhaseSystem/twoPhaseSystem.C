@@ -121,8 +121,6 @@ Foam::twoPhaseSystem::Vm() const
 
 void Foam::twoPhaseSystem::solve()
 {
-    const Time& runTime = mesh_.time();
-
     volScalarField& alpha1 = phase1_;
     volScalarField& alpha2 = phase2_;
 
@@ -136,8 +134,10 @@ void Foam::twoPhaseSystem::solve()
     word alphaScheme("div(phi," + alpha1.name() + ')');
     word alpharScheme("div(phir," + alpha1.name() + ')');
 
-    const surfaceScalarField& phi1 = phase1_.phi();
-    const surfaceScalarField& phi2 = phase2_.phi();
+    const tmp<surfaceScalarField> tphi1(phase1_.phi());
+    const surfaceScalarField& phi1 = tphi1();
+    const tmp<surfaceScalarField> tphi2(phase2_.phi());
+    const surfaceScalarField& phi2 = tphi2();
 
     // Construct the dilatation rate source term
     tmp<volScalarField::Internal> tdgdt;
@@ -193,24 +193,14 @@ void Foam::twoPhaseSystem::solve()
     {
         volScalarField::Internal Sp
         (
-            IOobject
-            (
-                "Sp",
-                runTime.timeName(),
-                mesh_
-            ),
+            mesh_.newIOobject("Sp"),
             mesh_,
-            dimensionedScalar(dimless/dimTime)
+            dimensionedScalar(dimless/dimTime, Zero)
         );
 
         volScalarField::Internal Su
         (
-            IOobject
-            (
-                "Su",
-                runTime.timeName(),
-                mesh_
-            ),
+            mesh_.newIOobject("Su"),
             // Divergence term is handled explicitly to be
             // consistent with the explicit transport solution
             fvc::div(phi_)*min(alpha1, scalar(1))

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,7 +56,7 @@ class pointSet
 public:
 
     //- Runtime type information
-    TypeName("pointSet");
+    TypeNameNoDebug("pointSet");
 
 
     // Constructors
@@ -64,25 +64,42 @@ public:
         //- Construct from IOobject
         explicit pointSet(const IOobject& io);
 
-        //- Construct from objectRegistry and name
+        //- Construct empty (no-read) with IOobject information
+        pointSet(const IOobject& io, const Foam::zero);
+
+        //- Construct from polyMesh (registry) and name
         pointSet
         (
             const polyMesh& mesh,
             const word& name,
             IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
-            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            IOobjectOption::registerOption reg = IOobjectOption::LEGACY_REGISTER
         );
 
-        //- Construct empty with initial size for labelHashSet
+        //- Construct from polyMesh (registry), name and registration option
         pointSet
         (
             const polyMesh& mesh,
             const word& name,
-            const label size,
+            IOobjectOption::registerOption reg,
+            IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+        )
+        :
+            pointSet(mesh, name, rOpt, wOpt, reg)
+        {}
+
+        //- Construct empty (no-read) with initial labelHashSet capacity.
+        pointSet
+        (
+            const polyMesh& mesh,
+            const word& name,
+            const label initialCapacity,
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct from existing set
+        //- Copy construct (no-read) from existing set
         pointSet
         (
             const polyMesh& mesh,
@@ -91,7 +108,8 @@ public:
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct (no-read) with copy of labelHashSet
+        //- Copy construct (no-read) from labelHashSet,
+        //- with search for IOobject instance.
         pointSet
         (
             const polyMesh& mesh,
@@ -100,7 +118,8 @@ public:
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct (no-read) with moving labelHashSet
+        //- Move construct (no-read) from labelHashSet,
+        //- with search for IOobject instance.
         pointSet
         (
             const polyMesh& mesh,
@@ -109,7 +128,8 @@ public:
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct (no-read) with copy of labels
+        //- Copy construct (no-read) from labels,
+        //- with search for IOobject instance.
         pointSet
         (
             const polyMesh& mesh,
@@ -119,11 +139,21 @@ public:
         );
 
 
+    // Factory Methods
+
+        //- Read and return contents. Intermediate IOobject is not registered
+        static labelHashSet readContents
+        (
+            const polyMesh& mesh,
+            const word& name
+        );
+
+
     //- Destructor
     virtual ~pointSet() = default;
 
 
-    // Member functions
+    // Member Functions
 
         //- Sync set across coupled patches. Adds coupled points to set.
         virtual void sync(const polyMesh& mesh);

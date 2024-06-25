@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,127 +83,7 @@ namespace fileOperations
 }
 
 
-// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
-// Get file contents (compressed or uncompressed)
-static DynamicList<char> slurpFile(IFstream& ifs)
-{
-    DynamicList<char> buffer;
-
-    auto& iss = ifs.stdStream();
-
-    const auto inputSize = ifs.fileSize();
-
-    if (IOstreamOption::COMPRESSED == ifs.compression())
-    {
-        // For compressed files, no idea how large the result will be.
-        // So read chunk-wise.
-        // Using the compressed size for the chunk size:
-        // 50% compression = 2 iterations
-        // 66% compression = 3 iterations
-        // ...
-
-        const uint64_t chunkSize =
-        (
-            (inputSize <= 1024)
-          ? uint64_t(4096)
-          : uint64_t(2*inputSize)
-        );
-
-        uint64_t beg = 0;
-
-        for (int iter = 1; iter < 100000; ++iter)
-        {
-            // Manual resizing to use incremental vs doubling
-            buffer.setCapacity(label(iter * chunkSize));
-            buffer.resize(buffer.capacity());
-
-            ifs.readRaw(buffer.data() + beg, chunkSize);
-            const std::streamsize nread = iss.gcount();
-
-            if
-            (
-                nread < 0
-             || nread == std::numeric_limits<std::streamsize>::max()
-            )
-            {
-                // Failed, but treat as normal 'done'
-                buffer.resize(label(beg));
-                break;
-            }
-            else
-            {
-                beg += uint64_t(nread);
-                if (nread >= 0 && uint64_t(nread) < chunkSize)
-                {
-                    // normalExit = true;
-                    buffer.resize(label(beg));
-                    break;
-                }
-            }
-        }
-    }
-    else
-    {
-        if (inputSize >= 0)
-        {
-            buffer.setCapacity(label(inputSize));
-            buffer.resize(buffer.capacity());
-
-            ifs.readRaw(buffer.data(), buffer.size_bytes());
-            const std::streamsize nread = iss.gcount();
-
-            if
-            (
-                nread < 0
-             || nread == std::numeric_limits<std::streamsize>::max()
-            )
-            {
-                // Failed, but treat as normal 'done'
-                buffer.clear();
-            }
-            else
-            {
-                buffer.resize(label(nread));  // Safety
-            }
-        }
-    }
-
-    return buffer;
-}
-
-} // End namespace Foam
-
-
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-Foam::word
-Foam::fileOperations::masterUncollatedFileOperation::findInstancePath
-(
-    const instantList& timeDirs,
-    const instant& t
-)
-{
-    // Note:
-    // - times will include constant (with value 0) as first element.
-    //   For backwards compatibility make sure to find 0 in preference
-    //   to constant.
-    // - list is sorted so could use binary search
-
-    forAllReverse(timeDirs, i)
-    {
-        if (t.equal(timeDirs[i].value()))
-        {
-            return timeDirs[i].name();
-        }
-    }
-
-    return word();
-}
-
 
 Foam::fileName
 Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
@@ -293,8 +173,10 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
         )
         {
             fileName parentPath =
-                io.rootPath()/io.time().globalCaseName()
-               /io.instance()/io.db().dbDir()/io.local()/io.name();
+            (
+                io.rootPath()/io.globalCaseName()
+               /io.instance()/io.db().dbDir()/io.local()/io.name()
+            );
 
             if (isFileOrDir(isFile, parentPath))
             {
@@ -309,11 +191,12 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
 
         if (search && pathFnd.good())
         {
-            newInstancePath = findInstancePath
-            (
-                *pathFnd(),
-                instant(io.instance())
-            );
+            newInstancePath =
+                Time::findInstancePath
+                (
+                    *pathFnd(),
+                    instant(io.instance())
+                );
 
             if (newInstancePath.size() && newInstancePath != io.instance())
             {
@@ -451,7 +334,7 @@ Foam::fileOperations::masterUncollatedFileOperation::localObjectPath
         case fileOperation::PARENTOBJECT:
         {
             return
-                io.rootPath()/io.time().globalCaseName()
+                io.rootPath()/io.globalCaseName()
                /io.instance()/io.db().dbDir()/io.local()/io.name();
         }
         break;
@@ -535,32 +418,24 @@ void Foam::fileOperations::masterUncollatedFileOperation::readAndSend
     {
         FatalIOErrorInFunction(filePath)
             << "Cannot open file " << filePath
-            //<< " using communicator " << pBufs.comm()
-            //<< " ioRanks:" << UPstream::procID(pBufs.comm())
             << exit(FatalIOError);
     }
+
+    // Read file contents (compressed or uncompressed) into a character buffer
+    DynamicList<char> buf(IFstream::readContents(ifs));
 
     if (debug)
     {
         Info<< "masterUncollatedFileOperation::readAndSend :"
-            << " compressed:" << bool(ifs.compression()) << " "
-            << filePath << endl;
+            << filePath
+            << " (compressed:" << bool(ifs.compression())
+            << ") : " << " bytes" << endl;
     }
-
-    // Read file contents (compressed or uncompressed) into a character buffer
-    DynamicList<char> buf(slurpFile(ifs));
 
     for (const label proci : recvProcs)
     {
         UOPstream os(proci, pBufs);
         os.write(buf.cdata_bytes(), buf.size_bytes());
-    }
-
-    if (debug)
-    {
-        Info<< "masterUncollatedFileOperation::readStream :"
-            << " From " << filePath <<  " sent " << buf.size()
-            << " bytes" << endl;
     }
 }
 
@@ -577,7 +452,7 @@ Foam::fileOperations::masterUncollatedFileOperation::read
 {
     autoPtr<ISstream> isPtr;
 
-    PstreamBuffers pBufs(comm, UPstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs(comm);
 
     if (UPstream::master(comm))
     {
@@ -875,11 +750,11 @@ bool Foam::fileOperations::masterUncollatedFileOperation::mkDir
     mode_t mode
 ) const
 {
-    return masterOp<mode_t>
+    return masterOp<bool>
     (
         dir,
         mkDirOp(mode),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -891,11 +766,11 @@ bool Foam::fileOperations::masterUncollatedFileOperation::chMod
     mode_t mode
 ) const
 {
-    return masterOp<mode_t>
+    return masterOp<bool>
     (
         fName,
         chModOp(mode),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -911,7 +786,7 @@ mode_t Foam::fileOperations::masterUncollatedFileOperation::mode
     (
         fName,
         modeOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -925,11 +800,11 @@ Foam::fileName::Type Foam::fileOperations::masterUncollatedFileOperation::type
 {
     return fileName::Type
     (
-        masterOp<label>
+        masterOp<int>
         (
             fName,
             typeOp(followLink),
-            Pstream::msgType(),
+            UPstream::msgType(),
             comm_
         )
     );
@@ -947,7 +822,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::exists
     (
         fName,
         existsOp(checkGzip, followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -963,7 +838,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::isDir
     (
         fName,
         isDirOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -980,7 +855,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::isFile
     (
         fName,
         isFileOp(checkGzip, followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -996,7 +871,7 @@ off_t Foam::fileOperations::masterUncollatedFileOperation::fileSize
     (
         fName,
         fileSizeOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1012,7 +887,7 @@ time_t Foam::fileOperations::masterUncollatedFileOperation::lastModified
     (
         fName,
         lastModifiedOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         UPstream::worldComm
     );
 }
@@ -1028,7 +903,7 @@ double Foam::fileOperations::masterUncollatedFileOperation::highResLastModified
     (
         fName,
         highResLastModifiedOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         UPstream::worldComm
     );
 }
@@ -1044,7 +919,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::mvBak
     (
         fName,
         mvBakOp(ext),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1059,7 +934,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::rm
     (
         fName,
         rmOp(),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1076,7 +951,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::rmDir
     (
         dir,
         rmDirOp(silent, emptyOnly),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1094,7 +969,7 @@ Foam::fileNameList Foam::fileOperations::masterUncollatedFileOperation::readDir
     (
         dir,
         readDirOp(type, filtergz, followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1112,7 +987,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::cp
         src,
         dst,
         cpOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1129,7 +1004,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::ln
         src,
         dst,
         lnOp(),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1147,7 +1022,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::mv
         src,
         dst,
         mvOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1293,7 +1168,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
                 (
                     io.objectPath(),
                     fileOrNullOp(true), // isFile=true
-                    Pstream::msgType(),
+                    UPstream::msgType(),
                     comm_
                 );
             }
@@ -1451,7 +1326,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
                 (
                     io.objectPath(),
                     fileOrNullOp(false), // isFile=false
-                    Pstream::msgType(),
+                    UPstream::msgType(),
                     comm_
                 );
             }
@@ -1524,7 +1399,8 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
 (
     const IOobject& startIO,
     const scalar startValue,
-    const word& stopInstance
+    const word& stopInstance,
+    const bool constant_fallback
 ) const
 {
     if (debug)
@@ -1650,6 +1526,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
                 }
                 else
                 {
+                    // At the stopInstance
                     foundInstance = io.instance();
                 }
                 break;
@@ -1701,9 +1578,13 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
             {
                 failed = failureCodes::FAILED_CONSTINST;
             }
-            else
+            else if (constant_fallback)
             {
                 foundInstance = time.constant();
+            }
+            else
+            {
+                foundInstance.clear();
             }
         }
 
@@ -1738,7 +1619,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
         {
             FatalError << stopInstance;
         }
-        else
+        else  // FAILED_CONSTINST
         {
             FatalError << "constant";
         }
@@ -1799,8 +1680,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
             // Find similar time
 
             // Copy of Time::findInstancePath. We want to avoid the
-            // parallel call to findTimes. Alternative is to have
-            // version of findInstancePath that takes instantList ...
+            // parallel call to findTimes.
             const instantList timeDirs
             (
                 fileOperation::findTimes
@@ -1810,20 +1690,20 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
                 )
             );
 
-            const instant t(instance);
-            forAllReverse(timeDirs, i)
+            fileName foundInst
+            (
+                Time::findInstancePath(timeDirs, instant(instance))
+            );
+
+            if (!foundInst.empty())
             {
-                if (t.equal(timeDirs[i].value()))
-                {
-                    objectNames = fileOperation::readObjects
-                    (
-                        db,
-                        timeDirs[i].name(),     // newly found time
-                        local,
-                        newInstance
-                    );
-                    break;
-                }
+                objectNames = fileOperation::readObjects
+                (
+                    db,
+                    foundInst,     // newly found time
+                    local,
+                    newInstance
+                );
             }
         }
 
@@ -1954,7 +1834,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::readHeader
         }
 
         // Is a more efficient scatter possible?
-        PstreamBuffers pBufs(comm_, UPstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs(comm_);
 
         if (Pstream::master(comm_))
         {
@@ -2270,8 +2150,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
                 << endl;
         }
 
-        bool ok = false;
-        if (Pstream::master(UPstream::worldComm))
+        if (UPstream::master(UPstream::worldComm))
         {
             // Do master-only reading always.
             const bool oldParRun = UPstream::parRun(false);
@@ -2287,37 +2166,23 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
             UPstream::parRun(oldParRun);  // Restore parallel state
         }
 
-        // Broadcast regIOobjects content
-        if (Pstream::parRun())
+        // Broadcast regIOobject content, with writeData/readData handling
+        if (UPstream::parRun())
         {
-            Pstream::broadcasts
-            (
-                UPstream::worldComm,
-                ok,
-                io.headerClassName(),
-                io.note()
-            );
-
-            if (Pstream::master(UPstream::worldComm))
+            if (UPstream::master(UPstream::worldComm))
             {
-                OPBstream toAll
-                (
-                    UPstream::masterNo(),
-                    UPstream::worldComm,
-                    format
-                );
-                bool okWrite = io.writeData(toAll);
+                OPBstream os(UPstream::worldComm, format);
+
+                os << io.headerClassName() << io.note();
+                bool okWrite = io.writeData(os);
                 ok = ok && okWrite;
             }
             else
             {
-                IPBstream fromMaster
-                (
-                    UPstream::masterNo(),
-                    UPstream::worldComm,
-                    format
-                );
-                ok = io.readData(fromMaster);
+                IPBstream is(UPstream::worldComm, format);
+
+                is >> io.headerClassName() >> io.note();
+                ok = io.readData(is);
             }
         }
     }
@@ -2531,7 +2396,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewIFstream
         filePaths[Pstream::myProcNo(comm_)] = filePath;
         Pstream::gatherList(filePaths, Pstream::msgType(), comm_);
 
-        PstreamBuffers pBufs(comm_, Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs(comm_);
 
         if (Pstream::master(comm_))
         {
@@ -2640,7 +2505,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewOFstream
             comm_,
             pathName,
             streamOpt,
-            IOstreamOption::NON_APPEND,
+            IOstreamOption::NO_APPEND,
             writeOnProc
         )
     );
@@ -2664,7 +2529,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewOFstream
             comm_,
             pathName,
             streamOpt,
-            IOstreamOption::NON_APPEND,
+            IOstreamOption::NO_APPEND,
             writeOnProc
         )
     );

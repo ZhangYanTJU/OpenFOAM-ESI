@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef solidProperties_H
-#define solidProperties_H
+#ifndef Foam_solidProperties_H
+#define Foam_solidProperties_H
 
 #include "typeInfo.H"
 #include "autoPtr.H"
@@ -133,7 +133,14 @@ public:
         }
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone solidProperties
+        template<class Derived>
+        static autoPtr<solidProperties> Clone(const Derived& prop)
+        {
+            return autoPtr<solidProperties>(new Derived(prop));
+        }
 
         //- Return a pointer to a new solidProperties created from name
         static autoPtr<solidProperties> New(const word& name);

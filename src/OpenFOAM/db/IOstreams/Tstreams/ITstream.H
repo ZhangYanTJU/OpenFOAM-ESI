@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,14 +77,26 @@ class ITstream
         //  but leave any excess capacity (ie, like reserve).
         void reserveCapacity(const label newCapacity);
 
+        //- Convert input sequence into a list of tokens,
+        static tokenList parse_chars
+        (
+            const char* s,
+            size_t nbytes,
+            IOstreamOption streamOpt
+        );
+
+        //- Convert input sequence into a list of tokens,
+        //- using the existing stream format. Rewinds the stream
+        void reset(const char* input, size_t nbytes);
+
         //- Failsafe read-access to token at specified location
         //- or undefinedToken
-        inline const token& peekNoFail(const label i) const
+        inline const token& peekNoFail(const label i) const noexcept
         {
             return
             (
                 (i >= 0 && i < tokenList::size())
-                ? tokenList::operator[](i)
+                ? tokenList::cdata()[i]
                 : token::undefinedToken
             );
         }
@@ -158,6 +170,47 @@ public:
             const string& name = "input"
         );
 
+        #if __cplusplus >= 201703L
+        //- Construct token list by parsing the input character sequence
+        //  Uses static parse function internally.
+        explicit ITstream
+        (
+            std::string_view s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ITstream(streamOpt)
+        {
+            reset(s.data(), s.size());
+        }
+        #endif
+
+        //- Construct token list by parsing the input character sequence
+        //  Uses static parse function internally.
+        explicit ITstream
+        (
+            stdFoam::span<char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ITstream(streamOpt)
+        {
+            reset(s.data(), s.size());
+        }
+
+        //- Construct token list by parsing the input character sequence
+        //  Uses static parse function internally.
+        explicit ITstream
+        (
+            stdFoam::span<const char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ITstream(streamOpt)
+        {
+            reset(s.data(), s.size());
+        }
+
 
     // Additional constructors
 
@@ -207,7 +260,10 @@ public:
         (
             const UList<char>& input,
             IOstreamOption streamOpt = IOstreamOption()
-        );
+        )
+        {
+            return parse_chars(input.cdata(), input.size(), streamOpt);
+        }
 
         //- Create token list by parsing the input string
         //- until no good tokens remain.
@@ -215,7 +271,10 @@ public:
         (
             const std::string& input,
             IOstreamOption streamOpt = IOstreamOption()
-        );
+        )
+        {
+            return parse_chars(input.data(), input.size(), streamOpt);
+        }
 
         //- Create token list by parsing the input character sequence
         //- until no good tokens remain.
@@ -223,7 +282,45 @@ public:
         (
             const char* input,
             IOstreamOption streamOpt = IOstreamOption()
-        );
+        )
+        {
+            return parse_chars(input, strlen(input), streamOpt);
+        }
+
+        #if __cplusplus >= 201703L
+        //- Create token list by parsing the input character sequence
+        //- until no good tokens remain.
+        static tokenList parse
+        (
+            std::string_view s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        {
+            return parse_chars(s.data(), s.size(), streamOpt);
+        }
+        #endif
+
+        //- Create token list by parsing the input character sequence
+        //- until no good tokens remain.
+        static tokenList parse
+        (
+            stdFoam::span<char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        {
+            return parse_chars(s.data(), s.size(), streamOpt);
+        }
+
+        //- Create token list by parsing the input character sequence
+        //- until no good tokens remain.
+        static tokenList parse
+        (
+            stdFoam::span<const char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        {
+            return parse_chars(s.data(), s.size(), streamOpt);
+        }
 
 
     // Member Functions
@@ -251,25 +348,41 @@ public:
 
     // Token Access
 
+        //- The token contents (read-only access)
+        const tokenList& tokens() const noexcept { return *this; }
+
+        //- The token contents (read/write access)
+        tokenList& tokens() noexcept { return *this; }
+
+
         //- True if putback token is in use
         bool hasPutback() const noexcept { return Istream::hasPutback(); }
 
         //- Failsafe peek at the token at the \b front of the tokenList
         //  \return \c undefinedToken if the list is empty.
-        const token& front() const { return peekNoFail(0); }
+        const token& front() const noexcept
+        {
+            return peekNoFail(0);
+        }
 
         //- Failsafe peek at the token at the \b back of the tokenList
         //  \return \c undefinedToken if the list is empty.
-        const token& back() const { return peekNoFail(tokenList::size()-1); }
+        const token& back() const noexcept
+        {
+            return peekNoFail(tokenList::size()-1);
+        }
 
         //- Failsafe peek at what the next read would return,
         //- including handling of any putback
         //  \return \c undefinedToken if list is exhausted
-        const token& peek() const;
+        const token& peek() const noexcept;
 
         //- Read access to the token at the current tokenIndex.
         //- \returns \c undefinedToken if list is exhausted
-        const token& currentToken() const { return peekNoFail(tokenIndex_); }
+        const token& currentToken() const noexcept
+        {
+            return peekNoFail(tokenIndex_);
+        }
 
         //- Write access to the token at the current tokenIndex.
         //- Fatal if not in range
@@ -300,9 +413,10 @@ public:
         }
 
         //- Move tokenIndex to the specified position
-        //  Using seek(0) is identical to rewind.
+        //- and adjust the stream status (open/good/eof ...)
+        //  Using seek(0) is identical to rewind().
         //  Using seek(-1) moves to the end.
-        void seek(label pos);
+        void seek(label pos) noexcept;
 
         //- Move tokenIndex relative to the current position.
         //  Will not overrun the beginning (0) or one-past end positions.
@@ -310,7 +424,7 @@ public:
         //  Use skip(2) to move forward two tokens.
         //  Use skip(-2) to move backward two tokens.
         //  \return True if the indexing completed without underflow/overflow
-        bool skip(label n = 1);
+        bool skip(label n = 1) noexcept;
 
 
     // Searching
@@ -319,7 +433,7 @@ public:
         using tokenList::find;
 
         //- Find range containing matching delimiter pair, starting at the
-        //- the specified position. The position -1 indicates to continue
+        //- specified position. The position -1 indicates to continue
         //- from the present tokenIndex() position.
         labelRange find
         (
@@ -327,6 +441,13 @@ public:
             const token::punctuationToken delimClose,
             label pos = 0
         ) const;
+
+        //- Find compoundToken of specified Type, starting at the
+        //- specified position. The position -1 indicates to continue
+        //- from the present tokenIndex() position.
+        //  \return nullptr if not found
+        template<class Type>
+        const Type* findCompound(label pos = 0) const;
 
 
     // Token list modification
@@ -378,16 +499,18 @@ public:
 
     // Stream State Functions
 
-        //- Get stream flags - always 0
-        virtual ios_base::fmtflags flags() const override
+        //- Return current stream flags.
+        //- Dummy for token stream, returns 0.
+        virtual std::ios_base::fmtflags flags() const override
         {
-            return ios_base::fmtflags(0);
+            return std::ios_base::fmtflags(0);
         }
 
-        //- Set flags of stream - ignored
-        ios_base::fmtflags flags(const ios_base::fmtflags) override
+        //- Set stream flags, return old stream flags.
+        //- Dummy for token stream, returns 0.
+        std::ios_base::fmtflags flags(std::ios_base::fmtflags) override
         {
-            return ios_base::fmtflags(0);
+            return std::ios_base::fmtflags(0);
         }
 
 
@@ -428,7 +551,7 @@ public:
         virtual bool endRawRead() override { return false; }
 
         //- Rewind the stream so that it may be read again. Same as seek(0)
-        virtual void rewind() override;
+        virtual void rewind() override { ITstream::seek(0); }
 
 
     // Output
@@ -519,6 +642,10 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "ITstreamI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

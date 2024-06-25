@@ -49,22 +49,28 @@ using PolyFaceField = DimensionedField<Type, polySurfaceGeoMesh>;
 
 
 // Typedefs
-typedef DimensionedField<label, polySurfaceGeoMesh>
+typedef
+    DimensionedField<label, polySurfaceGeoMesh>
     polySurfaceLabelField;
 
-typedef Foam::DimensionedField<scalar, polySurfaceGeoMesh>
+typedef
+    DimensionedField<scalar, polySurfaceGeoMesh>
     polySurfaceScalarField;
 
-typedef Foam::DimensionedField<vector, polySurfaceGeoMesh>
+typedef
+    DimensionedField<vector, polySurfaceGeoMesh>
     polySurfaceVectorField;
 
-typedef Foam::DimensionedField<sphericalTensor, polySurfaceGeoMesh>
+typedef
+    DimensionedField<sphericalTensor, polySurfaceGeoMesh>
     polySurfaceSphericalTensorField;
 
-typedef Foam::DimensionedField<symmTensor, polySurfaceGeoMesh>
+typedef
+    DimensionedField<symmTensor, polySurfaceGeoMesh>
     polySurfaceSymmTensorField;
 
-typedef Foam::DimensionedField<tensor, polySurfaceGeoMesh>
+typedef
+    DimensionedField<tensor, polySurfaceGeoMesh>
     polySurfaceTensorField;
 
 
@@ -79,22 +85,28 @@ using PolyPointField = DimensionedField<Type, polySurfacePointGeoMesh>;
 
 
 // Typedefs
-typedef Foam::DimensionedField<label, polySurfacePointGeoMesh>
+typedef
+    DimensionedField<label, polySurfacePointGeoMesh>
     polySurfacePointLabelField;
 
-typedef Foam::DimensionedField<scalar, polySurfacePointGeoMesh>
+typedef
+    DimensionedField<scalar, polySurfacePointGeoMesh>
     polySurfacePointScalarField;
 
-typedef Foam::DimensionedField<vector, polySurfacePointGeoMesh>
+typedef
+    DimensionedField<vector, polySurfacePointGeoMesh>
     polySurfacePointVectorField;
 
-typedef Foam::DimensionedField<sphericalTensor, polySurfacePointGeoMesh>
+typedef
+    DimensionedField<sphericalTensor, polySurfacePointGeoMesh>
     polySurfacePointSphericalTensorField;
 
-typedef Foam::DimensionedField<symmTensor, polySurfacePointGeoMesh>
+typedef
+    DimensionedField<symmTensor, polySurfacePointGeoMesh>
     polySurfacePointSymmTensorField;
 
-typedef Foam::DimensionedField<tensor, polySurfacePointGeoMesh>
+typedef
+    DimensionedField<tensor, polySurfacePointGeoMesh>
     polySurfacePointTensorField;
 
 

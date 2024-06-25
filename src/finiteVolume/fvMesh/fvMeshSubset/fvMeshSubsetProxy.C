@@ -160,7 +160,7 @@ bool Foam::fvMeshSubsetProxy::correct(bool verbose)
             Info<< "Subsetting mesh based on cellSet " << name_ << endl;
         }
 
-        cellSet cset(baseMesh_, name_);
+        cellSet cset(baseMesh_, name_, IOobject::NO_REGISTER);
 
         selectedCells.resize(nCells);
         for (const label idx : cset)

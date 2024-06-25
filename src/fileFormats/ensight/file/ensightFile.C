@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "ensightFile.H"
+#include "ensightReadFile.H"
 #include "error.H"
 #include "List.H"
 #include <cstring>
@@ -39,6 +40,37 @@ bool Foam::ensightFile::allowUndef_ = false;
 float Foam::ensightFile::undefValue_ = Foam::floatScalarVGREAT;
 
 const char* const Foam::ensightFile::coordinates = "coordinates";
+
+
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Put integers, floats etc in binary or ascii.
+template<class Type>
+static inline void putPrimitive
+(
+    const Type& value,
+    OFstream& os,
+    const int fieldWidth
+)
+{
+    auto& oss = os.stdStream();
+
+    if (os.format() == IOstreamOption::BINARY)
+    {
+        oss.write(reinterpret_cast<const char*>(&value), sizeof(Type));
+    }
+    else
+    {
+        oss.width(fieldWidth);
+        oss << value;
+    }
+    os.syncState();
+}
+
+} // End namespace Foam
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
@@ -82,6 +114,51 @@ void Foam::ensightFile::init()
         std::ios_base::floatfield
     );
     precision(5);
+
+    // Handle transient single-file timestep information
+    auto& oss = OFstream::stdStream();
+
+    if (OFstream::is_appending())
+    {
+        // Already positioned at the EOF (in append mode), but be certain
+        oss.seekp(0, std::ios_base::end);
+        origFileSize_ = oss.tellp();
+    }
+    else
+    {
+        origFileSize_ = 0;
+    }
+
+    int64_t begin_footer(-1);
+    List<int64_t> offsets;
+
+    if (OFstream::is_appending())
+    {
+        // Temporarily open for reading as well.
+        // No race condition since no writing is done concurrently with the
+        // reading
+        IFstream is(OFstream::name(), OFstream::format());
+
+        begin_footer =
+            ensightReadFile::getTimeStepFooter
+            (
+                is,
+                offsets
+            );
+    }
+
+    timeStepOffsets_ = std::move(offsets);
+
+    if (OFstream::is_appending() && begin_footer > 0)
+    {
+        oss.seekp(begin_footer);
+        OFstream::syncState();
+    }
+
+    // InfoErr << "output at: " << label(begin_footer) << nl;
+    // InfoErr
+    //     << "footer: " << label(begin_footer)
+    //     << " time-steps: " << offsets.size() << nl;
 }
 
 
@@ -89,11 +166,30 @@ void Foam::ensightFile::init()
 
 Foam::ensightFile::ensightFile
 (
+    std::nullptr_t,  // dispatch tag
+    IOstreamOption::appendType append,
     const fileName& pathname,
     IOstreamOption::streamFormat fmt
 )
 :
-    OFstream(IOstreamOption::ATOMIC, ensight::FileName(pathname), fmt)
+    OFstream
+    (
+        (
+            // Only use atomic when not appending
+            (append == IOstreamOption::NO_APPEND)
+          ? IOstreamOption::ATOMIC
+          : IOstreamOption::NON_ATOMIC
+        ),
+        pathname,
+        fmt,
+        (
+            // Change APPEND_APP -> APPEND_ATE (file rewriting)
+            (append == IOstreamOption::APPEND_APP)
+          ? IOstreamOption::APPEND_ATE
+          : append
+        )
+    ),
+    origFileSize_(0)
 {
     init();
 }
@@ -101,14 +197,44 @@ Foam::ensightFile::ensightFile
 
 Foam::ensightFile::ensightFile
 (
+    IOstreamOption::appendType append,
+    const fileName& pathname,
+    IOstreamOption::streamFormat fmt
+)
+:
+    ensightFile
+    (
+        nullptr,
+        append,
+        ensight::FileName(pathname),
+        fmt
+    )
+{}
+
+
+Foam::ensightFile::ensightFile
+(
+    IOstreamOption::appendType append,
     const fileName& path,
     const fileName& name,
     IOstreamOption::streamFormat fmt
 )
 :
-    OFstream(IOstreamOption::ATOMIC, path/ensight::FileName(name), fmt)
+    ensightFile
+    (
+        nullptr,
+        append,
+        path/ensight::FileName(name),
+        fmt
+    )
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::ensightFile::~ensightFile()
 {
-    init();
+    (void) writeTimeStepFooter();
 }
 
 
@@ -158,9 +284,11 @@ void Foam::ensightFile::writeString(const char* str, size_t len)
     std::copy_n(str, len, buf);
     std::fill_n(buf + len, (80 - len), '\0');  // Pad trailing with nul
 
+    auto& oss = stdStream();
+
     if (format() == IOstreamOption::BINARY)
     {
-        write(buf, 80);
+        oss.write(buf, 80);
     }
     else
     {
@@ -170,9 +298,10 @@ void Foam::ensightFile::writeString(const char* str, size_t len)
         // char* p = ::strchr(buf, '\n');
         // if (p) *p = 0;
 
-        stdStream() << buf;
-        syncState();
+        oss << buf;
     }
+
+    syncState();
 }
 
 
@@ -209,6 +338,7 @@ Foam::Ostream& Foam::ensightFile::write(const std::string& str)
 }
 
 
+// Same as OFstream::writeRaw(buf, count)
 Foam::Ostream& Foam::ensightFile::write
 (
     const char* buf,
@@ -221,22 +351,33 @@ Foam::Ostream& Foam::ensightFile::write
 }
 
 
+void Foam::ensightFile::writeInt(const int32_t val, const int fieldWidth)
+{
+    putPrimitive<int32_t>(val, *this, fieldWidth);
+}
+
+
+void Foam::ensightFile::writeInt(const int64_t val, const int fieldWidth)
+{
+    putPrimitive<int32_t>(narrowInt32(val), *this, fieldWidth);
+}
+
+
+void Foam::ensightFile::writeFloat(const float val, const int fieldWidth)
+{
+    putPrimitive<float>(val, *this, fieldWidth);
+}
+
+
+void Foam::ensightFile::writeFloat(const double val, const int fieldWidth)
+{
+    putPrimitive<float>(narrowFloat(val), *this, fieldWidth);
+}
+
+
 Foam::Ostream& Foam::ensightFile::write(const int32_t val)
 {
-    if (format() == IOstreamOption::BINARY)
-    {
-        write
-        (
-            reinterpret_cast<const char *>(&val),
-            sizeof(int32_t)
-        );
-    }
-    else
-    {
-        stdStream().width(10);
-        stdStream() << val;
-        syncState();
-    }
+    putPrimitive<int32_t>(val, *this, 10);
 
     return *this;
 }
@@ -244,28 +385,15 @@ Foam::Ostream& Foam::ensightFile::write(const int32_t val)
 
 Foam::Ostream& Foam::ensightFile::write(const int64_t val)
 {
-    int32_t ivalue(narrowInt32(val));
+    putPrimitive<int32_t>(narrowInt32(val), *this, 10);
 
-    return write(ivalue);
+    return *this;
 }
 
 
 Foam::Ostream& Foam::ensightFile::write(const float val)
 {
-    if (format() == IOstreamOption::BINARY)
-    {
-        write
-        (
-            reinterpret_cast<const char *>(&val),
-            sizeof(float)
-        );
-    }
-    else
-    {
-        stdStream().width(12);
-        stdStream() << val;
-        syncState();
-    }
+    putPrimitive<float>(val, *this, 12);
 
     return *this;
 }
@@ -273,28 +401,7 @@ Foam::Ostream& Foam::ensightFile::write(const float val)
 
 Foam::Ostream& Foam::ensightFile::write(const double val)
 {
-    float fvalue(narrowFloat(val));
-
-    return write(fvalue);
-}
-
-
-Foam::Ostream& Foam::ensightFile::write
-(
-    const label value,
-    const label fieldWidth
-)
-{
-    if (format() == IOstreamOption::BINARY)
-    {
-        write(value);
-    }
-    else
-    {
-        stdStream().width(fieldWidth);
-        stdStream() << value;
-        syncState();
-    }
+    putPrimitive<float>(narrowFloat(val), *this, 12);
 
     return *this;
 }
@@ -304,8 +411,7 @@ void Foam::ensightFile::newline()
 {
     if (format() == IOstreamOption::ASCII)
     {
-        stdStream() << nl;
-        syncState();
+        OFstream::write('\n');
     }
 }
 
@@ -340,28 +446,124 @@ void Foam::ensightFile::writeBinaryHeader()
     if (format() == IOstreamOption::BINARY)
     {
         writeString("C Binary");
-        // Is binary: newline() is a no-op
+        // newline();  // A no-op in binary
     }
 }
 
 
-void Foam::ensightFile::beginTimeStep()
-{
-    writeString("BEGIN TIME STEP");
-    newline();
-}
+// Footer information looks like this
+//
+/*  |---------------|---------------|-----------------------|
+ *  | ASCII         | BINARY        | element               |
+ *  |---------------|---------------|-----------------------|
+ *  | "%20lld\n"    | int32         | nSteps                |
+ *  | "%20lld\n"    | int64         | offset step 1         |
+ *  | "%20lld\n"    | int64         | offset step 2         |
+ *  | "%20lld\n"    | ..            |                       |
+ *  | "%20lld\n"    | int64         | offset step n         |
+ *  | "%20lld\n"    | int32         | flag (unused)         |
+ *  | "%20lld\n"    | int64         | offset to nSteps      |
+ *  | "%s\n"        | char[80]      | 'FILE_INDEX'          |
+ *  |---------------|---------------|-----------------------|
+ */
 
-
-void Foam::ensightFile::endTimeStep()
+int64_t Foam::ensightFile::writeTimeStepFooter()
 {
-    writeString("END TIME STEP");
+    if (timeStepOffsets_.empty())
+    {
+        return -1;
+    }
+
+    auto& oss = OFstream::stdStream();
+
+    // The footer begin, which is also the current position
+    const int64_t footer_begin(oss.tellp());
+
+    // nSteps
+    putPrimitive<int32_t>(int32_t(timeStepOffsets_.size()), *this, 20);
     newline();
+
+    // offset step 1, 2, ... N
+    for (int64_t off : timeStepOffsets_)
+    {
+        putPrimitive<int64_t>(off, *this, 20);
+        newline();
+    }
+
+    // flag (unused)
+    putPrimitive<int32_t>(0, *this, 20);
+    newline();
+
+    // The footer begin == position of nSteps
+    putPrimitive<int64_t>(footer_begin, *this, 20);
+    newline();
+
+    // FILE_INDEX is "%s\n", not "%79s\n"
+    // but our ASCII strings are truncated (nul-padded) anyhow
+
+    writeString("FILE_INDEX");
+    newline();
+
+    // Reposition to begin of footer so that any subsequent output
+    // will overwrite the footer too
+    oss.seekp(footer_begin);
+
+    return footer_begin;
 }
 
 
 //
 // Convenience Output Methods
 //
+
+int64_t Foam::ensightFile::beginTimeStep()
+{
+    writeString("BEGIN TIME STEP");
+    newline();
+
+    auto& oss = OFstream::stdStream();
+
+    const int64_t curr_pos(oss.tellp());
+    timeStepOffsets_.push_back(curr_pos);
+
+    // To avoid partly incomplete/incorrect footer information,
+    // overwrite original footer if needed.
+
+    if (curr_pos >= 0 && curr_pos < origFileSize_)
+    {
+        const char fill[] = "deadbeef";
+
+        for
+        (
+            int64_t pos = curr_pos;
+            pos < origFileSize_ && bool(oss);
+            pos += 8
+        )
+        {
+            // Overwrite with specified "junk" to avoid/detect corrupt
+            // files etc. Don't worry about slightly increasing the
+            // file size (ie, max 7 bytes) - it's unimportant
+            oss.write(fill, 8);
+        }
+
+        // Maintain the original output position
+        oss.seekp(curr_pos);
+
+        OFstream::syncState();
+    }
+
+    return curr_pos;
+}
+
+
+int64_t Foam::ensightFile::endTimeStep()
+{
+    writeString("END TIME STEP");
+    newline();
+
+    return int64_t(stdStream().tellp());
+}
+
 
 void Foam::ensightFile::beginPart(const label index)
 {
@@ -372,11 +574,33 @@ void Foam::ensightFile::beginPart(const label index)
 }
 
 
+void Foam::ensightFile::beginPart
+(
+    const label index,
+    const std::string& description
+)
+{
+    beginPart(index);
+    writeString(description);
+    newline();
+}
+
+
+void Foam::ensightFile::beginCoordinates(const label npoints)
+{
+    writeString("coordinates");
+    newline();
+
+    write(npoints);
+    newline();
+}
+
+
 void Foam::ensightFile::beginParticleCoordinates(const label nparticles)
 {
     writeString("particle coordinates");
     newline();
-    write(nparticles, 8); // unusual width
+    writeInt(nparticles, 8);  // Warning: unusual width
     newline();
 }
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,8 +40,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ABAQUSsurfaceFormat_H
-#define ABAQUSsurfaceFormat_H
+#ifndef Foam_ABAQUSsurfaceFormat_H
+#define Foam_ABAQUSsurfaceFormat_H
 
 #include "MeshedSurface.H"
 #include "MeshedSurfaceProxy.H"
@@ -95,7 +95,7 @@ public:
 
     // Static Member Functions
 
-        //- Write surface mesh components by proxy
+        //- Write surface mesh components (by proxy) in ABAQUS format
         static void write
         (
             const fileName& filename,
@@ -108,18 +108,27 @@ public:
     // Member Functions
 
         //- Read from file
-        virtual bool read
-        (
-            const fileName& filename
-        );
+        virtual bool read(const fileName& filename) override;
 
-        //- Write surface mesh to file
+        //- Write surface mesh to file (by proxy)
         virtual void write
         (
             const fileName& name,
             IOstreamOption streamOpt = IOstreamOption(),
             const dictionary& options = dictionary::null
-        ) const
+        ) const override
+        {
+            write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
+        }
+
+        //- Write surface mesh to file (by proxy)
+        virtual void write
+        (
+            const fileName& name,
+            const word& fileType,  /* ignored */
+            IOstreamOption streamOpt = IOstreamOption(),
+            const dictionary& options = dictionary::null
+        ) const override
         {
             write(name, MeshedSurfaceProxy<Face>(*this), streamOpt, options);
         }

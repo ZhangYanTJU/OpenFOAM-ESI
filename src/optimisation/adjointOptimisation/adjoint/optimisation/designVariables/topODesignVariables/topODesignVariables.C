@@ -28,7 +28,7 @@ License
 
 #include "localIOdictionary.H"
 #include "topODesignVariables.H"
-#include "MeshObject.H"
+#include "wallDist.H"
 #include "wallFvPatch.H"
 #include "cutFaceIso.H"
 #include "cutCellIso.H"
@@ -452,11 +452,9 @@ void Foam::topODesignVariables::update(scalarField& correction)
     // if the method computing it includes fvOptions that depend on the
     // indicator field.
     // Trick wallDist into updating it
-    if (mesh_.foundObject<UpdateableMeshObject<fvMesh>>("wallDist"))
-    {
-        mesh_.lookupObjectRef<UpdateableMeshObject<fvMesh>>("wallDist").
-            movePoints();
-    }
+
+    wallDist::try_movePoints(mesh_);
+
 
     // Write the 0.5 beta iso-line to files, as an indication of the
     // fluid-solid interface

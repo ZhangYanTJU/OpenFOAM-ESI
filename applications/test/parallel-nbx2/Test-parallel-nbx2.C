@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 
     for (bool barrier_active = false, done = false; !done; /*nil*/)
     {
-        std::pair<int, int> probed =
+        std::pair<int, int64_t> probed =
             UPstream::probeMessage
             (
                 UPstream::commsTypes::nonBlocking,
@@ -132,14 +132,14 @@ int main(int argc, char *argv[])
         {
             // Message found and had size: receive it
 
-            const label proci = probed.first;
-            const label count = probed.second;
+            const label proci(probed.first);
+            const label count(probed.second);
 
             if (optNonBlocking)
             {
                 recvBufs(proci).resize_nocopy(count);
 
-                // Non-blocking read
+                // Non-blocking read - MPI_Irecv()
                 UIPstream::read
                 (
                     recvRequests.emplace_back(),
@@ -155,9 +155,9 @@ int main(int argc, char *argv[])
             {
                 IPstream is
                 (
-                    UPstream::commsTypes::scheduled,
-                    probed.first,
-                    probed.second,
+                    UPstream::commsTypes::scheduled,  // ie, MPI_Recv()
+                    proci,
+                    count,  // bufSize
                     tag,
                     comm
                 );

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,7 +83,6 @@ See Also
 #define Foam_OSpanStream_H
 
 #include "memoryStreamBuffer.H"
-#include "DynamicList.H"
 #include "OSstream.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -139,6 +138,12 @@ public:
         std::streampos output_pos() const
         {
             return buffer_type::span_tellp();
+        }
+
+        //- The number of bytes outputted
+        std::streamsize count() const
+        {
+            return buffer_type::size_bytes();
         }
 
         //- The put buffer capacity
@@ -199,37 +204,9 @@ public:
         //- Some information about the output buffer position/capacity
         void debug_info(Ostream& os) const
         {
-            os  << "put="
-                << output_pos() << '/' << capacity();
+            os  << "put=" << output_pos() << '/' << capacity();
         }
 };
-
-
-namespace Detail
-{
-
-/*---------------------------------------------------------------------------*\
-                Class Detail::OSpanStreamAllocator Declaration
-\*---------------------------------------------------------------------------*/
-
-//- An allocator for holding Foam::ospanstream
-class OSpanStreamAllocator
-{
-protected:
-
-    // Protected Data
-
-        //- The stream
-        Foam::ospanstream stream_;
-
-
-    // Constructors
-
-        //- Default construct (empty)
-        OSpanStreamAllocator() = default;
-};
-
-} // End namespace Detail
 
 
 /*---------------------------------------------------------------------------*\
@@ -238,10 +215,12 @@ protected:
 
 class OSpanStream
 :
-    public Detail::OSpanStreamAllocator,
+    public Foam::Detail::StreamAllocator<Foam::ospanstream>,
     public Foam::OSstream
 {
-    typedef Detail::OSpanStreamAllocator allocator_type;
+    typedef
+        Foam::Detail::StreamAllocator<Foam::ospanstream>
+        allocator_type;
 
 public:
 
@@ -314,8 +293,11 @@ public:
         //- The current output position within the buffer (tellp)
         std::streampos output_pos() const { return stream_.output_pos(); }
 
-        //- The current output size. Same as tellp(), output_pos()
-        label size() const { return label(stream_.output_pos()); }
+        //- The number of bytes outputted
+        std::streamsize count() const { return stream_.count(); }
+
+        //- The current output size. Same as count(), output_pos(), tellp().
+        label size() const { return label(stream_.count()); }
 
         //- The put buffer capacity
         std::streamsize capacity() const { return stream_.capacity(); }

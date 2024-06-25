@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -541,7 +541,7 @@ void syncPoints
     // Is there any coupled patch with transformation?
     bool hasTransformation = false;
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
         const labelList& procPatches = mesh.globalData().processorPatches();
 
@@ -570,7 +570,7 @@ void syncPoints
 
                 OPstream toNbr
                 (
-                    Pstream::commsTypes::blocking,
+                    UPstream::commsTypes::buffered,
                     procPatch.neighbProcNo()
                 );
                 toNbr << patchInfo;
@@ -587,17 +587,12 @@ void syncPoints
 
             if (pp.nPoints() && !procPatch.owner())
             {
-                pointField nbrPatchInfo(procPatch.nPoints());
-                {
-                    // We do not know the number of points on the other side
-                    // so cannot use UIPstream::read
-                    IPstream fromNbr
-                    (
-                        Pstream::commsTypes::blocking,
-                        procPatch.neighbProcNo()
-                    );
-                    fromNbr >> nbrPatchInfo;
-                }
+                // We do not know the number of points on the other side
+                // so cannot use UIPstream::read
+
+                pointField nbrPatchInfo;
+                IPstream::recv(nbrPatchInfo, procPatch.neighbProcNo());
+
                 // Null any value which is not on neighbouring processor
                 nbrPatchInfo.setSize(procPatch.nPoints(), nullValue);
 
@@ -1465,8 +1460,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Set the precision of the points data to 10
-    IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    IOstream::minPrecision(10);
 
     // Write resulting mesh
     forAll(meshes, meshi)

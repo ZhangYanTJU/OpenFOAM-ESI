@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -551,9 +551,13 @@ void subsetMesh
         Info<< "Writing refined mesh to time " << runTime.timeName() << nl
             << endl;
 
-        IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+        // More precision (for points data)
+        const auto oldPrec = IOstream::minPrecision(10);
+
         mesh.write();
         refLevel.write();
+
+        IOstream::defaultPrecision(oldPrec);
     }
 
     // Update cutCells for removed cells.
@@ -922,9 +926,13 @@ int main(int argc, char *argv[])
             Info<< "    Writing refined mesh to time " << runTime.timeName()
                 << nl << endl;
 
-            IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+            // More precision (for points data)
+            const auto oldPrec = IOstream::minPrecision(10);
+
             mesh.write();
             refLevel.write();
+
+            IOstream::defaultPrecision(oldPrec);
         }
 
         // Update mesh edge stats.
@@ -993,20 +1001,29 @@ int main(int argc, char *argv[])
             << endl;
 
         // Write final mesh
-        IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+
+        // More precision (for points data)
+        const auto oldPrec = IOstream::minPrecision(10);
+
         mesh.write();
         refLevel.write();
 
+        IOstream::defaultPrecision(oldPrec);
     }
     else if (!writeMesh)
     {
+        // Write final mesh. (will have been written already if writeMesh=true)
+
         Info<< "Writing refined mesh to time " << runTime.timeName() << nl
             << endl;
 
-        // Write final mesh. (will have been written already if writeMesh=true)
-        IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+        // More precision (for points data)
+        const auto oldPrec = IOstream::minPrecision(10);
+
         mesh.write();
         refLevel.write();
+
+        IOstream::defaultPrecision(oldPrec);
     }
 
 

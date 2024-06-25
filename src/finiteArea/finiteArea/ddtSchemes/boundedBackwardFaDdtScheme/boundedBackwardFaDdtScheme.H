@@ -76,24 +76,24 @@ class boundedBackwardFaDdtScheme
             {
                 return GREAT;
             }
-            else
-            {
-                return deltaT0_();
-            }
+
+            return deltaT0_();
         }
-
-
-        //- No copy construct
-        boundedBackwardFaDdtScheme(const boundedBackwardFaDdtScheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const boundedBackwardFaDdtScheme&) = delete;
 
 
 public:
 
     //- Runtime type information
     TypeName("boundedBackward");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        boundedBackwardFaDdtScheme(const boundedBackwardFaDdtScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const boundedBackwardFaDdtScheme&) = delete;
 
 
     // Constructors

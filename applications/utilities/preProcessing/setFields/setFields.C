@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,6 +36,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
+#include "timeSelector.H"
 #include "Time.H"
 #include "fvMesh.H"
 #include "faMesh.H"
@@ -656,6 +657,10 @@ struct setAreaField
 
 int main(int argc, char *argv[])
 {
+    argList::noFunctionObjects();           // Never use function objects
+
+    timeSelector::addOptions_singleTime();  // Single-time options
+
     argList::addNote
     (
         "Set values on a selected set of cells/patch-faces via a dictionary"
@@ -670,8 +675,15 @@ int main(int argc, char *argv[])
     );
 
     #include "addRegionOption.H"
+
+    // -------------------------
+
     #include "setRootCase.H"
     #include "createTime.H"
+
+    // Set time from specified time options, or no-op
+    timeSelector::setTimeIfPresent(runTime, args);
+
     #include "createNamedMesh.H"
 
     autoPtr<faMesh> faMeshPtr;

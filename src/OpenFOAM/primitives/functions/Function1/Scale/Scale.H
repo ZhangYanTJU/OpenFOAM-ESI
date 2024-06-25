@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,8 +72,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Function1Types_Scale_H
-#define Function1Types_Scale_H
+#ifndef Foam_Function1Types_Scale_H
+#define Foam_Function1Types_Scale_H
 
 #include "Function1.H"
 
@@ -133,10 +133,10 @@ public:
         //- Copy construct
         explicit Scale(const Scale<Type>& rhs);
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual tmp<Function1<Type>> clone() const
         {
-            return tmp<Function1<Type>>(new Scale<Type>(*this));
+            return Function1<Type>::Clone(*this);
         }
 
 

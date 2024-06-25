@@ -4,26 +4,19 @@ if (nAlphaSubCycles > 1)
 {
     dimensionedScalar totalDeltaT = runTime.deltaT();
 
-    talphaPhi1 = new surfaceScalarField
+    talphaPhi1.reset
     (
-        IOobject
+        new surfaceScalarField
         (
-            "alphaPhi1",
-            runTime.timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar(alphaPhi10.dimensions(), Zero)
+            mesh.newIOobject("alphaPhi1"),
+            mesh,
+            dimensionedScalar(alphaPhi10.dimensions(), Zero)
+        )
     );
 
     surfaceScalarField rhoPhiSum
     (
-        IOobject
-        (
-            "rhoPhiSum",
-            runTime.timeName(),
-            mesh
-        ),
+        mesh.newIOobject("rhoPhiSum"),
         mesh,
         dimensionedScalar(rhoPhi.dimensions(), Zero)
     );

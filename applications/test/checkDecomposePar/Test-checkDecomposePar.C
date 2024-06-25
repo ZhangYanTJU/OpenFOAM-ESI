@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    checkDecomposePar
+    Test-checkDecomposePar
 
 Group
     grpParallelUtilities
@@ -35,8 +35,9 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "OSspecific.H"
-#include "fvCFD.H"
+#include "argList.H"
+#include "timeSelector.H"
+#include "polyMesh.H"
 #include "cpuTime.H"
 #include "IFstream.H"
 #include "regionProperties.H"
@@ -44,10 +45,14 @@ Description
 #include "decompositionInformation.H"
 #include "decompositionModel.H"
 
+using namespace Foam;
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
+    timeSelector::addOptions_singleTime();  // Single-time options
+
     argList::addNote
     (
         "Check decomposition from kaffpa (KaHIP) output"
@@ -65,9 +70,6 @@ int main(int argc, char *argv[])
 
     argList::addArgument("kaffpa-output-file");
 
-    // Include explicit constant options, have zero from time range
-    timeSelector::addOptions(true, false);
-
     #include "setRootCase.H"
 
     const auto decompFile = args.get<fileName>(1);
@@ -75,8 +77,8 @@ int main(int argc, char *argv[])
     // Set time from database
     #include "createTime.H"
 
-    // Allow override of time
-    instantList times = timeSelector::selectIfPresent(runTime, args);
+    // Allow override of time from specified time options, or no-op
+    timeSelector::setTimeIfPresent(runTime, args);
 
     // Allow override of decomposeParDict location
     const fileName decompDictFile =
@@ -95,7 +97,7 @@ int main(int argc, char *argv[])
         Info<< "\n\nDecomposing mesh " << regionName << nl << endl;
         Info<< "Create mesh..." << flush;
 
-        fvMesh mesh
+        polyMesh mesh
         (
             IOobject
             (
@@ -111,7 +113,7 @@ int main(int argc, char *argv[])
         Info<< " nCells = " << mesh.nCells() << endl;
 
         // Expected format is a simple ASCII list
-        cellToProc.setSize(mesh.nCells());
+        cellToProc.resize(mesh.nCells());
         {
             IFstream is(decompFile);
 
@@ -123,15 +125,9 @@ int main(int argc, char *argv[])
 
         const label nDomains = max(cellToProc) + 1;
 
+        // Local mesh connectivity
         CompactListList<label> cellCells;
-        globalMeshData::calcCellCells
-        (
-            mesh,
-            identity(mesh.nCells()),
-            mesh.nCells(),
-            false,
-            cellCells
-        );
+        globalMeshData::calcCellCells(mesh, cellCells);
 
         decompositionInformation info
         (

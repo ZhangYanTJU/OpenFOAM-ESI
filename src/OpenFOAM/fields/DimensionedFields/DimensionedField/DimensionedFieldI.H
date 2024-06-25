@@ -29,14 +29,6 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, class GeoMesh>
-inline const Foam::DimensionedField<Type, GeoMesh>&
-Foam::DimensionedField<Type, GeoMesh>::null()
-{
-    return NullObjectRef<DimensionedField<Type, GeoMesh>>();
-}
-
-
-template<class Type, class GeoMesh>
 inline const typename GeoMesh::Mesh&
 Foam::DimensionedField<Type, GeoMesh>::mesh() const noexcept
 {

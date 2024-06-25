@@ -86,13 +86,6 @@ Foam::Matrix<Form, Type>::clone() const
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Form, class Type>
-inline const Foam::Matrix<Form, Type>& Foam::Matrix<Form, Type>::null()
-{
-    return NullObjectRef<Matrix<Form, Type>>();
-}
-
-
-template<class Form, class Type>
 inline Foam::label Foam::Matrix<Form, Type>::size() const
 {
     return mRows_ * nCols_;

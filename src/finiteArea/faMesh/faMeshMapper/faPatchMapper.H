@@ -39,20 +39,19 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faPatchMapper_H
-#define faPatchMapper_H
+#ifndef Foam_faPatchMapper_H
+#define Foam_faPatchMapper_H
 
 #include "faPatchFieldMapper.H"
 #include "faceMapper.H"
 #include "faPatch.H"
-#include "primitiveFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-// Forward declaration of classes
+// Forward Declarations
 class faPatch;
 class mapPolyMesh;
 
@@ -64,7 +63,7 @@ class faPatchMapper
 :
     public faPatchFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to patch
         const faPatch& patch_;
@@ -79,15 +78,23 @@ class faPatchMapper
         const labelList oldEdgeFaces_;
 
 
-    // Demand-driven private data
+    // Demand-Driven Data
 
         mutable bool hasUnmapped_;
 
         //- Direct addressing
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
 
     // Private Member Functions
+
+        //- Calculate addressing for mapping with inserted cells
+        void calcAddressing() const;
+
+
+public:
+
+    // Generated Methods
 
         //- No copy construct
         faPatchMapper(const faPatchMapper&) = delete;
@@ -96,21 +103,10 @@ class faPatchMapper
         void operator=(const faPatchMapper&) = delete;
 
 
-        //- Calculate addressing for mapping with inserted cells
-        void calcAddressing() const;
+    // Constructors
 
-        //- Clear out local storage
-        void clearOut();
-
-
-public:
-
-    //- Construct from mappers
-    faPatchMapper
-    (
-        const faPatch& patch,
-        const mapPolyMesh& mpm
-    );
+        //- Construct from mappers
+        faPatchMapper(const faPatch& patch, const mapPolyMesh& mpm);
 
 
     //- Destructor

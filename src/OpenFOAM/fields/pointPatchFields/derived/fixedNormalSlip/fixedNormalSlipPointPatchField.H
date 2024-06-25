@@ -104,18 +104,6 @@ public:
             const pointPatchFieldMapper&
         );
 
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchField<Type>> clone() const
-        {
-            return autoPtr<pointPatchField<Type>>
-            (
-                new fixedNormalSlipPointPatchField<Type>
-                (
-                    *this
-                )
-            );
-        }
-
         //- Construct as copy setting internal field reference
         fixedNormalSlipPointPatchField
         (
@@ -123,28 +111,28 @@ public:
             const DimensionedField<Type, pointMesh>&
         );
 
+        //- Return a clone
+        virtual autoPtr<pointPatchField<Type>> clone() const
+        {
+            return pointPatchField<Type>::Clone(*this);
+        }
+
         //- Construct and return a clone setting internal field reference
         virtual autoPtr<pointPatchField<Type>> clone
         (
             const DimensionedField<Type, pointMesh>& iF
         ) const
         {
-            return autoPtr<pointPatchField<Type>>
-            (
-                new fixedNormalSlipPointPatchField<Type>
-                (
-                    *this,
-                    iF
-                )
-            );
+            return pointPatchField<Type>::Clone(*this, iF);
         }
+
 
     // Member functions
 
         //- Update the patch field
         virtual void evaluate
         (
-            const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
+            const Pstream::commsTypes commsType=Pstream::commsTypes::buffered
         );
 
         //- Write

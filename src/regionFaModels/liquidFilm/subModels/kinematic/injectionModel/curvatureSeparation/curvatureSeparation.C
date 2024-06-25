@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,9 +28,6 @@ License
 
 #include "curvatureSeparation.H"
 #include "addToRunTimeSelectionTable.H"
-#include "Time.H"
-#include "stringListOps.H"
-#include "cyclicPolyPatch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -61,9 +58,11 @@ tmp<areaScalarField> curvatureSeparation::calcInvR1
 {
     const dimensionedScalar smallU(dimVelocity, ROOTVSMALL);
     const areaVectorField UHat(U/(mag(U) + smallU));
-    tmp<areaScalarField> tinvR1
+    auto tinvR1 = areaScalarField::New
     (
-        new areaScalarField("invR1", UHat & (UHat & -gradNHat_))
+        "invR1",
+        IOobjectOption::NO_REGISTER,
+        (UHat & (UHat & -gradNHat_))
     );
 
     scalarField& invR1 = tinvR1.ref().primitiveFieldRef();
@@ -131,21 +130,17 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
     // checks
     if (debug && mesh.time().writeTime())
     {
-        areaScalarField volCosAngle
-        (
-            IOobject
+        {
+            areaScalarField volCosAngle
             (
-                "cosAngle",
-                mesh.time().timeName(),
-                mesh.thisDb(),
-                IOobject::NO_READ
-            ),
-            mesh,
-            dimensionedScalar(dimless, Zero)
-        );
-        volCosAngle.primitiveFieldRef() = cosAngle;
-        volCosAngle.correctBoundaryConditions();
-        volCosAngle.write();
+                mesh.newIOobject("cosAngle"),
+                mesh,
+                dimensionedScalar(dimless, Zero)
+            );
+            volCosAngle.primitiveFieldRef() = cosAngle;
+            volCosAngle.correctBoundaryConditions();
+            volCosAngle.write();
+        }
     }
 
     return clamp(cosAngle, scalarMinMax(-1, 1));
@@ -250,65 +245,49 @@ void curvatureSeparation::correct
 
     if (debug && mesh.time().writeTime())
     {
-        areaScalarField volFnet
-        (
-            IOobject
+        {
+            areaScalarField volFnet
             (
-                "Fnet",
-                mesh.time().timeName(),
-                mesh.thisDb(),
-                IOobject::NO_READ
-            ),
-            mesh,
-            dimensionedScalar(dimForce, Zero)
-        );
-        volFnet.primitiveFieldRef() = Fnet;
-        volFnet.write();
+                mesh.newIOobject("Fnet"),
+                mesh,
+                dimensionedScalar(dimForce, Zero)
+            );
+            volFnet.primitiveFieldRef() = Fnet;
+            volFnet.write();
+        }
 
-        areaScalarField areaSeparated
-        (
-            IOobject
+        {
+            areaScalarField areaSeparated
             (
-                "separated",
-                mesh.time().timeName(),
-                mesh.thisDb(),
-                IOobject::NO_READ
-            ),
-            mesh,
-            dimensionedScalar(dimMass, Zero)
-        );
-        areaSeparated.primitiveFieldRef() = separated;
-        areaSeparated.write();
+                mesh.newIOobject("separated"),
+                mesh,
+                dimensionedScalar(dimMass, Zero)
+            );
+            areaSeparated.primitiveFieldRef() = separated;
+            areaSeparated.write();
+        }
 
-        areaScalarField areaMassToInject
-        (
-            IOobject
+        {
+            areaScalarField areaMassToInject
             (
-                "massToInject",
-                mesh.time().timeName(),
-                mesh.thisDb(),
-                IOobject::NO_READ
-            ),
-            mesh,
-            dimensionedScalar(dimMass, Zero)
-        );
-        areaMassToInject.primitiveFieldRef() = massToInject;
-        areaMassToInject.write();
+                mesh.newIOobject("massToInject"),
+                mesh,
+                dimensionedScalar(dimMass, Zero)
+            );
+            areaMassToInject.primitiveFieldRef() = massToInject;
+            areaMassToInject.write();
+        }
 
-        areaScalarField areaInvR1
-        (
-            IOobject
+        {
+            areaScalarField areaInvR1
             (
-                "InvR1",
-                mesh.time().timeName(),
-                mesh.thisDb(),
-                IOobject::NO_READ
-            ),
-            mesh,
-            dimensionedScalar(inv(dimLength), Zero)
-        );
-        areaInvR1.primitiveFieldRef() = invR1;
-        areaInvR1.write();
+                mesh.newIOobject("InvR1"),
+                mesh,
+                dimensionedScalar(inv(dimLength), Zero)
+            );
+            areaInvR1.primitiveFieldRef() = invR1;
+            areaInvR1.write();
+        }
     }
 
     injectionModel::correct();

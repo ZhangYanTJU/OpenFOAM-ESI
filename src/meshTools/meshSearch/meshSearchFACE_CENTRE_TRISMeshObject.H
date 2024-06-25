@@ -59,6 +59,14 @@ class meshSearchFACE_CENTRE_TRISMeshObject
     >,
     public meshSearch
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            polyMesh,
+            GeometricMeshObject,
+            meshSearchFACE_CENTRE_TRISMeshObject
+        > MeshObject_type;
 
 public:
 
@@ -68,8 +76,13 @@ public:
 
     // Constructors
 
-        //- Constructor given polyMesh
-        explicit meshSearchFACE_CENTRE_TRISMeshObject(const polyMesh& mesh);
+        //- Construct given polyMesh
+        explicit meshSearchFACE_CENTRE_TRISMeshObject(const polyMesh& mesh)
+        :
+            MeshObject_type(mesh),
+            meshSearch(mesh, polyMesh::FACE_CENTRE_TRIS)
+        {}
+
 
     //- Destructor
     virtual ~meshSearchFACE_CENTRE_TRISMeshObject() = default;

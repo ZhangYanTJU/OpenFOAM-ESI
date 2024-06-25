@@ -157,27 +157,21 @@ Foam::symmetryPlaneFvPatchField<Type>::snGradTransformDiag() const
 {
     vector nHat(symmetryPlanePatch_.n());
 
-    const vector diag
-    (
-        mag(nHat.component(vector::X)),
-        mag(nHat.component(vector::Y)),
-        mag(nHat.component(vector::Z))
-    );
+    const vector diag(mag(nHat.x()), mag(nHat.y()), mag(nHat.z()));
 
-    return tmp<Field<Type>>
+    return tmp<Field<Type>>::New
     (
-        new Field<Type>
+        this->size(),
+        transformMask<Type>
         (
-            this->size(),
-            transformMask<Type>
+            //pow<vector, pTraits<Type>::rank>(diag)
+            pow
             (
-                //pow<vector, pTraits<Type>::rank>(diag)
-                pow
-                (
-                    diag,
-                    pTraits<typename powProduct<vector, pTraits<Type>::rank>
-                    ::type>::zero
-                )
+                diag,
+                pTraits
+                <
+                    typename powProduct<vector, pTraits<Type>::rank>::type
+                >::zero
             )
         )
     );

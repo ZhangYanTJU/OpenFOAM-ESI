@@ -60,7 +60,7 @@ void Foam::primitiveMesh::calcCellCells() const
     {
         // 1. Count number of internal faces per cell
 
-        labelList ncc(nCells(), Zero);
+        labelList ncc(nCells(), Foam::zero{});
 
         const labelList& own = faceOwner();
         const labelList& nei = faceNeighbour();
@@ -73,17 +73,16 @@ void Foam::primitiveMesh::calcCellCells() const
 
         // Create the storage
         ccPtr_ = new labelListList(ncc.size());
-        labelListList& cellCellAddr = *ccPtr_;
-
+        auto& cellCellAddr = *ccPtr_;
 
 
         // 2. Size and fill cellFaceAddr
 
         forAll(cellCellAddr, celli)
         {
-            cellCellAddr[celli].setSize(ncc[celli]);
+            cellCellAddr[celli].resize(ncc[celli]);
+            ncc[celli] = 0;  // reset size counter
         }
-        ncc = 0;
 
         forAll(nei, facei)
         {

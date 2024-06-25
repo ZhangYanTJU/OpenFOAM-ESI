@@ -67,16 +67,20 @@ class leastSquaresEdgeInterpolation
 :
     virtual public edgeInterpolationScheme<Type>
 {
-    // Private Member Functions
-
-        //- No copy assignment
-        void operator=(const leastSquaresEdgeInterpolation&) = delete;
-
-
 public:
 
     //- Runtime type information
     TypeName("leastSquares");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        leastSquaresEdgeInterpolation(const leastSquaresEdgeInterpolation&)
+            = delete;
+
+        //- No copy assignment
+        void operator=(const leastSquaresEdgeInterpolation&) = delete;
 
 
     // Constructors

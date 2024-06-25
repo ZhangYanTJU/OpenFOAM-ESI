@@ -143,6 +143,16 @@ class regionSplit
     public MeshObject<polyMesh, TopologicalMeshObject, regionSplit>,
     public labelList
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            polyMesh,
+            TopologicalMeshObject,
+            regionSplit
+        > MeshObject_type;
+
+
     // Private Data
 
         //- Indexing into the regions
@@ -156,7 +166,6 @@ class regionSplit
 
 
     // Private Class
-
 
         //- Simple wrapper for handling test() on bitSet or boolList
         //- without a templating layer or lambda expresssion.

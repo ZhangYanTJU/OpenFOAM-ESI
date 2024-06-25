@@ -48,6 +48,7 @@ namespace Foam
 
 defineTypeNameAndDebug(adjointEikonalSolver, 0);
 
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 wordList adjointEikonalSolver::patchTypes() const
@@ -60,7 +61,7 @@ wordList adjointEikonalSolver::patchTypes() const
 
     for (const label patchi : wallPatchIDs_)
     {
-        daTypes[patchi] = zeroGradientFvPatchScalarField::typeName;
+        daTypes[patchi] = fvPatchFieldBase::zeroGradientType();
     }
 
     return daTypes;
@@ -82,7 +83,8 @@ void adjointEikonalSolver::read()
 tmp<surfaceScalarField> adjointEikonalSolver::computeYPhi()
 {
     // Primal distance field
-    const volScalarField& d = adjointSolver_.yWall();
+    const tmp<volScalarField> td(adjointSolver_.yWall());
+    const volScalarField& d = td();
 
     volVectorField ny
     (
@@ -197,7 +199,8 @@ void adjointEikonalSolver::solve()
     read();
 
     // Primal distance field
-    const volScalarField& d = adjointSolver_.yWall();
+    const tmp<volScalarField> td(adjointSolver_.yWall());
+    const volScalarField& d = td();
 
     // Convecting flux
     tmp<surfaceScalarField> tyPhi = computeYPhi();
@@ -212,7 +215,7 @@ void adjointEikonalSolver::solve()
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE,
-            false
+            IOobject::NO_REGISTER
         ),
         mesh_,
         dimensionedScalar("scaleDims", dimTime/dimLength, scalar(1))
@@ -274,7 +277,9 @@ boundaryVectorField& adjointEikonalSolver::distanceSensitivities()
 
     boundaryVectorField& distanceSens = distanceSensPtr_();
 
-    const volScalarField& d = adjointSolver_.yWall();
+    const tmp<volScalarField> td(adjointSolver_.yWall());
+    const volScalarField& d = td();
+
     for (const label patchi : sensitivityPatchIDs_)
     {
         vectorField nf(mesh_.boundary()[patchi].nf());
@@ -293,7 +298,8 @@ tmp<volTensorField> adjointEikonalSolver::getFISensitivityTerm() const
 {
     Info<< "Calculating distance sensitivities " << endl;
 
-    const volScalarField& d = adjointSolver_.yWall();
+    const tmp<volScalarField> td(adjointSolver_.yWall());
+    const volScalarField& d = td();
     const volVectorField gradD(fvc::grad(d));
 
     auto gradDDa
@@ -329,7 +335,7 @@ tmp<volTensorField> adjointEikonalSolver::getFISensitivityTerm() const
             ),
             mesh_,
             dimensionedTensor(da_.dimensions(), Zero),
-            zeroGradientFvPatchField<tensor>::typeName
+            fvPatchFieldBase::zeroGradientType()
         )
     );
     volTensorField& distanceSens = tdistanceSens.ref();
@@ -353,7 +359,8 @@ tmp<scalarField> adjointEikonalSolver::topologySensitivities
     const word& designVarsName
 ) const
 {
-    const volScalarField& d = adjointSolver_.yWall();
+    const tmp<volScalarField> td(adjointSolver_.yWall());
+    const volScalarField& d = td();
 
     auto tres(tmp<scalarField>::New(d.primitiveField().size(), Zero));
     scalarField dSens(d.primitiveField()*da_.primitiveField());
@@ -376,7 +383,9 @@ const volScalarField& adjointEikonalSolver::da()
 
 tmp<volVectorField> adjointEikonalSolver::gradEikonal()
 {
-    const volScalarField& d = adjointSolver_.yWall();
+    const tmp<volScalarField> td(adjointSolver_.yWall());
+    const volScalarField& d = td();
+
     volVectorField gradD(fvc::grad(d));
     return tmp<volVectorField>::New("gradEikonal", 2*gradD & fvc::grad(gradD));
 }

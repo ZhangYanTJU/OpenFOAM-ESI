@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,7 +49,7 @@ Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
     const dictionary& dict
 )
 :
-    fvsPatchField<Type>(p, iF, dict)
+    fvsPatchField<Type>(p, iF, dict, IOobjectOption::MUST_READ)
 {
     if (!isType<symmetryPlaneFvPatch>(p))
     {
@@ -86,22 +87,32 @@ Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
 template<class Type>
 Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
 (
-    const symmetryPlaneFvsPatchField<Type>& ptf
-)
-:
-    fvsPatchField<Type>(ptf)
-{}
-
-
-template<class Type>
-Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
-(
     const symmetryPlaneFvsPatchField<Type>& ptf,
     const DimensionedField<Type, surfaceMesh>& iF
 )
 :
     fvsPatchField<Type>(ptf, iF)
 {}
+
+
+template<class Type>
+Foam::symmetryPlaneFvsPatchField<Type>::symmetryPlaneFvsPatchField
+(
+    const symmetryPlaneFvsPatchField<Type>& ptf
+)
+:
+    symmetryPlaneFvsPatchField<Type>(ptf, ptf.internalField())
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::symmetryPlaneFvsPatchField<Type>::write(Ostream& os) const
+{
+    fvsPatchField<Type>::write(os);
+    fvsPatchField<Type>::writeValueEntry(os);
+}
 
 
 // ************************************************************************* //

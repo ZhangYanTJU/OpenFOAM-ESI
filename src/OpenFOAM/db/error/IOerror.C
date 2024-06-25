@@ -30,15 +30,15 @@ Note
 \*---------------------------------------------------------------------------*/
 
 #include "error.H"
-#include "StringStream.H"
 #include "fileName.H"
 #include "dictionary.H"
 #include "JobInfo.H"
 #include "Pstream.H"
+#include "StringStream.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::IOerror::IOerror(const string& title)
+Foam::IOerror::IOerror(const char* title)
 :
     error(title),
     ioFileName_("unknown"),
@@ -171,7 +171,7 @@ void Foam::IOerror::SafeFatalIOError
     const char* sourceFileName,
     const int sourceFileLineNumber,
     const IOstream& ioStream,
-    const string& msg
+    const std::string& msg
 )
 {
     if (JobInfo::constructed)
@@ -182,10 +182,11 @@ void Foam::IOerror::SafeFatalIOError
             sourceFileName,
             sourceFileLineNumber,
             ioStream
-        )   << msg << Foam::exit(FatalIOError);
+        )   << msg.c_str() << Foam::exit(FatalIOError);
     }
     else
     {
+        // Without (openfoam=API patch=NN) since it is rarely used
         std::cerr
             << nl
             << "--> FOAM FATAL IO ERROR:" << nl
@@ -225,7 +226,7 @@ void Foam::IOerror::exiting(const int errNo, const bool isAbort)
             IOerror errorException(*this);
 
             // Reset the message buffer for the next error message
-            messageStreamPtr_->reset();
+            error::clear();
 
             throw errorException;
             return;
@@ -297,7 +298,7 @@ void Foam::IOerror::write(Ostream& os, const bool withTitle) const
 
     const label lineNo = sourceFileLineNumber();
 
-    if (IOerror::level >= 2 && lineNo && !functionName().empty())
+    if (messageStream::level >= 2 && lineNo && !functionName().empty())
     {
         os  << nl << nl
             << "    From " << functionName().c_str() << nl;

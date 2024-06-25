@@ -252,7 +252,7 @@ public:
 
     // Constructors
 
-        //- Construct null
+        //- No default construct
         QRMatrix() = delete;
 
         //- Construct with a matrix and perform QR decomposition

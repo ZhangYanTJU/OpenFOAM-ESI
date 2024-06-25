@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -105,35 +105,35 @@ void Foam::IsotropyModels::Stochastic<CloudType>::calculate()
 
     const scalar oneBySqrtThree = sqrt(1.0/3.0);
 
-    const AveragingMethod<scalar>& volumeAverage =
+    const auto& volumeAverage =
         mesh.lookupObject<AveragingMethod<scalar>>
         (
-            this->owner().name() + ":volumeAverage"
+            IOobject::scopedName(this->owner().name(), "volumeAverage")
         );
-    const AveragingMethod<scalar>& radiusAverage =
+    const auto& radiusAverage =
         mesh.lookupObject<AveragingMethod<scalar>>
         (
-            this->owner().name() + ":radiusAverage"
+            IOobject::scopedName(this->owner().name(), "radiusAverage")
         );
-    const AveragingMethod<vector>& uAverage =
+    const auto& uAverage =
         mesh.lookupObject<AveragingMethod<vector>>
         (
-            this->owner().name() + ":uAverage"
+            IOobject::scopedName(this->owner().name(), "uAverage")
         );
-    const AveragingMethod<scalar>& uSqrAverage =
+    const auto& uSqrAverage =
         mesh.lookupObject<AveragingMethod<scalar>>
         (
-            this->owner().name() + ":uSqrAverage"
+            IOobject::scopedName(this->owner().name(), "uSqrAverage")
         );
-    const AveragingMethod<scalar>& frequencyAverage =
+    const auto& frequencyAverage =
         mesh.lookupObject<AveragingMethod<scalar>>
         (
-            this->owner().name() + ":frequencyAverage"
+            IOobject::scopedName(this->owner().name(), "frequencyAverage")
         );
-    const AveragingMethod<scalar>& massAverage =
+    const auto& massAverage =
         mesh.lookupObject<AveragingMethod<scalar>>
         (
-            this->owner().name() + ":massAverage"
+            IOobject::scopedName(this->owner().name(), "massAverage")
         );
 
     // calculate time scales and pdf exponent
@@ -143,7 +143,7 @@ void Foam::IsotropyModels::Stochastic<CloudType>::calculate()
         (
             IOobject
             (
-                this->owner().name() + ":exponentAverage",
+                IOobject::scopedName(this->owner().name(), "exponentAverage"),
                 this->owner().db().time().timeName(),
                 mesh
             ),
@@ -191,7 +191,7 @@ void Foam::IsotropyModels::Stochastic<CloudType>::calculate()
         (
             IOobject
             (
-                this->owner().name() + ":uTildeAverage",
+                IOobject::scopedName(this->owner().name(), "uTildeAverage"),
                 this->owner().db().time().timeName(),
                 mesh
             ),
@@ -213,7 +213,7 @@ void Foam::IsotropyModels::Stochastic<CloudType>::calculate()
         (
             IOobject
             (
-                this->owner().name() + ":uTildeSqrAverage",
+                IOobject::scopedName(this->owner().name(), "uTildeSqrAverage"),
                 this->owner().db().time().timeName(),
                 mesh
             ),

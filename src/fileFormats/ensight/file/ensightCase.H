@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,13 +42,11 @@ SourceFiles
 #define Foam_ensightCase_H
 
 #include "autoPtr.H"
-#include "HashSet.H"
 #include "InfoProxy.H"
-#include "Map.H"
 #include "HashSet.H"
+#include "Map.H"
 #include "Pstream.H"
 #include "ensightGeoFile.H"
-#include <memory>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -195,14 +193,16 @@ private:
         ) const;
 
 
+public:
+
+    // Generated Methods
+
         //- No copy construct
         ensightCase(const ensightCase&) = delete;
 
         //- No copy assignment
         void operator=(const ensightCase&) = delete;
 
-
-public:
 
     // Constructors
 
@@ -229,8 +229,19 @@ public:
 
     // Static Functions
 
-        //- Stringified zero-padded integer value
-        static word padded(const int nwidth, const label value);
+        //- A '*' mask of specified width
+        static word mask(const int nwidth);
+
+        //- Stringified zero-padded integer value of specified width
+        static word padded(const int nwidth, const label index);
+
+        //- Replace the '*' mask chars with zero-padded integer value
+        template<class StringType>
+        static StringType expand_mask
+        (
+            const StringType& input,
+            const label index
+        );
 
 
     // Member Functions
@@ -285,6 +296,7 @@ public:
     // Addition of entries to case file
 
         //- Open stream for new geometry file (on master).
+        //- Does not include beginGeometry() marker.
         autoPtr<ensightGeoFile> newGeometry(bool moving = false) const;
 
         //- Open stream for new cloud positions (on master).

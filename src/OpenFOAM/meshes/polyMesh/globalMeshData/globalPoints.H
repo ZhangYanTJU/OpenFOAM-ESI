@@ -76,8 +76,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef globalPoints_H
-#define globalPoints_H
+#ifndef Foam_globalPoints_H
+#define Foam_globalPoints_H
 
 #include "DynamicList.H"
 #include "indirectPrimitivePatch.H"
@@ -309,39 +309,41 @@ public:
         // Access
 
             //- Global numbering of untransformed (mesh or patch) points
-            const globalIndex& globalIndices() const
+            const globalIndex& globalIndices() const noexcept
             {
                 return globalIndices_;
             }
 
             //- Global numbering of transformed (mesh or patch) points
-            const globalIndexAndTransform& globalTransforms() const
+            const globalIndexAndTransform& globalTransforms() const noexcept
             {
                 return globalTransforms_;
             }
 
-            //- Non-transformed connected points per point (in mapDistribute
-            //  indices)
-            const labelListList& pointPoints() const
+            //- Non-transformed connected points per point
+            //- (in mapDistribute indices)
+            const labelListList& pointPoints() const noexcept
             {
                 return pointPoints_;
             }
 
-            //- Non-transformed connected points per point (in mapDistribute
-            //  indices)
-            labelListList& pointPoints()
+            //- Non-transformed connected points per point
+            //- (in mapDistribute indices)
+            labelListList& pointPoints() noexcept
             {
                 return pointPoints_;
             }
 
-            //- Transformed points per point (in mapDistribute indices)
-            const labelListList& transformedPointPoints() const
+            //- Transformed points per point
+            //- (in mapDistribute indices)
+            const labelListList& transformedPointPoints() const noexcept
             {
                 return transformedPointPoints_;
             }
 
-            //- Transformed points per point (in mapDistribute indices)
-            labelListList& transformedPointPoints()
+            //- Transformed points per point
+            //- (in mapDistribute indices)
+            labelListList& transformedPointPoints() noexcept
             {
                 return transformedPointPoints_;
             }
@@ -359,14 +361,14 @@ public:
             }
 
             //- From (mesh or patch) point to index in procPoints
-            const Map<label>& meshToProcPoint() const
+            const Map<label>& meshToProcPoint() const noexcept
             {
                 return meshToProcPoint_;
             }
 
-            //- procPoints is per point the connected points (in
-            //  globalTransformAndIndex point numbers)
-            const DynamicList<labelPairList>& procPoints() const
+            //- The procPoints are per point the connected points
+            //- (in globalTransformAndIndex point numbers)
+            const DynamicList<labelPairList>& procPoints() const noexcept
             {
                 return procPoints_;
             }

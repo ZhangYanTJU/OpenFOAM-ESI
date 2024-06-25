@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -182,7 +182,7 @@ Foam::functionObjects::hydrostaticPressure::hydrostaticPressure
     if (read(dict))
     {
         // Read and store the initial ph_rgh field
-        volScalarField* ph_rghPtr =
+        volScalarField* ptr =
             new volScalarField
             (
                 IOobject
@@ -197,7 +197,7 @@ Foam::functionObjects::hydrostaticPressure::hydrostaticPressure
                 mesh_
             );
 
-        mesh_.objectRegistry::store(ph_rghPtr);
+        regIOobject::store(ptr);
 
         bool reInitialise = dict.getOrDefault("reInitialise", false);
 

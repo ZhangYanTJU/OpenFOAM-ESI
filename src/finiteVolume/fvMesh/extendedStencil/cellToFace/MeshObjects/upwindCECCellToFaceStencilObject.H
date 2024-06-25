@@ -59,10 +59,19 @@ class upwindCECCellToFaceStencilObject
     >,
     public extendedUpwindCellToFaceStencil
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            TopologicalMeshObject,
+            upwindCECCellToFaceStencilObject
+        > MeshObject_type;
 
 public:
 
     TypeName("upwindCECCellToFaceStencil");
+
 
     // Constructors
 
@@ -74,12 +83,7 @@ public:
             const scalar minOpposedness
         )
         :
-            MeshObject
-            <
-                fvMesh,
-                Foam::TopologicalMeshObject,
-                upwindCECCellToFaceStencilObject
-            >(mesh),
+            MeshObject_type(mesh),
             extendedUpwindCellToFaceStencil
             (
                 CECCellToFaceStencil(mesh),

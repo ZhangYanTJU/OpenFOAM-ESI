@@ -170,7 +170,7 @@ Usage
       type       | Type name: actuationDiskSource      | word | yes      | -
       diskArea   | Actuator disk planar surface area   | scalar | yes    | -
       diskDir    | Surface-normal vector of the actuator disk <!--
-               --> pointing downstream                 | vector    | yes | -
+               --> pointing downstream                 | Function1 | yes | -
       Cp         | Power coefficient                   | Function1 | yes | -
       Ct         | Thrust coefficient                  | Function1 | yes | -
       monitorMethod | Type of incoming velocity monitoring method   <!--
@@ -207,8 +207,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef actuationDiskSource_H
-#define actuationDiskSource_H
+#ifndef Foam_actuationDiskSource_H
+#define Foam_actuationDiskSource_H
 
 #include "cellSetOption.H"
 #include "writeFile.H"
@@ -276,7 +276,8 @@ protected:
         scalar diskArea_;
 
         //- Surface-normal vector of the actuator disk pointing downstream
-        vector diskDir_;
+        //- as a function of time
+        autoPtr<Function1<vector>> diskDir_;
 
         //- Velocity vs power coefficients
         autoPtr<Function1<scalar>> UvsCpPtr_;
@@ -364,14 +365,11 @@ public:
 
         // Access
 
-            //- Normal disk direction
-            const vector& diskDir() const
-            {
-                return diskDir_;
-            }
+            //- Normal disk direction, evaluated at timeOutputValue
+            vector diskDir() const;
 
             //- Disk area
-            scalar diskArea() const
+            scalar diskArea() const noexcept
             {
                 return diskArea_;
             }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,6 +71,33 @@ public:
             const label comm = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
+
+
+    // Static Functions
+
+        //- Receive and deserialize a value.
+        //- Uses \c operator>> for de-serialization
+        template<class Type>
+        static void recv
+        (
+            Type& value,
+            const int fromProcNo,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        {
+            IPstream is
+            (
+                UPstream::commsTypes::scheduled,  // ie, MPI_Recv()
+                fromProcNo,
+                0,  // bufSize
+                tag,
+                comm,
+                fmt
+            );
+            is >> value;
+        }
 };
 
 
@@ -100,14 +127,40 @@ public:
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
-        //- Construct for broadcast root with optional communicator,
-        //- write format
-        explicit IPBstream
+        //- Construct for broadcast root and communicator,
+        //- with optional read format
+        IPBstream
         (
             const int rootProcNo,           //!< normally UPstream::masterNo()
+            const label comm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        );
+
+        //- Construct with optional communicator and read format.
+        //- Uses UPstream::masterNo() root
+        explicit IPBstream
+        (
             const label comm = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
+
+
+    // Static Functions
+
+        //- Receive (from broadcast, root == UPstream::masterNo())
+        //- and deserialize a value.
+        //- Uses \c operator>> for de-serialization
+        template<class Type>
+        static void recv
+        (
+            Type& value,
+            const label comm = UPstream::worldComm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        {
+            IPBstream is(comm, fmt);
+            is >> value;
+        }
 };
 
 

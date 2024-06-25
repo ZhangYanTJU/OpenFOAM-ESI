@@ -27,9 +27,7 @@ License
 
 #include "contactAngleForce.H"
 #include "addToRunTimeSelectionTable.H"
-#include "faCFD.H"
 #include "unitConversion.H"
-#include "meshWavePatchDistMethod.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +28,7 @@ License
 
 #include "MRFZoneList.H"
 #include "volFields.H"
+#include "surfaceFields.H"
 #include "fixedValueFvsPatchFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -188,18 +189,13 @@ Foam::tmp<Foam::volVectorField> Foam::MRFZoneList::DDt
     const volVectorField& U
 ) const
 {
-    auto tacceleration =
-        tmp<volVectorField>::New
-        (
-            IOobject
-            (
-                "MRFZoneList:acceleration",
-                U.mesh().time().timeName(),
-                U.mesh().thisDb()
-            ),
-            U.mesh(),
-            dimensionedVector(U.dimensions()/dimTime, Zero)
-        );
+    auto tacceleration = volVectorField::New
+    (
+        IOobject::scopedName("MRFZoneList", "acceleration"),
+        IOobject::NO_REGISTER,
+        U.mesh(),
+        dimensionedVector(U.dimensions()/dimTime, Zero)
+    );
     auto& acceleration = tacceleration.ref();
 
     for (const auto& mrf: *this)
@@ -218,6 +214,26 @@ Foam::tmp<Foam::volVectorField> Foam::MRFZoneList::DDt
 ) const
 {
     return rho*DDt(U);
+}
+
+
+Foam::tmp<Foam::surfaceScalarField> Foam::MRFZoneList::phi() const
+{
+    auto tphi = surfaceScalarField::New
+    (
+        "phiMRF",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimVelocity*dimArea, Zero)
+    );
+    auto& phi = tphi.ref();
+
+    for (const auto& mrf : *this)
+    {
+        mrf.makeAbsolute(phi);
+    }
+
+    return tphi;
 }
 
 
@@ -263,10 +279,8 @@ Foam::tmp<Foam::surfaceScalarField> Foam::MRFZoneList::relative
 
         return rphi;
     }
-    else
-    {
-        return tmp<surfaceScalarField>(tphi, true);
-    }
+
+    return tmp<surfaceScalarField>(tphi, true);
 }
 
 
@@ -289,10 +303,8 @@ Foam::MRFZoneList::relative
 
         return rphi;
     }
-    else
-    {
-        return tmp<FieldField<fvsPatchField, scalar>>(tphi, true);
-    }
+
+    return tmp<FieldField<fvsPatchField, scalar>>(tphi, true);
 }
 
 
@@ -316,10 +328,8 @@ Foam::MRFZoneList::relative
 
         return rphi;
     }
-    else
-    {
-        return tmp<Field<scalar>>(tphi, true);
-    }
+
+    return tmp<Field<scalar>>(tphi, true);
 }
 
 
@@ -378,10 +388,8 @@ Foam::tmp<Foam::surfaceScalarField> Foam::MRFZoneList::absolute
 
         return rphi;
     }
-    else
-    {
-        return tmp<surfaceScalarField>(tphi, true);
-    }
+
+    return tmp<surfaceScalarField>(tphi, true);
 }
 
 

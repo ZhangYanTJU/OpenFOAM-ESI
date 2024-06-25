@@ -86,11 +86,11 @@ private:
         //- Cell zones absorptivity
         HashTable<scalarList> zoneAbsorptivity_;
 
-        //- Cell zones emisivity
-        HashTable<scalarList> zoneEmisivity_;
+        //- Cell zones emissivity
+        HashTable<scalarList> zoneEmissivity_;
 
-        //- Cells for each zone
-        labelList zoneCells_;
+        //- The cellZones selected
+        labelList zoneIds_;
 
 
 
