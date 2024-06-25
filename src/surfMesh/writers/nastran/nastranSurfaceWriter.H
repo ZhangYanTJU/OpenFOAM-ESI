@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,13 +33,13 @@ Description
     The formatOptions for nastran:
     \table
         Property    | Description                           | Reqd | Default
-        fields      | Field pairs for PLOAD2/PLOAD4         | yes |
-        format      | Nastran format (short/long/free)      | no  | long
+        format      | Nastran format (short/long/free)      | no  | free
         scale       | Output geometry scaling               | no  | 1
         transform   | Output coordinate transform           | no  |
         fieldLevel  | Subtract field level before scaling   | no  | empty dict
         fieldScale  | Output field scaling                  | no  | empty dict
         commonGeometry | use separate geometry files        | no  | false
+        fields      | Field pairs for PLOAD2/PLOAD4         | yes |
     \endtable
 
     For example,
@@ -48,13 +48,6 @@ Description
     {
         nastran
         {
-            // OpenFOAM field name to NASTRAN load types
-            fields
-            (
-                (pMean  PLOAD2)
-                (p      PLOAD4)
-            );
-
             format  free;     // format type
 
             scale   1000;     // [m] -> [mm]
@@ -62,6 +55,13 @@ Description
             {
                "p.*"   0.01;  // [Pa] -> [mbar]
             }
+
+            // OpenFOAM field name to NASTRAN load types
+            fields
+            (
+                (pMean  PLOAD2)
+                (p      PLOAD4)
+            );
         }
     }
     \endverbatim
@@ -93,7 +93,6 @@ Description
 
 Note
     Output variable scaling does not apply to integer types such as Ids.
-    Field pairs default to PLOAD2 for scalars and PLOAD4 for vectors etc.
 
 SourceFiles
     nastranSurfaceWriter.C
@@ -221,10 +220,10 @@ public:
 
     // Constructors
 
-        //- Default construct. Default SHORT format
+        //- Default construct. Default FREE format
         nastranWriter();
 
-        //- Construct with some output options. Default LONG format
+        //- Construct with some output options. Default FREE format
         explicit nastranWriter(const dictionary& options);
 
         //- Construct from components
