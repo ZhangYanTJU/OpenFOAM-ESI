@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -307,16 +307,10 @@ void Foam::surfaceWriters::nastranWriter::writeGeometry
 Foam::surfaceWriters::nastranWriter::nastranWriter()
 :
     surfaceWriter(),
-    writeFormat_(fieldFormat::SHORT),
-    fieldMap_(),
+    writeFormat_(fieldFormat::FREE),
     commonGeometry_(false),
-    separator_()
-{
-    // if (writeFormat_ == fieldFormat::FREE)
-    // {
-    //     separator_ = ",";
-    // }
-}
+    separator_(",")  // FREE format
+{}
 
 
 Foam::surfaceWriters::nastranWriter::nastranWriter
@@ -331,29 +325,40 @@ Foam::surfaceWriters::nastranWriter::nastranWriter
         (
             "format",
             options,
-            fieldFormat::LONG
+            fieldFormat::FREE
         )
     ),
-    fieldMap_(),
-    commonGeometry_(options.getOrDefault("commonGeometry", false)),
-    separator_()
+    commonGeometry_(options.getOrDefault("commonGeometry", false))
 {
     if (writeFormat_ == fieldFormat::FREE)
     {
         separator_ = ",";
     }
 
+    // Explicit PLOAD2, PLOAD4 field specification
+    options.readIfPresent("PLOAD2", pload2_);
+    options.readIfPresent("PLOAD4", pload4_);
+
+    // Compatibility:
+    // Optional pairs of (field name => load format)
+    // Could make conditional on (pload2_.empty() && pload4_.empty())
+
     List<Pair<word>> fieldPairs;
-    options.readEntry("fields", fieldPairs);
+    options.readIfPresent("fields", fieldPairs);
 
     for (const Pair<word>& item : fieldPairs)
     {
-        // (field name => load format)
-        fieldMap_.insert
-        (
-            item.first(),
-            fileFormats::NASCore::loadFormatNames[item.second()]
-        );
+        const loadFormat format =
+            fileFormats::NASCore::loadFormatNames[item.second()];
+
+        if (format == loadFormat::PLOAD2)
+        {
+            pload2_.push_back(item.first());
+        }
+        else if (format == loadFormat::PLOAD4)
+        {
+            pload4_.push_back(item.first());
+        }
     }
 }
 
@@ -414,12 +419,12 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::write()
 
     if (UPstream::master() || !parallel_)
     {
-        if (!isDir(outputFile.path()))
+        if (!Foam::isDir(outputFile.path()))
         {
-            mkDir(outputFile.path());
+            Foam::mkDir(outputFile.path());
         }
 
-        OFstream os(outputFile);
+        OFstream os(IOstreamOption::ATOMIC, outputFile);
         fileFormats::NASCore::setPrecision(os, writeFormat_);
 
         os  << "TITLE=OpenFOAM " << outputPath_.name() << " geometry" << nl

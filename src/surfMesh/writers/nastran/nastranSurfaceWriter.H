@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,13 +33,15 @@ Description
     The formatOptions for nastran:
     \table
         Property    | Description                           | Reqd | Default
-        fields      | Field pairs for PLOAD2/PLOAD4         | yes |
-        format      | Nastran format (short/long/free)      | no  | long
+        format      | Nastran format (short/long/free)      | no  | free
         scale       | Output geometry scaling               | no  | 1
         transform   | Output coordinate transform           | no  |
         fieldLevel  | Subtract field level before scaling   | no  | empty dict
         fieldScale  | Output field scaling                  | no  | empty dict
         commonGeometry | use separate geometry files        | no  | false
+        PLOAD2      | Field selection (words/regex) for PLOAD2 | no  |
+        PLOAD4      | Field selection (words/regex) for PLOAD4 | no  |
+        fields      | Compat: Field pairs for PLOAD2/PLOAD4 | no  |
     \endtable
 
     For example,
@@ -48,13 +50,6 @@ Description
     {
         nastran
         {
-            // OpenFOAM field name to NASTRAN load types
-            fields
-            (
-                (pMean  PLOAD2)
-                (p      PLOAD4)
-            );
-
             format  free;     // format type
 
             scale   1000;     // [m] -> [mm]
@@ -62,9 +57,26 @@ Description
             {
                "p.*"   0.01;  // [Pa] -> [mbar]
             }
+
+            // Specific NASTRAN load types
+            PLOAD2 ( pMean );
+            PLOAD4 ( "p.*" );
+
+            // old style specification
+            fields
+            (
+                (pMean  PLOAD2)
+                (p      PLOAD4)
+            );
         }
     }
     \endverbatim
+
+    Unless otherwise specified, all fields will be treated as PLOAD2
+    output. Can optionally specify PLOAD4 output using a combination
+    of \c PLOAD4 (accept) and \c PLOAD2 (deny) entries. The older \c fields
+    specification is also accepted and will be transcribed to
+    corresponding PLOAD4, PLOAD2 entries.
 
     \section Output file locations
 
@@ -93,7 +105,6 @@ Description
 
 Note
     Output variable scaling does not apply to integer types such as Ids.
-    Field pairs default to PLOAD2 for scalars and PLOAD4 for vectors etc.
 
 SourceFiles
     nastranSurfaceWriter.C
@@ -106,7 +117,7 @@ SourceFiles
 
 #include "surfaceWriter.H"
 #include "NASCore.H"
-#include "HashTable.H"
+#include "wordRes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -139,14 +150,17 @@ private:
         //- Field format (width and separator)
         fieldFormat writeFormat_;
 
-        //- Mapping from field name to data format enumeration
-        HashTable<loadFormat> fieldMap_;
-
         //- Use common geometry file
         bool commonGeometry_;
 
         //- Separator (used for free format)
         word separator_;
+
+        //- Explicit selection for PLOAD2 output (deselects for PLOAD4)
+        wordRes pload2_;
+
+        //- Explicit selection for PLOAD4 output
+        wordRes pload4_;
 
 
     // Private Member Functions
@@ -221,10 +235,10 @@ public:
 
     // Constructors
 
-        //- Default construct. Default SHORT format
+        //- Default construct. Default FREE format
         nastranWriter();
 
-        //- Construct with some output options. Default LONG format
+        //- Construct with some output options. Default FREE format
         explicit nastranWriter(const dictionary& options);
 
         //- Construct from components

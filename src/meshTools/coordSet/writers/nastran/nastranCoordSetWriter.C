@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -250,12 +250,12 @@ Foam::fileName Foam::coordSetWriters::nastranWriter::writeTemplate
             Info<< "Writing nastran geometry to " << outputFile << endl;
         }
 
-        if (!isDir(outputFile.path()))
+        if (!Foam::isDir(outputFile.path()))
         {
-            mkDir(outputFile.path());
+            Foam::mkDir(outputFile.path());
         }
 
-        OFstream os(outputFile);
+        OFstream os(IOstreamOption::ATOMIC, outputFile);
         fileFormats::NASCore::setPrecision(os, writeFormat_);
 
         os  << "TITLE=OpenFOAM " << outputFile.stem()
@@ -293,12 +293,12 @@ Foam::fileName Foam::coordSetWriters::nastranWriter::writeTemplate
             Info<< "Writing nastran geometry to " << outputFile << endl;
         }
 
-        if (!isDir(outputFile.path()))
+        if (!Foam::isDir(outputFile.path()))
         {
-            mkDir(outputFile.path());
+            Foam::mkDir(outputFile.path());
         }
 
-        OFstream os(outputFile);
+        OFstream os(IOstreamOption::ATOMIC, outputFile);
         fileFormats::NASCore::setPrecision(os, writeFormat_);
 
         os  << "TITLE=OpenFOAM " << outputFile.stem()
