@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -54,8 +54,16 @@ UNARY_FUNCTION(symmTensor, symmTensor, cof)
 void inv(Field<symmTensor>& result, const UList<symmTensor>& f1)
 {
     // With 'failsafe' invert
-    // std::transform
-    TFOR_ALL_F_OP_F_FUNC(symmTensor, result, =, symmTensor, f1, safeInv)
+    if (result.cdata() == f1.cdata())
+    {
+        // std::for_each
+        TSEQ_FORALL_F_OP_F_FUNC_inplace(result, =, f1, safeInv)
+    }
+    else
+    {
+        // std::transform
+        TSEQ_FORALL_F_OP_F_FUNC(result, =, f1, safeInv)
+    }
 }
 
 tmp<symmTensorField> inv(const UList<symmTensor>& tf)

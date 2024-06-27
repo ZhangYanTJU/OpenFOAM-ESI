@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,14 +34,22 @@ License
 
 void Foam::transform
 (
-    vectorField& rtf,
+    vectorField& result,
     const quaternion& q,
-    const vectorField& tf
+    const vectorField& fld
 )
 {
     const tensor rot = q.R();
-    // std::transform
-    TFOR_ALL_F_OP_FUNC_S_F(vector, rtf, =, transform, tensor, rot, vector, tf)
+    if (result.cdata() == fld.cdata())
+    {
+        // std::for_each
+        TSEQ_FORALL_F_OP_FUNC_S_F_inplace(result, =, transform, rot, fld)
+    }
+    else
+    {
+        // std::transform
+        TSEQ_FORALL_F_OP_FUNC_S_F(result, =, transform, rot, fld)
+    }
 }
 
 
@@ -82,8 +90,16 @@ void Foam::transformPoints
     // Check if any translation
     if (mag(trans) > VSMALL)
     {
-        // std::transform
-        TFOR_ALL_F_OP_F_OP_S(vector, result, =, vector, fld, -, vector, trans);
+        if (result.cdata() == fld.cdata())
+        {
+            // std::for_each
+            TSEQ_FORALL_F_OP_F_OP_S_inplace(result, =, fld, -, trans)
+        }
+        else
+        {
+            // std::transform
+            TSEQ_FORALL_F_OP_F_OP_S(result, =, fld, -, trans)
+        }
     }
     else
     {

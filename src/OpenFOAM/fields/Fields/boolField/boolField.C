@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,7 +45,7 @@ template<>
 void boolField::negate()
 {
     // std::for_each, std::logical_not
-    TFOR_ALL_F_OP_OP_F(bool, *this, =, !, bool, *this)
+    TSEQ_FORALL_F_OP_OP_F_inplace(*this, =, !, *this)
 }
 
 

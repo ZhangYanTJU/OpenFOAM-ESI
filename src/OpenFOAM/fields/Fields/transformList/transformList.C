@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,12 +37,12 @@ Foam::List<T> Foam::transform
     const UList<T>& field
 )
 {
-    const label loopLen = field.size();
+    const label loop_len = field.size();
 
-    List<T> result(loopLen);
+    List<T> result(loop_len);
 
     /* pragmas... */
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         result[i] = transform(rotTensor, field[i]);
     }
@@ -54,10 +54,10 @@ Foam::List<T> Foam::transform
 template<class T>
 void Foam::transformList(const tensor& rotTensor, UList<T>& field)
 {
-    const label loopLen = field.size();
+    const label loop_len = field.size();
 
     /* pragmas... */
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         field[i] = transform(rotTensor, field[i]);
     }
@@ -73,10 +73,10 @@ void Foam::transformList(const tensorField& rotTensor, UList<T>& field)
     }
     else if (rotTensor.size() == field.size())
     {
-        const label loopLen = field.size();
+        const label loop_len = field.size();
 
         /* pragmas... */
-        for (label i = 0; i < loopLen; ++i)
+        for (label i = 0; i < loop_len; ++i)
         {
             field[i] = transform(rotTensor[i], field[i]);
         }
@@ -96,7 +96,7 @@ void Foam::transformList(const tensor& rotTensor, Map<T>& field)
 {
     forAllIters(field, iter)
     {
-        T& value = iter.val();
+        auto& value = iter.val();
         value = transform(rotTensor, value);
     }
 }
@@ -124,7 +124,7 @@ void Foam::transformList(const tensor& rotTensor, EdgeMap<T>& field)
 {
     forAllIters(field, iter)
     {
-        T& value = iter.val();
+        auto& value = iter.val();
         value = transform(rotTensor, value);
     }
 }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,6 +87,15 @@ template
 >
 struct reuseTmpGeometricField
 {
+    //- Dissimilar types: non-reusable
+    static bool reusable
+    (
+        const tmp<GeometricField<Type1, PatchField, GeoMesh>>& tf1
+    )
+    {
+        return false;
+    }
+
     //- Pass-through to New GeometricField
     static tmp<GeometricField<TypeR, PatchField, GeoMesh>> New
     (
@@ -126,6 +135,15 @@ struct reuseTmpGeometricField
 template<class TypeR, template<class> class PatchField, class GeoMesh>
 struct reuseTmpGeometricField<TypeR, TypeR, PatchField, GeoMesh>
 {
+    //- Identical types: possibly reusable
+    static bool reusable
+    (
+        const tmp<GeometricField<TypeR, PatchField, GeoMesh>>& tf1
+    )
+    {
+        return Detail::reusable(tf1);
+    }
+
     //- Allow optional copy assignment of the initial content
     //- for identical input and output types
     static tmp<GeometricField<TypeR, PatchField, GeoMesh>> New
@@ -156,7 +174,7 @@ struct reuseTmpGeometricField<TypeR, TypeR, PatchField, GeoMesh>
 
         if (initCopy)
         {
-            tresult.ref() == tf1();
+            tresult.ref() == f1;
         }
 
         return tresult;
@@ -187,6 +205,9 @@ tmp
 }
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Two-parameter versions
+
 template
 <
     class TypeR,
@@ -198,6 +219,16 @@ template
 >
 struct reuseTmpTmpGeometricField
 {
+    //- Dissimilar types: non-reusable
+    static bool reusable
+    (
+        const tmp<GeometricField<Type1, PatchField, GeoMesh>>& tf1,
+        const tmp<GeometricField<Type2, PatchField, GeoMesh>>& tf2
+    )
+    {
+        return false;
+    }
+
     static tmp<GeometricField<TypeR, PatchField, GeoMesh>> New
     (
         const tmp<GeometricField<Type1, PatchField, GeoMesh>>& tf1,
@@ -231,6 +262,17 @@ struct reuseTmpTmpGeometricField
     TypeR, Type1, Type12, TypeR, PatchField, GeoMesh
 >
 {
+    //- Second input has return type: possibly reusable
+    static bool reusable
+    (
+        const tmp<GeometricField<Type1, PatchField, GeoMesh>>& tf1,
+        const tmp<GeometricField<TypeR, PatchField, GeoMesh>>& tf2
+    )
+    {
+        return Detail::reusable(tf2);
+    }
+
+    //- Second input has return type
     static tmp<GeometricField<TypeR, PatchField, GeoMesh>> New
     (
         const tmp<GeometricField<Type1, PatchField, GeoMesh>>& tf1,
@@ -272,6 +314,17 @@ struct reuseTmpTmpGeometricField
     TypeR, TypeR, TypeR, Type2, PatchField, GeoMesh
 >
 {
+    //- First input has return type: possibly reusable
+    static bool reusable
+    (
+        const tmp<GeometricField<TypeR, PatchField, GeoMesh>>& tf1,
+        const tmp<GeometricField<Type2, PatchField, GeoMesh>>& tf2
+    )
+    {
+        return Detail::reusable(tf2);
+    }
+
+    //- First input has return type
     static tmp<GeometricField<TypeR, PatchField, GeoMesh>> New
     (
         const tmp<GeometricField<TypeR, PatchField, GeoMesh>>& tf1,
@@ -307,6 +360,16 @@ struct reuseTmpTmpGeometricField
     TypeR, TypeR, TypeR, TypeR, PatchField, GeoMesh
 >
 {
+    //- Both inputs have return type: possibly reusable
+    static bool reusable
+    (
+        const tmp<GeometricField<TypeR, PatchField, GeoMesh>>& tf1,
+        const tmp<GeometricField<TypeR, PatchField, GeoMesh>>& tf2
+    )
+    {
+        return (Detail::reusable(tf1) || Detail::reusable(tf2));
+    }
+
     static tmp<GeometricField<TypeR, PatchField, GeoMesh>> New
     (
         const tmp<GeometricField<TypeR, PatchField, GeoMesh>>& tf1,

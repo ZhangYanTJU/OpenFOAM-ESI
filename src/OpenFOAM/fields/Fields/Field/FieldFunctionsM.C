@@ -40,7 +40,14 @@ void Func                                                                      \
     const UList<Type1>& f1                                                     \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_FUNC_F(ReturnType, result, =, ::Foam::Func, Type1, f1)       \
+    if (result.cdata_bytes() == f1.cdata_bytes())                              \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F_inplace(result, =, ::Foam::Func, f1)           \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F(result, =, ::Foam::Func, f1)                   \
+    }                                                                          \
 }                                                                              \
                                                                                \
 TEMPLATE                                                                       \
@@ -78,7 +85,14 @@ void OpFunc                                                                    \
     const UList<Type1>& f1                                                     \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_OP_F(ReturnType, result, =, Op, Type1, f1)                   \
+    if (result.cdata_bytes() == f1.cdata_bytes())                              \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_OP_F_inplace(result, =, Op, f1)                       \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_OP_F(result, =, Op, f1)                               \
+    }                                                                          \
 }                                                                              \
                                                                                \
 TEMPLATE                                                                       \
@@ -117,10 +131,18 @@ void Func                                                                      \
     const UList<Type2>& f2                                                     \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_FUNC_F_F                                                     \
+    if                                                                         \
     (                                                                          \
-        ReturnType, result, =, ::Foam::Func, Type1, f1, Type2, f2              \
+        result.cdata_bytes() == f1.cdata_bytes()                               \
+     || result.cdata_bytes() == f2.cdata_bytes()                               \
     )                                                                          \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F_F_inplace(result, =, ::Foam::Func, f1, f2)     \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F_F(result, =, ::Foam::Func, f1, f2)             \
+    }                                                                          \
 }
 
 #define BINARY_FUNCTION_INTERFACE(ReturnType, Type1, Type2, Func)              \
@@ -194,10 +216,14 @@ void Func                                                                      \
     const UList<Type2>& f2                                                     \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_FUNC_S_F                                                     \
-    (                                                                          \
-        ReturnType, result, =, ::Foam::Func, Type1, s1, Type2, f2              \
-    )                                                                          \
+    if (result.cdata_bytes() == f2.cdata_bytes())                              \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_S_F_inplace(result, =, ::Foam::Func, s1, f2)     \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_S_F(result, =, ::Foam::Func, s1, f2)             \
+    }                                                                          \
 }
 
 #define BINARY_FUNCTION_INTERFACE_SF(ReturnType, Type1, Type2, Func)           \
@@ -242,10 +268,14 @@ void Func                                                                      \
     const Type2& s2                                                            \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_FUNC_F_S                                                     \
-    (                                                                          \
-        ReturnType, result, =, ::Foam::Func, Type1, f1, Type2, s2              \
-    )                                                                          \
+    if (result.cdata_bytes() == f1.cdata_bytes())                              \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F_S_inplace(result, =, ::Foam::Func, f1, s2)     \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F_S(result, =, ::Foam::Func, f1, s2)             \
+    }                                                                          \
 }
 
 #define BINARY_FUNCTION_INTERFACE_FS(ReturnType, Type1, Type2, Func)           \
@@ -297,7 +327,18 @@ void OpFunc                                                                    \
     const UList<Type2>& f2                                                     \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_F_OP_F(ReturnType, result, =, Type1, f1, Op, Type2, f2)      \
+    if                                                                         \
+    (                                                                          \
+        result.cdata_bytes() == f1.cdata_bytes()                               \
+     || result.cdata_bytes() == f2.cdata_bytes()                               \
+    )                                                                          \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_F_OP_F_inplace(result, =, f1, Op, f2)                 \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_F_OP_F(result, =, f1, Op, f2)                         \
+    }                                                                          \
 }                                                                              \
                                                                                \
 TEMPLATE                                                                       \
@@ -365,7 +406,14 @@ void OpFunc                                                                    \
     const UList<Type2>& f2                                                     \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_S_OP_F(ReturnType, result, =, Type1, s1, Op, Type2, f2)      \
+    if (result.cdata_bytes() == f2.cdata_bytes())                              \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_S_OP_F_inplace(result, =, s1, Op, f2)                 \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_S_OP_F(result, =, s1, Op, f2)                         \
+    }                                                                          \
 }                                                                              \
                                                                                \
 TEMPLATE                                                                       \
@@ -404,7 +452,14 @@ void OpFunc                                                                    \
     const Type2& s2                                                            \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_F_OP_S(ReturnType, result, =, Type1, f1, Op, Type2, s2)      \
+    if (result.cdata_bytes() == f1.cdata_bytes())                              \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_F_OP_S_inplace(result, =, f1, Op, s2)                 \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_F_OP_S(result, =, f1, Op, s2)                         \
+    }                                                                          \
 }                                                                              \
                                                                                \
 TEMPLATE                                                                       \
@@ -451,10 +506,21 @@ void Func                                                                      \
     const UList<Type3>& f3                                                     \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_FUNC_F_F_F                                                   \
+    if                                                                         \
     (                                                                          \
-        ReturnType, result, =, ::Foam::Func, Type1, f1, Type2, f2, Type3, f3   \
+        result.cdata_bytes() == f1.cdata_bytes()                               \
+     || result.cdata_bytes() == f2.cdata_bytes()                               \
+     || result.cdata_bytes() == f3.cdata_bytes()                               \
     )                                                                          \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F_F_F_inplace                                    \
+        (result, =, ::Foam::Func, f1, f2, f3)                                  \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F_F_F                                            \
+        (result, =, ::Foam::Func, f1, f2, f3)                                  \
+    }                                                                          \
 }                                                                              \
                                                                                \
 TEMPLATE                                                                       \
@@ -586,10 +652,20 @@ void Func                                                                      \
     const Type3& s3                                                            \
 )                                                                              \
 {                                                                              \
-    TFOR_ALL_F_OP_FUNC_F_F_S                                                   \
+    if                                                                         \
     (                                                                          \
-        ReturnType, result, =, ::Foam::Func, Type1, f1, Type2, f2, Type3, s3   \
+        result.cdata_bytes() == f1.cdata_bytes()                               \
+     || result.cdata_bytes() == f2.cdata_bytes()                               \
     )                                                                          \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F_F_S_inplace                                    \
+        (result, =, ::Foam::Func, f1, f2, s3)                                  \
+    }                                                                          \
+    else                                                                       \
+    {                                                                          \
+        TSEQ_FORALL_F_OP_FUNC_F_F_S                                            \
+        (result, =, ::Foam::Func, f1, f2, s3)                                  \
+    }                                                                          \
 }                                                                              \
                                                                                \
 TEMPLATE                                                                       \

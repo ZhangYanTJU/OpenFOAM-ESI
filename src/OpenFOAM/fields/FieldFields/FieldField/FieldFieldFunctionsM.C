@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,9 +40,9 @@ void Func                                                                      \
     const FieldField<Field, Type1>& f1                                         \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         Func(result[i], f1[i]);                                                \
     }                                                                          \
@@ -83,9 +83,9 @@ void OpFunc                                                                    \
     const FieldField<Field, Type1>& f1                                         \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         OpFunc(result[i], f1[i]);                                              \
     }                                                                          \
@@ -127,9 +127,9 @@ void Func                                                                      \
     const FieldField<Field, Type2>& f2                                         \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         Func(result[i], f1[i], f2[i]);                                         \
     }                                                                          \
@@ -204,9 +204,9 @@ void Func                                                                      \
     const FieldField<Field, Type2>& f2                                         \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         Func(result[i], s1, f2[i]);                                            \
     }                                                                          \
@@ -248,9 +248,9 @@ void Func                                                                      \
     const Type2& s2                                                            \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         Func(result[i], f1[i], s2);                                            \
     }                                                                          \
@@ -299,9 +299,9 @@ void OpFunc                                                                    \
     const FieldField<Field, Type2>& f2                                         \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         OpFunc(result[i], f1[i], f2[i]);                                       \
     }                                                                          \
@@ -376,9 +376,9 @@ void OpFunc                                                                    \
     const FieldField<Field, Type2>& f2                                         \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         OpFunc(result[i], s1, f2[i]);                                          \
     }                                                                          \
@@ -420,9 +420,9 @@ void OpFunc                                                                    \
     const Type2& s2                                                            \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         OpFunc(result[i], f1[i], s2);                                          \
     }                                                                          \
@@ -472,9 +472,9 @@ void Func                                                                      \
     const FieldField<Field, Type3>& f3                                         \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         Func(result[i], f1[i], f2[i], f3[i]);                                  \
     }                                                                          \
@@ -625,9 +625,9 @@ void Func                                                                      \
     const Type3& s3                                                            \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         Func(result[i], f1[i], f2[i], s3);                                     \
     }                                                                          \

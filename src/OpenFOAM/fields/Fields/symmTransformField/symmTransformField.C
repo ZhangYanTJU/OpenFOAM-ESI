@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,11 +39,16 @@ void Foam::transform
     const Field<Type>& fld
 )
 {
-    // std::transform
-    TFOR_ALL_F_OP_FUNC_S_F
-    (
-        Type, result, =, transform, symmTensor, rot, Type, fld
-    );
+    if (result.cdata() == fld.cdata())
+    {
+        // std::for_each
+        TSEQ_FORALL_F_OP_FUNC_S_F_inplace(result, =, transform, rot, fld)
+    }
+    else
+    {
+        // std::transform
+        TSEQ_FORALL_F_OP_FUNC_S_F(result, =, transform, rot, fld)
+    }
 }
 
 
@@ -55,16 +60,23 @@ void Foam::transform
     const Field<Type>& fld
 )
 {
+    // Does not handle corner case where result and rot are identical...
+
     if (rot.size() == 1)
     {
         return transform(result, rot.front(), fld);
     }
 
-    // std::transform
-    TFOR_ALL_F_OP_FUNC_F_F
-    (
-        Type, result, =, transform, symmTensor, rot, Type, fld
-    );
+    if (result.cdata() == fld.cdata())
+    {
+        // std::for_each
+        TSEQ_FORALL_F_OP_FUNC_F_F_inplace(result, =, transform, rot, fld)
+    }
+    else
+    {
+        // std::transform
+        TSEQ_FORALL_F_OP_FUNC_F_F(result, =, transform, rot, fld)
+    }
 }
 
 

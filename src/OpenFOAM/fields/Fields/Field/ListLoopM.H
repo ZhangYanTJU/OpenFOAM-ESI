@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,6 +35,22 @@ Description
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 // Element access looping
 
+// The List size
+#define TFOR_List_LENGTH(f, n)                  \
+    const Foam::label n = (f).size()
+
+// List begin, non-const access with __restrict__ (or not)
+#define TFOR_List_ACCESS(f, fp, Restrict)       \
+    auto* const Restrict fp = (f).begin()
+
+// List begin, const access with __restrict__ (or not)
+#define TFOR_List_CONST_ACCESS(f, fp, Restrict) \
+    const auto* const Restrict fp = (f).begin()
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Element access looping
+
 // Initial non-const access to list
 #define List_ACCESS(type, f, fp)                \
     type* const __restrict__ fp = (f).begin()
@@ -45,8 +61,8 @@ Description
 
 // Loop over all elements
 #define List_FOR_ALL(f, i)                      \
-        const label _n##i = (f).size();         \
-        for (label i=0; i<_n##i; ++i)
+        const Foam::label _n##i = (f).size();   \
+        for (Foam::label i = 0; i < _n##i; ++i)
 
 // Current element (non-const access)
 #define List_ELEM(fp, i)  (fp[i])

@@ -255,7 +255,7 @@ complex sumProd(const UList<complex>& f1, const UList<complex>& f2)
     if (f1.size() && (f1.size() == f2.size()))
     {
         // std::inner_product
-        TFOR_ALL_S_OP_F_OP_F(complex, result, +=, complex, f1, *, complex, f2)
+        TSEQ_FORALL_S_OP_F_OP_F(result, +=, f1, *, f2)
     }
     return result;
 }

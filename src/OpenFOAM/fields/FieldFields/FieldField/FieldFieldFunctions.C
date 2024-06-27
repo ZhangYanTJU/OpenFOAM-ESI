@@ -47,9 +47,9 @@ void component
     const direction d
 )
 {
-    const label loopLen = (sf).size();
+    const label loop_len = (sf).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         component(sf[i], f[i], d);
     }
@@ -59,9 +59,9 @@ void component
 template<template<class> class Field, class Type>
 void T(FieldField<Field, Type>& f1, const FieldField<Field, Type>& f2)
 {
-    const label loopLen = (f1).size();
+    const label loop_len = (f1).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         T(f1[i], f2[i]);
     }
@@ -75,9 +75,9 @@ void pow
     const FieldField<Field, Type>& vf
 )
 {
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         pow(f[i], vf[i]);
     }
@@ -122,9 +122,9 @@ void sqr
     const FieldField<Field, Type>& vf
 )
 {
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         sqr(f[i], vf[i]);
     }
@@ -163,9 +163,9 @@ void magSqr
     const FieldField<Field, Type>& f
 )
 {
-    const label loopLen = (sf).size();
+    const label loop_len = (sf).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         magSqr(sf[i], f[i]);
     }
@@ -204,9 +204,9 @@ void mag
     const FieldField<Field, Type>& f
 )
 {
-    const label loopLen = (sf).size();
+    const label loop_len = (sf).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         mag(sf[i], f[i]);
     }
@@ -245,9 +245,9 @@ void cmptMax
     const FieldField<Field, Type>& f
 )
 {
-    const label loopLen = (cf).size();
+    const label loop_len = (cf).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         cmptMax(cf[i], f[i]);
     }
@@ -290,9 +290,9 @@ void cmptMin
     const FieldField<Field, Type>& f
 )
 {
-    const label loopLen = (cf).size();
+    const label loop_len = (cf).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         cmptMin(cf[i], f[i]);
     }
@@ -335,9 +335,9 @@ void cmptAv
     const FieldField<Field, Type>& f
 )
 {
-    const label loopLen = (cf).size();
+    const label loop_len = (cf).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         cmptAv(cf[i], f[i]);
     }
@@ -380,9 +380,9 @@ void cmptMag
     const FieldField<Field, Type>& f
 )
 {
-    const label loopLen = (cf).size();
+    const label loop_len = (cf).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         cmptMag(cf[i], f[i]);
     }
@@ -428,9 +428,9 @@ Type max(const FieldField<Field, Type>& f)
 {
     Type result = pTraits<Type>::min;
 
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         if (f[i].size())
         {
@@ -450,9 +450,9 @@ Type min(const FieldField<Field, Type>& f)
 {
     Type result = pTraits<Type>::max;
 
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         if (f[i].size())
         {
@@ -471,9 +471,9 @@ Type sum(const FieldField<Field, Type>& f)
 {
     Type result = Zero;
 
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         result += sum(f[i]);
     }
@@ -490,9 +490,9 @@ typename typeOfMag<Type>::type sumMag(const FieldField<Field, Type>& f)
 
     resultType result = Zero;
 
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         result += sumMag(f[i]);
     }
@@ -507,9 +507,9 @@ Type average(const FieldField<Field, Type>& f)
 {
     label n = 0;
 
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         n += f[i].size();
     }
@@ -535,9 +535,9 @@ MinMax<Type> minMax(const FieldField<Field, Type>& f)
 {
     MinMax<Type> result;
 
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         result += minMax(f[i]);
     }
@@ -552,9 +552,9 @@ scalarMinMax minMaxMag(const FieldField<Field, Type>& f)
 {
     scalarMinMax result;
 
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         result += minMaxMag(f[i]);
     }
@@ -593,9 +593,9 @@ Type gAverage(const FieldField<Field, Type>& f)
 {
     label n = 0;
 
-    const label loopLen = (f).size();
+    const label loop_len = (f).size();
 
-    for (label i = 0; i < loopLen; ++i)
+    for (label i = 0; i < loop_len; ++i)
     {
         n += f[i].size();
     }
@@ -672,9 +672,9 @@ void OpFunc                                                                    \
     const FieldField<Field2, Type2>& f2                                        \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (f).size();                                          \
+    const label loop_len = (f).size();                                         \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         OpFunc(f[i], f1[i], f2[i]);                                            \
     }                                                                          \
@@ -798,9 +798,9 @@ void OpFunc                                                                    \
     const VectorSpace<Form,Cmpt,nCmpt>& vs                                     \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         OpFunc(result[i], f1[i], vs);                                          \
     }                                                                          \
@@ -864,9 +864,9 @@ void OpFunc                                                                    \
     const FieldField<Field, Type>& f1                                          \
 )                                                                              \
 {                                                                              \
-    const label loopLen = (result).size();                                     \
+    const label loop_len = (result).size();                                    \
                                                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         OpFunc(result[i], vs, f1[i]);                                          \
     }                                                                          \
