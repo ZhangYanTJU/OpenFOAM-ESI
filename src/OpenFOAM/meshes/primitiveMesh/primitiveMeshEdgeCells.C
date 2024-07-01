@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,7 +48,7 @@ const Foam::labelListList& Foam::primitiveMesh::edgeCells() const
             }
         }
         // Invert cellEdges
-        ecPtr_ = new labelListList(nEdges());
+        ecPtr_ = std::make_unique<labelListList>(nEdges());
         invertManyToMany(nEdges(), cellEdges(), *ecPtr_);
     }
 

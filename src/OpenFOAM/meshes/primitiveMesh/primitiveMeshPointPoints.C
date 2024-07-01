@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,8 +60,8 @@ void Foam::primitiveMesh::calcPointPoints() const
         const edgeList& e = edges();
         const labelListList& pe = pointEdges();
 
-        ppPtr_ = new labelListList(pe.size());
-        labelListList& pp = *ppPtr_;
+        ppPtr_ = std::make_unique<labelListList>(pe.size());
+        auto& pp = *ppPtr_;
 
         forAll(pe, pointi)
         {

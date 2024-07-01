@@ -150,9 +150,7 @@ Foam::PrimitivePatchInterpolation<Patch>::PrimitivePatchInterpolation
     const Patch& p
 )
 :
-    patch_(p),
-    faceToPointWeightsPtr_(nullptr),
-    faceToEdgeWeightsPtr_(nullptr)
+    patch_(p)
 {}
 
 

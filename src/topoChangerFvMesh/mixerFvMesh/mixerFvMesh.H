@@ -65,7 +65,7 @@ class mixerFvMesh
         scalar rpm_;
 
         //- Markup field for points.  Moving points marked with 1
-        mutable scalarField* movingPointsMaskPtr_;
+        mutable std::unique_ptr<scalarField> movingPointsMaskPtr_;
 
 
     // Private Member Functions

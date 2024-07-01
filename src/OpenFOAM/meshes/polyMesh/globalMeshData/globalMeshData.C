@@ -1794,9 +1794,6 @@ void Foam::globalMeshData::calcGlobalCoPointSlaves() const
 Foam::globalMeshData::globalMeshData(const polyMesh& mesh)
 :
     mesh_(mesh),
-    globalMeshPointAddr_(),
-    globalMeshFaceAddr_(),
-    globalMeshCellAddr_(),
     processorTopology_
     (
         processorTopology::New<processorPolyPatch>
@@ -1805,16 +1802,8 @@ Foam::globalMeshData::globalMeshData(const polyMesh& mesh)
             mesh_.comm()
         )
     ),
-    processorPatches_(),
-    processorPatchIndices_(),
-    processorPatchNeighbours_(),
     nGlobalPoints_(-1),
-    sharedPointLabelsPtr_(nullptr),
-    sharedPointAddrPtr_(nullptr),
-    sharedPointGlobalLabelsPtr_(nullptr),
-    nGlobalEdges_(-1),
-    sharedEdgeLabelsPtr_(nullptr),
-    sharedEdgeAddrPtr_(nullptr)
+    nGlobalEdges_(-1)
 {
     updateMesh();
 }

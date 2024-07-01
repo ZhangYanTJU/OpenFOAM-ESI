@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,11 +55,11 @@ void Foam::primitiveMesh::calcFaceCentresAndAreas() const
             << abort(FatalError);
     }
 
-    faceCentresPtr_ = new vectorField(nFaces());
-    vectorField& fCtrs = *faceCentresPtr_;
+    faceCentresPtr_ = std::make_unique<vectorField>(nFaces());
+    auto& fCtrs = *faceCentresPtr_;
 
-    faceAreasPtr_ = new vectorField(nFaces());
-    vectorField& fAreas = *faceAreasPtr_;
+    faceAreasPtr_ = std::make_unique<vectorField>(nFaces());
+    auto& fAreas = *faceAreasPtr_;
 
     primitiveMeshTools::makeFaceCentresAndAreas(*this, points(), fCtrs, fAreas);
 

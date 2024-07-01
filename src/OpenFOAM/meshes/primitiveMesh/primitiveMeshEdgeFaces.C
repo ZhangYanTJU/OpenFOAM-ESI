@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,7 +49,7 @@ const Foam::labelListList& Foam::primitiveMesh::edgeFaces() const
         }
 
         // Invert faceEdges
-        efPtr_ = new labelListList(nEdges());
+        efPtr_ = std::make_unique<labelListList>(nEdges());
         invertManyToMany(nEdges(), faceEdges(), *efPtr_);
     }
 

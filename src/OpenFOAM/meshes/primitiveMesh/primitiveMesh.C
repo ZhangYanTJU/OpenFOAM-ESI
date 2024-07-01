@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,7 @@ License
 
 namespace Foam
 {
-defineTypeNameAndDebug(primitiveMesh, 0);
+    defineTypeNameAndDebug(primitiveMesh, 0);
 }
 
 
@@ -48,30 +48,7 @@ Foam::primitiveMesh::primitiveMesh()
     nEdges_(-1),
     nInternalFaces_(0),
     nFaces_(0),
-    nCells_(0),
-
-    cellShapesPtr_(nullptr),
-    edgesPtr_(nullptr),
-    ccPtr_(nullptr),
-    ecPtr_(nullptr),
-    pcPtr_(nullptr),
-
-    cfPtr_(nullptr),
-    efPtr_(nullptr),
-    pfPtr_(nullptr),
-
-    cePtr_(nullptr),
-    fePtr_(nullptr),
-    pePtr_(nullptr),
-    ppPtr_(nullptr),
-    cpPtr_(nullptr),
-
-    labels_(0),
-
-    cellCentresPtr_(nullptr),
-    faceCentresPtr_(nullptr),
-    cellVolumesPtr_(nullptr),
-    faceAreasPtr_(nullptr)
+    nCells_(0)
 {}
 
 
@@ -88,30 +65,7 @@ Foam::primitiveMesh::primitiveMesh
     nEdges_(-1),
     nInternalFaces_(nInternalFaces),
     nFaces_(nFaces),
-    nCells_(nCells),
-
-    cellShapesPtr_(nullptr),
-    edgesPtr_(nullptr),
-    ccPtr_(nullptr),
-    ecPtr_(nullptr),
-    pcPtr_(nullptr),
-
-    cfPtr_(nullptr),
-    efPtr_(nullptr),
-    pfPtr_(nullptr),
-
-    cePtr_(nullptr),
-    fePtr_(nullptr),
-    pePtr_(nullptr),
-    ppPtr_(nullptr),
-    cpPtr_(nullptr),
-
-    labels_(0),
-
-    cellCentresPtr_(nullptr),
-    faceCentresPtr_(nullptr),
-    cellVolumesPtr_(nullptr),
-    faceAreasPtr_(nullptr)
+    nCells_(nCells)
 {}
 
 
@@ -273,7 +227,7 @@ void Foam::primitiveMesh::reset
         nCells
     );
 
-    cfPtr_ = new cellList(clst, true);
+    cfPtr_ = std::make_unique<cellList>(std::move(clst));
 }
 
 
@@ -301,10 +255,10 @@ void Foam::primitiveMesh::resetGeometry
     // Remove old geometry
     clearGeom();
 
-    faceCentresPtr_ = new pointField(std::move(faceCentres));
-    faceAreasPtr_ = new pointField(std::move(faceAreas));
-    cellCentresPtr_ = new pointField(std::move(cellCentres));
-    cellVolumesPtr_ = new scalarField(std::move(cellVolumes));
+    faceCentresPtr_ = std::make_unique<pointField>(std::move(faceCentres));
+    faceAreasPtr_ = std::make_unique<pointField>(std::move(faceAreas));
+    cellCentresPtr_ = std::make_unique<pointField>(std::move(cellCentres));
+    cellVolumesPtr_ = std::make_unique<scalarField>(std::move(cellVolumes));
 
     if (debug)
     {

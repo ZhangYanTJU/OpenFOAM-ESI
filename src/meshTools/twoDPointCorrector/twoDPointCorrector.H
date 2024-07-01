@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,8 +42,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef twoDPointCorrector_H
-#define twoDPointCorrector_H
+#ifndef Foam_twoDPointCorrector_H
+#define Foam_twoDPointCorrector_H
 
 #include "MeshObject.H"
 #include "pointField.H"
@@ -80,14 +81,14 @@ class twoDPointCorrector
         //- Is 2D correction required, i.e. is the mesh
         bool required_;
 
-        //- 2-D plane unit normal
-        mutable vector* planeNormalPtr_;
-
-        //- Indices of edges normal to plane
-        mutable labelList* normalEdgeIndicesPtr_;
-
         //- Flag to indicate a wedge geometry
         mutable bool isWedge_;
+
+        //- 2-D plane unit normal
+        mutable std::unique_ptr<vector> planeNormalPtr_;
+
+        //- Indices of edges normal to plane
+        mutable std::unique_ptr<labelList> normalEdgeIndicesPtr_;
 
         //- Wedge axis (if wedge geometry)
         mutable vector wedgeAxis_;

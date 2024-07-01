@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,8 +40,9 @@ const Foam::labelListList& Foam::primitiveMesh::pointFaces() const
             Pout<< "primitiveMesh::pointFaces() : "
                 << "calculating pointFaces" << endl;
         }
+
         // Invert faces()
-        pfPtr_ = new labelListList(nPoints());
+        pfPtr_ = std::make_unique<labelListList>(nPoints());
         invertManyToMany(nPoints(), faces(), *pfPtr_);
     }
 

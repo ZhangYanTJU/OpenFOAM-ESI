@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,7 +62,7 @@ void Foam::primitiveMesh::calcPointCells() const
     else if (hasCellPoints())
     {
         // Invert cellPoints
-        pcPtr_ = new labelListList(nPoints());
+        pcPtr_ = std::make_unique<labelListList>(nPoints());
         invertManyToMany(nPoints(), cellPoints(), *pcPtr_);
     }
     else if (hasPointFaces())
@@ -81,7 +81,7 @@ void Foam::primitiveMesh::calcPointCells() const
 
         const label loopLen = nPoints();
 
-        pcPtr_ = new labelListList(nPoints());
+        pcPtr_ = std::make_unique<labelListList>(nPoints());
         auto& pointCellAddr = *pcPtr_;
 
         for (label pointi = 0; pointi < loopLen; ++pointi)
@@ -153,7 +153,7 @@ void Foam::primitiveMesh::calcPointCells() const
 
         // Step 2: set sizing, reset counters
 
-        pcPtr_ = new labelListList(nPoints());
+        pcPtr_ = std::make_unique<labelListList>(nPoints());
         auto& pointCellAddr = *pcPtr_;
 
         forAll(pointCellAddr, pointi)
