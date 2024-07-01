@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,6 @@ License
 
 #include "primitiveMesh.H"
 #include "DynamicList.H"
-#include "demandDrivenData.H"
 #include "SortableList.H"
 #include "ListOps.H"
 
@@ -129,8 +128,8 @@ void Foam::primitiveMesh::calcEdges(const bool doFaceEdges) const
         // Estimate faceEdges storage
         if (doFaceEdges)
         {
-            fePtr_ = new labelListList(fcs.size());
-            labelListList& faceEdges = *fePtr_;
+            fePtr_ = std::make_unique<labelListList>(fcs.size());
+            auto& faceEdges = *fePtr_;
             forAll(fcs, facei)
             {
                 faceEdges[facei].setSize(fcs[facei].size());
@@ -435,16 +434,16 @@ void Foam::primitiveMesh::calcEdges(const bool doFaceEdges) const
         // Renumber and transfer.
 
         // Edges
-        edgesPtr_ = new edgeList(es.size());
-        edgeList& edges = *edgesPtr_;
+        edgesPtr_ = std::make_unique<edgeList>(es.size());
+        auto& edges = *edgesPtr_;
         forAll(es, edgeI)
         {
             edges[oldToNew[edgeI]] = es[edgeI];
         }
 
         // pointEdges
-        pePtr_ = new labelListList(nPoints());
-        labelListList& pointEdges = *pePtr_;
+        pePtr_ = std::make_unique<labelListList>(nPoints());
+        auto& pointEdges = *pePtr_;
         forAll(pe, pointi)
         {
             DynamicList<label>& pEdges = pe[pointi];
@@ -457,7 +456,7 @@ void Foam::primitiveMesh::calcEdges(const bool doFaceEdges) const
         // faceEdges
         if (doFaceEdges)
         {
-            labelListList& faceEdges = *fePtr_;
+            auto& faceEdges = *fePtr_;
             forAll(faceEdges, facei)
             {
                 inplaceRenumber(oldToNew, faceEdges[facei]);
@@ -552,8 +551,8 @@ const Foam::labelListList& Foam::primitiveMesh::faceEdges() const
         const labelListList& pe = pointEdges();
         const edgeList& es = edges();
 
-        fePtr_ = new labelListList(fcs.size());
-        labelListList& faceEdges = *fePtr_;
+        fePtr_ = std::make_unique<labelListList>(fcs.size());
+        auto& faceEdges = *fePtr_;
 
         forAll(fcs, facei)
         {
@@ -590,9 +589,9 @@ const Foam::labelListList& Foam::primitiveMesh::faceEdges() const
 
 void Foam::primitiveMesh::clearOutEdges()
 {
-    deleteDemandDrivenData(edgesPtr_);
-    deleteDemandDrivenData(pePtr_);
-    deleteDemandDrivenData(fePtr_);
+    edgesPtr_.reset(nullptr);
+    pePtr_.reset(nullptr);
+    fePtr_.reset(nullptr);
     labels_.clear();
     labelSet_.clear();
 }

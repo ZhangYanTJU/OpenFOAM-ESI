@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,7 +33,6 @@ License
 #include "triSurfaceSearch.H"
 #include "cellClassification.H"
 #include "cpuTime.H"
-#include "demandDrivenData.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -389,8 +388,7 @@ Foam::surfaceToCell::surfaceToCell
     nearDist_(nearDist),
     curvature_(curvature),
     surfPtr_(new triSurface(surfName_)),
-    querySurfPtr_(new triSurfaceSearch(*surfPtr_)),
-    IOwnPtrs_(true)
+    querySurfPtr_(new triSurfaceSearch(*surfPtr_))
 {
     checkSettings();
 }
@@ -420,9 +418,8 @@ Foam::surfaceToCell::surfaceToCell
     useSurfaceOrientation_(useSurfaceOrientation),
     nearDist_(nearDist),
     curvature_(curvature),
-    surfPtr_(&surf),
-    querySurfPtr_(&querySurf),
-    IOwnPtrs_(false)
+    surfPtr_(surf),
+    querySurfPtr_(querySurf)
 {
     checkSettings();
 }
@@ -455,8 +452,7 @@ Foam::surfaceToCell::surfaceToCell
             dict.getOrDefault<scalar>("scale", -1)
         )
     ),
-    querySurfPtr_(new triSurfaceSearch(*surfPtr_)),
-    IOwnPtrs_(true)
+    querySurfPtr_(new triSurfaceSearch(*surfPtr_))
 {
     checkSettings();
 }
@@ -478,8 +474,7 @@ Foam::surfaceToCell::surfaceToCell
     nearDist_(readScalar(checkIs(is))),
     curvature_(readScalar(checkIs(is))),
     surfPtr_(new triSurface(surfName_)),
-    querySurfPtr_(new triSurfaceSearch(*surfPtr_)),
-    IOwnPtrs_(true)
+    querySurfPtr_(new triSurfaceSearch(*surfPtr_))
 {
     checkSettings();
 }
@@ -488,13 +483,7 @@ Foam::surfaceToCell::surfaceToCell
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::surfaceToCell::~surfaceToCell()
-{
-    if (IOwnPtrs_)
-    {
-        deleteDemandDrivenData(surfPtr_);
-        deleteDemandDrivenData(querySurfPtr_);
-    }
-}
+{}  // Define here (incomplete type in header)
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -104,8 +104,8 @@ void Foam::primitiveMesh::calcCellEdges() const
             }
         }
 
-        cePtr_ = new labelListList(ce.size());
-        labelListList& cellEdgeAddr = *cePtr_;
+        cePtr_ = std::make_unique<labelListList>(ce.size());
+        auto& cellEdgeAddr = *cePtr_;
 
         // reset the size
         forAll(ce, celli)

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2019 Zeljko Tukovic, FSB Zagreb.
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,7 +47,6 @@ License
 #include "twoDPointCorrector.H"
 #include "gravityMeshObject.H"
 #include "turbulentTransportModel.H"
-#include "demandDrivenData.H"
 #include "unitConversion.H"
 #include "foamVtkIndPatchWriter.H"
 #include "calculatedFaPatchFields.H"
@@ -210,7 +209,7 @@ void Foam::interfaceTrackingFvMesh::makeUs() const
         }
     }
 
-    UsPtr_ = new areaVectorField
+    UsPtr_ = std::make_unique<areaVectorField>
     (
         IOobject
         (
@@ -268,7 +267,7 @@ void Foam::interfaceTrackingFvMesh::makeFsNetPhi() const
             << abort(FatalError);
     }
 
-    fsNetPhiPtr_ = new areaScalarField
+    fsNetPhiPtr_ = std::make_unique<areaScalarField>
     (
         IOobject
         (
@@ -309,14 +308,14 @@ void Foam::interfaceTrackingFvMesh::makeControlPoints()
     if (pointsIO.typeHeaderOk<vectorIOField>())
     {
         Info<< "Reading control points" << endl;
-        controlPointsPtr_ = new vectorIOField(pointsIO);
+        controlPointsPtr_ = std::make_unique<vectorIOField>(pointsIO);
     }
     else
     {
         pointsIO.readOpt(IOobject::NO_READ);
 
         Info<< "Creating new control points" << endl;
-        controlPointsPtr_ = new vectorIOField
+        controlPointsPtr_ = std::make_unique<vectorIOField>
         (
             pointsIO,
             aMesh().areaCentres().internalField()
@@ -339,7 +338,7 @@ void Foam::interfaceTrackingFvMesh::makeMotionPointsMask()
             << abort(FatalError);
     }
 
-    motionPointsMaskPtr_ = new labelList
+    motionPointsMaskPtr_ = std::make_unique<labelList>
     (
         mesh().boundaryMesh()[fsPatchIndex()].nPoints(),
         1
@@ -402,14 +401,14 @@ void Foam::interfaceTrackingFvMesh::makeDirections()
     }
 
     pointsDisplacementDirPtr_ =
-        new vectorField
+        std::make_unique<vectorField>
         (
             mesh().boundaryMesh()[fsPatchIndex()].nPoints(),
             Zero
         );
 
     facesDisplacementDirPtr_ =
-        new vectorField
+        std::make_unique<vectorField>
         (
             mesh().boundaryMesh()[fsPatchIndex()].size(),
             Zero
@@ -444,7 +443,7 @@ void Foam::interfaceTrackingFvMesh::makePhis()
             << abort(FatalError);
     }
 
-    phisPtr_ = new edgeScalarField
+    phisPtr_ = std::make_unique<edgeScalarField>
     (
         IOobject
         (
@@ -471,7 +470,7 @@ void Foam::interfaceTrackingFvMesh::makeSurfactConc() const
             << abort(FatalError);
     }
 
-    surfactConcPtr_ = new areaScalarField
+    surfactConcPtr_ = std::make_unique<areaScalarField>
     (
         IOobject
         (
@@ -502,7 +501,7 @@ void Foam::interfaceTrackingFvMesh::makeBulkSurfactConc() const
             << abort(FatalError);
     }
 
-    bulkSurfactConcPtr_ = new volScalarField
+    bulkSurfactConcPtr_ = std::make_unique<volScalarField>
     (
         IOobject
         (
@@ -518,7 +517,7 @@ void Foam::interfaceTrackingFvMesh::makeBulkSurfactConc() const
         ),
         mesh()
     );
-    volScalarField& bulkSurfactConc = *bulkSurfactConcPtr_;
+    auto& bulkSurfactConc = *bulkSurfactConcPtr_;
 
     if (mesh().time().timeIndex()-1 == 0)
     {
@@ -541,7 +540,7 @@ void Foam::interfaceTrackingFvMesh::makeSurfaceTension() const
             << abort(FatalError);
     }
 
-    surfaceTensionPtr_ = new areaScalarField
+    surfaceTensionPtr_ = std::make_unique<areaScalarField>
     (
         IOobject
         (
@@ -571,7 +570,7 @@ void Foam::interfaceTrackingFvMesh::makeSurfactant() const
     const dictionary& surfactProp =
         motion().subDict("surfactantProperties");
 
-    surfactantPtr_ = new surfactantProperties(surfactProp);
+    surfactantPtr_ = std::make_unique<surfactantProperties>(surfactProp);
 }
 
 
@@ -601,7 +600,8 @@ void Foam::interfaceTrackingFvMesh::makeContactAngle()
     {
         Info<< "Reading contact angle field" << endl;
 
-        contactAnglePtr_ = new areaScalarField(contactAngleHeader, aMesh());
+        contactAnglePtr_ =
+            std::make_unique<areaScalarField>(contactAngleHeader, aMesh());
     }
 }
 
@@ -1275,14 +1275,7 @@ void Foam::interfaceTrackingFvMesh::correctContactLinePointNormals()
 // #       include "createTangentField.H"
         areaVectorField tangent
         (
-            IOobject
-            (
-                "tangent",
-                aMesh().time().timeName(),
-                aMesh().thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            aMesh().thisDb().newIOobject("tangent"),
             aMesh(),
             dimensioned<vector>(dimless, Zero)
         );
@@ -1534,7 +1527,6 @@ Foam::interfaceTrackingFvMesh::interfaceTrackingFvMesh
 )
 :
     dynamicMotionSolverFvMesh(io, doInit),
-    aMeshPtr_(nullptr),
     fsPatchIndex_(-1),
     fixedFreeSurfacePatches_(),
     nonReflectingFreeSurfacePatches_(),
@@ -1547,19 +1539,7 @@ Foam::interfaceTrackingFvMesh::interfaceTrackingFvMesh
     correctContactLineNormals_(false),
     sigma0_("zero", dimForce/dimLength/dimDensity, Zero),
     rho_("one", dimDensity, 1.0),
-    timeIndex_(-1),
-    UsPtr_(nullptr),
-    controlPointsPtr_(nullptr),
-    motionPointsMaskPtr_(nullptr),
-    pointsDisplacementDirPtr_(nullptr),
-    facesDisplacementDirPtr_(nullptr),
-    fsNetPhiPtr_(nullptr),
-    phisPtr_(nullptr),
-    surfactConcPtr_(nullptr),
-    bulkSurfactConcPtr_(nullptr),
-    surfaceTensionPtr_(nullptr),
-    surfactantPtr_(nullptr),
-    contactAnglePtr_(nullptr)
+    timeIndex_(-1)
 {
     if (doInit)
     {
@@ -1598,19 +1578,7 @@ Foam::interfaceTrackingFvMesh::interfaceTrackingFvMesh
     pureFreeSurface_(true),
     sigma0_("zero", dimForce/dimLength/dimDensity, Zero),
     rho_("one", dimDensity, 1.0),
-    timeIndex_(-1),
-    UsPtr_(nullptr),
-    controlPointsPtr_(nullptr),
-    motionPointsMaskPtr_(nullptr),
-    pointsDisplacementDirPtr_(nullptr),
-    facesDisplacementDirPtr_(nullptr),
-    fsNetPhiPtr_(nullptr),
-    phisPtr_(nullptr),
-    surfactConcPtr_(nullptr),
-    bulkSurfactConcPtr_(nullptr),
-    surfaceTensionPtr_(nullptr),
-    surfactantPtr_(nullptr),
-    contactAnglePtr_(nullptr)
+    timeIndex_(-1)
 {}
 */
 
@@ -1618,18 +1586,18 @@ Foam::interfaceTrackingFvMesh::interfaceTrackingFvMesh
 
 Foam::interfaceTrackingFvMesh::~interfaceTrackingFvMesh()
 {
-    deleteDemandDrivenData(UsPtr_);
-    deleteDemandDrivenData(controlPointsPtr_);
-    deleteDemandDrivenData(motionPointsMaskPtr_);
-    deleteDemandDrivenData(pointsDisplacementDirPtr_);
-    deleteDemandDrivenData(facesDisplacementDirPtr_);
-    deleteDemandDrivenData(fsNetPhiPtr_);
-    deleteDemandDrivenData(phisPtr_);
-    deleteDemandDrivenData(surfactConcPtr_);
-    deleteDemandDrivenData(bulkSurfactConcPtr_);
-    deleteDemandDrivenData(surfaceTensionPtr_);
-    deleteDemandDrivenData(surfactantPtr_);
-    deleteDemandDrivenData(contactAnglePtr_);
+    UsPtr_.reset(nullptr);
+    controlPointsPtr_.reset(nullptr);
+    motionPointsMaskPtr_.reset(nullptr);
+    pointsDisplacementDirPtr_.reset(nullptr);
+    facesDisplacementDirPtr_.reset(nullptr);
+    fsNetPhiPtr_.reset(nullptr);
+    phisPtr_.reset(nullptr);
+    surfactConcPtr_.reset(nullptr);
+    bulkSurfactConcPtr_.reset(nullptr);
+    surfaceTensionPtr_.reset(nullptr);
+    surfactantPtr_.reset(nullptr);
+    contactAnglePtr_.reset(nullptr);
 }
 
 

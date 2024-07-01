@@ -51,7 +51,7 @@ void Foam::fvMesh::makeSf() const
             << abort(FatalError);
     }
 
-    SfPtr_ = new slicedSurfaceVectorField
+    SfPtr_ = std::make_unique<slicedSurfaceVectorField>
     (
         IOobject
         (
@@ -88,7 +88,7 @@ void Foam::fvMesh::makeMagSf() const
     // Note: Added stabilisation for faces with exactly zero area.
     // These should be caught on mesh checking but at least this stops
     // the code from producing Nans.
-    magSfPtr_ = new surfaceScalarField
+    magSfPtr_ = std::make_unique<surfaceScalarField>
     (
         IOobject
         (
@@ -120,7 +120,7 @@ void Foam::fvMesh::makeC() const
 
     // Construct as slices. Only preserve processor (not e.g. cyclic)
 
-    CPtr_ = new slicedVolVectorField
+    CPtr_ = std::make_unique<slicedVolVectorField>
     (
         IOobject
         (
@@ -155,7 +155,7 @@ void Foam::fvMesh::makeCf() const
             << abort(FatalError);
     }
 
-    CfPtr_ = new slicedSurfaceVectorField
+    CfPtr_ = std::make_unique<slicedSurfaceVectorField>
     (
         IOobject
         (
@@ -183,7 +183,7 @@ const Foam::volScalarField::Internal& Foam::fvMesh::V() const
         DebugInFunction
             << "Constructing from primitiveMesh::cellVolumes()" << endl;
 
-        VPtr_ = new SlicedDimensionedField<scalar, volMesh>
+        VPtr_ = std::make_unique<SlicedDimensionedField<scalar, volMesh>>
         (
             IOobject
             (
@@ -236,7 +236,7 @@ const Foam::volScalarField::Internal& Foam::fvMesh::V00() const
     {
         DebugInFunction << "Constructing from V0" << endl;
 
-        V00Ptr_ = new DimensionedField<scalar, volMesh>
+        V00Ptr_ = std::make_unique<DimensionedField<scalar, volMesh>>
         (
             IOobject
             (

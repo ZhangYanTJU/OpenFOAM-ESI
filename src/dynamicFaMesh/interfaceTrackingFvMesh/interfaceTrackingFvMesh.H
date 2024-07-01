@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2019 Zeljko Tukovic, FSB Zagreb.
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -107,42 +107,43 @@ class interfaceTrackingFvMesh
         label timeIndex_;
 
         //- Free-surface velocity field
-        mutable areaVectorField* UsPtr_;
+        mutable std::unique_ptr<areaVectorField> UsPtr_;
 
         //- Points which are attached to the free-surface A side faces
         //  and which defines the free-surface shape
-        mutable vectorIOField* controlPointsPtr_;
+        mutable std::unique_ptr<vectorIOField> controlPointsPtr_;
 
         //- Field which additionally determines
         //  the motion of free-surface points
-        mutable labelList* motionPointsMaskPtr_;
+        mutable std::unique_ptr<labelList> motionPointsMaskPtr_;
 
         //- Displacement direction of free-surface points
-        mutable vectorField* pointsDisplacementDirPtr_;
+        mutable std::unique_ptr<vectorField> pointsDisplacementDirPtr_;
 
         //- Displacement direction of free-surface control points
-        mutable vectorField* facesDisplacementDirPtr_;
+        mutable std::unique_ptr<vectorField> facesDisplacementDirPtr_;
 
         //- Free-surface net flux
-        mutable areaScalarField* fsNetPhiPtr_;
+        mutable std::unique_ptr<areaScalarField> fsNetPhiPtr_;
 
         //- Free-surface flux
-        mutable edgeScalarField* phisPtr_;
+        mutable std::unique_ptr<edgeScalarField> phisPtr_;
 
         //- Free-surface surfactant concetration
-        mutable areaScalarField* surfactConcPtr_;
+        mutable std::unique_ptr<areaScalarField> surfactConcPtr_;
 
         //- Volume surfactant concetration
-        mutable volScalarField* bulkSurfactConcPtr_;
+        mutable std::unique_ptr<volScalarField> bulkSurfactConcPtr_;
 
         //- Surface tension field
-        mutable areaScalarField* surfaceTensionPtr_;
+        mutable std::unique_ptr<areaScalarField> surfaceTensionPtr_;
 
         //- Surfactant properties
-        mutable surfactantProperties* surfactantPtr_;
+        mutable std::unique_ptr<surfactantProperties> surfactantPtr_;
 
         //- Contact angle
-        mutable areaScalarField* contactAnglePtr_;
+        mutable std::unique_ptr<areaScalarField> contactAnglePtr_;
+
 
     // Private Member Functions
 
@@ -425,7 +426,7 @@ public:
         //- Clear control points
         void clearControlPoints()
         {
-            deleteDemandDrivenData(controlPointsPtr_);
+            controlPointsPtr_.reset(nullptr);
         }
 
         //- Write VTK freeSurface mesh

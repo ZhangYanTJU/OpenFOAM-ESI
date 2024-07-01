@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) Wikki Ltd
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,6 @@ License
 #include "volFields.H"
 #include "emptyFvPatch.H"
 #include "SubField.H"
-#include "demandDrivenData.H"
 #include "globalMeshData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -66,15 +65,17 @@ void Foam::pointVolInterpolation::makeWeights() const
     const vectorField& cellCentres = vMesh().cellCentres();
 
     // Allocate storage for weighting factors
-    volWeightsPtr_ = new FieldField<Field, scalar>(cellCentres.size());
-    FieldField<Field, scalar>& weightingFactors = *volWeightsPtr_;
+    volWeightsPtr_ =
+        std::make_unique<FieldField><Field, scalar>>(cellCentres.size());
+
+    auto& weightingFactors = *volWeightsPtr_;
 
     forAll(weightingFactors, pointi)
     {
-        weightingFactors.set
+        weightingFactors.emplace_set
         (
             pointi,
-            new scalarField(cellPoints[pointi].size())
+            cellPoints[pointi].size()
         );
     }
 
@@ -130,38 +131,37 @@ void Foam::pointVolInterpolation::makeWeights() const
 // Do what is necessary if the mesh has changed topology
 void Foam::pointVolInterpolation::clearAddressing() const
 {
-    deleteDemandDrivenData(patchInterpolatorsPtr_);
+    patchInterpolators_.clear();
 }
 
 
 // Do what is necessary if the mesh has moved
 void Foam::pointVolInterpolation::clearGeom() const
 {
-    deleteDemandDrivenData(volWeightsPtr_);
+    volWeightsPtr_.reset(nullptr);
 }
 
 
 const Foam::PtrList<Foam::primitivePatchInterpolation>&
 Foam::pointVolInterpolation::patchInterpolators() const
 {
-    if (!patchInterpolatorsPtr_)
+    if (patchInterpolators_.empty())
     {
         const fvBoundaryMesh& bdry = vMesh().boundary();
 
-        patchInterpolatorsPtr_ =
-            new PtrList<primitivePatchInterpolation>(bdry.size());
+        patchInterpolators_.reset(bdry.size());
 
-        forAll(bdry, patchI)
+        forAll(bdry, patchi)
         {
-            patchInterpolatorsPtr_->set
+            patchInterpolators_.emplace_set
             (
-                patchI,
-                new primitivePatchInterpolation(bdry[patchI].patch())
+                patchi,
+                bdry[patchi].patch()
             );
         }
     }
 
-    return *patchInterpolatorsPtr_;
+    return patchInterpolators_;
 }
 
 
@@ -169,14 +169,12 @@ Foam::pointVolInterpolation::patchInterpolators() const
 
 Foam::pointVolInterpolation::pointVolInterpolation
 (
- const pointMesh& pm,
+    const pointMesh& pm,
     const fvMesh& vm
 )
 :
     pointMesh_(pm),
-    fvMesh_(vm),
-    volWeightsPtr_(nullptr),
-    patchInterpolatorsPtr_(nullptr)
+    fvMesh_(vm)
 {}
 
 

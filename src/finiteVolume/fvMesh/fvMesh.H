@@ -98,7 +98,7 @@ protected:
 
     // Demand-Driven Data
 
-        mutable fvMeshLduAddressing* lduPtr_;
+        mutable std::unique_ptr<fvMeshLduAddressing> lduPtr_;
 
         //- Current time index for cell volumes
         //  Note.  The whole mechanism will be replaced once the
@@ -107,25 +107,25 @@ protected:
         mutable label curTimeIndex_;
 
         //- Cell volumes
-        mutable SlicedDimensionedField<scalar, volMesh>* VPtr_;
+        mutable std::unique_ptr<SlicedDimensionedField<scalar, volMesh>> VPtr_;
 
         //- Cell volumes old time level
-        mutable DimensionedField<scalar, volMesh>* V0Ptr_;
+        mutable std::unique_ptr<DimensionedField<scalar, volMesh>> V0Ptr_;
 
         //- Cell volumes old-old time level
-        mutable DimensionedField<scalar, volMesh>* V00Ptr_;
+        mutable std::unique_ptr<DimensionedField<scalar, volMesh>> V00Ptr_;
 
         //- Face area vectors
-        mutable slicedSurfaceVectorField* SfPtr_;
+        mutable std::unique_ptr<slicedSurfaceVectorField> SfPtr_;
 
         //- Mag face area vectors
-        mutable surfaceScalarField* magSfPtr_;
+        mutable std::unique_ptr<surfaceScalarField> magSfPtr_;
 
         //- Cell centres
-        mutable slicedVolVectorField* CPtr_;
+        mutable std::unique_ptr<slicedVolVectorField> CPtr_;
 
         //- Face centres
-        mutable slicedSurfaceVectorField* CfPtr_;
+        mutable std::unique_ptr<slicedSurfaceVectorField> CfPtr_;
 
         //- Face motion fluxes
         mutable std::unique_ptr<surfaceScalarField> phiPtr_;
