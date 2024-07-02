@@ -131,7 +131,7 @@ protected:
 
             //- Multiplier of the additional variables y in the Lagrangian, to
             //- make them 'expensive'
-            scalar c_;
+            autoPtr<Function1<scalar>> c_;
 
 
         // Fields holding updates of the design, Lagrange and slack variables
