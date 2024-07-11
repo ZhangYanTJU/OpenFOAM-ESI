@@ -33,32 +33,20 @@ License
 template<class Type>
 bool Foam::IOField<Type>::readIOcontents(bool readOnProc)
 {
-    if (isReadRequired())
+    if (isReadRequired() || (isReadOptional() && headerOk()))
     {
-        // Reading
-    }
-    else if (isReadOptional())
-    {
-        if (!headerOk())
+        // Do reading
+        Istream& is = readStream(typeName, readOnProc);
+
+        if (readOnProc)
         {
-            readOnProc = false;
+            is >> *this;
         }
-    }
-    else
-    {
-        return false;
+        close();
+        return true;
     }
 
-
-    // Do reading
-    Istream& is = readStream(typeName, readOnProc);
-
-    if (readOnProc)
-    {
-        is >> *this;
-    }
-    close();
-    return true;
+    return false;
 }
 
 
