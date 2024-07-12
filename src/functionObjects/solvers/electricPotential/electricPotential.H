@@ -124,6 +124,7 @@ Usage
         electricField         <bool>;
         E                     <word>;
         fvOptions             <dict>;
+        tolerance             <scalar>;
 
         // Inherited entries
         ...
@@ -143,6 +144,7 @@ Usage
       electricField | Flag to calculate electric field  | bool | no | false
       E    | Name of electric field           | word | no | electricPotential:E
       fvOptions | List of finite-volume options       | dict | no   | -
+      tolerance | Outer-loop initial-residual tolerance | scalar | no | 1
     \endtable
 
     The inherited entries are elaborated in:
@@ -217,6 +219,9 @@ class electricPotential
 
         //- Run-time selectable finite volume options
         fv::optionList fvOptions_;
+
+        //- Outer-loop initial-residual tolerance
+        scalar tol_;
 
         //- Number of corrector iterations
         int nCorr_;

@@ -183,6 +183,7 @@ Foam::functionObjects::scalarTransport::scalarTransport
     ),
     D_(0),
     constantD_(false),
+    tol_(1),
     nCorr_(0),
     resetOnStartUp_(false),
     schemesField_("unknown-schemesField"),
@@ -225,6 +226,7 @@ bool Foam::functionObjects::scalarTransport::read(const dictionary& dict)
     alphaD_ = dict.getOrDefault<scalar>("alphaD", 1);
     alphaDt_ = dict.getOrDefault<scalar>("alphaDt", 1);
 
+    dict.readIfPresent("tolerance", tol_);
     dict.readIfPresent("nCorr", nCorr_);
     dict.readIfPresent("resetOnStartUp", resetOnStartUp_);
 
@@ -256,6 +258,10 @@ bool Foam::functionObjects::scalarTransport::execute()
     scalar relaxCoeff = 0;
     mesh_.relaxEquation(schemesField_, relaxCoeff);
 
+    // Convergence monitor parameters
+    bool converged = false;
+    label iter = 0;
+
     // Two phase scalar transport
     if (phaseName_ != "none")
     {
@@ -285,9 +291,13 @@ bool Foam::functionObjects::scalarTransport::execute()
 
             sEqn.relax(relaxCoeff);
             fvOptions_.constrain(sEqn);
-            sEqn.solve(schemesField_);
+
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
 
             tTPhiUD = sEqn.flux();
+
+            if (converged) break;
         }
 
         if (bounded01_)
@@ -323,7 +333,9 @@ bool Foam::functionObjects::scalarTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
+            if (converged) break;
         }
     }
     else if (phi.dimensions() == dimVolume/dimTime)
@@ -343,7 +355,9 @@ bool Foam::functionObjects::scalarTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
+            if (converged) break;
         }
     }
     else
@@ -352,6 +366,14 @@ bool Foam::functionObjects::scalarTransport::execute()
             << "Incompatible dimensions for phi: " << phi.dimensions() << nl
             << "Dimensions should be " << dimMass/dimTime << " or "
             << dimVolume/dimTime << exit(FatalError);
+    }
+
+    if (converged)
+    {
+        Log << type() << ": " << name() << ": "
+            << s.name() << " is converged." << nl
+            << tab << "initial-residual tolerance: " << tol_ << nl
+            << tab << "outer iteration: " << iter << nl;
     }
 
     Log << endl;
