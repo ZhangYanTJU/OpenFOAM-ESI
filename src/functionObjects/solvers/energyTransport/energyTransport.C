@@ -192,6 +192,7 @@ Foam::functionObjects::energyTransport::energyTransport
     phiName_(dict.getOrDefault<word>("phi", "phi")),
     rhoName_(dict.getOrDefault<word>("rho", "rho")),
     nCorr_(0),
+    tol_(1),
     schemesField_("unknown-schemesField"),
     fvOptions_(mesh_),
     multiphaseThermo_(dict.subOrEmptyDict("phaseThermos")),
@@ -323,6 +324,7 @@ bool Foam::functionObjects::energyTransport::read(const dictionary& dict)
     schemesField_ = dict.getOrDefault("schemesField", fieldName_);
 
     dict.readIfPresent("nCorr", nCorr_);
+    dict.readIfPresent("tolerance", tol_);
 
     if (dict.found("fvOptions"))
     {
@@ -355,6 +357,10 @@ bool Foam::functionObjects::energyTransport::execute()
     scalar relaxCoeff = 0;
     mesh_.relaxEquation(schemesField_, relaxCoeff);
 
+    // Convergence monitor parameters
+    bool converged = false;
+    label iter = 0;
+
     if (phi.dimensions() == dimMass/dimTime)
     {
         rhoCp_ = rho()*Cp();
@@ -376,7 +382,9 @@ bool Foam::functionObjects::energyTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
+            if (converged) break;
         }
     }
     else if (phi.dimensions() == dimVolume/dimTime)
@@ -408,7 +416,9 @@ bool Foam::functionObjects::energyTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
+            if (converged) break;
         }
     }
     else
@@ -417,6 +427,14 @@ bool Foam::functionObjects::energyTransport::execute()
             << "Incompatible dimensions for phi: " << phi.dimensions() << nl
             << "Dimensions should be " << dimMass/dimTime << " or "
             << dimVolume/dimTime << exit(FatalError);
+    }
+
+    if (converged)
+    {
+        Log << type() << ": " << name() << ": "
+            << s.name() << " is converged." << nl
+            << tab << "initial-residual tolerance: " << tol_ << nl
+            << tab << "outer iteration: " << iter << nl;
     }
 
     Log << endl;

@@ -90,6 +90,7 @@ Usage
             field           s;
             bounded01       false;
             phase           alpha.water;
+            tolerance       1e-5;
 
             write           true;
 
@@ -123,6 +124,7 @@ Usage
         phi          | Name of flux field      | no          | phi
         rho          | Name of density field   | no          | rho
         phase        | Name of the phase       | no          | none
+        tolerance    | Outer-loop initial-residual tolerance | no | 1
         nut          | Name of the turbulence viscosity | no | none
         D            | Diffusion coefficient   | no          | auto generated
         nCorr        | Number of correctors    | no          | 0
@@ -195,6 +197,9 @@ class scalarTransport
         //- Turbulent diffusion coefficient (optional)
         scalar alphaDt_;
 
+        //- Outer-loop initial-residual tolerance
+        scalar tol_;
+
         //- Number of corrector iterations (optional)
         label nCorr_;
 
@@ -222,6 +227,7 @@ class scalarTransport
             const volScalarField& s,
             const surfaceScalarField& phi
         ) const;
+
 
         //- No copy construct
         scalarTransport(const scalarTransport&) = delete;

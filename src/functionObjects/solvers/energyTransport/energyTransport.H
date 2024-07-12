@@ -163,6 +163,7 @@ Usage
         phi          | Name of flux field      | no          | phi
         rho          | Name of density field   | no          | rho
         nCorr        | Number of correctors    | no          | 0
+        tolerance    | Outer-loop initial-residual tolerance | no | 1
         schemesField | Name of field to specify schemes | no | field name
         fvOptions    | List of scalar sources  | no          |
         Cp           | Heat capacity for single phase | no   | 0
@@ -216,6 +217,9 @@ class energyTransport
 
         //- Number of corrector iterations (optional)
         label nCorr_;
+
+        //- Outer-loop initial-residual tolerance
+        scalar tol_;
 
         //- Name of field whose schemes are used (optional)
         word schemesField_;
