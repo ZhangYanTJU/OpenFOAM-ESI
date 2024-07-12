@@ -162,6 +162,25 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::scalarTransport::D
 }
 
 
+bool Foam::functionObjects::scalarTransport::converged
+(
+    const int nCorr,
+    const scalar initialResidual
+) const
+{
+    if (initialResidual > tolerance_)
+    {
+        return false;
+    }
+
+    Info<< "Field " << typeName
+        << " converged in " << nCorr << " correctors"
+        << nl << endl;
+
+    return true;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::functionObjects::scalarTransport::scalarTransport
@@ -183,6 +202,7 @@ Foam::functionObjects::scalarTransport::scalarTransport
     ),
     D_(0),
     constantD_(false),
+    tolerance_(1),
     nCorr_(0),
     resetOnStartUp_(false),
     schemesField_("unknown-schemesField"),
@@ -225,6 +245,7 @@ bool Foam::functionObjects::scalarTransport::read(const dictionary& dict)
     alphaD_ = dict.getOrDefault<scalar>("alphaD", 1);
     alphaDt_ = dict.getOrDefault<scalar>("alphaDt", 1);
 
+    dict.readIfPresent("tolerance", tolerance_);
     dict.readIfPresent("nCorr", nCorr_);
     dict.readIfPresent("resetOnStartUp", resetOnStartUp_);
 
@@ -285,7 +306,11 @@ bool Foam::functionObjects::scalarTransport::execute()
 
             sEqn.relax(relaxCoeff);
             fvOptions_.constrain(sEqn);
-            sEqn.solve(schemesField_);
+
+            if (converged(i, sEqn.solve(schemesField_).initialResidual()))
+            {
+                break;
+            }
 
             tTPhiUD = sEqn.flux();
         }
@@ -323,7 +348,10 @@ bool Foam::functionObjects::scalarTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            if (converged(i, sEqn.solve(schemesField_).initialResidual()))
+            {
+                break;
+            }
         }
     }
     else if (phi.dimensions() == dimVolume/dimTime)
@@ -343,7 +371,10 @@ bool Foam::functionObjects::scalarTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            if (converged(i, sEqn.solve(schemesField_).initialResidual()))
+            {
+                break;
+            }
         }
     }
     else
