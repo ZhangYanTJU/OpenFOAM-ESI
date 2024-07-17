@@ -2054,7 +2054,6 @@ Foam::labelList Foam::meshRefinement::intersectedPoints() const
 
     // Mark all points on faces that will become baffles
     bitSet isBoundaryPoint(mesh_.nPoints());
-    label nBoundaryPoints = 0;
 
     const labelList& surfIndex = surfaceIndex();
 
@@ -2062,15 +2061,7 @@ Foam::labelList Foam::meshRefinement::intersectedPoints() const
     {
         if (surfIndex[facei] != -1)
         {
-            const face& f = faces[facei];
-
-            forAll(f, fp)
-            {
-                if (isBoundaryPoint.set(f[fp]))
-                {
-                    nBoundaryPoints++;
-                }
-            }
+            isBoundaryPoint.set(faces[facei]);
         }
     }
 
@@ -2083,37 +2074,17 @@ Foam::labelList Foam::meshRefinement::intersectedPoints() const
     //    if (patchi != -1)
     //    {
     //        const polyPatch& pp = mesh_.boundaryMesh()[patchi];
-    //
-    //        label facei = pp.start();
-    //
     //        forAll(pp, i)
     //        {
-    //            const face& f = faces[facei];
-    //
-    //            forAll(f, fp)
-    //            {
-    //                if (isBoundaryPoint.set(f[fp]))
-    //                    nBoundaryPoints++;
-    //                }
-    //            }
-    //            facei++;
+    //            isBoundaryPoint.set(faces[pp.start()+i]);
     //        }
     //    }
     //}
 
+    // Make sure all processors have the same data
+    syncTools::syncPointList(mesh_, isBoundaryPoint, orEqOp<unsigned int>(), 0);
 
-    // Pack
-    labelList boundaryPoints(nBoundaryPoints);
-    nBoundaryPoints = 0;
-    forAll(isBoundaryPoint, pointi)
-    {
-        if (isBoundaryPoint.test(pointi))
-        {
-            boundaryPoints[nBoundaryPoints++] = pointi;
-        }
-    }
-
-    return boundaryPoints;
+    return isBoundaryPoint.sortedToc();
 }
 
 
