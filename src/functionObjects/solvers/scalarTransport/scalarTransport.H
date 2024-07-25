@@ -31,112 +31,134 @@ Group
     grpSolversFunctionObjects
 
 Description
-    Evolves a passive scalar transport equation.
+    Computes the transport equation for a passive scalar in single-phase or
+    two-phase flow, considering both incompressible and compressible cases:
 
-    - To specify the field name set the \c field entry
-    - To employ the same numerical schemes as another field set
-      the \c schemesField entry,
-    - The diffusivity can be set manually using the 'D' entry, retrieved
-      from the turbulence model or specified nut
-    - Alternatively if a turbulence model is available a turbulent diffusivity
-      may be constructed from the laminar and turbulent viscosities using the
-      optional diffusivity coefficients \c alphaD and \c alphaDt (which default
-      to 1):
-      \verbatim
-          D = alphaD*nu + alphaDt*nut
-      \endverbatim
-    - To specify a transport quantity within a phase enter phase.
-    - bounded01 bounds the transported scalar within 0 and 1.
+    \f[
+        \frac{\partial \rho \, T}{\partial t}
+      + \nabla \cdot \left( \phi_\alpha \, T \right)
+      - \nabla \cdot (D_T \, \nabla T)
+      = \alpha \, S_T
+    \f]
+
+    where:
+    \vartable
+      T       | Passive scalar field
+      \rho    | (Generic) Fluid density which is unity when not specified
+      \phi_\alpha | (Generic) Flux field
+      \alpha  | Phase fraction which is unity for single-phase flows
+      D_T     | Diffusivity representing the diffusive transport of T
+      S_T     | Passive-scalar field source term
+    \endvartable
 
 Usage
-    Example of function object specification to solve a scalar transport
-    equation:
+    Minimal example in \c system/controlDict.functions:
     \verbatim
-    functions
+    scalarTransport1
     {
-        scalar1
-        {
-            type            scalarTransport;
-            libs            (solverFunctionObjects);
+        // Mandatory entries
+        type            scalarTransport;
+        libs            (solverFunctionObjects);
 
-            resetOnStartUp  no;
-            region          cabin;
-            field           H2O;
+        // Optional entries
+        field           <word>;
+        phi             <word>;
+        rho             <word>;
+        nut             <word>;
+        phase           <word>;
+        phasePhiCompressed  <word>;
+        schemesField    <word>;
+        bounded01       <bool>;
+        D               <scalar>;
+        alphaD          <scalar>;
+        alphaDt         <scalar>;
+        tolerance       <scalar>;
+        nCorr           <label>;
+        resetOnStartUp  <bool>;
+        fvOptions       <dict>;
 
-
-            fvOptions
-            {
-                ...
-            }
-        }
+        // Inherited entries
+        ...
     }
-    \endverbatim
 
-    Example of function object specification to solve a residence time
-    in a two phase flow:
-    equation:
-    \verbatim
-    functions
-    {
-        sTransport
-        {
-            type            scalarTransport;
-            libs            (solverFunctionObjects);
-
-            enabled         true;
-            writeControl    writeTime;
-            writeInterval   1;
-
-            field           s;
-            bounded01       false;
-            phase           alpha.water;
-            tolerance       1e-5;
-
-            write           true;
-
-            fvOptions
-            {
-                unitySource
-                {
-                    type            scalarSemiImplicitSource;
-                    enabled         true;
-
-                    selectionMode   all;
-                    volumeMode      specific;
-
-                    sources
-                    {
-                        s           (1 0);
-                    }
-                }
-            }
-
-            resetOnStartUp  false;
-        }
-    }
-    \endverbatim
-
-    Where the entries comprise:
+    where:
     \table
-        Property     | Description             | Required    | Default value
-        type         | Type name: scalarTransport | yes      |
-        field        | Name of the scalar field | no         | s
-        phi          | Name of flux field      | no          | phi
-        rho          | Name of density field   | no          | rho
-        phase        | Name of the phase       | no          | none
-        tolerance    | Outer-loop initial-residual tolerance | no | 1
-        nut          | Name of the turbulence viscosity | no | none
-        D            | Diffusion coefficient   | no          | auto generated
-        nCorr        | Number of correctors    | no          | 0
-        resetOnStartUp | Reset scalar to zero on start-up | no | no
-        schemesField | Name of field to specify schemes | no | field name
-        fvOptions    | List of scalar sources  | no          |
-        bounded01    | Bounds scalar between 0-1 for multiphase | no | true
-        phasePhiCompressed | Compressed flux for VOF | no | alphaPhiUn
+      Property  | Description                         | Type | Reqd | Deflt
+      type      | Type name: scalarTransport          | word | yes  | -
+      libs      | Library name: solverFunctionObjects | word | yes  | -
+      field     | Name of the passive-scalar field    | word | no   | s
+      phi       | Name of flux field                  | word | no   | phi
+      rho       | Name of density field               | word | no   | rho
+      nut       | Name of the turbulence viscosity    | word | no   | none
+      phase     | Name of the phase                   | word | no   | none
+      phasePhiCompressed | Name of compressed VOF flux | word | no | alphaPhiUn
+      schemesField | Name of field to specify schemes | word  | no | field
+      bounded01 | Bounds scalar between 0-1 for multiphase  | bool | no | true
+      D         | Diffusion coefficient               | scalar | no | -
+      alphaD    | Laminar diffusivity coefficient     | scalar | no | 1
+      alphaDt   | Turbulent diffusivity coefficient   | scalar | no | 1
+      tolerance | Outer-loop initial-residual tolerance | scalar | no | 1
+      nCorr     | Number of outer-loop correctors     | label  | no | 0
+      resetOnStartUp | Flag to reset field to zero on start-up | bool | no | no
+      fvOptions | List of finite-volume options       | dict   | no | -
     \endtable
 
-See also
-    Foam::functionObjects::fvMeshFunctionObject
+    The inherited entries are elaborated in:
+      - \link fvMeshFunctionObject.H \endlink
+      - \link fvOption.H \endlink
+
+    An example of function object specification to solve a residence time
+    in a two-phase flow:
+    \verbatim
+    scalarTransport1
+    {
+        // Mandatory entries
+        type            scalarTransport;
+        libs            (solverFunctionObjects);
+
+        // Optional entries
+        field           s;
+        bounded01       false;
+        phase           alpha.water;
+        tolerance       1e-5;
+        resetOnStartUp  false;
+        fvOptions
+        {
+            unitySource
+            {
+                type            scalarSemiImplicitSource;
+                enabled         true;
+
+                selectionMode   all;
+                volumeMode      specific;
+
+                sources
+                {
+                    s           (1 0);
+                }
+            }
+        }
+
+        // Inherited entries
+        enabled         true;
+        writeControl    writeTime;
+        writeInterval   1;
+    }
+    \endverbatim
+
+Note
+  - To use the same numerical schemes as another field,
+  set the \c schemesField entry.
+  - The diffusivity can be set manually using the \c D entry, obtained
+  from the turbulence model or specified as `nut`.
+  - Alternatively, if a turbulence model is available, turbulent diffusivity
+  can be constructed from the laminar and turbulent viscosities using the
+  optional diffusivity coefficients \c alphaD and \c alphaDt
+  (which default to 1):
+
+    \f[
+        D = \alpha_D \, \nu + \alpha_{Dt} \, \nu_t
+    \f]
 
 SourceFiles
     scalarTransport.C
