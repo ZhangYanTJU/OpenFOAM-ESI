@@ -30,152 +30,180 @@ Group
     grpSolversFunctionObjects
 
 Description
-    Evolves a simplified energy transport equation for incompressible flows.
-    It takes into account the inertia, conduction and convection terms plus
-    a source.
+    Computes the simplified energy transport equation in single-phase or
+    two-phase flow, considering incompressible cases:
 
-    - The field name must be temperature and its BC's specified in the time
-      directory.
-    - The turbulence model should be incompressible
-    - In order to use in a incompressible multi phase a list of thermal
-      properties are needed. See below
+    \f[
+        \frac{\partial \rho \, C_p \, T}{\partial t}
+      + \nabla \cdot \left(\rho \, C_p \, \phi \, T \right)
+      - \nabla \cdot \left(\rho \, C_p \, \phi \right) \, T
+      - \nabla \cdot \left(\kappa_{eff} \, \nabla T \right)
+      = S_T
+    \f]
 
+    where:
+    \vartable
+      T       | Scalar field
+      \rho    | (Generic) Fluid density which is unity when not specified
+      C_p     | Specific heat capacity at constant pressure
+      \phi    | (Generic) Flux field
+      \kappa_{eff}  | Effective thermal conductivity
+      S_T     | Scalar field source term
+    \endvartable
 
 Usage
-    Example of function object specification to solve a energy transport
-    equation for a single phase flow plus a source term
+    Minimal example in \c system/controlDict.functions:
     \verbatim
-    functions
+    energyTransport1
     {
-        energy
-        {
-            type            energyTransport;
-            libs            (energyTransportFunctionObjects);
+        // Mandatory entries
+        type            energyTransport;
+        libs            (solverFunctionObjects);
 
-            enabled         true;
-            writeControl    writeTime;
-            writeInterval   1;
+        // Optional entries
+        field           <word>;
+        phi             <word>;
+        rho             <word>;
+        Cp              <scalar>;
+        kappa           <scalar>;
+        rhoInf          <scalar>;
+        Prt             <scalar>;
+        schemesField    <word>;
+        tolerance       <scalar>;
+        nCorr           <label>;
+        fvOptions       <dict>;
+        phaseThermos    <dict>;
 
-            field           T;
-
-            // volumetric Flux
-            phi             phi;
-
-            // Thermal properties
-            Cp              Cp    [J/kg/K]  1e3;
-            kappa           kappa [W/m/K]   0.0257;
-            rhoInf          rho   [kg/m^3]  1.2;
-
-            write           true;
-
-            fvOptions
-            {
-                viscousDissipation
-                {
-                    type            viscousDissipation;
-                    enabled         true;
-
-                    viscousDissipationCoeffs
-                    {
-                        fields          (T);
-                        rhoInf          $....rhoInf;
-                    }
-                }
-            }
-        }
+        // Inherited entries
+        ...
     }
     \endverbatim
 
-    Example of function object specification to solve a energy transport
-    equation for a multiphase phase flow plus a source term
-
-    equation:
-    \verbatim
-    functions
-    {
-        energy
-        {
-            type            energyTransport;
-            libs            (energyTransportFunctionObjects);
-
-            enabled         true;
-            writeControl    writeTime;
-            writeInterval   1;
-
-            field           T;
-
-            // rho field name
-            rho             rho;
-            // mass flux for multiphase
-            phi             rhoPhi;
-
-            write           true;
-
-            // Thermal properties of the phases
-            phaseThermos
-            {
-                alpha.air
-                {
-                    Cp          1e3;
-                    kappa       0.0243;
-                }
-                alpha.mercury
-                {
-                    Cp          140;
-                    kappa       8.2;
-                }
-                alpha.oil
-                {
-                    Cp          2e3;
-                    kappa       0.2;
-                }
-                alpha.water
-                {
-                    Cp          4e3;
-                    kappa       0.6;
-                }
-            }
-
-
-            fvOptions
-            {
-                viscousDissipation
-                {
-                    type            viscousDissipation;
-                    enabled         true;
-
-                    viscousDissipationCoeffs
-                    {
-                        fields          (T);
-                        rho             rho; //rho Field
-                    }
-                }
-            }
-        }
-    }
-    \endverbatim
-
-    Where the entries comprise:
+    where:
     \table
-        Property     | Description             | Required    | Default value
-        type         | Type name: energyTransport | yes      |
-        field        | Name of the scalar field | no         | T
-        phi          | Name of flux field      | no          | phi
-        rho          | Name of density field   | no          | rho
-        nCorr        | Number of correctors    | no          | 0
-        tolerance    | Outer-loop initial-residual tolerance | no | 1
-        schemesField | Name of field to specify schemes | no | field name
-        fvOptions    | List of scalar sources  | no          |
-        Cp           | Heat capacity for single phase | no   | 0
-        rhoInf       | Density for single phase | no         | 0
-        kappa        | Thermal conductivity for single phase | no   | 0
-        Prt          | Turbulent Prandlt number | no         | 1.0
-        phaseThermos | Dictionary for multi-phase thermo |no | null
-        fvOptions    | Opotional extra sources | no          | null
+      Property  | Description                         | Type | Reqd | Deflt
+      type      | Type name: energyTransport          | word | yes  | -
+      libs      | Library name: solverFunctionObjects | word | yes  | -
+      field     | Name of the passive-scalar field    | word | no   | s
+      phi       | Name of flux field                  | word | no   | phi
+      rho       | Name of density field               | word | no   | rho
+      Cp        | Specific heat capacity at constant pressure | scalar | no | 0
+      kappa     | Thermal conductivity                | scalar | no | 0
+      rhoInf    | Fluid density                       | scalar | no | 0
+      Prt       | Turbulent Prandtl number            | scalar | no | 1
+      schemesField | Name of field to specify schemes | word   | no | field
+      tolerance | Outer-loop initial-residual tolerance | scalar | no | 1
+      nCorr     | Number of outer-loop correctors     | label  | no | 0
+      fvOptions | List of finite-volume options       | dict   | no | -
+      phaseThermos | Dictionary for multi-phase thermo | dict  | no | null
     \endtable
 
-See also
-    Foam::functionObjects::fvMeshFunctionObject
+    The inherited entries are elaborated in:
+      - \link fvMeshFunctionObject.H \endlink
+      - \link fvOption.H \endlink
+
+    An example of function object specification to solve a energy transport
+    equation for a single phase flow plus a source term:
+    \verbatim
+    energyTransport1
+    {
+        // Mandatory entries
+        type            energyTransport;
+        libs            (solverFunctionObjects);
+
+        // Optional entries
+        field           T;
+        phi             phi;
+        Cp              Cp    [J/kg/K]  1e3;
+        kappa           kappa [W/m/K]   0.0257;
+        rhoInf          rho   [kg/m^3]  1.2;
+        fvOptions
+        {
+            viscousDissipation
+            {
+                type            viscousDissipation;
+                enabled         true;
+
+                viscousDissipationCoeffs
+                {
+                    fields          (T);
+                    rhoInf          $....rhoInf;
+                }
+            }
+        }
+
+        // Inherited entries
+        enabled         true;
+        writeControl    writeTime;
+        writeInterval   1;
+    }
+    \endverbatim
+
+    An example of function object specification to solve a energy transport
+    equation for a multiphase phase flow plus a source term:
+    \verbatim
+    energyTransport1
+    {
+        // Mandatory entries
+        type            energyTransport;
+        libs            (solverFunctionObjects);
+
+        // Optional entries
+        field           T;
+        rho             rho;
+        phi             rhoPhi;
+
+        // Thermal properties of the phases
+        phaseThermos
+        {
+            alpha.air
+            {
+                Cp          1e3;
+                kappa       0.0243;
+            }
+            alpha.mercury
+            {
+                Cp          140;
+                kappa       8.2;
+            }
+            alpha.oil
+            {
+                Cp          2e3;
+                kappa       0.2;
+            }
+            alpha.water
+            {
+                Cp          4e3;
+                kappa       0.6;
+            }
+        }
+
+        fvOptions
+        {
+            viscousDissipation
+            {
+                type            viscousDissipation;
+                enabled         true;
+
+                viscousDissipationCoeffs
+                {
+                    fields          (T);
+                    rho             rho;
+                }
+            }
+        }
+
+        // Inherited entries
+        enabled         true;
+        writeControl    writeTime;
+        writeInterval   1;
+    }
+    \endverbatim
+
+Note
+  - The field name must be temperature and its boundary conditions
+    specified in the time directory.
+  - The turbulence model should be incompressible.
 
 SourceFiles
     energyTransport.C
