@@ -73,7 +73,7 @@ Usage
         alphaD          <scalar>;
         alphaDt         <scalar>;
         tolerance       <scalar>;
-        nCorr           <label>;
+        nCorr           <int>;
         resetOnStartUp  <bool>;
         fvOptions       <dict>;
 
@@ -98,7 +98,7 @@ Usage
       alphaD    | Laminar diffusivity coefficient     | scalar | no | 1
       alphaDt   | Turbulent diffusivity coefficient   | scalar | no | 1
       tolerance | Outer-loop initial-residual tolerance | scalar | no | 1
-      nCorr     | Number of outer-loop correctors     | label  | no | 0
+      nCorr     | Number of outer-loop correctors     | int    | no | 0
       resetOnStartUp | Flag to reset field to zero on start-up | bool | no | no
       fvOptions | List of finite-volume options       | dict   | no | -
     \endtable
@@ -187,52 +187,52 @@ class scalarTransport
 :
     public fvMeshFunctionObject
 {
-    // Private data
+    // Private Data
+
+        //- Run-time selectable finite volume options, e.g. sources, constraints
+        fv::optionList fvOptions_;
 
         //- Name of the transport field.
         word fieldName_;
 
-        //- Name of flux field (optional)
+        //- Name of field whose schemes are used
+        word schemesField_;
+
+        //- Name of flux field
         word phiName_;
 
-        //- Name of density field (optional)
+        //- Name of density field
         word rhoName_;
 
-        //- Name of turbulent viscosity field (optional)
+        //- Name of turbulent viscosity field
         word nutName_;
 
-        //- Name of phase field (optional)
+        //- Name of phase field
         word phaseName_;
 
-        //- Name of phase field compressed flux (optional)
+        //- Name of phase field compressed flux
         word phasePhiCompressedName_;
 
-        //- Diffusion coefficient (optional)
+        //- Diffusion coefficient
         scalar D_;
 
-        //- Flag to indicate whether a constant, uniform D_ is specified
-        bool constantD_;
-
-        //- Laminar diffusion coefficient (optional)
+        //- Laminar diffusion coefficient
         scalar alphaD_;
 
-        //- Turbulent diffusion coefficient (optional)
+        //- Turbulent diffusion coefficient
         scalar alphaDt_;
 
         //- Outer-loop initial-residual tolerance
         scalar tol_;
 
-        //- Number of corrector iterations (optional)
-        label nCorr_;
+        //- Number of corrector iterations
+        int nCorr_;
 
         //- Flag to reset the scalar to zero on start-up
         bool resetOnStartUp_;
 
-        //- Name of field whose schemes are used (optional)
-        word schemesField_;
-
-        //- Run-time selectable finite volume options, e.g. sources, constraints
-        fv::optionList fvOptions_;
+        //- Flag to indicate whether a constant, uniform D_ is specified
+        bool constantD_;
 
         //- Bound scalar between 0-1 using MULES for multiphase case
         bool bounded01_;
@@ -249,13 +249,6 @@ class scalarTransport
             const volScalarField& s,
             const surfaceScalarField& phi
         ) const;
-
-
-        //- No copy construct
-        scalarTransport(const scalarTransport&) = delete;
-
-        //- No copy assignment
-        void operator=(const scalarTransport&) = delete;
 
 
 public:
@@ -276,7 +269,7 @@ public:
 
 
     //- Destructor
-    virtual ~scalarTransport();
+    virtual ~scalarTransport() = default;
 
 
     // Member Functions

@@ -26,11 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "energyTransport.H"
-#include "surfaceFields.H"
-#include "fvmDdt.H"
-#include "fvmDiv.H"
-#include "fvmLaplacian.H"
-#include "fvmSup.H"
 #include "turbulentTransportModel.H"
 #include "turbulentFluidThermoModel.H"
 #include "addToRunTimeSelectionTable.H"
@@ -188,24 +183,6 @@ Foam::functionObjects::energyTransport::energyTransport
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
-    fieldName_(dict.getOrDefault<word>("field", "T")),
-    phiName_(dict.getOrDefault<word>("phi", "phi")),
-    rhoName_(dict.getOrDefault<word>("rho", "rho")),
-    nCorr_(0),
-    tol_(1),
-    schemesField_("unknown-schemesField"),
-    fvOptions_(mesh_),
-    multiphaseThermo_(dict.subOrEmptyDict("phaseThermos")),
-    Cp_("Cp", dimEnergy/dimMass/dimTemperature, 0, dict),
-    kappa_
-    (
-        "kappa",
-        dimEnergy/dimTime/dimLength/dimTemperature,
-        0,
-        dict
-    ),
-    rho_("rhoInf", dimDensity, 0, dict),
-    Prt_("Prt", dimless, 1, dict),
     rhoCp_
     (
         IOobject
@@ -219,7 +196,25 @@ Foam::functionObjects::energyTransport::energyTransport
         ),
         mesh_,
         dimensionedScalar(dimEnergy/dimTemperature/dimVolume, Zero)
-    )
+    ),
+    fvOptions_(mesh_),
+    multiphaseThermo_(dict.subOrEmptyDict("phaseThermos")),
+    Cp_("Cp", dimEnergy/dimMass/dimTemperature, 0, dict),
+    kappa_
+    (
+        "kappa",
+        dimEnergy/dimTime/dimLength/dimTemperature,
+        0,
+        dict
+    ),
+    rho_("rhoInf", dimDensity, 0, dict),
+    Prt_("Prt", dimless, 1, dict),
+    fieldName_(dict.getOrDefault<word>("field", "T")),
+    schemesField_("unknown-schemesField"),
+    phiName_(dict.getOrDefault<word>("phi", "phi")),
+    rhoName_(dict.getOrDefault<word>("rho", "rho")),
+    tol_(1),
+    nCorr_(0)
 {
     read(dict);
 
@@ -306,17 +301,14 @@ Foam::functionObjects::energyTransport::energyTransport
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::functionObjects::energyTransport::~energyTransport()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::functionObjects::energyTransport::read(const dictionary& dict)
 {
-    fvMeshFunctionObject::read(dict);
+    if (!fvMeshFunctionObject::read(dict))
+    {
+        return false;
+    }
 
     dict.readIfPresent("phi", phiName_);
     dict.readIfPresent("rho", rhoName_);
@@ -359,14 +351,14 @@ bool Foam::functionObjects::energyTransport::execute()
 
     // Convergence monitor parameters
     bool converged = false;
-    label iter = 0;
+    int iter = 0;
 
     if (phi.dimensions() == dimMass/dimTime)
     {
         rhoCp_ = rho()*Cp();
         const surfaceScalarField rhoCpPhi(fvc::interpolate(Cp())*phi);
 
-        for (label i = 0; i <= nCorr_; i++)
+        for (int i = 0; i <= nCorr_; ++i)
         {
             fvScalarMatrix sEqn
             (
@@ -401,7 +393,7 @@ bool Foam::functionObjects::energyTransport::execute()
             rhoCp
         );
 
-        for (label i = 0; i <= nCorr_; i++)
+        for (int i = 0; i <= nCorr_; ++i)
         {
             fvScalarMatrix sEqn
             (
