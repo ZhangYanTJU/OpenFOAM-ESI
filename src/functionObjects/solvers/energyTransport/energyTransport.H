@@ -70,7 +70,7 @@ Usage
         Prt             <scalar>;
         schemesField    <word>;
         tolerance       <scalar>;
-        nCorr           <label>;
+        nCorr           <int>;
         fvOptions       <dict>;
         phaseThermos    <dict>;
 
@@ -93,7 +93,7 @@ Usage
       Prt       | Turbulent Prandtl number            | scalar | no | 1
       schemesField | Name of field to specify schemes | word   | no | field
       tolerance | Outer-loop initial-residual tolerance | scalar | no | 1
-      nCorr     | Number of outer-loop correctors     | label  | no | 0
+      nCorr     | Number of outer-loop correctors     | int    | no | 0
       fvOptions | List of finite-volume options       | dict   | no | -
       phaseThermos | Dictionary for multi-phase thermo | dict  | no | null
     \endtable
@@ -232,25 +232,10 @@ class energyTransport
 :
     public fvMeshFunctionObject
 {
-    // Private data
+    // Private Data
 
-        //- Name of the transport field.
-        word fieldName_;
-
-        //- Name of flux field
-        word phiName_;
-
-        //- Name of density field
-        word rhoName_;
-
-        //- Number of corrector iterations (optional)
-        label nCorr_;
-
-        //- Outer-loop initial-residual tolerance
-        scalar tol_;
-
-        //- Name of field whose schemes are used (optional)
-        word schemesField_;
+        //- Volumetric heat capacity field [J/m^3/K]
+        volScalarField rhoCp_;
 
         //- Run-time selectable finite volume options, e.g. sources, constraints
         fv::optionList fvOptions_;
@@ -261,7 +246,7 @@ class energyTransport
         //- List of phase names
         wordList phaseNames_;
 
-        //- List of phase heat capacities
+        //- List of phase specific heat capacities at constant pressure
         PtrList<dimensionedScalar> Cps_;
 
         //- List of phase thermal diffusivity for temperature [J/m/s/K]
@@ -270,7 +255,7 @@ class energyTransport
         //- Unallocated phase list
         UPtrList<volScalarField> phases_;
 
-        //- Heat capacity for single phase flows
+        //- Specific heat capacity at constant pressure for single phase flows
         dimensionedScalar Cp_;
 
         //- Thermal diffusivity for temperature for single phase flows
@@ -282,8 +267,23 @@ class energyTransport
         //- Turbulent Prandt number
         dimensionedScalar Prt_;
 
-        //- rhoCp
-        volScalarField rhoCp_;
+        //- Name of the transport field
+        word fieldName_;
+
+        //- Name of field whose schemes are used
+        word schemesField_;
+
+        //- Name of flux field
+        word phiName_;
+
+        //- Name of density field
+        word rhoName_;
+
+        //- Outer-loop initial-residual tolerance
+        scalar tol_;
+
+        //- Number of corrector iterations
+        int nCorr_;
 
 
     // Private Member Functions
@@ -294,20 +294,14 @@ class energyTransport
         //- Return the diffusivity field
         tmp<volScalarField> kappaEff() const;
 
-        //- Return rho field
+        //- Return the density field, rho
         tmp<volScalarField> rho() const;
 
-        //- Return Cp
+        //- Return the specific heat capacity at constant pressure field, Cp
         tmp<volScalarField> Cp() const;
 
-        //- Return kappa
+        //- Return the thermal diffusivity field
         tmp<volScalarField> kappa() const;
-
-        //- No copy construct
-        energyTransport(const energyTransport&) = delete;
-
-        //- No copy assignment
-        void operator=(const energyTransport&) = delete;
 
 
 public:
@@ -328,7 +322,7 @@ public:
 
 
     //- Destructor
-    virtual ~energyTransport();
+    virtual ~energyTransport() = default;
 
 
     // Member Functions
