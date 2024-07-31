@@ -83,6 +83,10 @@ Note
     pitch (rotation about y)
     yaw (rotation about z)
 
+    - with -rotate and two exactly opposing vectors it will actually mirror
+    the geometry. Use any of the other rotation options instead or use
+    two steps, each 90 degrees.
+
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
