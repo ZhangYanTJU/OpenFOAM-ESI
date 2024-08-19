@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2019,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -54,19 +54,9 @@ typedef MeshObject<fvMesh, MoveableMeshObject, cellCellStencilObject> Stencil;
 
 class cellCellStencilObject
 :
-    public MeshObject<fvMesh, MoveableMeshObject, cellCellStencilObject>,
+    public Stencil,
     public cellCellStencil
 {
-    // Private Typedefs
-
-        typedef MeshObject
-        <
-            fvMesh,
-            MoveableMeshObject,
-            cellCellStencilObject
-        > MeshObject_type;
-
-
     // Private Data
 
         autoPtr<cellCellStencil> stencilPtr_;
@@ -86,8 +76,7 @@ public:
             const bool update = true
         )
         :
-            MeshObject_type(mesh),
-
+            Stencil(mesh),
             cellCellStencil(mesh),
             stencilPtr_
             (
@@ -111,10 +100,7 @@ public:
     // Member Functions
 
         //- Callback for geometry motion
-        virtual bool movePoints()
-        {
-            return stencilPtr_().update();
-        }
+        virtual bool movePoints();
 
         //- Update stencils. Return false if nothing changed.
         virtual bool update()

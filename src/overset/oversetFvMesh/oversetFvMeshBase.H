@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,7 +37,6 @@ SourceFiles
 #ifndef oversetFvMeshBase_H
 #define oversetFvMeshBase_H
 
-#include "fvMeshPrimitiveLduAddressing.H"
 #include "fvMeshPrimitiveLduAddressing.H"
 #include "lduInterfaceFieldPtrsList.H"
 #include "volFieldsFwd.H"
@@ -237,6 +236,9 @@ public:
                 const Type& holeCellValue
             ) const;
 
+
+        //- Clear out local storage
+        void clearOut();
 
         //- Update the mesh for both mesh motion and topology change
         virtual bool update();

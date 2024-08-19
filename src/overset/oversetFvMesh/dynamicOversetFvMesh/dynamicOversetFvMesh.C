@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,6 +65,10 @@ bool Foam::dynamicOversetFvMesh::update()
         return false;
     }
 
+    //Note: too late to do oversetFvMeshBase::clearOut() to get it
+    //      consistent with any new cell-cell stencil since 
+    //      dynamicMotionSolverListFvMesh already triggers
+    //      meshObject::movePoints on cellCellStencilObject
     oversetFvMeshBase::update();
 
     return true;

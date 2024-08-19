@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2014-2022 OpenCFD Ltd.
+    Copyright (C) 2014-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -575,6 +575,14 @@ Foam::oversetFvMeshBase::primitiveLduAddr() const
     }
 
     return *lduPtr_;
+}
+
+
+void Foam::oversetFvMeshBase::clearOut()
+{
+    // Cell-cell stencil is already mesh object. Clear out local
+    // addressing to force rebuilding addressing
+    lduPtr_.clear();
 }
 
 

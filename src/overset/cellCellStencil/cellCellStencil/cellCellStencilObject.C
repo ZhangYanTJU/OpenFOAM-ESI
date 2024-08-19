@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,13 +26,34 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "cellCellStencilObject.H"
-
+#include "dynamicOversetFvMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(cellCellStencilObject, 0);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::cellCellStencilObject::movePoints()
+{
+    // Update (if needed) underlying stencil
+    const bool changed = stencilPtr_().update();
+
+    if (changed)
+    {
+        const auto* oversetMeshPtr = isA<oversetFvMeshBase>(mesh());
+        if (oversetMeshPtr)
+        {
+            // Clear out any additional (ldu)addressing
+            const_cast<oversetFvMeshBase&>(*oversetMeshPtr).clearOut();
+        }
+    }
+
+    return changed;
 }
 
 
