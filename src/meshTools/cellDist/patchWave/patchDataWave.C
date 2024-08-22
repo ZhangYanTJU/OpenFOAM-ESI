@@ -264,16 +264,25 @@ void Foam::patchDataWave<TransferType, TrackingData>::correct()
         Map<label> nearestFace(2 * nWalls);
 
         // Get distance and indices of nearest face
-        correctBoundaryFaceCells
-        (
-            patchIDs_,
-            distance_,
-            nearestFace
-        );
+        //correctBoundaryFaceCells
+        //(
+        //    patchIDs_,
+        //    distance_,
+        //    nearestFace
+        //);
 
-        correctBoundaryPointCells
+        //correctBoundaryPointCells
+        //(
+        //    patchIDs_,
+        //    distance_,
+        //    nearestFace
+        //);
+
+        // Correct across multiple patches
+        correctBoundaryCells
         (
-            patchIDs_,
+            patchIDs_.sortedToc(),
+            true,           // do point-connected cells as well
             distance_,
             nearestFace
         );

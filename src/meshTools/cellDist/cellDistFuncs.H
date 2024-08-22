@@ -103,22 +103,22 @@ public:
         template<class Type>
         labelHashSet getPatchIDs() const;
 
-        //- Calculate smallest true distance (and face index)
+        //- Calculate smallest true distance (and patch face index)
         //  from pt to faces wallFaces.
-        //  For efficiency reasons we still pass in patch instead of extracting
-        //  it from mesh_
+        template<class PatchType>
         scalar smallestDist
         (
             const point& p,
-            const polyPatch& patch,
+            const PatchType& patch,
             const labelUList& wallFaces,
-            label& meshFacei
+            label& patchFacei
         ) const;
 
         //- Get faces sharing point with face on patch
+        template<class PatchType>
         void getPointNeighbours
         (
-            const primitivePatch&,
+            const PatchType&,
             const label patchFacei,
             DynamicList<label>&
         ) const;
@@ -144,6 +144,17 @@ public:
         void correctBoundaryPointCells
         (
             const labelHashSet& patchIDs,
+            scalarField& wallDistCorrected,
+            Map<label>& nearestFace
+        ) const;
+
+        //- Correct all cells connected to any of the patches in patchIDs. Sets
+        //  - cell values in wallDistCorrected
+        //  - (mesh) face that contains the nearest point
+        void correctBoundaryCells
+        (
+            const labelList& patchIDs,
+            const bool doPointCells,
             scalarField& wallDistCorrected,
             Map<label>& nearestFace
         ) const;

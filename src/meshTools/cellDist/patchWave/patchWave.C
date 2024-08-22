@@ -204,16 +204,25 @@ void Foam::patchWave::correct()
     {
         Map<label> nearestFace(2*nPatch);
 
-        correctBoundaryFaceCells
-        (
-            patchIDs_,
-            distance_,
-            nearestFace
-        );
+        //correctBoundaryFaceCells
+        //(
+        //    patchIDs_,
+        //    distance_,
+        //    nearestFace
+        //);
 
-        correctBoundaryPointCells
+        //correctBoundaryPointCells
+        //(
+        //    patchIDs_,
+        //    distance_,
+        //    nearestFace
+        //);
+
+        // Correct across multiple patches
+        correctBoundaryCells
         (
-            patchIDs_,
+            patchIDs_.sortedToc(),
+            true,           // do point-connected cells as well
             distance_,
             nearestFace
         );
