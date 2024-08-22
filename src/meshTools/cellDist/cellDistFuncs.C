@@ -256,7 +256,7 @@ void Foam::cellDistFuncs::correctBoundaryFaceCells
             {
                 if (areaFraction && (areaFraction()[patchFacei] <= 0.5))
                 {
-                    // is mostly coupled
+                    // For cyclicACMI: more cyclic than wall
                     continue;
                 }
 
@@ -311,9 +311,9 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
                 // Check cells with face on wall
                 forAll(patch, patchFacei)
                 {
-                    if (!areaFraction || (areaFraction()[patchFacei] <= 0.5))
+                    if (areaFraction && (areaFraction()[patchFacei] <= 0.5))
                     {
-                        // face mostly coupled
+                        // For cyclicACMI: more cyclic than wall
                         isWallPoint.unset(localFaces[patchFacei]);
                     }
                 }
