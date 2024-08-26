@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,60 +27,83 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "nearWallDist.H"
-#include "fvMesh.H"
 #include "cellDistFuncs.H"
 #include "wallFvPatch.H"
-#include "surfaceFields.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::nearWallDist::calculate()
 {
-    cellDistFuncs wallUtils(mesh_);
+    const cellDistFuncs wallUtils(mesh_);
 
-    // Get patch ids of walls
-    labelHashSet wallPatchIDs(wallUtils.getPatchIDs<wallPolyPatch>());
+    // Collect indices of wall patches
 
-    // Size neighbours array for maximum possible
-
-    DynamicList<label> neighbours(wallUtils.maxPatchSize(wallPatchIDs));
-
-
-    // Correct all cells with face on wall
-
-    const volVectorField& cellCentres = mesh_.C();
+    DynamicList<label> wallPatchIDs(mesh_.boundary().size());
+    label nWalls = 0;
 
     forAll(mesh_.boundary(), patchi)
     {
-        fvPatchScalarField& ypatch = operator[](patchi);
-
-        const fvPatch& patch = mesh_.boundary()[patchi];
-
-        if (isA<wallFvPatch>(patch))
+        if (isA<wallFvPatch>(mesh_.boundary()[patchi]))
         {
-            const polyPatch& pPatch = patch.patch();
-
-            const labelUList& faceCells = patch.faceCells();
-
-            // Check cells with face on wall
-            forAll(patch, patchFacei)
-            {
-                wallUtils.getPointNeighbours(pPatch, patchFacei, neighbours);
-
-                label minFacei = -1;
-
-                ypatch[patchFacei] = wallUtils.smallestDist
-                (
-                    cellCentres[faceCells[patchFacei]],
-                    pPatch,
-                    neighbours,
-                    minFacei
-                );
-            }
+            wallPatchIDs.append(patchi);
+            nWalls += mesh_.boundary()[patchi].size();
         }
         else
         {
-            ypatch = 0.0;
+            // Set distance to 0
+            operator[](patchi) = 0.0;
+        }
+    }
+
+
+    // Collect all mesh faces of wall patches
+
+    DynamicList<label> faceLabels(nWalls);
+
+    for (const label patchi : wallPatchIDs)
+    {
+        const fvPatch& patch = mesh_.boundary()[patchi];
+        const auto& pp = patch.patch();
+
+        forAll(patch, i)
+        {
+            faceLabels.append(pp.start()+i);
+        }
+    }
+
+    const uindirectPrimitivePatch wallPatch
+    (
+        UIndirectList<face>(mesh_.faces(), faceLabels),
+        mesh_.points()
+    );
+
+    const volVectorField& cellCentres = mesh_.C();
+
+    DynamicList<label> neighbours;
+
+    nWalls = 0;
+    for (const label patchi : wallPatchIDs)
+    {
+        const fvPatch& patch = mesh_.boundary()[patchi];
+        const labelUList& faceCells = patch.patch().faceCells();
+
+        fvPatchScalarField& ypatch = operator[](patchi);
+
+        forAll(patch, patchFacei)
+        {
+            // Get point connected neighbours (in wallPatch indices!)
+            wallUtils.getPointNeighbours(wallPatch, nWalls, neighbours);
+
+            label minFacei = -1;
+            ypatch[patchFacei] = wallUtils.smallestDist
+            (
+                cellCentres[faceCells[patchFacei]],
+                wallPatch,
+                neighbours,
+                minFacei
+            );
+
+            nWalls++;
         }
     }
 }
