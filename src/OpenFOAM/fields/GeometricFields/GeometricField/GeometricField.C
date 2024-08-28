@@ -1092,6 +1092,10 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::relax(const scalar alpha)
         << "Relaxing" << nl << this->info() << " by " << alpha << endl;
 
     operator==(prevIter() + alpha*(*this - prevIter()));
+
+    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
+    // triggers e.g. cyclic interpolation.
+    this->correctLocalBoundaryConditions();
 }
 
 

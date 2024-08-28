@@ -170,7 +170,7 @@ public:
         // Evaluation functions
 
             //- Return neighbour coupled internal cell data
-            tmp<Field<Type>> patchNeighbourField() const;
+            virtual tmp<Field<Type>> patchNeighbourField() const;
 
             //- Return reference to neighbour patchField
             const cyclicFvPatchField<Type>& neighbourPatchField() const;
