@@ -79,7 +79,7 @@ Foam::patchDistMethods::advectionDiffusion::advectionDiffusion
     tolerance_(coeffs_.getOrDefault<scalar>("tolerance", 1e-3)),
     maxIter_(coeffs_.getOrDefault<int>("maxIter", 10)),
     predicted_(false),
-    checkAndWriteMesh_(coeffs_.getOrDefault("checkAndWriteMesh", true))
+    checkAndWriteMesh_(coeffs_.getOrDefault("checkAndWriteMesh", false))
 {}
 
 
