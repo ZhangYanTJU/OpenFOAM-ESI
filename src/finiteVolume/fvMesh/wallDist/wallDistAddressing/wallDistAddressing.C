@@ -235,27 +235,33 @@ void Foam::wallDistAddressing::correct(volScalarField& y)
     {
         cellToWallFace.reserve(nWalls);
 
-        //correctBoundaryFaceCells
-        //(
-        //    patchSet,
-        //    y,
-        //    cellToWallFace
-        //);
-        //correctBoundaryPointCells
-        //(
-        //    patchSet,
-        //    y,
-        //    cellToWallFace
-        //);
-
-        // Correct across multiple patches
-        correctBoundaryCells
-        (
-            patchIDs_,
-            true,           // do point-connected cells as well
-            y,
-            cellToWallFace
-        );
+        if (cellDistFuncs::useCombinedWallPatch)
+        {
+            // Correct across multiple patches
+            correctBoundaryCells
+            (
+                patchIDs_,
+                true,           // do point-connected cells as well
+                y,
+                cellToWallFace
+            );
+        }
+        else
+        {
+            // Optional backwards compatibility
+            correctBoundaryFaceCells
+            (
+                patchSet,
+                y,
+                cellToWallFace
+            );
+            correctBoundaryPointCells
+            (
+                patchSet,
+                y,
+                cellToWallFace
+            );
+        }
     }
 
     // Make sure boundary values are up to date

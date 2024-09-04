@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,7 +79,15 @@ class cellDistFuncs
 
 public:
 
+    // Static Data Members
+
     ClassName("cellDistFuncs");
+
+
+        //- Use combined-wall-patches wall distance v.s. v2406 per-patch
+        //- distance. Default is true
+        static bool useCombinedWallPatch;
+
 
     // Constructors
 

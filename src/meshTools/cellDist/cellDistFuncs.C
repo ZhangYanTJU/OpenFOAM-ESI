@@ -30,6 +30,7 @@ License
 #include "polyMesh.H"
 #include "polyBoundaryMesh.H"
 #include "uindirectPrimitivePatch.H"
+#include "registerSwitch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -37,6 +38,16 @@ namespace Foam
 {
 defineTypeNameAndDebug(cellDistFuncs, 0);
 }
+
+bool Foam::cellDistFuncs::useCombinedWallPatch = true;
+
+registerInfoSwitch
+(
+    "useCombinedWallPatch",
+    bool,
+    Foam::cellDistFuncs::useCombinedWallPatch
+);
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
