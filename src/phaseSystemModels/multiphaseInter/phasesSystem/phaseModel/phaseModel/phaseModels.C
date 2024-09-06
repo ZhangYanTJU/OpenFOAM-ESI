@@ -68,6 +68,15 @@ makePhaseTypes
 makePhaseTypes
 (
     MovingPhaseModel,
+    PurePhaseModel,
+    multiphaseInter::phaseModel,
+    solidThermo,
+    pureMovingSolidPhaseModel
+);
+
+makePhaseTypes
+(
+    MovingPhaseModel,
     MultiComponentPhaseModel,
     multiphaseInter::phaseModel,
     rhoReactionThermo,
