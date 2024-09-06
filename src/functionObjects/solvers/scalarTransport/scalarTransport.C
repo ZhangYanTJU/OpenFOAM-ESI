@@ -27,11 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "scalarTransport.H"
-#include "surfaceFields.H"
-#include "fvmDdt.H"
-#include "fvmDiv.H"
-#include "fvmLaplacian.H"
-#include "fvmSup.H"
 #include "CMULES.H"
 #include "turbulentTransportModel.H"
 #include "turbulentFluidThermoModel.H"
@@ -172,7 +167,9 @@ Foam::functionObjects::scalarTransport::scalarTransport
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
+    fvOptions_(mesh_),
     fieldName_(dict.getOrDefault<word>("field", "s")),
+    schemesField_("unknown-schemesField"),
     phiName_(dict.getOrDefault<word>("phi", "phi")),
     rhoName_(dict.getOrDefault<word>("rho", "rho")),
     nutName_(dict.getOrDefault<word>("nut", "none")),
@@ -182,11 +179,12 @@ Foam::functionObjects::scalarTransport::scalarTransport
         dict.getOrDefault<word>("phasePhiCompressed", "alphaPhiUn")
     ),
     D_(0),
-    constantD_(false),
+    alphaD_(1),
+    alphaDt_(1),
+    tol_(1),
     nCorr_(0),
     resetOnStartUp_(false),
-    schemesField_("unknown-schemesField"),
-    fvOptions_(mesh_),
+    constantD_(false),
     bounded01_(dict.getOrDefault("bounded01", true))
 {
     read(dict);
@@ -202,31 +200,30 @@ Foam::functionObjects::scalarTransport::scalarTransport
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::functionObjects::scalarTransport::~scalarTransport()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::functionObjects::scalarTransport::read(const dictionary& dict)
 {
-    fvMeshFunctionObject::read(dict);
+    if (!fvMeshFunctionObject::read(dict))
+    {
+        return false;
+    }
 
     dict.readIfPresent("phi", phiName_);
     dict.readIfPresent("rho", rhoName_);
     dict.readIfPresent("nut", nutName_);
     dict.readIfPresent("phase", phaseName_);
-    dict.readIfPresent("bounded01", bounded01_);
+    dict.readIfPresent("phasePhiCompressed", phasePhiCompressedName_);
 
     schemesField_ = dict.getOrDefault("schemesField", fieldName_);
-    constantD_ = dict.readIfPresent("D", D_);
-    alphaD_ = dict.getOrDefault<scalar>("alphaD", 1);
-    alphaDt_ = dict.getOrDefault<scalar>("alphaDt", 1);
 
+    dict.readIfPresent("alphaD", alphaD_);
+    dict.readIfPresent("alphaDt", alphaDt_);
+    dict.readIfPresent("tolerance", tol_);
     dict.readIfPresent("nCorr", nCorr_);
     dict.readIfPresent("resetOnStartUp", resetOnStartUp_);
+    constantD_ = dict.readIfPresent("D", D_);
+    dict.readIfPresent("bounded01", bounded01_);
 
     if (dict.found("fvOptions"))
     {
@@ -256,6 +253,10 @@ bool Foam::functionObjects::scalarTransport::execute()
     scalar relaxCoeff = 0;
     mesh_.relaxEquation(schemesField_, relaxCoeff);
 
+    // Convergence monitor parameters
+    bool converged = false;
+    int iter = 0;
+
     // Two phase scalar transport
     if (phaseName_ != "none")
     {
@@ -272,7 +273,7 @@ bool Foam::functionObjects::scalarTransport::execute()
 
         // Solve
         tmp<surfaceScalarField> tTPhiUD;
-        for (label i = 0; i <= nCorr_; i++)
+        for (int i = 0; i <= nCorr_; ++i)
         {
             fvScalarMatrix sEqn
             (
@@ -285,9 +286,13 @@ bool Foam::functionObjects::scalarTransport::execute()
 
             sEqn.relax(relaxCoeff);
             fvOptions_.constrain(sEqn);
-            sEqn.solve(schemesField_);
+
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
 
             tTPhiUD = sEqn.flux();
+
+            if (converged) break;
         }
 
         if (bounded01_)
@@ -307,9 +312,8 @@ bool Foam::functionObjects::scalarTransport::execute()
     {
         const volScalarField& rho = lookupObject<volScalarField>(rhoName_);
 
-        for (label i = 0; i <= nCorr_; i++)
+        for (int i = 0; i <= nCorr_; ++i)
         {
-
             fvScalarMatrix sEqn
             (
                 fvm::ddt(rho, s)
@@ -323,12 +327,14 @@ bool Foam::functionObjects::scalarTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
+            if (converged) break;
         }
     }
     else if (phi.dimensions() == dimVolume/dimTime)
     {
-        for (label i = 0; i <= nCorr_; i++)
+        for (int i = 0; i <= nCorr_; ++i)
         {
             fvScalarMatrix sEqn
             (
@@ -343,7 +349,9 @@ bool Foam::functionObjects::scalarTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
+            if (converged) break;
         }
     }
     else
@@ -352,6 +360,14 @@ bool Foam::functionObjects::scalarTransport::execute()
             << "Incompatible dimensions for phi: " << phi.dimensions() << nl
             << "Dimensions should be " << dimMass/dimTime << " or "
             << dimVolume/dimTime << exit(FatalError);
+    }
+
+    if (converged)
+    {
+        Log << type() << ": " << name() << ": "
+            << s.name() << " is converged." << nl
+            << tab << "initial-residual tolerance: " << tol_ << nl
+            << tab << "outer iteration: " << iter << nl;
     }
 
     Log << endl;

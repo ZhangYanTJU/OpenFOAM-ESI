@@ -26,11 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "energyTransport.H"
-#include "surfaceFields.H"
-#include "fvmDdt.H"
-#include "fvmDiv.H"
-#include "fvmLaplacian.H"
-#include "fvmSup.H"
 #include "turbulentTransportModel.H"
 #include "turbulentFluidThermoModel.H"
 #include "addToRunTimeSelectionTable.H"
@@ -188,23 +183,6 @@ Foam::functionObjects::energyTransport::energyTransport
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
-    fieldName_(dict.getOrDefault<word>("field", "T")),
-    phiName_(dict.getOrDefault<word>("phi", "phi")),
-    rhoName_(dict.getOrDefault<word>("rho", "rho")),
-    nCorr_(0),
-    schemesField_("unknown-schemesField"),
-    fvOptions_(mesh_),
-    multiphaseThermo_(dict.subOrEmptyDict("phaseThermos")),
-    Cp_("Cp", dimEnergy/dimMass/dimTemperature, 0, dict),
-    kappa_
-    (
-        "kappa",
-        dimEnergy/dimTime/dimLength/dimTemperature,
-        0,
-        dict
-    ),
-    rho_("rhoInf", dimDensity, 0, dict),
-    Prt_("Prt", dimless, 1, dict),
     rhoCp_
     (
         IOobject
@@ -218,7 +196,25 @@ Foam::functionObjects::energyTransport::energyTransport
         ),
         mesh_,
         dimensionedScalar(dimEnergy/dimTemperature/dimVolume, Zero)
-    )
+    ),
+    fvOptions_(mesh_),
+    multiphaseThermo_(dict.subOrEmptyDict("phaseThermos")),
+    Cp_("Cp", dimEnergy/dimMass/dimTemperature, 0, dict),
+    kappa_
+    (
+        "kappa",
+        dimEnergy/dimTime/dimLength/dimTemperature,
+        0,
+        dict
+    ),
+    rho_("rhoInf", dimDensity, 0, dict),
+    Prt_("Prt", dimless, 1, dict),
+    fieldName_(dict.getOrDefault<word>("field", "T")),
+    schemesField_("unknown-schemesField"),
+    phiName_(dict.getOrDefault<word>("phi", "phi")),
+    rhoName_(dict.getOrDefault<word>("rho", "rho")),
+    tol_(1),
+    nCorr_(0)
 {
     read(dict);
 
@@ -305,17 +301,14 @@ Foam::functionObjects::energyTransport::energyTransport
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::functionObjects::energyTransport::~energyTransport()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::functionObjects::energyTransport::read(const dictionary& dict)
 {
-    fvMeshFunctionObject::read(dict);
+    if (!fvMeshFunctionObject::read(dict))
+    {
+        return false;
+    }
 
     dict.readIfPresent("phi", phiName_);
     dict.readIfPresent("rho", rhoName_);
@@ -323,6 +316,7 @@ bool Foam::functionObjects::energyTransport::read(const dictionary& dict)
     schemesField_ = dict.getOrDefault("schemesField", fieldName_);
 
     dict.readIfPresent("nCorr", nCorr_);
+    dict.readIfPresent("tolerance", tol_);
 
     if (dict.found("fvOptions"))
     {
@@ -355,12 +349,16 @@ bool Foam::functionObjects::energyTransport::execute()
     scalar relaxCoeff = 0;
     mesh_.relaxEquation(schemesField_, relaxCoeff);
 
+    // Convergence monitor parameters
+    bool converged = false;
+    int iter = 0;
+
     if (phi.dimensions() == dimMass/dimTime)
     {
         rhoCp_ = rho()*Cp();
         const surfaceScalarField rhoCpPhi(fvc::interpolate(Cp())*phi);
 
-        for (label i = 0; i <= nCorr_; i++)
+        for (int i = 0; i <= nCorr_; ++i)
         {
             fvScalarMatrix sEqn
             (
@@ -376,7 +374,9 @@ bool Foam::functionObjects::energyTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
+            if (converged) break;
         }
     }
     else if (phi.dimensions() == dimVolume/dimTime)
@@ -393,7 +393,7 @@ bool Foam::functionObjects::energyTransport::execute()
             rhoCp
         );
 
-        for (label i = 0; i <= nCorr_; i++)
+        for (int i = 0; i <= nCorr_; ++i)
         {
             fvScalarMatrix sEqn
             (
@@ -408,7 +408,9 @@ bool Foam::functionObjects::energyTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(schemesField_);
+            ++iter;
+            converged = (sEqn.solve(schemesField_).initialResidual() < tol_);
+            if (converged) break;
         }
     }
     else
@@ -417,6 +419,14 @@ bool Foam::functionObjects::energyTransport::execute()
             << "Incompatible dimensions for phi: " << phi.dimensions() << nl
             << "Dimensions should be " << dimMass/dimTime << " or "
             << dimVolume/dimTime << exit(FatalError);
+    }
+
+    if (converged)
+    {
+        Log << type() << ": " << name() << ": "
+            << s.name() << " is converged." << nl
+            << tab << "initial-residual tolerance: " << tol_ << nl
+            << tab << "outer iteration: " << iter << nl;
     }
 
     Log << endl;
