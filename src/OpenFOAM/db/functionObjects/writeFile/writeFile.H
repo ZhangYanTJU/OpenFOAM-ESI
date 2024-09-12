@@ -122,6 +122,9 @@ protected:
         //- Start time value
         scalar startTime_;
 
+        //- File extension; default = .dat
+        string ext_;
+
 
     // Protected Member Functions
 
@@ -208,7 +211,8 @@ public:
             const objectRegistry& obr,
             const fileName& prefix,
             const word& name = "undefined",
-            const bool writeToFile = true
+            const bool writeToFile = true,
+            const string& ext = ".dat"
         );
 
         //- Construct from objectRegistry, prefix, fileName
@@ -219,7 +223,8 @@ public:
             const fileName& prefix,
             const word& name,
             const dictionary& dict,
-            const bool writeToFile = true
+            const bool writeToFile = true,
+            const string& ext = ".dat"
         );
 
         //- Construct copy
@@ -234,6 +239,9 @@ public:
 
         //- Read
         virtual bool read(const dictionary& dict);
+
+        //- Set extension
+        virtual const string& setExt(const string& ext);
 
         //- Return access to the file (if only 1)
         virtual OFstream& file();
