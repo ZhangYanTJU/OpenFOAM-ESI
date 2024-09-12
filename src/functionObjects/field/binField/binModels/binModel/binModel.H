@@ -77,6 +77,9 @@ protected:
         //- increasing distance in binning direction
         bool cumulative_;
 
+        //- Flag to suppress warnings for missing patches
+        bool warnOnNoPatch_;
+
         //- Local coordinate system of bins
         autoPtr<coordinateSystem> coordSysPtr_;
 

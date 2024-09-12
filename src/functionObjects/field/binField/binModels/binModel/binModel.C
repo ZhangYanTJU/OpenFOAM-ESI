@@ -122,6 +122,7 @@ Foam::binModel::binModel
     mesh_(mesh),
     decomposePatchValues_(false),
     cumulative_(false),
+    warnOnNoPatch_(true),
     coordSysPtr_(nullptr),
     nBin_(1)
 {}
@@ -138,8 +139,11 @@ bool Foam::binModel::read(const dictionary& dict)
         return false;
     }
 
+    dict.readIfPresent("warnOnNoPatch", warnOnNoPatch_);
+
     // Can also use pbm.indices(), but no warnings...
-    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
+    patchIDs_ =
+        pbm.patchSet(dict.get<wordRes>("patches"), warnOnNoPatch_).sortedToc();
     fieldNames_ = dict.get<wordHashSet>("fields").sortedToc();
 
     wordRes zoneNames;

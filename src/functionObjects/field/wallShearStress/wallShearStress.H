@@ -133,6 +133,9 @@ class wallShearStress
         //- Write the shear stress field ?
         bool writeFields_;
 
+        //- Flag to suppress warnings for missing patches
+        bool warnOnNoPatch_;
+
 
 protected:
 

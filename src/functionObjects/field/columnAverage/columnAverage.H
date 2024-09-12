@@ -132,6 +132,9 @@ class columnAverage
         mutable autoPtr<globalIndex> globalPoints_;
         mutable autoPtr<meshStructure> meshStructurePtr_;
 
+        //- Flag to suppress warnings for missing patches
+        bool warnOnNoPatch_;
+
 
     // Private Member Functions
 

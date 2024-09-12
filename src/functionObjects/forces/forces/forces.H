@@ -264,6 +264,9 @@ protected:
             //- Flag of initialisation (internal)
             bool initialised_;
 
+            //- Flag to suppress warnings for missing patches
+            bool warnOnNoPatch_;
+
 
     // Protected Member Functions
 

@@ -106,7 +106,8 @@ Foam::functionObjects::wallHeatFlux::wallHeatFlux
 :
     fvMeshFunctionObject(name, runTime, dict),
     writeFile(obr_, name, typeName, dict),
-    qrName_("qr")
+    qrName_("qr"),
+    warnOnNoPatch_(true)
 {
     read(dict);
 
@@ -144,12 +145,13 @@ bool Foam::functionObjects::wallHeatFlux::read(const dictionary& dict)
     writeFile::read(dict);
 
     dict.readIfPresent("qr", qrName_);
+    dict.readIfPresent("warnOnNoPatch", warnOnNoPatch_);
 
     wordRes patchNames;
     labelHashSet patchSet;
     if (dict.readIfPresent("patches", patchNames) && !patchNames.empty())
     {
-        patchSet = pbm.patchSet(patchNames);
+        patchSet = pbm.patchSet(patchNames, warnOnNoPatch_);
     }
 
     labelHashSet allWalls(pbm.findPatchIDs<wallPolyPatch>());

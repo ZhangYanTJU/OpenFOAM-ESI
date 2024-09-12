@@ -206,7 +206,10 @@ Foam::functionObjects::regionSizeDistribution::findPatchRegions
 
     labelHashSet patchRegions(2*regions.nRegions());
 
-    labelHashSet patchSet(mesh_.boundaryMesh().patchSet(patchNames_));
+    labelHashSet patchSet
+    (
+        mesh_.boundaryMesh().patchSet(patchNames_, warnOnNoPatch_)
+    );
 
     for (const label patchi : patchSet)
     {
@@ -369,7 +372,8 @@ Foam::functionObjects::regionSizeDistribution::regionSizeDistribution
     writeFile(obr_, name),
     alphaName_(dict.get<word>("field")),
     patchNames_(dict.get<wordRes>("patches")),
-    isoPlanes_(dict.getOrDefault("isoPlanes", false))
+    isoPlanes_(dict.getOrDefault("isoPlanes", false)),
+    warnOnNoPatch_(true)
 {
     read(dict);
 }
@@ -415,6 +419,8 @@ bool Foam::functionObjects::regionSizeDistribution::read(const dictionary& dict)
          dict.readEntry("maxDownstream", maxDownstream_);
          direction_.normalise();
     }
+
+    dict.readIfPresent("warnOnNoPatch", warnOnNoPatch_);
 
     return true;
 }

@@ -128,7 +128,8 @@ Foam::functionObjects::columnAverage::columnAverage
 :
     fvMeshFunctionObject(name, runTime, dict),
     patchIDs_(),
-    fieldSet_(mesh_)
+    fieldSet_(mesh_),
+    warnOnNoPatch_(true)
 {
     read(dict);
 }
@@ -140,10 +141,13 @@ bool Foam::functionObjects::columnAverage::read(const dictionary& dict)
 {
     fvMeshFunctionObject::read(dict);
 
+    dict.readIfPresent("warnOnNoPatch", warnOnNoPatch_);
+
     patchIDs_ =
         mesh_.boundaryMesh().patchSet
         (
-            dict.get<wordRes>("patches")
+            dict.get<wordRes>("patches"),
+            warnOnNoPatch_
         ).sortedToc();
 
     fieldSet_.read(dict);

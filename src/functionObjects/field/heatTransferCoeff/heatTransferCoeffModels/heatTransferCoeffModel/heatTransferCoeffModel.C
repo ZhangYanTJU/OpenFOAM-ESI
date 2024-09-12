@@ -51,7 +51,8 @@ Foam::heatTransferCoeffModel::heatTransferCoeffModel
 :
     mesh_(mesh),
     TName_(TName),
-    qrName_("qr")
+    qrName_("qr"),
+    warnOnNoPatch_(true)
 {}
 
 
@@ -150,8 +151,10 @@ bool Foam::heatTransferCoeffModel::read(const dictionary& dict)
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
 
     dict.readIfPresent("qr", qrName_);
+    dict.readIfPresent("warnOnNoPatch", warnOnNoPatch_);
 
-    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
+    patchIDs_ =
+        pbm.patchSet(dict.get<wordRes>("patches"), warnOnNoPatch_).sortedToc();
 
     return true;
 }

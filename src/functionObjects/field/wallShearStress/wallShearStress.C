@@ -90,7 +90,8 @@ Foam::functionObjects::wallShearStress::wallShearStress
 :
     fvMeshFunctionObject(name, runTime, dict),
     writeFile(mesh_, name, typeName, dict),
-    writeFields_(true)  // May change in the future
+    writeFields_(true),  // May change in the future
+    warnOnNoPatch_(true)
 {
     read(dict);
 
@@ -127,6 +128,7 @@ bool Foam::functionObjects::wallShearStress::read(const dictionary& dict)
 
     writeFields_ = true;   // May change in the future
     dict.readIfPresent("writeFields", writeFields_);
+    dict.readIfPresent("warnOnNoPatch", warnOnNoPatch_);
 
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
 
@@ -134,7 +136,7 @@ bool Foam::functionObjects::wallShearStress::read(const dictionary& dict)
     labelHashSet patchSet;
     if (dict.readIfPresent("patches", patchNames) && !patchNames.empty())
     {
-        patchSet = pbm.patchSet(patchNames);
+        patchSet = pbm.patchSet(patchNames, warnOnNoPatch_);
     }
 
     labelHashSet allWalls(pbm.findPatchIDs<wallPolyPatch>());

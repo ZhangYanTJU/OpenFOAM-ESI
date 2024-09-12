@@ -67,7 +67,8 @@ Foam::functionObjects::Curle::Curle
     c0_(0),
     rawFilePtrs_(),
     inputSurface_(),
-    surfaceWriterPtr_(nullptr)
+    surfaceWriterPtr_(nullptr),
+    warnOnNoPatch_(true)
 {
     read(dict);
 }
@@ -85,8 +86,10 @@ bool Foam::functionObjects::Curle::read(const dictionary& dict)
     }
 
     dict.readIfPresent("p", pName_);
+    dict.readIfPresent("warnOnNoPatch", warnOnNoPatch_);
 
-    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
+    patchIDs_ =
+        pbm.patchSet(dict.get<wordRes>("patches"), warnOnNoPatch_).sortedToc();
 
     if (patchIDs_.empty())
     {

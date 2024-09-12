@@ -550,7 +550,8 @@ Foam::functionObjects::forces::forces
     directForceDensity_(false),
     porosity_(false),
     writeFields_(false),
-    initialised_(false)
+    initialised_(false),
+    warnOnNoPatch_(true)
 {
     if (readFields)
     {
@@ -589,7 +590,8 @@ Foam::functionObjects::forces::forces
     directForceDensity_(false),
     porosity_(false),
     writeFields_(false),
-    initialised_(false)
+    initialised_(false),
+    warnOnNoPatch_(true)
 {
     if (readFields)
     {
@@ -613,10 +615,13 @@ bool Foam::functionObjects::forces::read(const dictionary& dict)
 
     initialised_ = false;
 
+    dict.readIfPresent("warnOnNoPatch", warnOnNoPatch_);
+
     Info<< type() << ' ' << name() << ':' << endl;
 
     // Can also use pbm.indices(), but no warnings...
-    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
+    patchIDs_ =
+        pbm.patchSet(dict.get<wordRes>("patches"), warnOnNoPatch_).sortedToc();
 
     dict.readIfPresent("directForceDensity", directForceDensity_);
     if (directForceDensity_)

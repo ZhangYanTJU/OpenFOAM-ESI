@@ -181,6 +181,9 @@ class Curle
         //- Ouput surface when sampling a surface
         autoPtr<surfaceWriter> surfaceWriterPtr_;
 
+        //- Flag to suppress warnings for missing patches
+        bool warnOnNoPatch_;
+
 
 public:
 

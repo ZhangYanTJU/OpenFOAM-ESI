@@ -134,6 +134,9 @@ protected:
             //- From resulting back to original field
             HashTable<word> reverseFieldMap_;
 
+            //- Flag to suppress warnings for missing patches
+            bool warnOnNoPatch_;
+
 
         // Calculated addressing
 

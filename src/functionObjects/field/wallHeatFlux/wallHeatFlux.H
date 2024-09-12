@@ -123,6 +123,9 @@ protected:
         //- Name of radiative heat flux name
         word qrName_;
 
+        //- Flag to suppress warnings for missing patches
+        bool warnOnNoPatch_;
+
 
     // Protected Member Functions
 

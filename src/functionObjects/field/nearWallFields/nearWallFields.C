@@ -245,7 +245,8 @@ Foam::functionObjects::nearWallFields::nearWallFields
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
-    fieldSet_()
+    fieldSet_(),
+    warnOnNoPatch_(true)
 {
     read(dict);
 }
@@ -261,9 +262,11 @@ bool Foam::functionObjects::nearWallFields::read(const dictionary& dict)
 
     dict.readEntry("fields", fieldSet_);
     dict.readEntry("distance", distance_);
+    dict.readIfPresent("warnOnNoPatch", warnOnNoPatch_);
 
     // Can also use pbm.indices(), but no warnings...
-    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
+    patchIDs_ =
+        pbm.patchSet(dict.get<wordRes>("patches"), warnOnNoPatch_).sortedToc();
 
 
     // Clear out any previously loaded fields
