@@ -269,10 +269,10 @@ bool Foam::functionObjects::ensightWrite::write()
         true // prune
     );
 
-    Log << type() << " " << name() << " write: (";
+    Log << type() << " " << name() << " write:\n";
     writeAllVolFields(meshSubset_, candidateNames);
 
-    Log << " )" << nl;
+    Log << nl;
 
     ensCase().write();  // Flush case information
 
