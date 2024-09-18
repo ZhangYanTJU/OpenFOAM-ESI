@@ -204,19 +204,34 @@ void Foam::patchWave::correct()
     {
         Map<label> nearestFace(2*nPatch);
 
-        correctBoundaryFaceCells
-        (
-            patchIDs_,
-            distance_,
-            nearestFace
-        );
+        if (cellDistFuncs::useCombinedWallPatch)
+        {
+            // Correct across multiple patches
+            correctBoundaryCells
+            (
+                patchIDs_.sortedToc(),
+                true,           // do point-connected cells as well
+                distance_,
+                nearestFace
+            );
+        }
+        else
+        {
+            // Backwards compatible
+            correctBoundaryFaceCells
+            (
+                patchIDs_,
+                distance_,
+                nearestFace
+            );
 
-        correctBoundaryPointCells
-        (
-            patchIDs_,
-            distance_,
-            nearestFace
-        );
+            correctBoundaryPointCells
+            (
+                patchIDs_,
+                distance_,
+                nearestFace
+            );
+        }
     }
 }
 
