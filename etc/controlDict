@@ -223,6 +223,11 @@ OptimisationSwitches
     //- Enable enforced consistency of constraint bcs after 'local' operations.
     //  Default is on. Set to 0/false to revert to <v2306 behaviour
     //localConsistency 0;
+
+    //- Since v2412 wall distance is calculated on a combined patch, created
+    //  from all the individual wall patches. Set to 0/false to revert to
+    //  <v2412 behaviour
+    //useCombinedWallPatch    0;
 }
 
 

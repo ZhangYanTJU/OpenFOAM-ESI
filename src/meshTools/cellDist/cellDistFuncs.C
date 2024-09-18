@@ -41,7 +41,7 @@ defineTypeNameAndDebug(cellDistFuncs, 0);
 
 bool Foam::cellDistFuncs::useCombinedWallPatch = true;
 
-registerInfoSwitch
+registerOptSwitch
 (
     "useCombinedWallPatch",
     bool,
