@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016, 2019 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -219,7 +219,7 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
     {
         return
         (
-            cornerWeights[facei]*6.0*nuw[facei]/(beta1_*sqr(y[facei]))
+            6.0*nuw[facei]/(beta1_*sqr(y[facei]))
         );
     };
 
@@ -228,7 +228,7 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
     {
         return
         (
-            cornerWeights[facei]*sqrt(k[faceCells[facei]])
+            sqrt(k[faceCells[facei]])
           / (Cmu25*kappa*y[facei])
         );
     };
@@ -241,11 +241,15 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
             {
                 if (yPlus(facei) > yPlusLam)
                 {
-                    omega0[faceCells[facei]] += omegaLog(facei);
+                    omega0[faceCells[facei]] +=
+                        cornerWeights[facei]
+                      * omegaLog(facei);
                 }
                 else
                 {
-                    omega0[faceCells[facei]] += omegaVis(facei);
+                    omega0[faceCells[facei]] +=
+                        cornerWeights[facei]
+                      * omegaVis(facei);
                 }
             }
             break;
@@ -256,7 +260,8 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
             forAll(faceCells, facei)
             {
                 omega0[faceCells[facei]] +=
-                    pow
+                    cornerWeights[facei]
+                  * pow
                     (
                         pow(omegaVis(facei), n_) + pow(omegaLog(facei), n_),
                         scalar(1)/n_
@@ -271,7 +276,8 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
             {
                 // (PH:Eq. 27)
                 omega0[faceCells[facei]] +=
-                    max(omegaVis(facei), omegaLog(facei));
+                    cornerWeights[facei]
+                  * max(omegaVis(facei), omegaLog(facei));
             }
             break;
         }
@@ -286,10 +292,11 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
                 const scalar invGamma = scalar(1)/(Gamma + ROOTVSMALL);
 
                 omega0[faceCells[facei]] +=
-                (
-                    omegaVis(facei)*exp(-Gamma)
-                  + omegaLog(facei)*exp(-invGamma)
-                );
+                    cornerWeights[facei]
+                  * (
+                        omegaVis(facei)*exp(-Gamma)
+                      + omegaLog(facei)*exp(-invGamma)
+                    );
             }
             break;
         }
@@ -310,7 +317,9 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
                     );
                 const scalar phiTanh = tanh(pow4(0.1*yPlus(facei)));
 
-                omega0[faceCells[facei]] += phiTanh*b1 + (1 - phiTanh)*b2;
+                omega0[faceCells[facei]] +=
+                    cornerWeights[facei]
+                   *(phiTanh*b1 + (1 - phiTanh)*b2);
             }
             break;
         }
