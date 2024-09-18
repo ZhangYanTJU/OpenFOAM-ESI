@@ -29,6 +29,8 @@ License
 #include "cellDistFuncs.H"
 #include "polyMesh.H"
 #include "polyBoundaryMesh.H"
+#include "uindirectPrimitivePatch.H"
+#include "registerSwitch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -36,6 +38,16 @@ namespace Foam
 {
 defineTypeNameAndDebug(cellDistFuncs, 0);
 }
+
+bool Foam::cellDistFuncs::useCombinedWallPatch = true;
+
+registerInfoSwitch
+(
+    "useCombinedWallPatch",
+    bool,
+    Foam::cellDistFuncs::useCombinedWallPatch
+);
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -53,134 +65,6 @@ Foam::labelHashSet Foam::cellDistFuncs::getPatchIDs
 ) const
 {
     return mesh().boundaryMesh().patchSet(patchNames, false);
-}
-
-
-// Return smallest true distance from p to any of wallFaces.
-// Note that even if normal hits face we still check other faces.
-// Note that wallFaces is untruncated and we explicitly pass in size.
-Foam::scalar Foam::cellDistFuncs::smallestDist
-(
-    const point& p,
-    const polyPatch& patch,
-    const labelUList& wallFaces,
-    label& minFacei
-) const
-{
-    const pointField& points = patch.points();
-
-    scalar minDist = GREAT;
-    minFacei = -1;
-
-    for (const label patchFacei : wallFaces)
-    {
-        const pointHit curHit = patch[patchFacei].nearestPoint(p, points);
-
-        if (curHit.distance() < minDist)
-        {
-            minDist = curHit.distance();
-            minFacei = patch.start() + patchFacei;
-        }
-    }
-
-    return minDist;
-}
-
-
-// Get point neighbours of facei (including facei). Returns number of faces.
-// Note: does not allocate storage but does use linear search to determine
-// uniqueness. For polygonal faces this might be quite inefficient.
-void Foam::cellDistFuncs::getPointNeighbours
-(
-    const primitivePatch& patch,
-    const label patchFacei,
-    DynamicList<label>& neighbours
-) const
-{
-    neighbours.clear();
-
-    // Add myself
-    neighbours.append(patchFacei);
-
-    // Add all face neighbours
-    const labelList& faceNeighbours = patch.faceFaces()[patchFacei];
-
-    for (const label nbr : faceNeighbours)
-    {
-        neighbours.push_uniq(nbr);
-    }
-
-    // Add all point-only neighbours by linear searching in edge neighbours.
-    // Assumes that point-only neighbours are not using multiple points on
-    // face.
-
-    const face& f = patch.localFaces()[patchFacei];
-
-    forAll(f, fp)
-    {
-        label pointi = f[fp];
-
-        const labelList& pointNbs = patch.pointFaces()[pointi];
-
-        for (const label facei : pointNbs)
-        {
-            // Check for facei in edge-neighbours part of neighbours
-            neighbours.push_uniq(facei);
-        }
-    }
-
-
-    if (debug)
-    {
-        // Check for duplicates
-
-        // Use hashSet to determine nbs.
-        labelHashSet nbs(4*f.size());
-
-        forAll(f, fp)
-        {
-            const labelList& pointNbs = patch.pointFaces()[f[fp]];
-            nbs.insert(pointNbs);
-        }
-
-        // Subtract ours.
-        for (const label nb : neighbours)
-        {
-            if (!nbs.found(nb))
-            {
-                SeriousErrorInFunction
-                    << "getPointNeighbours : patchFacei:" << patchFacei
-                    << " verts:" << f << endl;
-
-                forAll(f, fp)
-                {
-                    SeriousErrorInFunction
-                        << "point:" << f[fp] << " pointFaces:"
-                        << patch.pointFaces()[f[fp]] << endl;
-                }
-
-                for (const label facei : neighbours)
-                {
-                    SeriousErrorInFunction
-                        << "fast nbr:" << facei
-                        << endl;
-                }
-
-                FatalErrorInFunction
-                    << "Problem: fast pointNeighbours routine included " << nb
-                    << " which is not in proper neighbour list " << nbs.toc()
-                    << abort(FatalError);
-            }
-            nbs.erase(nb);
-        }
-
-        if (nbs.size())
-        {
-            FatalErrorInFunction
-                << "Problem: fast pointNeighbours routine did not find "
-                << nbs.toc() << abort(FatalError);
-        }
-    }
 }
 
 
@@ -275,7 +159,7 @@ void Foam::cellDistFuncs::correctBoundaryFaceCells
                 );
 
                 // Store wallCell and its nearest neighbour
-                nearestFace.insert(celli, minFacei);
+                nearestFace.insert(celli, patch.start()+minFacei);
             }
         }
     }
@@ -348,8 +232,146 @@ void Foam::cellDistFuncs::correctBoundaryPointCells
                         );
 
                         // Store wallCell and its nearest neighbour
-                        nearestFace.insert(celli, minFacei);
+                        nearestFace.insert(celli, patch.start()+minFacei);
                     }
+                }
+            }
+        }
+    }
+}
+
+
+void Foam::cellDistFuncs::correctBoundaryCells
+(
+    const labelList& patchIDs,
+    const bool doPointCells,
+    scalarField& wallDistCorrected,
+    Map<label>& nearestFace
+) const
+{
+    label nWalls = 0;
+    {
+        for (const label patchi : patchIDs)
+        {
+            nWalls += mesh().boundaryMesh()[patchi].size();
+        }
+    }
+
+
+    DynamicList<label> faceLabels(nWalls);
+    {
+        for (const label patchi : patchIDs)
+        {
+            const auto& patch = mesh().boundaryMesh()[patchi];
+            forAll(patch, i)
+            {
+                faceLabels.append(patch.start()+i);
+            }
+        }
+    }
+
+    const uindirectPrimitivePatch wallPatch
+    (
+        UIndirectList<face>(mesh().faces(), faceLabels),
+        mesh_.points()
+    );
+
+
+    // Correct all cells with face on wall
+    const vectorField& cellCentres = mesh().cellCentres();
+
+    DynamicList<label> neighbours;
+
+    nWalls = 0;
+    for (const label patchi : patchIDs)
+    {
+        const auto& patch = mesh().boundaryMesh()[patchi];
+        const auto areaFraction(patch.areaFraction());
+        const labelUList& faceCells = patch.faceCells();
+
+        // Check cells with face on wall
+        forAll(patch, patchFacei)
+        {
+            if (areaFraction && (areaFraction()[patchFacei] <= 0.5))
+            {
+                // For cyclicACMI: more cyclic than wall
+            }
+            else
+            {
+                getPointNeighbours(wallPatch, nWalls, neighbours);
+
+                const label celli = faceCells[patchFacei];
+
+                label minFacei = -1;
+                wallDistCorrected[celli] = smallestDist
+                (
+                    cellCentres[celli],
+                    wallPatch,
+                    neighbours,
+                    minFacei
+                );
+
+                // Store wallCell and its nearest neighbour
+                nearestFace.insert(celli, nWalls+minFacei);
+            }
+
+            nWalls++;
+        }
+    }
+
+    // Correct all cells with a point on the wall
+    if (doPointCells)
+    {
+        const auto& meshPoints = wallPatch.meshPoints();
+        const auto& localFaces = wallPatch.localFaces();
+
+        bitSet isWallPoint(meshPoints.size(), true);
+
+        nWalls = 0;
+        for (const label patchi : patchIDs)
+        {
+            const auto& patch = mesh().boundaryMesh()[patchi];
+            const auto areaFraction(patch.areaFraction());
+
+            // Check cells with face on wall
+            forAll(patch, patchFacei)
+            {
+                if (areaFraction && (areaFraction()[patchFacei] <= 0.5))
+                {
+                    // For cyclicACMI: more cyclic than wall
+                    isWallPoint.unset(localFaces[nWalls]);
+                }
+
+                nWalls++;
+            }
+        }
+
+        const auto& pointFaces = wallPatch.pointFaces();
+
+        for (const label patchPointi : isWallPoint)
+        {
+            const label verti = meshPoints[patchPointi];
+
+            const labelList& neighbours = mesh().pointCells(verti);
+
+            for (const label celli : neighbours)
+            {
+                if (!nearestFace.found(celli))
+                {
+                    const labelList& wallFaces = pointFaces[patchPointi];
+
+                    label minFacei = -1;
+
+                    wallDistCorrected[celli] = smallestDist
+                    (
+                        cellCentres[celli],
+                        wallPatch,
+                        wallFaces,
+                        minFacei
+                    );
+
+                    // Store wallCell and its nearest neighbour
+                    nearestFace.insert(celli, wallPatch.addressing()[minFacei]);
                 }
             }
         }

@@ -263,20 +263,35 @@ void Foam::patchDataWave<TransferType, TrackingData>::correct()
     {
         Map<label> nearestFace(2 * nWalls);
 
-        // Get distance and indices of nearest face
-        correctBoundaryFaceCells
-        (
-            patchIDs_,
-            distance_,
-            nearestFace
-        );
+        if (cellDistFuncs::useCombinedWallPatch)
+        {
+            // Correct across multiple patches
+            correctBoundaryCells
+            (
+                patchIDs_.sortedToc(),
+                true,           // do point-connected cells as well
+                distance_,
+                nearestFace
+            );
+        }
+        else
+        {
+            // Get distance and indices of nearest face
+            correctBoundaryFaceCells
+            (
+                patchIDs_,
+                distance_,
+                nearestFace
+            );
 
-        correctBoundaryPointCells
-        (
-            patchIDs_,
-            distance_,
-            nearestFace
-        );
+            correctBoundaryPointCells
+            (
+                patchIDs_,
+                distance_,
+                nearestFace
+            );
+        }
+
 
         // Transfer data from nearest face to cell
         const List<TransferType>& faceInfo = waveInfo.allFaceInfo();
