@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -109,13 +109,17 @@ private:
         //- Merging distance
         scalar mergeDist_;
 
-        autoPtr<IOdictionary> decomposeParDict_;
+        mutable autoPtr<IOdictionary> decomposeParDict_;
 
         //- Decomposition used when independently decomposing surface.
-        autoPtr<decompositionMethod> decomposer_;
+        mutable autoPtr<decompositionMethod> decomposer_;
 
         //- Bounding box settings
         localIOdictionary dict_;
+
+        //- Use bounding boxes (default) or unique decomposition of triangles
+        //- (i.e. do not duplicate triangles)
+        bool decomposeUsingBbs_;
 
         //- Bounding boxes of all processors
         List<List<treeBoundBox>> procBb_;
@@ -139,8 +143,9 @@ private:
             //  directory or in parent directory
             static word findLocalInstance(const IOobject& io);
 
-            //- Read my additional data
-            bool read();
+            //- Read my additional data from dictionary. Additional flag to
+            //- say whether we can use master-only geometric tests.
+            bool read(const bool isUndecomposed);
 
 
         // Line intersection
@@ -321,11 +326,16 @@ private:
                 labelListList& faceFaces
             );
 
+            //- Helper: get decompositionMethod
+            const decompositionMethod& decomposer() const;
+
             //- Finds new bounds based on an independent decomposition.
-            List<List<treeBoundBox>> independentlyDistributedBbs
+            void independentlyDistributedBbs
             (
-                const triSurface&
-            );
+                const triSurface& s,
+                labelList& distribution,
+                List<List<treeBoundBox>>& bbs
+            ) const;
 
             //- Does any part of triangle overlap bb.
             static bool overlaps
@@ -413,7 +423,8 @@ public:
 
     // Constructors
 
-        //- Construct from triSurface
+        //- Construct from components. Assumes triSurface is already decomposed
+        //- and dictionary contains corresponding information
         distributedTriSurfaceMesh
         (
             const IOobject&,
@@ -421,11 +432,17 @@ public:
             const dictionary& dict
         );
 
-        //- Construct read. Does findInstance to find io.local().
+        //- Construct read. Does findInstance to find io.local()
+        //-   - if found local : assume distributed
+        //-   - if found in parent : assume undistributed. Can e.g. check for
+        //-     closedness.
         distributedTriSurfaceMesh(const IOobject& io);
 
         //- Construct from dictionary (used by searchableSurface).
         //  Does read. Does findInstance to find io.local().
+        //-   - if found local : assume distributed
+        //-   - if found in parent : assume undistributed. Can e.g. check for
+        //-     closedness.
         distributedTriSurfaceMesh
         (
             const IOobject& io,
