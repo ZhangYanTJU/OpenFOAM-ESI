@@ -52,6 +52,7 @@ Description
 #include "IOPtrList.H"
 #include "polyTopoChange.H"
 #include "polyModifyFace.H"
+#include "polyAddFace.H"
 #include "wordRes.H"
 #include "processorMeshes.H"
 #include "IOdictionary.H"
@@ -344,6 +345,7 @@ void matchPatchFaces
 
 void changePatchID
 (
+    const bool modify,
     const fvMesh& mesh,
     const label faceID,
     const label patchID,
@@ -361,21 +363,43 @@ void changePatchID
         zoneFlip = fZone.flipMap()[fZone.whichFace(faceID)];
     }
 
-    meshMod.setAction
-    (
-        polyModifyFace
+    if (modify)
+    {
+        meshMod.setAction
         (
-            mesh.faces()[faceID],               // face
-            faceID,                             // face ID
-            mesh.faceOwner()[faceID],           // owner
-            -1,                                 // neighbour
-            false,                              // flip flux
-            patchID,                            // patch ID
-            false,                              // remove from zone
-            zoneID,                             // zone ID
-            zoneFlip                            // zone flip
-        )
-    );
+            polyModifyFace
+            (
+                mesh.faces()[faceID],               // face
+                faceID,                             // face ID
+                mesh.faceOwner()[faceID],           // owner
+                -1,                                 // neighbour
+                false,                              // flip flux
+                patchID,                            // patch ID
+                false,                              // remove from zone
+                zoneID,                             // zone ID
+                zoneFlip                            // zone flip
+            )
+        );
+    }
+    else
+    {
+        meshMod.setAction
+        (
+            polyAddFace
+            (
+                mesh.faces()[faceID],       // modified face
+                mesh.faceOwner()[faceID],   // owner
+                -1,                         // neighbour
+                -1,                         // master point
+                -1,                         // master edge
+                faceID,                     // master face
+                false,                      // face flip
+                patchID,                    // patch for face
+                zoneID,                     // zone for face
+                zoneFlip                    // face flip in zone
+            )
+        );
+    }
 }
 
 
@@ -399,7 +423,9 @@ void changePatchID
                 << " existing boundary faces." << exit(FatalError);
         }
 
-        if (!isRepatchedBoundary.set(facei-mesh.nInternalFaces()))
+        const bool isFirst =
+            isRepatchedBoundary.set(facei-mesh.nInternalFaces());
+        if (!isFirst)
         {
             static label nWarnings = 0;
             if (nWarnings == 0)
@@ -413,14 +439,14 @@ void changePatchID
                     << " name " << mesh.boundaryMesh()[patchID].name()
                     << " is already marked for patch " << newPatchi
                     << " name " << mesh.boundaryMesh()[newPatchi].name()
-                    << ". Suppressing further warnings"
+                    << ". Creating duplicate face. Suppressing further warnings"
                     //<< exit(FatalError);
                     << endl;
             }
             nWarnings++;
         }
 
-        changePatchID(mesh, facei, patchID, meshMod);
+        changePatchID(isFirst, mesh, facei, patchID, meshMod);
     }
 }
 

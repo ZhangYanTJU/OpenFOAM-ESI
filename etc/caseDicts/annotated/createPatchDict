@@ -168,6 +168,69 @@ patches
         // Wildcards&patchGroups allowed.
         patches (coupling_group);
     }
+
+
+    // Example of creating cyclicACMI patch pair
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // (creates duplicate faces for blockage)
+    {
+        // Name of new patch
+        name left_couple;
+
+        // Dictionary to construct new patch from
+        patchInfo
+        {
+            type cyclicACMI;
+            neighbourPatch right_couple;
+            nonOverlapPatch left_blockage;
+        }
+
+        // Select faces
+        constructFrom set;
+        set left_faces_set;
+    }
+
+    {
+        name left_blockage;
+        patchInfo
+        {
+            type    wall;
+        }
+
+        // Select faces
+        constructFrom set;
+        set left_faces_set;
+    }
+
+    {
+        // Name of new patch
+        name right_couple;
+
+        // Dictionary to construct new patch from
+        patchInfo
+        {
+            type cyclicACMI;
+            neighbourPatch left_couple;
+            nonOverlapPatch right_blockage;
+        }
+
+        // Select faces
+        constructFrom set;
+        set right_faces_set;
+    }
+
+    {
+        name right_blockage;
+        // Dictionary to construct new patch from
+        patchInfo
+        {
+            type    wall;
+        }
+
+        // Select faces
+        constructFrom set;
+        set right_faces_set;
+    }
 );
 
 // ************************************************************************* //
