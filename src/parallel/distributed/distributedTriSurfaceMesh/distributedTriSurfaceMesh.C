@@ -110,6 +110,7 @@ namespace Foam
     };
 
 
+    //- Same as above but with some more debugging
     //typedef Tuple2<Pair<point>, volumeType> NearType;
     //
     ////- Combine operator for volume types
@@ -410,30 +411,112 @@ bool Foam::distributedTriSurfaceMesh::read(const bool undecomposed)
     }
     else
     {
-        // Delay calculating outside vol type since constructs tree. Is ok
-        // after distributing since then local surfaces much smaller
-        //if (undecomposed && surfaceClosed_)
-        //{
-        //    point outsidePt(localBb.max()+localBb.centre());
-        //    List<volumeType> outsideVolTypes;
-        //    triSurfaceMesh::getVolumeType
-        //    (
-        //        pointField(1, outsidePt),
-        //        outsideVolTypes
-        //    );
-        //    outsideVolType_ = outsideVolTypes[0];
-        //}
-        //else
+        if (undecomposed && surfaceClosed_)
+        {
+            if (UPstream::master())
+            {
+                // Determine nearest to do inside/outside testing.
+                // Do linear search to avoid building tree on this large
+                // undecomposed surface. See e.g. triSurfaceTools::surfaceSide
+
+                const triSurface& surf = *this;
+                const pointField& points = surf.points();
+                const boundBox& localBb = triSurfaceMesh::bounds();
+                const point outsidePt(localBb.max()+localBb.centre());
+
+                label nearTrii = -1;
+                pointHit nearInfo;  // distance=GREAT
+                forAll(surf, trii)
+                {
+                    pointHit info = surf[trii].nearestPoint(outsidePt, points);
+
+                    if (info.distance() < nearInfo.distance())
+                    {
+                        nearTrii = trii;
+                        nearInfo = info;
+                    }
+                }
+
+                if (nearTrii != -1)
+                {
+                    const triSurfaceTools::sideType t =
+                        triSurfaceTools::surfaceSide
+                        (
+                            surf,
+                            outsidePt,
+                            nearTrii
+                        );
+
+                    if (t == triSurfaceTools::UNKNOWN)
+                    {
+                        outsideVolType_ = volumeType::UNKNOWN;
+                    }
+                    else if (t == triSurfaceTools::INSIDE)
+                    {
+                        outsideVolType_ = volumeType::INSIDE;
+                    }
+                    else if (t == triSurfaceTools::OUTSIDE)
+                    {
+                        outsideVolType_ = volumeType::OUTSIDE;
+                    }
+                    else
+                    {
+                        FatalErrorInFunction << "problem" << abort(FatalError);
+                    }
+                }
+            }
+            // Scatter master
+            label volType = outsideVolType_;
+            Pstream::broadcast(volType);
+            outsideVolType_ = volumeType(volType);
+        }
+        else
         {
             // Mark as to-be-done
             outsideVolType_ = volumeType::UNKNOWN;
         }
+
         dict_.add("outsideVolumeType", volumeType::names[outsideVolType_]);
     }
 
     Pstream::allGatherList(procBb_);
 
     return true;
+}
+
+
+void Foam::distributedTriSurfaceMesh::calcVertexNormals
+(
+    const triSurface& surf,
+    List<FixedList<vector, 3>>& vn
+) const
+{
+    // For now don't do features so just use the point normals
+    vectorField pointNormals(surf.points().size(), vector::zero);
+    forAll(surf, facei)
+    {
+        const triSurface::face_type& f = surf[facei];
+        const vector n = f.unitNormal(surf.points());
+        forAll(f, fp)
+        {
+            const label pointi = f[fp];
+            pointNormals[pointi] += n;
+        }
+    }
+    pointNormals.normalise();
+
+
+    vn.resize_nocopy(surf.size());
+    vn = Zero;
+
+    forAll(surf, facei)
+    {
+        const triSurface::face_type& f = surf[facei];
+        forAll(f, fp)
+        {
+            vn[facei][fp] = pointNormals[f[fp]];
+        }
+    }
 }
 
 
@@ -1296,7 +1379,8 @@ void Foam::distributedTriSurfaceMesh::surfaceSide
         Pout<< "distributedTriSurfaceMesh::surfaceSide :"
             << " on surface " << searchableSurface::name()
             << " finding surface side given points on surface for "
-            << samples.size() << " samples" << endl;
+            << samples.size() << " samples"
+            << " cached vertexnormals " << vertexNormals_.valid() << endl;
     }
 
     // Use global index to send local tri and nearest back to originating
@@ -1326,6 +1410,41 @@ void Foam::distributedTriSurfaceMesh::surfaceSide
 
     const triSurface& surf = *this;
     const pointField& points = surf.points();
+
+
+    if (vertexNormals_)
+    {
+        // Use smooth interpolation for the normal
+
+        forAll(triangleIndex, i)
+        {
+            const label facei = triangleIndex[i];
+            const triSurface::face_type& f = surf[facei];
+            const auto& vn = vertexNormals_()[facei];
+
+            const point& sample = localSamples[i];
+            //const point& nearest = nearestInfo[i].point();
+            const point nearest = f.nearestPoint(sample, points).point();
+
+            const vector sampleNearestVec(sample - nearest);
+
+            const barycentric2D w(f.tri(points).pointToBarycentric(nearest));
+
+            const vector n = w[0]*vn[0]+w[1]*vn[1]+w[2]*vn[2];
+
+            const scalar c = (sampleNearestVec & n);
+
+            if (c > 0)
+            {
+                volType[i] = volumeType::OUTSIDE;
+            }
+            else
+            {
+                volType[i] = volumeType::INSIDE;
+            }
+        }
+    }
+    else
     {
         //const labelListList& pointFaces = surf.pointFaces();
         // Construct pointFaces. Let's hope surface has compact point
@@ -2728,6 +2847,15 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh(const IOobject& io)
 
     bounds().reduce();
 
+    if (readFromMaster)
+    {
+        DebugInFunction
+            << "Determining vertex based normals since undecomposed" << endl;
+        const triSurface& surf = *this;
+        vertexNormals_ = autoPtr<List<FixedList<vector, 3>>>::New();
+        calcVertexNormals(surf, vertexNormals_());
+    }
+
     if
     (
         readFromMaster
@@ -2842,6 +2970,15 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh
     read(readFromMaster);
 
     bounds().reduce();
+
+    if (readFromMaster)
+    {
+        DebugInFunction
+            << "Determining vertex based normals since undecomposed" << endl;
+        const triSurface& surf = *this;
+        vertexNormals_ = autoPtr<List<FixedList<vector, 3>>>::New();
+        calcVertexNormals(surf, vertexNormals_());
+    }
 
     if
     (
@@ -4957,6 +5094,34 @@ void Foam::distributedTriSurfaceMesh::distribute
     distributeFields<sphericalTensor>(faceMap());
     distributeFields<symmTensor>(faceMap());
     distributeFields<tensor>(faceMap());
+    if (vertexNormals_)
+    {
+        List<FixedList<vector, 3>>& vn = vertexNormals_();
+        faceMap().distribute(vn);
+
+        if (debug & 2)
+        {
+            OBJstream str
+            (
+                searchableSurface::time().path()
+               /searchableSurface::name() + "_vertex_normals.obj"
+            );
+            const triSurface& s = *this;
+            forAll(s, trii)
+            {
+                const auto& f = s[trii];
+                const scalar l = Foam::sqrt(f.mag(s.points()));
+                forAll(f, fp)
+                {
+                    const point& pt = s.points()[f[fp]];
+                    const vector& n = vn[trii][fp];
+                    str.write(linePointRef(pt, pt+l*n));
+                }
+            }
+            Pout<< "Dumped local vertex normals to " << str.name() << endl;
+        }
+    }
+
 
     if (debug)
     {
@@ -5079,13 +5244,14 @@ void Foam::distributedTriSurfaceMesh::writeStats(Ostream& os) const
     PatchTools::calcBounds(*this, bb, nPoints);
     bb.reduce();
 
-    os  << "Triangles    : " << returnReduce(triSurface::size(), sumOp<label>())
-        << endl
-        << "Vertices     : " << returnReduce(nPoints, sumOp<label>()) << endl
-        << "Bounding Box : " << bb << endl
-        << "Closed       : " << surfaceClosed_ << endl
-        << "Outside point: " << volumeType::names[outsideVolType_] << endl
-        << "Distribution : " << distributionTypeNames_[distType_] << endl;
+    os  << "Triangles      : "
+        << returnReduce(triSurface::size(), sumOp<label>()) << endl
+        << "Vertices       : " << returnReduce(nPoints, sumOp<label>()) << endl
+        << "Vertex normals : " << vertexNormals_.valid() << endl
+        << "Bounding Box   : " << bb << endl
+        << "Closed         : " << surfaceClosed_ << endl
+        << "Outside type   : " << volumeType::names[outsideVolType_] << endl
+        << "Distribution   : " << distributionTypeNames_[distType_] << endl;
 }
 
 

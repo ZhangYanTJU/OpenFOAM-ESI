@@ -127,6 +127,10 @@ private:
         //- Global triangle numbering
         mutable autoPtr<globalIndex> globalTris_;
 
+        //- Optional per-vertex normals. TBD: move to triSurface? or have
+        //- per-triangle 3 normals so we can interpolate and have features
+        mutable autoPtr<List<FixedList<vector, 3>>> vertexNormals_;
+
         //- The (wanted) distribution type.
         distributionType distType_;
 
@@ -146,6 +150,14 @@ private:
             //- Read my additional data from dictionary. Additional flag to
             //- say whether we can use master-only geometric tests.
             bool read(const bool isUndecomposed);
+
+            //- Construction helper: generate vertex normals upon reading
+            //- undecomposed surface
+            void calcVertexNormals
+            (
+                const triSurface& surf,
+                List<FixedList<vector, 3>>& vn
+            ) const;
 
 
         // Line intersection
