@@ -44,6 +44,9 @@ Description
         expansionRatio  1;
         columnCells      true;
 
+        // Optional feature angle to avoid extruding feature-angles
+        featureAngle    45;
+
         // Patch information
         bottomCoeffs
         {
