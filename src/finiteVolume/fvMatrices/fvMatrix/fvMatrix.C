@@ -258,7 +258,9 @@ void Foam::fvMatrix<Type>::setValuesFromList
 
             for (const label facei : cells[celli])
             {
-                if (mesh.isInternalFace(facei))
+                const label patchi = mesh.boundaryMesh().patchID(facei);
+
+                if (patchi == -1)
                 {
                     if (symmetric())
                     {
@@ -290,8 +292,6 @@ void Foam::fvMatrix<Type>::setValuesFromList
                 }
                 else
                 {
-                    const label patchi = mesh.boundaryMesh().whichPatch(facei);
-
                     if (internalCoeffs_[patchi].size())
                     {
                         const label patchFacei =
