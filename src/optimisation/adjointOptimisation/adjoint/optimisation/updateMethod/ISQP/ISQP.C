@@ -1074,14 +1074,19 @@ Foam::ISQP::ISQP
     ),
     cRed_
         (coeffsDict(type).getOrDefault<scalar>("targetConstraintReduction", 1)),
+    disableDamping_
+        (coeffsDict(type).getOrDefault<bool>("disableDamping", false)),
     meritFunctionFile_(nullptr)
 {
     Info<< "Preconditioner type of the SQP subproblem is ::"
         << preconditionerNames.names()[preconType_]
         << endl;
-    // Always apply damping of s in ISQP
-    useYDamping_ = true;
-    useSDamping_ = false;
+    if (!disableDamping_)
+    {
+        // Always apply damping of y in ISQP
+        useYDamping_ = true;
+        useSDamping_ = false;
+    }
 
     // Determine c if necessary
     if (includeExtraVars_)
