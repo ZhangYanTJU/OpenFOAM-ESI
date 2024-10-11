@@ -175,6 +175,11 @@ protected:
         //  Can be used to relax QP problems with no feasible points
         scalar cRed_;
 
+        //- Disable damping
+        //  Generally discouraged but could be useful in cases with no
+        //  constraints or only bound ones
+        bool disableDamping_;
+
         //- File including the l1 merit function
         autoPtr<OFstream> meritFunctionFile_;
 
