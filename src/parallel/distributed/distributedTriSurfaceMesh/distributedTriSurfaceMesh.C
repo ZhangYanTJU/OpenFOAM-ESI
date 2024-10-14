@@ -110,7 +110,7 @@ namespace Foam
     };
 
 
-    //- Same as above but with some more debugging
+    ////- Same as above but with some more debugging
     //typedef Tuple2<Pair<point>, volumeType> NearType;
     //
     ////- Combine operator for volume types
@@ -1401,6 +1401,10 @@ void Foam::distributedTriSurfaceMesh::surfaceSide
     pointField localSamples(samples);
     map.distribute(localSamples);
 
+    // Send over nearest point since we have it anyway
+    List<pointIndexHit> localNearestInfo(nearestInfo);
+    map.distribute(localNearestInfo);
+
 
     // Do my tests
     // ~~~~~~~~~~~
@@ -1423,8 +1427,21 @@ void Foam::distributedTriSurfaceMesh::surfaceSide
             const auto& vn = vertexNormals_()[facei];
 
             const point& sample = localSamples[i];
-            //const point& nearest = nearestInfo[i].point();
-            const point nearest = f.nearestPoint(sample, points).point();
+
+            const point& nearest = localNearestInfo[i].point();
+
+            //const point nearest = f.nearestPoint(sample, points).point();
+            //if (mag(nearest-nearest2) > SMALL)
+            //{
+            //    WarningInFunction
+            //        << "distributedTriSurfaceMesh::surfaceSide :"
+            //        << " on surface " << searchableSurface::name()
+            //        << " triangle:" << f.tri(points)
+            //        << " sample:" << sample
+            //        << " nearest:" << nearest
+            //        << " nearest2:" << nearest2
+            //        << endl;
+            //}
 
             const vector sampleNearestVec(sample - nearest);
 
@@ -1611,12 +1628,44 @@ void Foam::distributedTriSurfaceMesh::surfaceSide
     // send the volume-query to a single processor)
 
 
-    //forAll(localSamples, i)
     //{
-    //    Pout<< "surfaceSide : for localSample:" << localSamples[i]
-    //        << " found volType:" << volumeType::names[volType[i]]
-    //        << endl;
+    //- Alternative which also sends over source sample so we get better
+    //- debug messages.
+    //    // Pack sample, nearest and volType so we get nicer error messages
+    //    typedef Tuple2<Pair<point>, volumeType> NearType;
+    //    List<NearType> nearTypes(volType.size());
+    //    forAll(localSamples, i)
+    //    {
+    //        const point& sample = localSamples[i];
+    //        const point& near = localNearestInfo[i].point();
+    //        nearTypes[i] = NearType(Pair<point>(sample, near), volType[i]);
+    //    }
+    //
+    //
+    //    const NearType zero(Pair<point>(Zero, Zero), volumeType::UNKNOWN);
+    //    mapDistributeBase::distribute
+    //    (
+    //        Pstream::commsTypes::nonBlocking,
+    //        List<labelPair>::null(),
+    //        nearestInfo.size(),
+    //        map.constructMap(),
+    //        map.constructHasFlip(),
+    //        map.subMap(),
+    //        map.subHasFlip(),
+    //        nearTypes,
+    //        zero,
+    //        NearTypeCombineOp(),
+    //        noOp(),           // no flipping
+    //        UPstream::msgType(),
+    //        map.comm()
+    //    );
+    //    volType.setSize(nearTypes.size());
+    //    forAll(nearTypes, i)
+    //    {
+    //        volType[i] = nearTypes[i].second();
+    //    }
     //}
+
 
     const volumeType zero(volumeType::UNKNOWN);
     mapDistributeBase::distribute
@@ -1636,40 +1685,6 @@ void Foam::distributedTriSurfaceMesh::surfaceSide
         map.comm()
     );
 
-    //// Pack sample, nearest and volType so we get nicer error messages
-    ////typedef Tuple2<Pair<point>, volumeType>> NearType;
-    //List<NearType> nearTypes(volType.size());
-    //forAll(localSamples, i)
-    //{
-    //    const point& sample = localSamples[i];
-    //    const point& near = nearest[i];
-    //    nearTypes[i] = NearType(Pair<point>(sample, near), volType[i]);
-    //}
-    //
-    //
-    //const NearType zero(Pair<point>(Zero, Zero), volumeType::UNKNOWN);
-    //mapDistributeBase::distribute
-    //(
-    //    Pstream::commsTypes::nonBlocking,
-    //    List<labelPair>::null(),
-    //    nearestInfo.size(),
-    //    map.constructMap(),
-    //    map.constructHasFlip(),
-    //    map.subMap(),
-    //    map.subHasFlip(),
-    //    nearTypes,
-    //    zero,
-    //    NearTypeCombineOp(),
-    //    noOp(),           // no flipping
-    //    UPstream::msgType(),
-    //    map.comm()
-    //);
-    //volType.setSize(nearTypes.size());
-    //forAll(nearTypes, i)
-    //{
-    //    volType[i] = nearTypes[i].second();
-    //}
-
     if (debug)
     {
         Pout<< "distributedTriSurfaceMesh::surfaceSide :"
@@ -1677,6 +1692,196 @@ void Foam::distributedTriSurfaceMesh::surfaceSide
             << " given points on surface "
             << searchableSurface::name() << " for "
             << samples.size() << " samples" << endl;
+    }
+}
+
+
+Foam::volumeType Foam::distributedTriSurfaceMesh::markMixed
+(
+    const indexedOctree<treeDataTriSurface>& tree,
+    const label nodei,
+    const triPointRef& tri,
+    PackedList<2>& nodeTypes
+) const
+{
+    const auto& nod = tree.nodes()[nodei];
+    //const auto& contents = tree.contents();
+
+    //Pout<< indent
+    //    << "Entering node:" << nodei
+    //    << " with bb:" << nod.bb_ << endl;
+    //Pout<< incrIndent;
+
+    volumeType myType = volumeType::UNKNOWN;
+
+    for (direction octant = 0; octant < nod.subNodes_.size(); octant++)
+    {
+        const labelBits index = nod.subNodes_[octant];
+        const treeBoundBox subBb(nod.bb_.subBbox(octant));
+
+        if (subBb.intersects(tri))
+        {
+            volumeType subType;
+
+            if (indexedOctree<treeDataTriSurface>::isNode(index))
+            {
+                //Pout<< indent
+                //    << "Testing node octant:" << octant << " with node:"
+                //    << indexedOctree<treeDataTriSurface>::getNode(index)
+                //    << " subBb:" << subBb << endl;
+
+                // tree node. Recurse.
+                subType = markMixed
+                (
+                    tree,
+                    indexedOctree<treeDataTriSurface>::getNode(index),
+                    tri,
+                    nodeTypes
+                );
+            }
+            else if (indexedOctree<treeDataTriSurface>::isContent(index))
+            {
+                // Content inside so we cannot pre-determine whether
+                // whole node box is inside or outside
+
+                //const label contenti =
+                //    indexedOctree<treeDataTriSurface>::getContent(index);
+                //Pout<< indent
+                //    << "Testing content octant:" << octant
+                //    << " with contenti:" << contenti << " subBb:" << subBb
+                //    << " holding shapes:" << flatOutput(contents[contenti])
+                //    << endl;
+
+                // Store octant type
+                subType = volumeType::MIXED;
+            }
+            else
+            {
+                // Nothing in it but intersects triangle. Can't cache
+
+                //Pout<< indent
+                //    << "Testing empty octant:" << octant
+                //    << " subBb:" << subBb << endl;
+
+                // Store octant type
+                subType = volumeType::MIXED;
+            }
+
+            // Store octant type
+            nodeTypes.set(labelBits::pack(nodei, octant), subType);
+
+            // Combine sub node types into type for treeNode. Result is
+            // 'mixed' if types differ among subnodes.
+            if (myType == volumeType::UNKNOWN)
+            {
+                myType = subType;
+            }
+            else if (subType != myType)
+            {
+                //Pout<< indent
+                //    << "for octant:" << octant
+                //    << " siwtched from myType:" << myType
+                //    << " and subType:" << subType
+                //    << " switched to MIXED" << endl;
+                myType = volumeType::MIXED;
+            }
+        }
+    }
+
+    //Pout<< indent
+    //    << "Result for node:" << nodei << " myType:" << myType << endl;
+    //Pout<< decrIndent;
+
+    return myType;
+}
+
+
+void Foam::distributedTriSurfaceMesh::markMixedOverlap
+(
+    const indexedOctree<treeDataTriSurface>& tree,
+    PackedList<2>& nodeTypes
+) const
+{
+    // At this point each triangle is on a unique processor so we can just
+    // go and
+    // check what additional triangles would be sent over based on the
+    // bounding boxes. Note that the surface at this point is already
+    // uniquely distributed (every triangle is on a single processor
+    // only) and the tree is only for those.
+
+    PstreamBuffers pBufs;
+
+    // Test & send
+    forAll(procBb_, proci)
+    {
+        if (proci != UPstream::myProcNo())
+        {
+            labelList pointMap;
+            labelList faceMap;
+            overlappingSurface
+            (
+                *this,
+                procBb_[proci],
+                pointMap,    // not used
+                faceMap
+            );
+            if (!faceMap.empty())
+            {
+                const triSurface subSurface
+                (
+                    subsetMesh
+                    (
+                        *this,
+                        faceMap,
+                        pointMap
+                    )
+                );
+                UOPstream os(proci, pBufs);
+                os << subSurface;
+            }
+        }
+    }
+
+    pBufs.finishedSends();
+
+    // Receive
+    for (const int proci : pBufs.allProcs())
+    {
+        if (proci != Pstream::myProcNo() && pBufs.recvDataCount(proci))
+        {
+            UIPstream is(proci, pBufs);
+
+            // Receive
+            const triSurface subSurface(is);
+
+            //Pout<< "** from proc:" << proci
+            //    << " received:" << subSurface.size()
+            //    << " compared to local:" << this->size() << endl;
+            //const fileName fName
+            //(
+            //    searchableSurface::time().path()
+            //   /searchableSurface::name()
+            // + "_from_proc" + Foam::name(proci) + ".obj"
+            //);
+            //Pout<< "fName:" << fName << endl;
+            //subSurface.write(fName);
+
+
+            // Set all tree nodes overlapping buffer triangles to
+            // mixed. This state will be preserved when caching the
+            // volume type (see below). This uses the actual local
+            // triangles.
+            for (const auto& tri : subSurface)
+            {
+                markMixed
+                (
+                    tree,
+                    0,          //nodei,
+                    tri.tri(subSurface.points()),
+                    nodeTypes
+                );
+            }
+        }
     }
 }
 
@@ -1780,6 +1985,101 @@ Foam::volumeType Foam::distributedTriSurfaceMesh::calcVolumeType
         }
     }
     return myType;
+}
+
+
+void Foam::distributedTriSurfaceMesh::cacheVolumeType(PackedList<2>& nt) const
+{
+    // Get local tree
+    const indexedOctree<treeDataTriSurface>& t = tree();
+    const auto& nodes = t.nodes();
+
+    // Collect midpoints
+    DynamicField<point> midPoints(label(0.5*nodes.size()));
+    if (nodes.size())
+    {
+        collectLeafMids(0, midPoints);
+    }
+
+    if (debug)
+    {
+        Pout<< "distributedTriSurfaceMesh::cacheVolumeType :"
+            << " surface " << searchableSurface::name()
+            << " triggering orientation caching for "
+            << midPoints.size() << " leaf mids" << endl;
+    }
+
+    // Get volume type of mid points
+    List<volumeType> midVolTypes;
+
+    // Note: could recurse here (since now outsideVolType_ is set)
+    // but this would use the cached mid point data which we're trying
+    // to calculate. Instead bypass caching and do a full search
+    {
+        List<pointIndexHit> nearestInfo;
+        findNearest
+        (
+            midPoints,
+            scalarField(midPoints.size(), Foam::sqr(GREAT)),
+            nearestInfo
+        );
+        surfaceSide(midPoints, nearestInfo, midVolTypes);
+
+        if (debug & 2)
+        {
+            OBJstream insideStr
+            (
+                searchableSurface::time().path()
+               /searchableSurface::name() + "_cacheVolumeType_inside.obj"
+            );
+            OBJstream outsideStr
+            (
+                searchableSurface::time().path()
+               /searchableSurface::name() + "_cacheVolumeType_outside.obj"
+            );
+            forAll(midVolTypes, i)
+            {
+                if (midVolTypes[i] == volumeType::INSIDE)
+                {
+                    insideStr.write
+                    (
+                        linePointRef(midPoints[i], nearestInfo[i].hitPoint())
+                    );
+                }
+                else if (midVolTypes[i] == volumeType::OUTSIDE)
+                {
+                    outsideStr.write
+                    (
+                        linePointRef(midPoints[i], nearestInfo[i].hitPoint())
+                    );
+                }
+            }
+            Pout<< "Whilst caching " << searchableSurface::name()
+                << " have inside:" << insideStr.nVertices()
+                << " have outside:" << outsideStr.nVertices()
+                << endl;
+        }
+    }
+
+    // Cache on local tree
+    if (nodes.size())
+    {
+        label index = 0;
+        calcVolumeType
+        (
+            midVolTypes,
+            index,
+            nt,
+            0               // nodeI
+        );
+    }
+    if (debug)
+    {
+        Pout<< "distributedTriSurfaceMesh::cacheVolumeType :"
+            << " surface " << searchableSurface::name()
+            << " done orientation caching for "
+            << midPoints.size() << " leaf mids" << endl;
+    }
 }
 
 
@@ -4329,64 +4629,18 @@ void Foam::distributedTriSurfaceMesh::getVolumeType
          || outsideVolType_ == volumeType::OUTSIDE
         )
         {
-            // Get local tree
             const indexedOctree<treeDataTriSurface>& t = tree();
             const auto& nodes = t.nodes();
             PackedList<2>& nt = t.nodeTypes();
             nt.resize(nodes.size());
             nt = volumeType::UNKNOWN;
 
-            // Collect midpoints
-            DynamicField<point> midPoints(label(0.5*nodes.size()));
-            if (nodes.size())
+            if (!decomposeUsingBbs_)
             {
-                collectLeafMids(0, midPoints);
+                markMixedOverlap(t, nt);
             }
 
-            if (debug)
-            {
-                Pout<< "distributedTriSurfaceMesh::getVolumeType :"
-                    << " surface " << searchableSurface::name()
-                    << " triggering orientation caching for "
-                    << midPoints.size() << " leaf mids" << endl;
-            }
-
-            // Get volume type of mid points
-            List<volumeType> midVolTypes;
-
-            // Note: could recurse here (since now outsideVolType_ is set)
-            // but this would use the cached mid point data which we're trying
-            // to calculate. Instead bypass caching and do a full search
-            {
-                List<pointIndexHit> nearestInfo;
-                findNearest
-                (
-                    midPoints,
-                    scalarField(midPoints.size(), Foam::sqr(GREAT)),
-                    nearestInfo
-                );
-                surfaceSide(midPoints, nearestInfo, midVolTypes);
-            }
-
-            // Cache on local tree
-            if (nodes.size())
-            {
-                label index = 0;
-                calcVolumeType
-                (
-                    midVolTypes,
-                    index,
-                    nt,
-                    0               // nodeI
-                );
-            }
-            if (debug)
-            {
-                Pout<< "distributedTriSurfaceMesh::getVolumeType :"
-                    << " surface " << searchableSurface::name()
-                    << " done orientation caching for "
-                    << midPoints.size() << " leaf mids" << endl;
-            }
+            cacheVolumeType(nt);
         }
     }
 
@@ -4476,7 +4730,15 @@ void Foam::distributedTriSurfaceMesh::getVolumeType
 
     forAll(localPoints, i)
     {
-        if (tree().nodes().size())
+        // If no-fill in:
+        // - tree nodes on the outside will not include fill-in triangles
+        // - so might decide the wrong state (might be 'mixed' with fill-in
+        //   triangles)
+        // - for now do not cache
+        // - TBD. Note that the cached volume types already include remote
+        //   fill-in triangles. There is still a problem there though. TBD.
+
+        if (decomposeUsingBbs_ && tree().nodes().size())
         {
             volType[i] = cachedVolumeType(0, localPoints[i]);
         }
@@ -4514,8 +4776,67 @@ void Foam::distributedTriSurfaceMesh::getVolumeType
     // Combine
     forAll(fullSearchMap, i)
     {
-        volType[fullSearchMap[i]] = fullSearchType[i];
+        volumeType& vt = volType[fullSearchMap[i]];
+        if (vt == volumeType::UNKNOWN)
+        {
+            vt = fullSearchType[i];
+        }
+        else if (vt != fullSearchType[i])
+        {
+            Pout<< "At point:" << fullSearchPoints[i]
+                << " or point:" << localPoints[fullSearchMap[i]]
+                << " have cached status:" << vt
+                << " have full-search status:" << fullSearchType[i]
+                << endl;
+        }
+        //volType[fullSearchMap[i]] = fullSearchType[i];
     }
+
+    //{
+    //    //- Variant of below that produces better error messages
+    //    typedef Tuple2<Pair<point>, volumeType> NearType;
+    //    const NearType zero(Pair<point>(Zero, Zero), volumeType::UNKNOWN);
+    //
+    //    // Combine nearest and volType so we can give nicer error messages
+    //    List<NearType> nearTypes(volType.size(), zero);
+    //
+    //    NearTypeCombineOp cop;
+    //
+    //    // For all volType we do have the originating point but not the
+    //    // nearest
+    //    forAll(localPoints, i)
+    //    {
+    //        nearTypes[i] =
+    //            NearType(Pair<point>(localPoints[i], Zero), volType[i]);
+    //    }
+    //    // But for all full-search we also have the nearest
+    //    forAll(fullSearchMap, i)
+    //    {
+    //        const NearType nt
+    //        (
+    //            Pair<point>(fullSearchPoints[i], nearestInfo[i].hitPoint()),
+    //            fullSearchType[i]
+    //        );
+    //
+    //        cop(nearTypes[fullSearchMap[i]], nt);
+    //    }
+    //    mapDistributeBase::distribute
+    //    (
+    //        Pstream::commsTypes::nonBlocking,
+    //        List<labelPair>::null(),
+    //        samples.size(),
+    //        map.constructMap(),
+    //        map.constructHasFlip(),
+    //        map.subMap(),
+    //        map.subHasFlip(),
+    //        nearTypes,
+    //        zero,
+    //        cop,                //NearTypeCombineOp(),
+    //        noOp(),             // no flipping
+    //        UPstream::msgType(),
+    //        map.comm()
+    //    );
+    //}
 
     // Send back to originator. In case of multiple answers choose inside or
     // outside
@@ -4536,47 +4857,6 @@ void Foam::distributedTriSurfaceMesh::getVolumeType
         UPstream::msgType(),
         map.comm()
     );
-
-
-    //// Combine nearest and volType so we can give nicer error messages
-    //List<NearType> nearTypes(volType.size());
-    //// For all volType we do have the originating point but not the nearest
-    //forAll(localPoints, i)
-    //{
-    //    nearTypes[i] =
-    //        NearType(Pair<point>(localPoints[i], Zero), volType[i]);
-    //}
-    //// But for all full-search we also have the nearest
-    //forAll(fullSearchMap, i)
-    //{
-    //    nearTypes[fullSearchMap[i]] = NearType
-    //    (
-    //        Pair<point>(fullSearchPoints[i], nearestInfo[i].hitPoint()),
-    //        fullSearchType[i]
-    //    );
-    //}
-    //const NearType zero(Pair<point>(Zero, Zero), volumeType::UNKNOWN);
-    //mapDistributeBase::distribute
-    //(
-    //    Pstream::commsTypes::nonBlocking,
-    //    List<labelPair>::null(),
-    //    samples.size(),
-    //    map.constructMap(),
-    //    map.constructHasFlip(),
-    //    map.subMap(),
-    //    map.subHasFlip(),
-    //    nearTypes,
-    //    zero,
-    //    NearTypeCombineOp(),
-    //    noOp(),           // no flipping
-    //    UPstream::msgType(),
-    //    map.comm()
-    //);
-    //volType.setSize(nearTypes.size());
-    //forAll(nearTypes, i)
-    //{
-    //    volType[i] = nearTypes[i].second();
-    //}
 
     // Add the points outside the bounding box
     for (label samplei : outsideSamples)
@@ -5121,6 +5401,35 @@ void Foam::distributedTriSurfaceMesh::distribute
             Pout<< "Dumped local vertex normals to " << str.name() << endl;
         }
     }
+
+
+    if
+    (
+        outsideVolType_ == volumeType::INSIDE
+     || outsideVolType_ == volumeType::OUTSIDE
+    )
+    {
+        // Re-build tree & inside/outside for closed surfaces
+
+        const indexedOctree<treeDataTriSurface>& t = tree();
+        const auto& nodes = t.nodes();
+        PackedList<2>& nt = t.nodeTypes();
+        nt.resize(nodes.size());
+        nt = volumeType::UNKNOWN;
+
+        // Send over any overlapping but not included triangles
+        if (!decomposeUsingBbs_)
+        {
+            // We do not backfill the bounding box so the local tree might
+            // not have all the triangles to cache inside/outside correctly.
+            // Do a pre-pass to mark 'mixed' the tree leaves that intersect
+            // the triangles of the (would be) fill-in triangles.
+            markMixedOverlap(t, nt);
+        }
+
+        cacheVolumeType(nt);
+    }
+
 
 
     if (debug)

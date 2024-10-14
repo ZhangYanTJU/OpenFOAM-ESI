@@ -304,6 +304,23 @@ private:
 
             // Caching of volume type (based on indexedOctree)
 
+            //- Set node type on any node containing the triangle
+            volumeType markMixed
+            (
+                const indexedOctree<treeDataTriSurface>& tree,
+                const label nodei,
+                const triPointRef& tri,
+                PackedList<2>& nodeTypes
+            ) const;
+
+            //- Set node type on any node overlapping any remote triangles.
+            //- Only valid if using unique decomposition.
+            void markMixedOverlap
+            (
+                const indexedOctree<treeDataTriSurface>& tree,
+                PackedList<2>& nodeTypes
+            ) const;
+
             //- Collect mid points of tree boxes
             void collectLeafMids
             (
@@ -319,6 +336,9 @@ private:
                 PackedList<2>& nodeTypes,
                 const label nodeI
             ) const;
+
+            //- Calculate inside/outside of midpoint of tree nodes
+            void cacheVolumeType(PackedList<2>& nt) const;
 
             //- Look up any cached data. Return unknown if cannot be determined.
             volumeType cachedVolumeType
