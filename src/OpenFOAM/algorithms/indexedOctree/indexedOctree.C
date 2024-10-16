@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -2661,7 +2661,7 @@ Foam::label Foam::indexedOctree<Type>::findInside(const point& sample) const
     // Need to check for the presence of content, in-case the node is empty
     if (isContent(contentIndex))
     {
-        labelList indices = contents_[getContent(contentIndex)];
+        const labelList& indices = contents_[getContent(contentIndex)];
 
         forAll(indices, elemI)
         {
