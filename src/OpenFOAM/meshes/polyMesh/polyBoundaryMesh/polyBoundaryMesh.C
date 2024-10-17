@@ -300,7 +300,8 @@ void Foam::polyBoundaryMesh::clearAddressing()
 
 void Foam::polyBoundaryMesh::calcGeometry()
 {
-    PstreamBuffers pBufs(Pstream::defaultCommsType);
+    // Make sure messages don't interact by having unique tag
+    PstreamBuffers pBufs(Pstream::defaultCommsType, __LINE__);
 
     if
     (

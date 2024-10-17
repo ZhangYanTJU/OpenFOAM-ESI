@@ -88,7 +88,12 @@ void Foam::globalMeshData::initProcAddr()
 
     if (UPstream::parRun())
     {
-        PstreamBuffers pBufs(mesh_.comm());
+        PstreamBuffers pBufs
+        (
+            mesh_.comm(),
+            UPstream::commsTypes::nonBlocking,
+            __LINE__        // tag
+        );
 
         // Send indices of my processor patches to my neighbours
         for (const label patchi : processorPatches_)
@@ -198,7 +203,9 @@ void Foam::globalMeshData::calcSharedPoints() const
     parallelPoints.map().reverseDistribute
     (
         parallelPoints.map().constructSize(),
-        master
+        master,
+        true,
+        __LINE__
     );
 
 
@@ -486,6 +493,11 @@ void Foam::globalMeshData::calcGlobalPointSlaves() const
             << endl;
     }
 
+
+    // Allocate unique tag for all maps. Could/should go through globalPoints
+    // instead.
+    const int oldTag = UPstream::msgType(__LINE__);
+
     // Calculate connected points for master points.
     globalPoints globalData(mesh_, coupledPatch(), true, true);
 
@@ -511,6 +523,9 @@ void Foam::globalMeshData::calcGlobalPointSlaves() const
             std::move(globalData.map())
         )
     );
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 
@@ -536,7 +551,7 @@ void Foam::globalMeshData::calcPointConnectivity
         );
     }
     // Send to master
-    globalPointSlavesMap().distribute(myData);
+    globalPointSlavesMap().distribute(myData, true, __LINE__);
 
 
     // String of connected points with their transform
@@ -613,7 +628,9 @@ void Foam::globalMeshData::calcPointConnectivity
     globalPointSlavesMap().reverseDistribute
     (
         slaves.size(),
-        allPointConnectivity
+        allPointConnectivity,
+        true,
+        __LINE__
     );
 }
 
@@ -655,8 +672,8 @@ void Foam::globalMeshData::calcGlobalPointEdges
     }
 
     // Pull slave data to master. Dummy transform.
-    globalPointSlavesMap().distribute(globalPointEdges);
-    globalPointSlavesMap().distribute(globalPointPoints);
+    globalPointSlavesMap().distribute(globalPointEdges, true, __LINE__);
+    globalPointSlavesMap().distribute(globalPointPoints, true, __LINE__);
     // Add all pointEdges
     forAll(slaves, pointi)
     {
@@ -764,13 +781,17 @@ void Foam::globalMeshData::calcGlobalPointEdges
     globalPointSlavesMap().reverseDistribute
     (
         slaves.size(),
-        globalPointEdges
+        globalPointEdges,
+        true,
+        __LINE__
     );
     // Push back
     globalPointSlavesMap().reverseDistribute
     (
         slaves.size(),
-        globalPointPoints
+        globalPointPoints,
+        true,
+        __LINE__
     );
 }
 
@@ -1037,7 +1058,8 @@ void Foam::globalMeshData::calcGlobalEdgeSlaves() const
             transformedEdges,
             globalEdgeTransformedSlavesPtr_(),
 
-            compactMap
+            compactMap,
+            __LINE__        // tag
         )
     );
 
@@ -1296,7 +1318,8 @@ void Foam::globalMeshData::calcGlobalPointBoundaryFaces() const
     globalPointSlavesMap().distribute
     (
         globalPointBoundaryFaces,
-        true    // put data on transformed points into correct slots
+        true,    // put data on transformed points into correct slots
+        __LINE__
     );
 
 
@@ -1423,7 +1446,8 @@ void Foam::globalMeshData::calcGlobalPointBoundaryFaces() const
             transformedFaces,
             globalPointTransformedBoundaryFacesPtr_(),
 
-            compactMap
+            compactMap,
+            __LINE__            // tag
         )
     );
     globalPointBoundaryFaces.setSize(coupledPatch().nPoints());
@@ -1526,7 +1550,8 @@ void Foam::globalMeshData::calcGlobalPointBoundaryCells() const
     globalPointSlavesMap().distribute
     (
         globalPointBoundaryCells,
-        true    // put data on transformed points into correct slots
+        true,    // put data on transformed points into correct slots
+        __LINE__
     );
 
 
@@ -1648,7 +1673,8 @@ void Foam::globalMeshData::calcGlobalPointBoundaryCells() const
             transformedCells,
             globalPointTransformedBoundaryCellsPtr_(),
 
-            compactMap
+            compactMap,
+            __LINE__        // tag
         )
     );
     globalPointBoundaryCells.setSize(coupledPatch().nPoints());
@@ -1676,6 +1702,9 @@ void Foam::globalMeshData::calcGlobalCoPointSlaves() const
             << " slave point addressing." << endl;
     }
 
+    // Allocate unique tag for all maps
+    const int oldTag = UPstream::msgType(__LINE__);
+
     // Calculate connected points for master points.
     globalPoints globalData(mesh_, coupledPatch(), true, false);
 
@@ -1693,6 +1722,8 @@ void Foam::globalMeshData::calcGlobalCoPointSlaves() const
             std::move(globalData.map())
         )
     );
+
+    UPstream::msgType(oldTag);
 
     if (debug)
     {
@@ -2430,7 +2461,7 @@ Foam::autoPtr<Foam::globalIndex> Foam::globalMeshData::mergePoints
         }
 
         // Send back
-        pointSlavesMap.reverseDistribute(cpp.nPoints(), masterToGlobal);
+        pointSlavesMap.reverseDistribute(cpp.nPoints(), masterToGlobal, true, __LINE__);
 
         // On slave copy master index into overal map.
         forAll(pointSlaves, pointi)
@@ -2510,7 +2541,7 @@ Foam::autoPtr<Foam::globalIndex> Foam::globalMeshData::mergePoints
     // - else the slave with the lowest numbered patch point label
 
     // Get all data on master
-    pointSlavesMap.distribute(coupledToGlobalPatch);
+    pointSlavesMap.distribute(coupledToGlobalPatch, true, __LINE__);
     forAll(pointSlaves, coupledPointi)
     {
         const labelList& slaves = pointSlaves[coupledPointi];
@@ -2548,7 +2579,7 @@ Foam::autoPtr<Foam::globalIndex> Foam::globalMeshData::mergePoints
             }
         }
     }
-    pointSlavesMap.reverseDistribute(cpp.nPoints(), coupledToGlobalPatch);
+    pointSlavesMap.reverseDistribute(cpp.nPoints(), coupledToGlobalPatch, true, __LINE__);
 
 
     // Generate compact numbering for master points

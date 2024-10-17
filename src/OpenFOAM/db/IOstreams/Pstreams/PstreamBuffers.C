@@ -321,6 +321,7 @@ Foam::PstreamBuffers::~PstreamBuffers()
             FatalErrorInFunction
                 << "Message from processor " << proci
                 << " Only consumed " << pos << " of " << len << " bytes" << nl
+                << " comm " << comm_ << " tag " << tag_ << nl
                 << Foam::abort(FatalError);
         }
     }
