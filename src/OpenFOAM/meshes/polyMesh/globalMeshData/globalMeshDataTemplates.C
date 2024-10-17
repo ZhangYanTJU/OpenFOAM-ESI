@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,6 +44,9 @@ void Foam::globalMeshData::syncData
     const TransformOp& top
 )
 {
+    // Allocate unique tag for all comms
+    const int oldTag = UPstream::incrMsgType();
+
     // Pull slave data onto master
     slavesMap.distribute(transforms, elems, top);
 
@@ -94,6 +97,9 @@ void Foam::globalMeshData::syncData
         elems,
         top
     );
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 
@@ -107,6 +113,9 @@ void Foam::globalMeshData::syncData
     const CombineOp& cop
 )
 {
+    // Allocate unique tag for all comms
+    const int oldTag = UPstream::incrMsgType();
+
     // Pull slave data onto master
     slavesMap.distribute(elems);
 
@@ -151,6 +160,9 @@ void Foam::globalMeshData::syncData
 
     // Push slave-slot data back to slaves
     slavesMap.reverseDistribute(elems.size(), elems);
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 
