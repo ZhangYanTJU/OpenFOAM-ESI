@@ -546,10 +546,14 @@ void Foam::globalMeshData::calcPointConnectivity
     const globalIndexAndTransform& transforms = globalTransforms();
     const labelListList& slaves = globalPointSlaves();
     const labelListList& transformedSlaves = globalPointTransformedSlaves();
+    const auto& slavesMap = globalPointSlavesMap();
 
+
+    // Allocate unique tag for all comms
+    const int oldTag = UPstream::incrMsgType();
 
     // Create field with my local data
-    labelPairList myData(globalPointSlavesMap().constructSize());
+    labelPairList myData(slavesMap.constructSize());
     forAll(slaves, pointi)
     {
         myData[pointi] = transforms.encode
@@ -560,11 +564,11 @@ void Foam::globalMeshData::calcPointConnectivity
         );
     }
     // Send to master
-    globalPointSlavesMap().distribute(myData, true, UPstream::msgType()+1);
+    slavesMap.distribute(myData, true, UPstream::msgType());
 
 
     // String of connected points with their transform
-    allPointConnectivity.setSize(globalPointSlavesMap().constructSize());
+    allPointConnectivity.setSize(slavesMap.constructSize());
     allPointConnectivity = labelPairList(0);
 
     // Pass1: do the master points since these also update local slaves
@@ -593,7 +597,7 @@ void Foam::globalMeshData::calcPointConnectivity
             forAll(pTransformSlaves, i)
             {
                 // Get transform from index
-                label transformI = globalPointSlavesMap().whichTransform
+                label transformI = slavesMap.whichTransform
                 (
                     pTransformSlaves[i]
                 );
@@ -634,13 +638,16 @@ void Foam::globalMeshData::calcPointConnectivity
     }
 
 
-    globalPointSlavesMap().reverseDistribute
+    slavesMap.reverseDistribute
     (
         slaves.size(),
         allPointConnectivity,
         true,
-        UPstream::msgType()+1
+        UPstream::msgType()
     );
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 
@@ -885,6 +892,8 @@ void Foam::globalMeshData::calcGlobalEdgeSlaves() const
     // need to make sure that all points know about connectivity and
     // the transformations.
 
+    // Allocate unique tag for all comms
+    const int oldTag = UPstream::incrMsgType();
 
     // 1. collect point connectivity - basically recreating globalPoints output.
     // All points will now have a string of coupled points. The transforms are
@@ -1071,10 +1080,12 @@ void Foam::globalMeshData::calcGlobalEdgeSlaves() const
             globalEdgeTransformedSlavesPtr_(),
 
             compactMap,
-            UPstream::msgType()+1
+            UPstream::msgType()
         )
     );
 
+    // Reset tag
+    UPstream::msgType(oldTag);
 
     if (debug)
     {
