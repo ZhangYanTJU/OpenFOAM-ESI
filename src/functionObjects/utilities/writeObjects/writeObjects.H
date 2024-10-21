@@ -34,49 +34,55 @@ Description
     Allows specification of different writing frequency of objects registered
     to the database.
 
-    It has similar functionality as the main time database through the
-    \c writeControl setting:
-      - timeStep
-      - writeTime
-      - adjustableRunTime
-      - runTime
-      - clockTime
-      - cpuTime
-
-    It also has the ability to write the selected objects that were defined
-    with the respective write mode for the requested \c writeOption, namely:
-    \vartable
-        autoWrite | objects set to write at output time
-        noWrite   | objects set to not write by default
-        anyWrite  | any option of the previous two
-    \endvartable
-
 Usage
-    Example of function object specification:
+    Minimal example by using \c system/controlDict.functions:
     \verbatim
     writeObjects1
     {
-        type        writeObjects;
-        libs        (utilityFunctionObjects);
+        // Mandatory entries
+        type          writeObjects;
+        libs          (utilityFunctionObjects);
+
+        // Optional entries
+        writeOption   <word>;
+
+        // Conditional entries
+
+            // Option-1
+            field     <word>;
+
+            // Option-2
+            fields    (<wordRes>);
+
+            // Option-3
+            objects   (<wordRes>);
+
+        // Inherited entries
         ...
-        objects     (obj1 obj2);
-        writeOption anyWrite;
     }
     \endverbatim
 
-    Where the entries comprise:
+    where the entries mean:
     \table
-        Property     | Description             | Required     | Default value
-        type         | type name: writeObjects | yes          |
-        objects      | objects to write        | yes          |
-        writeOption  | only those with this write option | no | anyWrite
+      Property   | Description               | Type | Reqd    | Deflt
+      type       | Type name: writeObjects   | word | yes     | -
+      libs       | Library name: utilityFunctionObjects | word | yes  | -
+      writeOption | Select objects with the specified write mode | no | anyWrite
+      field      | Name of field to write    | word | no      | -
+      fields     | Names of fields to write  | wordRes | no   | -
+      objects    | Names of objects to write | wordRes | no   | -
     \endtable
 
-    Note: Regular expressions can also be used in \c objects.
+    Options for the \c writeOption entry:
+    \vartable
+      autoWrite | Objects set to write at output time
+      noWrite   | Objects set to not write by default
+      anyWrite  | Any option of the previous two
+      reportRegistered | Only report registered objects without writing objects
+    \endvartable
 
-See also
-    Foam::functionObject
-    Foam::functionObjects::timeControl
+    The inherited entries are elaborated in:
+      - \link functionObject.H \endlink
 
 SourceFiles
     writeObjects.C
@@ -119,9 +125,11 @@ public:
         {
             NO_WRITE,
             AUTO_WRITE,
-            ANY_WRITE
+            ANY_WRITE,
+            REPORT_REGISTERED
         };
 
+        //- Names for writeOption
         static const Enum<writeOption> writeOptionNames_;
 
 private:
