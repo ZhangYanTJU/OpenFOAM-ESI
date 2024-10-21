@@ -45,6 +45,11 @@ registerOptSwitch
     Foam::PstreamBuffers::algorithm
 );
 
+namespace Foam
+{
+    defineTypeNameAndDebug(PstreamBuffers, 0);
+}
+
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -231,6 +236,12 @@ void Foam::PstreamBuffers::finalExchange
     labelList& recvSizes
 )
 {
+    DebugPoutInFunction
+        << "tag:" << tag_
+        << " comm:" << comm_
+        << " nProcs:" << nProcs_
+        << endl;
+
     initFinalExchange();
 
     if (commsType_ == UPstream::commsTypes::nonBlocking)
@@ -303,13 +314,25 @@ Foam::PstreamBuffers::PstreamBuffers
     sendBuffers_(nProcs_),
     recvBuffers_(nProcs_),
     recvPositions_(nProcs_, Zero)
-{}
+{
+    DebugPoutInFunction
+        << "tag:" << tag_
+        << " comm:" << comm_
+        << " nProcs:" << nProcs_
+        << endl;
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::PstreamBuffers::~PstreamBuffers()
 {
+    DebugPoutInFunction
+        << "tag:" << tag_
+        << " comm:" << comm_
+        << " nProcs:" << nProcs_
+        << endl;
+
     // Check that all data has been consumed.
     forAll(recvBuffers_, proci)
     {
@@ -624,6 +647,12 @@ Foam::PstreamBuffers::peekRecvData(const label proci) const
 
 void Foam::PstreamBuffers::finishedSends(const bool wait)
 {
+    DebugPoutInFunction
+        << "tag:" << tag_
+        << " comm:" << comm_
+        << " nProcs:" << nProcs_
+        << endl;
+
     labelList recvSizes;
     finalExchange(modeOption::DEFAULT, wait, recvSizes);
 }
@@ -631,6 +660,12 @@ void Foam::PstreamBuffers::finishedSends(const bool wait)
 
 void Foam::PstreamBuffers::finishedSendsNBX(const bool wait)
 {
+    DebugPoutInFunction
+        << "tag:" << tag_
+        << " comm:" << comm_
+        << " nProcs:" << nProcs_
+        << endl;
+
     labelList recvSizes;
     finalExchange(modeOption::NBX_PEX, wait, recvSizes);
 }
@@ -642,6 +677,12 @@ void Foam::PstreamBuffers::finishedSends
     const bool wait
 )
 {
+    DebugPoutInFunction
+        << "tag:" << tag_
+        << " comm:" << comm_
+        << " nProcs:" << nProcs_
+        << endl;
+
     // Resize for copying back
     recvSizes.resize_nocopy(sendBuffers_.size());
 
