@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1110,8 +1110,9 @@ void setCouplingInfo
     fvMesh& mesh,
     const labelList& zoneToPatch,
     const word& sampleRegion,
-    const mappedWallPolyPatch::sampleMode mode,
-    const List<pointField>& offsets
+    const mappedPatchBase::sampleMode mode,
+    const List<pointField>& offsets,
+    const List<boundBox>& bbs
 )
 {
     const polyBoundaryMesh& patches = mesh.boundaryMesh();
@@ -1132,7 +1133,6 @@ void setCouplingInfo
 
             if (isA<mappedWallPolyPatch>(pp))
             {
-                const boundBox bb(pp.points(), pp.meshPoints(), true);
                 const vector avgOffset = gAverage(offsets[zoneI]);
                 const scalar mergeSqrDist =
                     gMax(magSqr(offsets[zoneI]-avgOffset));
@@ -1157,7 +1157,7 @@ void setCouplingInfo
 
                 // Verify uniformity of offset
                 // (same check as blockMesh geom merge)
-                if (mergeSqrDist < magSqr(10*SMALL*bb.span()))
+                if (mergeSqrDist < magSqr(10*SMALL*bbs[zoneI].span()))
                 {
                     Info<< "uniform offset " << avgOffset << endl;
                 }
@@ -2468,7 +2468,10 @@ int main(int argc, char *argv[])
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     List<pointField> topOffsets(zoneNames.size());
+    List<boundBox> topBbs(zoneNames.size());
+
     List<pointField> bottomOffsets(zoneNames.size());
+    List<boundBox> bottomBbs(zoneNames.size());
 
     forAll(regionMesh.boundaryMesh(), patchi)
     {
@@ -2480,11 +2483,13 @@ int main(int argc, char *argv[])
             {
                 label zoneI = interRegionTopPatch.find(patchi);
                 topOffsets[zoneI] = calcOffset(extrudePatch, extruder, pp);
+                topBbs[zoneI] = boundBox(pp.points(), pp.meshPoints(), true);
             }
             else if (interRegionBottomPatch.found(patchi))
             {
                 label zoneI = interRegionBottomPatch.find(patchi);
                 bottomOffsets[zoneI] = calcOffset(extrudePatch, extruder, pp);
+                bottomBbs[zoneI] = boundBox(pp.points(), pp.meshPoints(), true);
             }
         }
     }
@@ -2501,7 +2506,8 @@ int main(int argc, char *argv[])
             interRegionTopPatch,
             regionName,                 // name of main mesh
             sampleMode,                 // sampleMode
-            topOffsets
+            topOffsets,
+            topBbs
         );
 
         // Correct bottom patches for offset
@@ -2511,7 +2517,8 @@ int main(int argc, char *argv[])
             interRegionBottomPatch,
             regionName,
             sampleMode,                 // sampleMode
-            bottomOffsets
+            bottomOffsets,
+            bottomBbs
         );
 
         // Remove any unused patches
@@ -2530,7 +2537,8 @@ int main(int argc, char *argv[])
             interMeshTopPatch,
             shellRegionName,                        // name of shell mesh
             sampleMode,                             // sampleMode
-            -topOffsets
+            -topOffsets,
+            topBbs
         );
 
         // Correct bottom patches for offset
@@ -2540,7 +2548,8 @@ int main(int argc, char *argv[])
             interMeshBottomPatch,
             shellRegionName,
             sampleMode,
-            -bottomOffsets
+            -bottomOffsets,
+            bottomBbs
         );
     }
 
