@@ -42,5 +42,6 @@ liquidFilm/kinematicThinFilm/kinematicThinFilm.C
 derivedFvPatchFields/filmShell/velocityFilmShellFvPatchVectorField.C
 
 functionObjects/setTimeStep/setTimeStepFaRegionsFunctionObject.C
+functionObjects/surfaceCourantNumber/surfaceCourantNumber.C
 
 LIB = $(FOAM_LIBBIN)/libregionFaModels
