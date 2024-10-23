@@ -175,7 +175,15 @@ void Foam::cyclicAMIPolyPatch::initInterpolateUntransformed
         const auto& map = (owner() ? AMI.tgtMap() : AMI.srcMap());
 
         // Insert send/receive requests (non-blocking)
-        map.send(fld, sendRequests, sendBuffers, recvRequests, recvBuffers);
+        map.send
+        (
+            fld,
+            sendRequests,
+            sendBuffers,
+            recvRequests,
+            recvBuffers,
+            3894+this->index()      // unique offset + patch index
+        );
     }
 }
 
@@ -256,7 +264,13 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     {
         // Receive (= copy) data from buffers into work. TBD: receive directly
         // into slices of work.
-        map.receive(requests, recvBuffers, work);
+        map.receive
+        (
+            requests,
+            recvBuffers,
+            work,
+            3894+this->index()      // unique offset + patch index
+        );
     }
     const Field<Type>& fld = (AMI.distributed() ? work : localFld);
 
