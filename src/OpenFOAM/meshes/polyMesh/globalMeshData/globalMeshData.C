@@ -692,8 +692,21 @@ void Foam::globalMeshData::calcGlobalPointEdges
     // Allocate unique tag for all comms
     const int oldTag = UPstream::incrMsgType();
 
-    globalPointSlavesMap().distribute(globalPointEdges);
-    globalPointSlavesMap().distribute(globalPointPoints);
+    globalPointSlavesMap().distribute
+    (
+        globalPointEdges,
+        true,
+        UPstream::msgType()
+    );
+    // Make sure second send uses 'far' away tags in case of NBX deciding on
+    // multi-pass spraying of messages with consecutive tags
+    globalPointSlavesMap().distribute
+    (
+        globalPointPoints,
+        true,
+        UPstream::msgType()+23456    // Unique, far enough away tag
+    );
+
     // Add all pointEdges
     forAll(slaves, pointi)
     {
@@ -801,13 +814,17 @@ void Foam::globalMeshData::calcGlobalPointEdges
     globalPointSlavesMap().reverseDistribute
     (
         slaves.size(),
-        globalPointEdges
+        globalPointEdges,
+        true,
+        UPstream::msgType()
     );
     // Push back
     globalPointSlavesMap().reverseDistribute
     (
         slaves.size(),
-        globalPointPoints
+        globalPointPoints,
+        true,
+        UPstream::msgType()+65432   // Unique, far enough away tag
     );
 
     // Reset tag
