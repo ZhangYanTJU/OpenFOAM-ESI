@@ -50,5 +50,9 @@ maxCo               5;
 
 maxDeltaT           0.1;
 
+functions
+{
+    #include "FOsurfaceCourantNumber"
+}
 
 // ************************************************************************* //
