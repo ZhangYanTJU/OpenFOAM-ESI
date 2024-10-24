@@ -251,6 +251,8 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
         );
         UPstream::commWarn(oldWarnComm);
     }
+
+    this->updatedMatrix(false);
 }
 
 
@@ -360,6 +362,8 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
         // Add result using coefficients
         this->addToInternalField(result, !add, faceCells, coeffs, pnf);
     }
+
+    this->updatedMatrix(true);
 }
 
 

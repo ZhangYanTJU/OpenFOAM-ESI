@@ -616,6 +616,8 @@ void Foam::cyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
             scalarRecvBufs_
         );
     }
+
+    this->updatedMatrix(false);
 }
 
 
@@ -693,6 +695,8 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 
     // Multiply the field by coefficients and add into the result
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+
+    this->updatedMatrix(true);
 }
 
 
@@ -751,6 +755,8 @@ void Foam::cyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
             recvBufs_
         );
     }
+
+    this->updatedMatrix(false);
 }
 
 
@@ -827,6 +833,8 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 
     // Multiply the field by coefficients and add into the result
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+
+    this->updatedMatrix(true);
 }
 
 
