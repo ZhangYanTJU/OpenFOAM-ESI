@@ -289,7 +289,7 @@ bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
                             (
                                 inti,
                                &coarseMesh.interfaces()[inti]
-                            );    
+                            );
                         }
                     }
                 }
