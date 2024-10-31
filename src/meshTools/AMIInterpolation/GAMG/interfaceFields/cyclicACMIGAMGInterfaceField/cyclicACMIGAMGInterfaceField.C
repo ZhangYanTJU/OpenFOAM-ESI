@@ -216,12 +216,6 @@ void Foam::cyclicACMIGAMGInterfaceField::initInterfaceMatrixUpdate
           ? AMI.tgtMap()
           : AMI.srcMap()
         );
-        const label masterIndex
-        (
-            cyclicACMIInterface_.owner()
-          ? cyclicACMIInterface_.index()
-          : cyclicACMIInterface_.neighbPatchID()
-        );
 
         // Assert that all receives are known to have finished
         if (!recvRequests_.empty())
@@ -245,7 +239,7 @@ void Foam::cyclicACMIGAMGInterfaceField::initInterfaceMatrixUpdate
             scalarSendBufs_,
             recvRequests_,
             scalarRecvBufs_,
-            19462+masterIndex   // unique offset + owner patch index
+            19462+cyclicACMIInterface_.index()  // unique offset + patch index
         );
         UPstream::commWarn(oldWarnComm);
     }
@@ -291,12 +285,6 @@ void Foam::cyclicACMIGAMGInterfaceField::updateInterfaceMatrix
           ? AMI.tgtMap()
           : AMI.srcMap()
         );
-        const label masterIndex
-        (
-            cyclicACMIInterface_.owner()
-          ? cyclicACMIInterface_.index()
-          : cyclicACMIInterface_.neighbPatchID()
-        );
 
         // Receive (= copy) data from buffers into work. TBD: receive directly
         // into slices of work.
@@ -306,7 +294,7 @@ void Foam::cyclicACMIGAMGInterfaceField::updateInterfaceMatrix
             recvRequests_,
             scalarRecvBufs_,
             work,
-            19462+masterIndex   // unique offset + owner patch index
+            19462+cyclicACMIInterface_.index()  // unique offset + patch index
         );
 
         // Receive requests all handled by last function call

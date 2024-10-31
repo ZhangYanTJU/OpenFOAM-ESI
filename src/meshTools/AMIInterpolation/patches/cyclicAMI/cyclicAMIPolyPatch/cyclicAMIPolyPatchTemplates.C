@@ -173,12 +173,6 @@ void Foam::cyclicAMIPolyPatch::initInterpolateUntransformed
     if (AMI.distributed())
     {
         const auto& map = (owner() ? AMI.tgtMap() : AMI.srcMap());
-        const label masterIndex
-        (
-            owner()
-          ? this->index()
-          : this->neighbPatchID()
-        );
 
         // Insert send/receive requests (non-blocking)
         map.send
@@ -188,7 +182,7 @@ void Foam::cyclicAMIPolyPatch::initInterpolateUntransformed
             sendBuffers,
             recvRequests,
             recvBuffers,
-            3894+masterIndex    // unique offset + owner patch index
+            3894+this->index()  // unique offset + patch index
         );
     }
 }
@@ -270,20 +264,12 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     {
         // Receive (= copy) data from buffers into work. TBD: receive directly
         // into slices of work.
-
-        const label masterIndex
-        (
-            owner()
-          ? this->index()
-          : this->neighbPatchID()
-        );
-
         map.receive
         (
             requests,
             recvBuffers,
             work,
-            3894+masterIndex    // unique offset + owner patch index
+            3894+this->index()  // unique offset + patch index
         );
     }
     const Field<Type>& fld = (AMI.distributed() ? work : localFld);
