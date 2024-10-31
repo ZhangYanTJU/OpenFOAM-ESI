@@ -1430,19 +1430,6 @@ void Foam::distributedTriSurfaceMesh::surfaceSide
 
             const point& nearest = localNearestInfo[i].point();
 
-            //const point nearest = f.nearestPoint(sample, points).point();
-            //if (mag(nearest-nearest2) > SMALL)
-            //{
-            //    WarningInFunction
-            //        << "distributedTriSurfaceMesh::surfaceSide :"
-            //        << " on surface " << searchableSurface::name()
-            //        << " triangle:" << f.tri(points)
-            //        << " sample:" << sample
-            //        << " nearest:" << nearest
-            //        << " nearest2:" << nearest2
-            //        << endl;
-            //}
-
             const vector sampleNearestVec(sample - nearest);
 
             const barycentric2D w(f.tri(points).pointToBarycentric(nearest));
@@ -3369,6 +3356,35 @@ const Foam::globalIndex& Foam::distributedTriSurfaceMesh::globalTris() const
 }
 
 
+void Foam::distributedTriSurfaceMesh::flip()
+{
+    if (debug)
+    {
+        Pout<< "distributedTriSurfaceMesh::flip :"
+            << " surface " << searchableSurface::name()
+            << " with current orientation "
+            << volumeType::names[outsideVolType_]
+            << " vertexNormals_ " << vertexNormals_.good()
+            << endl;
+    }
+
+    triSurfaceMesh::flip();
+
+    if (vertexNormals_)
+    {
+        List<FixedList<vector, 3>>& vn = vertexNormals_();
+
+        for (auto& normals : vn)
+        {
+            for (auto& n : normals)
+            {
+                n = -n;
+            }
+        }
+    }
+}
+
+
 //void Foam::distributedTriSurfaceMesh::findNearest
 //(
 //    const pointField& samples,
@@ -4464,10 +4480,32 @@ void Foam::distributedTriSurfaceMesh::getNormal
 
     normal.setSize(triangleIndex.size());
 
-    forAll(triangleIndex, i)
+    if (vertexNormals_)
     {
-        label trii = triangleIndex[i];
-        normal[i] = s[trii].unitNormal(s.points());
+        // Use smooth interpolation for the normal
+
+        // Send over nearest point since we have it anyway
+        List<pointIndexHit> localNearestInfo(info);
+        map.distribute(localNearestInfo);
+
+        forAll(triangleIndex, i)
+        {
+            const point& nearest = localNearestInfo[i].point();
+
+            const label trii = triangleIndex[i];
+            const triPointRef tri(s[trii].tri(s.points()));
+            const auto& vn = vertexNormals_()[trii];
+            const barycentric2D w(tri.pointToBarycentric(nearest));
+            normal[i] = w[0]*vn[0]+w[1]*vn[1]+w[2]*vn[2];
+        }
+    }
+    else
+    {
+        forAll(triangleIndex, i)
+        {
+            const label trii = triangleIndex[i];
+            normal[i] = s[trii].unitNormal(s.points());
+        }
     }
 
 

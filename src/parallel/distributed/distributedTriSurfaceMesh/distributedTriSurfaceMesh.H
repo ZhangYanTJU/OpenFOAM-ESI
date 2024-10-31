@@ -503,6 +503,9 @@ public:
                 return globalTris().totalSize();
             }
 
+            //- Flip triangles, outsideVolumeType and all cached inside/outside.
+            virtual void flip();
+
             virtual void findNearest
             (
                 const pointField& sample,

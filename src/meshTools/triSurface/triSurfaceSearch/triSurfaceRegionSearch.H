@@ -128,6 +128,11 @@ public:
                 const labelList& regionIndices,
                 List<pointIndexHit>& info
             ) const;
+
+        // Edit
+
+            //- Flip orientation
+            void flip();
 };
 
 
