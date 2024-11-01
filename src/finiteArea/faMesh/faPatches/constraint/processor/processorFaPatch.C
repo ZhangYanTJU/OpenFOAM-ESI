@@ -398,18 +398,21 @@ void Foam::processorFaPatch::makeWeights(scalarField& w) const
 {
     if (Pstream::parRun())
     {
-        // The face normals point in the opposite direction on the other side
-        scalarField neighbEdgeCentresCn
+        const vectorField& skew = skewCorrectionVectors();
+        const scalarField& PN = lPN();
+
+        const scalarField lEN
         (
-            neighbEdgeNormals()
-          & (neighbEdgeCentres() - neighbEdgeFaceCentres())
+            mag(neighbEdgeFaceCentres() - edgeCentres() + skew)
         );
 
-        w = neighbEdgeCentresCn/
-            (
-                (edgeNormals() & coupledFaPatch::delta())
-              + neighbEdgeCentresCn + VSMALL
-            );
+        forAll(w, i)
+        {
+            if (mag(PN[i]) > SMALL)
+            {
+                w[i] = lEN[i]/PN[i];
+            }
+        }
     }
     else
     {
@@ -418,17 +421,104 @@ void Foam::processorFaPatch::makeWeights(scalarField& w) const
 }
 
 
+void Foam::processorFaPatch::makeLPN(scalarField& lPN) const
+{
+    const vectorField& skew = skewCorrectionVectors();
+
+    if (Pstream::parRun())
+    {
+        lPN =
+            mag(edgeCentres() - skew - edgeFaceCentres())         // lPE
+          + mag(neighbEdgeFaceCentres() - edgeCentres() + skew);  // lEN
+
+        for (scalar& lpn: lPN)
+        {
+            if (mag(lpn) < SMALL)
+            {
+                lpn = SMALL;
+            }
+        }
+    }
+    else
+    {
+        lPN =
+            mag(edgeCentres() - skew - edgeFaceCentres())         // lPE
+          + mag(edgeFaceCentres() - edgeCentres() + skew);        // lEN
+    }
+}
+
+
 void Foam::processorFaPatch::makeDeltaCoeffs(scalarField& dc) const
 {
     if (Pstream::parRun())
     {
-        dc = (1.0 - weights())
-            /((edgeNormals() & coupledFaPatch::delta()) + VSMALL);
+        const edgeList& edges = boundaryMesh().mesh().edges();
+        const pointField& points = boundaryMesh().mesh().points();
+        const vectorField& lengths = edgeLengths();
+        const scalarField& PN = lPN();
+
+        tmp<vectorField> tdelta = processorFaPatch::delta();
+        vectorField& unitDelta = tdelta.ref();
+
+        forAll(dc, i)
+        {
+            vector edgeNormal =
+                normalised(lengths[i] ^ edges[i + start()].vec(points));
+
+            unitDelta[i].removeCollinear(edgeNormal);
+            unitDelta[i].normalise();
+
+            edgeNormal = normalised(lengths[i]);
+
+            const scalar alpha = PN[i]*(edgeNormal & unitDelta[i]);
+            if (mag(alpha) > SMALL)
+            {
+                dc[i] = scalar(1)/max(alpha, 0.05*PN[i]);
+            }
+        }
     }
     else
     {
         dc = scalar(1)
             /((edgeNormals() & coupledFaPatch::delta()) + VSMALL);
+    }
+}
+
+
+void Foam::processorFaPatch::makeCorrectionVectors(vectorField& cv) const
+{
+    if (Pstream::parRun())
+    {
+        const edgeList& edges = boundaryMesh().mesh().edges();
+        const pointField& points = boundaryMesh().mesh().points();
+        const vectorField& lengths = edgeLengths();
+
+        tmp<vectorField> tdelta = processorFaPatch::delta();
+        vectorField& unitDelta = tdelta.ref();
+
+        forAll(cv, i)
+        {
+            vector edgeNormal =
+                normalised(lengths[i] ^ edges[i + start()].vec(points));
+
+            unitDelta[i].removeCollinear(edgeNormal);
+            unitDelta.normalise();
+
+            edgeNormal = normalised(lengths[i]);
+
+            const scalar alpha = unitDelta[i] & edgeNormal;
+            scalar dc = SMALL;
+            if (mag(alpha) > SMALL)
+            {
+                dc = scalar(1)/alpha;
+            }
+
+            cv[i] = edgeNormal - dc*unitDelta[i];
+        }
+    }
+    else
+    {
+        cv = Zero;
     }
 }
 

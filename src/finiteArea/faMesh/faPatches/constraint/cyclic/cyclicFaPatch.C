@@ -218,6 +218,13 @@ void Foam::cyclicFaPatch::makeWeights(scalarField& w) const
 }
 
 
+void Foam::cyclicFaPatch::makeLPN(scalarField& lPN) const
+{
+    makeDeltaCoeffs(lPN);
+    lPN = scalar(1)/lPN;
+}
+
+
 void Foam::cyclicFaPatch::makeDeltaCoeffs(scalarField& dc) const
 {
     const scalarField deltas(edgeNormals() & coupledFaPatch::delta());

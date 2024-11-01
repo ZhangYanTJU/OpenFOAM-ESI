@@ -98,9 +98,17 @@ const Foam::edgeVectorField& Foam::edgeInterpolation::correctionVectors() const
 {
     if (orthogonal())
     {
-        FatalErrorInFunction
-            << "cannot return correctionVectors; mesh is orthogonal"
-            << abort(FatalError);
+        return tmp<edgeVectorField>::New
+        (
+            IOobject
+            (
+                "correctionVectors",
+                mesh().pointsInstance(),
+                mesh().thisDb()
+            ),
+            mesh(),
+            dimensionedVector(dimless, Zero)
+        );
     }
 
     return (*correctionVectorsPtr_);
@@ -123,9 +131,17 @@ Foam::edgeInterpolation::skewCorrectionVectors() const
 {
     if (!skew())
     {
-        FatalErrorInFunction
-            << "cannot return skewCorrectionVectors; mesh is now skewed"
-            << abort(FatalError);
+        return tmp<edgeVectorField>::New
+        (
+            IOobject
+            (
+                "skewCorrectionVectors",
+                mesh().pointsInstance(),
+                mesh().thisDb()
+            ),
+            mesh(),
+            dimensionedVector(dimless, Zero)
+        );
     }
 
     return (*skewCorrectionVectorsPtr_);
@@ -233,12 +249,10 @@ void Foam::edgeInterpolation::makeLPN() const
 
     forAll(lPN.boundaryField(), patchI)
     {
-        mesh().boundary()[patchI].makeDeltaCoeffs
+        mesh().boundary()[patchI].makeLPN
         (
             lPN.boundaryFieldRef()[patchI]
         );
-
-        lPN.boundaryFieldRef()[patchI] = 1.0/lPN.boundaryField()[patchI];
     }
 
 
@@ -305,6 +319,7 @@ void Foam::edgeInterpolation::makeWeights() const
 
         // weight = (0,1]
         const scalar lPN = lPE + lEN;
+
         if (mag(lPN) > SMALL)
         {
             weightingFactorsIn[edgeI] = lEN/lPN;
@@ -498,31 +513,6 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
         mesh().boundary()[patchI].makeCorrectionVectors(CorrVecsbf[patchI]);
     }
 
-    scalar NonOrthogCoeff = 0.0;
-
-    if (owner.size() > 0)
-    {
-        scalarField sinAlpha(deltaCoeffs*mag(CorrVecs.internalField()));
-        sinAlpha.clamp_range(-1, 1);
-
-        NonOrthogCoeff = max(Foam::asin(sinAlpha)*180.0/M_PI);
-    }
-
-    reduce(NonOrthogCoeff, maxOp<scalar>());
-
-    DebugInFunction
-        << "non-orthogonality coefficient = " << NonOrthogCoeff << " deg."
-        << endl;
-
-    if (NonOrthogCoeff < 0.1)
-    {
-        orthogonal_ = true;
-        correctionVectorsPtr_.reset(nullptr);
-    }
-    else
-    {
-        orthogonal_ = false;
-    }
 
     DebugInFunction
         << "Finished constructing non-orthogonal correction vectors"
