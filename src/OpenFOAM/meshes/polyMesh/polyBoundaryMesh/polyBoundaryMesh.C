@@ -978,14 +978,22 @@ Foam::polyBoundaryMesh::whichPatchFace(const label meshFacei) const
     }
 
 
+    const polyPatchList& patches = *this;
+
+    // Do we have cached patch info?
+    if (patchIDPtr_)
+    {
+        const label patchi =
+            this->patchID()[meshFacei - mesh().nInternalFaces()];
+
+        // (patch, local face index)
+        return labelPair(patchi, meshFacei - patches[patchi].start());
+    }
+
+
     // Patches are ordered, use binary search
     // Find out which patch index and local patch face the specified
     // mesh face belongs to by comparing label with patch start labels.
-
-
-    // TBD: use patchIDPtr_ if it exists?
-
-    const polyPatchList& patches = *this;
 
     const label patchi =
         findLower
