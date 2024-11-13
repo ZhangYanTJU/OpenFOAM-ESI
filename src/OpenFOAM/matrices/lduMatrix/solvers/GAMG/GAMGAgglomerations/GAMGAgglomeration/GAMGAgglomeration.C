@@ -497,13 +497,17 @@ Foam::GAMGAgglomeration::~GAMGAgglomeration()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::GAMGAgglomeration::requiresUpdate() const
+{
+    return
+        (updateInterval_ > 0)
+     && ((mesh_.thisDb().time().timeIndex() % updateInterval_) == 0);
+}
+
+
 bool Foam::GAMGAgglomeration::movePoints()
 {
-    if
-    (
-        (updateInterval_ > 0)
-     && ((mesh_.thisDb().time().timeIndex() % updateInterval_) == 0)
-    )
+    if (requiresUpdate())
     {
         requireUpdate_ = true;
     }

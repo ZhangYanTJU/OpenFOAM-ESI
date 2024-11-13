@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -68,23 +68,47 @@ Foam::faceAreaPairGAMGAgglomeration::faceAreaPairGAMGAgglomeration
 {
     const fvMesh& fvmesh = refCast<const fvMesh>(mesh);
 
-    //agglomerate(mesh, sqrt(fvmesh.magSf().primitiveField()));
-    agglomerate
-    (
-        nCellsInCoarsestLevel_,
-        0,          //mesh,
-        mag
+    if (pairGAMGAgglomeration::requiresUpdate())
+    {
+        // This is the <=2406 logic. Apply perturbation to avoid jagged
+        // agglomerations on axis-aligned meshes
+
+        DebugPoutInFunction<< "Agglomerate with perturbation" << endl;
+
+        //agglomerate(mesh, sqrt(fvmesh.magSf().primitiveField()));
+        agglomerate
         (
-            cmptMultiply
+            nCellsInCoarsestLevel_,
+            0,          //mesh,
+            mag
             (
-                fvmesh.Sf().primitiveField()
-               /sqrt(fvmesh.magSf().primitiveField()),
-                vector(1, 1.01, 1.02)
-                //vector::one
-            )
-        ),
-        true
-    );
+                cmptMultiply
+                (
+                    fvmesh.Sf().primitiveField()
+                   /sqrt(fvmesh.magSf().primitiveField()),
+                    vector(1, 1.01, 1.02)
+                    //vector::one
+                )
+            ),
+            true
+        );
+    }
+    else
+    {
+        // In partial updating mode. Use Galilean invariant agglomeration
+        // to e.g. have constant agglomeration for solid body rotation. Also
+        // scale with face area to be consistent with (most) discretisation.
+
+        DebugPoutInFunction<< "Agglomerate with faceArea magnitude" << endl;
+
+        agglomerate
+        (
+            nCellsInCoarsestLevel_,
+            0,          //mesh,
+            mag(fvmesh.magSf().primitiveField()),
+            true
+        );
+    }
 }
 
 
@@ -98,23 +122,47 @@ Foam::faceAreaPairGAMGAgglomeration::faceAreaPairGAMGAgglomeration
 :
     pairGAMGAgglomeration(mesh, controlDict)
 {
-    //agglomerate(mesh, sqrt(mag(faceAreas)));
-    agglomerate
-    (
-        nCellsInCoarsestLevel_,
-        0,          //mesh,
-        mag
+    if (pairGAMGAgglomeration::requiresUpdate())
+    {
+        // This is the <=2406 logic. Apply perturbation to avoid jagged
+        // agglomerations on axis-aligned meshes
+
+        DebugPoutInFunction<< "Agglomerate with perturbation" << endl;
+
+        //agglomerate(mesh, sqrt(mag(faceAreas)));
+        agglomerate
         (
-            cmptMultiply
+            nCellsInCoarsestLevel_,
+            0,          //mesh,
+            mag
             (
-                faceAreas
-               /sqrt(mag(faceAreas)),
-                vector(1, 1.01, 1.02)
-                //vector::one
-            )
-        ),
-        true
-    );
+                cmptMultiply
+                (
+                    faceAreas
+                   /sqrt(mag(faceAreas)),
+                    vector(1, 1.01, 1.02)
+                    //vector::one
+                )
+            ),
+            true
+        );
+    }
+    else
+    {
+        // In partial updating mode. Use Galilean invariant agglomeration
+        // to e.g. have constant agglomeration for solid body rotation. Also
+        // scale with face area to be consistent with (most) discretisation.
+
+        DebugPoutInFunction<< "Agglomerate with faceArea magnitude" << endl;
+
+        agglomerate
+        (
+            nCellsInCoarsestLevel_,
+            0,          //mesh,
+            mag(faceAreas),
+            true
+        );
+    }
 }
 
 
@@ -306,6 +354,11 @@ bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
                 //    )
                 //);
             }
+        }
+
+        if (debug)
+        {
+            printLevels();
         }
     }
 

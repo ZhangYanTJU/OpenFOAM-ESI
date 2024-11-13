@@ -187,6 +187,9 @@ protected:
 
     // Protected Member Functions
 
+        //- Does the agglomeration need to be fully updated?
+        bool requiresUpdate() const;
+
         //- Assemble coarse mesh addressing
         void agglomerateLduAddressing(const label fineLevelIndex);
 
