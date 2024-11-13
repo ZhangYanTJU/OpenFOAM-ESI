@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2019 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -218,7 +218,7 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
     {
         return
         (
-            cornerWeights[facei]*2.0*k[faceCells[facei]]*nuw[facei]
+            2.0*k[faceCells[facei]]*nuw[facei]
           / sqr(y[facei])
         );
     };
@@ -228,7 +228,7 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
     {
         return
         (
-            cornerWeights[facei]*Cmu75*pow(k[faceCells[facei]], 1.5)
+            Cmu75*pow(k[faceCells[facei]], 1.5)
           / (kappa*y[facei])
         );
     };
@@ -241,11 +241,15 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
             {
                 if (lowReCorrection_ && yPlus(facei) < yPlusLam)
                 {
-                    epsilon0[faceCells[facei]] += epsilonVis(facei);
+                    epsilon0[faceCells[facei]] +=
+                        cornerWeights[facei]
+                      * epsilonVis(facei);
                 }
                 else
                 {
-                    epsilon0[faceCells[facei]] += epsilonLog(facei);
+                    epsilon0[faceCells[facei]] +=
+                        cornerWeights[facei]
+                      * epsilonLog(facei);
                 }
             }
             break;
@@ -257,7 +261,8 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
             {
                 // (ME:Eqs. 15-16)
                 epsilon0[faceCells[facei]] +=
-                    pow
+                    cornerWeights[facei]
+                  * pow
                     (
                         pow(epsilonVis(facei), n_) + pow(epsilonLog(facei), n_),
                         scalar(1)/n_
@@ -272,7 +277,8 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
             {
                 // (PH:Eq. 27)
                 epsilon0[faceCells[facei]] +=
-                    max(epsilonVis(facei), epsilonLog(facei));
+                    cornerWeights[facei]
+                  * max(epsilonVis(facei), epsilonLog(facei));
             }
             break;
         }
@@ -288,10 +294,11 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
                 const scalar invGamma = scalar(1)/(Gamma + ROOTVSMALL);
 
                 epsilon0[faceCells[facei]] +=
-                (
-                    epsilonVis(facei)*exp(-Gamma)
-                  + epsilonLog(facei)*exp(-invGamma)
-                );
+                    cornerWeights[facei]
+                  * (
+                        epsilonVis(facei)*exp(-Gamma)
+                      + epsilonLog(facei)*exp(-invGamma)
+                    );
             }
             break;
         }
@@ -312,7 +319,9 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
                     );
                 const scalar phiTanh = tanh(pow4(0.1*yPlus(facei)));
 
-                epsilon0[faceCells[facei]] += phiTanh*b1 + (1 - phiTanh)*b2;
+                epsilon0[faceCells[facei]] +=
+                    cornerWeights[facei]
+                  * (phiTanh*b1 + (1 - phiTanh)*b2);
             }
             break;
         }
