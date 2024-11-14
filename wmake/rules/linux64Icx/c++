@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------
 include $(GENERAL_RULES)/Icx/c++
 
-c++ARCH    := -fp-model precise
+c++ARCH    := -fp-model=precise
 
 ifneq (,$(strip $(WM_COMPILE_OPTION)))
     sinclude $(DEFAULT_RULES)/c++$(WM_COMPILE_OPTION)
