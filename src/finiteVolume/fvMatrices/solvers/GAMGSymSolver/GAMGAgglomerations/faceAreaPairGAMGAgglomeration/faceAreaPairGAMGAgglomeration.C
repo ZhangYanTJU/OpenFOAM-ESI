@@ -32,7 +32,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "cyclicAMIGAMGInterface.H"
 #include "cyclicACMIGAMGInterface.H"
-#include "processorGAMGInterface.H"
+//#include "processorGAMGInterface.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

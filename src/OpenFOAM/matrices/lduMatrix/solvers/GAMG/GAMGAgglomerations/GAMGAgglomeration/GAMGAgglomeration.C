@@ -381,7 +381,7 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
         if (agglomPtr->requireUpdate_)
         {
             mesh.thisDb().checkOut(const_cast<GAMGAgglomeration*>(agglomPtr));
-            return GAMGAgglomeration::New(mesh, controlDict);
+            return GAMGAgglomeration::New(matrix, controlDict);
         }
 
         return *agglomPtr;
