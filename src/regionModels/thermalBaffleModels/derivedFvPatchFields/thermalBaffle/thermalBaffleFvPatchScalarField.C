@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd
+    Copyright (C) 2020-2024 OpenCFD Ltd
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -230,6 +230,70 @@ void thermalBaffleFvPatchScalarField::createPatchMesh()
             regionPatches
         )
     );
+
+    // Adjust top patch for the thickness - it needs to subtract the offset
+    // distance when trying to do the mapping.
+    const auto& extrPbm = extrudeMeshPtr_().boundaryMesh();
+    const auto* topPtr = isA<const mappedPatchBase>(extrPbm[topPatchID]);
+
+    if (topPtr)
+    {
+        const auto& top = extrPbm[topPatchID];
+        const auto& bottom = extrPbm[bottomPatchID];
+
+        if (top.size() != bottom.size())
+        {
+            WarningInFunction<< "Top patch " << top.name()
+                << " size " << top.size()
+                << " has different size from bottom patch " << bottom.name()
+                << " size " << bottom.size() << endl
+                << "    Disabling mapping offset calculation." << endl;
+        }
+        else
+        {
+            // Adjust top patch offsets
+            const vectorField offsets(bottom.faceCentres()-top.faceCentres());
+            const_cast<mappedPatchBase&>(*topPtr).setOffset(offsets);
+
+            DebugPoutInFunction
+                    << "Adjusting patch " << top.name()
+                    << " offsets to " << flatOutput(offsets)
+                    << endl;
+
+            if (internal_)
+            {
+                // Find other side of the baffle using its group
+                const auto& thisPbm = thisMesh.boundaryMesh();
+                const auto& groupPatchLookup = thisPbm.groupPatchIDs();
+                const auto& group = topPtr->coupleGroup();
+                const labelList patchIDs(groupPatchLookup[group]);
+
+                if (patchIDs.size() != 1)
+                {
+                    FatalErrorInFunction<< "Group " << group
+                        << " on region " << thisMesh.name()
+                        << " contains more than one patch : "
+                        << patchIDs
+                        << exit(FatalError);
+                }
+
+                const auto* thisPp =
+                    isA<const mappedPatchBase>(thisPbm[patchIDs[0]]);
+                if (thisPp)
+                {
+                    const_cast<mappedPatchBase&>(*thisPp).setOffset(-offsets);
+
+                    DebugPoutInFunction
+                            << "Adjusting patch " << thisPbm[patchIDs[0]].name()
+                            << " offsets to " << thisPp->offsets()
+                            << endl;
+                }
+            }
+
+            // Enforce re-writing so baffleType::New reads updated mesh
+            extrudeMeshPtr_->write();
+        }
+    }
 }
 
 

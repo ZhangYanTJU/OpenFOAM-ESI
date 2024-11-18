@@ -78,7 +78,7 @@ Foam::extrudePatchMesh::extrudePatchMesh
     const fvPatch& p,
     const dictionary& dict,
     const word& regionName,
-    polyPatchList& regionPatches
+    const polyPatchList& regionPatches
 )
 :
     extrudePatchMesh(regionName, mesh, p, dict)
@@ -153,7 +153,7 @@ Foam::extrudePatchMesh::extrudePatchMesh
 }
 
 
-void Foam::extrudePatchMesh::extrudeMesh(polyPatchList& regionPatches)
+void Foam::extrudePatchMesh::extrudeMesh(const polyPatchList& regionPatches)
 {
     if (this->boundaryMesh().empty())
     {
@@ -292,7 +292,17 @@ void Foam::extrudePatchMesh::extrudeMesh(polyPatchList& regionPatches)
         );
         this->clearOut();
         this->removeFvBoundary();
-        this->addFvPatches(regionPatches, true);
+        // Make sure the patches index the new mesh
+        polyPatchList newRegionPatches(regionPatches.size());
+        forAll(regionPatches, patchi)
+        {
+            newRegionPatches.set
+            (
+                patchi,
+                regionPatches[patchi].clone(this->boundaryMesh())
+            );
+        }
+        this->addFvPatches(newRegionPatches, true);
 
 
         // At this point we have a valid mesh with 3 patches and zero cells.
