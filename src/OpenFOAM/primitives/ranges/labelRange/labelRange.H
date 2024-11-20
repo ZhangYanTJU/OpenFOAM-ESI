@@ -131,7 +131,7 @@ public:
         inline void reset
         (
             const label beg,
-            const label end,
+            const label len,
             const bool adjustStart
         ) noexcept;
 
