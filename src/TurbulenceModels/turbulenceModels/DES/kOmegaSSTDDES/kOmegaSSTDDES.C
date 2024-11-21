@@ -36,6 +36,18 @@ namespace Foam
 namespace LESModels
 {
 
+template<class BasicTurbulenceModel>
+const Foam::Enum
+<
+    typename Foam::LESModels::
+        kOmegaSSTDDES<BasicTurbulenceModel>::shieldingMode
+>
+Foam::LESModels::kOmegaSSTDDES<BasicTurbulenceModel>::shieldingModeNames
+({
+    { shieldingMode::standard, "standard" },
+    { shieldingMode::ZDES2, "ZDES2" },
+});
+
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
 template<class BasicTurbulenceModel>
@@ -44,7 +56,51 @@ tmp<volScalarField> kOmegaSSTDDES<BasicTurbulenceModel>::fd
     const volScalarField& magGradU
 ) const
 {
-    return 1 - tanh(pow(Cd1_*this->r(this->nuEff(), magGradU), Cd2_));
+    tmp<volScalarField> tfd =
+        1 - tanh(pow(Cd1_*this->r(this->nuEff(), magGradU), Cd2_));
+
+    switch (shielding_)
+    {
+        case shieldingMode::standard:
+        {
+            return tfd;
+        }
+        case shieldingMode::ZDES2:
+        {
+            auto maxEps = [](const volScalarField& fld, const scalar eps){
+                return max(fld, dimensionedScalar(fld.dimensions(), eps));
+            };
+
+            volScalarField& fdStd = tfd.ref();
+            const auto& nut = this->nut_;
+            const volVectorField& n = wallDist::New(this->mesh_).n();
+
+            const volScalarField Gnut
+            (
+                Cd3_*maxEps(fvc::grad(nut) & n, Zero)
+              / (maxEps(magGradU, SMALL)*this->kappa_*this->y_)
+            );
+
+            const volScalarField fdGnut(1 - tanh(pow(Cd1_*Gnut, Cd2_)));
+            const volScalarField GOmega
+            (
+              - (fvc::grad(mag(fvc::curl(this->U_))) & n)
+              * sqrt(nut/maxEps(pow3(magGradU), SMALL))
+            );
+            const volScalarField alpha((7.0/6.0*Cd4_ - GOmega)/(Cd4_/6.0));
+            const volScalarField fRGOmega
+            (
+                pos(Cd4_ - GOmega)
+              + 1.0
+               /(1 + exp(min(-6*alpha/max(1 - sqr(alpha), SMALL), scalar(50))))
+               *pos(4*Cd4_/3.0 - GOmega)*pos(GOmega - Cd4_)
+            );
+
+            fdStd *= 1 - (1 - fdGnut)*fRGOmega;
+        }
+    }
+
+    return tfd;
 }
 
 
@@ -159,7 +215,15 @@ kOmegaSSTDDES<BasicTurbulenceModel>::kOmegaSSTDDES
         propertiesName,
         type
     ),
-
+    shielding_
+    (
+        shieldingModeNames.getOrDefault
+        (
+            "shielding",
+            this->coeffDict_,
+            shieldingMode::standard
+        )
+    ),
     Cd1_
     (
         this->useSigma_
@@ -184,11 +248,53 @@ kOmegaSSTDDES<BasicTurbulenceModel>::kOmegaSSTDDES
             this->coeffDict_,
             3
         )
+    ),
+    Cd3_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "Cd3",
+            this->coeffDict_,
+            25
+        )
+    ),
+    Cd4_
+    (
+        dimensioned<scalar>::lookupOrAddToDict
+        (
+            "Cd4",
+            this->coeffDict_,
+            0.03
+        )
     )
 {
     if (type == typeName)
     {
         this->printCoeffs(type);
+
+        switch (shielding_)
+        {
+            case shieldingMode::standard:
+            {
+                Info<< "shielding function: standard DDES "
+                    <<  "(Spalart et al., 2006)"
+                    << nl;
+                break;
+            }
+            case shieldingMode::ZDES2:
+            {
+                Info<< "shielding function: ZDES mode 2 (Deck & Renard, 2020)"
+                    << nl;
+                break;
+            }
+            default:
+            {
+                FatalErrorInFunction
+                    << "Unrecognised 'shielding' option: "
+                    << shieldingModeNames[shielding_]
+                    << exit(FatalError);
+            }
+        }
     }
 }
 
@@ -200,8 +306,17 @@ bool kOmegaSSTDDES<BasicTurbulenceModel>::read()
 {
     if (kOmegaSSTDES<BasicTurbulenceModel>::read())
     {
+        shieldingModeNames.readIfPresent
+        (
+            "shielding",
+            this->coeffDict(),
+            shielding_
+        );
+
         Cd1_.readIfPresent(this->coeffDict());
         Cd2_.readIfPresent(this->coeffDict());
+        Cd3_.readIfPresent(this->coeffDict());
+        Cd4_.readIfPresent(this->coeffDict());
 
         return true;
     }

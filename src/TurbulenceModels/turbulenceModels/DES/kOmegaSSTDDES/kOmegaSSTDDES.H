@@ -6,8 +6,8 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2022 Upstream CFD GmbH
-    Copyright (C) 2019, 2022 OpenCFD Ltd.
+    Copyright (C) 2022, 2024 Upstream CFD GmbH
+    Copyright (C) 2019, 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,6 +44,15 @@ Description
         DOI:10.1007/s10494-011-9378-4
     \endverbatim
 
+    Reference for enhanced shielding function formulation:
+    \verbatim
+        Deck, S., Renard, N. (2020).
+        Towards an enhanced protection of attached boundary layers in hybrid
+        RANS/LES methods.
+        Journal of Computational Physics, 400, 108970.
+        DOI:10.1016/j.jcp.2019.108970
+    \endverbatim
+
 SourceFiles
     kOmegaSSTDDES.C
 
@@ -53,6 +62,7 @@ SourceFiles
 #define Foam_kOmegaSSTDDES_H
 
 #include "kOmegaSSTDES.H"
+#include "Enum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -70,6 +80,23 @@ class kOmegaSSTDDES
 :
     public kOmegaSSTDES<BasicTurbulenceModel>
 {
+public:
+
+    // Public enumerations
+
+        //- Shielding modes
+        enum class shieldingMode
+        {
+            standard,
+            ZDES2
+        };
+
+        //- Shielding mode names
+        static const Enum<shieldingMode> shieldingModeNames;
+
+
+private:
+
     // Private Member Functions
 
         //- Return the shielding function field
@@ -86,10 +113,15 @@ protected:
 
     // Protected Data
 
+        //- Shielding mode
+        shieldingMode shielding_;
+
         // Model coefficients
 
             dimensionedScalar Cd1_;
             dimensionedScalar Cd2_;
+            dimensionedScalar Cd3_;
+            dimensionedScalar Cd4_;
 
 
     // Protected Member Functions
