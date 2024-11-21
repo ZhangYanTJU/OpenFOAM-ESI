@@ -100,6 +100,11 @@ surface2.nas
         // the faces form more than two different normal planes)
         nonManifoldEdges yes;
 
+        // Like nonManifoldEdges but is purely topological - does not
+        // check for normals. Either use nonManifoldEdges or
+        // strictNonManifoldEdges
+        //strictNonManifoldEdges  false;
+
         // Keep open edges (edges with 1 connected face)
         openEdges       yes;
     }

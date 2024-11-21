@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -474,6 +474,15 @@ int main(int argc, char *argv[])
                     1e-5,   // tol
                     extractor().includedAngle()
                 );
+            }
+
+            if (!subsetDict.getOrDefault("strictNonManifoldEdges", true))
+            {
+                Info<< "Removing all non-manifold edges"
+                    << " (edges with > 2 connected faces)"
+                    << endl;
+
+                features().excludeNonManifold(edgeStat);
             }
 
             // Suboption: "openEdges" (false: remove open edges)
