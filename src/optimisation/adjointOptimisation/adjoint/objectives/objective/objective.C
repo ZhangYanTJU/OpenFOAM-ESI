@@ -134,7 +134,13 @@ objective::objective
     objectiveName_(dict.dictName()),
     computeMeanFields_(false), // is reset in derived classes
     nullified_(false),
-    normalize_(dict.getOrDefault<bool>("normalize", false)),
+    normalize_
+    (
+        dict.getOrDefaultCompat<bool>
+        (
+            "normalise", {{"normalize", 2406}}, false
+        )
+    ),
     shouldWrite_(true),
 
     J_(Zero),
