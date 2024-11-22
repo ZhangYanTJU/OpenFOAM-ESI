@@ -223,26 +223,32 @@ void Foam::topODesignVariables::readField
     {
         SubField<scalar>(*this, mesh_.nCells(), offset) =
             scalarField(name, *this, mesh_.nCells());
-
-        /*
-        // Set values next to IO boundaries if needed
-        if (setIOValues)
+    }
+    else
+    {
+        IOobject header
+        (
+            name,
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        );
+        if (header.typeHeaderOk<volScalarField>())
         {
-            forAll(mesh_.boundary(), patchI)
+            Info<< "Setting design variables based on the alpha field "
+                << nl << endl;
+            volScalarField volField
+            (
+                header,
+                mesh_
+            );
+            const scalarField& field = volField.primitiveField();
+            forAll(field, cI)
             {
-                const fvPatch& patch = mesh_.boundary()[patchI];
-                if (patch.type() == "patch")
-                {
-                    const labelList& faceCells = patch.faceCells();
-                    const scalarField& pf = volField.boundaryField()[patchI];
-                    forAll(faceCells, fI)
-                    {
-                        scalarField::operator[](offset + faceCells[fI]) = pf[fI];
-                    }
-                }
+                scalarField::operator[](offset + cI) = field[cI];
             }
         }
-        */
     }
 }
 
