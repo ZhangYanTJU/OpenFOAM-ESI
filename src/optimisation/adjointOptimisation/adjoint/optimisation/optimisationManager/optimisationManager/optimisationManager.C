@@ -172,6 +172,9 @@ void Foam::optimisationManager::fixedStepUpdate()
     // Solve primal equations
     solvePrimalEquations();
 
+    // Check the convergence criteria of the optimisation loop
+    dvUpdate_->checkConvergence();
+
     // Reset adjoint sensitivities in all adjoint solver managers
     clearSensitivities();
 
