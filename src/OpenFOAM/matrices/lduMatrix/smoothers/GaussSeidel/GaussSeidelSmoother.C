@@ -83,7 +83,9 @@ void Foam::GaussSeidelSmoother::smooth
 
     const label nCells = psi.size();
 
-    solveScalarField bPrime(nCells);
+    //solveScalarField bPrime(nCells);
+    solveScalarField& bPrime = matrix_.work(nCells);
+
     solveScalar* __restrict__ bPrimePtr = bPrime.begin();
 
     const scalar* const __restrict__ diagPtr = matrix_.diag().begin();

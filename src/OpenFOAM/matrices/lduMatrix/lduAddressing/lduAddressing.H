@@ -91,6 +91,10 @@ Description
     list. Thus, for every point the losort start gives the address of the
     first face to neighbour this point.
 
+    Instead of using losort to lookup the face and then using the lowerAddr
+    to find the neighbour cell one can also directly lookup the neighbour cell
+    using the lowerCSRAddr (upperAddr is already in CSR order).
+
 SourceFiles
     lduAddressing.C
 
@@ -131,6 +135,9 @@ class lduAddressing
         //- Losort start addressing
         mutable std::unique_ptr<labelList> losortStartPtr_;
 
+        //- Lower addressing
+        mutable std::unique_ptr<labelList> lowerCSRAddrPtr_;
+
 
     // Private Member Functions
 
@@ -142,6 +149,9 @@ class lduAddressing
 
         //- Calculate losort start
         void calcLosortStart() const;
+
+        //- Calculate CSR lower addressing
+        void calcLoCSR() const;
 
 
 public:
@@ -203,17 +213,34 @@ public:
         //- Return losort start addressing
         const labelUList& losortStartAddr() const;
 
+        //- Return CSR addressing
+        const labelUList& lowerCSRAddr() const;
+
         //- Return off-diagonal index given owner and neighbour label
         label triIndex(const label a, const label b) const;
 
         //- Calculate bandwidth and profile of addressing
         Tuple2<label, scalar> band() const;
+
+        //- Helper to convert lower addressing & data into CSR format
+        template<class Type>
+        void map
+        (
+            const UList<Type>& faceVals,
+            List<Type>& vals
+        ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "lduAddressingTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

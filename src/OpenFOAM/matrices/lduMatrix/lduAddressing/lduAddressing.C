@@ -169,6 +169,20 @@ void Foam::lduAddressing::calcLosortStart() const
 }
 
 
+void Foam::lduAddressing::calcLoCSR() const
+{
+    if (lowerCSRAddrPtr_)
+    {
+        FatalErrorInFunction
+            << "lowerCSRAddr already calculated"
+            << abort(FatalError);
+    }
+
+    lowerCSRAddrPtr_ = std::make_unique<labelList>(lowerAddr().size());
+    map(lowerAddr(), *lowerCSRAddrPtr_);
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 const Foam::labelUList& Foam::lduAddressing::losortAddr() const
@@ -204,11 +218,23 @@ const Foam::labelUList& Foam::lduAddressing::losortStartAddr() const
 }
 
 
+const Foam::labelUList& Foam::lduAddressing::lowerCSRAddr() const
+{
+    if (!lowerCSRAddrPtr_)
+    {
+        calcLoCSR();
+    }
+
+    return *lowerCSRAddrPtr_;
+}
+
+
 void Foam::lduAddressing::clearOut()
 {
     losortPtr_.reset(nullptr);
     ownerStartPtr_.reset(nullptr);
     losortStartPtr_.reset(nullptr);
+    lowerCSRAddrPtr_.reset(nullptr);
 }
 
 
