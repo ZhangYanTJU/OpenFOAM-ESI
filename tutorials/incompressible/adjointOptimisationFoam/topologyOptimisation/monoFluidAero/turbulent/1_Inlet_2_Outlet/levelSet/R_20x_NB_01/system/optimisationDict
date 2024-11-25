@@ -63,7 +63,7 @@ adjointManagers
                             weight          1.; 
                             type            PtLosses;
                             patches         (inlet "outlet.*");
-                            normalize       true;
+                            normalise       true;
                         }
                     }
                 }

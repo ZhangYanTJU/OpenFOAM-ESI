@@ -63,7 +63,7 @@ adjointManagers
                             weight           -1; // maximize
                             type              flowRate;
                             patches           (outlet1);
-                            normalize         true;
+                            normalise         true;
                         }
                     }
                 }
