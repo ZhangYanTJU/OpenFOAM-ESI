@@ -41,7 +41,6 @@ solvers
             tolerance       1e-5;
             relTol          0;
             smoother        DICGaussSeidel;
-            cacheAgglomeration no;
         }
         tolerance       1e-05;
         relTol          0;

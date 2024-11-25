@@ -22,7 +22,6 @@ solvers
         tolerance       1e-8;
         relTol          0;
         smoother        GaussSeidel;
-        cacheAgglomeration no;
     }
 
     pFinal

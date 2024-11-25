@@ -247,6 +247,9 @@ Foam::GAMGAgglomeration::GAMGAgglomeration
 
     maxLevels_(50),
 
+    updateInterval_(controlDict.getOrDefault<label>("updateInterval", 1)),
+    requireUpdate_(false),
+
     nCellsInCoarsestLevel_
     (
         controlDict.getOrDefault<label>("nCellsInCoarsestLevel", 10)
@@ -313,6 +316,12 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
 
     if (agglomPtr)
     {
+        if (agglomPtr->requireUpdate_)
+        {
+            mesh.thisDb().checkOut(const_cast<GAMGAgglomeration*>(agglomPtr));
+            return GAMGAgglomeration::New(mesh, controlDict);
+        }
+
         return *agglomPtr;
     }
 
@@ -369,6 +378,12 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
 
     if (agglomPtr)
     {
+        if (agglomPtr->requireUpdate_)
+        {
+            mesh.thisDb().checkOut(const_cast<GAMGAgglomeration*>(agglomPtr));
+            return GAMGAgglomeration::New(matrix, controlDict);
+        }
+
         return *agglomPtr;
     }
 
@@ -421,6 +436,12 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
 
     if (agglomPtr)
     {
+        if (agglomPtr->requireUpdate_)
+        {
+            mesh.thisDb().checkOut(const_cast<GAMGAgglomeration*>(agglomPtr));
+            return GAMGAgglomeration::New(mesh, controlDict);
+        }
+
         return *agglomPtr;
     }
 
@@ -475,6 +496,25 @@ Foam::GAMGAgglomeration::~GAMGAgglomeration()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::GAMGAgglomeration::requiresUpdate() const
+{
+    return
+        (updateInterval_ > 0)
+     && ((mesh_.thisDb().time().timeIndex() % updateInterval_) == 0);
+}
+
+
+bool Foam::GAMGAgglomeration::movePoints()
+{
+    if (requiresUpdate())
+    {
+        requireUpdate_ = true;
+    }
+    // What to return?
+    return requireUpdate_;
+}
+
 
 const Foam::lduMesh& Foam::GAMGAgglomeration::meshLevel
 (
