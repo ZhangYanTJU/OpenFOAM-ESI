@@ -22,8 +22,8 @@ solvers
         tolerance       1e-2;
         relTol          0;
         smoother        GaussSeidel;
-        //cacheAgglomeration no;    // keep agglom during pimple
-        maxIter         50;
+        cacheAgglomeration yes; // Store agglomeration
+        updateInterval  -1;     // Never redo agglomeration
     }
 
     p

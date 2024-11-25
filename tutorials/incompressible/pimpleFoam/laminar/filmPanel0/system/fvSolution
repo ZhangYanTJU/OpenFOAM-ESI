@@ -21,7 +21,6 @@ solvers
     {
         solver          GAMG;
         smoother        GaussSeidel;
-        cacheAgglomeration no;
 
         tolerance        0.02;
         relTol           0;
