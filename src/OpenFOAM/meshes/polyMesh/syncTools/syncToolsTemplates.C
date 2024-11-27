@@ -92,6 +92,9 @@ void Foam::syncTools::syncPointMap
 {
     const polyBoundaryMesh& patches = mesh.boundaryMesh();
 
+    // Make sure we use unique message tag
+    const int oldTag = UPstream::incrMsgType();
+
     // Synchronize multiple shared points.
     const globalMeshData& pd = mesh.globalData();
 
@@ -369,6 +372,9 @@ void Foam::syncTools::syncPointMap
             }
         }
     }
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 
@@ -387,6 +393,8 @@ void Foam::syncTools::syncEdgeMap
     // Do synchronisation without constructing globalEdge addressing
     // (since this constructs mesh edge addressing)
 
+    // Make sure we use unique message tag
+    const int oldTag = UPstream::incrMsgType();
 
     // Swap proc patch info
     // ~~~~~~~~~~~~~~~~~~~~
@@ -734,6 +742,9 @@ void Foam::syncTools::syncEdgeMap
             );
         }
     }
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 
@@ -1037,6 +1048,9 @@ void Foam::syncTools::syncBoundaryFaceList
 
     const polyBoundaryMesh& patches = mesh.boundaryMesh();
 
+    // Allocate unique tag for all comms
+    const int oldTag = UPstream::incrMsgType();
+
     if (parRun && UPstream::parRun())
     {
         // Avoid mesh.globalData() - possible race condition
@@ -1252,6 +1266,9 @@ void Foam::syncTools::syncBoundaryFaceList
             }
         }
     }
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 
@@ -1282,6 +1299,9 @@ void Foam::syncTools::syncFaceList
     }
 
     const polyBoundaryMesh& patches = mesh.boundaryMesh();
+
+    // Allocate unique tag for all comms
+    const int oldTag = UPstream::incrMsgType();
 
     if (parRun && UPstream::parRun())
     {
@@ -1403,6 +1423,9 @@ void Foam::syncTools::syncFaceList
             }
         }
     }
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 

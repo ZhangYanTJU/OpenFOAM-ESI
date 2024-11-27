@@ -611,6 +611,8 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
             scalarRecvBufs_
         );
     }
+
+    this->updatedMatrix(false);
 }
 
 
@@ -679,6 +681,8 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
     }
 
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+
+    this->updatedMatrix(true);
 }
 
 
@@ -735,6 +739,8 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
             recvBufs_
         );
     }
+
+    this->updatedMatrix(false);
 }
 
 
@@ -792,6 +798,8 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
     }
 
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+
+    this->updatedMatrix(true);
 }
 
 

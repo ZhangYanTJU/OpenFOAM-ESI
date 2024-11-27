@@ -248,6 +248,10 @@ class PstreamBuffers
 
 public:
 
+    // Declare name of the class and its debug switch
+    ClassName("PstreamBuffers");
+
+
     // Static Data
 
         //- Preferred exchange algorithm (may change or be removed in future)

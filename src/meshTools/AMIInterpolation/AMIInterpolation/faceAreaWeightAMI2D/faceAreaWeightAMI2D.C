@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020,2022 OpenCFD Ltd.
+    Copyright (C) 2020,2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -428,6 +428,8 @@ bool Foam::faceAreaWeightAMI2D::calculate
     if (distributed())
     {
         const label myRank = UPstream::myProcNo(comm_);
+        // Allocate unique tag for all comms
+        const int oldTag = UPstream::incrMsgType();
 
         const primitivePatch& srcPatch0 = this->srcPatch0();
         const primitivePatch& tgtPatch0 = this->tgtPatch0();
@@ -465,7 +467,7 @@ bool Foam::faceAreaWeightAMI2D::calculate
             labelList(),
             ListOps::appendEqOp<label>(),
             flipOp(),                   // flip operation
-            UPstream::msgType(),
+            UPstream::msgType()+77431,
             comm_
         );
 
@@ -482,7 +484,7 @@ bool Foam::faceAreaWeightAMI2D::calculate
             scalarList(),
             ListOps::appendEqOp<scalar>(),
             flipOp(),                   // flip operation
-            UPstream::msgType(),
+            UPstream::msgType()+77432,
             comm_
         );
 
@@ -498,7 +500,7 @@ bool Foam::faceAreaWeightAMI2D::calculate
                 globalSrcFaces,
                 tgtAddress_,
                 cMapSrc,
-                UPstream::msgType(),
+                UPstream::msgType()+77433,
                 comm_
             )
         );
@@ -511,10 +513,13 @@ bool Foam::faceAreaWeightAMI2D::calculate
                 globalTgtFaces,
                 srcAddress_,
                 cMapTgt,
-                UPstream::msgType(),
+                UPstream::msgType()+77434,
                 comm_
             )
         );
+
+        // Reset tag
+        UPstream::msgType(oldTag);
     }
 
     // Convert the weights from areas to normalised values

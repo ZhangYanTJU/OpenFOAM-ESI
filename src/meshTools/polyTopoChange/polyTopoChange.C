@@ -2026,6 +2026,9 @@ void Foam::polyTopoChange::reorderCoupledFaces
     // Rotation on new faces.
     labelList rotation(faces_.size(), Zero);
 
+    // Allocate unique tag for all comms
+    const int oldTag = UPstream::incrMsgType();
+
     PstreamBuffers pBufs;
 
     // Send ordering
@@ -2131,6 +2134,9 @@ void Foam::polyTopoChange::reorderCoupledFaces
             }
         }
     }
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 

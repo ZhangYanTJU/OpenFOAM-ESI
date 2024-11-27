@@ -300,6 +300,9 @@ void Foam::polyBoundaryMesh::clearAddressing()
 
 void Foam::polyBoundaryMesh::calcGeometry()
 {
+    // Make sure messages don't interact by having unique tag
+    const int oldTag = UPstream::incrMsgType();
+
     PstreamBuffers pBufs(Pstream::defaultCommsType);
 
     if
@@ -341,6 +344,9 @@ void Foam::polyBoundaryMesh::calcGeometry()
             }
         }
     }
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 
