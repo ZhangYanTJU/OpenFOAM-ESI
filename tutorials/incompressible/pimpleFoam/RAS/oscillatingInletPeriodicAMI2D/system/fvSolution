@@ -24,6 +24,7 @@ solvers
         smoother        GaussSeidel;
         nCellsInCoarsestLevel 10;
         agglomerator    faceAreaPair;
+        updateInterval  -1;     // Never redo agglomeration
         mergeLevels     1;
         maxIter         50;
     }

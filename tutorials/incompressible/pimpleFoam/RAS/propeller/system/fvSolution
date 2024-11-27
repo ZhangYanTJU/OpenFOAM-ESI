@@ -23,6 +23,8 @@ solvers
         relTol          0;
         smoother        DICGaussSeidel;
         maxIter         50;
+        cacheAgglomeration yes; // Store agglomeration
+        updateInterval  -1;     // Never redo agglomeration
     }
 
     p

@@ -24,6 +24,8 @@ solvers
         smoother        DICGaussSeidel;
         nCellsInCoarsestLevel 10;
         agglomerator    faceAreaPair;
+        cacheAgglomeration yes; // Store agglomeration
+        updateInterval  -1;     // Never redo agglomeration
         mergeLevels     1;
         maxIter         50;
     }

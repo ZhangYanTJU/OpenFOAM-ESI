@@ -22,6 +22,8 @@ solvers
         tolerance       0;
         relTol          0.01;
         smoother        GaussSeidel;
+        cacheAgglomeration yes; // Store agglomeration
+        updateInterval  2;      // Redo agglomeration occasionally
     }
 
     pFinal
