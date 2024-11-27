@@ -239,10 +239,13 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
             sendRequests_,
             scalarSendBufs_,
             recvRequests_,
-            scalarRecvBufs_
+            scalarRecvBufs_,
+            19462+cyclicAMIInterface_.index()   // unique offset + patch index
         );
         UPstream::commWarn(oldWarnComm);
     }
+
+    this->updatedMatrix(false);
 }
 
 
@@ -300,7 +303,13 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
         // Receive (= copy) data from buffers into work. TBD: receive directly
         // into slices of work.
         solveScalarField work;
-        map.receive(recvRequests_, scalarRecvBufs_, work);
+        map.receive
+        (
+            recvRequests_,
+            scalarRecvBufs_,
+            work,
+            19462+cyclicAMIInterface_.index()   // unique offset + patch index
+        );
 
         // Receive requests all handled by last function call
         recvRequests_.clear();
@@ -340,6 +349,8 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
         // Add result using coefficients
         this->addToInternalField(result, !add, faceCells, coeffs, pnf);
     }
+
+    this->updatedMatrix(true);
 }
 
 
