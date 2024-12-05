@@ -73,6 +73,9 @@ Usage
 #include "regionProperties.H"
 #include "fvMeshTools.H"
 
+#include "faMeshReconstructor.H"
+#include "ignoreFaPatch.H"
+
 using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -573,6 +576,160 @@ void printWarning()
 }
 
 
+// Used to determine the correspondence between the edges.
+// See faMeshReconstructor::calcAddressing
+void determineFaEdgeMapping
+(
+    const uindirectPrimitivePatch& onePatch,// reconstructed faMesh patch
+    const PtrList<faMesh>& procFaMeshes,    // individual faMeshes
+    const labelListList& pointProcAddressing,   // procPolyMesh to reconstructed
+
+    labelListList& faEdgeProcAddressing
+)
+{
+    // Determines ordering from faMesh to onePatch (= recsontructed faMesh)
+
+    // From two polyMesh points to patch-edge label
+    EdgeMap<label> pointsToOnePatchEdge(onePatch.nEdges());
+    {
+        const edgeList& edges = onePatch.edges();
+        const labelList& mp = onePatch.meshPoints();
+
+        forAll(edges, edgei)
+        {
+            const edge meshE(mp, edges[edgei]);
+            pointsToOnePatchEdge.insert(meshE, edgei);
+        }
+    }
+
+    // Now we can create the mapping from patch-edge on processor
+    // to patch-edge on onePatch
+
+    faEdgeProcAddressing.resize_nocopy(procFaMeshes.size());
+    forAll(procFaMeshes, proci)
+    {
+        const auto& procPatch = procFaMeshes[proci].patch();
+        const auto& edges = procPatch.edges();
+        const auto& mp = procPatch.meshPoints();
+        const auto& ppAddressing = pointProcAddressing[proci];
+
+        labelList& edgeProcAddr = faEdgeProcAddressing[proci];
+        edgeProcAddr.resize_nocopy(edges.size());
+
+        label edgei = 0;
+        for
+        (
+            ;
+            edgei < procPatch.nEdges(); //procPatch.nInternalEdges();
+            edgei++
+        )
+        {
+            const edge meshE(mp, edges[edgei]);
+            const edge onePatchE(ppAddressing, meshE);
+
+            edgeProcAddr[edgei] = pointsToOnePatchEdge[onePatchE];
+        }
+    }
+}
+
+
+void sortFaEdgeMapping
+(
+    const uindirectPrimitivePatch& onePatch,// reconstructed faMesh patch
+    const PtrList<faMesh>& procFaMeshes,    // individual faMeshes
+    const labelListList& pointProcAddressing,   // procPolyMesh to reconstructed
+
+    labelListList& faEdgeProcAddressing,    // per proc the map to the master
+    labelListList& singlePatchEdgeLabels    // per patch the map to the master
+)
+{
+    // From faMeshReconstructor.C - edge shuffling on patches
+
+    Map<label> remapGlobal(2*onePatch.nEdges());
+    for (label edgei = 0; edgei < onePatch.nInternalEdges(); ++edgei)
+    {
+        remapGlobal.insert(edgei, remapGlobal.size());
+    }
+
+
+    const faMesh& procMesh0 = procFaMeshes[0];
+    const label nNonProcessor = procMesh0.boundary().nNonProcessor();
+
+    singlePatchEdgeLabels.resize_nocopy(nNonProcessor);
+
+    forAll(singlePatchEdgeLabels, patchi)
+    {
+        if (isA<ignoreFaPatch>(procMesh0.boundary()[patchi]))
+        {
+            // These are not real edges
+            continue;
+        }
+
+        forAll(procFaMeshes, proci)
+        {
+            const faMesh& procMesh = procFaMeshes[proci];
+            const faPatch& fap = procMesh.boundary()[patchi];
+
+            labelList patchEdgeLabels(fap.edgeLabels());
+
+            // Renumber from local edges to global edges (natural order)
+            for (label& edgeId : patchEdgeLabels)
+            {
+                edgeId = faEdgeProcAddressing[proci][edgeId];
+            }
+
+            // Combine from all processors
+            singlePatchEdgeLabels[patchi].append(patchEdgeLabels);
+        }
+
+        // Sorted order will be the original non-decomposed order
+        Foam::sort(singlePatchEdgeLabels[patchi]);
+
+        for (const label sortedEdgei : singlePatchEdgeLabels[patchi])
+        {
+            remapGlobal.insert(sortedEdgei, remapGlobal.size());
+        }
+    }
+
+    {
+        // Use the map to rewrite the local faEdgeProcAddressing
+
+        labelListList newEdgeProcAddr(faEdgeProcAddressing);
+
+        forAll(procFaMeshes, proci)
+        {
+            const faMesh& procMesh = procFaMeshes[proci];
+
+            label edgei = procMesh.nInternalEdges();
+
+            for (const faPatch& fap : procMesh.boundary())
+            {
+                for (const label patchEdgei : fap.edgeLabels())
+                {
+                    const label globalEdgei =
+                        faEdgeProcAddressing[proci][patchEdgei];
+
+                    const auto fnd = remapGlobal.cfind(globalEdgei);
+                    if (fnd.good())
+                    {
+                        newEdgeProcAddr[proci][edgei] = fnd.val();
+                        ++edgei;
+                    }
+                    else
+                    {
+                        FatalErrorInFunction
+                            << "Failed to find edge " << globalEdgei
+                            << " this indicates a programming error" << nl
+                            << exit(FatalError);
+                    }
+                }
+            }
+        }
+        faEdgeProcAddressing = std::move(newEdgeProcAddr);
+    }
+}
+
+
 int main(int argc, char *argv[])
 {
     argList::addNote
@@ -614,6 +771,12 @@ int main(int argc, char *argv[])
         "Write cell distribution as a labelList - for use with 'manual' "
         "decomposition method or as a volScalarField for post-processing."
     );
+    argList::addBoolOption
+    (
+        "no-finite-area",
+        "Suppress finiteArea mesh reconstruction",
+        true  // Advanced option
+    );
 
     #include "addAllRegionOptions.H"
 
@@ -625,7 +788,7 @@ int main(int argc, char *argv[])
     const bool fullMatch = args.found("fullMatch");
     const bool procMatch = args.found("procMatch");
     const bool writeCellDist = args.found("cellDist");
-
+    const bool doFiniteArea = !args.found("no-finite-area");
     const bool writeAddrOnly = args.found("addressing-only");
 
     const scalar mergeTol =
@@ -1234,21 +1397,31 @@ int main(int argc, char *argv[])
             Info<< "Reconstructing addressing from processor meshes"
                 << " to the newly reconstructed mesh" << nl << endl;
 
+
+            // Read finite-area
+            PtrList<faMesh> procFaMeshes(databases.size());
+            PtrList<polyMesh> procMeshes(databases.size());
+
             forAll(databases, proci)
             {
                 Info<< "Processor " << proci << nl
                     << "Read processor mesh: "
                     << (databases[proci].caseName()/regionDir) << endl;
 
-                polyMesh procMesh
+                procMeshes.set
                 (
-                    IOobject
+                    proci,
+                    new polyMesh
                     (
-                        regionName,
-                        databases[proci].timeName(),
-                        databases[proci]
+                        IOobject
+                        (
+                            regionName,
+                            databases[proci].timeName(),
+                            databases[proci]
+                        )
                     )
                 );
+                const polyMesh& procMesh = procMeshes[proci];
 
                 writeMaps
                 (
@@ -1260,6 +1433,255 @@ int main(int argc, char *argv[])
                     pointProcAddressing[proci],
                     boundProcAddressing[proci]
                 );
+
+
+                if (doFiniteArea)
+                {
+                    const word boundaryInst =
+                        procMesh.time().findInstance
+                        (
+                            procMesh.meshDir(),
+                            "boundary"
+                        );
+
+                    IOobject io
+                    (
+                        "faBoundary",
+                        boundaryInst,
+                        faMesh::meshDir(procMesh, word::null),
+                        procMesh.time(),
+                        IOobject::READ_IF_PRESENT,
+                        IOobject::NO_WRITE,
+                        IOobject::NO_REGISTER
+                    );
+
+                    if (io.typeHeaderOk<faBoundaryMesh>(true))
+                    {
+                        // Always based on the volume decomposition!
+                        procFaMeshes.set(proci, new faMesh(procMesh));
+                    }
+                }
+            }
+
+
+            // Finite-area mapping
+            if (doFiniteArea)
+            {
+                // Addressing from processor to reconstructed case
+                labelListList faFaceProcAddressing(nProcs);
+                labelListList faEdgeProcAddressing(nProcs);
+                labelListList faPointProcAddressing(nProcs);
+                labelListList faBoundProcAddressing(nProcs);
+
+
+                // boundProcAddressing
+                // ~~~~~~~~~~~~~~~~~~~
+
+                forAll(procFaMeshes, proci)
+                {
+                    const auto& procMesh = procFaMeshes[proci];
+                    const auto& bm = procMesh.boundary();
+
+                    faBoundProcAddressing[proci] = identity(bm.size());
+                    // Mark processor patches
+                    for
+                    (
+                        label patchi = bm.nNonProcessor();
+                        patchi < bm.size();
+                        ++patchi
+                    )
+                    {
+                        faBoundProcAddressing[proci][patchi] = -1;
+                    }
+                }
+
+
+                // Re-read reconstructed polyMesh. Note: could probably be avoided
+                // by merging into loops above.
+                const polyMesh masterMesh
+                (
+                    IOobject
+                    (
+                        regionName,
+                        runTime.timeName(),
+                        runTime
+                    ),
+                    true
+                );
+
+
+                // faceProcAddressing
+                // ~~~~~~~~~~~~~~~~~~
+
+                DynamicList<label> masterFaceLabels;
+                label nPatchFaces = 0;
+                forAll(procFaMeshes, proci)
+                {
+                    const auto& procMesh = procFaMeshes[proci];
+                    const auto& procPolyFaces = procMesh.faceLabels();
+                    const auto& fpa = faceProcAddressing[proci];
+
+                    labelList& faceAddr = faFaceProcAddressing[proci];
+                    faceAddr.resize_nocopy(procPolyFaces.size());
+
+                    // Map to masterPolyMesh faces
+                    forAll(procPolyFaces, i)
+                    {
+                        const label facei = procPolyFaces[i];
+                        masterFaceLabels.append(fpa[facei]);
+                        faceAddr[i] = nPatchFaces++;
+                    }
+                }
+
+
+                // faMesh itself
+                // ~~~~~~~~~~~~~
+
+                // Set up to read-if-present
+                IOobject io(masterMesh);
+                io.readOpt(IOobject::READ_IF_PRESENT);
+
+                // Construct without patches
+                faMesh masterFaMesh
+                (
+                    masterMesh,
+                    std::move(masterFaceLabels),
+                    io
+                );
+
+                const uindirectPrimitivePatch& masterPatch =
+                    masterFaMesh.patch();
+
+
+                // pointProcAddressing
+                // ~~~~~~~~~~~~~~~~~~~
+
+                const auto& mpm = masterPatch.meshPointMap();
+                forAll(procFaMeshes, proci)
+                {
+                    const auto& procPatch = procFaMeshes[proci].patch();
+                    const auto& mp = procPatch.meshPoints();
+
+                    labelList& pointAddr = faPointProcAddressing[proci];
+                    pointAddr.resize_nocopy(mp.size());
+
+                    forAll(mp, i)
+                    {
+                        pointAddr[i] = mpm[pointProcAddressing[proci][mp[i]]];
+                    }
+                }
+
+
+                // edgeProcAddressing
+                // ~~~~~~~~~~~~~~~~~~
+                // 1. straight mapping from proc faMesh back to reconstructed
+                //    faMesh
+                determineFaEdgeMapping
+                (
+                    masterPatch,            // reconstructed faMesh patch
+                    procFaMeshes,           // individual faMeshes
+                    pointProcAddressing,    // procPolyMesh to reconstructed
+
+                    faEdgeProcAddressing
+                );
+
+
+                // Per patch all edges on the masterPatch
+                labelListList singlePatchEdgeLabels;
+
+                // 2. edgeProcAddressing : fix ordering on patches
+                sortFaEdgeMapping
+                (
+                    masterPatch,           // reconstructed faMesh patch
+                    procFaMeshes,          // individual faMeshes
+                    pointProcAddressing,   // procPolyMesh to reconstructed
+
+                    faEdgeProcAddressing,  // per proc the map to the master
+                    singlePatchEdgeLabels  // per patch the map to the master
+                );
+
+
+                const faMesh& procMesh0 = procFaMeshes[0];
+
+
+                // Add faPatches
+                // ~~~~~~~~~~~~~
+
+                faPatchList completePatches(singlePatchEdgeLabels.size());
+                label nPatches = 0;
+                forAll(completePatches, patchi)
+                {
+                    const labelList& patchEdgeLabels =
+                        singlePatchEdgeLabels[patchi];
+
+                    const faPatch& fap = procMesh0.boundary()[patchi];
+
+                    if (isA<ignoreFaPatch>(fap))
+                    {
+                        // These are not real edges
+                        continue;
+                    }
+
+                    const label neiPolyPatchId = fap.ngbPolyPatchIndex();
+
+                    completePatches.set
+                    (
+                        nPatches,
+                        fap.clone
+                        (
+                            masterFaMesh.boundary(),
+                            patchEdgeLabels,
+                            nPatches,  // index
+                            neiPolyPatchId
+                        )
+                    );
+
+                    ++nPatches;
+                }
+
+                completePatches.resize(nPatches);
+
+                // Serial mesh - no parallel communication
+
+                const bool oldParRun = Pstream::parRun(false);
+
+                masterFaMesh.addFaPatches(completePatches);
+
+                Pstream::parRun(oldParRun);  // Restore parallel state
+
+
+                // Write mesh & individual addressing
+                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+                faMeshReconstructor::writeMesh
+                (
+                    masterMesh.time().timeName(),
+                    masterFaMesh,
+                    masterFaMesh.faceLabels()
+                );
+
+                forAll(procFaMeshes, proci)
+                {
+                    const faMesh& procMesh = procFaMeshes[proci];
+
+                    faMeshReconstructor::writeAddressing
+                    (
+                        IOobject
+                        (
+                            "procAddressing",
+                            masterMesh.time().timeName(),
+                            faMesh::meshSubDir,
+                            procMesh.thisDb(),
+                            IOobject::NO_READ,
+                            IOobject::NO_WRITE,
+                            IOobject::NO_REGISTER
+                        ),
+                        faBoundProcAddressing[proci],
+                        faFaceProcAddressing[proci],
+                        faPointProcAddressing[proci],
+                        faEdgeProcAddressing[proci]
+                    );
+                }
             }
         }
     }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -210,11 +210,29 @@ public:
 
     // Write
 
+        //- Write proc addressing
+        static void writeAddressing
+        (
+            const IOobject& io,
+            const labelList& faBoundaryProcAddr,
+            const labelList& faFaceProcAddr,
+            const labelList& faPointProcAddr,
+            const labelList& faEdgeProcAddr
+        );
+
         //- Write proc addressing at the polyMesh faceInstances time
         void writeAddressing() const;
 
         //- Write proc addressing at the given time
         void writeAddressing(const word& timeName) const;
+
+        //- Write mesh information
+        static void writeMesh
+        (
+            const word& timeName,
+            const faMesh& fullMesh,
+            const labelUList& singlePatchFaceLabels
+        );
 
         //- Write equivalent mesh information at the polyMesh faceInstances time
         void writeMesh() const;
