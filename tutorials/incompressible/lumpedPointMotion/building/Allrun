@@ -37,6 +37,10 @@ then
     foamDictionary "$caseName"/system/controlDict \
         -entry application -set pimpleFoam
 
+    # Adjust dynamicMeshDict (from static -> dynamicMotionSolver)
+    foamDictionary "$caseName"/constant/dynamicMeshDict \
+        -entry dynamicFvMesh -set dynamicMotionSolverFvMesh
+
     # Copy/link support files
     linkFiles files "$caseName"
 

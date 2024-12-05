@@ -20,7 +20,7 @@ updateControl   runTime;
 
 updateInterval  0.001;
 
-dynamicFvMesh   dynamicMotionSolverFvMesh;
+dynamicFvMesh   staticFvMesh;
 
 motionSolverLibs (fvMotionSolvers);
 
