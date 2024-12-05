@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,15 +47,15 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcFaceMap
 ) const
 {
     // Generate the list of processor bounding boxes for tgtPatch
-    List<boundBox> procBbs(Pstream::nProcs());
-    procBbs[Pstream::myProcNo()] =
-        boundBox(tgtPatch.points(), tgtPatch.meshPoints(), true);
-    Pstream::allGatherList(procBbs);
+    List<boundBox> procBbs(Pstream::nProcs(comm()));
+    procBbs[Pstream::myProcNo(comm())] =
+        boundBox(tgtPatch.points(), tgtPatch.meshPoints(), false);
+    Pstream::allGatherList(procBbs, UPstream::msgType(), comm());
 
     // Identify which of my local src faces intersect with each processor
     // tgtPatch bb within the current match's search distance
     const pointField& srcCcs = srcPatch.faceCentres();
-    List<DynamicList<label>> dynSendMap(Pstream::nProcs());
+    List<DynamicList<label>> dynSendMap(Pstream::nProcs(comm()));
 
     forAll(localInfo, srcFacei)
     {
@@ -66,7 +66,7 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcFaceMap
 
         forAll(procBbs, proci)
         {
-            if (proci != Pstream::myProcNo())
+            if (proci != Pstream::myProcNo(comm()))
             {
                 if (procBbs[proci].overlaps(srcCcs[srcFacei], r2))
                 {
@@ -77,7 +77,7 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcFaceMap
     }
 
     // Convert dynamicList to labelList
-    labelListList sendMap(Pstream::nProcs());
+    labelListList sendMap(Pstream::nProcs(comm()));
     forAll(sendMap, proci)
     {
         sendMap[proci].transfer(dynSendMap[proci]);
@@ -89,7 +89,13 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcFaceMap
         }
     }
 
-    return autoPtr<mapDistribute>::New(std::move(sendMap));
+    return autoPtr<mapDistribute>::New
+    (
+        std::move(sendMap),
+        false,
+        false,
+        comm()
+    );
 }
 
 
@@ -108,10 +114,10 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcDistributed
     }
 
     // Create global indexing for tgtPatch
-    globalIndex globalTgtCells(tgt.size());
+    globalIndex globalTgtCells(tgt.size(), comm());
 
 
-    const label myRank = UPstream::myProcNo(comm_);
+    const label myRank = UPstream::myProcNo(comm());
 
 
     // First pass
@@ -205,7 +211,7 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcDistributed
         nearestEqOp(),
         identityOp(),       // No flipping
         UPstream::msgType(),
-        comm_
+        comm()
     );
 
 
@@ -234,7 +240,7 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcDistributed
         srcToTgtAddr,
         cMap,
         UPstream::msgType(),
-        comm_
+        comm()
     );
 }
 
@@ -297,7 +303,7 @@ bool Foam::nearestFaceAMI::calculate
     // TODO: implement symmetric calculation controls; assume yes for now
     bool symmetric_ = true;
 
-    if (this->distributed())
+    if (this->distributed() && comm() != -1)
     {
         tgtMapPtr_ =
             calcDistributed

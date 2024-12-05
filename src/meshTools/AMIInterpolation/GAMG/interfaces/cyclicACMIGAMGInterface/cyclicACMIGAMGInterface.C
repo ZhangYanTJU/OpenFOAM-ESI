@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2019,2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -84,7 +84,8 @@ Foam::cyclicACMIGAMGInterface::cyclicACMIGAMGInterface
     reverseT_
     (
         refCast<const cyclicACMILduInterface>(fineInterface).reverseT()
-    )
+    ),
+    myProcNo_(-1)
 {
     const auto& fineCyclicACMIInterface =
         refCast<const cyclicACMILduInterface>(fineInterface);
@@ -190,13 +191,24 @@ Foam::cyclicACMIGAMGInterface::cyclicACMIGAMGInterface
     neighbPatchID_(readLabel(is)),
     owner_(readBool(is)),
     forwardT_(is),
-    reverseT_(is)
+    reverseT_(is),
+    myProcNo_(-1)
 {
     const bool hasAMI(readBool(is));
 
     if (hasAMI)
     {
         amiPtr_.reset(new AMIPatchToPatchInterpolation(is));
+
+        // Store originating ranks locally - used when processor agglomerating
+        // onto a processor that wasn't in the communicator originally (since
+        // it had no faces)
+        const label comm = AMI().comm();
+
+        if (comm != -1)
+        {
+            is  >> myProcNo_;
+        }
     }
 }
 
@@ -244,324 +256,313 @@ Foam::cyclicACMIGAMGInterface::cyclicACMIGAMGInterface
     reverseT_
     (
        refCast<const cyclicACMILduInterface>(fineInterface).reverseT()
-    )
+    ),
+    myProcNo_(-1)
 {
-    const auto& fineCyclicACMIInterface =
-        refCast<const cyclicACMIGAMGInterface>(fineInterface);
-
-    if (fineCyclicACMIInterface.amiPtr_)
+    if (!owner_)
     {
-        const auto& AMI = const_cast<AMIPatchToPatchInterpolation&>
-        (
-            fineCyclicACMIInterface.AMI()
-        );
-
-        label singlePatchProc = AMI.singlePatchProc();
+        return;
+    }
 
 
-        // Get some sizes
-        label nSrc = 0;
-        label nTgt = 0;
-        bool hasSrcMagSf = false;
-        bool hasSrcCentroids = false;
-        bool hasTgtMagSf = false;
+    // Get stats, sizes from the input interfaces. For the global settings
+    // the problem is that the
+    // local processor might not have any valid interfaces so here just
+    // collect and do a global reduction afterwards.
 
+    // Structure to pack all. First element is used to decide who has the
+    // valid AMI.
+    typedef
+    Tuple2
+    <
+        label,
+        Tuple2
+        <
+            Tuple2
+            <
+                FixedList<bool, 4>,
+                scalar
+            >,
+            label
+        >
+    > AMIType;
+
+    AMIType globalInfo;
+    FixedList<bool, 4>& bools = globalInfo.second().first().first();
+
+    // Define aliases to make our life easier
+    label& firstValidAMI = globalInfo.first();
+    bool& requireMatch = bools[0];
+    bool& reverseTarget = bools[1];
+    bool& srcHasFlip = bools[2];
+    bool& tgtHasFlip = bools[3];
+    scalar& lowWeightCorrection = globalInfo.second().first().second();
+    label& singlePatchProc = globalInfo.second().second();
+
+    // Initialise all global variables
+    firstValidAMI = labelMax;
+    requireMatch = false;
+    reverseTarget = false;
+    srcHasFlip = false;
+    tgtHasFlip = false;
+    lowWeightCorrection = -1;
+    singlePatchProc = -1;
+
+    // Initialise all local variables
+    bool hasSrcMagSf = false;
+    bool hasSrcCentroids = false;
+    bool hasTgtMagSf = false;
+    label nSrc = 0;
+    label nTgt = 0;
+
+    forAll(allInterfaces, inti)
+    {
+        if (allInterfaces.set(inti))
+        {
+            const auto& intf =
+                refCast<const cyclicACMIGAMGInterface>(allInterfaces[inti]);
+
+            if (!intf.amiPtr_)
+            {
+                continue;
+            }
+
+            if (firstValidAMI == labelMax)
+            {
+                firstValidAMI = inti;
+            }
+
+            const auto& AMI = intf.AMI();
+
+            if (AMI.distributed() && AMI.comm() != -1)
+            {
+                singlePatchProc = -1;
+                srcHasFlip =
+                    srcHasFlip || AMI.srcMap().constructHasFlip();
+                tgtHasFlip =
+                    tgtHasFlip || AMI.tgtMap().constructHasFlip();
+            }
+            requireMatch = AMI.requireMatch();
+            reverseTarget = AMI.reverseTarget();
+            lowWeightCorrection = AMI.lowWeightCorrection();
+
+            nSrc += AMI.srcAddress().size();
+            nTgt += AMI.tgtAddress().size();
+
+            if (AMI.srcMagSf().size())
+            {
+                hasSrcMagSf = true;
+                if (AMI.srcMagSf().size() != AMI.srcAddress().size())
+                {
+                    FatalErrorInFunction
+                        << "srcMagSf size:" << AMI.srcMagSf().size()
+                        << "srcAddress size:" << AMI.srcAddress().size()
+                        << exit(FatalError);
+                }
+            }
+            if (AMI.srcCentroids().size())
+            {
+                hasSrcCentroids = true;
+                if (AMI.srcCentroids().size() != AMI.srcAddress().size())
+                {
+                    FatalErrorInFunction
+                        << "srcCentroids size:" << AMI.srcCentroids().size()
+                        << "srcAddress size:" << AMI.srcAddress().size()
+                        << exit(FatalError);
+                }
+            }
+            if (AMI.tgtMagSf().size())
+            {
+                hasTgtMagSf = true;
+                if (AMI.tgtMagSf().size() != AMI.tgtAddress().size())
+                {
+                    FatalErrorInFunction
+                        << "tgtMagSf size:" << AMI.tgtMagSf().size()
+                        << "tgtAddress size:" << AMI.tgtAddress().size()
+                        << exit(FatalError);
+                }
+            }
+        }
+    }
+
+
+    // Reduce global information in case one of the coarse ranks does not
+    // have an input AMI to get data from. Could use minFirstEqOp from Tuple2
+    // instead ...
+    Pstream::combineReduce
+    (
+        globalInfo,
+        [](AMIType& x, const AMIType& y)
+        {
+            if (y.first() < x.first())
+            {
+                x = y;
+            }
+        },
+        Pstream::msgType(),
+        coarseComm
+    );
+
+    DebugPout
+        << "Input amis :"
+        << " singlePatchProc:" << singlePatchProc
+        << " srcHasFlip:" << srcHasFlip
+        << " tgtHasFlip:" << tgtHasFlip
+        << " requireMatch:" << requireMatch
+        << " reverseTarget:" << reverseTarget
+        << " lowWeightCorrection:" << lowWeightCorrection
+        << " hasSrcMagSf:" << hasSrcMagSf
+        << " hasSrcCentroids:" << hasSrcCentroids
+        << " hasTgtMagSf:" << hasTgtMagSf
+        << " nSrc:" << nSrc
+        << " nTgt:" << nTgt
+        << endl;
+
+
+    labelListList srcAddress;
+    scalarListList srcWeights;
+    scalarList srcMagSf;
+    // Needed?
+    pointListList srcCentroids;
+
+    labelListList tgtAddress;
+    scalarListList tgtWeights;
+    scalarList tgtMagSf;
+
+
+    // Map to send src side data to tgt side
+    autoPtr<mapDistribute> srcToTgtMap;
+
+    // Map to send tgt side data to src side
+    autoPtr<mapDistribute> tgtToSrcMap;
+
+    if (singlePatchProc == -1)
+    {
+        // Find ranks that agglomerate together
+        const label myAgglom = UPstream::myProcNo(coarseComm);
+
+        // Per input map either -1 or the index in the maps that is local
+        // data.
+        labelList localRanks(allInterfaces.size(), -1);
+        // From rank in coarse communicator back to rank in original (fine)
+        // communicator.
+        labelListList newToOldRanks;
+        {
+            // Pass 1: count number of valid maps
+            label nOldRanks = 0;
+            forAll(allInterfaces, inti)
+            {
+                if (allInterfaces.set(inti))
+                {
+                    const auto& intf = refCast<const cyclicACMIGAMGInterface>
+                    (
+                        allInterfaces[inti]
+                    );
+
+                    if (!intf.amiPtr_ || intf.AMI().comm() == -1)
+                    {
+                        continue;
+                    }
+                    nOldRanks++;
+                }
+            }
+
+            // Pass 2: collect
+            DynamicList<label> oldRanks(nOldRanks);
+            forAll(allInterfaces, inti)
+            {
+                if (allInterfaces.set(inti))
+                {
+                    const auto& intf = refCast<const cyclicACMIGAMGInterface>
+                    (
+                        allInterfaces[inti]
+                    );
+
+                    if (!intf.amiPtr_ || intf.AMI().comm() == -1)
+                    {
+                        continue;
+                    }
+
+                    label fineRank = -1;
+                    if (intf.myProcNo() == -1)
+                    {
+                        // The interface was already local so got never
+                        // sent across so myProcNo_ is never set ...
+                        fineRank = UPstream::myProcNo(intf.AMI().comm());
+                    }
+                    else
+                    {
+                        fineRank = intf.myProcNo();
+                    }
+
+                    oldRanks.append(fineRank);
+                    localRanks[inti] = fineRank;
+                }
+            }
+
+            // Pull individual parts together - this is the only communication
+            // needed.
+            newToOldRanks = Pstream::listGatherValues
+            (
+                labelList(std::move(oldRanks)),
+                coarseComm
+            );
+            Pstream::broadcast(newToOldRanks, coarseComm);
+        }
+
+
+        // Create combined maps
+        UPtrList<const mapDistribute> srcMaps(allInterfaces.size());
+        UPtrList<const mapDistribute> tgtMaps(allInterfaces.size());
         forAll(allInterfaces, inti)
         {
             if (allInterfaces.set(inti))
             {
-                const auto& intf =
-                    refCast<const cyclicACMIGAMGInterface>(allInterfaces[inti]);
+                const auto& intf = refCast<const cyclicACMIGAMGInterface>
+                (
+                    allInterfaces[inti]
+                );
+
+                if (!intf.amiPtr_)
+                {
+                    // Should not be in allInterfaces?
+                    continue;
+                }
+
                 const auto& AMI = intf.AMI();
-                nSrc += AMI.srcAddress().size();
-                nTgt += AMI.tgtAddress().size();
 
-                if (AMI.srcMagSf().size())
+                if (AMI.comm() != -1)
                 {
-                    hasSrcMagSf = true;
-                    if (AMI.srcMagSf().size() != AMI.srcAddress().size())
-                    {
-                        FatalErrorInFunction
-                            << "srcMagSf size:" << AMI.srcMagSf().size()
-                            << "srcAddress size:" << AMI.srcAddress().size()
-                            << exit(FatalError);
-                    }
-                }
-                if (AMI.srcCentroids().size())
-                {
-                    hasSrcCentroids = true;
-                    if (AMI.srcCentroids().size() != AMI.srcAddress().size())
-                    {
-                        FatalErrorInFunction
-                            << "srcCentroids size:" << AMI.srcCentroids().size()
-                            << "srcAddress size:" << AMI.srcAddress().size()
-                            << exit(FatalError);
-                    }
-                }
-                if (AMI.tgtMagSf().size())
-                {
-                    hasTgtMagSf = true;
-                    if (AMI.tgtMagSf().size() != AMI.tgtAddress().size())
-                    {
-                        FatalErrorInFunction
-                            << "tgtMagSf size:" << AMI.tgtMagSf().size()
-                            << "tgtAddress size:" << AMI.tgtAddress().size()
-                            << exit(FatalError);
-                    }
-                }
-            }
-        }
-
-
-        labelListList srcAddress;
-        scalarListList srcWeights;
-        scalarList srcMagSf;
-        // Needed?
-        pointListList srcCentroids;
-
-        labelListList tgtAddress;
-        scalarListList tgtWeights;
-        scalarList tgtMagSf;
-
-
-        // Map to send src side data to tgt side
-        autoPtr<mapDistribute> srcToTgtMap;
-
-        // Map to send tgt side data to src side
-        autoPtr<mapDistribute> tgtToSrcMap;
-
-        if (AMI.distributed())
-        {
-            // Create combined maps
-            UPtrList<const mapDistribute> srcMaps(allInterfaces.size());
-            UPtrList<const mapDistribute> tgtMaps(allInterfaces.size());
-            forAll(allInterfaces, inti)
-            {
-                if (allInterfaces.set(inti))
-                {
-                    const auto& intf = refCast<const cyclicACMIGAMGInterface>
-                    (
-                        allInterfaces[inti]
-                    );
-                    const auto& AMI = intf.AMI();
                     srcMaps.set(inti, &AMI.srcMap());
                     tgtMaps.set(inti, &AMI.tgtMap());
                 }
             }
-
-
-            // Find ranks that agglomerate together
-            const label myAgglom =
-                procAgglomMap[UPstream::myProcNo(AMI.comm())];
-
-            // Invert procAgglomMap
-            const labelListList newToOldRanks
-            (
-                invertOneToMany
-                (
-                    UPstream::nProcs(coarseComm),
-                    procAgglomMap
-                )
-            );
-            const labelList& localRanks = newToOldRanks[myAgglom];
-
-
-            // Offsets for slots into results of srcToTgtMap
-            labelList srcStartOfLocal;
-            List<Map<label>> srcCompactMaps;
-
-            srcToTgtMap.reset
-            (
-                new mapDistribute
-                (
-                    srcMaps,
-                    localRanks,     // per src map which rank it is from
-                    coarseComm,
-                    newToOldRanks,  // destination rank to source ranks
-                    srcStartOfLocal,
-                    srcCompactMaps
-                )
-            );
-
-            // Assemble tgtAddress
-            tgtAddress.setSize(nTgt);
-            if (tgtAddress.size())
-            {
-                label alli = 0;
-                forAll(allInterfaces, inti)
-                {
-                    if (allInterfaces.set(inti))
-                    {
-                        const auto& intf =
-                            refCast<const cyclicACMIGAMGInterface>
-                            (
-                                allInterfaces[inti]
-                            );
-                        const auto& AMI = intf.AMI();
-                        const auto& tgtSlots = AMI.tgtAddress();
-                        const label localSize =
-                            srcStartOfLocal[inti+1]
-                          - srcStartOfLocal[inti];
-
-                        forAll(tgtSlots, tgti)
-                        {
-                            // Append old slots: copy old values and adapt
-                            auto& newSlots = tgtAddress[alli++];
-                            newSlots = tgtSlots[tgti];
-
-                            // Renumber to new indices
-                            mapDistributeBase::renumberMap
-                            (
-                                newSlots,
-                                localSize,
-                                srcStartOfLocal[inti],
-                                srcCompactMaps[inti],
-                                AMI.srcMap().constructHasFlip() //hasFlip
-                            );
-
-                            for (const label slot : newSlots)
-                            {
-                                if
-                                (
-                                    slot < 0
-                                 || slot >= srcToTgtMap().constructSize()
-                                )
-                                {
-                                    FatalErrorInFunction << " newSlots:"
-                                        << newSlots << exit(FatalError);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (nTgt != alli)
-                {
-                    FatalErrorInFunction << "nTgt:" << nTgt
-                        << " alli:" << alli << exit(FatalError);
-                }
-            }
-
-            // Offsets for slots into results of tgtToSrcMap
-            labelList tgtStartOfLocal;
-            List<Map<label>> tgtCompactMaps;
-
-            tgtToSrcMap.reset
-            (
-                new mapDistribute
-                (
-                    tgtMaps,
-                    localRanks,
-                    coarseComm,
-                    newToOldRanks,
-                    tgtStartOfLocal,
-                    tgtCompactMaps
-                )
-            );
-
-            // Assemble srcAddress
-            srcAddress.setSize(nSrc);
-            if (srcAddress.size())
-            {
-                label alli = 0;
-                forAll(allInterfaces, inti)
-                {
-                    if (allInterfaces.set(inti))
-                    {
-                        const auto& intf =
-                            refCast<const cyclicACMIGAMGInterface>
-                            (
-                                allInterfaces[inti]
-                            );
-                        const auto& AMI = intf.AMI();
-                        const auto& srcSlots = AMI.srcAddress();
-                        const label localSize =
-                            tgtStartOfLocal[inti+1]
-                          - tgtStartOfLocal[inti];
-
-                        forAll(srcSlots, srci)
-                        {
-                            // Append old slots: copy old values and adapt
-                            auto& newSlots = srcAddress[alli++];
-                            newSlots = srcSlots[srci];
-                            // Renumber to new indices
-                            mapDistributeBase::renumberMap
-                            (
-                                newSlots,
-                                localSize,
-                                tgtStartOfLocal[inti],
-                                tgtCompactMaps[inti],
-                                AMI.tgtMap().constructHasFlip() //hasFlip
-                            );
-
-                            for (const label slot : newSlots)
-                            {
-                                if
-                                (
-                                    slot < 0
-                                 || slot >= tgtToSrcMap().constructSize()
-                                )
-                                {
-                                    FatalErrorInFunction << " newSlots:"
-                                        << newSlots << exit(FatalError);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (nSrc != alli)
-                {
-                    FatalErrorInFunction << "nSrc:" << nSrc
-                        << " alli:" << alli << exit(FatalError);
-                }
-            }
-
-
-            // Clean up: if no remote elements sent/received mark as
-            // non-distributed. We could do this at the start but this
-            // needs to take all the internal transport into account. Easier
-            // (but less efficient) to do afterwards now all is compacted.
-            {
-                const auto& map = srcToTgtMap().subMap();
-
-                bool usesRemote = false;
-                forAll(map, proci)
-                {
-                    if (proci != myAgglom)
-                    {
-                        const auto& ss = srcToTgtMap().subMap()[proci];
-                        const auto& sc = srcToTgtMap().constructMap()[proci];
-                        const auto& ts = tgtToSrcMap().subMap()[proci];
-                        const auto& tc = tgtToSrcMap().constructMap()[proci];
-
-                        if (ss.size() || sc.size() || ts.size() || tc.size())
-                        {
-                            usesRemote = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!usesRemote)
-                {
-                    //Pout<< "** making fully local on new rank "
-                    //    << myAgglom << " in comm:" << coarseComm << endl;
-                    singlePatchProc = myAgglom;
-                    srcToTgtMap.clear();
-                    tgtToSrcMap.clear();
-                }
-            }
         }
-        else
+
+
+        // Offsets for slots into results of srcToTgtMap
+        labelList srcStartOfLocal;
+        List<Map<label>> srcCompactMaps;
+
+        srcToTgtMap.reset
+        (
+            new mapDistribute
+            (
+                srcMaps,
+                localRanks,     // per src map which rank represents local data
+                coarseComm,
+                newToOldRanks,  // destination rank to source ranks
+                srcStartOfLocal,
+                srcCompactMaps
+            )
+        );
+
+
+        // Assemble tgtAddress
+        tgtAddress.setSize(nTgt);
+        if (tgtAddress.size())
         {
-            // src/tgt address are straight indices
-
-            srcAddress.setSize(nSrc);
-            tgtAddress.setSize(nTgt);
-
-            nSrc = 0;
-            nTgt = 0;
+            label alli = 0;
             forAll(allInterfaces, inti)
             {
                 if (allInterfaces.set(inti))
@@ -570,51 +571,185 @@ Foam::cyclicACMIGAMGInterface::cyclicACMIGAMGInterface
                     (
                         allInterfaces[inti]
                     );
+
+                    if (!intf.amiPtr_)
+                    {
+                        continue;
+                    }
+
                     const auto& AMI = intf.AMI();
+                    const auto& tgtSlots = AMI.tgtAddress();
+                    const label localSize =
+                        srcStartOfLocal[inti+1]
+                      - srcStartOfLocal[inti];
 
-                    const auto& srcA = AMI.srcAddress();
-                    if (srcAddress.size())
+                    forAll(tgtSlots, tgti)
                     {
-                        label srci = nSrc;
-                        forAll(srcA, i)
+                        // Append old slots: copy old values and adapt
+                        auto& newSlots = tgtAddress[alli++];
+                        newSlots = tgtSlots[tgti];
+
+                        // Renumber to new indices
+                        mapDistributeBase::renumberMap
+                        (
+                            newSlots,
+                            localSize,
+                            srcStartOfLocal[inti],
+                            srcCompactMaps[inti],
+                            srcHasFlip //hasFlip
+                        );
+
+                        for (const label slot : newSlots)
                         {
-                            srcAddress[srci++] = srcA[i]+nTgt;
+                            if
+                            (
+                                slot < 0
+                             || slot >= srcToTgtMap().constructSize()
+                            )
+                            {
+                                FatalErrorInFunction << " newSlots:"
+                                    << newSlots << exit(FatalError);
+                            }
                         }
                     }
-
-                    const auto& tgtA = AMI.tgtAddress();
-                    if (tgtAddress.size())
-                    {
-                        label tgti = nTgt;
-                        forAll(tgtA, i)
-                        {
-                            tgtAddress[tgti++] = tgtA[i]+nSrc;
-                        }
-                    }
-
-                    nSrc += srcA.size();
-                    nTgt += tgtA.size();
                 }
+            }
+
+            if (nTgt != alli)
+            {
+                FatalErrorInFunction << "nTgt:" << nTgt
+                    << " alli:" << alli << exit(FatalError);
             }
         }
 
-        srcWeights.setSize(nSrc);
-        if (hasSrcMagSf)
+        // Offsets for slots into results of tgtToSrcMap
+        labelList tgtStartOfLocal;
+        List<Map<label>> tgtCompactMaps;
+
+        tgtToSrcMap.reset
+        (
+            new mapDistribute
+            (
+                tgtMaps,
+                localRanks,
+                coarseComm,
+                newToOldRanks,
+                tgtStartOfLocal,
+                tgtCompactMaps
+            )
+        );
+
+
+        // Assemble srcAddress
+        srcAddress.setSize(nSrc);
+        if (srcAddress.size())
         {
-            srcMagSf.setSize(nSrc);
-        }
-        if (hasSrcCentroids)
-        {
-            srcCentroids.setSize(nSrc);
-        }
-        tgtWeights.setSize(nTgt);
-        if (hasTgtMagSf)
-        {
-            tgtMagSf.setSize(nTgt);
+            label alli = 0;
+            forAll(allInterfaces, inti)
+            {
+                if (allInterfaces.set(inti))
+                {
+                    const auto& intf = refCast<const cyclicACMIGAMGInterface>
+                    (
+                        allInterfaces[inti]
+                    );
+
+                    if (!intf.amiPtr_)
+                    {
+                        continue;
+                    }
+
+                    const auto& AMI = intf.AMI();
+                    const auto& srcSlots = AMI.srcAddress();
+                    const label localSize =
+                        tgtStartOfLocal[inti+1]
+                      - tgtStartOfLocal[inti];
+
+                    forAll(srcSlots, srci)
+                    {
+                        // Append old slots: copy old values and adapt
+                        auto& newSlots = srcAddress[alli++];
+                        newSlots = srcSlots[srci];
+                        // Renumber to new indices
+                        mapDistributeBase::renumberMap
+                        (
+                            newSlots,
+                            localSize,
+                            tgtStartOfLocal[inti],
+                            tgtCompactMaps[inti],
+                            tgtHasFlip
+                        );
+
+                        for (const label slot : newSlots)
+                        {
+                            if
+                            (
+                                slot < 0
+                             || slot >= tgtToSrcMap().constructSize()
+                            )
+                            {
+                                FatalErrorInFunction << " newSlots:"
+                                    << newSlots << exit(FatalError);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (nSrc != alli)
+            {
+                FatalErrorInFunction << "nSrc:" << nSrc
+                    << " alli:" << alli << exit(FatalError);
+            }
         }
 
 
-        // Append individual data
+        // Clean up: if no remote elements sent/received mark as
+        // non-distributed. We could do this at the start but this
+        // needs to take all the internal transport into account. Easier
+        // (but less efficient) to do afterwards now all is compacted.
+        {
+            const auto& map = srcToTgtMap().subMap();
+
+            bool usesRemote = false;
+            forAll(map, proci)
+            {
+                if (proci != myAgglom)
+                {
+                    const auto& ss = srcToTgtMap().subMap()[proci];
+                    const auto& sc = srcToTgtMap().constructMap()[proci];
+                    const auto& ts = tgtToSrcMap().subMap()[proci];
+                    const auto& tc = tgtToSrcMap().constructMap()[proci];
+
+                    if (ss.size() || sc.size() || ts.size() || tc.size())
+                    {
+                        usesRemote = true;
+                        break;
+                    }
+                }
+            }
+
+            // We can't have a single rank become fully-local since we
+            // expect singlePatchProc to be synchronised. So make sure all
+            // have become local
+
+            if (!returnReduceOr(usesRemote, coarseComm))
+            {
+                DebugPout<< "** making fully local on new rank "
+                    << myAgglom << " in comm:" << coarseComm << endl;
+                singlePatchProc = myAgglom;
+                srcToTgtMap.clear();
+                tgtToSrcMap.clear();
+            }
+        }
+    }
+    else
+    {
+        // src/tgt address are straight indices
+
+        srcAddress.setSize(nSrc);
+        tgtAddress.setSize(nTgt);
+
         nSrc = 0;
         nTgt = 0;
         forAll(allInterfaces, inti)
@@ -625,39 +760,31 @@ Foam::cyclicACMIGAMGInterface::cyclicACMIGAMGInterface
                 (
                     allInterfaces[inti]
                 );
+
+                if (!intf.amiPtr_)
+                {
+                    continue;
+                }
+
                 const auto& AMI = intf.AMI();
 
                 const auto& srcA = AMI.srcAddress();
+                if (srcAddress.size())
                 {
-                    // weights
-                    SubList<scalarList>(srcWeights, srcA.size(), nSrc) =
-                        AMI.srcWeights();
-
-                    // magSf
-                    if (hasSrcMagSf)
+                    label srci = nSrc;
+                    forAll(srcA, i)
                     {
-                        SubList<scalar>(srcMagSf, srcA.size(), nSrc) =
-                            AMI.srcMagSf();
-                    }
-
-                    // centroids
-                    if (hasSrcCentroids)
-                    {
-                        SubList<pointList>(srcCentroids, srcA.size(), nSrc) =
-                            AMI.srcCentroids();
+                        srcAddress[srci++] = srcA[i]+nTgt;
                     }
                 }
 
                 const auto& tgtA = AMI.tgtAddress();
+                if (tgtAddress.size())
                 {
-                    // weights
-                    SubList<scalarList>(tgtWeights, tgtA.size(), nTgt) =
-                        AMI.tgtWeights();
-
-                    if (hasTgtMagSf)
+                    label tgti = nTgt;
+                    forAll(tgtA, i)
                     {
-                        SubList<scalar>(tgtMagSf, tgtA.size(), nTgt) =
-                            AMI.tgtMagSf();
+                        tgtAddress[tgti++] = tgtA[i]+nSrc;
                     }
                 }
 
@@ -665,40 +792,119 @@ Foam::cyclicACMIGAMGInterface::cyclicACMIGAMGInterface
                 nTgt += tgtA.size();
             }
         }
-
-
-        // Construct with same arguments as original
-        amiPtr_.reset
-        (
-            new AMIPatchToPatchInterpolation
-            (
-                AMI.requireMatch(),
-                AMI.reverseTarget(),
-                AMI.lowWeightCorrection()
-            )
-        );
-        amiPtr_().comm(coarseComm),
-        amiPtr_().reset
-        (
-            std::move(srcToTgtMap),
-            std::move(tgtToSrcMap),
-            std::move(srcAddress),
-            std::move(srcWeights),
-            std::move(tgtAddress),
-            std::move(tgtWeights),
-            singlePatchProc
-        );
-        amiPtr_().srcMagSf() = std::move(srcMagSf);
-        amiPtr_().srcCentroids() = std::move(srcCentroids);
-        amiPtr_().tgtMagSf() = std::move(tgtMagSf);
     }
+
+    srcWeights.setSize(nSrc);
+    if (hasSrcMagSf)
+    {
+        srcMagSf.setSize(nSrc);
+    }
+    if (hasSrcCentroids)
+    {
+        srcCentroids.setSize(nSrc);
+    }
+    tgtWeights.setSize(nTgt);
+    if (hasTgtMagSf)
+    {
+        tgtMagSf.setSize(nTgt);
+    }
+
+
+    // Append individual data
+    nSrc = 0;
+    nTgt = 0;
+    forAll(allInterfaces, inti)
+    {
+        if (allInterfaces.set(inti))
+        {
+            const auto& intf = refCast<const cyclicACMIGAMGInterface>
+            (
+                allInterfaces[inti]
+            );
+
+            if (!intf.amiPtr_)
+            {
+                continue;
+            }
+
+            const auto& AMI = intf.AMI();
+
+            const auto& srcA = AMI.srcAddress();
+            {
+                // weights
+                SubList<scalarList>(srcWeights, srcA.size(), nSrc) =
+                    AMI.srcWeights();
+
+                // magSf
+                if (hasSrcMagSf)
+                {
+                    SubList<scalar>(srcMagSf, srcA.size(), nSrc) =
+                        AMI.srcMagSf();
+                }
+
+                // centroids
+                if (hasSrcCentroids)
+                {
+                    SubList<pointList>(srcCentroids, srcA.size(), nSrc) =
+                        AMI.srcCentroids();
+                }
+            }
+
+            const auto& tgtA = AMI.tgtAddress();
+            {
+                // weights
+                SubList<scalarList>(tgtWeights, tgtA.size(), nTgt) =
+                    AMI.tgtWeights();
+
+                if (hasTgtMagSf)
+                {
+                    SubList<scalar>(tgtMagSf, tgtA.size(), nTgt) =
+                        AMI.tgtMagSf();
+                }
+            }
+
+            nSrc += srcA.size();
+            nTgt += tgtA.size();
+        }
+    }
+
+
+    // Construct with same arguments as original
+    amiPtr_.reset
+    (
+        new AMIPatchToPatchInterpolation
+        (
+            requireMatch,
+            reverseTarget,
+            lowWeightCorrection
+        )
+    );
+    amiPtr_().comm(coarseComm),
+    amiPtr_().reset
+    (
+        std::move(srcToTgtMap),
+        std::move(tgtToSrcMap),
+        std::move(srcAddress),
+        std::move(srcWeights),
+        std::move(tgtAddress),
+        std::move(tgtWeights),
+        singlePatchProc
+    );
+    amiPtr_().srcMagSf() = std::move(srcMagSf);
+    amiPtr_().srcCentroids() = std::move(srcCentroids);
+    amiPtr_().tgtMagSf() = std::move(tgtMagSf);
+
+    //Pout<< "** constructed new ami:"
+    //    << " comm:" << amiPtr_().comm()
+    //    << " srcMap.comm:" << amiPtr_().srcMap().comm()
+    //    << " tgtMap.comm:" << amiPtr_().tgtMap().comm()
+    //    << endl;
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::labelField>
-Foam::cyclicACMIGAMGInterface::internalFieldTransfer
+Foam::tmp<Foam::labelField> Foam::cyclicACMIGAMGInterface::internalFieldTransfer
 (
     const Pstream::commsTypes commsType,
     const labelUList& iF
@@ -736,6 +942,15 @@ void Foam::cyclicACMIGAMGInterface::write(Ostream& os) const
     {
         os  << token::SPACE;
         AMI().writeData(os);
+
+        // Write processors in communicator
+        const label comm = AMI().comm();
+
+        if (comm != -1)
+        {
+            os  << token::SPACE
+                << UPstream::myProcNo(comm);
+        }
     }
 }
 

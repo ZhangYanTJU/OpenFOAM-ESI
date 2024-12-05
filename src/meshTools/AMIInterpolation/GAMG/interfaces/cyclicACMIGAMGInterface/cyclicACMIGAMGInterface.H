@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cyclicACMIGAMGInterface_H
-#define cyclicACMIGAMGInterface_H
+#ifndef Foam_cyclicACMIGAMGInterface_H
+#define Foam_cyclicACMIGAMGInterface_H
 
 #include "GAMGInterface.H"
 #include "cyclicACMILduInterface.H"
@@ -67,6 +67,11 @@ class cyclicACMIGAMGInterface
 
         //- AMI interface
         autoPtr<AMIPatchToPatchInterpolation> amiPtr_;
+
+        //- rank in AMI with respect to parent communicator.
+        //- Used for combining contributions from different processors if the
+        //- destination processor was not in the original set.
+        label myProcNo_;
 
 
     // Private Member Functions
@@ -211,6 +216,12 @@ public:
             virtual const tensorField& reverseT() const
             {
                 return reverseT_;
+            }
+
+            //- -1 or old local rank
+            virtual label myProcNo() const
+            {
+                return myProcNo_;
             }
 
 

@@ -328,7 +328,7 @@ void Foam::GAMGAgglomeration::agglomerateLduAddressing
             tmp<labelField> restrictMapInternalField;
 
             // The finest mesh uses patchAddr from the original lduAdressing.
-            // the coarser levels create thei own adressing for faceCells
+            // the coarser levels create their own adressing for faceCells
             if (fineLevelIndex == 0)
             {
                 restrictMapInternalField =
@@ -466,7 +466,7 @@ void Foam::GAMGAgglomeration::procAgglomerateLduAddressing
     procBoundaryFaceMap_.set(levelIndex, new labelListListList(0));
 
 
-    // Collect meshes
+    // Collect meshes. Does no renumbering
     PtrList<lduPrimitiveMesh> otherMeshes;
     lduPrimitiveMesh::gather(comm, myMesh, otherMeshes);
 

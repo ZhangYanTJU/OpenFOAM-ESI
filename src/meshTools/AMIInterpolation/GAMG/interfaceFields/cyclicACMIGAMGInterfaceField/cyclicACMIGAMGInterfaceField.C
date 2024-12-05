@@ -184,7 +184,7 @@ void Foam::cyclicACMIGAMGInterfaceField::initInterfaceMatrixUpdate
       : cyclicACMIInterface_.neighbPatch().AMI()
     );
 
-    if (AMI.distributed())
+    if (AMI.distributed() && AMI.comm() != -1)
     {
         DebugPout<< "cyclicACMIFvPatchField::initInterfaceMatrixUpdate() :"
             << " interface:" << cyclicACMIInterface_.index()
@@ -277,7 +277,7 @@ void Foam::cyclicACMIGAMGInterfaceField::updateInterfaceMatrix
         << endl;
 
 
-    if (AMI.distributed())
+    if (AMI.distributed() && AMI.comm() != -1)
     {
         const auto& map =
         (

@@ -184,7 +184,7 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
       : cyclicAMIInterface_.neighbPatch().AMI()
     );
 
-    if (AMI.distributed())
+    if (AMI.distributed() && AMI.comm() != -1)
     {
         //DebugPout<< "cyclicAMIFvPatchField::initInterfaceMatrixUpdate() :"
         //    << " interface:" << cyclicAMIInterface_.index()
@@ -284,7 +284,7 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
     //    << " AMI low-weight:" << AMI.applyLowWeightCorrection()
     //    << endl;
 
-    if (AMI.distributed())
+    if (AMI.distributed() && AMI.comm() != -1)
     {
         if (commsType != UPstream::commsTypes::nonBlocking)
         {

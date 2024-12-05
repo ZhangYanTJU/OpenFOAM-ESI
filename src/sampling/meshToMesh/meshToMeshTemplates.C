@@ -537,7 +537,7 @@ void Foam::meshToMesh::mapSrcToTgt
                 (
                     AMIList[i].singlePatchProc(),
                     (
-                        AMIList[i].distributed()
+                        (AMIList[i].distributed() && AMIList[i].comm() != -1)
                       ? AMIList[i].hasSrcMap()  // pointer to map
                       : nullptr
                     ),
@@ -769,7 +769,7 @@ void Foam::meshToMesh::mapTgtToSrc
                 (
                     AMIList[i].singlePatchProc(),
                     (
-                        AMIList[i].distributed()
+                        (AMIList[i].distributed() && AMIList[i].comm() != -1)
                       ? AMIList[i].hasTgtMap()  // pointer to map
                       : nullptr
                     ),

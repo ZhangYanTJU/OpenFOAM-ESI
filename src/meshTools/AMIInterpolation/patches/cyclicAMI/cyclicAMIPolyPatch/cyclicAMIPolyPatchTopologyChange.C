@@ -312,7 +312,7 @@ void Foam::cyclicAMIPolyPatch::setAMIFaces()
     autoPtr<mapDistribute> srcToTgtMap1;
     autoPtr<mapDistribute> tgtToSrcMap1;
 
-    if (AMIPtr_->distributed())
+    if (AMIPtr_->distributed() && AMIPtr_().comm() != -1)
     {
        // Parallel running
 

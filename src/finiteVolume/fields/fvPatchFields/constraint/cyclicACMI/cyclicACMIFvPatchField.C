@@ -345,7 +345,9 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
 {
-    if (this->ownerAMI().distributed() && cacheNeighbourField())
+    const auto& AMI = this->ownerAMI();
+
+    if (AMI.distributed() && cacheNeighbourField() && AMI.comm() != -1)
     {
         if (!this->ready())
         {
@@ -441,7 +443,9 @@ void Foam::cyclicACMIFvPatchField<Type>::initEvaluate
         this->updateCoeffs();
     }
 
-    if (this->ownerAMI().distributed() && cacheNeighbourField())
+    const auto& AMI = this->ownerAMI();
+
+    if (AMI.distributed() && cacheNeighbourField() && AMI.comm() != -1)
     {
         if (commsType != UPstream::commsTypes::nonBlocking)
         {
@@ -502,7 +506,7 @@ void Foam::cyclicACMIFvPatchField<Type>::evaluate
 
     const auto& AMI = this->ownerAMI();
 
-    if (AMI.distributed() && cacheNeighbourField())
+    if (AMI.distributed() && cacheNeighbourField() && AMI.comm() != -1)
     {
         // Calculate patchNeighbourField
         if (commsType != UPstream::commsTypes::nonBlocking)
@@ -564,7 +568,9 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
     const Pstream::commsTypes commsType
 ) const
 {
-    if (this->ownerAMI().distributed())
+    const auto& AMI = this->ownerAMI();
+
+    if (AMI.distributed() && AMI.comm() != -1)
     {
         // Start sending
         if (commsType != UPstream::commsTypes::nonBlocking)
@@ -640,7 +646,9 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
 
     solveScalarField pnf;
 
-    if (this->ownerAMI().distributed())
+    const auto& AMI = this->ownerAMI();
+
+    if (AMI.distributed() && AMI.comm() != -1)
     {
         if (commsType != UPstream::commsTypes::nonBlocking)
         {
@@ -700,7 +708,7 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
 {
     const auto& AMI = this->ownerAMI();
 
-    if (AMI.distributed())
+    if (AMI.distributed() && AMI.comm() != -1)
     {
         if (commsType != UPstream::commsTypes::nonBlocking)
         {
@@ -764,7 +772,7 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
 
     Field<Type> pnf;
 
-    if (AMI.distributed())
+    if (AMI.distributed() && AMI.comm() != -1)
     {
         if (commsType != UPstream::commsTypes::nonBlocking)
         {

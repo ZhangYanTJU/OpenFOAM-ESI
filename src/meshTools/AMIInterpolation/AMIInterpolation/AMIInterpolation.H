@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -80,6 +80,11 @@ public:
 
         static bool cacheIntersections_;
 
+        //- localComm : 0 : all processors (backwards compatible)
+        //- localComm : 1 : only processors with patch faces
+        //- localComm : 2 : like 1 but add master processor always
+        static int localComm_;
+
 
 protected:
 
@@ -105,6 +110,10 @@ protected:
 
         //- Communicator to use for parallel operations.
         label comm_;
+
+        //- Communicator to use for geometry calculations. Not valid (-1) on
+        //- processors that do not have faces
+        autoPtr<UPstream::communicator> geomComm_;
 
 
         // Source patch
@@ -181,11 +190,15 @@ protected:
                 const primitivePatch& patch
             ) const;
 
-            //- Calculate if patches are on multiple processors
+            //- Calculate if patches are on multiple processors. Allocates
+            //- local communicator and returns -1 or processor containing all
+            //- faces
             label calcDistribution
             (
                 const primitivePatch& srcPatch,
-                const primitivePatch& tgtPatch
+                const primitivePatch& tgtPatch,
+                const label comm,
+                autoPtr<UPstream::communicator>& geomComm
             ) const;
 
             //- Project points to surface

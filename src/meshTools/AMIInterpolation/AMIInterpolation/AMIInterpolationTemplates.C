@@ -142,9 +142,15 @@ void Foam::AMIInterpolation::interpolateToTarget
     result.setSize(tgtAddress_.size());
     List<Type> work;
 
-    if (distributed())
+    if (distributed() && srcMapPtr_)
     {
         const mapDistribute& map = srcMapPtr_();
+
+        if (map.comm() == -1)
+        {
+            return;
+        }
+
         work.resize_nocopy(map.constructSize());
         SubList<Type>(work, fld.size()) = fld;  // deep copy
         map.distribute(work);
@@ -203,9 +209,15 @@ void Foam::AMIInterpolation::interpolateToSource
     result.setSize(srcAddress_.size());
     List<Type> work;
 
-    if (distributed())
+    if (distributed() && tgtMapPtr_)
     {
         const mapDistribute& map = tgtMapPtr_();
+
+        if (map.comm() == -1)
+        {
+            return;
+        }
+
         work.resize_nocopy(map.constructSize());
         SubList<Type>(work, fld.size()) = fld;  // deep copy
         map.distribute(work);

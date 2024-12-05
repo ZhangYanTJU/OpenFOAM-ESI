@@ -240,6 +240,12 @@ OptimisationSwitches
     //  from all the individual wall patches. Set to 0/false to revert to
     //  <v2412 behaviour
     //useCombinedWallPatch    0;
+
+    //- Use local communicator for AMI communication. Default for v2506.
+    //localAMIComm = 0;   // old behaviour : all ranks included
+    //localAMIComm = 1;   // (default) only ranks that have patch faces
+    //localAMIComm = 2;   // like 1 but always include rank 0 so messages
+                          // still come from processor0
 }
 
 

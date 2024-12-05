@@ -183,7 +183,7 @@ void Foam::cyclicAMIPolyPatch::initInterpolateUntransformed
 {
     const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());
 
-    if (AMI.distributed())
+    if (AMI.distributed() && AMI.comm() != -1)
     {
         const auto& map = (owner() ? AMI.tgtMap() : AMI.srcMap());
 
@@ -213,7 +213,7 @@ void Foam::cyclicAMIPolyPatch::initInterpolate
 {
     const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());
 
-    if (!AMI.distributed())
+    if (!AMI.distributed() || AMI.comm() == -1)
     {
         return;
     }
@@ -273,12 +273,20 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     const UList<Type>& defaultValues
 ) const
 {
+    auto tresult = tmp<Field<Type>>::New(this->size(), Zero);
+
     const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());
-    const auto& map = (owner() ? AMI.tgtMap() : AMI.srcMap());
 
     Field<Type> work;
     if (AMI.distributed())
     {
+        if (AMI.comm() == -1)
+        {
+            return tresult;
+        }
+
+        const auto& map = (owner() ? AMI.tgtMap() : AMI.srcMap());
+
         // Receive (= copy) data from buffers into work. TBD: receive directly
         // into slices of work.
         map.receive
@@ -290,8 +298,6 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
         );
     }
     const Field<Type>& fld = (AMI.distributed() ? work : localFld);
-
-    auto tresult = tmp<Field<Type>>::New(this->size(), Zero);
 
     // Rotate fields (vector and non-spherical tensors)
     constexpr bool transform_supported = is_rotational_vectorspace_v<Type>;

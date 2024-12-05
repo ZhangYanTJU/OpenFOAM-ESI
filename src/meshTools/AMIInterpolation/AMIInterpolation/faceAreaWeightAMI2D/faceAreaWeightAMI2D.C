@@ -425,9 +425,9 @@ bool Foam::faceAreaWeightAMI2D::calculate
         tgtWeights_[i].transfer(tgtWght[i]);
     }
 
-    if (distributed())
+    if (distributed() && comm() != -1)
     {
-        const label myRank = UPstream::myProcNo(comm_);
+        const label myRank = UPstream::myProcNo(comm());
         // Allocate unique tag for all comms
         const int oldTag = UPstream::incrMsgType();
 
@@ -435,8 +435,8 @@ bool Foam::faceAreaWeightAMI2D::calculate
         const primitivePatch& tgtPatch0 = this->tgtPatch0();
 
         // Create global indexing for each original patch
-        const globalIndex globalSrcFaces(srcPatch0.size(), comm_);
-        const globalIndex globalTgtFaces(tgtPatch0.size(), comm_);
+        const globalIndex globalSrcFaces(srcPatch0.size(), comm());
+        const globalIndex globalTgtFaces(tgtPatch0.size(), comm());
 
         for (labelList& addressing : srcAddress_)
         {
@@ -468,7 +468,7 @@ bool Foam::faceAreaWeightAMI2D::calculate
             ListOps::appendEqOp<label>(),
             flipOp(),                   // flip operation
             UPstream::msgType()+77431,
-            comm_
+            comm()
         );
 
         mapDistributeBase::distribute
@@ -485,7 +485,7 @@ bool Foam::faceAreaWeightAMI2D::calculate
             ListOps::appendEqOp<scalar>(),
             flipOp(),                   // flip operation
             UPstream::msgType()+77432,
-            comm_
+            comm()
         );
 
         // Note: using patch face areas calculated by the AMI method
@@ -501,7 +501,7 @@ bool Foam::faceAreaWeightAMI2D::calculate
                 tgtAddress_,
                 cMapSrc,
                 UPstream::msgType()+77433,
-                comm_
+                comm()
             )
         );
 
@@ -514,7 +514,7 @@ bool Foam::faceAreaWeightAMI2D::calculate
                 srcAddress_,
                 cMapTgt,
                 UPstream::msgType()+77434,
-                comm_
+                comm()
             )
         );
 

@@ -104,7 +104,14 @@ inline Foam::label Foam::AMIInterpolation::singlePatchProc() const noexcept
 
 inline Foam::label Foam::AMIInterpolation::comm() const
 {
-    return comm_;
+    if (geomComm_.valid())
+    {
+        return geomComm_();
+    }
+    else
+    {
+        return comm_;
+    }
 }
 
 

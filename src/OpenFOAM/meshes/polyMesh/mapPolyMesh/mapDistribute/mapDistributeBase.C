@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1001,17 +1001,39 @@ Foam::mapDistributeBase::mapDistributeBase
     constructSize_(0),
     subHasFlip_(false),
     constructHasFlip_(false),
-    comm_(-1),
+    comm_(newComm),
     schedulePtr_(nullptr)
 {
-    if (maps.empty())
+    // localRanks : gives for every map the index (=rank in original
+    //              communicator) in subMap,constructMap that refers to
+    //              the local data. -1 if the map did not contain any data
+    //              (can happen for e.g. agglomerating of cyclicAMI data)
+    // newToOldRanks : gives for every rank in the newComm the ranks in the
+    //                 maps that agglomerate to it. This is used to decide
+    //                  - data was local and stays local
+    //                  - data that was remote and now becomes local
+    //                  - and same for remote
+    //                 Currently can contain -1 entries. Probably should be
+    //                 filtered...
+
+    // Find set index
+    label validMapi = -1;
+    forAll(maps, mapi)
+    {
+        if (maps.set(mapi) && localRanks[mapi] != -1)
+        {
+            validMapi = mapi;
+            break;
+        }
+    }
+
+    if (validMapi == -1)
     {
         return;
     }
 
-    comm_ = newComm;
-    subHasFlip_ = maps[0].subHasFlip();
-    constructHasFlip_ = maps[0].constructHasFlip();
+    subHasFlip_ = maps[validMapi].subHasFlip();
+    constructHasFlip_ = maps[validMapi].constructHasFlip();
 
     const label nNewRanks = newToOldRanks.size();
     const label myNewRank = UPstream::myProcNo(newComm);
@@ -1031,15 +1053,20 @@ Foam::mapDistributeBase::mapDistributeBase
     }
 
     // Sanity checks
-    const auto& map0 = maps[0];
+    const auto& map0 = maps[validMapi];
     forAll(maps, mapi)
     {
+        if (!maps.set(mapi) || localRanks[mapi] == -1)
+        {
+            continue;
+        }
+
         const auto& map = maps[mapi];
 
         if
         (
-            (map.comm() != map0.comm())
-         || (map.subHasFlip() != map0.subHasFlip())
+            //(map.comm() != map0.comm())
+            (map.subHasFlip() != map0.subHasFlip())
          || (map.constructHasFlip() != map0.constructHasFlip())
         )
         {
@@ -1049,7 +1076,10 @@ Foam::mapDistributeBase::mapDistributeBase
                 << " has comm:" << map.comm()
                 << " subHasFlip:" << map.subHasFlip()
                 << " constructHasFlip:" << map.constructHasFlip()
-                << " which is different from map 0"
+                << " which is different from map 0 "
+                << " comm:" << map0.comm()
+                << " subHasFlip:" << map0.subHasFlip()
+                << " constructHasFlip:" << map0.constructHasFlip()
                 << exit(FatalError);
         }
 
@@ -1069,6 +1099,38 @@ Foam::mapDistributeBase::mapDistributeBase
     }
 
 
+    // Determine start of constructed remote data. This is used to get the
+    // local offset which can then be used to get the relative subMap location.
+    labelListList startOfRemote(maps.size());
+    forAll(maps, mapi)
+    {
+        if (!maps.set(mapi))
+        {
+            continue;
+        }
+
+        const label nOldRanks = maps[mapi].constructMap().size();
+        labelList& starts = startOfRemote[mapi];
+
+        starts.setSize(nOldRanks, labelMax);
+        forAll(maps[mapi].constructMap(), oldRanki)
+        {
+            const labelList& map = maps[mapi].constructMap()[oldRanki];
+            forAll(map, i)
+            {
+                const label index
+                (
+                    constructHasFlip_
+                  ? mag(map[i])-1
+                  : map[i]
+                );
+                starts[oldRanki] = min(starts[oldRanki], index);
+            }
+        }
+    }
+
+
+
     constructMap_.resize_nocopy(nNewRanks);
     subMap_.resize_nocopy(nNewRanks);
 
@@ -1081,7 +1143,14 @@ Foam::mapDistributeBase::mapDistributeBase
     forAll(maps, mapi)
     {
         startOfLocal[mapi] = constructi;
+
         const label localRank = localRanks[mapi];
+
+        if (!maps.set(mapi) || localRank == -1)
+        {
+            continue;
+        }
+
         const auto& map = maps[mapi].constructMap()[localRank];
 
         // Presize compaction array
@@ -1092,31 +1161,6 @@ Foam::mapDistributeBase::mapDistributeBase
     }
     startOfLocal.last() = constructi;
 
-
-    // Determine start of constructed remote data. This is used to get the
-    // local offset which can then be used to get the relative subMap location.
-    labelListList startOfRemote(maps.size());
-    forAll(maps, mapi)
-    {
-        const label nOldProcs = maps[mapi].constructMap().size();
-        labelList& starts = startOfRemote[mapi];
-
-        starts.setSize(nOldProcs, labelMax);
-        forAll(maps[mapi].constructMap(), oldProci)
-        {
-            const labelList& map = maps[mapi].constructMap()[oldProci];
-            forAll(map, i)
-            {
-                const label index
-                (
-                    constructHasFlip_
-                  ? mag(map[i])-1
-                  : map[i]
-                );
-                starts[oldProci] = min(starts[oldProci], index);
-            }
-        }
-    }
 
 
     // Construct map
@@ -1141,6 +1185,12 @@ Foam::mapDistributeBase::mapDistributeBase
         forAll(maps, mapi)
         {
             const label localRank = localRanks[mapi];
+
+            if (!maps.set(mapi) || localRank == -1)
+            {
+                continue;
+            }
+
             const auto& map = maps[mapi].constructMap()[localRank];
             const label offset = startOfLocal[mapi];
 
@@ -1166,22 +1216,68 @@ Foam::mapDistributeBase::mapDistributeBase
                 }
             }
         }
+
+        if (constructi != startOfLocal.last())
+        {
+            FatalErrorInFunction
+                << "constructi:" << constructi
+                << " startOfLocal:" << startOfLocal.last()
+                << exit(FatalError);
+        }
     }
+
 
     // Filter remote construct data
     {
         // Remote ranks that are now local
         //  - store new index for mapping stencils
         //  - no need to construct since already
-        const auto& oldProcs = newToOldRanks[myNewRank];
+        const auto& oldRanks = newToOldRanks[myNewRank];
+
+        // Determine number of old ranks. Note: should have passed in old-to-new
+        // ranks instead of new-to-old ranks?
+        label maxOldRank = -1;
+        for (const auto& elems : newToOldRanks)
+        {
+            for (const label el : elems)
+            {
+                maxOldRank = max(maxOldRank, el);
+            }
+        }
+
+        // Construct mapping from oldRanks to map. Note: could probably
+        // use some ListOps invert routine ...
+        labelList oldRankToMap(maxOldRank+1, -1);
+        {
+            forAll(localRanks, mapi)
+            {
+                const label localRank = localRanks[mapi];
+                if (localRank != -1)
+                {
+                    oldRankToMap[localRank] = mapi;
+                }
+            }
+        }
 
         forAll(maps, mapi)
         {
-            for (const label oldProci : oldProcs)
+            if (!maps.set(mapi) || localRanks[mapi] == -1)
             {
-                if (oldProci != localRanks[mapi])
+                continue;
+            }
+
+            for (const label oldRanki : oldRanks)
+            {
+                if (oldRanki == -1)
                 {
-                    const auto& map = maps[mapi].constructMap()[oldProci];
+                    continue;
+                }
+
+                if (oldRanki != localRanks[mapi])
+                {
+                    // Note:
+                    // - constructMap is sized with the map's communicator
+                    const auto& map = maps[mapi].constructMap()[oldRanki];
 
                     if (!map.size())
                     {
@@ -1191,11 +1287,11 @@ Foam::mapDistributeBase::mapDistributeBase
 
                     // The slots come from a local map so we can look up the
                     // new location
-                    const label sourceMapi = localRanks.find(oldProci);
+                    const label sourceMapi = oldRankToMap[oldRanki];
                     const auto& subMap =
                         maps[sourceMapi].subMap()[localRanks[mapi]];
 
-                    //Pout<< "From oldRank:" << oldProci
+                    //Pout<< "From oldRank:" << oldRanki
                     //    << " sending to masterRank:" << localRanks[mapi]
                     //    << " elements:" << flatOutput(subMap)
                     //    << nl
@@ -1205,7 +1301,7 @@ Foam::mapDistributeBase::mapDistributeBase
                     if (map.size() != subMap.size())
                     {
                         FatalErrorInFunction << "Problem:"
-                            << "oldProci:" << oldProci
+                            << "oldRanki:" << oldRanki
                             << " mapi:" << mapi
                             << " constructMap:" << map.size()
                             << " sourceMapi:" << sourceMapi
@@ -1215,7 +1311,7 @@ Foam::mapDistributeBase::mapDistributeBase
 
                     const label offset = startOfLocal[sourceMapi];
                     // Construct map starts after the local data
-                    const label nMapLocal = startOfRemote[mapi][oldProci];
+                    const label nMapLocal = startOfRemote[mapi][oldRanki];
 
                     auto& cptMap = compactMaps[mapi];
                     forAll(map, i)
@@ -1238,7 +1334,7 @@ Foam::mapDistributeBase::mapDistributeBase
                         )
                         {
                             FatalErrorInFunction<< "Duplicate insertion"
-                                << "From oldProc:" << oldProci
+                                << "From oldRank:" << oldRanki
                                 << " on map:" << mapi
                                 << " at index:" << i
                                 << " have construct slot:" << index
@@ -1260,32 +1356,51 @@ Foam::mapDistributeBase::mapDistributeBase
         // Either loop over all old ranks and filter out ones already handled
         // or loop over all new ranks and avoid myNewRank
 
-        forAll(newToOldRanks, newProci)
+        forAll(newToOldRanks, newRanki)
         {
-            if (newProci != myNewRank)
+            if (newRanki != myNewRank)
             {
-                const auto& oldProcs = newToOldRanks[newProci];
+                const auto& oldRanks = newToOldRanks[newRanki];
 
                 label allSize = 0;
                 forAll(maps, mapi)
                 {
-                    for (const label oldProci : oldProcs)
+                    if (!maps.set(mapi))
                     {
-                        allSize += maps[mapi].constructMap()[oldProci].size();
+                        continue;
+                    }
+
+                    for (const label oldRanki : oldRanks)
+                    {
+                        if (oldRanki == -1)
+                        {
+                            continue;
+                        }
+                        allSize += maps[mapi].constructMap()[oldRanki].size();
                     }
                 }
 
-                labelList& myConstruct = constructMap_[newProci];
+                labelList& myConstruct = constructMap_[newRanki];
                 myConstruct.resize_nocopy(allSize);
 
                 allSize = 0;
                 forAll(maps, mapi)
                 {
-                    for (const label oldProci : oldProcs)
+                    if (!maps.set(mapi))
                     {
-                        const auto& map = maps[mapi].constructMap()[oldProci];
+                        continue;
+                    }
+
+                    for (const label oldRanki : oldRanks)
+                    {
+                        if (oldRanki == -1)
+                        {
+                            continue;
+                        }
+
+                        const auto& map = maps[mapi].constructMap()[oldRanki];
                         // Construct map starts after the local data
-                        const label nMapLocal = startOfRemote[mapi][oldProci];
+                        const label nMapLocal = startOfRemote[mapi][oldRanki];
                         SubList<label> slice(myConstruct, map.size(), allSize);
 
                         if (constructHasFlip_)
@@ -1340,6 +1455,12 @@ Foam::mapDistributeBase::mapDistributeBase
         forAll(maps, mapi)
         {
             const label localRank = localRanks[mapi];
+
+            if (!maps.set(mapi) || localRank == -1)
+            {
+                continue;
+            }
+
             allSize += maps[mapi].subMap()[localRank].size();
         }
 
@@ -1349,6 +1470,12 @@ Foam::mapDistributeBase::mapDistributeBase
         forAll(maps, mapi)
         {
             const label localRank = localRanks[mapi];
+
+            if (!maps.set(mapi) || localRank == -1)
+            {
+                continue;
+            }
+
             const auto& map = maps[mapi].subMap()[localRank];
             SubList<label> slice(mySub, map.size(), allSize);
 
@@ -1377,30 +1504,49 @@ Foam::mapDistributeBase::mapDistributeBase
         }
     }
     // Filter remote sub data
-    forAll(newToOldRanks, newProci)
+    forAll(newToOldRanks, newRanki)
     {
-        if (newProci != myNewRank)
+        if (newRanki != myNewRank)
         {
-            const auto& oldProcs = newToOldRanks[newProci];
+            const auto& oldRanks = newToOldRanks[newRanki];
 
             label allSize = 0;
             forAll(maps, mapi)
             {
-                for (const label oldProci : oldProcs)
+                if (!maps.set(mapi))
                 {
-                    allSize += maps[mapi].subMap()[oldProci].size();
+                    continue;
+                }
+
+                for (const label oldRanki : oldRanks)
+                {
+                    if (oldRanki == -1)
+                    {
+                        continue;
+                    }
+                    allSize += maps[mapi].subMap()[oldRanki].size();
                 }
             }
 
-            labelList& mySub = subMap_[newProci];
+            labelList& mySub = subMap_[newRanki];
             mySub.resize_nocopy(allSize);
 
             allSize = 0;
-            for (const label oldProci : oldProcs)
+            for (const label oldRanki : oldRanks)
             {
+                if (oldRanki == -1)
+                {
+                    continue;
+                }
+
                 forAll(maps, mapi)
                 {
-                    const auto& map = maps[mapi].subMap()[oldProci];
+                    if (!maps.set(mapi))
+                    {
+                        continue;
+                    }
+
+                    const auto& map = maps[mapi].subMap()[oldRanki];
                     SubList<label> slice(mySub, map.size(), allSize);
                     if (subHasFlip_)
                     {

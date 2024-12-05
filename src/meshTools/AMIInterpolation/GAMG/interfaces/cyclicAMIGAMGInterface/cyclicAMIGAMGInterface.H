@@ -68,6 +68,11 @@ class cyclicAMIGAMGInterface
         //- AMI interface
         autoPtr<AMIPatchToPatchInterpolation> amiPtr_;
 
+        //- rank in AMI with respect to parent communicator.
+        //- Used for combining contributions from different processors if the
+        //- destination processor was not in the original set.
+        label myProcNo_;
+
 
     // Private Member Functions
 
@@ -211,6 +216,12 @@ public:
             virtual const tensorField& reverseT() const
             {
                 return reverseT_;
+            }
+
+            //- -1 or old local rank
+            virtual label myProcNo() const
+            {
+                return myProcNo_;
             }
 
 
