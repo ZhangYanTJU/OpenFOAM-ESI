@@ -65,13 +65,14 @@ boundaryField
 
         injectionModels
         (
-            curvatureSeparation
+            filmSeparation
         );
 
         forces ();
 
-        curvatureSeparationCoeffs
+        filmSeparationCoeffs
         {
+            model              OwenRyley;
             definedPatchRadii  0;
             minInvR1           0;
             deltaByR1Min       0; // h*invRi = 0.004*10
