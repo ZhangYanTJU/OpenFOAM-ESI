@@ -68,13 +68,14 @@ boundaryField
 
         injectionModels
         (
-            curvatureSeparation
+            filmSeparation
         );
 
         forces ();
 
-        curvatureSeparationCoeffs
+        filmSeparationCoeffs
         {
+            model              OwenRyley;
             definedPatchRadii  0;
         }
 
