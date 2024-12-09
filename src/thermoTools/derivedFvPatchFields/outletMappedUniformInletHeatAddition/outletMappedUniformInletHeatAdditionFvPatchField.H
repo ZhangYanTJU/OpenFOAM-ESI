@@ -72,6 +72,7 @@ SourceFiles
 
 #include "fixedValueFvPatchFields.H"
 #include "fvPatchFields.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -88,14 +89,14 @@ class outletMappedUniformInletHeatAdditionFvPatchField
 {
     // Private data
 
+        //- Input energy
+        autoPtr<Function1<scalar>> Qptr_;
+
         //- Name of the outlet patch to be mapped
         word outletPatchName_;
 
         //- Name of the flux transporting the field
         word phiName_;
-
-        //- Input energy
-        scalar Q_;
 
         //- Minimum Temperature Limit
         scalar TMin_;

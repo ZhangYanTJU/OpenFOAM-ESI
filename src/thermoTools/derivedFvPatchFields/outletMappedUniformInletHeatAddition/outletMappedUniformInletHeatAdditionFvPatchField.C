@@ -41,9 +41,9 @@ outletMappedUniformInletHeatAdditionFvPatchField
 )
 :
     fixedValueFvPatchScalarField(p, iF),
+    Qptr_(nullptr),
     outletPatchName_(),
     phiName_("phi"),
-    Q_(0),
     TMin_(0),
     TMax_(5000)
 {}
@@ -59,9 +59,9 @@ outletMappedUniformInletHeatAdditionFvPatchField
 )
 :
     fixedValueFvPatchScalarField(ptf, p, iF, mapper),
+    Qptr_(ptf.Qptr_.clone()),
     outletPatchName_(ptf.outletPatchName_),
     phiName_(ptf.phiName_),
-    Q_(ptf.Q_),
     TMin_(ptf.TMin_),
     TMax_(ptf.TMax_)
 {}
@@ -76,9 +76,9 @@ outletMappedUniformInletHeatAdditionFvPatchField
 )
 :
     fixedValueFvPatchScalarField(p, iF, dict),
+    Qptr_(Function1<scalar>::New("Q", dict, &db())),
     outletPatchName_(dict.get<word>("outletPatch")),
     phiName_(dict.getOrDefault<word>("phi", "phi")),
-    Q_(dict.get<scalar>("Q")),
     TMin_(dict.getOrDefault<scalar>("TMin", 0)),
     TMax_(dict.getOrDefault<scalar>("TMax", 5000))
 {}
@@ -92,9 +92,9 @@ outletMappedUniformInletHeatAdditionFvPatchField
 )
 :
     fixedValueFvPatchScalarField(ptf),
+    Qptr_(ptf.Qptr_.clone()),
     outletPatchName_(ptf.outletPatchName_),
     phiName_(ptf.phiName_),
-    Q_(ptf.Q_),
     TMin_(ptf.TMin_),
     TMax_(ptf.TMax_)
 {}
@@ -109,9 +109,9 @@ outletMappedUniformInletHeatAdditionFvPatchField
 )
 :
     fixedValueFvPatchScalarField(ptf, iF),
+    Qptr_(ptf.Qptr_.clone()),
     outletPatchName_(ptf.outletPatchName_),
     phiName_(ptf.phiName_),
-    Q_(ptf.Q_),
     TMin_(ptf.TMin_),
     TMax_(ptf.TMax_)
 {}
@@ -166,11 +166,14 @@ void Foam::outletMappedUniformInletHeatAdditionFvPatchField::updateCoeffs()
         scalar averageOutletField =
             gSum(outletPatchPhi*outletPatchField)/sumOutletPatchPhi;
 
+        // Calculate Q as a function of average outlet temperature
+        const scalar Q = Qptr_->value(averageOutletField);
+
         const scalarField Cpf(thermo.Cp(pp, pT, outletPatchID));
 
         scalar totalPhiCp = gSum(outletPatchPhi)*gAverage(Cpf);
 
-        operator==(clamp(averageOutletField + Q_/totalPhiCp, TMin_, TMax_));
+        operator==(clamp(averageOutletField + Q/totalPhiCp, TMin_, TMax_));
     }
     else
     {
@@ -193,7 +196,9 @@ void Foam::outletMappedUniformInletHeatAdditionFvPatchField::write
     fvPatchField<scalar>::write(os);
     os.writeEntry("outletPatch", outletPatchName_);
     os.writeEntryIfDifferent<word>("phi", "phi", phiName_);
-    os.writeEntry("Q", Q_);
+
+    Qptr_->writeData(os);
+
     os.writeEntry("TMin", TMin_);
     os.writeEntry("TMax", TMax_);
 
