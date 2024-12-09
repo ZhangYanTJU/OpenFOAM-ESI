@@ -195,7 +195,7 @@ tmp<scalarField> OwenRyleyModel::netForce() const
             const scalar R2 = R1 + h[i];
 
             // Inertial force (OR:Eq. 11; '2' is an exponent in the Eq.)
-            const scalar Fi = -72.0/60.0*h[i]*rho[i]*magSqrU[i]*invR1[i];
+            const scalar Fi = -4.0/3.0*h[i]*rho[i]*magSqrU[i]*invR1[i];
 
             // Body force (OR:Eq. 11)
             const scalar Fb =
