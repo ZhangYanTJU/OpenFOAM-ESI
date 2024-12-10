@@ -888,7 +888,7 @@ boundaryInternalField() const
         *this
     );
 
-    auto& result = tresult;
+    auto& result = tresult.ref();
 
     forAll(result, patchi)
     {
