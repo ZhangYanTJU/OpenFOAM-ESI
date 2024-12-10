@@ -136,82 +136,6 @@ void Foam::designVariablesUpdate::writeToCostFile(bool zeroAdjointSolns)
 }
 
 
-void Foam::designVariablesUpdate::checkConvergence
-(
-    const scalarField& oldCorrection
-)
-{
-    bool converged(false);
-    // Design variables convergence check
-    if (designVarsThreshold_)
-    {
-        const labelList& activeVarIDs =
-            designVars_->activeDesignVariables();
-        const scalarField correction(oldCorrection, activeVarIDs);
-        const scalarField activeVars(designVars_->getVars(), activeVarIDs);
-        const scalar scaledCorrection =
-            gMax(mag(correction)/(mag(activeVars) + SMALL));
-        DebugInfo
-            << "Current correction " << correction << nl
-            << "Active vars " << activeVars << endl;
-        Info<< "Max. scaled correction of the design variables = "
-            << scaledCorrection
-            << endl;
-        if (scaledCorrection < designVarsThreshold_())
-        {
-            Info<< tab << "Design variables have converged " << endl;
-            converged = true;
-        }
-    }
-    // Objective convergence check
-    if (objectiveThreshold_)
-    {
-        const scalar newObjective = computeObjectiveValue();
-        const scalar oldObjective = updateMethod_->getObjectiveValueOld();
-        const scalar relativeUpdate =
-            mag(newObjective - oldObjective)/(mag(oldObjective) + SMALL);
-        Info<< "Relative change of the objective value = "
-            << relativeUpdate
-            << endl;
-        if (relativeUpdate < objectiveThreshold_())
-        {
-            Info<< tab << "Objective function has converged " << endl;
-            converged = true;
-        }
-    }
-    // Feasibility check
-    const scalarField& constraints = updateMethod_->getConstraintValues();
-    const scalar feasibility = sum(pos(constraints)*constraints);
-    Info<< "Feasibility = " << feasibility << endl;
-    if (converged && feasibility < feasibilityThreshold_)
-    {
-        Info<< "Stopping criteria met and all constraints satisfied." << nl
-            << "Optimisation has converged, stopping ..." << nl << nl
-            << "End" << nl
-            << endl;
-        // Force writing of all objective and constraint functions, to get
-        // the converged results to files
-        for (adjointSolverManager& am : adjointSolvManagers_)
-        {
-            for (adjointSolver& as : am.adjointSolvers())
-            {
-                // Use dummy weighted objective
-                as.getObjectiveManager().writeObjectives();
-            }
-        }
-        writeToCostFile(true);
-        if (UPstream::parRun())
-        {
-            UPstream::exit(0);
-        }
-        else
-        {
-            std::exit(0);
-        }
-    }
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::designVariablesUpdate::designVariablesUpdate
@@ -570,10 +494,86 @@ void Foam::designVariablesUpdate::postUpdate(const scalarField& oldCorrection)
                 }
             }
         }
+        checkConvergence();
     }
-    if (convergenceCriteriaDefined_)
+}
+
+
+void Foam::designVariablesUpdate::checkConvergence()
+{
+    if (!convergenceCriteriaDefined_)
     {
-        checkConvergence(oldCorrection);
+        return;
+    }
+
+    bool converged(false);
+    const scalarField& oldCorrection = updateMethod_->returnCorrection();
+    // Design variables convergence check
+    if (designVarsThreshold_)
+    {
+        const labelList& activeVarIDs =
+            designVars_->activeDesignVariables();
+        const scalarField correction(oldCorrection, activeVarIDs);
+        const scalarField activeVars(designVars_->getVars(), activeVarIDs);
+        const scalar scaledCorrection =
+            gMax(mag(correction)/(mag(activeVars) + SMALL));
+        DebugInfo
+            << "Current correction " << correction << nl
+            << "Active vars " << activeVars << endl;
+        Info<< "Max. scaled correction of the design variables = "
+            << scaledCorrection
+            << endl;
+        if (scaledCorrection < designVarsThreshold_())
+        {
+            Info<< tab << "Design variables have converged " << endl;
+            converged = true;
+        }
+    }
+    // Objective convergence check
+    if (objectiveThreshold_ && updateMethod_->getObjectiveValueOld())
+    {
+        const scalar newObjective = computeObjectiveValue();
+        const scalar oldObjective = updateMethod_->getObjectiveValueOld()();
+        const scalar relativeUpdate =
+            mag(newObjective - oldObjective)/(mag(oldObjective) + SMALL);
+        Info<< "Relative change of the objective value = "
+            << relativeUpdate
+            << endl;
+        if (relativeUpdate < objectiveThreshold_())
+        {
+            Info<< tab << "Objective function has converged " << endl;
+            converged = true;
+        }
+    }
+    // Feasibility check
+    const scalarField& constraints = updateMethod_->getConstraintValues();
+    const scalar feasibility = sum(pos(constraints)*constraints);
+    Info<< "Feasibility = " << feasibility << endl;
+    if (converged && feasibility < feasibilityThreshold_)
+    {
+        Info<< "Stopping criteria met and all constraints satisfied." << nl
+            << "Optimisation has converged, stopping ..." << nl << nl
+            << "End" << nl
+            << endl;
+        // Force writing of all objective and constraint functions, to get
+        // the converged results to files
+        for (adjointSolverManager& am : adjointSolvManagers_)
+        {
+            for (adjointSolver& as : am.adjointSolvers())
+            {
+                // Use dummy weighted objective
+                as.getObjectiveManager().writeObjectives();
+            }
+        }
+        writeToCostFile(true);
+        if (UPstream::parRun())
+        {
+            UPstream::exit(0);
+        }
+        else
+        {
+            std::exit(0);
+        }
     }
 }
 

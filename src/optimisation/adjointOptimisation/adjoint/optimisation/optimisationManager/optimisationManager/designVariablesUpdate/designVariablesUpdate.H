@@ -138,11 +138,6 @@ protected:
         //- Write to cost file
         void writeToCostFile(bool zeroAdjointSolns = false);
 
-        //- Check if the optimisation loop has converged based on the provided
-        //- criteria
-        //  May terminate the program
-        void checkConvergence(const scalarField& oldCorrection);
-
 
 private:
 
@@ -215,6 +210,11 @@ public:
         //- varibles, i.e. the last step of line search or the simple update
         //- in the fixedStep approach
         void postUpdate(const scalarField& oldCorrection);
+
+        //- Check if the optimisation loop has converged based on the provided
+        //- criteria
+        //  May terminate the program
+        void checkConvergence();
 
         //- Get access to design variables
         inline autoPtr<designVariables>& getDesignVariables()

@@ -237,7 +237,7 @@ Foam::updateMethod::updateMethod
     objectiveDerivatives_(designVars().getVars().size(), Zero),
     constraintDerivatives_(0),
     objectiveValue_(0),
-    objectiveValueOld_(0),
+    objectiveValueOld_(nullptr),
     cValues_(0),
     correction_(readOrZeroField("correction", designVars().getVars().size())),
     cumulativeCorrection_(0),
@@ -334,7 +334,11 @@ void Foam::updateMethod::setObjectiveValue(const scalar value)
 
 void Foam::updateMethod::setObjectiveValueOld(const scalar value)
 {
-    objectiveValueOld_ = value;
+    if (!objectiveValueOld_)
+    {
+        objectiveValueOld_.reset(new scalar(Zero));
+    }
+    objectiveValueOld_.ref() = value;
 }
 
 
@@ -350,7 +354,8 @@ Foam::scalar Foam::updateMethod::getObjectiveValue() const
 }
 
 
-Foam::scalar Foam::updateMethod::getObjectiveValueOld() const
+const Foam::autoPtr<Foam::scalar>&
+Foam::updateMethod::getObjectiveValueOld() const
 {
     return objectiveValueOld_;
 }
