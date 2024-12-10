@@ -223,16 +223,27 @@ void Foam::MMA::initialize()
 {
     const label m(cValues_.size());
     // Allocate correct sizes for array depending on the number of constraints
-    if (c_.empty())
+    if (!c_.good())
     {
         alpha_.setSize(m, Zero);
-        c_.setSize(m, coeffsDict(typeName).getOrDefault<scalar>("c", 100));
+        if (coeffsDict(typeName).found("c"))
+        {
+            Info<< "Reading constraint penalty function type from dict" << endl;
+            c_.reset(Function1<scalar>::New("c", coeffsDict(typeName)));
+        }
+        else
+        {
+            Info<< "Setting constant penalty factor" << endl;
+            c_.reset(new Function1Types::Constant<scalar>("c", 100));
+        }
         d_.setSize(m, coeffsDict(typeName).getOrDefault<scalar>("d", 1));
         deltaLamda_.setSize(m, Zero);
         deltaY_.setSize(m, Zero);
         deltaS_.setSize(m, Zero);
         deltaMu_.setSize(m, Zero);
     }
+    const scalar t = mesh_.time().timeOutputValue();
+    Info<< "Penalty multiplier (c):: " << c_->value(t) << endl;
 
     // Scalar quantities
     eps_ = 1.;
@@ -249,7 +260,7 @@ void Foam::MMA::initialize()
     lamda_.setSize(m, scalar(1));
     s_.setSize(m, scalar(1));
     mu_.setSize(m, Zero);
-    mu_ = max(scalar(1), 0.5*c_);
+    mu_ = max(scalar(1), 0.5*c_->value(t));
 }
 
 
@@ -536,9 +547,10 @@ void Foam::MMA::computeNewtonDirection()
       - eps_/(xNew_ - a_)
       + eps_/(b_ - xNew_)
     );
+    const scalar t = mesh_.time().timeOutputValue();
     scalarField deltaYTilda
     (
-        c_ + d_*y_ - lamda_ - eps_/y_
+        c_->value(t) + d_*y_ - lamda_ - eps_/y_
     );
     scalar deltaZTilda = alpha0_ - sum(lamda_*alpha_) - eps_/z_;
     scalarField deltaLamdaYTilda
@@ -779,9 +791,10 @@ Foam::tmp<Foam::scalarField> Foam::MMA::computeResiduals()
     }
 
     // dLdy
+    const scalar t = mesh_.time().timeOutputValue();
     for (label i = 0; i < m; ++i)
     {
-        res[iRes++] = c_[i] + d_[i]*y_[i] - lamda_[i] - mu_[i];
+        res[iRes++] = c_->value(t) + d_[i]*y_[i] - lamda_[i] - mu_[i];
     }
 
     // dLdz
@@ -888,7 +901,7 @@ Foam::MMA::MMA
     alpha0_(coeffsDict(type).getOrDefault<scalar>("alpha0", 1.)),
     alpha_(0),
     y_(0),
-    c_(0),
+    c_(nullptr),
     d_(0),
     lower_(xNew_.size(), -GREAT),
     upper_(xNew_.size(),  GREAT),
@@ -1040,6 +1053,9 @@ void Foam::MMA::solveSubproblem()
 
     Info<< "Solved the MMA Newton problem in " << iter << " iterations "
         << nl << endl;
+
+    DebugInfo
+        << "Constraint penalization variables (y) " << y_ << endl;
 
     // Pass update to correction field
     const scalarField& oldVars = designVars_().getVars();

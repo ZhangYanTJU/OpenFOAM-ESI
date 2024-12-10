@@ -64,7 +64,7 @@ adjointManagers
                             weight          1.; 
                             type            PtLosses;
                             patches         (inlet "outlet.*");
-                            normalize       true;
+                            normalise       true;
                             target          0.0027;
                             normFactor      0.005;
                         }
@@ -117,7 +117,7 @@ adjointManagers
                             weight            1.; 
                             type              uniformityPatch;
                             patches           (outlet outlet-right);
-                            normalize         true;
+                            normalise         true;
                         }
                     }
                 }

@@ -63,7 +63,7 @@ adjointManagers
                             weight            1;
                             type              uniformityPatch;
                             patches           (outlet2);
-                            normalize         true;
+                            normalise         true;
                         }
                     }
                 }

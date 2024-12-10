@@ -70,7 +70,7 @@ adjointManagers
                             Aref            2.;
                             rhoInf          1.225;
                             UInf            6;
-                            normalize       true;
+                            normalise       true;
                         }
                     }
                 }

@@ -108,7 +108,7 @@ protected:
         scalarField y_;
 
         //- y multipliers in the objective function
-        scalarField c_;
+        autoPtr<Function1<scalar>> c_;
 
         //- y^2 multipliers in the objective function
         scalarField d_;
