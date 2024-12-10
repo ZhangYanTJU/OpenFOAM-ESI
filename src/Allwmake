@@ -55,6 +55,7 @@ wmake $targetType meshTools
 
 wmake $targetType finiteArea
 wmake $targetType finiteVolume
+wmake $targetType fused/finiteVolume
 
 wmake $targetType mesh/blockMesh
 wmake $targetType mesh/extrudeModel  # Requires: blockMesh
