@@ -188,8 +188,43 @@ void Foam::isoAdvection::limitFluxes
                       + faceValue(dVfcorrectionValues, facei);
 
                     setFaceValue(dVf_, facei, corrVf);
+
+                    // If facei is on a cyclic patch correct dVf of facej on
+                    // neighbour patch and alpha value of facej's owner cell.
+                    if (!mesh_.isInternalFace(facei))
+                    {
+                        const polyBoundaryMesh& boundaryMesh =
+                            mesh_.boundaryMesh();
+                        const label patchi = boundaryMesh.patchID(facei);
+                        const polyPatch& pp = boundaryMesh[patchi];
+                        const cyclicPolyPatch* cpp = isA<cyclicPolyPatch>(pp);
+                        const label patchFacei = pp.whichFace(facei);
+
+                        if (cpp)
+                        {
+                            const label neiPatchID(cpp->neighbPolyPatchID());
+                            surfaceScalarField::Boundary& dVfb =
+                                dVf_.boundaryFieldRef();
+                            dVfb[neiPatchID][patchFacei] =
+                                -dVfb[patchi][patchFacei];
+                            const polyPatch& np = boundaryMesh[neiPatchID];
+                            const label globalFacei = np.start() + patchFacei;
+                            const label neiOwn(owner[globalFacei]);
+                            scalar VneiOwn = mesh_.V()[neiOwn];
+                            if (porosityEnabled_)
+                            {
+                                VneiOwn *=
+                                    porosityPtr_->primitiveField()[neiOwn];
+                            }
+                            alpha1_[neiOwn] +=
+                                faceValue(dVfcorrectionValues, facei)/VneiOwn;
+                        }
+                    }
+
                 }
+
             }
+
             syncProcPatches(dVf_, phi_);
         }
         else
