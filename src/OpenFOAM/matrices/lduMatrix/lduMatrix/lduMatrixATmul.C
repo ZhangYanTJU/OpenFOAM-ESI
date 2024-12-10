@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,6 +43,8 @@ void Foam::lduMatrix::Amul
     const direction cmpt
 ) const
 {
+    const auto& addr = lduAddr();
+
     solveScalar* __restrict__ ApsiPtr = Apsi.begin();
 
     const solveScalarField& psi = tpsi();
@@ -50,8 +52,8 @@ void Foam::lduMatrix::Amul
 
     const scalar* const __restrict__ diagPtr = diag().begin();
 
-    const label* const __restrict__ uPtr = lduAddr().upperAddr().begin();
-    const label* const __restrict__ lPtr = lduAddr().lowerAddr().begin();
+    const label* const __restrict__ uPtr = addr.upperAddr().begin();
+    const label* const __restrict__ lPtr = addr.lowerAddr().begin();
 
     const scalar* const __restrict__ upperPtr = upper().begin();
     const scalar* const __restrict__ lowerPtr = lower().begin();
@@ -70,18 +72,75 @@ void Foam::lduMatrix::Amul
     );
 
     const label nCells = diag().size();
-    for (label cell=0; cell<nCells; cell++)
+
+    if (hasLowerCSR())
     {
-        ApsiPtr[cell] = diagPtr[cell]*psiPtr[cell];
+        // Use cell-based looping
+        if (debug == 2) PoutInFunction<< "cell-based looping" << endl;
+
+        const label* const __restrict__ oStartPtr =
+            addr.ownerStartAddr().begin();
+        const label* const __restrict__ loStartPtr =
+            addr.losortStartAddr().begin();
+            const label* const __restrict__ lcsrPtr =
+                addr.lowerCSRAddr().begin();
+
+        // Note: lowerCSR constructed from lower if available, upper otherwise
+        //       so is handling symmetric()
+        const scalar* const __restrict__ lowercsrPtr = lowerCSR().begin();
+
+        for (label cell=0; cell<nCells; cell++)
+        {
+            scalar& val = ApsiPtr[cell];
+
+            //Pout<< "cell:" << cell << endl;
+
+            val = diagPtr[cell]*psiPtr[cell];
+
+            // Add lower contributions
+            {
+                const label start = loStartPtr[cell];
+                const label end = loStartPtr[cell+1];
+
+                for (label i = start; i < end; i++)
+                {
+                    const label nbrCell = lcsrPtr[i];
+                    //Pout<< "    adding from " << nbrCell
+                    //    << " coeff:" << lowercsrPtr[i] << endl;
+                    val += lowercsrPtr[i]*psiPtr[nbrCell];
+                }
+            }
+            // Add upper contributions
+            {
+                const label start = oStartPtr[cell];
+                const label end = oStartPtr[cell+1];
+
+                for (label i = start; i < end; i++)
+                {
+                    const label nbrCell = uPtr[i];
+                    //Pout<< "    adding from " << nbrCell
+                    //    << " coeff:" << upperPtr[i] << endl;
+                    val += upperPtr[i]*psiPtr[nbrCell];
+                }
+            }
+            //Pout<< "cell:" << cell << " val after:" << val << endl;
+        }
     }
-
-
-    const label nFaces = upper().size();
-
-    for (label face=0; face<nFaces; face++)
+    else
     {
-        ApsiPtr[uPtr[face]] += lowerPtr[face]*psiPtr[lPtr[face]];
-        ApsiPtr[lPtr[face]] += upperPtr[face]*psiPtr[uPtr[face]];
+        for (label cell=0; cell<nCells; cell++)
+        {
+            ApsiPtr[cell] = diagPtr[cell]*psiPtr[cell];
+        }
+
+
+        const label nFaces = upper().size();
+
+        for (label face=0; face<nFaces; face++)
+        {
+            ApsiPtr[uPtr[face]] += lowerPtr[face]*psiPtr[lPtr[face]];
+            ApsiPtr[lPtr[face]] += upperPtr[face]*psiPtr[uPtr[face]];
+        }
     }
 
     // Update interface interfaces
