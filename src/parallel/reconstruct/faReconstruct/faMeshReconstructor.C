@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -678,6 +678,37 @@ void Foam::faMeshReconstructor::writeAddressing() const
 }
 
 
+void Foam::faMeshReconstructor::writeAddressing
+(
+    const IOobject& io,
+    const labelList& faBoundaryProcAddr,
+    const labelList& faFaceProcAddr,
+    const labelList& faPointProcAddr,
+    const labelList& faEdgeProcAddr
+)
+{
+    // Write copies
+
+    IOobject ioAddr(io);
+
+    // boundaryProcAddressing
+    ioAddr.rename("boundaryProcAddressing");
+    IOListRef<label>(ioAddr, faBoundaryProcAddr).write();
+
+    // faceProcAddressing
+    ioAddr.rename("faceProcAddressing");
+    IOListRef<label>(ioAddr, faFaceProcAddr).write();
+
+    // pointProcAddressing
+    ioAddr.rename("pointProcAddressing");
+    IOListRef<label>(ioAddr, faPointProcAddr).write();
+
+    // edgeProcAddressing
+    ioAddr.rename("edgeProcAddressing");
+    IOListRef<label>(ioAddr, faEdgeProcAddr).write();
+}
+
+
 void Foam::faMeshReconstructor::writeAddressing(const word& timeName) const
 {
     // Write copies
@@ -693,21 +724,14 @@ void Foam::faMeshReconstructor::writeAddressing(const word& timeName) const
         IOobject::NO_REGISTER
     );
 
-    // boundaryProcAddressing
-    ioAddr.rename("boundaryProcAddressing");
-    IOListRef<label>(ioAddr, faBoundaryProcAddr_).write();
-
-    // faceProcAddressing
-    ioAddr.rename("faceProcAddressing");
-    IOListRef<label>(ioAddr, faFaceProcAddr_).write();
-
-    // pointProcAddressing
-    ioAddr.rename("pointProcAddressing");
-    IOListRef<label>(ioAddr, faPointProcAddr_).write();
-
-    // edgeProcAddressing
-    ioAddr.rename("edgeProcAddressing");
-    IOListRef<label>(ioAddr, faEdgeProcAddr_).write();
+    writeAddressing
+    (
+        ioAddr,
+        faBoundaryProcAddr_,
+        faFaceProcAddr_,
+        faPointProcAddr_,
+        faEdgeProcAddr_
+    );
 }
 
 
@@ -717,10 +741,13 @@ void Foam::faMeshReconstructor::writeMesh() const
 }
 
 
-void Foam::faMeshReconstructor::writeMesh(const word& timeName) const
+void Foam::faMeshReconstructor::writeMesh
+(
+    const word& timeName,
+    const faMesh& fullMesh,
+    const labelUList& singlePatchFaceLabels
+)
 {
-    const faMesh& fullMesh = this->mesh();
-
     refPtr<fileOperation> writeHandler(fileOperation::NewUncollated());
 
     auto oldHandler = fileOperation::fileHandler(writeHandler);
@@ -733,7 +760,7 @@ void Foam::faMeshReconstructor::writeMesh(const word& timeName) const
         IOobject io(fullMesh.boundary());
 
         io.rename("faceLabels");
-        IOListRef<label>(io, singlePatchFaceLabels_).write();
+        IOListRef<label>(io, singlePatchFaceLabels).write();
 
         fullMesh.boundary().write();
 
@@ -743,6 +770,12 @@ void Foam::faMeshReconstructor::writeMesh(const word& timeName) const
     // Restore settings
     fileHandler().distributed(oldDistributed);
     (void) fileOperation::fileHandler(oldHandler);
+}
+
+
+void Foam::faMeshReconstructor::writeMesh(const word& timeName) const
+{
+    writeMesh(timeName, this->mesh(), singlePatchFaceLabels_);
 }
 
 
