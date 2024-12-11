@@ -118,6 +118,7 @@ SourceFiles
 #ifndef functionObjects_caseInfo_H
 #define functionObjects_caseInfo_H
 
+#include "IOdictionary.H"
 #include "writeFile.H"
 #include "stateFunctionObject.H"
 #include "Enum.H"
@@ -139,6 +140,7 @@ namespace functionObjects
 
 class caseInfo
 :
+    public IOdictionary,
     public stateFunctionObject,
     public writeFile
 {
@@ -263,6 +265,9 @@ public:
 
 
     // Member Functions
+
+        using regIOobject::read;
+        using regIOobject::write;
 
         //- Read the controls
         virtual bool read(const dictionary& dict);
