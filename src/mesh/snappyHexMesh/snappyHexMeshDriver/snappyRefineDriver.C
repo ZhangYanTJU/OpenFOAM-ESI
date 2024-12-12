@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,6 +49,7 @@ License
 #include "snappyVoxelMeshDriver.H"
 #include "regionSplit.H"
 #include "removeCells.H"
+#include "addPatchCellLayer.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -2805,8 +2806,23 @@ void Foam::snappyRefineDriver::baffleAndSplitMesh
 
     if (!handleSnapProblems) // merge free standing baffles?
     {
+        // By default only merge baffles if on same patch. However the patching
+        // of the castellated mesh is not very accurate. For backwards
+        // compatibility disable check for new mode only.
+        const auto mt = meshRefiner_.meshType();
+        const bool mergeSameOnly
+        (
+            (
+                mt == meshRefinement::CASTELLATEDBUFFERLAYER
+             || mt == meshRefinement::CASTELLATEDBUFFERLAYER2
+            )
+          ? false
+          : true
+        );
+
         meshRefiner_.mergeFreeStandingBaffles
         (
+            mergeSameOnly,      // whether to merge baffles on different patches
             snapParams,
             refineParams.useTopologicalSnapDetection(),
             false,                  // perpendicular edge connected cells
@@ -2942,9 +2958,24 @@ void Foam::snappyRefineDriver::splitAndMergeBaffles
         surfFormatter_
     );
 
-    // Merge free-standing baffles always
+
+    // By default only merge baffles if on same patch. However the patching
+    // of the castellated mesh is not very accurate. For backwards
+    // compatibility disable check for new mode only.
+    const auto mt = meshRefiner_.meshType();
+    const bool mergeSameOnly
+    (
+        (
+            mt == meshRefinement::CASTELLATEDBUFFERLAYER
+         || mt == meshRefinement::CASTELLATEDBUFFERLAYER2
+        )
+      ? false
+      : true
+    );
+
     meshRefiner_.mergeFreeStandingBaffles
     (
+        mergeSameOnly,
         snapParams,
         refineParams.useTopologicalSnapDetection(),
         handleSnapProblems,
@@ -3024,6 +3055,145 @@ void Foam::snappyRefineDriver::splitAndMergeBaffles
             mesh.time().path()/meshRefiner_.timeName()
         );
     }
+}
+
+
+void Foam::snappyRefineDriver::erodeNonManifoldZoneFaces
+(
+    const refinementParameters& refineParams
+)
+{
+    if (dryRun_)
+    {
+        return;
+    }
+
+    addProfiling(merge, "snappyHexMesh::refine::erode");
+    Info<< nl
+        << "Erode non-manifold zone faces" << nl
+        << "-----------------------------" << nl
+        << endl;
+
+    auto& mesh = meshRefiner_.mesh();
+    auto& fzs = mesh.faceZones();
+
+    // Detect a faceZone face that:
+    // - sits on the edge of the faceZone (i.e. has an open edge)
+    // - has a non-manifold edge
+    //
+    // Limitations:
+    // - analyses across all zones - does not support overlapping zones
+    // - requires zones to be consistent across processor patches
+
+    bitSet isZoneFace(mesh.nFaces());
+    for (const auto& fz : fzs)
+    {
+        isZoneFace.set(fz.addressing());
+    }
+    // Unmark non-owner side of processor patches so they don't get double
+    // counted.
+    const auto& pbm = mesh.boundaryMesh();
+    for (label patchi = pbm.nNonProcessor(); patchi < pbm.size(); patchi++)
+    {
+        if (!refCast<const processorPolyPatch>(pbm[patchi]).owner())
+        {
+            isZoneFace.unset(pbm[patchi].range());
+        }
+    }
+
+
+    // TBD: replace with mesh.globalData().globalMeshFaceAddr()
+    const globalIndex globalFaces(mesh.nFaces());
+
+    label nChanged = 0;
+
+    while (true)
+    {
+        const labelList meshFaces(isZoneFace.sortedToc());
+
+        const indirectPrimitivePatch pp
+        (
+            IndirectList<face>
+            (
+                mesh.faces(),
+                meshFaces
+            ),
+            mesh.points()
+        );
+
+        const labelListList edgeGlobalFaces
+        (
+            addPatchCellLayer::globalEdgeFaces
+            (
+                mesh,
+                globalFaces,
+                pp
+            )
+        );
+
+        const label nOldChanged = nChanged;
+        forAll(pp, patchFacei)
+        {
+            // Detect at least one open edge and one non-manifold edge
+            label nOpen = 0;
+            label nNonManif = 0;
+            for (const label edgei : pp.faceEdges()[patchFacei])
+            {
+                if (edgeGlobalFaces[edgei].size() == 1)
+                {
+                    nOpen++;
+                }
+                else if (edgeGlobalFaces[edgei].size() > 2)
+                {
+                    nNonManif++;
+                }
+            }
+            if (nNonManif > 0 && nOpen > 0)
+            {
+                isZoneFace.unset(meshFaces[patchFacei]);
+                nChanged++;
+            }
+        }
+
+        if (returnReduce((nChanged-nOldChanged), sumOp<label>()) == 0)
+        {
+            break;
+        }
+    }
+
+
+    reduce(nChanged, sumOp<label>());
+
+    if (nChanged)
+    {
+        // Filter out eroded faceZone faces
+        fzs.clearAddressing();
+
+        for (auto& fz : fzs)
+        {
+            DynamicList<label> addressing(fz.size());
+            DynamicList<bool> flipMap(fz.size());
+
+            forAll(fz.addressing(), i)
+            {
+                if (isZoneFace[fz.addressing()[i]])
+                {
+                    addressing.append(fz.addressing()[i]);
+                    flipMap.append(fz.flipMap()[i]);
+                }
+            }
+
+            //Pout<< "** on faceZone:" << fz.name()
+            //  << " from:" << fz.size()
+            //    << " to:" << addressing.size() << endl;
+
+            fz.resetAddressing(addressing, flipMap);
+        }
+    }
+
+    Info<< "Eroded " << nChanged
+        << " free-standing zone faces in = "
+        << mesh.time().cpuTimeIncrement() << " s." << endl;
 }
 
 
@@ -3555,9 +3725,23 @@ void Foam::snappyRefineDriver::doRefine
         motionDict
     );
 
+
     // Do something about cells with refined faces on the boundary
     if (prepareForSnapping)
     {
+        const auto mt = meshRefiner_.meshType();
+        if
+        (
+            meshRefiner_.mesh().faceZones().size()
+         && (
+                mt == meshRefinement::CASTELLATEDBUFFERLAYER
+             || mt == meshRefinement::CASTELLATEDBUFFERLAYER2
+            )
+        )
+        {
+            erodeNonManifoldZoneFaces(refineParams);
+        }
+
         mergePatchFaces(mergeType, refineParams, motionDict);
     }
 
@@ -3580,13 +3764,61 @@ void Foam::snappyRefineDriver::doRefine
             << "---------------------" << nl
             << endl;
 
+
+        /*
+        const bool hasBufferLayer
+        (
+            (meshRefiner_.meshType() == meshRefinement::CASTELLATEDBUFFERLAYER)
+         || (meshRefiner_.meshType() == meshRefinement::CASTELLATEDBUFFERLAYER2)
+        );
+        */
+        const bool hasBufferLayer = false;
+
+        labelList singleProcPoints;
+
+        /*
+        if (hasBufferLayer)
+        {
+            //- Needed since buffer layer addition did not handle
+            //- inter-processor extrusion. Fixed now. This code can be removed.
+
+            // Pick up all points on surfaces with specified buffer layers
+            const labelList& surfIndex = meshRefiner_.surfaceIndex();
+            const auto& addLayers = meshRefiner_.surfaces().addBufferLayers();
+
+            bitSet isSelected(mesh.nPoints());
+            forAll(surfIndex, facei)
+            {
+                const label surfi = surfIndex[facei];
+                if (surfIndex[facei] != -1)
+                {
+                    const label globalRegioni =
+                        meshRefiner_.surfaces().globalRegion(surfi, 0);
+                    if (addLayers[globalRegioni])
+                    {
+                        isSelected.set(mesh.faces()[facei]);
+                    }
+                }
+            }
+            syncTools::syncPointList
+            (
+                mesh,
+                isSelected,
+                orEqOp<unsigned int>(),
+                0
+            );
+            singleProcPoints = isSelected.sortedToc();
+        }
+        */
+
         // Do final balancing. Keep zoned faces on one processor since the
         // snap phase will convert them to baffles and this only works for
         // internal faces.
         meshRefiner_.balance
         (
             true,                           // keepZoneFaces
-            false,                          // keepBaffles
+            hasBufferLayer,                 // keepBaffles
+            singleProcPoints,               // keepZonePoints
             scalarField(mesh.nCells(), 1),  // cellWeights
             decomposer_,
             distributor_

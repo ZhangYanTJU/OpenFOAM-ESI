@@ -119,6 +119,9 @@ class refinementSurfaces
         //- From global region number to patchType
         PtrList<dictionary> patchInfo_;
 
+        //- From global region number to whether to add buffer layers
+        boolList addBufferLayers_;
+
         //- Are we operating in test mode?
         const bool dryRun_;
 
@@ -289,6 +292,13 @@ public:
             const PtrList<dictionary>& patchInfo() const
             {
                 return patchInfo_;
+            }
+
+            //- From global region number to whether to add buffer layers
+            //  when snapping
+            const boolList& addBufferLayers() const
+            {
+                return addBufferLayers_;
             }
 
 

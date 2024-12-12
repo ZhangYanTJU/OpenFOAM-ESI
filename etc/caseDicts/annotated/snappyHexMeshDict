@@ -14,6 +14,12 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Type of mesh generation:
+//  - castellated (default)
+//  - castellatedBufferLayer
+//type            castellatedBufferLayer;
+
+
 // Which of the steps to run
 castellatedMesh true;
 snap            true;
@@ -267,6 +273,10 @@ castellatedMeshControls
             //    these can be done with feature edge snapping (so can leave
             //    level (0 0))
             //curvatureLevel (10 0 10 -1);
+
+            // Optional disabling of buffer layer addition (if switched on by
+            // type = castellatedBufferLayer)
+            addBufferLayers false;
         }
     }
 
@@ -605,6 +615,18 @@ snapControls
         //- Attract points only to the surface they originate from. Default
         //  false. This can improve snapping of intersecting surfaces.
         //  strictRegionSnap true;
+
+
+    // Choice of mesh motion algorithm to inflate layers (only used for mode
+    // castellatedBufferLayer)
+
+        //solver  displacementPointSmoothing;
+        //displacementPointSmoothingCoeffs
+        //{
+        //    // Use laplacian to untangle problem areas
+        //    pointSmoother           laplacian;
+        //    nPointSmootherIter      10;
+        //}
 }
 
 // Settings for the layer addition.

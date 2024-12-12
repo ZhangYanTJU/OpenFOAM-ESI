@@ -104,4 +104,19 @@ inline const Foam::labelList& Foam::fvMeshSubset::patchMap() const
 }
 
 
+inline const Foam::labelList& Foam::fvMeshSubset::pointPatchMap() const
+{
+    checkHasSubMesh();
+
+    if (pointPatchMap_.empty())
+    {
+        return patchMap_;
+    }
+    else
+    {
+        return pointPatchMap_;
+    }
+}
+
+
 // ************************************************************************* //

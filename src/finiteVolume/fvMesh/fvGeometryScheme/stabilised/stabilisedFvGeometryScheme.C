@@ -208,4 +208,35 @@ void Foam::stabilisedFvGeometryScheme::movePoints()
 }
 
 
+bool Foam::stabilisedFvGeometryScheme::updateGeom
+(
+    const pointField& points,
+    const refPtr<pointField>& oldPoints,
+    pointField& faceCentres,
+    vectorField& faceAreas,
+    pointField& cellCentres,
+    scalarField& cellVolumes
+) const
+{
+    makeFaceCentresAndAreas
+    (
+        mesh_,
+        points,
+        faceCentres,
+        faceAreas
+    );
+
+    primitiveMeshTools::makeCellCentresAndVols
+    (
+        mesh_,
+        faceCentres,
+        faceAreas,
+        cellCentres,
+        cellVolumes
+    );
+
+    return true;
+}
+
+
 // ************************************************************************* //

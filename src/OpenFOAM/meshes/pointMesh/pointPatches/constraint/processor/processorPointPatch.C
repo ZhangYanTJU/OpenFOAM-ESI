@@ -117,4 +117,20 @@ Foam::processorPointPatch::processorPointPatch
 {}
 
 
+Foam::processorPointPatch::processorPointPatch
+(
+    const processorPointPatch& patch,
+    const pointBoundaryMesh& bm,
+    const label index,
+    const labelUList& mapAddressing,
+    const labelUList& reversePointMap
+)
+:
+    coupledFacePointPatch(patch, bm, index, mapAddressing, reversePointMap),
+    procPolyPatch_(refCast<const processorPolyPatch>(patch.patch()))
+{
+    //? map reverseMeshPoints_ or leave demand-driven
+}
+
+
 // ************************************************************************* //

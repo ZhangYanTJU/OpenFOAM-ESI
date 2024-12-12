@@ -59,6 +59,20 @@ processorCyclicPointPatch::processorCyclicPointPatch
 {}
 
 
+Foam::processorCyclicPointPatch::processorCyclicPointPatch
+(
+    const processorCyclicPointPatch& patch,
+    const pointBoundaryMesh& bm,
+    const label index,
+    const labelUList& mapAddressing,
+    const labelUList& reversePointMap
+)
+:
+    processorPointPatch(patch, bm, index, mapAddressing, reversePointMap),
+    procCycPolyPatch_(refCast<const processorCyclicPolyPatch>(patch.patch()))
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 processorCyclicPointPatch::~processorCyclicPointPatch()

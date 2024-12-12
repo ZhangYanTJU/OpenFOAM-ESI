@@ -1112,8 +1112,9 @@ void Foam::meshRefinement::markFacesOnProblemCellsGeometric
                 *this,
                 globalToMasterPatch,
                 globalToSlavePatch,
-                snapDist,   // attraction
                 pp,
+                pp.localPoints(),
+                snapDist,   // attraction
                 nearestPoint,
                 nearestNormal
             )

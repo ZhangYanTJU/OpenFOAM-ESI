@@ -26,6 +26,7 @@ constructFrom patch;
 // If construct from patch/mesh:
 sourceCase      "<case>";
 // and one of sourcePatches or sourceFaceZones (but not both):
+// (note: wildcards allowed)
 sourceFaceZones (someFacesZone);
 sourcePatches   (movingWall);
 

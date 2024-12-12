@@ -41,6 +41,7 @@ SourceFiles
 
 #include "meshRefinement.H"
 #include "DynamicField.H"
+#include "pointConstraint.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,6 +53,9 @@ class motionSmoother;
 class refinementParameters;
 class snapParameters;
 class pointConstraint;
+class layerParameters;
+class displacementMotionSolver;
+class addPatchCellLayer;
 
 /*---------------------------------------------------------------------------*\
                            Class snappySnapDriver Declaration
@@ -78,6 +82,17 @@ class snappySnapDriver
 
 
         // Snapping
+
+            //- Top-level: snap onto surface & features and add buffer layer
+            void doSnapBufferLayers
+            (
+                const dictionary& snapDict,
+                const dictionary& motionDict,
+                const meshRefinement::FaceMergeType mergeType,
+                const scalar featureCos,
+                const scalar planarAngle,
+                const snapParameters& snapParams
+            );
 
             //- Calculates (geometric) shared points
             //  Requires bitSet to be sized and initialised
@@ -106,17 +121,60 @@ class snappySnapDriver
 
             static tmp<pointField> avg
             (
+                const polyMesh& mesh,
+                const bitSet& isMasterPoint,
                 const indirectPrimitivePatch&,
                 const pointField&
             );
 
             //- Calculate displacement per patch point. Wip.
-            static pointField smoothLambdaMuPatchDisplacement
+            static tmp<pointField> smoothLambdaMuPatchDisplacement
             (
-                const motionSmoother& meshMover,
+                const polyMesh& mesh,
+                const indirectPrimitivePatch& pp,
                 const List<labelPair>& baffles
             );
 
+            tmp<scalarField> wantedThickness
+            (
+                const indirectPrimitivePatch& pp,
+                const scalar cellSizeFraction
+            ) const;
+
+            //- Create/update pointMesh
+            const pointMesh& makePointMesh
+            (
+                const indirectPrimitivePatch& pp,
+                const pointConstraintList& pointConstraints,
+                const word& allEdgePatchName,
+                const word& allPointPatchName
+            ) const;
+
+            autoPtr<displacementMotionSolver> makeMotionSolver
+            (
+                const pointMesh& pMesh,
+                const dictionary& snapDict,
+                const labelList& adaptPatchIDs
+            ) const;
+
+            void setDisplacement
+            (
+                const indirectPrimitivePatch& pp,
+                const pointField& patchDisp,
+                const labelList& adaptPatchIDs,
+                const pointField& points0,
+                pointVectorField& fld
+            );
+
+            autoPtr<mapPolyMesh> addBufferLayers
+            (
+                const indirectPrimitivePatch& pp,
+
+                //const scalar cellSizeFraction,
+                const pointField& thickness,
+                // Layer mesh modifier
+                addPatchCellLayer& addLayer
+            );
 
             //- Check that face zones are synced
             void checkCoupledFaceZones() const;
@@ -245,6 +303,7 @@ class snappySnapDriver
                 (
                     const label iter,
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& faceSnapDist,
                     vectorField& faceDisp,
                     vectorField& faceSurfaceNormal,
@@ -255,6 +314,7 @@ class snappySnapDriver
                 (
                     const label iter,
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
 
                     const vectorField& faceDisp,
                     const vectorField& faceSurfaceNormal,
@@ -284,6 +344,7 @@ class snappySnapDriver
                     const scalar featureCos,
 
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
 
                     const vectorField& rawPatchAttraction,
@@ -302,6 +363,7 @@ class snappySnapDriver
                     const scalar featureCos,
 
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
 
                     const List<List<point>>& pointFaceCentres,
@@ -376,6 +438,7 @@ class snappySnapDriver
                     const scalar concaveCos,
                     const scalar minAreaFraction,
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const vectorField& patchAttraction,
                     const List<pointConstraint>& patchConstraints,
                     const vectorField& nearestAttraction,
@@ -395,13 +458,16 @@ class snappySnapDriver
                     const scalar minAreaFraction,
 
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const vectorField& nearestAttraction,
                     const vectorField& nearestNormal,
+                    const List<labelList>& pointFacePatchID,
 
                     vectorField& patchAttraction,
                     List<pointConstraint>& patchConstraints,
                     DynamicList<label>& splitFaces,
-                    DynamicList<labelPair>& splits
+                    DynamicList<labelPair>& splits,
+                    DynamicList<labelPair>& splitPatches
                 ) const;
 
                 //- Avoid attraction across face diagonal since would
@@ -411,6 +477,7 @@ class snappySnapDriver
                     const label iter,
                     const scalar featureCos,
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     vectorField& patchAttraction,
                     List<pointConstraint>& patchConstraints
                 ) const;
@@ -457,6 +524,7 @@ class snappySnapDriver
                     const scalar featureCos,
 
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
                     const vectorField& nearestDisp,
                     const label pointi,
@@ -481,6 +549,7 @@ class snappySnapDriver
                     const label iter,
                     const scalar featureCos,
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
                     const vectorField& nearestDisp,
 
@@ -500,8 +569,10 @@ class snappySnapDriver
                     const label iter,
                     const scalar featureCos,
                     const bool multiRegionFeatureSnap,
+                    const bool strictRegionFeatureSnap, // special feat-point
 
                     const indirectPrimitivePatch&,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
                     const vectorField& nearestDisp,
 
@@ -528,6 +599,7 @@ class snappySnapDriver
                     const scalar featureCos,
 
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
 
                     // Feature-point to pp point
@@ -545,6 +617,7 @@ class snappySnapDriver
                     const label iter,
 
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
 
                     // Feature-point to pp point
@@ -570,6 +643,7 @@ class snappySnapDriver
                     const bool isRegionEdge,
 
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
                     const label pointi,
                     const point& estimatedPt,
@@ -591,6 +665,7 @@ class snappySnapDriver
                     const bool isRegionEdge,
 
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
                     const label pointi,
                     const point& estimatedPt,
@@ -610,6 +685,7 @@ class snappySnapDriver
                 (
                     const label iter,
                     const bool multiRegionFeatureSnap,
+                    const bool strictRegionFeatureSnap,
 
                     const bool detectBaffles,
                     const bool baffleFeaturePoints,
@@ -620,6 +696,7 @@ class snappySnapDriver
                     const scalar featureCos,
 
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
                     const vectorField& nearestDisp,
                     const vectorField& nearestNormal,
@@ -638,6 +715,7 @@ class snappySnapDriver
                     const label iter,
                     const scalar featureCos,
                     const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     const scalarField& snapDist,
                     const vectorField& nearestAttraction,
 
@@ -653,18 +731,21 @@ class snappySnapDriver
                 (
                     const snapParameters& snapParams,
                     const bool alignMeshEdges,
+                    const bool strictRegionFeatureSnap, //points on >=3 patches
                     const label iter,
                     const scalar featureCos,
                     const scalar featureAttract,
                     const scalarField& snapDist,
                     const vectorField& nearestDisp,
                     const vectorField& nearestNormal,
-                    motionSmoother& meshMover,
+                    const indirectPrimitivePatch& pp,
+                    const pointField& ppLocalPoints,
                     vectorField& patchAttraction,
                     List<pointConstraint>& patchConstraints,
 
                     DynamicList<label>& splitFaces,
-                    DynamicList<labelPair>& splits
+                    DynamicList<labelPair>& splits,
+                    DynamicList<labelPair>& splitPatches
                 ) const;
 
 
@@ -730,7 +811,8 @@ public:
             void detectNearSurfaces
             (
                 const scalar planarCos,
-                const indirectPrimitivePatch&,
+                const indirectPrimitivePatch& pp,
+                const pointField& ppLocalPoints,
                 const pointField& nearestPoint,
                 const vectorField& nearestNormal,
                 vectorField& disp
@@ -745,8 +827,9 @@ public:
                 const meshRefinement& meshRefiner,
                 const labelList& globalToMasterPatch,
                 const labelList& globalToSlavePatch,
+                const indirectPrimitivePatch& pp,
+                const pointField& ppLocalPoints,
                 const scalarField& snapDist,
-                const indirectPrimitivePatch&,
                 pointField& nearestPoint,
                 vectorField& nearestNormal
             );
@@ -790,6 +873,7 @@ public:
                 const labelList& preserveFaces
             );
 
+            //- Snap onto surface & features
             void doSnap
             (
                 const dictionary& snapDict,

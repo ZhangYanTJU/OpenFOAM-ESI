@@ -47,6 +47,92 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+void Foam::parallelFvGeometryScheme::adjustGeometry
+(
+    pointField& faceCentres,
+    vectorField& faceAreas
+) const
+{
+    pointField syncedBCentres;
+    syncedBCentres = SubField<vector>
+    (
+        faceCentres,
+        mesh_.nBoundaryFaces(),
+        mesh_.nInternalFaces()
+    );
+    syncTools::swapBoundaryFaceList
+    (
+        mesh_,
+        syncedBCentres
+    );
+
+    vectorField syncedBAreas;
+    syncedBAreas = SubField<vector>
+    (
+        faceAreas,
+        mesh_.nBoundaryFaces(),
+        mesh_.nInternalFaces()
+    );
+    syncTools::syncBoundaryFaceList
+    (
+        mesh_,
+        syncedBAreas,
+        eqOp<vector>(),
+        transformOriented()
+    );
+
+    const auto& pbm = mesh_.boundaryMesh();
+    for (const auto& pp : pbm)
+    {
+        const auto* ppp = isA<coupledPolyPatch>(pp);
+
+        //if (ppp)
+        //{
+        //    Pout<< "For patch:" << ppp->name()
+        //        << " size:" << ppp->size()
+        //        << endl;
+        //    forAll(*ppp, i)
+        //    {
+        //        const label facei = ppp->start()+i;
+        //        Pout<< "    Face:" << facei << nl
+        //            << "    meshFc:" << faceCentres[facei] << nl
+        //            << "    meshFa:" << faceAreas[facei] << nl
+        //            << endl;
+        //    }
+        //}
+
+        if (ppp && !ppp->owner())
+        {
+            SubField<point> patchFc
+            (
+                faceCentres,
+                ppp->size(),
+                ppp->start()
+            );
+            patchFc = SubField<vector>
+            (
+                syncedBCentres,
+                ppp->size(),
+                ppp->offset()
+            );
+
+            SubField<vector> patchArea
+            (
+                faceAreas,
+                ppp->size(),
+                ppp->start()
+            );
+            patchArea = SubField<vector>
+            (
+                syncedBAreas,
+                ppp->size(),
+                ppp->offset()
+            );
+        }
+    }
+}
+
+
 void Foam::parallelFvGeometryScheme::adjustGeometry()
 {
     // Swap face centres and areas
@@ -303,6 +389,39 @@ Foam::parallelFvGeometryScheme::nonOrthCorrectionVectors() const
     return geometry().nonOrthCorrectionVectors();
 }
 
+
+bool Foam::parallelFvGeometryScheme::updateGeom
+(
+    const pointField& points,
+    const refPtr<pointField>& oldPoints,
+    pointField& faceCentres,
+    vectorField& faceAreas,
+    pointField& cellCentres,
+    scalarField& cellVolumes
+) const
+{
+    primitiveMeshTools::makeFaceCentresAndAreas
+    (
+        mesh_,
+        points,
+        faceCentres,
+        cellCentres
+    );
+
+    // Parallel consistency
+    adjustGeometry(faceCentres, faceAreas);
+
+    primitiveMeshTools::makeCellCentresAndVols
+    (
+        mesh_,
+        faceCentres,
+        faceAreas,
+        cellCentres,
+        cellVolumes
+    );
+
+    return true;
+}
 
 
 // ************************************************************************* //

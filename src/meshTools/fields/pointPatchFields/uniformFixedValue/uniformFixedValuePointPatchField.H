@@ -86,10 +86,13 @@ class uniformFixedValuePointPatchField
         //- Function providing the value
         autoPtr<PatchFunction1<Type>> refValueFunc_;
 
+        //- Function providing the value (if not on polyPatch)
+        autoPtr<Function1<Type>> refPointValueFunc_;
+
 
     // Private Member Functions
 
-        static const polyPatch& getPatch(const pointPatch&);
+        static const polyPatch* getPatch(const pointPatch&);
 
 
 public:

@@ -44,6 +44,12 @@ License
 #include "decompositionModel.H"
 #include "hexRef8Data.H"
 
+// For handling pointMeshes with additional patches
+#include "pointMesh.H"
+#include "meshPointPatch.H"
+#include "processorPointPatch.H"
+#include "DynamicField.H"
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::domainDecomposition::mark
@@ -739,6 +745,101 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
         IOstream::minPrecision(10);
 
         procMesh.write();
+
+        // Add pointMesh if it was available
+        const auto* pMeshPtr =
+            thisDb().cfindObject<pointMesh>(pointMesh::typeName);
+        if (pMeshPtr)
+        {
+            const auto& pMesh = *pMeshPtr;
+            const auto& pMeshBoundary = pMesh.boundary();
+
+
+            // 1. Generate pointBoundaryMesh from polyBoundaryMesh (so ignoring
+            //    any additional patches
+            const auto& procPointMesh = pointMesh::New(procMesh);
+
+            pointBoundaryMesh& procBoundary =
+                const_cast<pointBoundaryMesh&>(procPointMesh.boundary());
+
+
+            // 2. Explicitly add subsetted meshPointPatches
+            forAll(pMeshBoundary, patchi)
+            {
+                const auto* mppPtr = isA<meshPointPatch>(pMeshBoundary[patchi]);
+                if (mppPtr && (procBoundary.findPatchID(mppPtr->name()) == -1))
+                {
+                    const auto& mpp = *mppPtr;
+
+                    DynamicList<label> procMeshPoints(mpp.size());
+                    DynamicField<vector> procNormals(mpp.size());
+                    forAll(mpp.meshPoints(), i)
+                    {
+                        const label pointi = mpp.meshPoints()[i];
+                        const label procPointi = pointLookup[pointi];
+                        if (procPointi != -1)
+                        {
+                            procMeshPoints.append(procPointi);
+                            procNormals.append(mpp.pointNormals()[i]);
+                        }
+                    }
+
+                    procBoundary.push_back
+                    (
+                        new meshPointPatch
+                        (
+                            mpp.name(),
+                            procMeshPoints,
+                            procNormals,
+                            procBoundary.size(),
+                            procBoundary,
+                            meshPointPatch::typeName
+                        )
+                    );
+                }
+            }
+
+            // 3. Shuffle new patches before any processor patches
+            labelList oldToNew(procBoundary.size());
+            label newPatchi = 0;
+            forAll(procBoundary, patchi)
+            {
+                if (!isA<processorPointPatch>(procBoundary[patchi]))
+                {
+                    oldToNew[patchi] = newPatchi;
+                    newPatchi++;
+                }
+            }
+
+            // decomposed-to-undecomposed patch numbering
+            labelList boundaryProcAddressing(identity(newPatchi));
+            boundaryProcAddressing.setSize(procBoundary.size(), -1);
+
+            forAll(procBoundary, patchi)
+            {
+                if (isA<processorPointPatch>(procBoundary[patchi]))
+                {
+                    oldToNew[patchi] = newPatchi++;
+                }
+            }
+            procBoundary.reorder(oldToNew, true);
+
+            // Write pointMesh/boundary
+            procBoundary.write();
+
+            // Write pointMesh/boundaryProcAddressing
+            IOobject ioAddr
+            (
+                "boundaryProcAddressing",
+                procMesh.facesInstance(),
+                polyMesh::meshSubDir/pointMesh::meshSubDir,
+                procPointMesh.thisDb(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            );
+            IOListRef<label>(ioAddr, boundaryProcAddressing).write();
+        }
 
         // Write points if pointsInstance differing from facesInstance
         if (facesInstancePointsPtr_)

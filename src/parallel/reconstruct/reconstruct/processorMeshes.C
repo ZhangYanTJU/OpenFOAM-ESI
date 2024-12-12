@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,6 +31,7 @@ License
 #include "IndirectList.H"
 #include "primitiveMesh.H"
 #include "OSspecific.H"
+#include "pointMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -46,6 +47,9 @@ void Foam::processorMeshes::read()
 {
     // Make sure to clear (and hence unregister) any previously loaded meshes
     // and fields
+    pBoundaryProcAddressing_.free();
+    pMeshes_.free();
+
     boundaryProcAddressing_.free();
     cellProcAddressing_.free();
     faceProcAddressing_.free();
@@ -92,6 +96,39 @@ void Foam::processorMeshes::read()
         // boundaryProcAddressing (polyMesh)
         ioAddr.rename("boundaryProcAddressing");
         boundaryProcAddressing_.emplace_set(proci, ioAddr);
+
+
+        // pointMesh
+        // ~~~~~~~~~
+
+        pMeshes_.set
+        (
+            proci,
+            new pointMesh
+            (
+                meshes_[proci],
+                IOobject::READ_IF_PRESENT
+            )
+        );
+
+        pBoundaryProcAddressing_.set
+        (
+            proci,
+            autoPtr<labelIOList>::New
+            (
+                IOobject
+                (
+                    "boundaryProcAddressing",
+                    meshes_[proci].facesInstance(),
+                    polyMesh::meshSubDir/pointMesh::meshSubDir,
+                    pMeshes_[proci].thisDb(),
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
+                ),
+                boundaryProcAddressing_[proci]
+            )
+        );
     }
 }
 
@@ -110,7 +147,9 @@ Foam::processorMeshes::processorMeshes
     pointProcAddressing_(databases.size()),
     faceProcAddressing_(databases.size()),
     cellProcAddressing_(databases.size()),
-    boundaryProcAddressing_(databases.size())
+    boundaryProcAddressing_(databases.size()),
+    pMeshes_(databases.size()),
+    pBoundaryProcAddressing_(databases.size())
 {
     read();
 }
@@ -250,6 +289,26 @@ void Foam::processorMeshes::removeFiles(const polyMesh& mesh)
     // boundaryProcAddressing
     io.rename("boundaryProcAddressing");
     fileHandler().rm(fileHandler().filePath(io.objectPath()));
+
+
+
+    // pointMesh
+    // ~~~~~~~~~
+
+    IOobject pointIO
+    (
+        "boundary",
+        mesh.facesInstance(),
+        polyMesh::meshSubDir/pointMesh::meshSubDir,
+        mesh.thisDb()
+    );
+
+    // pointMesh/boundary
+    fileHandler().rm(fileHandler().filePath(pointIO.objectPath()));
+
+    // boundaryProcAddressing
+    io.rename("boundaryProcAddressing");
+    fileHandler().rm(fileHandler().filePath(pointIO.objectPath()));
 }
 
 

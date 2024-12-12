@@ -73,6 +73,9 @@ public:
         //- Construct from components
         inline pointConstraint(const Tuple2<label, vector>&);
 
+        //- Construct from components
+        inline pointConstraint(const label count, const vector& n);
+
         //- Construct from Istream
         inline pointConstraint(Istream&);
 
@@ -97,7 +100,18 @@ public:
 };
 
 
+//! List of pointConstraint
+typedef List<pointConstraint> pointConstraintList;
+
+
 // * * * * * * * * * * * * * * * * * Traits  * * * * * * * * * * * * * * * * //
+
+//- Template specialisation for pTraits\<pointConstraint\> to enable IO
+template<>
+struct pTraits<pointConstraint>
+{
+    static const char* const typeName;
+};
 
 //- Contiguous data for pointConstraint
 template<> struct is_contiguous<pointConstraint> : std::true_type {};

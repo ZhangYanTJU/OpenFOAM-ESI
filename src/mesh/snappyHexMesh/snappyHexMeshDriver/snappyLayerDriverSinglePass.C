@@ -179,6 +179,7 @@ void Foam::snappyLayerDriver::addLayersSinglePass
     labelList pointToMaster;
     dupFaceZonePoints
     (
+        meshRefiner_,
         patchIDs,  // patch indices
         numLayers, // number of layers per patch
         baffles,
@@ -231,6 +232,7 @@ void Foam::snappyLayerDriver::addLayersSinglePass
     labelList inflateFaceID;
     determineSidePatches
     (
+        meshRefiner_,
         globalFaces,
         edgeGlobalFaces,
         *pp,
@@ -437,7 +439,7 @@ void Foam::snappyLayerDriver::addLayersSinglePass
 
 
         // Map baffles, pointToMaster
-        mapFaceZonePoints(map, baffles, pointToMaster);
+        mapFaceZonePoints(meshRefiner_, map, baffles, pointToMaster);
     }
 
 
@@ -471,6 +473,7 @@ void Foam::snappyLayerDriver::addLayersSinglePass
         (
             false,
             false,
+            labelList::null(),
             scalarField(mesh.nCells(), 1.0),
             decomposer,
             distributor

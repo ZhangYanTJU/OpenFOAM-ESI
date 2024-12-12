@@ -825,6 +825,17 @@ int main(int argc, char *argv[])
     #include "setSystemMeshDictionaryIO.H"
     const IOdictionary meshDict(dictIO);
 
+    // Overall mesh generation mode
+    const meshRefinement::MeshType meshType
+    (
+        meshRefinement::MeshTypeNames.getOrDefault
+        (
+            "type",
+            meshDict,
+            meshRefinement::CASTELLATED
+        )
+    );
+
 
     // all surface geometry
     const dictionary& geometryDict =
@@ -1339,6 +1350,7 @@ int main(int argc, char *argv[])
         shells,             // for volume (inside/outside) refinement
         limitShells,        // limit of volume refinement
         labelList(),        // initial faces to test
+        meshType,           // how to operate
         dryRun
     );
 

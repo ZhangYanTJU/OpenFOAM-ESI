@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,8 +28,8 @@ Class
     Foam::addPatchCellLayer
 
 Description
-    Adds layers of cells to outside of polyPatch. Can optionally create
-    stand-alone extruded mesh (addToMesh=false).
+    Adds layers of cells to outside (or inside) of polyMesh. Can optionally
+    create stand-alone extruded mesh (addToMesh=false).
 
     Call setRefinement with offset vector for every patch point and number
     of layers per patch face and number of layers per patch point.
@@ -51,24 +51,47 @@ Description
     \verbatim
         Was:
 
-           a      b         <- patch of boundary face
-        +------+------+
-        |      |      |     <- original cells
-        +------+------+
+               a      b         <- patch of boundary face
+            +------+------+
+            |      |      |     <- original cells
+            +------+------+
 
-        Becomes:
+        Extrusion:
 
-           a      b         <- patch of boundary face
-        +------+------+
-        +      +------+
-        +------+------+
-        +------+------+
-        |      |      |     <- original cells
-        +------+------+
+
+                            added   added
+                            face    cell
+                            ----    ----
+               a      b                     <- patch of boundary face
+            +------+------+  3
+            |      |      |         2
+            +      +------+  2
+            |      |      |         1
+            +------+------+  1
+            |      |      |         0
+            +------+------+  0              <- original boundary faces
+            |      |      |                 <- original cells
+            +------+------+
+
+
+
+        Intrusion:
+
+                            face    cell
+                            ----    ----
+               a      b                     <- patch of boundary face
+            +------+------+  0
+            |      |      |         0
+            +------+------+  1
+            |      |      |         1
+            +      +------+  2
+            |      |      |         2
+            +------+------+  3
+            |      |      |                 <- original cells
+            +------+------+
     \endverbatim
 
 
-    - added faces get same patchID as face they are extruded from
     - 'side' faces (i.e. on the edge of pp) get the patchID/zoneID of the
     other patch/zone they are connected to (hopefully only 1)
 
@@ -78,8 +101,13 @@ Description
     \verbatim
            a      b      b        <- patch of boundary face
         +------+------+------+
+        |      |      |      |
         |      |      |      |    <- cells
+        |      |      |      |
         +------+------+------+
+
+
+        (shown for extrusion mode only):
 
 
                ^      ^           <- wanted extrusion vector (none at far right)
@@ -123,7 +151,7 @@ class primitiveMesh;
 class globalIndex;
 
 /*---------------------------------------------------------------------------*\
-                           Class addPatchCellLayer Declaration
+                      Class addPatchCellLayer Declaration
 \*---------------------------------------------------------------------------*/
 
 class addPatchCellLayer
@@ -136,15 +164,23 @@ class addPatchCellLayer
         //- Add layers to existing mesh or create new mesh
         const bool addToMesh_;
 
+        //- Add layers to outside of mesh or to inside
+        const bool extrude_;
+
+
         //- For all patchpoints: list of added points (size 0 or nLayers)
         //  First point in list is one nearest to original point in patch,
-        //  last one is the new point on the surface.
+        //  last one is
+        //  - extrude : the new point on the surface
+        //  - intrude : the point connecting to the original cell.
         labelListList addedPoints_;
 
         //- For all patchfaces: list of layer faces.
         //  - empty if no face extruded
-        //  - first face is original boundary face
-        //  - last one is new boundary face.
+        //  - first element is original patch face
+        //  - last element is
+        //      - extrude : the new boundary face
+        //      - intrude : the new internal face to the original cell.
         labelListList layerFaces_;
 
 
@@ -226,25 +262,6 @@ class addPatchCellLayer
             label& inflateFaceI
         );
 
-        //- Find internal or boundary face to get extrude properties
-        //  from. zoneFlip consistent with ppEdge ordering
-        static void findZoneFace
-        (
-            const bool useInternalFaces,
-            const bool useBoundaryFaces,
-
-            const polyMesh& mesh,
-            const indirectPrimitivePatch& pp,
-            const label ppEdgeI,
-            const labelUIndList& excludeFaces,
-            const labelList& meshFaces,
-
-            label& inflateFaceI,
-            label& patchI,
-            label& zoneI,
-            bool& zoneFlip
-        );
-
         //- Mark internal and boundary edges of patch. In mesh edges
         //- since processor might not have pp but does have edge.
         static void markPatchEdges
@@ -294,7 +311,12 @@ public:
     // Constructors
 
         //- Construct from mesh.
-        explicit addPatchCellLayer(const polyMesh&, const bool addToMesh=true);
+        explicit addPatchCellLayer
+        (
+            const polyMesh&,
+            const bool addToMesh=true,
+            const bool extrude=true
+        );
 
 
     // Member Functions
@@ -314,8 +336,13 @@ public:
             }
 
             //- Helper: get added cells per patch face.
-            //  addedCells[patchFace] is list of cells added. Last element is
-            //  the top cells (i.e. the boundary cell)
+            //  addedCells[patchFace] is list of cells added.
+            //  extrude :
+            //      first element : next to original cell
+            //      last element  : is the top cell (i.e. the boundary cell)
+            //  intrude :
+            //      first element : top cell
+            //      last element  : next to original cell
             static labelListList addedCells
             (
                 const polyMesh&,
@@ -327,6 +354,18 @@ public:
 
 
         // Edit
+
+            //- Per patch edge the pp faces (in global indices) using it.
+            //  Uses ListOps::uniqueEqOp to remove duplicates. On coupled
+            //  faces only selects the one with the correct orientation/flip
+            //  (assumes the orientation is opposite on a coupled face pair)
+            static labelListList globalEdgeFaces
+            (
+                const polyMesh&,
+                const globalIndex& globalFaces,
+                const indirectPrimitivePatch& pp,
+                const bitSet& orientation
+            );
 
             //- Per patch edge the pp faces (in global indices) using it.
             //  Uses ListOps::uniqueEqOp to remove duplicates.
@@ -453,6 +492,28 @@ public:
                 const mapPolyMesh&,
                 const labelList& faceMap,   // new to old patch faces
                 const labelList& pointMap   // new to old patch points
+            );
+
+
+
+            //- Helper: given patch and points on patch that are extruded
+            //  (to slave side or master side) find the affected
+            //  points. Calculates by walking across faces which vertices on
+            //  which face are affected. isDupMeshPoint:
+            //      -1  : unaffected
+            //      >=0 : should use local duplicate of point
+            //            (though it does not tell us whether it should use
+            //             slave side or master side)
+            static void findDuplicatedPoints
+            (
+                const polyMesh& mesh,
+                const indirectPrimitivePatch& pp,
+                const bitSet& ppFlip,       // optional orientation on top of pp
+                const bitSet& isBlockedFace,// any mesh faces not to be
+                                            // traversed.Usually pp.addressing()
+                const bitSet& isDupPatchPoint,
+                const bool extrude,         // which side to extrude
+                faceList& isDupMeshPoint
             );
 };
 

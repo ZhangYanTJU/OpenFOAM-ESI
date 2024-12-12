@@ -123,6 +123,19 @@ public:
 
         //- Do what is necessary if the mesh has moved
         virtual void movePoints();
+
+        //- Calculate geometry quantities using mesh topology and provided
+        //- points. If oldPoints provided only does local update. Returns
+        //- true if anything changed, false otherwise
+        virtual bool updateGeom
+        (
+            const pointField& points,
+            const refPtr<pointField>& oldPoints,    // optional old points
+            pointField& faceCentres,
+            vectorField& faceAreas,
+            pointField& cellCentres,
+            scalarField& cellVolumes
+        ) const;
 };
 
 

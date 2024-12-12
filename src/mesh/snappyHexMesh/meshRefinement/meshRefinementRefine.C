@@ -2674,6 +2674,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::meshRefinement::balance
                 (
                     false,  //keepZoneFaces
                     false,  //keepBaffles
+                    labelList::null(),  //singleProcPoints
                     cellWeights,
                     decomposer,
                     distributor

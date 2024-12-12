@@ -145,6 +145,18 @@ Foam::displacementComponentLaplacianFvMotionSolver::curPoints() const
         pointDisplacement_
     );
 
+    // Evaluate the bcs so they are consistent with the internal field
+    // Might fight the multi-patch behaviour inside volPointInterpolate
+    if
+    (
+        pointDisplacement_.boundaryField().size()
+     != cellDisplacement_.boundaryField().size()
+    )
+    {
+        pointDisplacement_.correctBoundaryConditions();
+    }
+
+
     if (pointLocation_)
     {
         if (debug)

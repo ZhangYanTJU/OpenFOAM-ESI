@@ -91,6 +91,16 @@ public:
             const pointBoundaryMesh& bm
         );
 
+        //- Construct given the original patch and a map
+        coupledFacePointPatch
+        (
+            const coupledFacePointPatch& pp,
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        );
+
 
     //- Destructor
     virtual ~coupledFacePointPatch() = default;

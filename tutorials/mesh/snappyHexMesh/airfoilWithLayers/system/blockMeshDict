@@ -18,14 +18,14 @@ scale   1;
 
 vertices
 (
-    (-1 -1 -1)
-    ( 2 -1 -1)
-    ( 2  0 -1)
-    (-1  0 -1)
-    (-1 -1  1)
-    ( 2 -1  1)
-    ( 2  0  1)
-    (-1  0  1)
+    (-1 -0.8 -1)
+    ( 2 -0.8 -1)
+    ( 2 -0.2 -1)
+    (-1 -0.2 -1)
+    (-1 -0.8  1)
+    ( 2 -0.8  1)
+    ( 2 -0.2  1)
+    (-1 -0.2  1)
 );
 
 blocks
@@ -44,12 +44,28 @@ boundary
         type patch;
         faces
         (
-            (3 7 6 2)
-            (1 5 4 0)  //back
             (2 6 5 1)  //outlet
             (0 4 7 3)  //inlet
             (0 3 2 1)  //lowerWall
             (4 5 6 7)  //upperWall
+        );
+    }
+
+    front
+    {
+        type symmetryPlane;
+        faces
+        (
+            (3 7 6 2)
+        );
+    }
+
+    back
+    {
+        type symmetryPlane;
+        faces
+        (
+            (1 5 4 0)  //back
         );
     }
 );

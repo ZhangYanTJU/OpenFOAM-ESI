@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -727,6 +727,49 @@ Foam::List<Foam::labelPair> Foam::meshRefinement::subsetBaffles
 }
 
 
+void Foam::meshRefinement::mapBaffles
+(
+    const polyMesh& mesh,
+    const labelList& faceMap,
+    List<labelPair>& baffles
+)
+{
+    // Create old-to-new map just for boundary faces. (since multiple faces
+    // get created from the same baffle face)
+    labelList reverseFaceMap(mesh.nFaces(), -1);
+    for
+    (
+        label facei = mesh.nInternalFaces();
+        facei < mesh.nFaces();
+        facei++
+    )
+    {
+        label oldFacei = faceMap[facei];
+        if (oldFacei != -1)
+        {
+            reverseFaceMap[oldFacei] = facei;
+        }
+    }
+
+
+    DynamicList<labelPair> newBaffles(baffles.size());
+    forAll(baffles, i)
+    {
+        const labelPair& p = baffles[i];
+        labelPair newBaffle
+        (
+            reverseFaceMap[p[0]],
+            reverseFaceMap[p[1]]
+        );
+        if (newBaffle[0] != -1 && newBaffle[1] != -1)
+        {
+            newBaffles.append(newBaffle);
+        }
+    }
+    baffles = std::move(newBaffles);
+}
+
+
 void Foam::meshRefinement::getZoneFaces
 (
     const labelList& zoneIDs,
@@ -927,7 +970,8 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::createZoneBaffles
 Foam::List<Foam::labelPair> Foam::meshRefinement::freeStandingBaffles
 (
     const List<labelPair>& couples,
-    const scalar planarAngle
+    const scalar planarAngle,
+    const bool samePatch
 ) const
 {
     // Done by counting the number of baffles faces per mesh edge. If edge
@@ -1036,8 +1080,11 @@ Foam::List<Foam::labelPair> Foam::meshRefinement::freeStandingBaffles
 
         if
         (
-            patches.whichPatch(couple.first())
-         == patches.whichPatch(couple.second())
+           !samePatch
+         || (
+                patches.whichPatch(couple.first())
+             == patches.whichPatch(couple.second())
+            )
         )
         {
             const labelList& fEdges = mesh_.faceEdges(couple.first());
@@ -2430,15 +2477,24 @@ void Foam::meshRefinement::growCellZone
 
     // No blocked faces, limitless gap size
     const bitSet isBlockedFace(mesh_.nFaces());
-    List<scalarList> regionToBlockSize(surfaces_.surfaces().size());
+    //List<scalarList> regionToBlockSize(surfaces_.surfaces().size());
+    //{
+    //    forAll(surfaces_.surfaces(), surfi)
+    //    {
+    //        const label geomi = surfaces_.surfaces()[surfi];
+    //        const auto& s = surfaces_.geometry()[geomi];
+    //        const label nRegions = s.regions().size();
+    //        regionToBlockSize[surfi].setSize(nRegions, Foam::sqr(GREAT));
+    //    }
+    //}
+
+    //- regionToBlockSize is indexed with cellZone index (>= 0) and region
+    //- on cellZone (currently always 0)
+    const auto& czs = mesh_.cellZones();
+    List<scalarList> regionToBlockSize(czs.size());
+    for (auto& blockSizes : regionToBlockSize)
     {
-        forAll(surfaces_.surfaces(), surfi)
-        {
-            const label geomi = surfaces_.surfaces()[surfi];
-            const auto& s = surfaces_.geometry()[geomi];
-            const label nRegions = s.regions().size();
-            regionToBlockSize[surfi].setSize(nRegions, Foam::sqr(GREAT));
-        }
+        blockSizes.setSize(1, Foam::sqr(GREAT));
     }
 
 
@@ -4773,6 +4829,7 @@ void Foam::meshRefinement::baffleAndSplitMesh
 
 void Foam::meshRefinement::mergeFreeStandingBaffles
 (
+    const bool samePatch,
     const snapParameters& snapParams,
     const bool useTopologicalSnapDetection,
     const bool removeEdgeConnectedCells,
@@ -4801,7 +4858,8 @@ void Foam::meshRefinement::mergeFreeStandingBaffles
         freeStandingBaffles    // filter out freestanding baffles
         (
             localPointRegion::findDuplicateFacePairs(mesh_),
-            planarAngle
+            planarAngle,
+            samePatch
         )
     );
 

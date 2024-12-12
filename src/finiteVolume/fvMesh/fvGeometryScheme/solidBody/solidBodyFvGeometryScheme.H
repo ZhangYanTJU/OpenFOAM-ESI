@@ -94,6 +94,16 @@ class solidBodyFvGeometryScheme
 
     // Private Member Functions
 
+        //- Detect what geometry has changed. Return true if anything has.
+        bool markChanges
+        (
+            const pointField& oldPoints,
+            const pointField& currPoints,
+            bitSet& isChangedPoint,
+            bitSet& isChangedFace,
+            bitSet& isChangedCell
+        ) const;
+
         //- Set the mesh motion data (point, face IDs)
         void setMeshMotionData();
 
@@ -127,6 +137,19 @@ public:
 
         //- Update mesh for topology changes
         virtual void updateMesh(const mapPolyMesh& mpm);
+
+        //- Calculate geometry quantities using mesh topology and provided
+        //- points. If oldPoints provided only does local update. Returns
+        //- true if anything changed, false otherwise
+        virtual bool updateGeom
+        (
+            const pointField& points,
+            const refPtr<pointField>& oldPoints,    // optional old points
+            pointField& faceCentres,
+            vectorField& faceAreas,
+            pointField& cellCentres,
+            scalarField& cellVolumes
+        ) const;
 };
 
 

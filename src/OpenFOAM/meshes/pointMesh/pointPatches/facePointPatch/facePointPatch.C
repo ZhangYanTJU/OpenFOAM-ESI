@@ -84,8 +84,29 @@ Foam::facePointPatch::facePointPatch
     const pointBoundaryMesh& bm
 )
 :
-    pointPatch(bm),
+    pointPatch(p.name(), p.index(), bm, p.physicalType(), p.inGroups()),
     polyPatch_(p)
+{}
+
+
+Foam::facePointPatch::facePointPatch
+(
+    const facePointPatch& pp,
+    const pointBoundaryMesh& bm,
+    const label index,
+    const labelUList& mapAddressing,
+    const labelUList& reversePointMap
+)
+:
+    pointPatch
+    (
+        pp.name(),
+        index,
+        bm,
+        pp.physicalType(),
+        pp.inGroups()
+    ),
+    polyPatch_(pp.patch())
 {}
 
 

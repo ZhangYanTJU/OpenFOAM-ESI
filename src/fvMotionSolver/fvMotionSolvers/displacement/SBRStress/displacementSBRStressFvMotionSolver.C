@@ -160,6 +160,17 @@ Foam::displacementSBRStressFvMotionSolver::curPoints() const
         pointDisplacement_
     );
 
+    // Evaluate the bcs so they are consistent with the internal field
+    // Might fight the multi-patch behaviour inside volPointInterpolate
+    if
+    (
+        pointDisplacement_.boundaryField().size()
+     != cellDisplacement_.boundaryField().size()
+    )
+    {
+        pointDisplacement_.correctBoundaryConditions();
+    }
+
     tmp<pointField> tcurPoints
     (
         points0() + pointDisplacement().primitiveField()
@@ -185,6 +196,10 @@ void Foam::displacementSBRStressFvMotionSolver::solve()
         dimensionedScalar("viscosity", dimViscosity, 1.0)
        *diffusivityPtr_->operator()()
     );
+
+    // Make sure the cellMotion bcs are consistent with the pointDisplacement.
+    // This makes sure the grad below uses more up-to-date values.
+    cellDisplacement_.boundaryFieldRef().updateCoeffs();
 
     volTensorField gradCd("gradCd", fvc::grad(cellDisplacement_));
 

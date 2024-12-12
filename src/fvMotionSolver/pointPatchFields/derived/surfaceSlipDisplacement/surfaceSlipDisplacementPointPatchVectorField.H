@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,6 +47,8 @@ Description
     - wedgePlane : -1 or component to knock out of intersection normal
     - frozenPointsZone : empty or name of pointZone containing points
                          that do not move
+    - scale : optional scaling factor as PatchFunction1
+
 
 SourceFiles
     surfaceSlipDisplacementPointPatchVectorField.C
@@ -57,6 +60,7 @@ SourceFiles
 
 #include "pointPatchFields.H"
 #include "searchableSurfaces.H"
+#include "PatchFunction1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -104,6 +108,9 @@ private:
 
         //- pointZone with frozen points
         const word frozenPointsZone_;
+
+        //- Scalar scale factor
+        autoPtr<PatchFunction1<scalar>> scalePtr_;
 
         //- Demand driven: surface to project
         mutable autoPtr<searchableSurfaces> surfacesPtr_;
@@ -187,11 +194,8 @@ public:
         //- Surface to follow. Demand loads surfaceNames.
         const searchableSurfaces& surfaces() const;
 
-        //- Update the patch field
-        virtual void evaluate
-        (
-            const Pstream::commsTypes commsType=Pstream::commsTypes::buffered
-        );
+        //- Update the coefficients associated with the patch field
+        virtual void updateCoeffs();
 
         //- Write
         virtual void write(Ostream&) const;

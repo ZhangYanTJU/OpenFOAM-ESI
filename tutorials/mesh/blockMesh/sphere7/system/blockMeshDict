@@ -127,16 +127,56 @@ faces
 
 boundary
 (
-    walls
+    minX
     {
-        type wall;
+        type patch;
         faces
         (
             (1 0)  // block 1: x-min
+        );
+    }
+
+    maxX
+    {
+        type patch;
+        faces
+        (
             (2 1)  // block 2: x-max
+        );
+    }
+
+    minY
+    {
+        type patch;
+        faces
+        (
             (3 2)  // block 3: y-min
+        );
+    }
+
+    maxY
+    {
+        type patch;
+        faces
+        (
             (4 3)  // block 4: y-max
+        );
+    }
+
+    minZ
+    {
+        type patch;
+        faces
+        (
             (5 4)  // block 5: z-min
+        );
+    }
+
+    maxZ
+    {
+        type patch;
+        faces
+        (
             (6 5)  // block 6: z-max
         );
     }

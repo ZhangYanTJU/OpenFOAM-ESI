@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -666,6 +666,9 @@ int main(int argc, char *argv[])
             ),
             decompDictFile
         );
+        // Make sure pointMesh gets read as well
+        (void)pointMesh::New(mesh, IOobject::READ_IF_PRESENT);
+
 
         // Decompose the mesh
         if (!decomposeFieldsOnly)
@@ -785,6 +788,7 @@ int main(int argc, char *argv[])
             PtrList<labelIOList> cellProcAddressingList(mesh.nProcs());
             PtrList<labelIOList> boundaryProcAddressingList(mesh.nProcs());
             PtrList<labelIOList> pointProcAddressingList(mesh.nProcs());
+            PtrList<labelIOList> pointBoundaryProcAddressingList(mesh.nProcs());
 
             PtrList<fvFieldDecomposer> fieldDecomposerList(mesh.nProcs());
             PtrList<pointFieldDecomposer> pointFieldDecomposerList
@@ -869,7 +873,10 @@ int main(int argc, char *argv[])
 
                 // Point fields
                 // ~~~~~~~~~~~~
-                const pointMesh& pMesh = pointMesh::New(mesh);
+
+                // Read decomposed pointMesh
+                const pointMesh& pMesh =
+                    pointMesh::New(mesh, IOobject::READ_IF_PRESENT);
 
                 pointFieldDecomposer::fieldsCache pointFieldCache;
 
@@ -1138,7 +1145,34 @@ int main(int argc, char *argv[])
                             pointProcAddressingList
                         );
 
-                        const pointMesh& procPMesh = pointMesh::New(procMesh);
+                        const pointMesh& procPMesh =
+                            pointMesh::New(procMesh, IOobject::READ_IF_PRESENT);
+
+                        if (!pointBoundaryProcAddressingList.set(proci))
+                        {
+                            pointBoundaryProcAddressingList.set
+                            (
+                                proci,
+                                autoPtr<labelIOList>::New
+                                (
+                                    IOobject
+                                    (
+                                        "boundaryProcAddressing",
+                                        procMesh.facesInstance(),
+                                        polyMesh::meshSubDir
+                                       /pointMesh::meshSubDir,
+                                        procPMesh.thisDb(),
+                                        IOobject::READ_IF_PRESENT,
+                                        IOobject::NO_WRITE,
+                                        IOobject::NO_REGISTER
+                                    ),
+                                    boundaryProcAddressing
+                                )
+                            );
+                        }
+                        const auto& pointBoundaryProcAddressing =
+                            pointBoundaryProcAddressingList[proci];
+
 
                         if (!pointFieldDecomposerList.set(proci))
                         {
@@ -1150,7 +1184,7 @@ int main(int argc, char *argv[])
                                     pMesh,
                                     procPMesh,
                                     pointProcAddressing,
-                                    boundaryProcAddressing
+                                    pointBoundaryProcAddressing
                                 )
                             );
                         }
@@ -1162,6 +1196,12 @@ int main(int argc, char *argv[])
 
                         if (times.size() == 1)
                         {
+                            // Early deletion
+                            pointBoundaryProcAddressingList.set
+                            (
+                                proci,
+                                nullptr
+                            );
                             pointProcAddressingList.set(proci, nullptr);
                             pointFieldDecomposerList.set(proci, nullptr);
                         }
