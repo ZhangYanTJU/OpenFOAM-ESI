@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 SUFFIXES   += .C .cc .cpp .cxx
 
-CC         := g++$(COMPILER_VERSION) -std=c++14
+CC         := g++$(COMPILER_VERSION) -std=c++17
 
 c++ARCH    :=
 c++DBUG    :=

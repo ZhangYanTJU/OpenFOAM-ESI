@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 include $(GENERAL_RULES)/Clang/c++
 
-CC         := FCC$(COMPILER_VERSION) -std=c++14
+CC         := FCC$(COMPILER_VERSION) -std=c++17
 c++ARCH    := -pthread
 
 ifneq (,$(strip $(WM_COMPILE_OPTION)))
