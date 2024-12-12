@@ -14,6 +14,11 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Type of mesh generation:
+//  - castellated (default)
+//  - castellatedBufferLayer
+//type            castellatedBufferLayer;
+
 // Which of the steps to run
 castellatedMesh true;
 snap            true;
@@ -427,6 +432,31 @@ castellatedMeshControls
     //nCellZoneErodeIter 2;
 }
 
+
+// Internal macro for mesh-motion solver to use
+_meshMotionSolver
+{
+    solver  displacementPointSmoothing;
+    displacementPointSmoothingCoeffs
+    {
+        //// Use geometricElementTransform to maintain relative sizes
+        //pointSmoother           geometricElementTransform;
+        //transformationParameter 0.667;
+        //nPointSmootherIter      10;
+
+        // Use laplacian to untangle problem areas
+        pointSmoother           laplacian;
+        nPointSmootherIter      10;
+
+        //relaxationFactors       (1.0 0.8 0.6 0.4 0.2 0.0);
+        //meshQuality
+        //{
+        //    #includeEtc "caseDicts/meshQualityDict"
+        //}        
+    }
+}
+
+
 // Settings for the snapping.
 snapControls
 {
@@ -501,6 +531,10 @@ snapControls
         //- Attract points only to the surface they originate from. Default
         //  false. This can improve snapping of intersecting surfaces.
         strictRegionSnap true;
+
+
+    // Motion solver to use (when in  castellatedBufferLayer)
+    ${_meshMotionSolver}
 }
 
 // Settings for the layer addition.
@@ -601,19 +635,27 @@ addLayersControls
         // motion solvers. It needs specification of the solver to use and
         // its control dictionary.
         //meshShrinker displacementMotionSolver;
-        //solver displacementLaplacian;
-        //displacementLaplacianCoeffs
+        //solver      multiDisplacement;
+        //solvers
         //{
-        //    diffusivity quadratic inverseDistance
-        //    (
-        //        sphere.stl_firstSolid
-        //        maxY
-        //    );
+        //    displacementLaplacian
+        //    {
+        //        // Note that e.g. displacementLaplacian needs entries in
+        //        // fvSchemes, fvSolution. Also specify a minIter > 1 when
+        //        // solving
+        //        // cellDisplacement since otherwise solution might not be
+        //        // sufficiently accurate on points.
+        //        solver              displacementLaplacian;
+        //        diffusivity quadratic inverseDistance
+        //        (
+        //            aerofoil
+        //        );
+        //    }
+        //    displacementPointSmoothing
+        //    {
+        //        ${_meshMotionSolver}
+        //    }
         //}
-        // Note that e.g. displacementLaplacian needs entries in
-        // fvSchemes, fvSolution. Also specify a minIter > 1 when solving
-        // cellDisplacement since otherwise solution might not be sufficiently
-        // accurate on points.
 
 
     // Medial axis analysis (for use with default displacementMedialAxis)

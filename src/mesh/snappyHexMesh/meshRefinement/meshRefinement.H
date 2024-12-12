@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -90,6 +90,18 @@ class meshRefinement
 public:
 
     // Public Data Types
+
+        //- Enumeration for how to operate
+        enum MeshType
+        {
+            CASTELLATED,    // split-hex refinement, snapping, layer addition
+            CASTELLATEDBUFFERLAYER, // same but add buffer layers before
+                                    // snapping
+            CASTELLATEDBUFFERLAYER2 // experimental. wip.
+        };
+
+        static const Enum<MeshType> MeshTypeNames;
+
 
         //- Enumeration for what to debug. Used as a bit-pattern.
         enum debugType
@@ -179,8 +191,12 @@ private:
         //- All limit-refinement interaction
         const shellSurfaces& limitShells_;
 
+        //- How to generate mesh
+        const MeshType meshType_;
+
         //- Are we operating in test mode?
         const bool dryRun_;
+
 
         //- Refinement engine
         hexRef8 meshCutter_;
@@ -778,10 +794,12 @@ private:
 
             //- Extract those baffles (duplicate) faces that are on the edge
             //  of a baffle region. These are candidates for merging.
+            //  samePatch : include only if both sides on the same patch.
             List<labelPair> freeStandingBaffles
             (
                 const List<labelPair>&,
-                const scalar freeStandingAngle
+                const scalar freeStandingAngle,
+                const bool samePatch
             ) const;
 
 
@@ -997,6 +1015,7 @@ public:
             const shellSurfaces&,   // omnidirectional refinement
             const shellSurfaces&,   // limit refinement
             const labelUList& checkFaces,   // initial faces to check
+            const MeshType meshType,
             const bool dryRun
         );
 
@@ -1062,6 +1081,12 @@ public:
                 return meshCutter_;
             }
 
+            //- Mode of meshing
+            MeshType meshType() const
+            {
+                return meshType_;
+            }
+
             //- Per start-end edge the index of the surface hit
             const labelList& surfaceIndex() const;
 
@@ -1098,10 +1123,12 @@ public:
             //  keepZoneFaces : find all faceZones from zoned surfaces and keep
             //                  owner and neighbour together
             //  keepBaffles   : find all baffles and keep them together
+            //  singleProcPoints : all faces using point are kept together
             autoPtr<mapDistributePolyMesh> balance
             (
                 const bool keepZoneFaces,
                 const bool keepBaffles,
+                const labelList& singleProcPoints,
                 const scalarField& cellWeights,
                 decompositionMethod& decomposer,
                 fvMeshDistribute& distributor
@@ -1366,6 +1393,7 @@ public:
             //- Merge free-standing baffles
             void mergeFreeStandingBaffles
             (
+                const bool samePatch,
                 const snapParameters& snapParams,
                 const bool useTopologicalSnapDetection,
                 const bool removeEdgeConnectedCells,
@@ -1447,6 +1475,14 @@ public:
                 const polyMesh& mesh,
                 const labelList& zoneIDs,
                 const List<labelPair>& baffles
+            );
+
+            //- Map baffles after layer addition. Gets new-to-old face map.
+            static void mapBaffles
+            (
+                const polyMesh& mesh,
+                const labelList& faceMap,
+                List<labelPair>& baffles
             );
 
             //- Get per-face information (faceZone, master/slave patch)
@@ -1625,11 +1661,24 @@ public:
                 const refPtr<coordSetWriter>& leakPathFormatter
             );
 
+            //- Helper: split face into:
+            //          - f0 : split[0] to split[1]
+            //          - f1 : split[1] to split[0]
+            static void splitFace
+            (
+                const face& f,
+                const labelPair& split,
+
+                face& f0,
+                face& f1
+            );
+
             //- Split faces into two
             void doSplitFaces
             (
                 const labelList& splitFaces,
                 const labelPairList& splits,
+                const labelPairList& splitPatches,
                 polyTopoChange& meshMod
             ) const;
 
@@ -1639,6 +1688,7 @@ public:
             (
                 const labelList& splitFaces,
                 const labelPairList& splits,
+                const labelPairList& splitPatches,
                 const dictionary& motionDict,
 
                 labelList& duplicateFace,

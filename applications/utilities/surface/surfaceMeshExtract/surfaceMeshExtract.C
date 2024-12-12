@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,12 +34,38 @@ Description
     Extract patch or faceZone surfaces from a polyMesh.
     Depending on output surface format triangulates faces.
 
-    Region numbers on faces no guaranteed to be the same as the patch indices.
+    Region numbers on faces not guaranteed to be the same as the patch indices.
 
     Optionally only extracts named patches.
 
+    Optionally filters out points on faceZones, feature-edges and
+    featurePoints and generates pointPatches
+    for these - written to pointMesh/boundary.
+
     If run in parallel, processor patches get filtered out by default and
     the mesh is merged (based on topology).
+
+Usage
+    \b surfaceMeshExtract [OPTION] \<surfacefile\>
+
+    Options:
+      - \par -patches NAME | LIST
+        Specify single patch or multiple patches (name or regex) to extract
+
+      - \par -faceZones NAME | LIST
+        Specify single zone or multiple face zones (name or regex) to extract
+
+      - \par -exclude-patches NAME | LIST
+        Exclude single or multiple patches (name or regex) from extraction
+
+      - \par -excludeProcPatches
+        Exclude processor patches (default if parallel)
+
+      - \par -featureAngle \<angle\>
+        Extract feature edges/points and put into separate point-patches
+
+      - \par -extractZonePoints
+        Extract all face zone points and put into separate point-patches
 
 \*---------------------------------------------------------------------------*/
 
@@ -48,6 +74,7 @@ Description
 #include "argList.H"
 #include "Time.H"
 #include "polyMesh.H"
+#include "pointMesh.H"
 #include "emptyPolyPatch.H"
 #include "processorPolyPatch.H"
 #include "ListListOps.H"
@@ -56,10 +83,78 @@ Description
 #include "globalMeshData.H"
 #include "globalIndex.H"
 #include "timeSelector.H"
+#include "meshPointPatch.H"
+#include "unitConversion.H"
+#include "dummyTransform.H"
+#include "syncTools.H"
+#include "processorPointPatch.H"
+#include "pointMeshTools.H"
+#include "OBJstream.H"
 
 using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+void writeOBJ
+(
+    const fileName& path,
+    const pointPatch& pp
+)
+{
+    const meshPointPatch& ppp = refCast<const meshPointPatch>(pp);
+    const polyMesh& mesh = ppp.boundaryMesh().mesh().mesh();
+
+    // Count constraints
+    label maxConstraint = 0;
+    const auto& constraints = ppp.constraints();
+    forAll(constraints, i)
+    {
+        maxConstraint = max(maxConstraint, constraints[i].first());
+    }
+    reduce(maxConstraint, maxOp<label>());
+
+    const pointField localPoints(mesh.points(), ppp.meshPoints());
+
+    if (maxConstraint == 3)
+    {
+        OBJstream os
+        (
+            path
+          / ppp.name()+"_fixedPoints.obj"
+        );
+        os.write(localPoints);
+        Info<< "Written pointPatch " << ppp.name() << " to " << os.name()
+            << endl;
+    }
+    else if (maxConstraint == 2)
+    {
+        OBJstream os
+        (
+            path
+          / ppp.name()+"_slidingPoints.obj"
+        );
+        forAll(localPoints, i)
+        {
+            os.write(localPoints[i], constraints[i].second());
+        }
+        Info<< "Written pointPatch " << ppp.name() << " to " << os.name()
+            << " as coordinates and normals"
+            << endl;
+    }
+    else if (maxConstraint == 1)
+    {
+        OBJstream os
+        (
+            path
+          / ppp.name()+"_surfacePoints.obj"
+        );
+        os.write(localPoints);
+        Info<< "Written pointPatch " << ppp.name() << " to " << os.name()
+            << " as coordinates"
+            << endl;
+    }
+}
+
 
 labelList getSelectedPatches
 (
@@ -107,6 +202,286 @@ labelList getSelectedPatches
 }
 
 
+label addMeshPointPatches
+(
+    const polyMesh& mesh,
+    const pointMesh& pMesh,
+
+    const uindirectPrimitivePatch& allBoundary,
+    const labelUList& faceToZone,
+    const surfZoneIdentifierList& surfZones,
+    const labelList& faceZoneToCompactZone,
+
+    const scalar edgeFeatureAngle,
+    const scalar pointFeatureAngle,
+    const bool verbose = true,
+    const bool writePoints = false
+)
+{
+    const auto& pointBm = pMesh.boundary();
+    const auto& fzs = mesh.faceZones();
+    const label nPointPatches = pointBm.size();
+    const pointField& points = mesh.points();
+
+
+    // Feature edge(points) internal to a zone
+    labelListList zoneToMeshPoints;
+    List<pointConstraintList> zoneToConstraints;
+
+    // Feature edge(points) in between zones
+    labelList twoZoneMeshPoints;
+    pointConstraintList twoZoneConstraints;
+
+    // Feature points on > 2 zones
+    labelList multiZoneMeshPoints;
+    pointConstraintList multiZoneConstraints;
+
+    pointMeshTools::featurePointsEdges
+    (
+        mesh,
+        allBoundary,
+        // Per boundary face to zone
+        faceToZone,
+        // Number of zones
+        surfZones.size(),
+        edgeFeatureAngle,
+        //const scalar pointFeatureAngle, //not yet done
+
+        // Feature edge(points) internal to a zone
+        zoneToMeshPoints,
+        zoneToConstraints,
+
+        // Feature edge(points) in between zones
+        twoZoneMeshPoints,
+        twoZoneConstraints,
+
+        // Feature points on > 2 zones
+        multiZoneMeshPoints,
+        multiZoneConstraints
+    );
+
+
+    // Add per-zone patches
+    if (faceZoneToCompactZone.size())
+    {
+        // Calculate point normals consistent across whole patch
+        const pointField pointNormals
+        (
+            PatchTools::pointNormals
+            (
+                mesh,
+                allBoundary
+            )
+        );
+
+        forAll(faceZoneToCompactZone, zonei)
+        {
+            const label compacti = faceZoneToCompactZone[zonei];
+            if (compacti != -1)
+            {
+                const word patchName(surfZones[compacti].name());
+
+                if (pointBm.findPatchID(patchName) == -1)
+                {
+                    // Extract the points originating from the faceZone. Can
+                    //  - re-call featurePointsEdges with 0 feature angle so
+                    //    all points go into the feature edges
+                    //  - mark using faceToZone the correct points
+                    //  - or assume the whole faceZone was extracted:
+                    const uindirectPrimitivePatch fzPatch
+                    (
+                        UIndirectList<face>
+                        (
+                            mesh.faces(),
+                            fzs[zonei].addressing()
+                        ),
+                        points
+                    );
+                    const auto& mp = fzPatch.meshPoints();
+
+                    const vector nullVector(vector::uniform(0));
+
+                    // Extract pointNormal (or 0) on all patch/connected points
+                    vectorField meshPointNormals(mesh.nPoints(), nullVector);
+                    for (const label pointi : mp)
+                    {
+                        const label allPointi =
+                            allBoundary.meshPointMap()[pointi];
+                        meshPointNormals[pointi] = pointNormals[allPointi];
+                    }
+                    syncTools::syncPointList
+                    (
+                        mesh,
+                        meshPointNormals,
+                        maxMagSqrEqOp<vector>(),
+                        nullVector
+                    );
+
+                    // Extract indices with non-zero pointNormal
+                    DynamicList<label> meshPoints(mp.size());
+                    forAll(meshPointNormals, pointi)
+                    {
+                        if (meshPointNormals[pointi] != nullVector)
+                        {
+                            meshPoints.append(pointi);
+                        }
+                    }
+
+                    const_cast<pointBoundaryMesh&>(pointBm).push_back
+                    (
+                        new meshPointPatch
+                        (
+                            patchName,
+                            meshPoints,
+                            vectorField(meshPointNormals, meshPoints),
+                            pointBm.size(),
+                            pointBm,
+                            meshPointPatch::typeName
+                        )
+                    );
+
+                    if (verbose)
+                    {
+                        const auto& ppp = pointBm.last();
+                        Info<< "Added zone pointPatch " << ppp.name()
+                            << " with "
+                            << returnReduce(meshPoints.size(), sumOp<label>())
+                            << " points" << endl;
+                    }
+                    if (writePoints)
+                    {
+                        writeOBJ(mesh.path(), pointBm.last());
+                    }
+                }
+            }
+        }
+    }
+
+
+    // Add per-patch feature-edges
+    forAll(zoneToMeshPoints, zonei)
+    {
+        const label nPoints =
+            returnReduce(zoneToMeshPoints[zonei].size(), sumOp<label>());
+
+        const word patchName(surfZones[zonei].name() + "Edges");
+
+        if (nPoints && (pointBm.findPatchID(patchName) == -1))
+        {
+            const_cast<pointBoundaryMesh&>(pointBm).push_back
+            (
+                new meshPointPatch
+                (
+                    patchName,
+                    zoneToMeshPoints[zonei],
+                    zoneToConstraints[zonei],
+                    pointBm.size(),
+                    pointBm,
+                    meshPointPatch::typeName
+                )
+            );
+
+            if (verbose)
+            {
+                const auto& ppp = pointBm.last();
+                Info<< "Added feature-edges pointPatch " << ppp.name()
+                    << " with " << nPoints << " points" << endl;
+            }
+            if (writePoints)
+            {
+                writeOBJ(mesh.path(), pointBm.last());
+            }
+        }
+    }
+
+
+    // Add inter-patch points
+
+    const word allEdgePatchName("boundaryEdges");
+    const label nPatchEdgePoints =
+        returnReduce(twoZoneMeshPoints.size(), sumOp<label>());
+    if (nPatchEdgePoints && (pointBm.findPatchID(allEdgePatchName) == -1))
+    {
+        const_cast<pointBoundaryMesh&>(pointBm).push_back
+        (
+            new meshPointPatch
+            (
+                allEdgePatchName,
+                twoZoneMeshPoints,
+                twoZoneConstraints,
+                pointBm.size(),
+                pointBm,
+                meshPointPatch::typeName
+            )
+        );
+
+        if (verbose)
+        {
+            const auto& ppp = pointBm.last();
+            Info<< "Added inter-patch pointPatch " << ppp.name()
+                << " with " << nPatchEdgePoints << " points" << endl;
+        }
+        if (writePoints)
+        {
+            writeOBJ(mesh.path(), pointBm.last());
+        }
+    }
+
+
+    const word allPointPatchName("boundaryPoints");
+    const label nMultiPoints =
+        returnReduce(multiZoneMeshPoints.size(), sumOp<label>());
+    if (nMultiPoints && (pointBm.findPatchID(allPointPatchName) == -1))
+    {
+        const_cast<pointBoundaryMesh&>(pointBm).push_back
+        (
+            new meshPointPatch
+            (
+                allPointPatchName,
+                multiZoneMeshPoints,
+                multiZoneConstraints,
+                pointBm.size(),
+                pointBm,
+                meshPointPatch::typeName
+            )
+        );
+
+        if (verbose)
+        {
+            const auto& ppp = pointBm.last();
+            Info<< "Added multi-patch pointPatch " << ppp.name()
+                << " with " << nMultiPoints << " points" << endl;
+        }
+        if (writePoints)
+        {
+            writeOBJ(mesh.path(), pointBm.last());
+        }
+    }
+
+
+    // Shuffle into order
+    labelList oldToNew(pointBm.size());
+    label newPatchi = 0;
+    forAll(pointBm, patchi)
+    {
+        if (!isA<processorPointPatch>(pointBm[patchi]))
+        {
+            oldToNew[patchi] = newPatchi++;
+        }
+    }
+    forAll(pointBm, patchi)
+    {
+        if (isA<processorPointPatch>(pointBm[patchi]))
+        {
+            oldToNew[patchi] = newPatchi++;
+        }
+    }
+    const_cast<pointBoundaryMesh&>(pointBm).reorder(oldToNew, true);
+
+    return pointBm.size() - nPointPatches;
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
@@ -114,8 +489,6 @@ int main(int argc, char *argv[])
     argList::addNote
     (
         "Extract patch or faceZone surfaces from a polyMesh."
-        " The name is historical, it only triangulates faces"
-        " when the output format requires it."
     );
     timeSelector::addOptions();
 
@@ -153,6 +526,22 @@ int main(int argc, char *argv[])
         true  // mark as an advanced option
     );
     argList::addOptionCompat("exclude-patches", {"excludePatches", 2306});
+    argList::addOption
+    (
+        "featureAngle",
+        "angle",
+        "Auto-extract feature edges/points and put into separate point-patches"
+    );
+    argList::addBoolOption
+    (
+        "extractZonePoints",
+        "Extract point-patches for selected faceZones"
+    );
+    argList::addBoolOption
+    (
+        "writeOBJ",
+        "Write added pointPatch points to .obj files"
+    );
 
     #include "setRootCase.H"
     #include "createTime.H"
@@ -200,9 +589,37 @@ int main(int argc, char *argv[])
             << nl << endl;
     }
 
+    scalar featureAngle = 180.0;
+    const bool specifiedFeature = args.readIfPresent
+    (
+        "featureAngle",
+        featureAngle
+    );
+
+    const bool extractZonePoints = args.found("extractZonePoints");
+    const bool writeOBJ = args.found("writeOBJ");
+
     Info<< "Reading mesh from time " << runTime.value() << endl;
 
     #include "createNamedPolyMesh.H"
+    if (specifiedFeature)
+    {
+        Info<< "Detecting all sharp (>" << featureAngle
+            << " degrees) patch edges." << nl << endl;
+
+        if (extractZonePoints)
+        {
+            Info<< "Extracting all faceZone points as pointPatches."
+                << nl << endl;
+        }
+
+        //#include "createNamedPointMesh.H"
+        // Do not read constant/pointMesh - construct from polyMesh only
+        Info<< "Create pointMesh for time = "
+             << runTime.timeName() << Foam::nl << Foam::endl;
+        (void)pointMesh::New(mesh);
+    }
+
 
     // User specified times
     instantList timeDirs = timeSelector::select0(runTime, args);
@@ -249,7 +666,7 @@ int main(int argc, char *argv[])
         // Construct table of patches to include.
         const polyBoundaryMesh& bMesh = mesh.boundaryMesh();
 
-        labelList patchIds =
+        const labelList patchIds =
         (
             (includePatches.size() || excludePatches.size())
           ? getSelectedPatches(bMesh, includePatches, excludePatches)
@@ -276,7 +693,13 @@ int main(int argc, char *argv[])
         // Mesh face and compact zone indx
         DynamicList<label> faceLabels;
         DynamicList<label> compactZones;
+        // Per compact 'zone' index the name and location
+        surfZoneIdentifierList surfZones;
 
+        // Per local patch to compact 'zone' index (or -1)
+        labelList patchToCompactZone(bMesh.size(), -1);
+        // Per local faceZone to compact 'zone' index (or -1)
+        labelList faceZoneToCompactZone(bMesh.size(), -1);
         {
             // Collect sizes. Hash on names to handle local-only patches (e.g.
             //  processor patches)
@@ -317,9 +740,18 @@ int main(int argc, char *argv[])
             Pstream::broadcast(compactZoneID);
 
 
+            // Zones
+            surfZones.resize_nocopy(compactZoneID.size());
+            forAllConstIters(compactZoneID, iter)
+            {
+                surfZones[*iter] = surfZoneIdentifier(iter.key(), *iter);
+                Info<< "surfZone " << *iter
+                    <<  " : "      << surfZones[*iter].name()
+                    << endl;
+            }
+
+
             // Rework HashTable into labelList just for speed of conversion
-            labelList patchToCompactZone(bMesh.size(), -1);
-            labelList faceZoneToCompactZone(bMesh.size(), -1);
             forAllConstIters(compactZoneID, iter)
             {
                 label patchi = bMesh.findPatchID(iter.key());
@@ -362,7 +794,7 @@ int main(int argc, char *argv[])
 
 
         // Addressing engine for all faces
-        uindirectPrimitivePatch allBoundary
+        const uindirectPrimitivePatch allBoundary
         (
             UIndirectList<face>(mesh.faces(), faceLabels),
             mesh.points()
@@ -400,7 +832,7 @@ int main(int argc, char *argv[])
 
         // Gather all ZoneIDs
         List<labelList> gatheredZones(Pstream::nProcs());
-        gatheredZones[Pstream::myProcNo()].transfer(compactZones);
+        gatheredZones[Pstream::myProcNo()] = compactZones;
         Pstream::gatherList(gatheredZones);
 
         // On master combine all points, faces, zones
@@ -428,16 +860,6 @@ int main(int argc, char *argv[])
             gatheredZones.clear();
 
 
-            // Zones
-            surfZoneIdentifierList surfZones(compactZoneID.size());
-            forAllConstIters(compactZoneID, iter)
-            {
-                surfZones[*iter] = surfZoneIdentifier(iter.key(), *iter);
-                Info<< "surfZone " << *iter
-                    <<  " : "      << surfZones[*iter].name()
-                    << endl;
-            }
-
             UnsortedMeshedSurface<face> unsortedFace
             (
                 std::move(allPoints),
@@ -463,6 +885,39 @@ int main(int argc, char *argv[])
             Info<< "Writing merged surface to " << globalCasePath << endl;
 
             sortedFace.write(globalCasePath);
+        }
+
+
+        if (specifiedFeature)
+        {
+            // Add edge patches
+            const auto& pMesh = pointMesh::New(mesh);
+
+            const label nAdded = addMeshPointPatches
+            (
+                mesh,
+                pMesh,
+
+                allBoundary,    // all patches together
+                compactZones,   // originating compactZone
+                surfZones,      // per compactZone the index
+                (
+                    extractZonePoints
+                  ? faceZoneToCompactZone   // per faceZone the compactZone
+                  : labelList::null()
+                ),
+
+                featureAngle,
+                featureAngle,
+
+                true,
+                writeOBJ
+            );
+
+            if (nAdded)
+            {
+                pMesh.boundary().write();
+            }
         }
     }
 

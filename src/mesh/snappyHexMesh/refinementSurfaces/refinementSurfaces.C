@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -208,6 +208,9 @@ Foam::refinementSurfaces::refinementSurfaces
     labelList globalBlockLevel(surfI, labelMax);
     labelList globalLeakLevel(surfI, labelMax);
 
+    // Supported in buffer-layer mode only
+    boolList globalBufferLayers(surfI, true);
+
     // Per surface, per region data
     List<Map<label>> regionMinLevel(surfI);
     List<Map<label>> regionMaxLevel(surfI);
@@ -220,6 +223,7 @@ Foam::refinementSurfaces::refinementSurfaces
     List<Map<autoPtr<dictionary>>> regionPatchInfo(surfI);
     List<Map<label>> regionBlockLevel(surfI);
     List<Map<label>> regionLeakLevel(surfI);
+    List<Map<label>> regionBufferLayers(surfI);
 
     wordHashSet unmatchedKeys(surfacesDict.toc());
 
@@ -346,7 +350,7 @@ Foam::refinementSurfaces::refinementSurfaces
             dict.readIfPresent("perpendicularAngle", globalAngle[surfI]);
             dict.readIfPresent("blockLevel", globalBlockLevel[surfI]);
             dict.readIfPresent("leakLevel", globalLeakLevel[surfI]);
-
+            dict.readIfPresent("addBufferLayers", globalBufferLayers[surfI]);
 
             if (dict.found("regions"))
             {
@@ -499,6 +503,14 @@ Foam::refinementSurfaces::refinementSurfaces
                         {
                             regionLeakLevel[surfI].insert(regionI, l);
                         }
+                        bool s;
+                        if
+                        (
+                            regionDict.readIfPresent<bool>("addBufferLayers", s)
+                        )
+                        {
+                            regionBufferLayers[surfI].insert(regionI, s);
+                        }
                     }
                 }
             }
@@ -551,6 +563,8 @@ Foam::refinementSurfaces::refinementSurfaces
     blockLevel_ = labelMax;
     leakLevel_.setSize(nRegions);
     leakLevel_ = labelMax;
+    addBufferLayers_.setSize(nRegions);
+    addBufferLayers_ = false;
 
 
     forAll(globalMinLevel, surfI)
@@ -582,6 +596,7 @@ Foam::refinementSurfaces::refinementSurfaces
             }
             blockLevel_[globalRegionI] = globalBlockLevel[surfI];
             leakLevel_[globalRegionI] = globalLeakLevel[surfI];
+            addBufferLayers_[globalRegionI] = globalBufferLayers[surfI];
         }
 
         // Overwrite with region specific information
@@ -635,6 +650,11 @@ Foam::refinementSurfaces::refinementSurfaces
 
             blockLevel_[globalRegionI] = iter.val();
             leakLevel_[globalRegionI] = iter.val();
+        }
+        forAllConstIters(regionBufferLayers[surfI], iter)
+        {
+            const label globalRegionI = regionOffset_[surfI] + iter.key();
+            addBufferLayers_[globalRegionI] = iter.val();
         }
     }
 }

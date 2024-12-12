@@ -715,10 +715,15 @@ pointMeshMapper = $(pointMesh)/pointMeshMapper
 $(pointMeshMapper)/pointMapper.C
 $(pointMeshMapper)/pointPatchMapper.C
 
+pointMeshTools = $(pointMesh)/pointMeshTools
+$(pointMeshTools)/pointMeshTools.C
+
 pointPatches = $(pointMesh)/pointPatches
 $(pointPatches)/pointPatch/pointPatch.C
+$(pointPatches)/pointPatch/pointPatchNew.C
 $(pointPatches)/facePointPatch/facePointPatch.C
 $(pointPatches)/facePointPatch/facePointPatchNew.C
+$(pointPatches)/meshPointPatch/meshPointPatch.C
 
 basicPointPatches = $(pointPatches)/basic
 $(basicPointPatches)/coupled/coupledPointPatch.C
@@ -792,6 +797,7 @@ $(Fields)/fieldTypes.C
 pointPatchFields = fields/pointPatchFields
 $(pointPatchFields)/pointPatchField/pointPatchFieldBase.C
 $(pointPatchFields)/pointPatchField/pointPatchFields.C
+$(pointPatchFields)/pointPatchField/pointConstraint/pointConstraint.C
 
 basicPointPatchFields = $(pointPatchFields)/basic
 $(basicPointPatchFields)/calculated/calculatedPointPatchFields.C

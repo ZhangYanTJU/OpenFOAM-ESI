@@ -37,7 +37,7 @@ Usage
     \table
         Property     | Description             | Required    | Default value
         scale        | Time varying scale      | yes         |
-        patch        | patchField providing the raw patch value | yes |
+        refValue     | patchField providing the raw patch value | yes |
     \endtable
 
     Example of the boundary condition specification to scale a reference

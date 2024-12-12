@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +32,7 @@ License
 #include "transformField.H"
 #include "fvMesh.H"
 #include "displacementMotionSolver.H"
+#include "facePointPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -272,6 +273,16 @@ void Foam::surfaceSlipDisplacementPointPatchVectorField::calcProjection
         }
     }
 
+    if (scalePtr_)
+    {
+        const scalarField s
+        (
+            scalePtr_->value(this->db().time().timeOutputValue())
+        );
+
+        displacement *= s;
+    }
+
     reduce(nNotProjected, sumOp<label>());
 
     if (nNotProjected > 0)
@@ -312,9 +323,24 @@ surfaceSlipDisplacementPointPatchVectorField
     pointPatchVectorField(p, iF, dict),
     surfacesDict_(dict.subDict("geometry")),
     projectMode_(projectModeNames_.get("projectMode", dict)),
-    projectDir_(dict.get<vector>("projectDirection")),
+    projectDir_
+    (
+        (projectMode_ == FIXEDNORMAL)
+      ? dict.get<vector>("projectDirection")
+      : Zero
+    ),
     wedgePlane_(dict.getOrDefault("wedgePlane", -1)),
-    frozenPointsZone_(dict.getOrDefault("frozenPointsZone", word::null))
+    frozenPointsZone_(dict.getOrDefault("frozenPointsZone", word::null)),
+    scalePtr_
+    (
+        PatchFunction1<scalar>::NewIfPresent
+        (
+            refCast<const facePointPatch>(p).patch(),
+            "scale",
+            dict,
+            false           // point values
+        )
+    )
 {}
 
 
@@ -332,7 +358,8 @@ surfaceSlipDisplacementPointPatchVectorField
     projectMode_(ppf.projectMode_),
     projectDir_(ppf.projectDir_),
     wedgePlane_(ppf.wedgePlane_),
-    frozenPointsZone_(ppf.frozenPointsZone_)
+    frozenPointsZone_(ppf.frozenPointsZone_),
+    scalePtr_(ppf.scalePtr_.clone(refCast<const facePointPatch>(p).patch()))
 {}
 
 
@@ -347,7 +374,14 @@ surfaceSlipDisplacementPointPatchVectorField
     projectMode_(ppf.projectMode_),
     projectDir_(ppf.projectDir_),
     wedgePlane_(ppf.wedgePlane_),
-    frozenPointsZone_(ppf.frozenPointsZone_)
+    frozenPointsZone_(ppf.frozenPointsZone_),
+    scalePtr_
+    (
+        ppf.scalePtr_.clone
+        (
+            refCast<const facePointPatch>(ppf.patch()).patch()
+        )
+    )
 {}
 
 
@@ -363,7 +397,14 @@ surfaceSlipDisplacementPointPatchVectorField
     projectMode_(ppf.projectMode_),
     projectDir_(ppf.projectDir_),
     wedgePlane_(ppf.wedgePlane_),
-    frozenPointsZone_(ppf.frozenPointsZone_)
+    frozenPointsZone_(ppf.frozenPointsZone_),
+    scalePtr_
+    (
+        ppf.scalePtr_.clone
+        (
+            refCast<const facePointPatch>(ppf.patch()).patch()
+        )
+    )
 {}
 
 
@@ -397,15 +438,29 @@ Foam::surfaceSlipDisplacementPointPatchVectorField::surfaces() const
 }
 
 
-void Foam::surfaceSlipDisplacementPointPatchVectorField::evaluate
-(
-    const Pstream::commsTypes commsType
-)
+void Foam::surfaceSlipDisplacementPointPatchVectorField::updateCoeffs()
 {
+    if (this->updated())
+    {
+        return;
+    }
+
     vectorField displacement(this->patchInternalField());
 
     // Calculate displacement to project points onto surface
     calcProjection(displacement);
+
+    if (debug)
+    {
+        Pout<< type() << " :"
+            << " on patch " << patch().name()
+            << " of field " << this->internalField().name()
+            << " projection"
+            << " min:" << gMin(displacement)
+            << " max:" << gMaxMagSqr(displacement)
+            << " average:" << gAverage(displacement)
+            << endl;
+    }
 
     // Get internal field to insert values into
     Field<vector>& iF = const_cast<Field<vector>&>(this->primitiveField());
@@ -413,7 +468,7 @@ void Foam::surfaceSlipDisplacementPointPatchVectorField::evaluate
     //setInInternalField(iF, motionU);
     setInInternalField(iF, displacement);
 
-    pointPatchVectorField::evaluate(commsType);
+    pointPatchVectorField::updateCoeffs();
 }
 
 
@@ -425,15 +480,24 @@ void Foam::surfaceSlipDisplacementPointPatchVectorField::write
     pointPatchField<vector>::write(os);
     os.writeEntry("geometry", surfacesDict_);
     os.writeEntry("projectMode", projectModeNames_[projectMode_]);
-    os.writeEntry("projectDirection", projectDir_);
-    os.writeEntry("wedgePlane", wedgePlane_);
-
+    os.writeEntryIfDifferent<vector>
+    (
+        "projectDirection",
+        Zero,
+        projectDir_
+    );
+    os.writeEntryIfDifferent<label>("wedgePlane", -1, wedgePlane_);
     os.writeEntryIfDifferent<word>
     (
         "frozenPointsZone",
         word::null,
         frozenPointsZone_
     );
+
+    if (scalePtr_)
+    {
+        scalePtr_->writeData(os);
+    }
 }
 
 

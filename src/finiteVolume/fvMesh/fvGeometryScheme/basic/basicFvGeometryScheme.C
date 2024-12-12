@@ -29,6 +29,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "surfaceFields.H"
 #include "volFields.H"
+#include "primitiveMeshTools.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -387,6 +388,38 @@ Foam::basicFvGeometryScheme::nonOrthCorrectionVectors() const
             << endl;
     }
     return tnonOrthCorrectionVectors;
+}
+
+
+bool Foam::basicFvGeometryScheme::updateGeom
+(
+    const pointField& points,
+    const refPtr<pointField>& oldPoints,
+    pointField& faceCentres,
+    vectorField& faceAreas,
+    pointField& cellCentres,
+    scalarField& cellVolumes
+) const
+{
+    primitiveMeshTools::makeFaceCentresAndAreas
+    (
+        mesh_,
+        points,
+        faceCentres,
+        faceAreas
+    );
+
+    primitiveMeshTools::makeCellCentresAndVols
+    (
+        mesh_,
+        faceCentres,
+        faceAreas,
+        cellCentres,
+        cellVolumes
+    );
+
+    // Assume something has changed
+    return true;
 }
 
 

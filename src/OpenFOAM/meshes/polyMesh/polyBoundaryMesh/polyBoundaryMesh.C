@@ -1418,6 +1418,9 @@ void Foam::polyBoundaryMesh::reorder
         patches[patchi].index() = patchi;
     }
 
+    // Clear group-to-patch addressing. Note: could re-calculate
+    groupIDsPtr_.reset(nullptr);
+
     if (validBoundary)
     {
         updateMesh();

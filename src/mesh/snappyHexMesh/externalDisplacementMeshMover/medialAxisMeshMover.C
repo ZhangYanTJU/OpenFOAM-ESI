@@ -1692,6 +1692,22 @@ void Foam::medialAxisMeshMover::calculateDisplacement
             displacement
         );
     }
+
+    if (str)
+    {
+        Info<< typeName
+            << " : Written " << returnReduce(str().nVertices(), sumOp<label>())
+            << " points with too large an extrusion distance to "
+            << str().name() << endl;
+    }
+    if (medialVecStr)
+    {
+        Info<< typeName
+            << " : Written "
+            << returnReduce(medialVecStr().nVertices(), sumOp<label>())
+            << " medial axis vectors on points with too large"
+            << " an extrusion distance to " << medialVecStr().name() << endl;
+    }
 }
 
 

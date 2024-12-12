@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,8 +49,12 @@ void Foam::symmetryPlanePolyPatch::calcGeometry(PstreamBuffers&)
     {
         if (returnReduceOr(size()))
         {
-            const vectorField& nf = faceNormals();
-            n_ = gAverage(nf);
+            // Instead of using the average unit-normal use an area weighted
+            // average instead. This avoids problem when adding zero-sized
+            // faces since these have a calculated area vector of (0 0 0)
+            const auto& areas = faceAreas();
+
+            n_ = gSum(areas).normalise(ROOTVSMALL);
 
             if (debug)
             {
@@ -60,22 +64,30 @@ void Foam::symmetryPlanePolyPatch::calcGeometry(PstreamBuffers&)
 
 
             // Check the symmetry plane is planar
-            forAll(nf, facei)
+            forAll(areas, facei)
             {
-                if (magSqr(n_ - nf[facei]) > SMALL)
+                const scalar a = mag(areas[facei]);
+
+                // Calculate only if non-zero area
+                if (a > ROOTVSMALL)
                 {
-                    FatalErrorInFunction
-                        << "Symmetry plane '" << name() << "' is not planar."
-                        << endl
-                        << "At local face at "
-                        << primitivePatch::faceCentres()[facei]
-                        << " the normal " << nf[facei]
-                        << " differs from the average normal " << n_
-                        << " by " << magSqr(n_ - nf[facei]) << endl
-                        << "Either split the patch into planar parts"
-                        << " or use the " << symmetryPolyPatch::typeName
-                        << " patch type"
-                        << exit(FatalError);
+                    const vector nf(areas[facei]/a);
+
+                    if (magSqr(n_ - nf) > SMALL)
+                    {
+                        FatalErrorInFunction
+                            << "Symmetry plane '" << name()
+                            << "' is not planar." << endl
+                            << "At local face at "
+                            << primitivePatch::faceCentres()[facei]
+                            << " the normal " << nf
+                            << " differs from the average normal " << n_
+                            << " by " << magSqr(n_ - nf) << endl
+                            << "Either split the patch into planar parts"
+                            << " or use the " << symmetryPolyPatch::typeName
+                            << " patch type"
+                            << exit(FatalError);
+                    }
                 }
             }
         }

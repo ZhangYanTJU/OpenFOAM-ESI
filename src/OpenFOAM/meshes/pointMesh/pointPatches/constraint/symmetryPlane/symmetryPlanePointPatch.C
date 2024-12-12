@@ -58,6 +58,23 @@ Foam::symmetryPlanePointPatch::symmetryPlanePointPatch
 {}
 
 
+Foam::symmetryPlanePointPatch::symmetryPlanePointPatch
+(
+    const symmetryPlanePointPatch& patch,
+    const pointBoundaryMesh& bm,
+    const label index,
+    const labelUList& mapAddressing,
+    const labelUList& reversePointMap
+)
+:
+    facePointPatch(patch, bm, index, mapAddressing, reversePointMap),
+    symmetryPlanePolyPatch_
+    (
+        refCast<const symmetryPlanePolyPatch>(patch.patch())
+    )
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::symmetryPlanePointPatch::applyConstraint

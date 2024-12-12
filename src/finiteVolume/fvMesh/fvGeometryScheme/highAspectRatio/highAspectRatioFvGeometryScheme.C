@@ -456,4 +456,46 @@ void Foam::highAspectRatioFvGeometryScheme::movePoints()
 }
 
 
+bool Foam::highAspectRatioFvGeometryScheme::updateGeom
+(
+    const pointField& points,
+    const refPtr<pointField>& oldPoints,
+    pointField& faceCentres,
+    vectorField& faceAreas,
+    pointField& cellCentres,
+    scalarField& cellVolumes
+) const
+{
+    // Basic
+    basicFvGeometryScheme::updateGeom
+    (
+        points,
+        oldPoints,
+        faceCentres,
+        faceAreas,
+        cellCentres,
+        cellVolumes
+    );
+
+    // Average opposite faces
+    pointField avgFaceCentres;
+    pointField avgCellCentres;
+    makeAverageCentres
+    (
+        mesh_,
+        points,
+        faceAreas,
+        mag(faceAreas),
+        avgFaceCentres,
+        avgCellCentres
+    );
+
+    faceCentres = std::move(avgFaceCentres);
+    cellCentres = std::move(avgCellCentres);
+
+    // Assume something has changed.
+    return true;
+}
+
+
 // ************************************************************************* //

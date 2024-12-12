@@ -55,7 +55,6 @@ void Foam::surfaceDisplacementPointPatchVectorField::calcProjection
 ) const
 {
     const polyMesh& mesh = patch().boundaryMesh().mesh()();
-    const pointField& localPoints = patch().localPoints();
     const labelList& meshPoints = patch().meshPoints();
 
     //const scalar deltaT = mesh.time().deltaTValue();
@@ -117,16 +116,19 @@ void Foam::surfaceDisplacementPointPatchVectorField::calcProjection
 
         forAll(nearest, i)
         {
-            if (zonePtr && (zonePtr->whichPoint(meshPoints[i]) >= 0))
+            const label meshPointi = meshPoints[i];
+            const point& pt = mesh.points()[meshPointi];
+
+            if (zonePtr && (zonePtr->whichPoint(meshPointi) >= 0))
             {
                 // Fixed point. Reset to point0 location.
-                displacement[i] = points0[meshPoints[i]] - localPoints[i];
+                displacement[i] = points0[meshPointi] - pt;
             }
             else if (nearest[i].hit())
             {
                 displacement[i] =
                     nearest[i].point()
-                  - points0[meshPoints[i]];
+                  - points0[meshPointi];
             }
             else
             {
@@ -134,8 +136,8 @@ void Foam::surfaceDisplacementPointPatchVectorField::calcProjection
 
                 if (debug)
                 {
-                    Pout<< "    point:" << meshPoints[i]
-                        << " coord:" << localPoints[i]
+                    Pout<< "    point:" << meshPointi
+                        << " coord:" << pt
                         << "  did not find any surface within " << projectLen
                         << endl;
                 }
@@ -207,17 +209,20 @@ void Foam::surfaceDisplacementPointPatchVectorField::calcProjection
         // 3. Choose either -fixed, nearest, right, left.
         forAll(displacement, i)
         {
-            if (zonePtr && (zonePtr->whichPoint(meshPoints[i]) >= 0))
+            const label meshPointi = meshPoints[i];
+            const point& pt = mesh.points()[meshPointi];
+
+            if (zonePtr && (zonePtr->whichPoint(meshPointi) >= 0))
             {
                 // Fixed point. Reset to point0 location.
-                displacement[i] = points0[meshPoints[i]] - localPoints[i];
+                displacement[i] = points0[meshPointi] - pt;
             }
             else if (nearest[i].hit())
             {
                 // Found nearest.
                 displacement[i] =
                     nearest[i].point()
-                  - points0[meshPoints[i]];
+                  - points0[meshPointi];
             }
             else
             {
@@ -257,7 +262,7 @@ void Foam::surfaceDisplacementPointPatchVectorField::calcProjection
                     {
                         interPt.point()[wedgePlane_] += offset[i];
                     }
-                    displacement[i] = interPt.point() - points0[meshPoints[i]];
+                    displacement[i] = interPt.point() - points0[meshPointi];
                 }
                 else
                 {
@@ -265,8 +270,8 @@ void Foam::surfaceDisplacementPointPatchVectorField::calcProjection
 
                     if (debug)
                     {
-                        Pout<< "    point:" << meshPoints[i]
-                            << " coord:" << localPoints[i]
+                        Pout<< "    point:" << meshPointi
+                            << " coord:" << pt
                             << "  did not find any intersection between"
                             << " ray from " << start[i]-projectVecs[i]
                             << " to " << start[i]+projectVecs[i] << endl;
@@ -283,7 +288,7 @@ void Foam::surfaceDisplacementPointPatchVectorField::calcProjection
         Info<< "surfaceDisplacement :"
             << " on patch " << patch().name()
             << " did not project " << nNotProjected
-            << " out of " << returnReduce(localPoints.size(), sumOp<label>())
+            << " out of " << returnReduce(meshPoints.size(), sumOp<label>())
             << " points." << endl;
     }
 }
@@ -318,7 +323,12 @@ surfaceDisplacementPointPatchVectorField
     velocity_(dict.get<vector>("velocity")),
     surfacesDict_(dict.subDict("geometry")),
     projectMode_(projectModeNames_.get("projectMode", dict)),
-    projectDir_(dict.get<vector>("projectDirection")),
+    projectDir_
+    (
+        (projectMode_ == FIXEDNORMAL)
+      ? dict.get<vector>("projectDirection")
+      : Zero
+    ),
     wedgePlane_(dict.getOrDefault("wedgePlane", -1)),
     frozenPointsZone_(dict.getOrDefault("frozenPointsZone", word::null))
 {
@@ -424,11 +434,12 @@ void Foam::surfaceDisplacementPointPatchVectorField::updateCoeffs()
 
     const polyMesh& mesh = patch().boundaryMesh().mesh()();
 
-    vectorField currentDisplacement(this->patchInternalField());
+    const vectorField currentDisplacement(this->patchInternalField());
 
     // Calculate intersections with surface w.r.t points0.
     vectorField displacement(currentDisplacement);
     calcProjection(displacement);
+
 
     // offset wrt current displacement
     vectorField offset(displacement-currentDisplacement);
@@ -442,21 +453,15 @@ void Foam::surfaceDisplacementPointPatchVectorField::updateCoeffs()
     {
         vector& d = offset[i];
 
-        for (direction cmpt = 0; cmpt < vector::nComponents; cmpt++)
+        const scalar magD(mag(d));
+        if (magD > ROOTVSMALL)
         {
-            if (d[cmpt] < 0)
-            {
-                d[cmpt] = max(d[cmpt], -clipVelocity[cmpt]);
-            }
-            else
-            {
-                d[cmpt] = min(d[cmpt], clipVelocity[cmpt]);
-            }
+            d /= magD;
+            d *= min(magD, mag(clipVelocity));
         }
     }
 
     this->operator==(currentDisplacement+offset);
-
     fixedValuePointPatchVectorField::updateCoeffs();
 }
 
@@ -467,9 +472,13 @@ void Foam::surfaceDisplacementPointPatchVectorField::write(Ostream& os) const
     os.writeEntry("velocity", velocity_);
     os.writeEntry("geometry", surfacesDict_);
     os.writeEntry("projectMode", projectModeNames_[projectMode_]);
-    os.writeEntry("projectDirection", projectDir_);
-    os.writeEntry("wedgePlane", wedgePlane_);
-
+    os.writeEntryIfDifferent<vector>
+    (
+        "projectDirection",
+        Zero,
+        projectDir_
+    );
+    os.writeEntryIfDifferent<label>("wedgePlane", -1, wedgePlane_);
     os.writeEntryIfDifferent<word>
     (
         "frozenPointsZone",

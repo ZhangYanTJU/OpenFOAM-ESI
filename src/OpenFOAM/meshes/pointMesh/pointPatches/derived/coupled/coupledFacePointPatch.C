@@ -50,4 +50,19 @@ Foam::coupledFacePointPatch::coupledFacePointPatch
 {}
 
 
+Foam::coupledFacePointPatch::coupledFacePointPatch
+(
+    const coupledFacePointPatch& patch,
+    const pointBoundaryMesh& bm,
+    const label index,
+    const labelUList& mapAddressing,
+    const labelUList& reversePointMap
+)
+:
+    facePointPatch(patch, bm, index, mapAddressing, reversePointMap),
+    coupledPointPatch(bm),
+    coupledPolyPatch_(refCast<const coupledPolyPatch>(patch.patch()))
+{}
+
+
 // ************************************************************************* //

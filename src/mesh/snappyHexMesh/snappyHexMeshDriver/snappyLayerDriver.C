@@ -1000,15 +1000,16 @@ void Foam::snappyLayerDriver::handleWarpedFaces
 
 void Foam::snappyLayerDriver::setNumLayers
 (
+    meshRefinement& meshRefiner,
     const labelList& patchToNLayers,
     const labelList& patchIDs,
     const indirectPrimitivePatch& pp,
     labelList& patchNLayers,
     List<extrudeMode>& extrudeStatus,
     label& nAddedCells
-) const
+)
 {
-    const fvMesh& mesh = meshRefiner_.mesh();
+    const fvMesh& mesh = meshRefiner.mesh();
 
     Info<< nl << "Handling points with inconsistent layer specification ..."
         << endl;
@@ -1181,7 +1182,7 @@ Foam::snappyLayerDriver::makeLayerDisplacementField
             "pointDisplacement",
             mesh.time().timeName(),
             mesh,
-                IOobject::NO_READ,
+            IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
         pMesh,
@@ -1284,6 +1285,7 @@ void Foam::snappyLayerDriver::growNoExtrusion
 
 void Foam::snappyLayerDriver::determineSidePatches
 (
+    meshRefinement& meshRefiner,
     const globalIndex& globalFaces,
     const labelListList& edgeGlobalFaces,
     const indirectPrimitivePatch& pp,
@@ -1300,7 +1302,7 @@ void Foam::snappyLayerDriver::determineSidePatches
     // mean that 2 procesors that were only edge-connected now suddenly need
     // to become face-connected i.e. have a processor patch between them.
 
-    fvMesh& mesh = meshRefiner_.mesh();
+    fvMesh& mesh = meshRefiner.mesh();
 
     // Determine edgePatchID. Any additional processor boundary gets added to
     // patchToNbrProc,nbrProcToPatch and nPatches gets set to the new number
@@ -1361,7 +1363,7 @@ void Foam::snappyLayerDriver::determineSidePatches
             //    << " between " << Pstream::myProcNo()
             //    << " and " << nbrProci << endl;
 
-            label procPatchi = meshRefiner_.appendPatch
+            label procPatchi = meshRefiner.appendPatch
             (
                 mesh,
                 mesh.boundaryMesh().size(), // new patch index
@@ -1769,14 +1771,15 @@ void Foam::snappyLayerDriver::calculateLayerThickness
 // Synchronize displacement among coupled patches.
 void Foam::snappyLayerDriver::syncPatchDisplacement
 (
+    const fvMesh& mesh,
     const indirectPrimitivePatch& pp,
     const scalarField& minThickness,
     pointField& patchDisp,
     labelList& patchNLayers,
     List<extrudeMode>& extrudeStatus
-) const
+)
 {
-    const fvMesh& mesh = meshRefiner_.mesh();
+    //const fvMesh& mesh = meshRefiner.mesh();
     const labelList& meshPoints = pp.meshPoints();
 
     //label nChangedTotal = 0;
@@ -2106,6 +2109,7 @@ void Foam::snappyLayerDriver::getPatchDisplacement
     // Make sure displacement is equal on both sides of coupled patches.
     syncPatchDisplacement
     (
+        mesh,
         pp,
         minThickness,
         patchDisp,
@@ -2300,6 +2304,7 @@ Foam::label Foam::snappyLayerDriver::truncateDisplacement
     {
         syncPatchDisplacement
         (
+            mesh,
             pp,
             minThickness,
             patchDisp,
@@ -3358,8 +3363,9 @@ bool Foam::snappyLayerDriver::writeLayerData
 }
 
 
-void Foam::snappyLayerDriver::dupFaceZonePoints
+Foam::autoPtr<Foam::mapPolyMesh> Foam::snappyLayerDriver::dupFaceZonePoints
 (
+    meshRefinement& meshRefiner,
     const labelList& patchIDs,  // patch indices
     const labelList& numLayers, // number of layers per patch
     List<labelPair> baffles,    // pairs of baffles (input & updated)
@@ -3367,7 +3373,7 @@ void Foam::snappyLayerDriver::dupFaceZonePoints
                                 // point)
 )
 {
-    fvMesh& mesh = meshRefiner_.mesh();
+    fvMesh& mesh = meshRefiner.mesh();
 
     // Check outside of baffles for non-manifoldness
 
@@ -3395,6 +3401,7 @@ void Foam::snappyLayerDriver::dupFaceZonePoints
         // Get number of layers per point from number of layers per patch
         setNumLayers
         (
+            meshRefiner,
             numLayers,              // per patch the num layers
             patchIDs,               // patches that are being moved
             *pp,                    // indirectpatch for all faces moving
@@ -3408,6 +3415,7 @@ void Foam::snappyLayerDriver::dupFaceZonePoints
         // of the patchDisp here.
         syncPatchDisplacement
         (
+            mesh,
             *pp,
             scalarField(patchDisp.size(), Zero), //minThickness,
             patchDisp,
@@ -3474,7 +3482,7 @@ void Foam::snappyLayerDriver::dupFaceZonePoints
         {
             label mpi, spi;
             surfaceZonesInfo::faceZoneType fzType;
-            bool hasInfo = meshRefiner_.getFaceZoneInfo
+            bool hasInfo = meshRefiner.getFaceZoneInfo
             (
                 mesh.faceZones()[zonei].name(),
                 mpi,
@@ -3497,7 +3505,7 @@ void Foam::snappyLayerDriver::dupFaceZonePoints
 
     const localPointRegion regionSide(mesh, nonDupBaffles, candidatePoints);
 
-    autoPtr<mapPolyMesh> map = meshRefiner_.dupNonManifoldPoints
+    autoPtr<mapPolyMesh> map = meshRefiner.dupNonManifoldPoints
     (
         regionSide
     );
@@ -3539,9 +3547,9 @@ void Foam::snappyLayerDriver::dupFaceZonePoints
         {
             const_cast<Time&>(mesh.time())++;
             Info<< "Writing point-duplicate mesh to time "
-                << meshRefiner_.timeName() << endl;
+                << meshRefiner.timeName() << endl;
 
-            meshRefiner_.write
+            meshRefiner.write
             (
                 meshRefinement::debugType(debug),
                 meshRefinement::writeType
@@ -3549,14 +3557,14 @@ void Foam::snappyLayerDriver::dupFaceZonePoints
                     meshRefinement::writeLevel()
                   | meshRefinement::WRITEMESH
                 ),
-                mesh.time().path()/meshRefiner_.timeName()
+                mesh.time().path()/meshRefiner.timeName()
             );
 
             OBJstream str
             (
                 mesh.time().path()
               / "duplicatePoints_"
-              + meshRefiner_.timeName()
+              + meshRefiner.timeName()
               + ".obj"
             );
             Info<< "Writing point-duplicates to " << str.name() << endl;
@@ -3572,6 +3580,7 @@ void Foam::snappyLayerDriver::dupFaceZonePoints
             }
         }
     }
+    return map;
 }
 
 
@@ -3721,6 +3730,7 @@ Foam::label Foam::snappyLayerDriver::setPointNumLayers
 
     setNumLayers
     (
+        meshRefiner_,
         numLayers,                  // per patch the num layers
         patchIDs,                   // patches that are being moved
         pp,                         // indirectpatch for all faces moving
@@ -4017,6 +4027,7 @@ void Foam::snappyLayerDriver::addLayers
         // that.
         syncPatchDisplacement
         (
+            mesh,
             pp,
             minThickness,
             patchDisp,
@@ -4410,12 +4421,13 @@ void Foam::snappyLayerDriver::addLayers
 
 void Foam::snappyLayerDriver::mapFaceZonePoints
 (
+    meshRefinement& meshRefiner,
     const mapPolyMesh& map,
     labelPairList& baffles,
     labelList& pointToMaster
-) const
+)
 {
-    fvMesh& mesh = meshRefiner_.mesh();
+    fvMesh& mesh = meshRefiner.mesh();
 
     // Use geometric detection of points-to-be-merged
     //  - detect any boundary face created from a duplicated face (=baffle)
@@ -4517,7 +4529,7 @@ void Foam::snappyLayerDriver::mapFaceZonePoints
         label nNew = Foam::mergePoints
         (
             UIndirectList<point>(mesh.points(), candidates),
-            meshRefiner_.mergeDistance(),
+            meshRefiner.mergeDistance(),
             false,
             oldToNew
         );
@@ -4811,6 +4823,7 @@ void Foam::snappyLayerDriver::addLayers
     labelList pointToMaster;
     dupFaceZonePoints
     (
+        meshRefiner_,
         patchIDs,  // patch indices
         numLayers, // number of layers per patch
         baffles,
@@ -4960,7 +4973,7 @@ void Foam::snappyLayerDriver::addLayers
             << "-------------------" << endl;
         if (debug)
         {
-            Info<< " Layers to add in current iteration : " << nToAdd << endl;
+            Info<< "Layers to add in current iteration : " << nToAdd << endl;
         }
         if (nToAdd == 0)
         {
@@ -4977,6 +4990,7 @@ void Foam::snappyLayerDriver::addLayers
         labelList inflateFaceID;
         determineSidePatches
         (
+            meshRefiner_,
             globalFaces,
             edgeGlobalFaces,
             *pp,
@@ -5084,7 +5098,7 @@ void Foam::snappyLayerDriver::addLayers
         const label nTotalAdded = gSum(patchNLayers);
         if (debug)
         {
-            Info<< nl << " Added in current iteration : " << nTotalAdded
+            Info<< nl << "Added in current iteration : " << nTotalAdded
                 << " out of : " << gSum(deltaNLayers) << endl;
         }
         if (nTotalAdded == 0)
@@ -5225,7 +5239,7 @@ void Foam::snappyLayerDriver::addLayers
 
 
             // Map baffles, pointToMaster
-            mapFaceZonePoints(map, baffles, pointToMaster);
+            mapFaceZonePoints(meshRefiner_, map, baffles, pointToMaster);
 
             // Map patch and layer settings
             labelList newToOldPatchPoints;
@@ -5325,6 +5339,7 @@ void Foam::snappyLayerDriver::addLayers
         (
             false,
             false,
+            labelList::null(),
             scalarField(mesh.nCells(), 1.0),
             decomposer,
             distributor
@@ -5607,6 +5622,7 @@ void Foam::snappyLayerDriver::doLayers
                 (
                     true,           // keepZoneFaces
                     false,
+                    labelList::null(),
                     cellWeights,
                     decomposer,
                     distributor

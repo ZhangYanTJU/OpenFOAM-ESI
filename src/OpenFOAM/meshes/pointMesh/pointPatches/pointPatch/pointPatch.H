@@ -38,6 +38,7 @@ SourceFiles
 #ifndef Foam_pointPatch_H
 #define Foam_pointPatch_H
 
+#include "patchIdentifier.H"
 #include "labelList.H"
 #include "vectorField.H"
 #include "pointField.H"
@@ -54,6 +55,8 @@ class pointConstraint;
 class pointPatch;
 class PstreamBuffers;
 
+Ostream& operator<<(Ostream&, const pointPatch&);
+
 //- Store lists of pointPatch as a PtrList
 typedef PtrList<pointPatch> pointPatchList;
 
@@ -62,6 +65,8 @@ typedef PtrList<pointPatch> pointPatchList;
 \*---------------------------------------------------------------------------*/
 
 class pointPatch
+:
+    public patchIdentifier
 {
     // Private Data
 
@@ -114,13 +119,89 @@ public:
     TypeName("basePatch");
 
 
+    // Declare run-time constructor selection tables
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            pointPatch,
+            dictionary,
+            (
+                const word& name,
+                const dictionary& dict,
+                const label index,
+                const pointBoundaryMesh& bm,
+                const word& patchType
+            ),
+            (name, dict, index, bm, patchType)
+        );
+
+
     // Constructor
 
-        //- Construct from boundary mesh
-        explicit pointPatch(const pointBoundaryMesh& bm)
+        //- Construct from components
+        explicit pointPatch
+        (
+            const word& name,
+            const label index,
+            const pointBoundaryMesh& bm,
+            const word& physicalType,
+            const wordList& inGroups
+        )
         :
+            patchIdentifier(name, index, physicalType, inGroups),
             boundaryMesh_(bm)
         {}
+
+        //- Construct from dictionary
+        explicit pointPatch
+        (
+            const word& name,
+            const dictionary& dict,
+            const label index,
+            const pointBoundaryMesh& bm
+        )
+        :
+            patchIdentifier(name, dict, index),
+            boundaryMesh_(bm)
+        {}
+
+        //- Construct given the original patch and a map
+        explicit pointPatch
+        (
+            const pointPatch& pp,
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        )
+        :
+            patchIdentifier(pp.name(), index, pp.physicalType(), pp.inGroups()),
+            boundaryMesh_(bm)
+        {}
+
+        //- Construct and return a subset clone,
+        //- resetting the point list and boundary mesh
+        virtual autoPtr<pointPatch> clone
+        (
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        ) const = 0;
+
+
+    // Selectors
+
+        //- Return a pointer to a new patch created on freestore. Returns
+        //- null if not found
+        static autoPtr<pointPatch> New
+        (
+            const word& name,
+            const dictionary& dict,
+            const label index,
+            const pointBoundaryMesh&
+        );
 
 
     //- Destructor
@@ -129,14 +210,8 @@ public:
 
     // Member Functions
 
-        //- Return name
-        virtual const word& name() const = 0;
-
         //- Return size
         virtual label size() const = 0;
-
-        //- Return the index of this patch in the pointBoundaryMesh
-        virtual label index() const = 0;
 
         //- Return boundaryMesh reference
         const pointBoundaryMesh& boundaryMesh() const
@@ -172,6 +247,14 @@ public:
             pointConstraint&
         ) const
         {}
+
+        //- Write the pointPatch data as a dictionary
+        virtual void write(Ostream&) const;
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<<(Ostream&, const pointPatch&);
 };
 
 
