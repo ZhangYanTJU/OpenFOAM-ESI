@@ -9,7 +9,7 @@ rm -rf constant/extendedFeatureEdgeMesh
 
 #- From pointMesh generation
 rm -rf constant/pointMesh
-rm -f constant/triSurface/blockMesh.obj
+rm -rf constant/triSurface
 
 #- From surfaceFeatureExtract
 rm -f constant/triSurface/box222.eMesh

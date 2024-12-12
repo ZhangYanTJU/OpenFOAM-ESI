@@ -6,6 +6,7 @@ cd "${0%/*}" || exit                                # Run from this directory
 #- Generate mesh
 runApplication blockMesh
 
+mkdir -p constant/triSurface
 runApplication surfaceMeshExtract \
     -featureAngle 45 \
     -patches '(minX maxY)' \
