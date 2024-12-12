@@ -157,7 +157,10 @@ Foam::error::error(const error& err)
     throwing_(err.throwing_),
     messageStreamPtr_(nullptr)
 {
-    if (err.messageStreamPtr_ && (err.messageStreamPtr_->count() > 0))
+    // FIXME: OStringStream copy construct does not adjust tellp and
+    // thus the count is wrong! (#3281)
+    // // if (err.messageStreamPtr_ && (err.messageStreamPtr_->count() > 0))
+    if (err.messageStreamPtr_)
     {
         messageStreamPtr_.reset(new OStringStream(*err.messageStreamPtr_));
     }
