@@ -34,50 +34,38 @@ License
 template<class T, class BaseType>
 bool Foam::CompactIOField<T, BaseType>::readIOcontents(bool readOnProc)
 {
-    if (readOpt() == IOobject::MUST_READ)
+    if (isReadRequired() || (isReadOptional() && headerOk()))
     {
-        // Reading
-    }
-    else if (isReadOptional())
-    {
-        if (!headerOk())
-        {
-            readOnProc = false;
-        }
-    }
-    else
-    {
-        return false;
-    }
+        // Do reading
+        Istream& is = readStream(word::null, readOnProc);
 
+        if (readOnProc)
+        {
+            if (headerClassName() == IOField<T>::typeName)
+            {
+                is >> static_cast<Field<T>&>(*this);
+                close();
+            }
+            else if (headerClassName() == typeName)
+            {
+                is >> *this;
+                close();
+            }
+            else
+            {
+                FatalIOErrorInFunction(is)
+                    << "Unexpected class name " << headerClassName()
+                    << " expected " << typeName
+                    << " or " << IOField<T>::typeName << nl
+                    << "    while reading object " << name()
+                    << exit(FatalIOError);
+            }
+        }
 
-    // Do reading
-    Istream& is = readStream(word::null, readOnProc);
-
-    if (readOnProc)
-    {
-        if (headerClassName() == IOField<T>::typeName)
-        {
-            is >> static_cast<Field<T>&>(*this);
-            close();
-        }
-        else if (headerClassName() == typeName)
-        {
-            is >> *this;
-            close();
-        }
-        else
-        {
-            FatalIOErrorInFunction(is)
-                << "Unexpected class name " << headerClassName()
-                << " expected " << typeName
-                << " or " << IOField<T>::typeName << nl
-                << "    while reading object " << name()
-                << exit(FatalIOError);
-        }
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 

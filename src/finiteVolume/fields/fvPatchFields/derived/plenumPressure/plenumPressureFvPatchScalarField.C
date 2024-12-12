@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -75,12 +75,15 @@ Foam::plenumPressureFvPatchScalarField::plenumPressureFvPatchScalarField
     supplyTotalTemperature_(dict.get<scalar>("supplyTotalTemperature")),
     plenumVolume_(dict.get<scalar>("plenumVolume")),
     plenumDensity_(dict.get<scalar>("plenumDensity")),
+    plenumDensityOld_(1.0),
     plenumTemperature_(dict.get<scalar>("plenumTemperature")),
+    plenumTemperatureOld_(300.0),
     rho_(1.0),
     hasRho_(false),
     inletAreaRatio_(dict.get<scalar>("inletAreaRatio")),
     inletDischargeCoefficient_(dict.get<scalar>("inletDischargeCoefficient")),
     timeScale_(dict.getOrDefault<scalar>("timeScale", 0)),
+    timeIndex_(-1),
     phiName_(dict.getOrDefault<word>("phi", "phi")),
     UName_(dict.getOrDefault<word>("U", "U"))
 {
@@ -103,12 +106,15 @@ Foam::plenumPressureFvPatchScalarField::plenumPressureFvPatchScalarField
     supplyTotalTemperature_(ptf.supplyTotalTemperature_),
     plenumVolume_(ptf.plenumVolume_),
     plenumDensity_(ptf.plenumDensity_),
+    plenumDensityOld_(ptf.plenumDensityOld_),
     plenumTemperature_(ptf.plenumTemperature_),
+    plenumTemperatureOld_(ptf.plenumTemperatureOld_),
     rho_(ptf.rho_),
     hasRho_(ptf.hasRho_),
     inletAreaRatio_(ptf.inletAreaRatio_),
     inletDischargeCoefficient_(ptf.inletDischargeCoefficient_),
     timeScale_(ptf.timeScale_),
+    timeIndex_(ptf.timeIndex_),
     phiName_(ptf.phiName_),
     UName_(ptf.UName_)
 {}
@@ -126,12 +132,15 @@ Foam::plenumPressureFvPatchScalarField::plenumPressureFvPatchScalarField
     supplyTotalTemperature_(tppsf.supplyTotalTemperature_),
     plenumVolume_(tppsf.plenumVolume_),
     plenumDensity_(tppsf.plenumDensity_),
+    plenumDensityOld_(tppsf.plenumDensityOld_),
     plenumTemperature_(tppsf.plenumTemperature_),
+    plenumTemperatureOld_(tppsf.plenumTemperatureOld_),
     rho_(tppsf.rho_),
     hasRho_(tppsf.hasRho_),
     inletAreaRatio_(tppsf.inletAreaRatio_),
     inletDischargeCoefficient_(tppsf.inletDischargeCoefficient_),
     timeScale_(tppsf.timeScale_),
+    timeIndex_(tppsf.timeIndex_),
     phiName_(tppsf.phiName_),
     UName_(tppsf.UName_)
 {}
@@ -150,12 +159,15 @@ Foam::plenumPressureFvPatchScalarField::plenumPressureFvPatchScalarField
     supplyTotalTemperature_(tppsf.supplyTotalTemperature_),
     plenumVolume_(tppsf.plenumVolume_),
     plenumDensity_(tppsf.plenumDensity_),
+    plenumDensityOld_(tppsf.plenumDensityOld_),
     plenumTemperature_(tppsf.plenumTemperature_),
+    plenumTemperatureOld_(tppsf.plenumTemperatureOld_),
     rho_(tppsf.rho_),
     hasRho_(tppsf.hasRho_),
     inletAreaRatio_(tppsf.inletAreaRatio_),
     inletDischargeCoefficient_(tppsf.inletDischargeCoefficient_),
     timeScale_(tppsf.timeScale_),
+    timeIndex_(tppsf.timeIndex_),
     phiName_(tppsf.phiName_),
     UName_(tppsf.UName_)
 {}
