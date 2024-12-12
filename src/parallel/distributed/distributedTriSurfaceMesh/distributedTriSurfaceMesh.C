@@ -3134,8 +3134,9 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh(const IOobject& io)
 
     bounds().reduce();
 
-    if (readFromMaster)
+    if (readFromMaster && !decomposeUsingBbs_)
     {
+        // No fill-in so store normals
         DebugInFunction
             << "Determining vertex based normals since undecomposed" << endl;
         const triSurface& surf = *this;
@@ -3258,8 +3259,9 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh
 
     bounds().reduce();
 
-    if (readFromMaster)
+    if (readFromMaster && !decomposeUsingBbs_)
     {
+        // No fill-in so store enough normals to calculate
         DebugInFunction
             << "Determining vertex based normals since undecomposed" << endl;
         const triSurface& surf = *this;
