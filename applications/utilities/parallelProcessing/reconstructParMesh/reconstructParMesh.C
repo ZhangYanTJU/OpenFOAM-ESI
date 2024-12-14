@@ -788,7 +788,7 @@ int main(int argc, char *argv[])
     const bool fullMatch = args.found("fullMatch");
     const bool procMatch = args.found("procMatch");
     const bool writeCellDist = args.found("cellDist");
-    const bool doFiniteArea = !args.found("no-finite-area");
+    bool doFiniteArea = !args.found("no-finite-area");
     const bool writeAddrOnly = args.found("addressing-only");
 
     const scalar mergeTol =
@@ -1465,6 +1465,15 @@ int main(int argc, char *argv[])
 
 
             // Finite-area mapping
+            doFiniteArea = false;
+            forAll(procFaMeshes, proci)
+            {
+                if (procFaMeshes.set(proci))
+                {
+                    doFiniteArea = true;
+                }
+            }
+
             if (doFiniteArea)
             {
                 // Addressing from processor to reconstructed case
