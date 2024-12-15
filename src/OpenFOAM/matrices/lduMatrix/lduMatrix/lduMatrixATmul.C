@@ -91,9 +91,7 @@ void Foam::lduMatrix::Amul
 
         for (label cell=0; cell<nCells; cell++)
         {
-            scalar& val = ApsiPtr[cell];
-
-            //Pout<< "cell:" << cell << endl;
+            auto& val = ApsiPtr[cell];
 
             val = diagPtr[cell]*psiPtr[cell];
 
@@ -105,8 +103,6 @@ void Foam::lduMatrix::Amul
                 for (label i = start; i < end; i++)
                 {
                     const label nbrCell = lcsrPtr[i];
-                    //Pout<< "    adding from " << nbrCell
-                    //    << " coeff:" << lowercsrPtr[i] << endl;
                     val += lowercsrPtr[i]*psiPtr[nbrCell];
                 }
             }
@@ -118,12 +114,9 @@ void Foam::lduMatrix::Amul
                 for (label i = start; i < end; i++)
                 {
                     const label nbrCell = uPtr[i];
-                    //Pout<< "    adding from " << nbrCell
-                    //    << " coeff:" << upperPtr[i] << endl;
                     val += upperPtr[i]*psiPtr[nbrCell];
                 }
             }
-            //Pout<< "cell:" << cell << " val after:" << val << endl;
         }
     }
     else
