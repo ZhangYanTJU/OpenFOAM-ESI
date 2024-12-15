@@ -9,6 +9,15 @@ areaWrite/areaWrite.C
 ensightWrite/ensightWrite.C
 ensightWrite/ensightWriteUpdate.C
 
+foamReport/foamReport.C
+foamReport/substitutionModels/substitutionModel/substitutionModel.C
+foamReport/substitutionModels/substitutionModel/substitutionModelNew.C
+foamReport/substitutionModels/dictionaryValue/dictionaryValue.C
+foamReport/substitutionModels/functionObjectValue/functionObjectValue.C
+foamReport/substitutionModels/fileRegEx/fileRegEx.C
+foamReport/substitutionModels/environmentVariable/environmentVariable.C
+foamReport/substitutionModels/userValue/userValue.C
+
 graphFunctionObject/graphFunctionObject.C
 
 vtkWrite/vtkWrite.C
