@@ -9,6 +9,8 @@ areaWrite/areaWrite.C
 ensightWrite/ensightWrite.C
 ensightWrite/ensightWriteUpdate.C
 
+graphFunctionObject/graphFunctionObject.C
+
 vtkWrite/vtkWrite.C
 vtkWrite/vtkWriteUpdate.C
 
