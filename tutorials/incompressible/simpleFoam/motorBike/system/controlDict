@@ -51,6 +51,9 @@ functions
     #include "cuttingPlane"
     #include "forceCoeffs"
     #include "ensightWrite"
+
+    #include "solverInfo"
+    #include "graphFunctionObject"
 }
 
 
