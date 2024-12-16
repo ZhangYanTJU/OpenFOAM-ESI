@@ -14,6 +14,8 @@ EXE_LIBS = \
     -lfvOptions \
     -lmeshTools \
     -lsampling \
+    -ldynamicMesh \
+    -ldynamicFvMesh \
     -lturbulenceModels \
     -lincompressibleTurbulenceModels \
     -lincompressibleTransportModels \
