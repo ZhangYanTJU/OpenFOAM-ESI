@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -119,7 +119,13 @@ typedef std::vector<Triangle>::iterator Iterator;
 typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
 typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
 typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
+
+// Used boost::optional prior to CGAL-6.0
+#if (CGAL_VERSION_NR < 1060000910)
 typedef boost::optional
+#else
+typedef std::optional
+#endif
 <
     Tree::Intersection_and_primitive_id<Segment>::Type
 > Segment_intersection;
