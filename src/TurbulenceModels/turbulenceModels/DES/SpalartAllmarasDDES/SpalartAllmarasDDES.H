@@ -6,8 +6,8 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2022 Upstream CFD GmbH
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2022, 2024 Upstream CFD GmbH
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,6 +45,15 @@ Description
         DOI:10.1007/s00162-006-0015-0
     \endverbatim
 
+    Reference for enhanced shielding function formulation:
+    \verbatim
+        Deck, S., Renard, N. (2020).
+        Towards an enhanced protection of attached boundary layers in hybrid
+        RANS/LES methods.
+        Journal of Computational Physics, 400, 108970.
+        DOI:10.1016/j.jcp.2019.108970
+    \endverbatim
+
 SourceFiles
     SpalartAllmarasDDES.C
 
@@ -54,6 +63,7 @@ SourceFiles
 #define Foam_SpalartAllmarasDDES_H
 
 #include "SpalartAllmarasBase.H"
+#include "Enum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -71,6 +81,23 @@ class SpalartAllmarasDDES
 :
     public SpalartAllmarasDES<BasicTurbulenceModel>
 {
+public:
+
+    // Public enumerations
+
+        //- Shielding modes
+        enum class shieldingMode
+        {
+            standard,
+            ZDES2020
+        };
+
+        //- Shielding mode names
+        static const Enum<shieldingMode> shieldingModeNames;
+
+
+private:
+
     // Private Member Functions
 
         //- Return the shielding function
@@ -87,10 +114,17 @@ protected:
 
     // Protected Data
 
+        //- Shielding mode
+        shieldingMode shielding_;
+
         // Model coefficients
 
             dimensionedScalar Cd1_;
             dimensionedScalar Cd2_;
+            dimensionedScalar Cd3_;
+            dimensionedScalar Cd4_;
+            dimensionedScalar betaZDES_;
+            Switch usefP2_;
 
 
     // Protected Member Functions
