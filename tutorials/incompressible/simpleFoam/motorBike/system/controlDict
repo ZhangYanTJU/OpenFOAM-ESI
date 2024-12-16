@@ -54,6 +54,7 @@ functions
 
     #include "solverInfo"
     #include "graphFunctionObject"
+    #include "foamReport"
 }
 
 
