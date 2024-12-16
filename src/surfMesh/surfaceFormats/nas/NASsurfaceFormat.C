@@ -183,8 +183,6 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
 
     while (is.good())
     {
-        // Parsing position within current line
-        std::string::size_type linei = 0;
         is.getLine(line);
 
         if (NASCore::debug > 1) Info<< "Process: " << line << nl;
@@ -320,16 +318,30 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
             }
         }
 
+
+        // Parsing position within current line
+        std::string::size_type linei = 0;
+
+        // Is free format if line contains a comma
+        const bool freeFormat = line.contains(',');
+
         // First word (column 0-8)
         const word cmd(word::validate(nextNasField(line, linei, 8)));
 
         if (cmd == "CTRIA3")
         {
-            label elemId = readLabel(nextNasField(line, linei, 8)); // 8-16
-            label groupId = readLabel(nextNasField(line, linei, 8)); // 16-24
-            const auto a = readLabel(nextNasField(line, linei, 8)); // 24-32
-            const auto b = readLabel(nextNasField(line, linei, 8)); // 32-40
-            const auto c = readLabel(nextNasField(line, linei, 8)); // 40-48
+            // Fixed format:
+            //  8-16 : element id
+            // 16-24 : group id
+            // 24-32 : vertex
+            // 32-40 : vertex
+            // 40-48 : vertex
+
+            label elemId = readLabel(nextNasField(line, linei, 8, freeFormat));
+            label groupId = readLabel(nextNasField(line, linei, 8, freeFormat));
+            const auto a = readLabel(nextNasField(line, linei, 8, freeFormat));
+            const auto b = readLabel(nextNasField(line, linei, 8, freeFormat));
+            const auto c = readLabel(nextNasField(line, linei, 8, freeFormat));
 
             // Convert groupId into zoneId
             const auto iterZone = zoneLookup.cfind(groupId);
@@ -358,12 +370,20 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
         }
         else if (cmd == "CQUAD4")
         {
-            label elemId = readLabel(nextNasField(line, linei, 8)); // 8-16
-            label groupId = readLabel(nextNasField(line, linei, 8)); // 16-24
-            const auto a = readLabel(nextNasField(line, linei, 8)); // 24-32
-            const auto b = readLabel(nextNasField(line, linei, 8)); // 32-40
-            const auto c = readLabel(nextNasField(line, linei, 8)); // 40-48
-            const auto d = readLabel(nextNasField(line, linei, 8)); // 48-56
+            // Fixed format:
+            //  8-16 : element id
+            // 16-24 : group id
+            // 24-32 : vertex
+            // 32-40 : vertex
+            // 40-48 : vertex
+            // 48-56 : vertex
+
+            label elemId = readLabel(nextNasField(line, linei, 8, freeFormat));
+            label groupId = readLabel(nextNasField(line, linei, 8, freeFormat));
+            const auto a = readLabel(nextNasField(line, linei, 8, freeFormat));
+            const auto b = readLabel(nextNasField(line, linei, 8, freeFormat));
+            const auto c = readLabel(nextNasField(line, linei, 8, freeFormat));
+            const auto d = readLabel(nextNasField(line, linei, 8, freeFormat));
 
             // Convert groupId into zoneId
             const auto iterZone = zoneLookup.cfind(groupId);
@@ -407,11 +427,21 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
         }
         else if (cmd == "GRID")
         {
-            label index = readLabel(nextNasField(line, linei, 8)); // 8-16
-            (void) nextNasField(line, linei, 8); // 16-24
-            scalar x = readNasScalar(nextNasField(line, linei, 8)); // 24-32
-            scalar y = readNasScalar(nextNasField(line, linei, 8)); // 32-40
-            scalar z = readNasScalar(nextNasField(line, linei, 8)); // 40-48
+            // Fixed (short) format:
+            //  8-16 : point id
+            // 16-24 : coordinate system (not supported)
+            // 24-32 : point x coordinate
+            // 32-40 : point y coordinate
+            // 40-48 : point z coordinate
+            // 48-56 : displacement coordinate system (optional, unsupported)
+            // 56-64 : single point constraints (optional, unsupported)
+            // 64-70 : super-element id (optional, unsupported)
+
+            label index = readLabel(nextNasField(line, linei, 8, freeFormat));
+            (void) nextNasField(line, linei, 8, freeFormat);
+            scalar x = readNasScalar(nextNasField(line, linei, 8, freeFormat));
+            scalar y = readNasScalar(nextNasField(line, linei, 8, freeFormat));
+            scalar z = readNasScalar(nextNasField(line, linei, 8, freeFormat));
 
             pointId.push_back(index);
             dynPoints.emplace_back(x, y, z);
@@ -423,6 +453,8 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
             // Typical line (spaces compacted)
             // GRID*      126   0 -5.55999875E+02 -5.68730474E+02
             // *         2.14897901E+02
+
+            // Cannot be long format and free format at the same time!
 
             label index = readLabel(nextNasField(line, linei, 16)); // 8-24
             (void) nextNasField(line, linei, 16); // 24-40
@@ -453,7 +485,10 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
             // have the 'weird' format where the immediately preceeding
             // comment contains the information.
 
-            label groupId = readLabel(nextNasField(line, linei, 8)); // 8-16
+            // Fixed format:
+            //  8-16 : pshell id
+
+            label groupId = readLabel(nextNasField(line, linei, 8, freeFormat));
 
             if (lastComment.size() > 1 && !nameLookup.contains(groupId))
             {

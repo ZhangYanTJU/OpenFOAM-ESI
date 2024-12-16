@@ -84,7 +84,7 @@ protected:
 
         //- Old objective value
         //  Used for convergence checking
-        scalar objectiveValueOld_;
+        autoPtr<scalar> objectiveValueOld_;
 
         //- Constraint values
         scalarField cValues_;
@@ -239,7 +239,7 @@ public:
         scalar getObjectiveValue() const;
 
         //- Get old objective value
-        scalar getObjectiveValueOld() const;
+        const autoPtr<scalar>& getObjectiveValueOld() const;
 
         //- Get values of constraints
         const scalarField& getConstraintValues() const;
