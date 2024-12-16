@@ -762,6 +762,9 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
             pointBoundaryMesh& procBoundary =
                 const_cast<pointBoundaryMesh&>(procPointMesh.boundary());
 
+            // Keep track if it differs from the polyBoundaryMesh since then
+            // we need to write the boundary file.
+            bool differsFromPoly = false;
 
             // 2. Explicitly add subsetted meshPointPatches
             forAll(pMeshBoundary, patchi)
@@ -796,6 +799,7 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
                             meshPointPatch::typeName
                         )
                     );
+                    differsFromPoly = true;
                 }
             }
 
@@ -807,6 +811,12 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
                 if (!isA<processorPointPatch>(procBoundary[patchi]))
                 {
                     oldToNew[patchi] = newPatchi;
+
+                    if (newPatchi != patchi)
+                    {
+                        differsFromPoly = true;
+                    }
+
                     newPatchi++;
                 }
             }
@@ -824,21 +834,25 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
             }
             procBoundary.reorder(oldToNew, true);
 
-            // Write pointMesh/boundary
-            procBoundary.write();
 
-            // Write pointMesh/boundaryProcAddressing
-            IOobject ioAddr
-            (
-                "boundaryProcAddressing",
-                procMesh.facesInstance(),
-                polyMesh::meshSubDir/pointMesh::meshSubDir,
-                procPointMesh.thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            );
-            IOListRef<label>(ioAddr, boundaryProcAddressing).write();
+            if (differsFromPoly)
+            {
+                // Write pointMesh/boundary
+                procBoundary.write();
+
+                // Write pointMesh/boundaryProcAddressing
+                IOobject ioAddr
+                (
+                    "boundaryProcAddressing",
+                    procMesh.facesInstance(),
+                    polyMesh::meshSubDir/pointMesh::meshSubDir,
+                    procPointMesh.thisDb(),
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
+                );
+                IOListRef<label>(ioAddr, boundaryProcAddressing).write();
+            }
         }
 
         // Write points if pointsInstance differing from facesInstance
