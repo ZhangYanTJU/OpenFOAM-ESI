@@ -58,6 +58,7 @@ Foam::functionObjects::writeObjects::writeOptionNames_
     { writeOption::NO_WRITE, "noWrite" },
     { writeOption::AUTO_WRITE, "autoWrite" },
     { writeOption::ANY_WRITE, "anyWrite" },
+    { writeOption::LOG, "log" },
 });
 
 const Foam::objectRegistry& setRegistry
@@ -99,7 +100,10 @@ Foam::functionObjects::writeObjects::writeObjects
 
 bool Foam::functionObjects::writeObjects::read(const dictionary& dict)
 {
-    functionObject::read(dict);
+    if (!functionObject::read(dict))
+    {
+        return false;
+    }
 
     if (dict.found("field"))
     {
@@ -134,6 +138,31 @@ bool Foam::functionObjects::writeObjects::execute()
 
 bool Foam::functionObjects::writeObjects::write()
 {
+    if (writeOption_ == writeOption::LOG)
+    {
+        const auto& classes = obr_.classes();
+
+        Log << "Registered objects:\n";
+
+        forAllConstIters(classes, classInfo)
+        {
+            const word& className = classInfo.key();
+            const wordHashSet& objectSet = classInfo();
+
+            Log << "    " << className << ":\n";
+
+            for (const auto& objectName : objectSet)
+            {
+                Log << "        " << objectName << "\n";
+            }
+            Log << nl;
+        }
+
+        Log << endl;
+
+        return true;
+    }
+
     Log << type() << " " << name() << " write:" << nl;
 
     if (!obr_.time().writeTime())
