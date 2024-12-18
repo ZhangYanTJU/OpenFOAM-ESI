@@ -71,16 +71,6 @@ Foam::basicSymmetryFaPatchField<Type>::basicSymmetryFaPatchField
 template<class Type>
 Foam::basicSymmetryFaPatchField<Type>::basicSymmetryFaPatchField
 (
-    const basicSymmetryFaPatchField<Type>& ptf
-)
-:
-    transformFaPatchField<Type>(ptf)
-{}
-
-
-template<class Type>
-Foam::basicSymmetryFaPatchField<Type>::basicSymmetryFaPatchField
-(
     const basicSymmetryFaPatchField<Type>& ptf,
     const DimensionedField<Type, areaMesh>& iF
 )

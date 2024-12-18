@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSymmetryFaPatchField_H
-#define basicSymmetryFaPatchField_H
+#ifndef Foam_basicSymmetryFaPatchField_H
+#define Foam_basicSymmetryFaPatchField_H
 
 #include "transformFaPatchField.H"
 #include "symmetryFaPatch.H"
@@ -58,7 +58,6 @@ class basicSymmetryFaPatchField
 :
     public transformFaPatchField<Type>
 {
-
 public:
 
     // Constructors
@@ -89,11 +88,11 @@ public:
             const faPatchFieldMapper&
         );
 
-        //- Construct as copy
+        //- Default copy construct
         basicSymmetryFaPatchField
         (
             const basicSymmetryFaPatchField<Type>&
-        );
+        ) = default;
 
         //- Construct as copy setting internal field reference
         basicSymmetryFaPatchField

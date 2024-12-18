@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSymmetryFvPatchField_H
-#define basicSymmetryFvPatchField_H
+#ifndef Foam_basicSymmetryFvPatchField_H
+#define Foam_basicSymmetryFvPatchField_H
 
 #include "transformFvPatchField.H"
 #include "symmetryFvPatch.H"
@@ -88,11 +88,11 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Construct as copy
+        //- Default copy construct
         basicSymmetryFvPatchField
         (
             const basicSymmetryFvPatchField<Type>&
-        );
+        ) = default;
 
         //- Construct as copy setting internal field reference
         basicSymmetryFvPatchField
