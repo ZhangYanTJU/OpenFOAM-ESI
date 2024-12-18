@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,8 +25,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fanFvPatchFields_H
-#define fanFvPatchFields_H
+#ifndef foam_fanFvPatchFields_H
+#define foam_fanFvPatchFields_H
 
 #include "fanFvPatchField.H"
 #include "fieldTypes.H"
