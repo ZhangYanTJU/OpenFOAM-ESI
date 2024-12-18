@@ -308,13 +308,30 @@ bool Foam::functionObjects::fieldAverage::read(const dictionary& dict)
     dict.readIfPresent("restartOnRestart", restartOnRestart_);
     dict.readIfPresent("restartOnOutput",  restartOnOutput_);
     dict.readIfPresent("periodicRestart",  periodicRestart_);
-    dict.readEntry("fields", faItems_);
 
-    for (auto& item : faItems_)
+    List<fieldAverageItem> faItems0;
+    dict.readEntry("fields", faItems0);
+
+    DynamicList<fieldAverageItem> faItems(faItems0.size());
+
+    wordHashSet names;
+    for (auto& item : faItems0)
     {
-        item.setMeanFieldName(scopedName(item.meanFieldName()));
-        item.setPrime2MeanFieldName(scopedName(item.prime2MeanFieldName()));
+        if (names.insert(item.fieldName()))
+        {
+            item.setMeanFieldName(scopedName(item.meanFieldName()));
+            item.setPrime2MeanFieldName(scopedName(item.prime2MeanFieldName()));
+            faItems.push_back(item);
+        }
+        else
+        {
+            WarningInFunction
+                << "Duplicate entry found: " << item.fieldName()
+                << " (ignored)" << endl;
+        }
     }
+
+    faItems_.transfer(faItems);
 
     const scalar currentTime = obr().time().value();
 

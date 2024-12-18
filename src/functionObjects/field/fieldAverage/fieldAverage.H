@@ -233,19 +233,19 @@ protected:
 
             //- Add mean average field to database
             template<class Type>
-            void addMeanFieldType(fieldAverageItem& item);
+            bool addMeanFieldType(fieldAverageItem& item);
 
             //- Add mean average field to database
             template<class Type>
-            void addMeanField(fieldAverageItem& item);
+            bool addMeanField(fieldAverageItem& item);
 
             //- Add prime-squared average field to database
             template<class Type1, class Type2>
-            void addPrime2MeanFieldType(fieldAverageItem& item);
+            bool addPrime2MeanFieldType(fieldAverageItem& item);
 
             //- Add prime-squared average field to database
             template<class Type1, class Type2>
-            void addPrime2MeanField(fieldAverageItem& item);
+            bool addPrime2MeanField(fieldAverageItem& item);
 
 
         // Calculation functions
@@ -263,20 +263,20 @@ protected:
 
             //- Add mean-squared field value to prime-squared mean field
             template<class Type1, class Type2>
-            void addMeanSqrToPrime2MeanType(const fieldAverageItem& item) const;
+            bool addMeanSqrToPrime2MeanType(const fieldAverageItem& item) const;
 
             //- Add mean-squared field value to prime-squared mean field
             template<class Type1, class Type2>
             void addMeanSqrToPrime2Mean() const;
 
             template<class Type>
-            void storeWindowFieldType(fieldAverageItem& item);
+            bool storeWindowFieldType(fieldAverageItem& item);
 
             template<class Type>
             void storeWindowFields();
 
             template<class Type>
-            void restoreWindowFieldsType(const fieldAverageItem& item);
+            bool restoreWindowFieldsType(const fieldAverageItem& item);
 
             template<class Type>
             void restoreWindowFields(const fieldAverageItem& item);
@@ -288,7 +288,7 @@ protected:
 
             //- Write fields
             template<class Type>
-            void writeFieldType(const word& fieldName) const;
+            bool writeFieldType(const word& fieldName) const;
 
             //- Write fields
             template<class Type>
