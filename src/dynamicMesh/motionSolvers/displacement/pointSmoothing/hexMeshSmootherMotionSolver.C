@@ -528,7 +528,7 @@ void Foam::hexMeshSmootherMotionSolver::laplaceSmooth
         mesh(),
         n,
         plusEqOp<label>(),
-        0
+        label(0)
     );
     syncTools::syncPointList
     (
@@ -613,7 +613,7 @@ void Foam::hexMeshSmootherMotionSolver::featLaplaceSmooth
         meshPoints,
         n,
         plusEqOp<label>(),
-        0
+        label(0)
     );
     syncTools::syncPointList
     (
@@ -843,7 +843,7 @@ hexMeshSmootherMotionSolver
         mesh,
         pointTypes_,
         maxEqOp<label>(),
-        0
+        label(0)
     );
 
     bitSet isVal;
@@ -973,7 +973,7 @@ hexMeshSmootherMotionSolver
         mesh,
         pointTypes_,
         maxEqOp<label>(),
-        0
+        label(0)
     );
 
     bitSet isVal;
