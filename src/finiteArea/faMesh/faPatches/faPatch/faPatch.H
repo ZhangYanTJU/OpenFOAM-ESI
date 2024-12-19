@@ -413,13 +413,23 @@ public:
             //- Return patch weighting factors
             const scalarField& weights() const;
 
+            //- Make patch geodesic distance between P and N
+            virtual void makeLPN(scalarField&) const;
+
+            //- Return patch geodesic distance between P and N
+            const scalarField& lPN() const;
+
             //- Make patch edge - neighbour face distances
             virtual void makeDeltaCoeffs(scalarField&) const;
 
-            void makeCorrectionVectors(vectorField&) const;
-
             //- Return patch edge - neighbour face distances
             const scalarField& deltaCoeffs() const;
+
+            //- Make non-orthogonality correction vectors
+            virtual void makeCorrectionVectors(vectorField&) const;
+
+            //- Return patch skew-correction vectors
+            const vectorField& skewCorrectionVectors() const;
 
 
         // Topological changes

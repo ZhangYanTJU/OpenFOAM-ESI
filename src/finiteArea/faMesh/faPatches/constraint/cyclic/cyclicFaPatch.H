@@ -78,8 +78,14 @@ protected:
         //- Make patch weighting factors
         void makeWeights(scalarField&) const;
 
+        //- Make patch geodesic distance between P and N
+        void makeLPN(scalarField&) const;
+
         //- Make patch face - neighbour cell distances
         void makeDeltaCoeffs(scalarField&) const;
+
+        //- Make non-orthogonality correction vectors
+        void makeCorrectionVectors(vectorField& cv) const { cv = Zero; }
 
 
 public:

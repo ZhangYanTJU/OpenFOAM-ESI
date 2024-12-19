@@ -21,7 +21,7 @@ ddtSchemes
 
 gradSchemes
 {
-    default         none;
+    default         Gauss linear;
     grad(jouleHeatingSource:V_ceilingShell) Gauss linear;
 }
 
