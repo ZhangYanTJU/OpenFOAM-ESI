@@ -149,7 +149,7 @@ private:
 
             //- Read my additional data from dictionary. Additional flag to
             //- say whether we can use master-only geometric tests.
-            bool read(const bool isUndecomposed);
+            bool readSettings(const bool isUndecomposed);
 
             //- Construction helper: generate vertex normals upon reading
             //- undecomposed surface

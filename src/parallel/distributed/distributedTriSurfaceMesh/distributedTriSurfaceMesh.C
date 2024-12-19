@@ -338,7 +338,7 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
 }
 
 
-bool Foam::distributedTriSurfaceMesh::read(const bool undecomposed)
+bool Foam::distributedTriSurfaceMesh::readSettings(const bool undecomposed)
 {
     // Get bb of all domains.
     procBb_.resize_nocopy(Pstream::nProcs());
@@ -3057,7 +3057,7 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh
     // Construct from components. If empty dictionary get all the info from the
     // supplied (undecomposed) triSurface.
 
-    read(dict_.empty());
+    readSettings(dict_.empty());
 
     bounds().reduce();
 
@@ -3130,7 +3130,7 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh(const IOobject& io)
      || actualFile != io.localFilePath(triSurfaceMesh::typeName)
     );
 
-    read(readFromMaster);
+    readSettings(readFromMaster);
 
     bounds().reduce();
 
@@ -3255,7 +3255,7 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh
     // Add supplied dictionary entries (override existing)
     dict_ <<= dict;
 
-    read(readFromMaster);
+    readSettings(readFromMaster);
 
     bounds().reduce();
 
