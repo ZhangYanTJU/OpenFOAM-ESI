@@ -30,6 +30,7 @@ License
 #include "Function1.H"
 #include "unitConversion.H"
 #include "distributionModel.H"
+#include "axisAngleRotation.H"
 
 using namespace Foam::constant;
 
@@ -43,7 +44,9 @@ Foam::ConeNozzleInjection<CloudType>::injectionMethodNames
 ({
     { injectionMethod::imPoint, "point" },
     { injectionMethod::imDisc, "disc" },
+    { injectionMethod::imDiscSegments, "discSegments" },
 });
+
 
 template<class CloudType>
 const Foam::Enum
@@ -231,6 +234,20 @@ Foam::ConeNozzleInjection<CloudType>::ConeNozzleInjection
             owner.rndGen()
         )
     ),
+    t0_(this->template getModelProperty<scalar>("t0")),
+    nInjectors_
+    (
+        this->coeffDict().template getOrDefault<scalar>("nInjectors", 1)
+    ),
+    Uinjector_(Zero),
+    initialInjectorDir_
+    (
+        this->coeffDict().template getOrDefault<vector>
+        (
+            "initialInjectorDir",
+            Zero
+        )
+    ),
     tanVec1_(Zero),
     tanVec2_(Zero),
     normal_(Zero),
@@ -246,6 +263,15 @@ Foam::ConeNozzleInjection<CloudType>::ConeNozzleInjection
             << "    innerDiameter: " << innerDiameter_ << nl
             << "    outerDiameter: " << outerDiameter_
             << exit(FatalError);
+    }
+
+    if (nInjectors_ < SMALL)
+    {
+        FatalIOErrorInFunction(this->coeffDict())
+            << "Number of injectors in angular-segmented disc "
+            << "must be positive" << nl
+            << "    nInjectors: " << nInjectors_ << nl
+            << exit(FatalIOError);
     }
 
     // Convert from user time to reduce the number of time conversion calls
@@ -297,6 +323,10 @@ Foam::ConeNozzleInjection<CloudType>::ConeNozzleInjection
     thetaInner_(im.thetaInner_.clone()),
     thetaOuter_(im.thetaOuter_.clone()),
     sizeDistribution_(im.sizeDistribution_.clone()),
+    t0_(im.t0_),
+    nInjectors_(im.nInjectors_),
+    Uinjector_(im.Uinjector_),
+    initialInjectorDir_(im.initialInjectorDir_),
     tanVec1_(im.tanVec1_),
     tanVec2_(im.tanVec2_),
     normal_(im.normal_),
@@ -420,6 +450,14 @@ void Foam::ConeNozzleInjection<CloudType>::setPositionAndCell
             {
                 position = positionVsTime_->value(t);
 
+                // Estimate the moving injector velocity
+                const vector position0(positionVsTime_->value(t0_));
+                const scalar dt = t - t0_;
+                if (dt > 0)
+                {
+                    Uinjector_ = (position - position0)/dt;
+                }
+
                 this->findCellAtPosition
                 (
                     cellOwner,
@@ -438,6 +476,70 @@ void Foam::ConeNozzleInjection<CloudType>::setPositionAndCell
 
             position = positionVsTime_->value(t) + r*normal_;
 
+            // Estimate the moving injector velocity
+            const vector position0(positionVsTime_->value(t0_) + r*normal_);
+            const scalar dt = t - t0_;
+            if (dt > 0)
+            {
+                Uinjector_ = (position - position0)/dt;
+            }
+
+            this->findCellAtPosition
+            (
+                cellOwner,
+                tetFacei,
+                tetPti,
+                position
+            );
+            break;
+        }
+        case injectionMethod::imDiscSegments:
+        {
+            // Calculate the uniform angular increment in radians
+            const scalar angleIncrement = mathematical::twoPi/nInjectors_;
+
+            // Randomly set the index of injector angles
+            const label injectorIndex =
+                rndGen.globalPosition<label>(0, nInjectors_ - 1);
+
+            // Calculate the angle for the current injection
+            const scalar angle = injectorIndex*angleIncrement;
+
+            // Calculate the rotation tensor around an axis by an angle
+            const tensor R
+            (
+                coordinateRotations::axisAngle::rotation
+                (
+                    direction_,
+                    angle,
+                    false  // radians
+                )
+            );
+
+            // Compute a random radius between innerDiameter_ and outerDiameter_
+            const scalar fraction = rndGen.globalSample01<scalar>();
+            const scalar dr = outerDiameter_ - innerDiameter_;
+            const scalar radius = 0.5*(innerDiameter_ + fraction*dr);
+
+            // Rotate the initial direction to get the normal direction
+            // for this injector
+            normal_ = R & initialInjectorDir_;
+
+            // Compute the particle's injection position
+            const vector radialOffset(radius*normal_);
+            position = positionVsTime_->value(t) + radialOffset;
+
+            // Estimate the injector velocity if time has advanced
+            const scalar dt = t - t0_;
+            if (dt > 0)
+            {
+                const vector position0
+                (
+                    positionVsTime_->value(t0_) + radialOffset
+                );
+                Uinjector_ = (position - position0)/dt;
+            }
+
             this->findCellAtPosition
             (
                 cellOwner,
@@ -455,6 +557,9 @@ void Foam::ConeNozzleInjection<CloudType>::setPositionAndCell
                 << exit(FatalError);
         }
     }
+
+    // Update the previous time step
+    t0_ = t;
 }
 
 
@@ -487,7 +592,7 @@ void Foam::ConeNozzleInjection<CloudType>::setProperties
     {
         case flowType::ftConstantVelocity:
         {
-            parcel.U() = UMag_*dirVec;
+            parcel.U() = UMag_*dirVec + Uinjector_;
             break;
         }
         case flowType::ftPressureDrivenVelocity:
@@ -495,7 +600,7 @@ void Foam::ConeNozzleInjection<CloudType>::setProperties
             scalar pAmbient = this->owner().pAmbient();
             scalar rho = parcel.rho();
             scalar UMag = ::sqrt(2.0*(Pinj_->value(t) - pAmbient)/rho);
-            parcel.U() = UMag*dirVec;
+            parcel.U() = UMag*dirVec + Uinjector_;
             break;
         }
         case flowType::ftFlowRateAndDischarge:
@@ -508,7 +613,7 @@ void Foam::ConeNozzleInjection<CloudType>::setProperties
                /this->volumeTotal();
 
             scalar Umag = massFlowRate/(parcel.rho()*Cd_->value(t)*(Ao - Ai));
-            parcel.U() = Umag*dirVec;
+            parcel.U() = Umag*dirVec + Uinjector_;
             break;
         }
         default:
@@ -519,6 +624,7 @@ void Foam::ConeNozzleInjection<CloudType>::setProperties
                 << exit(FatalError);
         }
     }
+
 
     if (omegaPtr_)
     {
@@ -549,6 +655,18 @@ template<class CloudType>
 bool Foam::ConeNozzleInjection<CloudType>::validInjection(const label)
 {
     return true;
+}
+
+
+template<class CloudType>
+void Foam::ConeNozzleInjection<CloudType>::info()
+{
+    InjectionModel<CloudType>::info();
+
+    if (this->writeTime())
+    {
+        this->setModelProperty("t0", t0_);
+    }
 }
 
 
