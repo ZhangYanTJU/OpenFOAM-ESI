@@ -2026,19 +2026,14 @@ void Foam::distributedTriSurfaceMesh::cacheVolumeType(PackedList<2>& nt) const
             );
             forAll(midVolTypes, i)
             {
+                const linePointRef ln(midPoints[i], nearestInfo[i].hitPoint());
                 if (midVolTypes[i] == volumeType::INSIDE)
                 {
-                    insideStr.write
-                    (
-                        linePointRef(midPoints[i], nearestInfo[i].hitPoint())
-                    );
+                    insideStr.write(ln);
                 }
                 else if (midVolTypes[i] == volumeType::OUTSIDE)
                 {
-                    outsideStr.write
-                    (
-                        linePointRef(midPoints[i], nearestInfo[i].hitPoint())
-                    );
+                    outsideStr.write(ln);
                 }
             }
             Pout<< "Whilst caching " << searchableSurface::name()
