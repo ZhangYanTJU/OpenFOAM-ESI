@@ -34,7 +34,7 @@ Description
 
     \f[
         F_{ratio} =
-            \frac{\rho \, |\u|^2 \, h \, sin(\theta)}
+            \frac{\rho \, |\vec{u}|^2 \, h \, sin(\theta)}
             {\sigma (1 + sin(\theta)) + \rho \, \mathbf{g}\, h\,L_b cos(\theta)}
     \f]
 
@@ -45,11 +45,11 @@ Description
     \f]
 
     \f[
-        \mathrm{Re} = \frac{h \, |\u| \, \rho}{\mu}
+        \mathrm{Re} = \frac{h \, |\vec{u}| \, \rho}{\mu}
     \f]
 
     \f[
-        \mathrm{We} = \frac{h \, \rho_p (\u_p - \u)^2}{2 \sigma}
+        \mathrm{We} = \frac{h \, \rho_p (\vec{u}_p - \vec{u})^2}{2 \sigma}
     \f]
 
     where:
@@ -62,12 +62,12 @@ Description
       \sigma        | Film surface tension
       \mu           | Film dynamic viscosity
       \mathbf{u}    | Film velocity
-      \mathbf{g}    | Gravitational accelaration
+      \mathbf{g}    | Gravitational acceleration
       \theta        | Sharp-corner angle
       L_b           | Characteristic breakup length
     \endvartable
 
-    The onset of film separation is trigerred and the film is assumed
+    The onset of film separation is triggered and the film is assumed
     fully separated when \f$F_{ratio}>1\f$; otherwise, it remains attached.
 
 
