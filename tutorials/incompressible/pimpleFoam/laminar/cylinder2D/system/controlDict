@@ -54,17 +54,6 @@ functions
         (
             U
             {
-                mean            on;
-                prime2Mean      off;
-                base            time;
-                windowType      exact;
-                window          0.25;
-                windowName      movingAverageWindow;
-                allowRestart    no;
-            }
-
-            U
-            {
                 mean        on;
                 prime2Mean  on;
                 base        time;
@@ -78,6 +67,32 @@ functions
             }
         );
 
+        timeStart           10;
+        executeControl      timeStep;
+        executeInterval     1;
+        writeControl        onEnd;
+    }
+
+    fieldAverage2
+    {
+        type                fieldAverage;
+        libs                (fieldFunctionObjects);
+
+        fields
+        (
+            U
+            {
+                mean            on;
+                prime2Mean      off;
+                base            time;
+                windowType      exact;
+                window          0.25;
+                windowName      movingAverageWindow;
+                allowRestart    no;
+            }
+        );
+
+        useNamePrefix       true;
         timeStart           10;
         executeControl      timeStep;
         executeInterval     1;
@@ -118,7 +133,7 @@ functions
             pMean
             UPrime2Mean
             pPrime2Mean
-            UMean_movingAverageWindow
+            fieldAverage2:UMean_movingAverageWindow
         );
     }
 
@@ -189,13 +204,13 @@ functions
     // #include "DMDs/stdmd48" // field=UPrime2Mean, region=coarseMesh, maxRank=5
     #include "DMDs/stdmd49" // field=UPrime2Mean, patch=outlet, maxRank=2
 
-    #include "DMDs/stdmd50" // field=UMean_movingAverageWindow
-    // #include "DMDs/stdmd51" // field=UMean_movingAverageWindow, region=coarseMesh
-    #include "DMDs/stdmd52" // field=UMean_movingAverageWindow, patch=cylinder
-    #include "DMDs/stdmd53" // field=UMean_movingAverageWindow, patch=outlet
-    #include "DMDs/stdmd54" // field=UMean_movingAverageWindow, maxRank=10
-    // #include "DMDs/stdmd55" // field=UMean_movingAverageWindow, region=coarseMesh, maxRank=5
-    #include "DMDs/stdmd56" // field=UMean_movingAverageWindow, patch=outlet, maxRank=2
+    #include "DMDs/stdmd50" // field=fieldAverage2:UMean_movingAverageWindow
+    // #include "DMDs/stdmd51" // field=fieldAverage2:UMean_movingAverageWindow, region=coarseMesh
+    #include "DMDs/stdmd52" // field=fieldAverage2:UMean_movingAverageWindow, patch=cylinder
+    #include "DMDs/stdmd53" // field=fieldAverage2:UMean_movingAverageWindow, patch=outlet
+    #include "DMDs/stdmd54" // field=fieldAverage2:UMean_movingAverageWindow, maxRank=10
+    // #include "DMDs/stdmd55" // field=fieldAverage2:UMean_movingAverageWindow, region=coarseMesh, maxRank=5
+    #include "DMDs/stdmd56" // field=fieldAverage2:UMean_movingAverageWindow, patch=outlet, maxRank=2
 
     #include "DMDs/stdmd57" // field=yPlus
     #include "DMDs/stdmd58" // field=yPlus, patch=cylinder
