@@ -2144,7 +2144,7 @@ void Foam::addPatchCellLayer::setRefinement
                               : mesh_.faceOwner()[meshFacei]
                             );
                             nei = addedCells[patchFacei][i];
-                            if (ppFlip[patchFacei])
+                            if (!ppFlip[patchFacei])
                             {
                                 newFace = newFace.reverseFace();
                                 if (zonei != -1)
