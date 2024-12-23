@@ -255,6 +255,26 @@ Foam::triSurfaceSearch::tree() const
 }
 
 
+void Foam::triSurfaceSearch::flip()
+{
+    if (treePtr_)
+    {
+        PackedList<2>& nodeTypes = treePtr_->nodeTypes();
+        forAll(nodeTypes, i)
+        {
+            if (nodeTypes[i] == volumeType::INSIDE)
+            {
+                nodeTypes[i] = volumeType::OUTSIDE;
+            }
+            else if (nodeTypes[i] == volumeType::OUTSIDE)
+            {
+                nodeTypes[i] = volumeType::INSIDE;
+            }
+        }
+    }
+}
+
+
 // Determine inside/outside for samples
 Foam::boolList Foam::triSurfaceSearch::calcInside
 (
