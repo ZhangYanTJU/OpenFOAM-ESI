@@ -4635,7 +4635,7 @@ Foam::snappyLayerDriver::snappyLayerDriver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::snappyLayerDriver::mergePatchFacesUndo
+Foam::label Foam::snappyLayerDriver::mergePatchFacesUndo
 (
     const layerParameters& layerParams,
     const dictionary& motionDict,
@@ -4685,6 +4685,8 @@ void Foam::snappyLayerDriver::mergePatchFacesUndo
     );
 
     nChanged += meshRefiner_.mergeEdgesUndo(minCos, motionDict);
+
+    return nChanged;
 }
 
 

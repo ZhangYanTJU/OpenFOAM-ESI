@@ -627,8 +627,9 @@ public:
 
     // Member Functions
 
-            //- Merge patch faces on same cell.
-            void mergePatchFacesUndo
+            //- Merge patch faces on same cell. Return total number of
+            //- faces/edges changed.
+            label mergePatchFacesUndo
             (
                 const layerParameters& layerParams,
                 const dictionary& motionDict,
