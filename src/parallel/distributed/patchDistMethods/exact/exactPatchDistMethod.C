@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,10 +61,9 @@ Foam::patchDistMethods::exact::patchSurface() const
             localBb.extend(rndGen, 1E-3)
         );
 
-        // Dummy bounds dictionary
-        dictionary dict;
-        dict.add("bounds", meshBb);
-        dict.add
+        // Add any missing properties (but not override existing ones)
+        dict_.add("bounds", meshBb);
+        dict_.add
         (
             "distributionType",
             distributedTriSurfaceMesh::distributionTypeNames_
@@ -74,8 +73,7 @@ Foam::patchDistMethods::exact::patchSurface() const
                 distributedTriSurfaceMesh::DISTRIBUTED      // parallel decomp
             ]
         );
-        dict.add("mergeDistance", 1e-6*localBb.mag());
-
+        dict_.add("mergeDistance", 1e-6*localBb.mag());
 
         Info<< "Triangulating local patch faces" << nl << endl;
 
@@ -100,7 +98,7 @@ Foam::patchDistMethods::exact::patchSurface() const
                     patchIDs_,
                     mapTriToGlobal
                 ),
-                dict
+                dict_
             )
         );
 
@@ -131,7 +129,8 @@ Foam::patchDistMethods::exact::exact
     const labelHashSet& patchIDs
 )
 :
-    patchDistMethod(mesh, patchIDs)
+    patchDistMethod(mesh, patchIDs),
+    dict_(dict.subOrEmptyDict(typeName + "Coeffs"))
 {}
 
 

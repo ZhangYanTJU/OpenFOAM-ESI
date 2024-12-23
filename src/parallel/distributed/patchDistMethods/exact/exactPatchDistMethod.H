@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2019,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,9 +30,32 @@ Description
     Calculation of exact distance to nearest patch for all cells and
     boundary by constructing a search tree for all patch faces.
 
+Usage
+
+    \begin{verbatim}
+    wallDist
+    {
+        method          exactDistance;
+
+        // Optional entries (currently for distributedTriSurfaceMesh)
+        exactDistanceCoeffs
+        {
+            // Optional decomposition method. If not supplied will use the
+            // system/decomposeParDict.
+            method              hierarchical;
+            numberOfSubdomains  8;
+            n                   (2 2 2);
+
+            // (not)add fill-in triangles
+            decomposeUsingBbs   false;
+        }
+    }
+    \end{verbatim}
+
 See also
     Foam::patchDistMethod::meshWave
     Foam::wallDist
+    Foam::distributedTriSurfaceMesh
 
 SourceFiles
     exactPatchDistMethod.C
@@ -55,7 +78,7 @@ namespace patchDistMethods
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class exact Declaration
+                            Class exact Declaration
 \*---------------------------------------------------------------------------*/
 
 class exact
@@ -63,6 +86,9 @@ class exact
     public patchDistMethod
 {
     // Private Member Data
+
+        //- Dictionary contents from the dictionary constructor
+        mutable dictionary dict_;
 
         //- Cache surface+searching of patch
         mutable autoPtr<distributedTriSurfaceMesh> patchSurfPtr_;

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -168,12 +168,7 @@ void Foam::shellSurfaces::orient()
     {
         const searchableSurface& s = allGeometry_[shells_[shellI]];
 
-        if
-        (
-            modes_[shellI] != DISTANCE
-        &&  isA<triSurfaceMesh>(s)
-        && !isA<distributedTriSurfaceMesh>(s)
-        )
+        if (modes_[shellI] != DISTANCE && isA<triSurfaceMesh>(s))
         {
             hasSurface = true;
 
@@ -196,35 +191,39 @@ void Foam::shellSurfaces::orient()
         {
             const searchableSurface& s = allGeometry_[shells_[shellI]];
 
-            if
-            (
-                modes_[shellI] != DISTANCE
-            &&  isA<triSurfaceMesh>(s)
-            && !isA<distributedTriSurfaceMesh>(s)
-            )
+            if (modes_[shellI] != DISTANCE && isA<triSurfaceMesh>(s))
             {
-                triSurfaceMesh& shell = const_cast<triSurfaceMesh&>
+                List<pointIndexHit> info;
+                vectorField normal;
+                labelList region;
+                s.findNearest
                 (
-                    refCast<const triSurfaceMesh>(s)
+                    pointField(1, outsidePt),
+                    scalarField(1, GREAT),
+                    info,
+                    normal,
+                    region
                 );
 
-                // Flip surface so outsidePt is outside.
-                bool anyFlipped = orientedSurface::orient
-                (
-                    shell,
-                    outsidePt,
-                    true
-                );
+                //Pout<< "outsidePt:" << outsidePt << endl;
+                //Pout<< "info     :" << info[0] << endl;
+                //Pout<< "normal   :" << normal[0] << endl;
+                //Pout<< "region   :" << region[0] << endl;
+
+                bool anyFlipped = false;
+                if ((normal[0] & (info[0].point()-outsidePt)) > 0)
+                {
+                    triSurfaceMesh& shell = const_cast<triSurfaceMesh&>
+                    (
+                        refCast<const triSurfaceMesh>(s)
+                    );
+                    shell.flip();
+                    anyFlipped = true;
+                }
+
 
                 if (anyFlipped && !dryRun_)
                 {
-                    // orientedSurface will have done a clearOut of the surface.
-                    // we could do a clearout of the triSurfaceMeshes::trees()
-                    // but these aren't affected by orientation
-                    // (except for cached
-                    // sideness which should not be set at this point.
-                    // !!Should check!)
-
                     Info<< "shellSurfaces : Flipped orientation of surface "
                         << s.name()
                         << " so point " << outsidePt << " is outside." << endl;
