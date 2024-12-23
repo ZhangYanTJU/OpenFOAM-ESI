@@ -177,7 +177,7 @@ Foam::pointBoundaryMesh::pointBoundaryMesh
             "boundary",
             io.instance(),
             polyMesh::meshSubDir/pointMesh::meshSubDir,
-            io.db(),
+            m.thisDb(),
             io.readOpt(),
             io.writeOpt(),
             false   //io.registerObject()     // or always set to false?
