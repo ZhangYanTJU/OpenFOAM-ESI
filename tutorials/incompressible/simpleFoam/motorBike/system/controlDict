@@ -14,6 +14,13 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+//- To be more comparable to v2406 bug-fix branch disable the
+//- near-wall distance fix (see v2412 release notes about 'Wall distance')
+//OptimisationSwitches
+//{
+//    useCombinedWallPatch    0;
+//}
+
 application     simpleFoam;
 
 startFrom       startTime;
