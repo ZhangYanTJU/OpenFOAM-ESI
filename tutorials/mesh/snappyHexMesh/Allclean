@@ -13,5 +13,7 @@ cd "${0%/*}" || exit                                # Run from this directory
 ( cd opposite_walls && ./Allclean )
 ( cd airfoilWithLayers && ./Allclean )
 ( cd sphere_gapClosure && ./Allclean )
+( cd rotated_block && ./Allclean )
+( cd sphere_multiRegion && ./Allclean )
 
 #------------------------------------------------------------------------------
