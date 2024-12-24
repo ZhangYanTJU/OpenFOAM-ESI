@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,6 +50,10 @@ Description
 #include "refinementFeatures.H"
 #include "weightedPosition.H"
 #include "profiling.H"
+#include "addPatchCellLayer.H"
+#include "displacementMotionSolver.H"
+#include "snappyLayerDriver.H"
+#include "IOmanip.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -1116,6 +1120,7 @@ void Foam::snappySnapDriver::detectNearSurfaces
 (
     const scalar planarCos,
     const indirectPrimitivePatch& pp,
+    const pointField& localPoints,
     const pointField& nearestPoint,
     const vectorField& nearestNormal,
 
@@ -1124,7 +1129,6 @@ void Foam::snappySnapDriver::detectNearSurfaces
 {
     Info<< "Detecting near surfaces ..." << endl;
 
-    const pointField& localPoints = pp.localPoints();
     const labelList& meshPoints = pp.meshPoints();
     const refinementSurfaces& surfaces = meshRefiner_.surfaces();
     const fvMesh& mesh = meshRefiner_.mesh();
@@ -1796,8 +1800,9 @@ Foam::vectorField Foam::snappySnapDriver::calcNearestSurface
     const meshRefinement& meshRefiner,
     const labelList& globalToMasterPatch,
     const labelList& globalToSlavePatch,
-    const scalarField& snapDist,
     const indirectPrimitivePatch& pp,
+    const pointField& localPoints,
+    const scalarField& snapDist,
     pointField& nearestPoint,
     vectorField& nearestNormal
 )
@@ -1822,7 +1827,6 @@ Foam::vectorField Foam::snappySnapDriver::calcNearestSurface
     }
 
 
-    const pointField& localPoints = pp.localPoints();
     const refinementSurfaces& surfaces = meshRefiner.surfaces();
     const fvMesh& mesh = meshRefiner.mesh();
 
@@ -2575,6 +2579,22 @@ void Foam::snappySnapDriver::doSnap
     const snapParameters& snapParams
 )
 {
+    if (meshRefiner_.meshType() == meshRefinement::CASTELLATEDBUFFERLAYER2)
+    {
+        // Buffer-layer replacement for this routine
+
+        doSnapBufferLayers
+        (
+            snapDict,
+            motionDict,
+            mergeType,
+            featureCos,
+            planarAngle,
+            snapParams
+        );
+        return;
+    }
+
     addProfiling(snap, "snappyHexMesh::snap");
     fvMesh& mesh = meshRefiner_.mesh();
 
@@ -2616,6 +2636,48 @@ void Foam::snappySnapDriver::doSnap
 
 
 
+    // Get labels of patches where optional buffer layers are added
+    DynamicList<label> bufPatchIDs;
+    if (meshRefiner_.meshType() == meshRefinement::CASTELLATEDBUFFERLAYER)
+    {
+        bufPatchIDs.setCapacity(globalToMasterPatch_.size());
+
+        const auto& addLayers =
+            meshRefiner_.surfaces().addBufferLayers();
+
+        // Normal patches
+        forAll(globalToMasterPatch_, globalRegioni)
+        {
+            if (addLayers[globalRegioni])
+            {
+                const label masterP =
+                    globalToMasterPatch_[globalRegioni];
+                const label slaveP =
+                    globalToSlavePatch_[globalRegioni];
+
+                bufPatchIDs.append(masterP);
+                if (slaveP != masterP)
+                {
+                    bufPatchIDs.append(slaveP);
+                }
+            }
+        }
+
+        // Temporary patches from faceZones
+        for (const auto& fz : mesh.faceZones())
+        {
+            label mpI, spI;
+            surfaceZonesInfo::faceZoneType type;
+            if (meshRefiner_.getFaceZoneInfo(fz.name(), mpI, spI, type))
+            {
+                bufPatchIDs.appendUniq(mpI);
+                bufPatchIDs.appendUniq(spI);
+            }
+        }
+    }
+
+
+
     // faceZones of type internal
     const labelList internalFaceZones
     (
@@ -2629,11 +2691,10 @@ void Foam::snappySnapDriver::doSnap
         )
     );
 
-
     // Create baffles (pairs of faces that share the same points)
     // Baffles stored as owner and neighbour face that have been created.
+    List<labelPair> baffles;
     {
-        List<labelPair> baffles;
         labelList originatingFaceZone;
         meshRefiner_.createZoneBaffles
         (
@@ -2643,8 +2704,21 @@ void Foam::snappySnapDriver::doSnap
         );
     }
 
-    // Duplicate points on faceZones of type boundary
-    meshRefiner_.dupNonManifoldBoundaryPoints();
+    // Duplicate points on faceZones of type boundary. Renumber baffles
+    // (probably not necessary - faceIDs should not change)
+    {
+        autoPtr<mapPolyMesh> map = meshRefiner_.dupNonManifoldBoundaryPoints();
+        if (map)
+        {
+            const labelList& reverseFaceMap = map->reverseFaceMap();
+            forAll(baffles, i)
+            {
+                label f0 = reverseFaceMap[baffles[i].first()];
+                label f1 = reverseFaceMap[baffles[i].second()];
+                baffles[i] = labelPair(f0, f1);
+            }
+        }
+    }
 
 
     bool doFeatures = false;
@@ -2667,7 +2741,7 @@ void Foam::snappySnapDriver::doSnap
 
 
     // Get the labels of added patches.
-    labelList adaptPatchIDs(meshRefiner_.meshedPatches());
+    const labelList adaptPatchIDs(meshRefiner_.meshedPatches());
 
 
 
@@ -2680,7 +2754,6 @@ void Foam::snappySnapDriver::doSnap
                 adaptPatchIDs
             )
         );
-
 
         // Distance to attract to nearest feature on surface
         scalarField snapDist(calcSnapDistance(mesh, snapParams, ppPtr()));
@@ -2727,7 +2800,7 @@ void Foam::snappySnapDriver::doSnap
             << mesh.time().cpuTimeIncrement() << " s\n" << nl << endl;
 
         // Extract baffles across internal faceZones (for checking mesh quality
-        // across
+        // across)
         labelPairList internalBaffles
         (
             meshRefiner_.subsetBaffles
@@ -2750,7 +2823,462 @@ void Foam::snappySnapDriver::doSnap
             meshMoverPtr()
         );
 
-        // TBD. Include re-patching?
+        // Reset moving flag in case we do any topo changes
+        mesh.moving(false);
+
+
+        // Optionally add buffer layers
+        if (meshRefiner_.meshType() == meshRefinement::CASTELLATEDBUFFERLAYER)
+        {
+            ////- merge zone baffles (since current buffer layer insertion
+            ////- does not handle non-manifold edges ... TBD
+            //autoPtr<mapPolyMesh> mapPtr = meshRefiner_.mergeZoneBaffles
+            //(
+            //    true,   // internal zones
+            //    false   // baffle zones
+            //);
+            //
+            //if (mapPtr)
+            //{
+            //    if (debug & meshRefinement::MESH)
+            //    {
+            //        const_cast<Time&>(mesh.time())++;
+            //        Info<< "Writing baffle-merged mesh to time "
+            //            << meshRefiner_.timeName() << endl;
+            //        meshRefiner_.write
+            //        (
+            //            meshRefinement::debugType(debug),
+            //            meshRefinement::writeType
+            //            (
+            //                meshRefinement::writeLevel()
+            //              | meshRefinement::WRITEMESH
+            //            ),
+            //            meshRefiner_.timeName()
+            //        );
+            //    }
+            //}
+
+            ////- use bufferLayer insertion on internalFaceZones
+            //Info<< "Adding buffer layers ..." << endl;
+            //
+            //{
+            //    // Remove references to pp
+            //    meshMoverPtr.clear();
+            //
+            //    const labelList meshFaces
+            //    (
+            //        mesh.faceZones().selection
+            //        (
+            //            internalFaceZones
+            //        ).sortedToc()
+            //    );
+            //    ppPtr.reset
+            //    (
+            //        new indirectPrimitivePatch
+            //        (
+            //            IndirectList<face>
+            //            (
+            //                mesh.faces(),
+            //                meshFaces
+            //            ),
+            //            mesh.points()
+            //        )
+            //    );
+            //    const pointField thickness
+            //    (
+            //        wantedThickness(ppPtr(), 1e-1)     //cellSizeFraction
+            //      * PatchTools::pointNormals(mesh, ppPtr())
+            //    );
+            //
+            //    // Layer mesh modifier
+            //    // - use intrusion, not extrusion
+            //    addPatchCellLayer addLayer(mesh, true, false);
+            //
+            //    // Do mesh changes : introduce point, faces, cells
+            //    autoPtr<mapPolyMesh> mapPtr = addBufferLayers
+            //    (
+            //        ppPtr(),
+            //        -thickness,  //1e-3,   //cellSizeFraction,
+            //        addLayer
+            //    );
+            //
+            //    // Update numbering on baffles, pointToMaster. Note: uses
+            //    // geometric tolerance - could be avoided since now we have
+            //    // addPatchCellLayer still intact. However would like to avoid
+            //    // use of addPatchCellLayer altogether.
+            //    if (mapPtr)
+            //    {
+            //        // Invalidate extrusion (face numbering might have changed)
+            //        ppPtr.clear();
+            //
+            //        labelList dummyPointToMaster;
+            //        snappyLayerDriver::mapFaceZonePoints
+            //        (
+            //            meshRefiner_,
+            //            mapPtr(),
+            //            internalBaffles,
+            //            dummyPointToMaster
+            //        );
+            //
+            //        if (debug & meshRefinement::MESH)
+            //        {
+            //            const_cast<Time&>(mesh.time())++;
+            //            Info<< "Writing INTERNAL ZONE buffer layer mesh"
+            //                << " to time " << meshRefiner_.timeName() << endl;
+            //            meshRefiner_.write
+            //            (
+            //                meshRefinement::debugType(debug),
+            //                meshRefinement::writeType
+            //                (
+            //                    meshRefinement::writeLevel()
+            //                  | meshRefinement::WRITEMESH
+            //                ),
+            //                meshRefiner_.timeName()
+            //            );
+            //        }
+            //    }
+            //}
+
+            ////- re-split zone baffles
+            //{
+            //    labelList originatingFaceZone;
+            //    meshRefiner_.createZoneBaffles
+            //    (
+            //        internalFaceZones,
+            //        baffles,
+            //        originatingFaceZone
+            //    );
+            //}
+
+
+            Info<< "Adding buffer layers ..." << endl;
+
+            // Remove references to pp
+            meshMoverPtr.clear();
+            // Invalidate extrusion (face numbering might have changed)
+            ppPtr.clear();
+
+            // Note: all the way up to addBufferLayers can probably be replaced
+            // once addPatchCellLayer can add to both sides of faceZone ...
+
+            // Duplicate points on faceZones that layers are added to
+            labelList pointToMaster;
+            {
+                labelList numLayers(mesh.boundaryMesh().size(), 0);
+                UIndirectList<label>(numLayers, bufPatchIDs) = 1;
+
+                autoPtr<mapPolyMesh> mapPtr =
+                    snappyLayerDriver::dupFaceZonePoints
+                    (
+                        meshRefiner_,
+                        bufPatchIDs,  // patch indices
+                        numLayers,      // num layers per patch
+                        baffles,
+                        pointToMaster
+                    );
+                if (mapPtr)
+                {
+                    // Update numbering on any baffles
+                    meshRefinement::mapBaffles
+                    (
+                        mesh,
+                        mapPtr().faceMap(),
+                        internalBaffles
+                    );
+
+
+                    //// Shrink back mesh a bit to see if there are any
+                    //// incorrect dupFaceZonePoints ...
+                    //if (debug & meshRefinement::MESH)
+                    //{
+                    //    pointField newPoints(mesh.nPoints());
+                    //    forAll(newPoints, pointi)
+                    //    {
+                    //        const auto& pCells = mesh.pointCells()[pointi];
+                    //
+                    //        point avg(Zero);
+                    //        for (const label celli : pCells)
+                    //        {
+                    //            avg += mesh.cellCentres()[celli];
+                    //        }
+                    //        avg /= pCells.size();
+                    //
+                    //        newPoints[pointi] =
+                    //            0.5*mesh.points()[pointi]
+                    //          + 0.5*avg;
+                    //    }
+                    //    mesh.movePoints(newPoints);
+                    //
+                    //    const_cast<Time&>(mesh.time())++;
+                    //    Info<< "Writing DEBUG-shrunk layer mesh to time "
+                    //        << meshRefiner_.timeName() << endl;
+                    //    meshRefiner_.write
+                    //    (
+                    //        meshRefinement::debugType(debug),
+                    //        meshRefinement::writeType
+                    //        (
+                    //            meshRefinement::writeLevel()
+                    //          | meshRefinement::WRITEMESH
+                    //        ),
+                    //        meshRefiner_.timeName()
+                    //    );
+                    //}
+                }
+            }
+
+            //- Not needed: shrinking of mesh since now using intrusion ...
+            // // Move mesh back with thickness. Two purposes:
+            // // - avoid mapFaceZonePoints below merging points extraneously
+            // //   (does not use addPatchCellLayer structure; uses geometric
+            // //    tolerance)
+            // // - see what is happening
+            // {
+            //     pointField newPoints(mesh.points());
+            //     const auto& mp = ppPtr().meshPoints();
+            //     forAll(mp, i)
+            //     {
+            //         newPoints[mp[i]] -= thickness[i];
+            //     }
+            //     mesh.movePoints(newPoints);
+            //     ppPtr().movePoints(mesh.points());
+            //
+            //     if (debug & meshRefinement::MESH)
+            //     {
+            //         const_cast<Time&>(mesh.time())++;
+            //         Info<< "Writing shrunk buffer layer mesh to time "
+            //             << meshRefiner_.timeName() << endl;
+            //         meshRefiner_.write
+            //         (
+            //             meshRefinement::debugType(debug),
+            //             meshRefinement::writeType
+            //             (
+            //                 meshRefinement::writeLevel()
+            //               | meshRefinement::WRITEMESH
+            //             ),
+            //             meshRefiner_.timeName()
+            //         );
+            //     }
+            // }
+
+
+            {
+                // Layer mesh modifier
+                // - use intrusion, not extrusion
+                addPatchCellLayer addLayer(mesh, true, false);
+
+                // Redo pp
+                autoPtr<indirectPrimitivePatch> bufPatchPtr
+                (
+                    meshRefinement::makePatch(mesh, bufPatchIDs)
+                );
+
+                pointField thickness
+                (
+                    wantedThickness(bufPatchPtr(), 1e-1)  //cellSizeFraction
+                  * PatchTools::pointNormals(mesh, bufPatchPtr())
+                );
+
+                // Make sure to adhere to constraints
+                {
+
+                    const pointMesh& pMesh = pointMesh::New(mesh);
+                    const labelList& mp = bufPatchPtr().meshPoints();
+
+                    tmp<pointVectorField> tdisp
+                    (
+                        meshRefinement::makeDisplacementField
+                        (
+                            pMesh,
+                            adaptPatchIDs
+                        )
+                    );
+                    // Set internal field
+                    UIndirectList<point>(tdisp.ref(), mp) = thickness;
+                    // Take over onto boundary field. Needed since constraint
+                    // patch might be before the fixedValue patches so its
+                    // value gets overwritten
+                    for (auto& ppf : tdisp.ref().boundaryFieldRef())
+                    {
+                        ppf == ppf.patchInternalField();
+                    }
+
+                    // Adhere to multi-point constraints
+                    const pointConstraints& pcs = pointConstraints::New(pMesh);
+                    pcs.constrainDisplacement(tdisp.ref(), false);
+
+                    thickness = UIndirectList<point>(tdisp(), mp);
+                }
+
+
+
+                // Print a bit
+                {
+                    // See snappyLayerDriver::calculateLayerThickness.
+                    const auto& pbm = mesh.boundaryMesh();
+                    label maxLen = 0;
+                    for (const label patchi : bufPatchIDs)
+                    {
+                        maxLen = max(maxLen, label(pbm[patchi].name().size()));
+                    }
+
+                    const int oldPrecision = Info.stream().precision();
+
+                    Info<< nl
+                        << setf(ios_base::left) << setw(maxLen) << "patch"
+                        << setw(0) << " faces    layers thickness[m]" << nl
+                        << setf(ios_base::left) << setw(maxLen) << "-----"
+                        << setw(0) << " -----    ------ ------------" << endl;
+
+                    for (const label patchi : bufPatchIDs)
+                    {
+                        Info<< setf(ios_base::left) << setw(maxLen)
+                            << pbm[patchi].name() << setprecision(3)
+                            << " " << setw(8)
+                            << returnReduce(pbm[patchi].size(), sumOp<scalar>())
+                            << " " << setw(6) << 1
+                            << " " << setw(8) << gAverage(mag(thickness))
+                            << endl;
+                    }
+                    Info<< setprecision(oldPrecision) << endl;
+                }
+
+
+                // Do mesh changes : introduce point, faces, cells
+                autoPtr<mapPolyMesh> mapPtr = addBufferLayers
+                (
+                    bufPatchPtr(),
+                    -thickness,  //1e-3,   //cellSizeFraction,
+                    addLayer
+                );
+
+                // Update numbering on baffles, pointToMaster. Note: uses
+                // geometric tolerance - could be avoided since now we have
+                // addPatchCellLayer still intact. However would like to avoid
+                // use of addPatchCellLayer altogether.
+                if (mapPtr)
+                {
+                    // Invalidate extrusion (face numbering might have changed)
+                    ppPtr.clear();
+
+                    snappyLayerDriver::mapFaceZonePoints
+                    (
+                        meshRefiner_,
+                        mapPtr(),
+                        internalBaffles,
+                        pointToMaster
+                    );
+                }
+            }
+
+
+
+            {
+                // Merge duplicated points (this creates illegal cells -
+                // hopefully they will be smoothed out)
+                autoPtr<mapPolyMesh> mapPtr =
+                    meshRefiner_.mergePoints(pointToMaster);
+                if (mapPtr)
+                {
+                    // Invalidate extrusion (point numbering might have changed)
+                    ppPtr.clear();
+
+                    // Update numbering on any baffles
+                    meshRefinement::mapBaffles
+                    (
+                        mesh,
+                        mapPtr().faceMap(),
+                        internalBaffles
+                    );
+                    // Extract baffles across internal faceZones
+                    internalBaffles = meshRefinement::subsetBaffles
+                    (
+                        mesh,
+                        internalFaceZones,
+                        internalBaffles
+                    );
+
+                    if (debug & meshRefinement::MESH)
+                    {
+                        const_cast<Time&>(mesh.time())++;
+                        Info<< "Writing merged points buffer layer mesh"
+                            << " to time " << meshRefiner_.timeName() << endl;
+                        meshRefiner_.write
+                        (
+                            meshRefinement::debugType(debug),
+                            meshRefinement::writeType
+                            (
+                                meshRefinement::writeLevel()
+                              | meshRefinement::WRITEMESH
+                            ),
+                            meshRefiner_.timeName()
+                        );
+                    }
+                }
+            }
+
+
+            Info<< "Inflating buffer layers ..." << endl;
+
+            const pointMesh& pMesh = pointMesh::New(mesh);
+
+            {
+                autoPtr<displacementMotionSolver> motionPtr
+                (
+                    makeMotionSolver
+                    (
+                        pMesh,
+                        snapDict,
+                        bufPatchIDs
+                        //patchConstraints
+                    )
+                );
+
+                // Solve internal displacement
+                tmp<pointField> tnewPoints(motionPtr->newPoints());
+
+                // Move points
+                mesh.movePoints(tnewPoints);
+
+                // Reset moving flag to avoid problems with topo changes
+                mesh.moving(false);
+
+                if (debug & meshRefinement::MESH)
+                {
+                    const_cast<Time&>(mesh.time())++;
+                    Info<< "Writing smoothed buffer layer mesh to time "
+                        << meshRefiner_.timeName() << endl;
+                    meshRefiner_.write
+                    (
+                        meshRefinement::debugType(debug),
+                        meshRefinement::writeType
+                        (
+                            meshRefinement::writeLevel()
+                          | meshRefinement::WRITEMESH
+                        ),
+                        meshRefiner_.timeName()
+                    );
+                }
+            }
+
+            // Update mesh mover
+            ppPtr = meshRefinement::makePatch(mesh, adaptPatchIDs);
+            meshMoverPtr.reset
+            (
+                new motionSmoother
+                (
+                    mesh,
+                    ppPtr(),
+                    adaptPatchIDs,
+                    meshRefinement::makeDisplacementField
+                    (
+                        pointMesh::New(mesh),
+                        adaptPatchIDs
+                    ),
+                    motionDict,
+                    dryRun_
+                )
+            );
+        }
 
 
         //- Only if in feature attraction mode:
@@ -2764,6 +3292,8 @@ void Foam::snappySnapDriver::doSnap
         DynamicList<label> splitFaces;
         //- Indices in face to split across
         DynamicList<labelPair> splits;
+        //- Patch for both sides of the face
+        DynamicList<labelPair> splitPatches;
 
 
         for (label iter = 0; iter < nFeatIter; iter++)
@@ -2811,8 +3341,9 @@ void Foam::snappySnapDriver::doSnap
                 meshRefiner_,
                 globalToMasterPatch_,           // for if strictRegionSnap
                 globalToSlavePatch_,            // for if strictRegionSnap
-                snapDist,
                 pp,
+                pp.localPoints(),
+                snapDist,
 
                 nearestPoint,
                 nearestNormal
@@ -2826,6 +3357,7 @@ void Foam::snappySnapDriver::doSnap
                 (
                     Foam::cos(degToRad(planarAngle)),// planar cos for gaps
                     pp,
+                    pp.localPoints(),
                     nearestPoint,   // surfacepoint from nearest test
                     nearestNormal,  // surfacenormal from nearest test
 
@@ -2838,10 +3370,12 @@ void Foam::snappySnapDriver::doSnap
             {
                 splitFaces.clear();
                 splits.clear();
+                splitPatches.clear();
                 disp = calcNearestSurfaceFeature
                 (
                     snapParams,
                     !doSplit,       // alignMeshEdges
+                    false,          // no special handling for >=3 patch points
                     iter,
                     featureCos,
                     scalar(iter+1)/nFeatIter,
@@ -2849,13 +3383,15 @@ void Foam::snappySnapDriver::doSnap
                     snapDist,
                     disp,
                     nearestNormal,
-                    meshMover,
+                    pp,
+                    pp.localPoints(),
 
                     patchAttraction,
                     patchConstraints,
 
                     splitFaces,
-                    splits
+                    splits,
+                    splitPatches
                 );
             }
 
@@ -2952,12 +3488,14 @@ void Foam::snappySnapDriver::doSnap
                 {
                     labelList oldSplitFaces(std::move(splitFaces));
                     List<labelPair> oldSplits(std::move(splits));
+                    List<labelPair> oldSplitPatches(std::move(splitPatches));
                     forAll(oldSplitFaces, i)
                     {
                         if (duplicateFace[oldSplitFaces[i]] == -1)
                         {
                             splitFaces.append(oldSplitFaces[i]);
                             splits.append(oldSplits[i]);
+                            splitPatches.append(oldSplitPatches[i]);
                         }
                     }
                     nTotalSplit = returnReduce
@@ -2968,10 +3506,15 @@ void Foam::snappySnapDriver::doSnap
                 }
 
                 // Update mesh
+
+                // Reset moving flag to avoid meshPhi problems with topo changes
+                mesh.moving(false);
+
                 meshRefiner_.splitFacesUndo
                 (
                     splitFaces,
                     splits,
+                    splitPatches,
                     motionDict,
 
                     duplicateFace,
@@ -3045,6 +3588,10 @@ void Foam::snappySnapDriver::doSnap
             }
         }
     }
+
+
+    // Reset moving flag to avoid any meshPhi mapping problems
+    mesh.moving(false);
 
 
     // Merge any introduced baffles (from faceZones of faceType 'internal')

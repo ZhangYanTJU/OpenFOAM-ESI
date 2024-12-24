@@ -99,6 +99,12 @@ class lduMatrix
         //- Off-diagonal coefficients (not including interfaces)
         std::unique_ptr<scalarField> upperPtr_;
 
+        //- Off-diagonal coefficients (not including interfaces) in CSR ordering
+        mutable std::unique_ptr<scalarField> lowerCSRPtr_;
+
+        //- Work space
+        mutable std::unique_ptr<solveScalarField> workPtr_;
+
 
 public:
 
@@ -671,6 +677,21 @@ public:
         scalarField& lower(label nCoeffs);
 
 
+    // CSR
+
+        bool hasLowerCSR() const noexcept { return bool(lowerCSRPtr_); }
+
+        const scalarField& lowerCSR() const;
+
+        scalarField& lowerCSR();
+
+        //- Work array
+        const solveScalarField& work() const;
+
+        //- Work array
+        solveScalarField& work(label size) const;
+
+
     // Characteristics
 
         //- The matrix type (empty, diagonal, symmetric, ...)
@@ -683,19 +704,19 @@ public:
         //- Matrix has diagonal only
         bool diagonal() const noexcept
         {
-            return (diagPtr_ && !lowerPtr_ && !upperPtr_);
+            return (diagPtr_ && !lowerPtr_ && !lowerCSRPtr_ && !upperPtr_);
         }
 
         //- Matrix is symmetric
         bool symmetric() const noexcept
         {
-            return (diagPtr_ && !lowerPtr_ && upperPtr_);
+            return (diagPtr_ && !(lowerPtr_ || lowerCSRPtr_) && upperPtr_);
         }
 
         //- Matrix is asymmetric (ie, full)
         bool asymmetric() const noexcept
         {
-            return (diagPtr_ && lowerPtr_ && upperPtr_);
+            return (diagPtr_ && (lowerPtr_ || lowerCSRPtr_) && upperPtr_);
         }
 
 

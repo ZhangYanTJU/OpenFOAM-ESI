@@ -261,7 +261,7 @@ void Foam::functionObjects::caseInfo::writeFileDicts
             fileName path(ePtr->stream());
             path.expand();
 
-            IOobject io(path, time(), IOobject::MUST_READ);
+            IOobject io(path, time_, IOobject::MUST_READ);
 
             if (!io.typeHeaderOk<dictionary>(false))
             {
@@ -404,6 +404,17 @@ Foam::functionObjects::caseInfo::caseInfo
     const dictionary& dict
 )
 :
+    IOdictionary
+    (
+        IOobject
+        (
+            name,
+            runTime.timeName(),
+            runTime,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        )
+    ),
     stateFunctionObject(name, runTime),
     writeFile(runTime, name, typeName, dict),
     writeFormat_(writeFormat::dict),
@@ -420,12 +431,13 @@ bool Foam::functionObjects::caseInfo::read(const dictionary& dict)
     if (stateFunctionObject::read(dict) && writeFile::read(dict))
     {
         writeFormatNames_.readIfPresent("writeFormat", dict, writeFormat_);
+        writeFile::setExt("." + writeFormatNames_[writeFormat_]);
+
         lookupModeNames_.readIfPresent("lookupMode", dict, lookupMode_);
 
         dictionaries_ = dict.subOrEmptyDict("dictionaries");
 
-        functionObjectNames_ =
-            dict.getOrDefault<wordList>("functionObjects", wordList());
+        dict.readIfPresent("functionObjects", functionObjectNames_);
 
         return true;
     }
@@ -443,7 +455,8 @@ bool Foam::functionObjects::caseInfo::execute()
 bool Foam::functionObjects::caseInfo::write()
 {
     // Output dictionary
-    dictionary data;
+    dictionary& data = *this;
+    data.clear();
 
     // Case meta data
     writeMeta(data.subDictOrAdd("meta"));
@@ -498,7 +511,7 @@ bool Foam::functionObjects::caseInfo::write()
 
     if (Pstream::master())
     {
-        auto filePtr = newFileAtTime(name(), time_.value());
+        auto filePtr = newFileAtTime(functionObject::name(), time_.value());
         auto& os = filePtr();
 
         // Reset stream width - was set in writeFile
@@ -508,7 +521,7 @@ bool Foam::functionObjects::caseInfo::write()
         {
             case writeFormat::dict:
             {
-                os  << data << endl;
+                IOdictionary::writeData(os);
                 break;
             }
             case writeFormat::json:

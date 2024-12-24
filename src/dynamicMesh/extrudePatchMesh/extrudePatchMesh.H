@@ -44,6 +44,9 @@ Description
         expansionRatio  1;
         columnCells      true;
 
+        // Optional feature angle to avoid extruding feature-angles
+        featureAngle    45;
+
         // Patch information
         bottomCoeffs
         {
@@ -114,7 +117,7 @@ class extrudePatchMesh
     // Private Member Functions
 
         //- Extrude mesh using polyPatches
-        void extrudeMesh(polyPatchList& regionPatches);
+        void extrudeMesh(const polyPatchList& regionPatches);
 
         //- Construct from mesh, patch and dictionary without patches.
         //  Only used internally
@@ -151,7 +154,7 @@ public:
             const fvPatch& p,
             const dictionary& dict,
             const word& regionName,
-            polyPatchList& regionPatches
+            const polyPatchList& regionPatches
         );
 
         //- Construct from mesh, patch, dictionary and new mesh

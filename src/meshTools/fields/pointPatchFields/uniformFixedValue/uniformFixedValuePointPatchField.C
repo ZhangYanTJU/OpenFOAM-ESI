@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,7 +36,7 @@ License
 // refCast<const facePointPatch>(p).patch()
 
 template<class Type>
-const Foam::polyPatch&
+const Foam::polyPatch*
 Foam::uniformFixedValuePointPatchField<Type>::getPatch(const pointPatch& p)
 {
     const polyMesh& mesh = p.boundaryMesh().mesh()();
@@ -44,11 +44,12 @@ Foam::uniformFixedValuePointPatchField<Type>::getPatch(const pointPatch& p)
 
     if (patchi == -1)
     {
-        FatalErrorInFunction
-            << "Cannot use uniformFixedValue on patch " << p.name()
-            << " since there is no underlying mesh patch" << exit(FatalError);
+        return nullptr;
     }
-    return mesh.boundaryMesh()[patchi];
+    else
+    {
+        return &mesh.boundaryMesh()[patchi];
+    }
 }
 
 
@@ -63,7 +64,8 @@ uniformFixedValuePointPatchField
 )
 :
     fixedValuePointPatchField<Type>(p, iF),
-    refValueFunc_(nullptr)
+    refValueFunc_(nullptr),
+    refPointValueFunc_(nullptr)
 {}
 
 
@@ -79,12 +81,25 @@ uniformFixedValuePointPatchField
     fixedValuePointPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ),
     refValueFunc_
     (
-        PatchFunction1<Type>::New
+        this->getPatch(p)
+      ? PatchFunction1<Type>::New
         (
-            this->getPatch(p),
+            *(this->getPatch(p)),
             "uniformValue",
             dict,
             false           // generate point values
+        )
+      : nullptr
+    ),
+    refPointValueFunc_
+    (
+        this->getPatch(p)
+      ? nullptr
+      : Function1<Type>::New
+        (
+            "uniformValue",
+            dict,
+            &this->internalField().db()
         )
     )
 {
@@ -110,7 +125,8 @@ uniformFixedValuePointPatchField
 )
 :
     fixedValuePointPatchField<Type>(ptf, p, iF, mapper),
-    refValueFunc_(ptf.refValueFunc_.clone(this->getPatch(p)))
+    refValueFunc_(ptf.refValueFunc_.clone(*(this->getPatch(p)))),
+    refPointValueFunc_(ptf.refPointValueFunc_.clone())
 {
     if (mapper.direct() && !mapper.hasUnmapped())
     {
@@ -133,7 +149,8 @@ uniformFixedValuePointPatchField
 )
 :
     fixedValuePointPatchField<Type>(ptf),
-    refValueFunc_(ptf.refValueFunc_.clone(this->getPatch(this->patch())))
+    refValueFunc_(ptf.refValueFunc_.clone(*(this->getPatch(this->patch())))),
+    refPointValueFunc_(ptf.refPointValueFunc_.clone())
 {}
 
 
@@ -146,7 +163,8 @@ uniformFixedValuePointPatchField
 )
 :
     fixedValuePointPatchField<Type>(ptf, iF),
-    refValueFunc_(ptf.refValueFunc_.clone(this->getPatch(this->patch())))
+    refValueFunc_(ptf.refValueFunc_.clone(*(this->getPatch(this->patch())))),
+    refPointValueFunc_(ptf.refPointValueFunc_.clone())
 {}
 
 
@@ -165,6 +183,14 @@ void Foam::uniformFixedValuePointPatchField<Type>::autoMap
         refValueFunc_().autoMap(mapper);
 
         if (refValueFunc_().constant())
+        {
+            // If mapper is not dependent on time we're ok to evaluate
+            this->evaluate();
+        }
+    }
+    if (refPointValueFunc_)
+    {
+        if (refPointValueFunc_().constant())
         {
             // If mapper is not dependent on time we're ok to evaluate
             this->evaluate();
@@ -201,7 +227,14 @@ void Foam::uniformFixedValuePointPatchField<Type>::updateCoeffs()
     }
     const scalar t = this->db().time().timeOutputValue();
 
-    valuePointPatchField<Type>::operator=(refValueFunc_->value(t));
+    if (refValueFunc_)
+    {
+        valuePointPatchField<Type>::operator=(refValueFunc_->value(t));
+    }
+    else
+    {
+        valuePointPatchField<Type>::operator=(refPointValueFunc_->value(t));
+    }
     fixedValuePointPatchField<Type>::updateCoeffs();
 }
 
@@ -215,6 +248,10 @@ write(Ostream& os) const
     if (refValueFunc_)
     {
         refValueFunc_->writeData(os);
+    }
+    if (refPointValueFunc_)
+    {
+        refPointValueFunc_->writeData(os);
     }
 }
 

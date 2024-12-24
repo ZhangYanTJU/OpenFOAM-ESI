@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -70,7 +70,7 @@ adjointManagers
                             Aref            2.;
                             rhoInf          1.225;
                             UInf            6;
-                            normalize       true;
+                            normalise       true;
                         }
                     }
                 }

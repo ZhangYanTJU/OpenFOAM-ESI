@@ -81,6 +81,8 @@ bool Foam::functionObjects::limitFields::limitField(const word& fieldName)
         field *= tmField;
     }
 
+    Log << endl;
+
     return true;
 }
 

@@ -103,13 +103,13 @@ Foam::Ostream& Foam::surfaceWriters::nastranWriter::writeFaceValue
     {
         case loadFormat::PLOAD2 :
         {
-            if (pTraits<Type>::nComponents == 1)
+            if (pTraits<Type>::nComponents > 1)
             {
-                writeValue(os, value);
+                writeValue(os, Foam::mag(value));
             }
             else
             {
-                writeValue(os, mag(value));
+                writeValue(os, value);
             }
 
             os << separator_;
@@ -120,6 +120,9 @@ Foam::Ostream& Foam::surfaceWriters::nastranWriter::writeFaceValue
         case loadFormat::PLOAD4 :
         {
             writeValue(os, elemId);
+
+            // NOTE: these should actually be vertex values,
+            // but misused here to provide vector quantities!
 
             for (direction d = 0; d < pTraits<Type>::nComponents; ++d)
             {
@@ -156,42 +159,22 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
 
     checkOpen();
 
-    const loadFormat format
-    (
-        fieldMap_.lookup
-        (
-            fieldName,
-            // Default format
-            (
-                pTraits<Type>::nComponents == 1
-              ? loadFormat::PLOAD2
-              : loadFormat::PLOAD4
-            )
-        )
-    );
+    // Default is PLOAD2
+    loadFormat format = loadFormat::PLOAD2;
 
     if
     (
         !std::is_integral<Type>::value  // Handle 'Ids' etc silently
-     && !fieldMap_.empty()
-     && !fieldMap_.found(fieldName)
+     && !pload4_.empty()
     )
     {
-        WarningInFunction
-            << "No mapping found between field " << fieldName
-            << " and corresponding Nastran field.  Available types:"
-            << fieldMap_ << nl;
-    }
+        const wordRes::filter matcher(pload4_, pload2_);
 
-    // Emit any common warnings
-    if (format == loadFormat::PLOAD2 && pTraits<Type>::nComponents != 1)
-    {
-        WarningInFunction
-            << fileFormats::NASCore::loadFormatNames[format]
-            << " cannot be used for higher rank values"
-            << " - reverting to mag()" << endl;
+        if (matcher(fieldName))
+        {
+            format = loadFormat::PLOAD4;
+        }
     }
-
 
     // Common geometry
     // Field:  rootdir/<TIME>/<field>_surfaceName.bdf
@@ -239,9 +222,9 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
     {
         const auto& values = tfield();
 
-        if (!isDir(outputFile.path()))
+        if (!Foam::isDir(outputFile.path()))
         {
-            mkDir(outputFile.path());
+            Foam::mkDir(outputFile.path());
         }
 
         const scalar timeValue(0);
@@ -251,7 +234,7 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
         DynamicList<face> decompFaces;
 
 
-        OFstream os(outputFile);
+        OFstream os(IOstreamOption::ATOMIC, outputFile);
         fileFormats::NASCore::setPrecision(os, writeFormat_);
 
         os  << "TITLE=OpenFOAM " << outputFile.name()

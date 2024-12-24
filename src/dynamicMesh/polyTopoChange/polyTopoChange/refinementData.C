@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,13 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "refinementData.H"
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::refinementData Foam::transform(const tensor&, const refinementData val)
+{
+    return val;
+}
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 

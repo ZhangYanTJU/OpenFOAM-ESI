@@ -77,6 +77,18 @@ namespace Foam
 
 const Foam::Enum
 <
+    Foam::meshRefinement::MeshType
+>
+Foam::meshRefinement::MeshTypeNames
+({
+    { MeshType::CASTELLATED, "castellated" },
+    { MeshType::CASTELLATEDBUFFERLAYER, "castellatedBufferLayer" },
+    { MeshType::CASTELLATEDBUFFERLAYER2, "castellatedBufferLayer2" }
+});
+
+
+const Foam::Enum
+<
     Foam::meshRefinement::debugType
 >
 Foam::meshRefinement::debugTypeNames
@@ -1178,56 +1190,90 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::doRemoveCells
 }
 
 
+void Foam::meshRefinement::splitFace
+(
+    const face& f,
+    const labelPair& split,
+
+    face& f0,
+    face& f1
+)
+{
+    if (split.find(-1) != -1)
+    {
+        FatalErrorInFunction<< "Illegal split " << split
+            << " on face " << f << exit(FatalError);
+    }
+
+    label nVerts = split[1]-split[0];
+    if (nVerts < 0)
+    {
+        nVerts += f.size();
+    }
+    nVerts += 1;
+
+
+    // Split into f0, f1
+    f0.resize_nocopy(nVerts);
+
+    label fp = split[0];
+    forAll(f0, i)
+    {
+        f0[i] = f[fp];
+        fp = f.fcIndex(fp);
+    }
+
+    f1.resize_nocopy(f.size()-f0.size()+2);
+    fp = split[1];
+    forAll(f1, i)
+    {
+        f1[i] = f[fp];
+        fp = f.fcIndex(fp);
+    }
+}
+
+
 void Foam::meshRefinement::doSplitFaces
 (
     const labelList& splitFaces,
     const labelPairList& splits,
+    const labelPairList& splitPatches,
     //const List<Pair<point>>& splitPoints,
     polyTopoChange& meshMod
 ) const
 {
+    face f0, f1;
+
     forAll(splitFaces, i)
     {
-        label facei = splitFaces[i];
+        const label facei = splitFaces[i];
+        const auto& split = splits[i];
+        const auto& twoPatches = splitPatches[i];
+
         const face& f = mesh_.faces()[facei];
 
         // Split as start and end index in face
-        const labelPair& split = splits[i];
-
-        label nVerts = split[1]-split[0];
-        if (nVerts < 0)
-        {
-            nVerts += f.size();
-        }
-        nVerts += 1;
-
-
-        // Split into f0, f1
-        face f0(nVerts);
-
-        label fp = split[0];
-        forAll(f0, i)
-        {
-            f0[i] = f[fp];
-            fp = f.fcIndex(fp);
-        }
-
-        face f1(f.size()-f0.size()+2);
-        fp = split[1];
-        forAll(f1, i)
-        {
-            f1[i] = f[fp];
-            fp = f.fcIndex(fp);
-        }
-
+        splitFace(f, split, f0, f1);
 
         // Determine face properties
         label own = mesh_.faceOwner()[facei];
         label nei = -1;
-        label patchi = -1;
+        label patch0 = -1;
+        label patch1 = -1;
         if (facei >= mesh_.nInternalFaces())
         {
-            patchi = mesh_.boundaryMesh().whichPatch(facei);
+            patch0 =
+            (
+                twoPatches[0] != -1
+              ? twoPatches[0]
+              : mesh_.boundaryMesh().whichPatch(facei)
+            );
+            patch1 =
+            (
+                twoPatches[1] != -1
+              ? twoPatches[1]
+              : mesh_.boundaryMesh().whichPatch(facei)
+            );
         }
         else
         {
@@ -1258,7 +1304,7 @@ void Foam::meshRefinement::doSplitFaces
             own,                        // owner
             nei,                        // neighbour
             false,                      // face flip
-            patchi,                     // patch for face
+            patch0,                     // patch for face
             zonei,                      // zone for face
             zoneFlip                    // face flip in zone
         );
@@ -1272,7 +1318,7 @@ void Foam::meshRefinement::doSplitFaces
             -1,                         // master edge
             facei,                      // master face
             false,                      // face flip
-            patchi,                     // patch for face
+            patch1,                     // patch for face
             zonei,                      // zone for face
             zoneFlip                    // face flip in zone
         );
@@ -1301,6 +1347,7 @@ Foam::label Foam::meshRefinement::splitFacesUndo
 (
     const labelList& splitFaces,
     const labelPairList& splits,
+    const labelPairList& splitPatches,
     const dictionary& motionDict,
 
     labelList& duplicateFace,
@@ -1327,7 +1374,7 @@ Foam::label Foam::meshRefinement::splitFacesUndo
         );
 
         // Insert the mesh changes
-        doSplitFaces(splitFaces, splits, meshMod);
+        doSplitFaces(splitFaces, splits, splitPatches, meshMod);
 
         // Remove any unnecessary fields
         mesh_.clearOut();
@@ -1687,6 +1734,7 @@ Foam::meshRefinement::meshRefinement
     const shellSurfaces& shells,
     const shellSurfaces& limitShells,
     const labelUList& checkFaces,
+    const MeshType meshType,
     const bool dryRun
 )
 :
@@ -1698,6 +1746,7 @@ Foam::meshRefinement::meshRefinement
     features_(features),
     shells_(shells),
     limitShells_(limitShells),
+    meshType_(meshType),
     dryRun_(dryRun),
     meshCutter_
     (
@@ -1774,6 +1823,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::meshRefinement::balance
 (
     const bool keepZoneFaces,
     const bool keepBaffles,
+    const labelList& singleProcPoints,
     const scalarField& cellWeights,
     decompositionMethod& decomposer,
     fvMeshDistribute& distributor
@@ -1952,6 +2002,40 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::meshRefinement::balance
             blockedFace[baffle.second()] = false;
         }
 
+        if (returnReduceOr(singleProcPoints.size()))
+        {
+            // Modify couples to force all selected points be on the same
+            // processor
+
+            const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+
+            label nPointFaces = 0;
+            for (const label pointi : singleProcPoints)
+            {
+                for (const label facei : mesh_.pointFaces()[pointi])
+                {
+                    if (blockedFace[facei])
+                    {
+                        if
+                        (
+                            mesh_.isInternalFace(facei)
+                         || pbm[pbm.whichPatch(facei)].coupled()
+                        )
+                        {
+                            blockedFace[facei] = false;
+                            nPointFaces++;
+                        }
+                    }
+                }
+            }
+            reduce(nPointFaces, sumOp<label>());
+            Info<< "Found " << nPointFaces
+                << " additional point-coupled faces to keep together." << endl;
+
+            nUnblocked += nPointFaces;
+        }
+
+
         distribution = decomposer.decompose
         (
             mesh_,
@@ -2054,7 +2138,6 @@ Foam::labelList Foam::meshRefinement::intersectedPoints() const
 
     // Mark all points on faces that will become baffles
     bitSet isBoundaryPoint(mesh_.nPoints());
-    label nBoundaryPoints = 0;
 
     const labelList& surfIndex = surfaceIndex();
 
@@ -2062,15 +2145,7 @@ Foam::labelList Foam::meshRefinement::intersectedPoints() const
     {
         if (surfIndex[facei] != -1)
         {
-            const face& f = faces[facei];
-
-            forAll(f, fp)
-            {
-                if (isBoundaryPoint.set(f[fp]))
-                {
-                    nBoundaryPoints++;
-                }
-            }
+            isBoundaryPoint.set(faces[facei]);
         }
     }
 
@@ -2083,37 +2158,17 @@ Foam::labelList Foam::meshRefinement::intersectedPoints() const
     //    if (patchi != -1)
     //    {
     //        const polyPatch& pp = mesh_.boundaryMesh()[patchi];
-    //
-    //        label facei = pp.start();
-    //
     //        forAll(pp, i)
     //        {
-    //            const face& f = faces[facei];
-    //
-    //            forAll(f, fp)
-    //            {
-    //                if (isBoundaryPoint.set(f[fp]))
-    //                    nBoundaryPoints++;
-    //                }
-    //            }
-    //            facei++;
+    //            isBoundaryPoint.set(faces[pp.start()+i]);
     //        }
     //    }
     //}
 
+    // Make sure all processors have the same data
+    syncTools::syncPointList(mesh_, isBoundaryPoint, orEqOp<unsigned int>(), 0);
 
-    // Pack
-    labelList boundaryPoints(nBoundaryPoints);
-    nBoundaryPoints = 0;
-    forAll(isBoundaryPoint, pointi)
-    {
-        if (isBoundaryPoint.test(pointi))
-        {
-            boundaryPoints[nBoundaryPoints++] = pointi;
-        }
-    }
-
-    return boundaryPoints;
+    return isBoundaryPoint.sortedToc();
 }
 
 

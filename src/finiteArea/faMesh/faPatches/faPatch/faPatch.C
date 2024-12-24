@@ -500,9 +500,27 @@ Foam::tmp<Foam::vectorField> Foam::faPatch::delta() const
 }
 
 
+void Foam::faPatch::makeLPN(scalarField& lPN) const
+{
+    lPN = (edgeNormals() & delta());
+}
+
+
+const Foam::scalarField& Foam::faPatch::lPN() const
+{
+    return boundaryMesh().mesh().lPN().boundaryField()[index()];
+}
+
+
 void Foam::faPatch::makeDeltaCoeffs(scalarField& dc) const
 {
     dc = scalar(1)/(edgeNormals() & delta());
+}
+
+
+const Foam::scalarField& Foam::faPatch::deltaCoeffs() const
+{
+    return boundaryMesh().mesh().deltaCoeffs().boundaryField()[index()];
 }
 
 
@@ -514,9 +532,10 @@ void Foam::faPatch::makeCorrectionVectors(vectorField& k) const
 }
 
 
-const Foam::scalarField& Foam::faPatch::deltaCoeffs() const
+const Foam::vectorField& Foam::faPatch::skewCorrectionVectors() const
 {
-    return boundaryMesh().mesh().deltaCoeffs().boundaryField()[index()];
+    return
+        boundaryMesh().mesh().skewCorrectionVectors().boundaryField()[index()];
 }
 
 

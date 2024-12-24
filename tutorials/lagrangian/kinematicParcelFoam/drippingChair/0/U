@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -73,14 +73,18 @@ boundaryField
 
         injectionModels
         (
-            // curvatureSeparation
+            // filmSeparation
             // BrunDrippingInjection
         );
 
         forces ();
 
-        curvatureSeparationCoeffs
+        filmSeparationCoeffs
         {
+            // Mandatory entries
+            model              OwenRyley;
+
+            // Optional entries
             definedPatchRadii  0;
             minInvR1           0;
             deltaByR1Min       0; // h*invRi = 0.004*10

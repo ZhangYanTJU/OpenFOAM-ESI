@@ -1,10 +1,10 @@
 #------------------------------------------------------------------------------
-# mingw is gcc, but new enough to support c++14
-# NB: gnu++14 (not c++14) to ensure __STRICT_ANSI__ is not defined
+# mingw is gcc, but new enough to support c++17
+# NB: gnu++17 (not c++17) to ensure __STRICT_ANSI__ is not defined
 #------------------------------------------------------------------------------
 include $(GENERAL_RULES)/Gcc/c++
 
-CC         := x86_64-w64-mingw32-g++ -std=gnu++14
+CC         := x86_64-w64-mingw32-g++ -std=gnu++17
 c++ARCH    := -m64 -pthread
 
 ifneq (,$(strip $(WM_COMPILE_OPTION)))

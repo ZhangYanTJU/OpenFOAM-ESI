@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,19 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fanFvPatchField.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+template<class Type>
+const Foam::Enum<typename Foam::fanFvPatchField<Type>::operatingMode>
+Foam::fanFvPatchField<Type>::operatingModeNames_
+({
+    { operatingMode::VELOCITY, "velocity" },
+    { operatingMode::UNIFORM_VELOCITY, "uniformVelocity" },
+    { operatingMode::VOL_FLOW_RATE, "volumeFlowRate" },
+    { operatingMode::NON_DIMENSIONAL, "nonDimensional" },
+});
+
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -50,10 +63,9 @@ Foam::fanFvPatchField<Type>::fanFvPatchField
 )
 :
     uniformJumpFvPatchField<Type>(p, iF),
+    operatingMode_(operatingMode::VELOCITY),
     phiName_("phi"),
     rhoName_("rho"),
-    uniformJump_(false),
-    nonDimensional_(false),
     rpm_(nullptr),
     dm_(nullptr)
 {}
@@ -68,15 +80,36 @@ Foam::fanFvPatchField<Type>::fanFvPatchField
 )
 :
     uniformJumpFvPatchField<Type>(p, iF, dict, false),  // needValue = false
+    operatingMode_
+    (
+        operatingModeNames_.getOrDefault("mode", dict, operatingMode::VELOCITY)
+    ),
     phiName_(dict.getOrDefault<word>("phi", "phi")),
     rhoName_(dict.getOrDefault<word>("rho", "rho")),
-    uniformJump_(dict.getOrDefault("uniformJump", false)),
-    nonDimensional_(dict.getOrDefault("nonDimensional", false)),
     rpm_(nullptr),
     dm_(nullptr)
 {
+    // Backwards compatibility
+    if (operatingMode_ == operatingMode::VELOCITY)
+    {
+        bool nonDimCompat = dict.getOrDefault("nonDimensional", false);
+        if (nonDimCompat)
+        {
+            // Warn?
+            operatingMode_ = operatingMode::NON_DIMENSIONAL;
+        }
+
+        bool uniformCompat = dict.getOrDefault("uniformJump", false);
+        if (uniformCompat)
+        {
+            // Warn?
+            operatingMode_ = operatingMode::UNIFORM_VELOCITY;
+        }
+    }
+
+
     // Note that we've not read jumpTable_ etc
-    if (nonDimensional_)
+    if (operatingMode_ == operatingMode::NON_DIMENSIONAL)
     {
         rpm_.reset(Function1<scalar>::New("rpm", dict, &this->db()));
         dm_.reset(Function1<scalar>::New("dm", dict, &this->db()));
@@ -104,10 +137,9 @@ Foam::fanFvPatchField<Type>::fanFvPatchField
 )
 :
     uniformJumpFvPatchField<Type>(rhs, p, iF, mapper),
+    operatingMode_(rhs.operatingMode_),
     phiName_(rhs.phiName_),
     rhoName_(rhs.rhoName_),
-    uniformJump_(rhs.uniformJump_),
-    nonDimensional_(rhs.nonDimensional_),
     rpm_(rhs.rpm_.clone()),
     dm_(rhs.dm_.clone())
 {}
@@ -120,10 +152,9 @@ Foam::fanFvPatchField<Type>::fanFvPatchField
 )
 :
     uniformJumpFvPatchField<Type>(rhs),
+    operatingMode_(rhs.operatingMode_),
     phiName_(rhs.phiName_),
     rhoName_(rhs.rhoName_),
-    uniformJump_(rhs.uniformJump_),
-    nonDimensional_(rhs.nonDimensional_),
     rpm_(rhs.rpm_.clone()),
     dm_(rhs.dm_.clone())
 {}
@@ -137,10 +168,9 @@ Foam::fanFvPatchField<Type>::fanFvPatchField
 )
 :
     uniformJumpFvPatchField<Type>(rhs, iF),
+    operatingMode_(rhs.operatingMode_),
     phiName_(rhs.phiName_),
     rhoName_(rhs.rhoName_),
-    uniformJump_(rhs.uniformJump_),
-    nonDimensional_(rhs.nonDimensional_),
     rpm_(rhs.rpm_.clone()),
     dm_(rhs.dm_.clone())
 {}
@@ -170,14 +200,10 @@ void Foam::fanFvPatchField<Type>::write(Ostream& os) const
     os.writeEntryIfDifferent<word>("phi", "phi", phiName_);
     os.writeEntryIfDifferent<word>("rho", "rho", rhoName_);
 
-    if (uniformJump_)
-    {
-        os.writeEntry("uniformJump", "true");
-    }
+    os.writeEntry("mode", operatingModeNames_[operatingMode_]);
 
-    if (nonDimensional_)
+    if (operatingMode_ == operatingMode::NON_DIMENSIONAL)
     {
-        os.writeEntry("nonDimensional", "true");
         rpm_->writeData(os);
         dm_->writeData(os);
     }

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,13 +72,25 @@ Foam::fvc::cellReduce
 
     forAll(own, i)
     {
-        label celli = own[i];
+        const label celli = own[i];
         cop(result[celli], ssf[i]);
     }
     forAll(nbr, i)
     {
-        label celli = nbr[i];
+        const label celli = nbr[i];
         cop(result[celli], ssf[i]);
+    }
+
+    forAll(mesh.boundary(), patchi)
+    {
+        const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
+        const auto& pssf = ssf.boundaryField()[patchi];
+
+        forAll(pssf, i)
+        {
+            const label celli = pFaceCells[i];
+            cop(result[celli], pssf[i]);
+        }
     }
 
     result.correctBoundaryConditions();

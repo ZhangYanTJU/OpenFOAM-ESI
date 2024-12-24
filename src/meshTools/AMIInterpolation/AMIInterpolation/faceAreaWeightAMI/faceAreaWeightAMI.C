@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -714,6 +714,8 @@ bool Foam::faceAreaWeightAMI::calculate
     if (distributed())
     {
         const label myRank = UPstream::myProcNo(comm_);
+        // Allocate unique tag for all comms
+        const int oldTag = UPstream::incrMsgType();
 
         const primitivePatch& srcPatch0 = this->srcPatch0();
         const primitivePatch& tgtPatch0 = this->tgtPatch0();
@@ -751,7 +753,7 @@ bool Foam::faceAreaWeightAMI::calculate
             labelList(),
             ListOps::appendEqOp<label>(),
             flipOp(),                   // flip operation
-            UPstream::msgType(),
+            UPstream::msgType()+77431,
             comm_
         );
 
@@ -768,7 +770,7 @@ bool Foam::faceAreaWeightAMI::calculate
             scalarList(),
             ListOps::appendEqOp<scalar>(),
             flipOp(),
-            UPstream::msgType(),
+            UPstream::msgType()+77432,
             comm_
         );
 
@@ -784,7 +786,7 @@ bool Foam::faceAreaWeightAMI::calculate
                 globalSrcFaces,
                 tgtAddress_,
                 cMapSrc,
-                UPstream::msgType(),
+                UPstream::msgType()+77433,
                 comm_
             )
         );
@@ -797,10 +799,13 @@ bool Foam::faceAreaWeightAMI::calculate
                 globalTgtFaces,
                 srcAddress_,
                 cMapTgt,
-                UPstream::msgType(),
+                UPstream::msgType()+77434,
                 comm_
             )
         );
+
+        // Reset tag
+        UPstream::msgType(oldTag);
     }
 
     // Convert the weights from areas to normalised values

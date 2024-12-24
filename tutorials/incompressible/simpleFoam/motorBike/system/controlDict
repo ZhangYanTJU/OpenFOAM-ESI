@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -13,6 +13,13 @@ FoamFile
     object      controlDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- To be more comparable to v2406 bug-fix branch disable the
+//- near-wall distance fix (see v2412 release notes about 'Wall distance')
+//OptimisationSwitches
+//{
+//    useCombinedWallPatch    0;
+//}
 
 application     simpleFoam;
 
@@ -51,6 +58,10 @@ functions
     #include "cuttingPlane"
     #include "forceCoeffs"
     #include "ensightWrite"
+
+    #include "solverInfo"
+    #include "graphFunctionObject"
+    #include "foamReport"
 }
 
 

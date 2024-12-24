@@ -61,7 +61,23 @@ class tabulated6DoFMotion
 :
     public solidBodyMotionFunction
 {
-    // Private data
+    // Private Enumerations
+
+        //- Options for the interpolation algorithm
+        enum class interpolationType : char
+        {
+            SPLINE = 0, //!< "Spline interpolation method"
+            LINEAR      //!< "Linear interpolation method"
+        };
+
+        //- Names for interpolationType
+        static const Enum<interpolationType> interpolationTypeNames;
+
+
+    // Private Data
+
+        //- Interpolation algorithm
+        interpolationType interpolator_;
 
         //- Time data file name read from dictionary
         fileName timeDataFileName_;

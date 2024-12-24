@@ -127,8 +127,7 @@ public:
             // Private Data
 
                 label sizeBeforeMapping_;
-                labelListList addressing_;
-                scalarListList weights_;
+                labelList directAddressing_;
 
         public:
 
@@ -139,14 +138,7 @@ public:
                 const labelUList& edgeOwner,
                 const labelUList& edgeNeigbour,
                 const labelUList& addressingSlice,
-                const scalarField& edgeWeights = scalarField::null()
-            );
-
-            //- Construct given addressing from complete mesh
-            processorAreaPatchFieldDecomposer
-            (
-                const faMesh& mesh,
-                const labelUList& addressingSlice
+                const bitSet& flip
             );
 
 
@@ -154,7 +146,7 @@ public:
 
                 label size() const
                 {
-                    return addressing_.size();
+                    return directAddressing_.size();
                 }
 
                 virtual label sizeBeforeMapping() const
@@ -164,7 +156,7 @@ public:
 
                 bool direct() const
                 {
-                    return false;
+                    return true;
                 }
 
                 virtual bool hasUnmapped() const
@@ -172,14 +164,9 @@ public:
                     return false;
                 }
 
-                const labelListList& addressing() const
+                const labelUList& directAddressing() const
                 {
-                    return addressing_;
-                }
-
-                const scalarListList& weights() const
-                {
-                    return weights_;
+                    return directAddressing_;
                 }
         };
 

@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -20,6 +20,18 @@ snap            true;
 addLayers       false;
 
 
+// Define common distributedTriSurface properties
+_decomp
+{
+    numberOfSubdomains  8;
+    method              hierarchical;
+    n                   (2 2 2);
+
+    // unique triangle decomposition; no fill-in
+    decomposeUsingBbs   false;
+}
+
+
 // Geometry. Definition of all surfaces. All surfaces are of class
 // searchableSurface.
 // Surfaces are used
@@ -32,16 +44,19 @@ geometry
     {
         type distributedTriSurfaceMesh;
         file "box.obj"; //"box_12_2.obj";
+        ${_decomp}
     }
     box_trans
     {
-        file "box_trans.obj";
         type distributedTriSurfaceMesh;
+        file "box_trans.obj";
+        ${_decomp}
     }
     shell
     {
-        file "box_scaled.obj";
         type distributedTriSurfaceMesh;
+        file "box_scaled.obj";
+        ${_decomp}
     }
 };
 

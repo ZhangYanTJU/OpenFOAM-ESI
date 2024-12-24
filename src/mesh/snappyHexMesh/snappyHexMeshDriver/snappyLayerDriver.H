@@ -248,8 +248,9 @@ private:
 
                 //- Determine the number of layers per point from the number of
                 //  layers per surface.
-                void setNumLayers
+                static void setNumLayers
                 (
+                    meshRefinement& meshRefiner,
                     const labelList& patchToNLayers,
                     const labelList& patchIDs,
                     const indirectPrimitivePatch& pp,
@@ -257,7 +258,7 @@ private:
                     labelList& patchNLayers,
                     List<extrudeMode>& extrudeStatus,
                     label& nIdealAddedCells
-                ) const;
+                );
 
                 //- Determine number of layers per point; include static checks
                 //- on invalid extrusion (e.g. non-manifold)
@@ -281,12 +282,6 @@ private:
                     const labelList& internalFaceZones,
                     const scalarIOField& minThickness,
                     pointVectorField& displacement
-                ) const;
-                void mapFaceZonePoints
-                (
-                    const mapPolyMesh& map,
-                    labelPairList& baffles,
-                    labelList& pointToMaster
                 ) const;
                 void updatePatch
                 (
@@ -319,15 +314,6 @@ private:
                     List<extrudeMode>& extrudeStatus
                 ) const;
 
-                //- Duplicate points on faceZones with layers
-                void dupFaceZonePoints
-                (
-                    const labelList& patchIDs,  // patch indices
-                    const labelList& numLayers, // number of layers per patch
-                    List<labelPair> baffles,
-                    labelList& pointToMaster
-                );
-
                 //- Re-merge points/faces on faceZones. Opposite of
                 //- dupFaceZonePoints above
                 void mergeFaceZonePoints
@@ -336,19 +322,6 @@ private:
                     labelList& cellNLayers,
                     scalarField& faceRealThickness,
                     scalarField& faceWantedThickness
-                );
-
-                //- See what zones and patches edges should be extruded into
-                void determineSidePatches
-                (
-                    const globalIndex& globalFaces,
-                    const labelListList& edgeGlobalFaces,
-                    const indirectPrimitivePatch& pp,
-
-                    labelList& edgePatchID,
-                    labelList& edgeZoneID,
-                    boolList& edgeFlip,
-                    labelList& inflateFaceID
                 );
 
                 //- Calculate pointwise wanted and minimum thickness.
@@ -374,14 +347,15 @@ private:
             // Extrusion execution
 
                 //- Synchronize displacement among coupled patches.
-                void syncPatchDisplacement
+                static void syncPatchDisplacement
                 (
+                    const fvMesh& mesh,
                     const indirectPrimitivePatch& pp,
                     const scalarField& minThickness,
                     pointField& patchDisp,
                     labelList& patchNLayers,
                     List<extrudeMode>& extrudeStatus
-                ) const;
+                );
 
                 //- Get nearest point on surface to snap to
                 void getPatchDisplacement
@@ -653,8 +627,9 @@ public:
 
     // Member Functions
 
-            //- Merge patch faces on same cell.
-            void mergePatchFacesUndo
+            //- Merge patch faces on same cell. Return total number of
+            //- faces/edges changed.
+            label mergePatchFacesUndo
             (
                 const layerParameters& layerParams,
                 const dictionary& motionDict,
@@ -726,6 +701,41 @@ public:
                 const bool preBalance,              // balance before adding?
                 decompositionMethod& decomposer,
                 fvMeshDistribute& distributor
+            );
+
+            //- Helper: see what zones and patches edges should be extruded into
+            static void determineSidePatches
+            (
+                meshRefinement& meshRefiner,
+                const globalIndex& globalFaces,
+                const labelListList& edgeGlobalFaces,
+                const indirectPrimitivePatch& pp,
+
+                labelList& edgePatchID,
+                labelList& edgeZoneID,
+                boolList& edgeFlip,
+                labelList& inflateFaceID
+            );
+
+            //- Duplicate points on faceZones with layers. Re-used when adding
+            //- buffer layers. Can be made private again once multi-side
+            //- layer addition working.
+            static autoPtr<mapPolyMesh> dupFaceZonePoints
+            (
+                meshRefinement& meshRefiner,
+                const labelList& patchIDs,  // patch indices
+                const labelList& numLayers, // number of layers per patch
+                List<labelPair> baffles,
+                labelList& pointToMaster
+            );
+
+            //- Map numbering after adding cell layers
+            static void mapFaceZonePoints
+            (
+                meshRefinement& meshRefiner,
+                const mapPolyMesh& map,
+                labelPairList& baffles,
+                labelList& pointToMaster
             );
 };
 

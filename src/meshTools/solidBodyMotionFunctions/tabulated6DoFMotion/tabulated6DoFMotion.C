@@ -31,6 +31,7 @@ License
 #include "Tuple2.H"
 #include "IFstream.H"
 #include "interpolateSplineXY.H"
+#include "interpolateXY.H"
 #include "unitConversion.H"
 
 
@@ -49,6 +50,17 @@ namespace solidBodyMotionFunctions
     );
 }
 }
+
+
+const Foam::Enum
+<
+    Foam::solidBodyMotionFunctions::tabulated6DoFMotion::interpolationType
+>
+Foam::solidBodyMotionFunctions::tabulated6DoFMotion::interpolationTypeNames
+({
+    { interpolationType::SPLINE, "spline" },
+    { interpolationType::LINEAR, "linear" }
+});
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -90,12 +102,28 @@ Foam::solidBodyMotionFunctions::tabulated6DoFMotion::transformation() const
             << exit(FatalError);
     }
 
-    translationRotationVectors TRV = interpolateSplineXY
-    (
-        t,
-        times_,
-        values_
-    );
+    translationRotationVectors TRV;
+    switch (interpolator_)
+    {
+        case interpolationType::SPLINE:
+        {
+            TRV = interpolateSplineXY(t, times_, values_);
+            break;
+        }
+        case interpolationType::LINEAR:
+        {
+            TRV = interpolateXY(t, times_, values_);
+            break;
+        }
+        default:
+        {
+            FatalErrorInFunction
+                << "Unrecognised 'interpolationScheme' option: "
+                << interpolationTypeNames[interpolator_]
+                << exit(FatalError);
+            break;
+        }
+    }
 
     // Convert the rotational motion from deg to rad
     TRV[1] *= degToRad();
@@ -154,6 +182,14 @@ bool Foam::solidBodyMotionFunctions::tabulated6DoFMotion::read
     }
 
     SBMFCoeffs_.readEntry("CofG", CofG_);
+
+    interpolator_ =
+        interpolationTypeNames.getOrDefault
+        (
+            "interpolationScheme",
+            SBMFCoeffs_,
+            interpolationType::SPLINE
+        );
 
     return true;
 }

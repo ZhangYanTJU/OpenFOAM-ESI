@@ -2443,26 +2443,45 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement
     // Seed all boundary faces with owner value. This is to make sure that
     // they are visited (probably only important for coupled faces since
     // these need to be visited from both sides)
+    List<refinementData> nbrCellInfo;
+    syncTools::swapBoundaryCellList(mesh_, allCellInfo, nbrCellInfo);
+
     for (label facei = mesh_.nInternalFaces(); facei < mesh_.nFaces(); facei++)
     {
         // Check if face already handled in loop above
         if (!allFaceInfo[facei].valid(dummyTrackData))
         {
-            label own = faceOwner[facei];
+            const label own = faceOwner[facei];
+            const auto& nbrInfo = nbrCellInfo[facei-mesh_.nInternalFaces()];
 
-            // Seed face with transported data from owner.
-            refinementData faceData;
-            faceData.updateFace
-            (
-                mesh_,
-                facei,
-                own,
-                allCellInfo[own],
-                FaceCellWave<refinementData, int>::propagationTol(),
-                dummyTrackData
-            );
-            seedFaces.append(facei);
-            seedFacesInfo.append(faceData);
+            if (allCellInfo[own].count() > nbrInfo.count())
+            {
+                allFaceInfo[facei].updateFace
+                (
+                    mesh_,
+                    facei,
+                    own,
+                    allCellInfo[own],
+                    FaceCellWave<refinementData, int>::propagationTol(),
+                    dummyTrackData
+                );
+                seedFaces.append(facei);
+                seedFacesInfo.append(allFaceInfo[facei]);
+            }
+            else if (allCellInfo[own].count() < nbrInfo.count())
+            {
+                allFaceInfo[facei].updateFace
+                (
+                    mesh_,
+                    facei,
+                    -1,         // Lucky! neighbCelli not used!
+                    nbrInfo,
+                    FaceCellWave<refinementData, int>::propagationTol(),
+                    dummyTrackData
+                );
+                seedFaces.append(facei);
+                seedFacesInfo.append(allFaceInfo[facei]);
+            }
         }
     }
 

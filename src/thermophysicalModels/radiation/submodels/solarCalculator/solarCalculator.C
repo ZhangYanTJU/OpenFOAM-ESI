@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -95,7 +95,7 @@ void Foam::solarCalculator::calculateBetaTheta()
 
     dict_.readEntry("startTime", startTime_);
 
-    const scalar LST =  startTime_ + runTime/3600.0;
+    const scalar LST = startTime_ + std::fmod(runTime/3600.0, 24);
 
     const scalar LON = dict_.get<scalar>("longitude");
 

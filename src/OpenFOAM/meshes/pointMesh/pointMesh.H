@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,11 +96,25 @@ public:
     // Declare name of the class and its debug switch
     ClassName("pointMesh");
 
+    //- Return the mesh sub-directory name (usually "pointMesh")
+    static word meshSubDir;
+
 
     // Constructors
 
         //- Construct from polyMesh
         explicit pointMesh(const polyMesh& pMesh);
+
+        //- Construct from polyMesh and IOobject (used when reading boundary)
+        explicit pointMesh(const polyMesh& pMesh, const IOobject& io);
+
+        //- Construct from polyMesh and readOpt. Takes instance, time etc
+        //- from polyMesh. Used when reading boundary.
+        explicit pointMesh
+        (
+            const polyMesh& pMesh,
+            const IOobjectOption::readOption rOpt
+        );
 
 
     //- Destructor
@@ -151,6 +165,13 @@ public:
             return GeoMesh<polyMesh>::mesh_.time();
         }
 
+        //- Set the instance for mesh files
+        void setInstance
+        (
+            const fileName& instance,
+            const IOobjectOption::writeOption wOpt = IOobject::AUTO_WRITE
+        );
+
 
     // Volume Mesh
 
@@ -181,6 +202,16 @@ public:
         {
             return &pm == this;
         }
+
+
+    // Write
+
+        //- Write
+        virtual bool writeObject
+        (
+            IOstreamOption streamOpt,
+            const bool writeOnProc = true
+        ) const;
 };
 
 

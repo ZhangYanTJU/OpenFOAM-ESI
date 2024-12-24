@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,11 +61,11 @@ Type Foam::interpolateSplineXY
     label n = xOld.size();
 
     // early exit if out of bounds or only one value
-    if (n == 1 || x < xOld[0])
+    if (n == 1 || x <= xOld[0])
     {
         return yOld[0];
     }
-    if (x > xOld[n - 1])
+    if (x >= xOld[n - 1])
     {
         return yOld[n - 1];
     }

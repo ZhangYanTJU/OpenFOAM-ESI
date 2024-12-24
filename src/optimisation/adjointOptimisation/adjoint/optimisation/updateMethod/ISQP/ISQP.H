@@ -131,7 +131,7 @@ protected:
 
             //- Multiplier of the additional variables y in the Lagrangian, to
             //- make them 'expensive'
-            scalar c_;
+            autoPtr<Function1<scalar>> c_;
 
 
         // Fields holding updates of the design, Lagrange and slack variables
@@ -174,6 +174,11 @@ protected:
         //- Percentage reduction for the constraints.
         //  Can be used to relax QP problems with no feasible points
         scalar cRed_;
+
+        //- Disable damping
+        //  Generally discouraged but could be useful in cases with no
+        //  constraints or only bound ones
+        bool disableDamping_;
 
         //- File including the l1 merit function
         autoPtr<OFstream> meritFunctionFile_;

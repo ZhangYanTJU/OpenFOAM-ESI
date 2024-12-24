@@ -27,6 +27,7 @@ It is likely incomplete...
 - Bernhard Gschaider
 - Andrew Heather
 - David Hill
+- Cristóbal Ibáñez
 - Yoshiaki Inoue
 - Mattijs Janssens
 - Andrew Jackson

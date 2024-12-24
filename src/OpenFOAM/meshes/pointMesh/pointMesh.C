@@ -40,6 +40,8 @@ namespace Foam
     defineTypeNameAndDebug(pointMesh, 0);
 }
 
+Foam::word Foam::pointMesh::meshSubDir = "pointMesh";
+
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -89,7 +91,65 @@ Foam::pointMesh::pointMesh(const polyMesh& pMesh)
 }
 
 
+Foam::pointMesh::pointMesh(const polyMesh& pMesh, const IOobject& io)
+:
+    MeshObject<polyMesh, Foam::UpdateableMeshObject, pointMesh>(pMesh),
+    GeoMesh<polyMesh>(pMesh),
+    boundary_(io, *this, pMesh.boundaryMesh())
+{
+    if (debug)
+    {
+        Pout<< "pointMesh::pointMesh(const polyMesh&): "
+            << "Constructing from IO " << io.objectRelPath()
+            << endl;
+    }
+
+    // Calculate the geometry for the patches (transformation tensors etc.)
+    boundary_.calcGeometry();
+}
+
+
+Foam::pointMesh::pointMesh
+(
+    const polyMesh& pMesh,
+    const IOobjectOption::readOption rOpt
+)
+:
+    pointMesh
+    (
+        pMesh,
+        IOobject
+        (
+            pMesh.name(),                // polyMesh region
+            pMesh.facesInstance(),       // polyMesh topology instance
+            pMesh.time(),
+            rOpt,
+            Foam::IOobject::NO_WRITE
+        )
+    )
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::pointMesh::setInstance
+(
+    const fileName& inst,
+    const IOobjectOption::writeOption wOpt
+)
+{
+    if (debug)
+    {
+        Pout<< "pointMesh::setInstance(): "
+            << "Setting instance to " << inst << endl;
+    }
+    this->writeOpt(wOpt);
+    this->instance() = inst;
+
+    boundary_.writeOpt(wOpt);
+    boundary_.instance() = inst;
+}
+
 
 bool Foam::pointMesh::movePoints()
 {
@@ -116,6 +176,21 @@ void Foam::pointMesh::updateMesh(const mapPolyMesh& mpm)
 
     // Map all registered point fields
     mapFields(mpm);
+}
+
+
+bool Foam::pointMesh::writeObject
+(
+    IOstreamOption streamOpt,
+    const bool writeOnProc
+) const
+{
+    if (debug)
+    {
+        Pout<< "pointMesh::writeObject(IOstreamOption, const bool): "
+            << "Writing to " << boundary_.objectRelPath() << endl;
+    }
+    return boundary_.writeObject(streamOpt, writeOnProc);
 }
 
 

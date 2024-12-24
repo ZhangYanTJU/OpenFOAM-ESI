@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -482,7 +482,8 @@ Foam::surfaceFeatures::surfaceFeatures::checkFlatRegionEdge
 (
     const scalar tol,
     const scalar includedAngle,
-    const label edgeI
+    const label edgeI,
+    const point& leftPoint
 ) const
 {
     const triSurface& surf = surf_;
@@ -643,6 +644,250 @@ Foam::surfaceFeatures::surfaceFeatures::checkFlatRegionEdge
     return surfaceFeatures::NONE;
 }
 
+/*
+
+// TBD. Big problem for duplicate triangles with opposing normals: we
+// don't know which one of the duplicates gets found on either side so
+// the normal might be + or -. Hence on e.g. motorBike.obj we see feature
+// lines where there shouldn't be
+Foam::surfaceFeatures::edgeStatus
+Foam::surfaceFeatures::surfaceFeatures::checkBinRegion
+(
+    const label edgei,
+    const labelList& bin0,
+    const labelList& bin1
+) const
+{
+    const triSurface& surf = surf_;
+    const labelList& eFaces = surf.edgeFaces()[edgei];
+    const edge& e = surf.edges()[edgei];
+
+    // 1. store + or - region number depending
+    //    on orientation of triangle in bins[0]
+    labelList regionAndNormal(bin0.size());
+    forAll(bin0, i)
+    {
+        const labelledTri& t = surf.localFaces()[eFaces[bin0[i]]];
+        const auto dir = t.edgeDirection(e);
+
+        if (dir > 0)
+        {
+            regionAndNormal[i] = t.region()+1;
+        }
+        else if (dir == 0)
+        {
+            FatalErrorInFunction
+                << exit(FatalError);
+        }
+        else
+        {
+            regionAndNormal[i] = -(t.region()+1);
+        }
+    }
+
+    // 2. check against bin1
+    labelList regionAndNormal1(bin1.size());
+    forAll(bin1, i)
+    {
+        const labelledTri& t = surf.localFaces()[eFaces[bin1[i]]];
+        const auto dir = t.edgeDirection(e);
+
+        label myRegionAndNormal;
+        if (dir > 0)
+        {
+            myRegionAndNormal = t.region()+1;
+        }
+        else if (dir == 0)
+        {
+            myRegionAndNormal = 0;
+            FatalErrorInFunction
+                << exit(FatalError);
+        }
+        else
+        {
+            myRegionAndNormal = -(t.region()+1);
+        }
+
+        regionAndNormal1[i] = myRegionAndNormal;
+
+        label index = regionAndNormal.find(-myRegionAndNormal);
+        if (index == -1)
+        {
+            // Not found.
+            //Pout<< "cannot find region " << myRegionAndNormal
+            //    << " in regions " << regionAndNormal << endl;
+
+            return surfaceFeatures::REGION;
+        }
+    }
+    return surfaceFeatures::NONE;
+}
+
+
+Foam::surfaceFeatures::edgeStatus
+Foam::surfaceFeatures::surfaceFeatures::checkFlatRegionEdge
+(
+    const scalar tol,
+    const scalar includedAngle,
+    const label edgei,
+    const point& leftPoint
+) const
+{
+    const triSurface& surf = surf_;
+    const edge& e = surf.edges()[edgei];
+    const auto& mp = surf.meshPoints();
+    const point eMid(edge(mp[e[0]], mp[e[1]]).centre(surf.points()));
+    const labelList& eFaces = surf.edgeFaces()[edgei];
+
+    vector leftVec(leftPoint-eMid);
+    leftVec.normalise();
+
+    // Bin according to normal and location w.r.t. first face
+    plane pl(eMid, leftVec);
+
+
+    DynamicList<labelList> leftBins(2);
+    DynamicList<labelList> rightBins(2);
+    DynamicList<vector> leftNormals(2);
+    DynamicList<vector> rightNormals(2);
+
+    // Append first face since this is what leftPoint was created from in the
+    // first place
+    leftNormals.append(surf.faceNormals()[eFaces[0]]);
+    leftBins.append(labelList(1, 0));
+
+    for (label eFacei = 1; eFacei < eFaces.size(); ++eFacei)
+    {
+        const label facei = eFaces[eFacei];
+
+        const bool isLeft(pl.signedDistance(surf.faceCentres()[facei]) > 0);
+
+        DynamicList<labelList>& bins = (isLeft ? leftBins : rightBins);
+        DynamicList<vector>& normals = (isLeft ? leftNormals : rightNormals);
+
+        const vector& n = surf.faceNormals()[facei];
+
+        // Find the normal in normals
+        label index = -1;
+        forAll(normals, normalI)
+        {
+            if (mag(n & normals[normalI]) > (1-tol))
+            {
+                index = normalI;
+                break;
+            }
+        }
+
+        if (index != -1)
+        {
+            bins[index].append(eFacei);
+//            Pout<< "edge:" << edgei << " verts:" << e
+//                << " found existing normal bin:" << index
+//                << " after:" << flatOutput(bins[index])
+//                << endl;
+        }
+        else if ((leftNormals.size()+rightNormals.size()) >= 2)
+        {
+            // Would be third normal. Mark as feature.
+            //Pout<< "** at edge:" << surf.localPoints()[e[0]]
+            //    << surf.localPoints()[e[1]]
+            //    << " have normals:" << normals
+            //    << " and " << n << endl;
+            return surfaceFeatures::REGION;
+        }
+        else
+        {
+            normals.append(n);
+            bins.append(labelList(1, eFacei));
+        }
+    }
+
+    // Check resulting number of bins
+    if ((leftBins.size()+rightBins.size()) == 1)
+    {
+        // Note: should check here whether they are two sets of faces
+        // that are planar or indeed 4 faces al coming together at an edge.
+        //Pout<< "** at edge:"
+        //    << surf.localPoints()[e[0]]
+        //    << surf.localPoints()[e[1]]
+        //    << " have single normal:" << normals[0]
+        //    << endl;
+        return surfaceFeatures::NONE;
+    }
+    else
+    {
+        // Two bins. Check if normals make an angle
+
+        //Pout<< "** at edge:"
+        //    << surf.localPoints()[e[0]]
+        //    << surf.localPoints()[e[1]] << nl
+        //    << "    normals:" << normals << nl
+        //    << "    bins   :" << bins << nl
+        //    << endl;
+
+        if (includedAngle >= 0)
+        {
+            scalar minCos = Foam::cos(degToRad(180.0 - includedAngle));
+
+            forAll(eFaces, i)
+            {
+                const vector& ni = surf.faceNormals()[eFaces[i]];
+                for (label j=i+1; j<eFaces.size(); j++)
+                {
+                    const vector& nj = surf.faceNormals()[eFaces[j]];
+                    if (mag(ni & nj) < minCos)
+                    {
+                        //Pout<< "have sharp feature between normal:" << ni
+                        //    << " and " << nj << endl;
+
+                        // Is feature. Keep as region or convert to
+                        // feature angle? For now keep as region.
+                        return surfaceFeatures::REGION;
+                    }
+                }
+            }
+        }
+
+        // So now we have two normals bins but need to make sure both
+        // bins have the same regions in it.
+
+        if (leftBins.size() == 2)
+        {
+            return checkBinRegion
+            (
+                edgei,
+                leftBins[0],
+                leftBins[1]
+            );
+        }
+        else if (leftBins.size() == 1 && rightBins.size() == 1)
+        {
+            return checkBinRegion
+            (
+                edgei,
+                leftBins[0],
+                rightBins[0]
+            );
+        }
+        else if (rightBins.size() == 2)
+        {
+            return checkBinRegion
+            (
+                edgei,
+                rightBins[0],
+                rightBins[1]
+            );
+        }
+        else
+        {
+            FatalErrorInFunction << "leftBins:" << leftBins
+                << " rightBins:" << rightBins << exit(FatalError);
+        }
+    }
+
+    return surfaceFeatures::NONE;
+}
+*/
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -1119,6 +1364,21 @@ void Foam::surfaceFeatures::excludeOpen
 }
 
 
+void Foam::surfaceFeatures::excludeNonManifold
+(
+    List<edgeStatus>& edgeStat
+) const
+{
+    forAll(edgeStat, edgei)
+    {
+        if (surf_.edgeFaces()[edgei].size() > 2)
+        {
+            edgeStat[edgei] = surfaceFeatures::NONE;
+        }
+    }
+}
+
+
 //- Divide into multiple normal bins
 //  - return REGION if != 2 normals
 //  - return REGION if 2 normals that make feature angle
@@ -1138,11 +1398,14 @@ void Foam::surfaceFeatures::checkFlatRegionEdge
 
             if (eFaces.size() > 2 && (eFaces.size() % 2) == 0)
             {
+                const point& leftPoint = surf_.faceCentres()[eFaces[0]];
+
                 edgeStat[edgei] = checkFlatRegionEdge
                 (
                     tol,
                     includedAngle,
-                    edgei
+                    edgei,
+                    leftPoint
                 );
             }
         }

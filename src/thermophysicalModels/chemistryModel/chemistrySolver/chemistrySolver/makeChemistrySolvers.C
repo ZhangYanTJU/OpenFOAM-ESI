@@ -38,6 +38,7 @@ namespace Foam
     // Chemistry solvers based on sensibleEnthalpy
     makeChemistrySolverTypes(psiReactionThermo, constGasHThermoPhysics);
     makeChemistrySolverTypes(psiReactionThermo, gasHThermoPhysics);
+    makeChemistrySolverTypes(psiReactionThermo, PengRobinsonGasHThermoPhysics);
     makeChemistrySolverTypes
     (
         psiReactionThermo,
@@ -61,6 +62,7 @@ namespace Foam
 
     makeChemistrySolverTypes(rhoReactionThermo, constGasHThermoPhysics);
     makeChemistrySolverTypes(rhoReactionThermo, gasHThermoPhysics);
+    makeChemistrySolverTypes(rhoReactionThermo, PengRobinsonGasHThermoPhysics);
     makeChemistrySolverTypes
     (
         rhoReactionThermo,
@@ -84,6 +86,7 @@ namespace Foam
     // Chemistry solvers based on sensibleInternalEnergy
     makeChemistrySolverTypes(psiReactionThermo, constGasEThermoPhysics);
     makeChemistrySolverTypes(psiReactionThermo, gasEThermoPhysics);
+    makeChemistrySolverTypes(psiReactionThermo, PengRobinsonGasEThermoPhysics);
     makeChemistrySolverTypes
     (
         psiReactionThermo,
@@ -105,6 +108,7 @@ namespace Foam
 
     makeChemistrySolverTypes(rhoReactionThermo, constGasEThermoPhysics);
     makeChemistrySolverTypes(rhoReactionThermo, gasEThermoPhysics);
+    makeChemistrySolverTypes(rhoReactionThermo, PengRobinsonGasEThermoPhysics);
     makeChemistrySolverTypes
     (
         rhoReactionThermo,

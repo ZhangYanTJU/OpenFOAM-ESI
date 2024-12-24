@@ -620,7 +620,7 @@ const Type& Foam::objectRegistry::lookupObject
             << ", found a " << (*iter)->type() << nl
             << exit(FatalError);
     }
-    else if (recursive && this->parentNotTime())
+    else if (recursive && !this->isTimeDb())
     {
         return parent_.lookupObject<Type>(name, recursive);
     }

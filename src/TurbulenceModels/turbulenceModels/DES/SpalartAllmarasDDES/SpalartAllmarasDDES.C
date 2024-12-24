@@ -36,6 +36,19 @@ namespace Foam
 namespace LESModels
 {
 
+template<class BasicTurbulenceModel>
+const Foam::Enum
+<
+    typename Foam::LESModels::
+        SpalartAllmarasDDES<BasicTurbulenceModel>::shieldingMode
+>
+Foam::LESModels::SpalartAllmarasDDES<BasicTurbulenceModel>::shieldingModeNames
+({
+    { shieldingMode::standard, "standard" },
+    { shieldingMode::ZDES2020, "ZDES2020" },
+});
+
+
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
 template<class BasicTurbulenceModel>
@@ -44,9 +57,61 @@ tmp<volScalarField> SpalartAllmarasDDES<BasicTurbulenceModel>::fd
     const volScalarField& magGradU
 ) const
 {
-    return
-        1
-      - tanh(pow(this->Cd1_*this->r(this->nuEff(), magGradU, this->y_), Cd2_));
+    const volScalarField r(this->r(this->nuEff(), magGradU, this->y_));
+
+    tmp<volScalarField> tfd = 1 - tanh(pow(Cd1_*r, Cd2_));
+
+    switch (shielding_)
+    {
+        case shieldingMode::standard:
+        {
+            return tfd;
+        }
+        case shieldingMode::ZDES2020:
+        {
+            auto maxEps = [](const volScalarField& fld, const scalar eps){
+                return max(fld, dimensionedScalar(fld.dimensions(), eps));
+            };
+
+            volScalarField& fdStd = tfd.ref();
+            const auto& nuTilda = this->nuTilda_;
+            const volVectorField& n = wallDist::New(this->mesh_).n();
+
+            const volScalarField GnuTilda
+            (
+                Cd3_*maxEps(fvc::grad(nuTilda) & n, Zero)
+              / (maxEps(magGradU, SMALL)*this->kappa_*this->y_)
+            );
+
+            volScalarField fdGnuTilda(1 - tanh(pow(Cd1_*GnuTilda, Cd2_)));
+            const volScalarField GOmega
+            (
+              - (fvc::grad(mag(fvc::curl(this->U_))) & n)
+              * sqrt(nuTilda/maxEps(pow3(magGradU), SMALL))
+            );
+            const volScalarField alpha((7.0/6.0*Cd4_ - GOmega)/(Cd4_/6.0));
+            const volScalarField fRGOmega
+            (
+                pos(Cd4_ - GOmega)
+              + 1.0
+               /(1 + exp(min(-6*alpha/max(1 - sqr(alpha), SMALL), scalar(50))))
+               *pos(4*Cd4_/3.0 - GOmega)*pos(GOmega - Cd4_)
+            );
+
+            // Use more conservative fP2-function in case switch is true;
+            // otherwise use simplified formulation
+            if (usefP2_)
+            {
+                fdGnuTilda *=
+                    (1.0 - tanh(pow(Cd1_*betaZDES_*r, Cd2_)))
+		          / maxEps(fdStd, SMALL);
+            }
+
+            fdStd *= 1 - (1 - fdGnuTilda)*fRGOmega;
+        }
+    }
+
+    return tfd;
 }
 
 
@@ -138,7 +203,15 @@ SpalartAllmarasDDES<BasicTurbulenceModel>::SpalartAllmarasDDES
         propertiesName,
         type
     ),
-
+    shielding_
+    (
+        shieldingModeNames.getOrDefault
+        (
+            "shielding",
+            this->coeffDict_,
+            shieldingMode::standard
+        )
+    ),
     Cd1_
     (
         this->useSigma_
@@ -163,11 +236,80 @@ SpalartAllmarasDDES<BasicTurbulenceModel>::SpalartAllmarasDDES
             this->coeffDict_,
             3
         )
+    ),
+    Cd3_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "Cd3",
+            this->coeffDict_,
+            25
+        )
+    ),
+    Cd4_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "Cd4",
+            this->coeffDict_,
+            0.03
+        )
+    ),
+    betaZDES_
+    (
+        dimensioned<scalar>::getOrAddToDict
+        (
+            "betaZDES",
+            this->coeffDict_,
+            2.5
+        )
+    ),
+    usefP2_
+    (
+        Switch::getOrAddToDict
+        (
+            "usefP2",
+            this->coeffDict_,
+            false
+        )
     )
 {
     if (type == typeName)
     {
         this->printCoeffs(type);
+
+        switch (shielding_)
+        {
+            case shieldingMode::standard:
+            {
+                Info<< "shielding function: standard DDES "
+                    <<  "(Spalart et al., 2006)"
+                    << nl;
+                break;
+            }
+            case shieldingMode::ZDES2020:
+            {
+                Info<< "shielding function: ZDES mode 2 (Deck & Renard, 2020)"
+                    << nl;
+                break;
+            }
+            default:
+            {
+                FatalErrorInFunction
+                    << "Unrecognised 'shielding' option: "
+                    << shieldingModeNames[shielding_]
+                    << exit(FatalError);
+            }
+        }
+
+        if (usefP2_)
+        {
+            Info<< "fP2 term: active" << nl;
+        }
+        else
+        {
+            Info<< "fP2 term: inactive" << nl;
+        }
     }
 }
 
@@ -179,8 +321,19 @@ bool SpalartAllmarasDDES<BasicTurbulenceModel>::read()
 {
     if (SpalartAllmarasDES<BasicTurbulenceModel>::read())
     {
+        shieldingModeNames.readIfPresent
+        (
+            "shielding",
+            this->coeffDict(),
+            shielding_
+        );
+
         Cd1_.readIfPresent(this->coeffDict());
         Cd2_.readIfPresent(this->coeffDict());
+        Cd3_.readIfPresent(this->coeffDict());
+        Cd4_.readIfPresent(this->coeffDict());
+        betaZDES_.readIfPresent(this->coeffDict());
+        usefP2_.readIfPresent("usefP2", this->coeffDict());
 
         return true;
     }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +33,7 @@ License
 #include "wallPolyPatch.H"
 #include "emptyPolyPatch.H"
 #include "wedgePolyPatch.H"
+#include "unitConversion.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -77,7 +78,7 @@ Foam::extrudePatchMesh::extrudePatchMesh
     const fvPatch& p,
     const dictionary& dict,
     const word& regionName,
-    polyPatchList& regionPatches
+    const polyPatchList& regionPatches
 )
 :
     extrudePatchMesh(regionName, mesh, p, dict)
@@ -152,11 +153,17 @@ Foam::extrudePatchMesh::extrudePatchMesh
 }
 
 
-void Foam::extrudePatchMesh::extrudeMesh(polyPatchList& regionPatches)
+void Foam::extrudePatchMesh::extrudeMesh(const polyPatchList& regionPatches)
 {
     if (this->boundaryMesh().empty())
     {
         const bool columnCells = dict_.get<bool>("columnCells");
+        scalar featAngleCos = -GREAT;
+        scalar featAngle = -1;
+        if (dict_.readIfPresent("featureAngle", featAngle))
+        {
+            featAngleCos = Foam::cos(degToRad(featAngle));
+        }
 
         bitSet nonManifoldEdge(extrudedPatch_.nEdges());
         for (label edgeI = 0; edgeI < extrudedPatch_.nInternalEdges(); edgeI++)
@@ -165,11 +172,24 @@ void Foam::extrudePatchMesh::extrudeMesh(polyPatchList& regionPatches)
             {
                 nonManifoldEdge.set(edgeI);
             }
-            else if (extrudedPatch_.edgeFaces()[edgeI].size() > 2)
+            else
             {
-                // TBD: issue #2780 : non-manifold edges get seen as internal
-                // This bit of code can be removed once #2780 is solved.
-                nonManifoldEdge.set(edgeI);
+                const auto& fcs = extrudedPatch_.edgeFaces()[edgeI];
+                if (fcs.size() > 2)
+                {
+                    // TBD: issue #2780 : non-manifold edges get seen as
+                    // internal.
+                    // This bit of code can be removed once #2780 is solved.
+                    nonManifoldEdge.set(edgeI);
+                }
+                else if (fcs.size() == 2 && featAngleCos >= -1)
+                {
+                    const auto& n = extrudedPatch_.faceNormals();
+                    if ((n[fcs[0]] & n[fcs[1]]) < featAngleCos)
+                    {
+                        nonManifoldEdge.set(edgeI);
+                    }
+                }
             }
         }
 
@@ -272,7 +292,17 @@ void Foam::extrudePatchMesh::extrudeMesh(polyPatchList& regionPatches)
         );
         this->clearOut();
         this->removeFvBoundary();
-        this->addFvPatches(regionPatches, true);
+        // Make sure the patches index the new mesh
+        polyPatchList newRegionPatches(regionPatches.size());
+        forAll(regionPatches, patchi)
+        {
+            newRegionPatches.set
+            (
+                patchi,
+                regionPatches[patchi].clone(this->boundaryMesh())
+            );
+        }
+        this->addFvPatches(newRegionPatches, true);
 
 
         // At this point we have a valid mesh with 3 patches and zero cells.

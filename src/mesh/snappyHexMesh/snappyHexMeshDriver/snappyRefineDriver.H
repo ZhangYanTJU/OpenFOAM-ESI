@@ -243,6 +243,12 @@ class snappyRefineDriver
             const dictionary& motionDict
         );
 
+        //- Erode sticking-out zone faces. Bit heuristic.
+        void erodeNonManifoldZoneFaces
+        (
+            const refinementParameters& refineParams
+        );
+
         //- Merge refined boundary faces (from exposing coarser cell)
         void mergePatchFaces
         (

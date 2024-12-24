@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -94,6 +94,7 @@ functions
     #include "FOs/FOwallShearStress"
     #include "FOs/FOwriteCellCentres"
     #include "FOs/FOwriteCellVolumes"
+    #include "FOs/FOwriteObjects"
     #include "FOs/FOyPlus"
     #include "FOs/FOzeroGradient"
     #include "FOs/FOnorm"

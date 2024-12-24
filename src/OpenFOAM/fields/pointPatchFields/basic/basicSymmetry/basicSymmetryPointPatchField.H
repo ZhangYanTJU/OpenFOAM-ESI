@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSymmetryPointPatchField_H
-#define basicSymmetryPointPatchField_H
+#ifndef Foam_basicSymmetryPointPatchField_H
+#define Foam_basicSymmetryPointPatchField_H
 
 #include "pointPatchField.H"
 #include "symmetryPointPatch.H"
@@ -54,7 +54,6 @@ class basicSymmetryPointPatchField
 :
     public pointPatchField<Type>
 {
-
 public:
 
     // Constructors
@@ -82,6 +81,12 @@ public:
             const DimensionedField<Type, pointMesh>&,
             const pointPatchFieldMapper&
         );
+
+        //- Default copy construct
+        basicSymmetryPointPatchField
+        (
+            const basicSymmetryPointPatchField<Type>&
+        ) = default;
 
         //- Construct as copy setting internal field reference
         basicSymmetryPointPatchField

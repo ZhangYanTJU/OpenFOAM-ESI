@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -498,6 +498,15 @@ pointSet_doc
         source  nearestToPoint;
         points  ((0 0 0) (1 1 1));
         // See boxToCell for optional transformation of the points
+    }
+
+
+    //- All points of pointpatch
+    {
+        source  patchToPoint;
+        patches ("patch.*");
+        // or
+        patch   somePatch;
     }
 
 

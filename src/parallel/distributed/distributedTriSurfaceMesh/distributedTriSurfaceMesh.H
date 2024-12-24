@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -109,19 +109,27 @@ private:
         //- Merging distance
         scalar mergeDist_;
 
-        autoPtr<IOdictionary> decomposeParDict_;
+        mutable autoPtr<IOdictionary> decomposeParDict_;
 
         //- Decomposition used when independently decomposing surface.
-        autoPtr<decompositionMethod> decomposer_;
+        mutable autoPtr<decompositionMethod> decomposer_;
 
         //- Bounding box settings
         localIOdictionary dict_;
+
+        //- Use bounding boxes (default) or unique decomposition of triangles
+        //- (i.e. do not duplicate triangles)
+        bool decomposeUsingBbs_;
 
         //- Bounding boxes of all processors
         List<List<treeBoundBox>> procBb_;
 
         //- Global triangle numbering
         mutable autoPtr<globalIndex> globalTris_;
+
+        //- Optional per-vertex normals. TBD: move to triSurface? or have
+        //- per-triangle 3 normals so we can interpolate and have features
+        mutable autoPtr<List<FixedList<vector, 3>>> vertexNormals_;
 
         //- The (wanted) distribution type.
         distributionType distType_;
@@ -139,8 +147,17 @@ private:
             //  directory or in parent directory
             static word findLocalInstance(const IOobject& io);
 
-            //- Read my additional data
-            bool read();
+            //- Read my additional data from dictionary. Additional flag to
+            //- say whether we can use master-only geometric tests.
+            bool readSettings(const bool isUndecomposed);
+
+            //- Construction helper: generate vertex normals upon reading
+            //- undecomposed surface
+            void calcVertexNormals
+            (
+                const triSurface& surf,
+                List<FixedList<vector, 3>>& vn
+            ) const;
 
 
         // Line intersection
@@ -287,6 +304,23 @@ private:
 
             // Caching of volume type (based on indexedOctree)
 
+            //- Set node type on any node containing the triangle
+            volumeType markMixed
+            (
+                const indexedOctree<treeDataTriSurface>& tree,
+                const label nodei,
+                const triPointRef& tri,
+                PackedList<2>& nodeTypes
+            ) const;
+
+            //- Set node type on any node overlapping any remote triangles.
+            //- Only valid if using unique decomposition.
+            void markMixedOverlap
+            (
+                const indexedOctree<treeDataTriSurface>& tree,
+                PackedList<2>& nodeTypes
+            ) const;
+
             //- Collect mid points of tree boxes
             void collectLeafMids
             (
@@ -302,6 +336,9 @@ private:
                 PackedList<2>& nodeTypes,
                 const label nodeI
             ) const;
+
+            //- Calculate inside/outside of midpoint of tree nodes
+            void cacheVolumeType(PackedList<2>& nt) const;
 
             //- Look up any cached data. Return unknown if cannot be determined.
             volumeType cachedVolumeType
@@ -321,11 +358,16 @@ private:
                 labelListList& faceFaces
             );
 
+            //- Helper: get decompositionMethod
+            const decompositionMethod& decomposer() const;
+
             //- Finds new bounds based on an independent decomposition.
-            List<List<treeBoundBox>> independentlyDistributedBbs
+            void independentlyDistributedBbs
             (
-                const triSurface&
-            );
+                const triSurface& s,
+                labelList& distribution,
+                List<List<treeBoundBox>>& bbs
+            ) const;
 
             //- Does any part of triangle overlap bb.
             static bool overlaps
@@ -413,7 +455,8 @@ public:
 
     // Constructors
 
-        //- Construct from triSurface
+        //- Construct from components. Assumes triSurface is already decomposed
+        //- and dictionary contains corresponding information
         distributedTriSurfaceMesh
         (
             const IOobject&,
@@ -421,11 +464,17 @@ public:
             const dictionary& dict
         );
 
-        //- Construct read. Does findInstance to find io.local().
+        //- Construct read. Does findInstance to find io.local()
+        //-   - if found local : assume distributed
+        //-   - if found in parent : assume undistributed. Can e.g. check for
+        //-     closedness.
         distributedTriSurfaceMesh(const IOobject& io);
 
         //- Construct from dictionary (used by searchableSurface).
         //  Does read. Does findInstance to find io.local().
+        //-   - if found local : assume distributed
+        //-   - if found in parent : assume undistributed. Can e.g. check for
+        //-     closedness.
         distributedTriSurfaceMesh
         (
             const IOobject& io,
@@ -453,6 +502,9 @@ public:
             {
                 return globalTris().totalSize();
             }
+
+            //- Flip triangles, outsideVolumeType and all cached inside/outside.
+            virtual void flip();
 
             virtual void findNearest
             (

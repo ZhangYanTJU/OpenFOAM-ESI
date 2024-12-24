@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -45,7 +45,7 @@ geometry
 
 
 // Outer box size (approximate)
-vo   #eval{ sqrt($outerRadius/3) };
+vo   #eval{ $outerRadius/sqrt(3) };
 
 // Inner box size - % of overall dimension
 vi   #eval{ $vo * $innerRatio };

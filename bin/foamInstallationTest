@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2015 OpenFOAM Foundation
-#     Copyright (C) 2019-2021 OpenCFD Ltd.
+#     Copyright (C) 2019-2024 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -22,8 +22,8 @@
 #------------------------------------------------------------------------------
 
 # Base settings
-MIN_VERSION_GCC=4.8.5
-MIN_VERSION_LLVM=3.7.1
+MIN_VERSION_GCC=7.5.0
+MIN_VERSION_LLVM=7.0.1
 
 # General
 WIDTH=20
@@ -242,11 +242,11 @@ reportExecutable()
         ;;
 
     flex)
-        VERSION=$(flex --version /dev/null 2>&1 \
+        VERSION=$(flex --version 2>/dev/null \
             | sed -ne 's/flex \([0-9][0-9.]*\).*/\1/p')
         ;;
     make)
-        VERSION=$(make --version /dev/null 2>&1 \
+        VERSION=$(make --version 2>/dev/null \
             | sed -ne 's/^.*[Mm]ake \([0-9][0-9.]*\).*/\1/p')
         ;;
     wmake)
@@ -264,14 +264,29 @@ reportExecutable()
             esac
             echo "ERROR: $SHORT_NAME version is too old for this release of OpenFOAM"
             echo "    User version    : $VERSION"
-            echo "    Minimum required: $MIN_VERSION_GCC"
+            echo "    Minimum required: $MIN_VERSION_LLVM"
             echo
             fatalError="x${fatalError}"
         fi
         ;;
     *gcc* | *g++*)
+        # parse things like this
+        # --
+        # ...
+        # gcc version 7.5.0 (SUSE Linux)
+        # --
         VERSION=$($APP_NAME -v 2>&1 \
             | sed -ne 's/^gcc version \([0-9][0-9.]*\).*/\1/p')
+
+        # Fallback?
+        # parse things like this
+        # --
+        # gcc (SUSE Linux) 7.5.0
+        # g++ (SUSE Linux) 7.5.0
+        # --
+        [ -n "$VERSION" ] || \
+        VERSION=$($APP_NAME --version 2>/dev/null \
+            | sed -ne '1{s/^g.*) \([0-9][.0-9]*\).*/\1/p;}')
 
         if ! vercmp_3 "$MIN_VERSION_GCC" "$VERSION"
         then

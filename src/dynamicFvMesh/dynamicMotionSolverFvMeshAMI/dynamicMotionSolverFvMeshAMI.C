@@ -31,6 +31,7 @@ License
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "cyclicAMIPolyPatch.H"
+#include "cyclicACMIPolyPatch.H"
 #include "polyTopoChange.H"
 #include "MeshObject.H"
 #include "lduMesh.H"
@@ -83,6 +84,35 @@ bool Foam::dynamicMotionSolverFvMeshAMI::init(const bool doInit)
     }
 
     motionPtr_ = motionSolver::New(*this);
+
+    // allow restarts during initialization to match patch field values if
+    // required 
+    const auto& pbm = boundaryMesh();
+    bool changeRequired = false;
+    for (label patchi = 0; patchi < pbm.nNonProcessor(); ++patchi)
+    {
+        const auto* cycAmiPtr = isA<cyclicAMIPolyPatch>(pbm[patchi]);
+
+        if (cycAmiPtr)
+        {
+            changeRequired = cycAmiPtr->createAMIFaces() || changeRequired;
+        }
+        else
+        {
+            const auto* cycAcmiPtr = isA<cyclicACMIPolyPatch>(pbm[patchi]);
+            if (cycAcmiPtr)
+            {
+                changeRequired =
+                    cycAcmiPtr->cyclicAMIPolyPatch::createAMIFaces()
+                 || changeRequired;
+            }
+        }
+    }
+    if (returnReduceOr(changeRequired))
+    {
+        update();
+    }
+
     return true;
 }
 

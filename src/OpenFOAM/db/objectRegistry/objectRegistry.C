@@ -519,7 +519,7 @@ const Foam::regIOobject* Foam::objectRegistry::cfindIOobject
     {
         return iter.val();
     }
-    else if (recursive && this->parentNotTime())
+    else if (recursive && !this->isTimeDb())
     {
         return parent_.cfindIOobject(name, recursive);
     }

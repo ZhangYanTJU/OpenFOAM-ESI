@@ -126,6 +126,9 @@ public:
         //- Demand driven construction of the octree
         const indexedOctree<treeDataTriSurface>& tree() const;
 
+        //- Flip orientation (if cached on octree)
+        void flip();
+
         //- Return reference to the surface.
         const triSurface& surface() const
         {

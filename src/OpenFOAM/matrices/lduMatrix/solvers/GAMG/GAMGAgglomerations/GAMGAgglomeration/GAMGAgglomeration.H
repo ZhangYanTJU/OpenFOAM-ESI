@@ -30,6 +30,26 @@ Class
 Description
     Geometric agglomerated algebraic multigrid agglomeration class.
 
+    Example of the specification in fvSolution:
+    \verbatim
+    {
+        solver              GAMG;
+        smoother            symGaussSeidel;
+
+        // Whether to cache the agglomeration
+        cacheAgglomeration  yes;
+        // Optionally update every updateInterval mesh motion. Default is 1.
+        updateInterval      10;
+
+        // Optionally agglomerate coarsest-level across processors
+        processorAgglomerator   masterCoarsest;
+        nMasters            2;
+
+        tolerance       1e-2;
+        relTol          0;
+    }
+    \endverbatim
+
 SourceFiles
     GAMGAgglomeration.C
     GAMGAgglomerationTemplates.C
@@ -65,14 +85,14 @@ class GAMGProcAgglomeration;
 
 class GAMGAgglomeration
 :
-    public MeshObject<lduMesh, GeometricMeshObject, GAMGAgglomeration>
+    public MeshObject<lduMesh, MoveableMeshObject, GAMGAgglomeration>
 {
     // Private Typedefs
 
         typedef MeshObject
         <
             lduMesh,
-            GeometricMeshObject,
+            MoveableMeshObject,
             GAMGAgglomeration
         > MeshObject_type;
 
@@ -83,6 +103,12 @@ protected:
 
         //- Max number of levels
         const label maxLevels_;
+
+        //- Update agglomeration every updateInterval_ steps
+        const label updateInterval_;
+
+        //- Does agglomeration require update
+        mutable bool requireUpdate_;
 
         //- Number of cells in coarsest level
         label nCellsInCoarsestLevel_;
@@ -160,6 +186,9 @@ protected:
 
 
     // Protected Member Functions
+
+        //- Does the agglomeration need to be fully updated?
+        bool requiresUpdate() const;
 
         //- Assemble coarse mesh addressing
         void agglomerateLduAddressing(const label fineLevelIndex);
@@ -334,6 +363,10 @@ public:
 
 
     // Member Functions
+
+            //- Update when the mesh moves
+            virtual bool movePoints();
+
 
         // Access
 

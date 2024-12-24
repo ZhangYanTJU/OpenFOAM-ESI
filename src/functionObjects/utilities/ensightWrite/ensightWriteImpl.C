@@ -65,7 +65,7 @@ Foam::label Foam::functionObjects::ensightWrite::writeVolFieldsImpl
             caseOpts_.nodeValues()
         );
 
-        Log << ' ' << fieldName;
+        Log << "    " << fieldName << "\n";
 
         ++count;
     }

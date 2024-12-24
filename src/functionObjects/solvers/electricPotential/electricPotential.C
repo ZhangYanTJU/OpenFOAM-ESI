@@ -208,6 +208,7 @@ Foam::functionObjects::electricPotential::electricPotential
         )
     ),
     fvOptions_(mesh_),
+    tol_(1),
     nCorr_(1),
     writeDerivedFields_(false),
     electricField_(false)
@@ -258,6 +259,7 @@ bool Foam::functionObjects::electricPotential::read(const dictionary& dict)
     dict.readIfPresent("sigma", sigma_);
     dict.readIfPresent("epsilonr", epsilonr_);
     dict.readIfPresent("nCorr", nCorr_);
+    dict.readIfPresent("tolerance", tol_);
     dict.readIfPresent("writeDerivedFields", writeDerivedFields_);
     dict.readIfPresent("electricField", electricField_);
 
@@ -346,6 +348,10 @@ bool Foam::functionObjects::electricPotential::execute()
 {
     Log << type() << " execute: " << name() << endl;
 
+    // Convergence monitor parameters
+    bool converged = false;
+    label iter = 0;
+
     tmp<volScalarField> tsigma = this->sigma();
     const auto& sigma = tsigma();
 
@@ -362,13 +368,23 @@ bool Foam::functionObjects::electricPotential::execute()
 
         fvOptions_.constrain(eVEqn);
 
-        eVEqn.solve();
+        ++iter;
+        converged = (eVEqn.solve().initialResidual() < tol_);
+        if (converged) break;
     }
 
     if (electricField_)
     {
         auto& E = lookupObjectRef<volVectorField>(Ename_);
         E == -fvc::grad(eV);
+    }
+
+    if (converged)
+    {
+        Log << type() << ": " << name() << ": "
+            << eV.name() << " is converged." << nl
+            << tab << "initial-residual tolerance: " << tol_ << nl
+            << tab << "outer iteration: " << iter << nl;
     }
 
     Log << endl;

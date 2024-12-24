@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,6 +77,15 @@ class processorMeshes
         PtrList<labelIOList> boundaryProcAddressing_;
 
 
+        // pointMesh
+
+            //- List of processor meshes
+            PtrList<pointMesh> pMeshes_;
+
+            //- List of processor boundary addressing lists for pointMeshes
+            PtrList<labelIOList> pBoundaryProcAddressing_;
+
+
     // Private Member Functions
 
         //- Read all meshes
@@ -138,6 +147,20 @@ public:
         {
             return boundaryProcAddressing_;
         }
+
+
+        // pointMesh
+
+            const PtrList<pointMesh>& pointMeshes() const noexcept
+            {
+                return pMeshes_;
+            }
+
+            const PtrList<labelIOList>& pointMeshBoundaryProcAddressing()
+            const noexcept
+            {
+                return pBoundaryProcAddressing_;
+            }
 
 
         //- Helper: remove all procAddressing files from mesh instance

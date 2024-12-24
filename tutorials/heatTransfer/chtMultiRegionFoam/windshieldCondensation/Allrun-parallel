@@ -16,8 +16,7 @@ runApplication subsetMesh c0 -patch walls -overwrite
 runApplication splitMeshRegions -cellZones -overwrite
 
 # create register face and cell zones
-rm -f log.topoSet.register
-runApplication -o -s register \
+runApplication -s register \
     topoSet -region cabin -dict system/topoSetDictRegister
 
 # set the initial fields

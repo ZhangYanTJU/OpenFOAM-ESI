@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -26,6 +26,7 @@ constructFrom patch;
 // If construct from patch/mesh:
 sourceCase      "<case>";
 // and one of sourcePatches or sourceFaceZones (but not both):
+// (note: wildcards allowed)
 sourceFaceZones (someFacesZone);
 sourcePatches   (movingWall);
 

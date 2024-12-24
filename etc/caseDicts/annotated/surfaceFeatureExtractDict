@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -99,6 +99,11 @@ surface2.nas
         // Keep nonManifold edges (edges with >2 connected faces where
         // the faces form more than two different normal planes)
         nonManifoldEdges yes;
+
+        // Like nonManifoldEdges but is purely topological - does not
+        // check for normals. Either use nonManifoldEdges or
+        // strictNonManifoldEdges
+        //strictNonManifoldEdges  false;
 
         // Keep open edges (edges with 1 connected face)
         openEdges       yes;

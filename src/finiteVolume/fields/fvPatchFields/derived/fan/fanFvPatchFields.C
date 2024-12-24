@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,69 +44,120 @@ namespace Foam
 template<>
 void Foam::fanFvPatchField<Foam::scalar>::calcFanJump()
 {
-    if (this->cyclicPatch().owner())
+    if (!this->cyclicPatch().owner())
     {
-        const auto& phip =
-            patch().lookupPatchField<surfaceScalarField>(phiName_);
+        return;
+    }
 
-        scalarField Un(max(phip/patch().magSf(), scalar(0)));
+    const auto& phip = patch().lookupPatchField<surfaceScalarField>(phiName_);
 
-        // The non-dimensional parameters
+    scalarField volFlowRate(max(phip, scalar(0)));
 
-        scalar rpm(0);
-        scalar meanDiam(0);
+    if (phip.internalField().dimensions() == dimVolume/dimTime)
+    {
+        // No conversion of volFlowRate required
+    }
+    else if (phip.internalField().dimensions() == dimMass/dimTime)
+    {
+        const auto& rhop = patch().lookupPatchField<volScalarField>(rhoName_);
+        volFlowRate /= rhop;
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "dimensions of phi are not correct\n"
+            << "    on patch " << patch().name()
+            << " of field " << internalField().name()
+            << " in file " << internalField().objectPath() << nl
+            << exit(FatalError);
+    }
 
-        if (nonDimensional_)
+
+    // The non-dimensional parameters
+    scalar rpm(0);
+    scalar meanDiam(0);
+
+    scalarField pdFan(patch().size(), Zero);
+
+    switch (operatingMode_)
+    {
+        case operatingMode::VELOCITY:
         {
+            // Note: volFlowRate now becomes face normal velocity
+            volFlowRate /= patch().magSf();
+
+            // Per-face values
+            pdFan = this->jumpTable_->value(volFlowRate);
+
+            break;
+        }
+        case operatingMode::UNIFORM_VELOCITY:
+        {
+            // Note: volFlowRate now becomes face normal velocity
+            volFlowRate /= patch().magSf();
+
+            // Set face values to patch area-averaged value
+            const scalar area = gSum(patch().magSf());
+            const scalar UnAve = gSum(volFlowRate*patch().magSf())/area;
+
+            // Assign uniform value
+            pdFan = this->jumpTable_->value(UnAve);
+
+            break;
+        }
+        case operatingMode::VOL_FLOW_RATE:
+        {
+            // Face-based volFlowRate converted to patch-based volFlowRate
+            // for pd curve lookup
+            const scalar sumVolFlowRate = gSum(volFlowRate);
+
+            // Assign uniform value
+            pdFan = this->jumpTable_->value(sumVolFlowRate);
+
+            break;
+        }
+        case operatingMode::NON_DIMENSIONAL:
+        {
+            // Face-based volFlowRate converted to patch-based volFlowRate
+            // for pd curve lookup
+            scalar sumVolFlowRate = gSum(volFlowRate);
+
             rpm = rpm_->value(this->db().time().timeOutputValue());
             meanDiam = dm_->value(this->db().time().timeOutputValue());
-        }
 
-        if (uniformJump_)
-        {
-            const scalar area = gSum(patch().magSf());
-            Un = gSum(Un*patch().magSf())/area;
-
-            if (nonDimensional_)
-            {
-                // Create an non-dimensional velocity
-                Un =
-                (
-                    120.0*Un
-                  / stabilise
-                    (
-                        pow3(constant::mathematical::pi) * meanDiam * rpm,
-                        VSMALL
-                    )
-                );
-            }
-        }
-
-        if (phip.internalField().dimensions() == dimMass/dimTime)
-        {
-            Un /= patch().lookupPatchField<volScalarField>(rhoName_);
-        }
-
-        if (nonDimensional_)
-        {
-            scalarField deltap(this->jumpTable_->value(Un));
-
-            // Convert non-dimensional deltap from curve into deltaP
-            scalarField pdFan
+            // Create a non-dimensional flow rate
+            sumVolFlowRate *=
             (
-                deltap*pow4(constant::mathematical::pi)
-              * sqr(meanDiam*rpm)/1800.0
+                120.0
+               /stabilise
+                (
+                    pow3(constant::mathematical::pi*meanDiam)*rpm,
+                    VSMALL
+                )
             );
 
-            this->setJump(pdFan);
-        }
-        else
-        {
-            this->setJump(jumpTable_->value(Un));
-        }
+            const scalar pdNonDim = this->jumpTable_->value(sumVolFlowRate);
 
-        this->relax();
+            // Convert uniform non-dimensional pdFan from curve into deltaP
+            pdFan =
+                pdNonDim
+               *pow4(constant::mathematical::pi)*sqr(meanDiam*rpm)/1800.0;
+
+            break;
+        }
+        default:
+        {
+            FatalErrorInFunction
+                << "Unhandled enumeration "
+                << operatingModeNames_[operatingMode_]
+                << abort(FatalError);
+        }
     }
+
+
+    this->setJump(pdFan);
+
+    this->relax();
 }
 
 

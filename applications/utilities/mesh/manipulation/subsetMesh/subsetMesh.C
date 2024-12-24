@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -220,7 +220,7 @@ PtrList<FieldType> subsetFields
     const pointMesh& pMesh
 )
 {
-    const fvMesh& baseMesh = subsetter.baseMesh();
+    //const fvMesh& baseMesh = subsetter.baseMesh();
 
     const UPtrList<const IOobject> fieldObjects
     (
@@ -247,8 +247,8 @@ PtrList<FieldType> subsetFields
             IOobject
             (
                 io.name(),
-                baseMesh.time().timeName(),
-                baseMesh,
+                pMesh.thisDb().time().timeName(),
+                pMesh.thisDb(),
                 IOobjectOption::MUST_READ,
                 IOobjectOption::NO_WRITE,
                 IOobjectOption::NO_REGISTER
@@ -382,6 +382,8 @@ int main(int argc, char *argv[])
     #include "createTime.H"
 
     #include "createNamedMesh.H"
+    // Make sure pointMesh gets constructed/read as well
+    (void)pointMesh::New(mesh, IOobject::READ_IF_PRESENT);
 
     // arg[1] = word (cellSet) or wordRes (cellZone)
     // const word selectionName = args[1];
@@ -583,7 +585,7 @@ int main(int argc, char *argv[])
     // Read point fields and subset
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    const pointMesh& pMesh = pointMesh::New(mesh);
+    const pointMesh& pMesh = pointMesh::New(mesh, IOobject::READ_IF_PRESENT);
 
     #undef  createSubsetFields
     #define createSubsetFields(FieldType, Variable)             \
@@ -662,6 +664,18 @@ int main(int argc, char *argv[])
         << endl;
     subsetter.subMesh().write();
     processorMeshes::removeFiles(subsetter.subMesh());
+
+    auto* subPointMeshPtr =
+        subsetter.subMesh().thisDb().findObject<pointMesh>
+        (
+            pointMesh::typeName
+        );
+    if (subPointMeshPtr)
+    {
+        pointMesh& subPointMesh = const_cast<pointMesh&>(*subPointMeshPtr);
+        subPointMesh.setInstance(subsetter.subMesh().facesInstance());
+        subPointMesh.write();
+    }
 
 
     // Volume fields

@@ -68,17 +68,19 @@ bool Foam::functionObjects::limitFields::limitScalarField
 
     auto& field = *fieldPtr;
 
+    Log << "    Limiting field " << fieldName << ":";
+
     if (limitType::CLAMP_NONE != withBounds_)
     {
         MinMax<scalar> currentRange = gMinMax(field);
 
         if (withBounds_ & limitType::CLAMP_MIN)
         {
-            Log << ": min(" << currentRange.min() << ')';
+            Log << " min(" << currentRange.min() << ')';
         }
         if (withBounds_ & limitType::CLAMP_MAX)
         {
-            Log << ": max(" << currentRange.max() << ')';
+            Log << " max(" << currentRange.max() << ')';
         }
     }
 
@@ -94,6 +96,8 @@ bool Foam::functionObjects::limitFields::limitScalarField
     {
         field.clamp_range(min_, max_);
     }
+
+    Log << endl;
 
     return true;
 }

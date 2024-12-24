@@ -45,6 +45,68 @@ namespace Foam
 }
 
 
+bool Foam::solidBodyFvGeometryScheme::markChanges
+(
+    const pointField& oldPoints,
+    const pointField& currPoints,
+    bitSet& isChangedPoint,
+    bitSet& isChangedFace,
+    bitSet& isChangedCell
+) const
+{
+    isChangedPoint.setSize(oldPoints.size());
+
+    // Check for non-identical points
+    forAll(isChangedPoint, pointi)
+    {
+        isChangedPoint.set(pointi, oldPoints[pointi] != currPoints[pointi]);
+    }
+
+    DebugInfo
+        << "SBM --- Changed points:"
+        << returnReduce(isChangedPoint.count(), sumOp<label>())
+        << endl;
+
+    // Quick return if no points have moved
+    if (returnReduceAnd(isChangedPoint.none()))
+    {
+        return false;
+    }
+
+    isChangedFace.setSize(mesh_.nFaces());
+    isChangedFace = false;
+
+    isChangedCell.setSize(mesh_.nCells());
+    isChangedCell = false;
+
+    const auto& pointFaces = mesh_.pointFaces();
+    const auto& own = mesh_.faceOwner();
+    const auto& nbr = mesh_.faceNeighbour();
+
+    // Identify faces and cells attached to moving points
+    for (const label pointi : isChangedPoint)
+    {
+        for (const auto facei : pointFaces[pointi])
+        {
+            isChangedFace.set(facei);
+
+            isChangedCell.set(own[facei]);
+            if (facei < mesh_.nInternalFaces())
+            {
+                isChangedCell.set(nbr[facei]);
+            }
+        }
+    }
+
+    DebugInfo
+        << "SBM --- Changed cells:"
+        << returnReduce(isChangedCell.count(), sumOp<label>())
+        << endl;
+
+    return true;
+}
+
+
 void Foam::solidBodyFvGeometryScheme::setMeshMotionData()
 {
     if (!cacheInitialised_ || !cacheMotion_)
@@ -67,64 +129,86 @@ void Foam::solidBodyFvGeometryScheme::setMeshMotionData()
                 << abort(FatalError);
         }
 
-        bitSet changedPoints(oldPoints.size());
+        //bitSet changedPoints(oldPoints.size());
+        //
+        //// Check for non-identical points
+        //forAll(changedPoints, pointi)
+        //{
+        //    changedPoints.set
+        //    (
+        //        pointi,
+        //        oldPoints[pointi] != currPoints[pointi]
+        //    );
+        //}
+        //
+        //DebugInfo
+        //    << "SBM --- Changed points:"
+        //    << returnReduce(changedPoints.count(), sumOp<label>())
+        //    << endl;
+        //
+        //// Quick return if no points have moved
+        //if (returnReduceAnd(changedPoints.none()))
+        //{
+        //    return;
+        //}
+        //
+        //bitSet cellIDs(mesh_.nCells());
+        //bitSet faceIDs(mesh_.nFaces());
+        //
+        //const auto& pointFaces = mesh_.pointFaces();
+        //const auto& own = mesh_.faceOwner();
+        //const auto& nbr = mesh_.faceNeighbour();
+        //
+        //// Identify faces and cells attached to moving points
+        //for (const label pointi : changedPoints)
+        //{
+        //    for (const auto facei : pointFaces[pointi])
+        //    {
+        //        faceIDs.set(facei);
+        //
+        //        cellIDs.set(own[facei]);
+        //        if (facei < mesh_.nInternalFaces())
+        //        {
+        //            cellIDs.set(nbr[facei]);
+        //        }
+        //    }
+        //}
+        //
+        //changedCellIDs_ = cellIDs.toc();
+        //
+        //DebugInfo
+        //    << "SBM --- Changed cells:"
+        //    << returnReduce(changedCellIDs_.size(), sumOp<label>())
+        //    << endl;
 
-        // Check for non-identical points
-        forAll(changedPoints, pointi)
-        {
-            changedPoints.set(pointi, oldPoints[pointi] != currPoints[pointi]);
-        }
-
-        DebugInfo
-            << "SBM --- Changed points:"
-            << returnReduce(changedPoints.count(), sumOp<label>())
-            << endl;
+        bitSet isChangedPoint;
+        bitSet isChangedFace;
+        bitSet isChangedCell;
+        const bool changed = markChanges
+        (
+            oldPoints,
+            currPoints,
+            isChangedPoint,
+            isChangedFace,
+            isChangedCell
+        );
 
         // Quick return if no points have moved
-        if (returnReduceAnd(changedPoints.none()))
+        if (!changed)
         {
             return;
         }
 
-        bitSet cellIDs(mesh_.nCells());
-        bitSet faceIDs(mesh_.nFaces());
-
-        const auto& pointFaces = mesh_.pointFaces();
-        const auto& own = mesh_.faceOwner();
-        const auto& nbr = mesh_.faceNeighbour();
-
-        // Identify faces and cells attached to moving points
-        for (const label pointi : changedPoints)
-        {
-            for (const auto facei : pointFaces[pointi])
-            {
-                faceIDs.set(facei);
-
-                cellIDs.set(own[facei]);
-                if (facei < mesh_.nInternalFaces())
-                {
-                    cellIDs.set(nbr[facei]);
-                }
-            }
-        }
-
-        changedCellIDs_ = cellIDs.toc();
-
-        DebugInfo
-            << "SBM --- Changed cells:"
-            << returnReduce(changedCellIDs_.size(), sumOp<label>())
-            << endl;
+        changedCellIDs_ = isChangedCell.toc();
 
 
         // Construct face and patch ID info
 
-        const auto changedFaceFlag = faceIDs.values();
-
-        DynamicList<label> changedFaceIDs(faceIDs.count());
-        DynamicList<label> changedPatchIDs(faceIDs.count());
+        DynamicList<label> changedFaceIDs(isChangedFace.count());
+        DynamicList<label> changedPatchIDs(changedFaceIDs.capacity());
         for (label facei = 0; facei < mesh_.nInternalFaces(); ++facei)
         {
-            if (changedFaceFlag[facei])
+            if (isChangedFace[facei])
             {
                 changedFaceIDs.append(facei);
                 changedPatchIDs.append(-1);
@@ -138,7 +222,7 @@ void Foam::solidBodyFvGeometryScheme::setMeshMotionData()
 
             for (const label meshFacei : pp.range())
             {
-                if (changedFaceFlag[meshFacei])
+                if (isChangedFace[meshFacei])
                 {
                     changedFaceIDs.append(meshFacei);
                     changedPatchIDs.append(patchi);
@@ -340,6 +424,84 @@ void Foam::solidBodyFvGeometryScheme::movePoints()
 void Foam::solidBodyFvGeometryScheme::updateMesh(const mapPolyMesh& mpm)
 {
     cacheInitialised_ = false;
+}
+
+
+bool Foam::solidBodyFvGeometryScheme::updateGeom
+(
+    const pointField& points,
+    const refPtr<pointField>& oldPoints,
+    pointField& faceCentres,
+    vectorField& faceAreas,
+    pointField& cellCentres,
+    scalarField& cellVolumes
+) const
+{
+    if
+    (
+        (faceCentres.size() != mesh_.nFaces())
+     || (faceAreas.size() != mesh_.nFaces())
+     || (cellCentres.size() != mesh_.nCells())
+     || (cellVolumes.size() != mesh_.nCells())
+     || !oldPoints
+    )
+    {
+        // Do all
+        return basicFvGeometryScheme::updateGeom
+        (
+            points,
+            oldPoints,
+            faceCentres,
+            faceAreas,
+            cellCentres,
+            cellVolumes
+        );
+    }
+    else
+    {
+        // Since oldPoints provided assume that face & cell geometry is
+        // up to date with it
+
+        bitSet isChangedPoint;
+        bitSet isChangedFace;
+        bitSet isChangedCell;
+        const bool changed = markChanges
+        (
+            oldPoints(),
+            points,
+            isChangedPoint,
+            isChangedFace,
+            isChangedCell
+        );
+
+        if (!changed)
+        {
+            return false;
+        }
+
+        // Make face centres and areas consistent with new points
+        primitiveMeshTools::updateFaceCentresAndAreas
+        (
+            mesh_,
+            isChangedFace.toc(),
+            points,
+            faceCentres,
+            faceAreas
+        );
+
+        primitiveMeshTools::updateCellCentresAndVols
+        (
+            mesh_,
+            faceCentres,
+            faceAreas,
+            isChangedCell.toc(),
+            mesh_.cells(),
+            cellCentres,
+            cellVolumes
+        );
+
+        return true;
+    }
 }
 
 

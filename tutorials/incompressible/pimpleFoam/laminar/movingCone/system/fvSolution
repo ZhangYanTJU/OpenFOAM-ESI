@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -22,7 +22,8 @@ solvers
         tolerance       0;
         relTol          0.01;
         smoother        GaussSeidel;
-        cacheAgglomeration no;
+        cacheAgglomeration yes; // Store agglomeration
+        updateInterval  2;      // Redo agglomeration occasionally
     }
 
     pFinal

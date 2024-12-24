@@ -15,22 +15,29 @@ derivedFvPatchFields/vibrationShell/vibrationShellFvPatchScalarField.C
 
 /* Sub-Model */
 
-liquidFilm/subModels/kinematic/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModel.C
-liquidFilm/subModels/kinematic/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModelNew.C
-liquidFilm/subModels/kinematic/filmTurbulenceModel/laminar/laminar.C
+kinematic = liquidFilm/subModels/kinematic
 
-liquidFilm/subModels/kinematic/injectionModel/injectionModelList/injectionModelList.C
-liquidFilm/subModels/kinematic/injectionModel/injectionModel/injectionModel.C
-liquidFilm/subModels/kinematic/injectionModel/injectionModel/injectionModelNew.C
+$(kinematic)/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModel.C
+$(kinematic)/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModelNew.C
+$(kinematic)/filmTurbulenceModel/laminar/laminar.C
 
-liquidFilm/subModels/kinematic/injectionModel/curvatureSeparation/curvatureSeparation.C
-liquidFilm/subModels/kinematic/injectionModel/BrunDrippingInjection/BrunDrippingInjection.C
+$(kinematic)/injectionModel/injectionModelList/injectionModelList.C
+$(kinematic)/injectionModel/injectionModel/injectionModel.C
+$(kinematic)/injectionModel/injectionModel/injectionModelNew.C
 
-liquidFilm/subModels/kinematic/force/forceList/forceList.C
-liquidFilm/subModels/kinematic/force/force/force.C
-liquidFilm/subModels/kinematic/force/force/forceNew.C
-liquidFilm/subModels/kinematic/force/contactAngleForces/contactAngleForce/contactAngleForce.C
-liquidFilm/subModels/kinematic/force/contactAngleForces/dynamicContactAngleForce/dynamicContactAngleForce.C
+$(kinematic)/injectionModel/filmSeparation/filmSeparation.C
+$(kinematic)/injectionModel/filmSeparation/filmSeparationModels/filmSeparationModel/filmSeparationModel.C
+$(kinematic)/injectionModel/filmSeparation/filmSeparationModels/filmSeparationModel/filmSeparationModelNew.C
+$(kinematic)/injectionModel/filmSeparation/filmSeparationModels/OwenRyleyModel/OwenRyleyModel.C
+$(kinematic)/injectionModel/filmSeparation/filmSeparationModels/FriedrichModel/FriedrichModel.C
+
+$(kinematic)/injectionModel/BrunDrippingInjection/BrunDrippingInjection.C
+
+$(kinematic)/force/forceList/forceList.C
+$(kinematic)/force/force/force.C
+$(kinematic)/force/force/forceNew.C
+$(kinematic)/force/contactAngleForces/contactAngleForce/contactAngleForce.C
+$(kinematic)/force/contactAngleForces/dynamicContactAngleForce/dynamicContactAngleForce.C
 
 liquidFilm/subModels/filmSubModelBase.C
 
@@ -42,5 +49,6 @@ liquidFilm/kinematicThinFilm/kinematicThinFilm.C
 derivedFvPatchFields/filmShell/velocityFilmShellFvPatchVectorField.C
 
 functionObjects/setTimeStep/setTimeStepFaRegionsFunctionObject.C
+functionObjects/surfaceCourantNumber/surfaceCourantNumber.C
 
 LIB = $(FOAM_LIBBIN)/libregionFaModels

@@ -251,4 +251,26 @@ void Foam::triSurfaceRegionSearch::findNearest
 }
 
 
+void Foam::triSurfaceRegionSearch::flip()
+{
+    triSurfaceSearch::flip();
+
+    for (auto& tree : treeByRegion_)
+    {
+        PackedList<2>& nodeTypes = tree.nodeTypes();
+        forAll(nodeTypes, i)
+        {
+            if (nodeTypes[i] == volumeType::INSIDE)
+            {
+                nodeTypes[i] = volumeType::OUTSIDE;
+            }
+            else if (nodeTypes[i] == volumeType::OUTSIDE)
+            {
+                nodeTypes[i] = volumeType::INSIDE;
+            }
+        }
+    }
+}
+
+
 // ************************************************************************* //

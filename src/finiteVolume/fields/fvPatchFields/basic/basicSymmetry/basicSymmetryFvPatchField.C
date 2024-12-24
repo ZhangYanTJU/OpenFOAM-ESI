@@ -28,7 +28,6 @@ License
 #include "basicSymmetryFvPatchField.H"
 #include "symmTransformField.H"
 
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -67,16 +66,6 @@ Foam::basicSymmetryFvPatchField<Type>::basicSymmetryFvPatchField
 {
     this->evaluate();
 }
-
-
-template<class Type>
-Foam::basicSymmetryFvPatchField<Type>::basicSymmetryFvPatchField
-(
-    const basicSymmetryFvPatchField<Type>& ptf
-)
-:
-    transformFvPatchField<Type>(ptf)
-{}
 
 
 template<class Type>

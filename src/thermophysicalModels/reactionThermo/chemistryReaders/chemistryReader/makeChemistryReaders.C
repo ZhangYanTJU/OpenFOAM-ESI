@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,6 +44,7 @@ namespace Foam
 
 makeChemistryReader(constGasHThermoPhysics);
 makeChemistryReader(gasHThermoPhysics);
+makeChemistryReader(PengRobinsonGasHThermoPhysics);
 makeChemistryReader(constIncompressibleGasHThermoPhysics);
 makeChemistryReader(incompressibleGasHThermoPhysics);
 makeChemistryReader(icoPoly8HThermoPhysics);
@@ -53,6 +55,7 @@ makeChemistryReader(constHThermoPhysics);
 
 makeChemistryReaderType(foamChemistryReader, constGasHThermoPhysics);
 makeChemistryReaderType(foamChemistryReader, gasHThermoPhysics);
+makeChemistryReaderType(foamChemistryReader, PengRobinsonGasHThermoPhysics);
 makeChemistryReaderType
 (
     foamChemistryReader,
@@ -70,6 +73,7 @@ makeChemistryReaderType(foamChemistryReader, constHThermoPhysics);
 
 makeChemistryReader(constGasEThermoPhysics);
 makeChemistryReader(gasEThermoPhysics);
+makeChemistryReader(PengRobinsonGasEThermoPhysics);
 makeChemistryReader(constIncompressibleGasEThermoPhysics);
 makeChemistryReader(incompressibleGasEThermoPhysics);
 makeChemistryReader(icoPoly8EThermoPhysics);
@@ -80,6 +84,7 @@ makeChemistryReader(constEThermoPhysics);
 
 makeChemistryReaderType(foamChemistryReader, constGasEThermoPhysics);
 makeChemistryReaderType(foamChemistryReader, gasEThermoPhysics);
+makeChemistryReaderType(foamChemistryReader, PengRobinsonGasEThermoPhysics);
 makeChemistryReaderType
 (
     foamChemistryReader,

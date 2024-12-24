@@ -71,6 +71,39 @@ public:
         :
             facePointPatch(patch, bm)
         {}
+
+        //- Construct given the original patch and a map
+        wallPointPatch
+        (
+            const wallPointPatch& patch,
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        )
+        :
+            facePointPatch(patch, bm, index, mapAddressing, reversePointMap)
+        {}
+
+        //- Construct and return a subset clone,
+        //- resetting the point list and boundary mesh
+        virtual autoPtr<pointPatch> clone
+        (
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        ) const
+        {
+            return autoPtr<pointPatch>::NewFrom<wallPointPatch>
+            (
+                *this,
+                bm,
+                index,
+                mapAddressing,
+                reversePointMap
+            );
+        }
 };
 
 

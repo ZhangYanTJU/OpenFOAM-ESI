@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -108,7 +108,12 @@ typedef CGAL::AABB_face_graph_triangle_primitive
 typedef CGAL::AABB_traits<K, Primitive> Traits;
 typedef CGAL::AABB_tree<Traits> Tree;
 
+// Used boost::optional prior to CGAL-6.0
+#if (CGAL_VERSION_NR < 1060000910)
 typedef boost::optional
+#else
+typedef std::optional
+#endif
 <
     Tree::Intersection_and_primitive_id<Segment>::Type
 > Segment_intersection;
@@ -647,7 +652,12 @@ labelPair edgeIntersectionsCGAL
             // Get intersection object
             if
             (
+                // Used boost::variant prior to CGAL-6.0
+                #if (CGAL_VERSION_NR < 1060000910)
                 const Point* ptPtr = boost::get<Point>(&(intersect->first))
+                #else
+                const Point* ptPtr = std::get_if<Point>(&(intersect->first))
+                #endif
             )
             {
                 point pt
@@ -679,7 +689,12 @@ labelPair edgeIntersectionsCGAL
             }
             else if
             (
+                // Used boost::variant prior to CGAL-6.0
+                #if (CGAL_VERSION_NR < 1060000910)
                 const Segment* sPtr = boost::get<Segment>(&(intersect->first))
+                #else
+                const Segment* sPtr = std::get_if<Segment>(&(intersect->first))
+                #endif
             )
             {
                 #if defined (CGAL_VERSION_NR) && (CGAL_VERSION_NR < 1041400000)

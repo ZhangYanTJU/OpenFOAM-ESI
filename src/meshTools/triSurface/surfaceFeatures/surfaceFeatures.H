@@ -174,6 +174,15 @@ private:
             labelList& featVisited
         );
 
+        ////- Given two valid bins check if the regions differ. If so return
+        ////- REGION, otherwise return NONE
+        //edgeStatus checkBinRegion
+        //(
+        //    const label edgei,
+        //    const labelList& bin0,
+        //    const labelList& bin1
+        //) const;
+
         //- Divide into multiple normal bins
         //  - set REGION if != 2 normals
         //  - set REGION if 2 normals that make feature angle
@@ -182,7 +191,8 @@ private:
         (
             const scalar tol,
             const scalar includedAngle,
-            const label edgeI
+            const label edgeI,
+            const point& leftPoint
         ) const;
 
 public:
@@ -346,6 +356,9 @@ public:
 
             //- Mark edges with a single connected face as 'NONE'
             void excludeOpen(List<edgeStatus>& edgeStat) const;
+
+            //- Mark edges with >2 connected faces as 'NONE'
+            void excludeNonManifold(List<edgeStatus>& edgeStat) const;
 
             //- Divide into multiple normal bins
             //  - set REGION if != 2 normals

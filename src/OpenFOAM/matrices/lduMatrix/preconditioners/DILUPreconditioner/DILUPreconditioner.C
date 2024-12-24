@@ -107,8 +107,6 @@ void Foam::DILUPreconditioner::precondition
         solver_.matrix().lduAddr().upperAddr().begin();
     const label* const __restrict__ lPtr =
         solver_.matrix().lduAddr().lowerAddr().begin();
-    const label* const __restrict__ losortPtr =
-        solver_.matrix().lduAddr().losortAddr().begin();
 
     const scalar* const __restrict__ upperPtr =
         solver_.matrix().upper().begin();
@@ -126,9 +124,8 @@ void Foam::DILUPreconditioner::precondition
 
     for (label face=0; face<nFaces; face++)
     {
-        const label sface = losortPtr[face];
-        wAPtr[uPtr[sface]] -=
-            rDPtr[uPtr[sface]]*lowerPtr[sface]*wAPtr[lPtr[sface]];
+        wAPtr[uPtr[face]] -=
+            rDPtr[uPtr[face]]*lowerPtr[face]*wAPtr[lPtr[face]];
     }
 
     for (label face=nFacesM1; face>=0; face--)

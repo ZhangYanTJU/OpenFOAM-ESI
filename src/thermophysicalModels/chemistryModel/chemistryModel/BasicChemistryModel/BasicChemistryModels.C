@@ -67,6 +67,13 @@ namespace Foam
     (
         StandardChemistryModel,
         psiReactionThermo,
+        PengRobinsonGasHThermoPhysics
+    );
+
+    makeChemistryModelType
+    (
+        StandardChemistryModel,
+        psiReactionThermo,
         constIncompressibleGasHThermoPhysics
     );
 
@@ -124,6 +131,13 @@ namespace Foam
     (
         StandardChemistryModel,
         rhoReactionThermo,
+        PengRobinsonGasHThermoPhysics
+    );
+
+    makeChemistryModelType
+    (
+        StandardChemistryModel,
+        rhoReactionThermo,
         constIncompressibleGasHThermoPhysics
     );
 
@@ -181,6 +195,13 @@ namespace Foam
     (
         TDACChemistryModel,
         psiReactionThermo,
+        PengRobinsonGasHThermoPhysics
+    );
+
+    makeChemistryModelType
+    (
+        TDACChemistryModel,
+        psiReactionThermo,
         constIncompressibleGasHThermoPhysics
     );
 
@@ -232,6 +253,13 @@ namespace Foam
         TDACChemistryModel,
         rhoReactionThermo,
         gasHThermoPhysics
+    );
+
+    makeChemistryModelType
+    (
+        TDACChemistryModel,
+        rhoReactionThermo,
+        PengRobinsonGasHThermoPhysics
     );
 
     makeChemistryModelType
@@ -296,6 +324,13 @@ namespace Foam
     (
         StandardChemistryModel,
         psiReactionThermo,
+        PengRobinsonGasEThermoPhysics
+    );
+
+    makeChemistryModelType
+    (
+        StandardChemistryModel,
+        psiReactionThermo,
         constIncompressibleGasEThermoPhysics
     );
 
@@ -354,6 +389,13 @@ namespace Foam
     (
         StandardChemistryModel,
         rhoReactionThermo,
+        PengRobinsonGasEThermoPhysics
+    );
+
+    makeChemistryModelType
+    (
+        StandardChemistryModel,
+        rhoReactionThermo,
         constIncompressibleGasEThermoPhysics
     );
 
@@ -411,6 +453,13 @@ namespace Foam
     (
         TDACChemistryModel,
         psiReactionThermo,
+        PengRobinsonGasEThermoPhysics
+    );
+
+    makeChemistryModelType
+    (
+        TDACChemistryModel,
+        psiReactionThermo,
         constIncompressibleGasEThermoPhysics
     );
 
@@ -462,6 +511,13 @@ namespace Foam
         TDACChemistryModel,
         rhoReactionThermo,
         gasEThermoPhysics
+    );
+
+    makeChemistryModelType
+    (
+        TDACChemistryModel,
+        rhoReactionThermo,
+        PengRobinsonGasEThermoPhysics
     );
 
     makeChemistryModelType

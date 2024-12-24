@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -67,7 +67,7 @@ adjointManagers
                             // Optional entry. If abscent, inlet flow rate will
                             // be partitioned equally between outlets
                             // targetFractions (0.5 0.5);
-                            normalize         true;
+                            normalise         true;
                         }
                     }
                 }

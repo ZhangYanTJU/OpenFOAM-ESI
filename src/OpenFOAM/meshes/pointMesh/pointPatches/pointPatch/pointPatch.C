@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,7 +32,33 @@ License
 
 namespace Foam
 {
-defineTypeNameAndDebug(pointPatch, 0);
+    defineTypeNameAndDebug(pointPatch, 0);
+
+//    int pointPatch::disallowGenericPointPatch
+//    (
+//        debug::debugSwitch("disallowGenericPointPatch", 0)
+//    );
+
+    defineRunTimeSelectionTable(pointPatch, dictionary);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::pointPatch::write(Ostream& os) const
+{
+    os.writeKeyword("type") << type() << token::END_STATEMENT << nl;
+    patchIdentifier::write(os);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+Foam::Ostream& Foam::operator<<(Ostream& os, const pointPatch& p)
+{
+    p.write(os);
+    os.check("Ostream& operator<<(Ostream& os, const pointPatch& p");
+    return os;
 }
 
 

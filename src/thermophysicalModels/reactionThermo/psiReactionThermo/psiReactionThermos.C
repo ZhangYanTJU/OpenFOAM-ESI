@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +33,7 @@ License
 
 #include "specie.H"
 #include "perfectGas.H"
+#include "PengRobinsonGas.H"
 #include "hConstThermo.H"
 #include "janafThermo.H"
 #include "sensibleEnthalpy.H"
@@ -181,6 +183,131 @@ makeReactionThermos
     specie
 );
 
+
+// Peng Robinson
+makeReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    homogeneousMixture,
+    constTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    inhomogeneousMixture,
+    constTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    veryInhomogeneousMixture,
+    constTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+
+// sutherlandTransport, hConstThermo
+
+makeReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    homogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    inhomogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    veryInhomogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+
+// sutherlandTransport, janafThermo
+
+makeReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    homogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    janafThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    inhomogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    janafThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    veryInhomogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    janafThermo,
+    PengRobinsonGas,
+    specie
+);
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Multi-component thermo for sensible enthalpy
@@ -245,6 +372,15 @@ makeThermoPhysicsReactionThermos
     gasHThermoPhysics
 );
 
+makeThermoPhysicsReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    reactingMixture,
+    PengRobinsonGasHThermoPhysics
+);
+
 
 // Single-step reaction thermo for sensible enthalpy
 
@@ -276,6 +412,15 @@ makeThermoPhysicsReactionThermos
     hePsiThermo,
     reactingMixture,
     gasEThermoPhysics
+);
+
+makeThermoPhysicsReactionThermos
+(
+    psiThermo,
+    psiReactionThermo,
+    hePsiThermo,
+    reactingMixture,
+    PengRobinsonGasEThermoPhysics
 );
 
 

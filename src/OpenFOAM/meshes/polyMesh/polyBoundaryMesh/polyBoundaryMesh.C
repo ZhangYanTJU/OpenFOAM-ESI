@@ -300,6 +300,9 @@ void Foam::polyBoundaryMesh::clearAddressing()
 
 void Foam::polyBoundaryMesh::calcGeometry()
 {
+    // Make sure messages don't interact by having unique tag
+    const int oldTag = UPstream::incrMsgType();
+
     PstreamBuffers pBufs(Pstream::defaultCommsType);
 
     if
@@ -341,6 +344,9 @@ void Foam::polyBoundaryMesh::calcGeometry()
             }
         }
     }
+
+    // Reset tag
+    UPstream::msgType(oldTag);
 }
 
 
@@ -978,14 +984,22 @@ Foam::polyBoundaryMesh::whichPatchFace(const label meshFacei) const
     }
 
 
+    const polyPatchList& patches = *this;
+
+    // Do we have cached patch info?
+    if (patchIDPtr_)
+    {
+        const label patchi =
+            this->patchID()[meshFacei - mesh().nInternalFaces()];
+
+        // (patch, local face index)
+        return labelPair(patchi, meshFacei - patches[patchi].start());
+    }
+
+
     // Patches are ordered, use binary search
     // Find out which patch index and local patch face the specified
     // mesh face belongs to by comparing label with patch start labels.
-
-
-    // TBD: use patchIDPtr_ if it exists?
-
-    const polyPatchList& patches = *this;
 
     const label patchi =
         findLower
@@ -1403,6 +1417,9 @@ void Foam::polyBoundaryMesh::reorder
     {
         patches[patchi].index() = patchi;
     }
+
+    // Clear group-to-patch addressing. Note: could re-calculate
+    groupIDsPtr_.reset(nullptr);
 
     if (validBoundary)
     {

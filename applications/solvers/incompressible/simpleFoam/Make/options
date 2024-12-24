@@ -5,13 +5,17 @@ EXE_INC = \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/incompressible/lnInclude \
     -I$(LIB_SRC)/transportModels \
-    -I$(LIB_SRC)/transportModels/incompressible/singlePhaseTransportModel
+    -I$(LIB_SRC)/transportModels/incompressible/singlePhaseTransportModel \
+    -I$(LIB_SRC)/dynamicMesh/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude
 
 EXE_LIBS = \
     -lfiniteVolume \
     -lfvOptions \
     -lmeshTools \
     -lsampling \
+    -ldynamicMesh \
+    -ldynamicFvMesh \
     -lturbulenceModels \
     -lincompressibleTurbulenceModels \
     -lincompressibleTransportModels \

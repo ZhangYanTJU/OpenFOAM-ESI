@@ -79,8 +79,14 @@ protected:
         //- Make patch weighting factors
         virtual void makeWeights(scalarField&) const = 0;
 
+        //- Make patch geodesic distance between P and N
+        virtual void makeLPN(scalarField&) const = 0;
+
         //- Make patch face - neighbour cell distances
         virtual void makeDeltaCoeffs(scalarField&) const = 0;
+
+        //- Make non-orthogonality correction vectors
+        virtual void makeCorrectionVectors(vectorField&) const = 0;
 
         //- Calculate the uniform transformation tensors
         void calcTransformTensors

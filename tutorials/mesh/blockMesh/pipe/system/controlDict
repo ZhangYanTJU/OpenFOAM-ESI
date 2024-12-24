@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -14,17 +14,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-libs            (blockMesh);
-
-DebugSwitches
-{
-    //project 1;
-    //searchableExtrudedCircle 1;
-    //projectCurve 1;
-    solution    1;
-}
-
-application     simpleFoam;
+application     moveDynamicMesh;
 
 startFrom       startTime;
 
@@ -32,7 +22,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         100;
+endTime         10;
 
 deltaT          1;
 

@@ -146,7 +146,7 @@ bool Foam::functionObjects::mapFields::mapFieldType() const
 
         mappedField = interpPtr_->mapTgtToSrc(field);
 
-        Log << "    " << fieldName << ": interpolated";
+        Log << "    " << fieldName << ": interpolated\n";
 
         evaluateConstraintTypes(mappedField);
     }
@@ -173,7 +173,7 @@ bool Foam::functionObjects::mapFields::writeFieldType() const
 
         mappedField.write();
 
-        Log << "    " << fieldName << ": written";
+        Log << "    " << fieldName << ": written\n";
     }
 
     return processed;

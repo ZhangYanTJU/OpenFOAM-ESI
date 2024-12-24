@@ -35,8 +35,12 @@ then
     copyParallelPointDisplacement "$caseName" "$latestTime"
 
     # Adjust application (from simpleFoam -> pimpleFoam)
-    foamDictionary transient/system/controlDict \
+    foamDictionary "$caseName"/system/controlDict \
         -entry application -set pimpleFoam
+
+    # Adjust dynamicMeshDict (from static -> dynamicMotionSolver)
+    foamDictionary "$caseName"/constant/dynamicMeshDict \
+        -entry dynamicFvMesh -set dynamicMotionSolverFvMesh
 
     # Copy/link support files
     linkFiles files "$caseName"

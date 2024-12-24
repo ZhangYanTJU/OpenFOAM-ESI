@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2406                                 |
+|  \\    /   O peration     | Version:  v2412                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -14,6 +14,11 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+DebugSwitches
+{
+    pointBoundaryMesh   1;
+}
+
 application     blockMesh;
 
 startFrom       startTime;
@@ -22,9 +27,9 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         0;
+endTime         20;
 
-deltaT          0;
+deltaT          1;
 
 writeControl    timeStep;
 

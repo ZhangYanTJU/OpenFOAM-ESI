@@ -97,7 +97,8 @@ public:
     enum class injectionMethod
     {
         imPoint,
-        imDisc
+        imDisc,
+        imDiscSegments  //<! Disc with angular segments
     };
 
     static const Enum<injectionMethod> injectionMethodNames;
@@ -170,6 +171,18 @@ private:
 
         //- Parcel size PDF model
         autoPtr<distributionModel> sizeDistribution_;
+
+        //- Previous-time value
+        scalar t0_;
+
+        //- Number of injectors in angular-segmented disc
+        label nInjectors_;
+
+        //- Estimated speed of the moving injector
+        vector Uinjector_;
+
+        //- Initial injector direction
+        vector initialInjectorDir_;
 
 
         // Tangential vectors to the direction vector
@@ -282,6 +295,12 @@ public:
             //- Return flag to identify whether or not injection of parcelI is
             //  permitted
             virtual bool validInjection(const label parcelI);
+
+
+        // I-O
+
+            //- Write injection info
+            virtual void info();
 };
 
 

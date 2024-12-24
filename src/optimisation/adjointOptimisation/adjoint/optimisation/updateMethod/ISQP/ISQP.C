@@ -28,6 +28,7 @@ License
 
 #include "ISQP.H"
 #include "IOmanip.H"
+#include "Constant.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -128,7 +129,8 @@ void Foam::ISQP::allocateLagrangeMultipliers()
     if (includeExtraVars_)
     {
         extraVars_.reset(autoPtr<scalarField>::New(m, 1));
-        z_.reset(autoPtr<scalarField>::New(m, max(1, 0.5*c_)));
+        const scalar t = mesh_.time().timeOutputValue();
+        z_.reset(autoPtr<scalarField>::New(m, max(1, 0.5*c_->value(t))));
 
         deltaExtraVars_.reset(autoPtr<scalarField>::New(m, Zero));
         deltaZ_.reset(autoPtr<scalarField>::New(m, Zero));
@@ -185,7 +187,9 @@ void Foam::ISQP::initialize()
     if (includeExtraVars_)
     {
         extraVars_() = scalar(1);
-        z_() = max(1, 0.5*c_);
+        const scalar c = c_->value(mesh_.time().timeOutputValue());
+        z_() = max(1, 0.5*c);
+        Info<< "Penalty multiplier (c):: " << c << endl;
     }
 
     // Reset eps
@@ -868,7 +872,7 @@ Foam::tmp<Foam::scalarField> Foam::ISQP::resFExtraVars()
 {
     if (includeExtraVars_)
     {
-        return (c_ - lamdas_ - z_());
+        return (c_->value(mesh_.time().timeOutputValue()) - lamdas_ - z_());
     }
     return nullptr;
 }
@@ -949,6 +953,12 @@ void Foam::ISQP::solveSubproblem()
                 Info<< "Min of extraVars " << gMin(extraVars_()) << endl;
                 Info<< "Max of extraVars*z " << gMax(extraVars_()*z_()) << endl;
             }
+        }
+        if (includeExtraVars_)
+        {
+            DebugInfo
+                << "Constraint penalization variables (y) " << extraVars_()
+                << endl;
         }
     }
     else
@@ -1036,7 +1046,7 @@ Foam::ISQP::ISQP
     us_(nullptr),
     extraVars_(nullptr),
     z_(nullptr),
-    c_(coeffsDict(type).getOrDefault<scalar>("c", 100)),
+    c_(nullptr),
     deltaP_(activeDesignVars_.size(), Zero),
     deltaLamda_(nConstraints_, Zero),
     deltaGs_(nConstraints_, Zero),
@@ -1064,14 +1074,34 @@ Foam::ISQP::ISQP
     ),
     cRed_
         (coeffsDict(type).getOrDefault<scalar>("targetConstraintReduction", 1)),
+    disableDamping_
+        (coeffsDict(type).getOrDefault<bool>("disableDamping", false)),
     meritFunctionFile_(nullptr)
 {
     Info<< "Preconditioner type of the SQP subproblem is ::"
         << preconditionerNames.names()[preconType_]
         << endl;
-    // Always apply damping of s in ISQP
-    useYDamping_ = true;
-    useSDamping_ = false;
+    if (!disableDamping_)
+    {
+        // Always apply damping of y in ISQP
+        useYDamping_ = true;
+        useSDamping_ = false;
+    }
+
+    // Determine c if necessary
+    if (includeExtraVars_)
+    {
+        if (coeffsDict(type).found("c"))
+        {
+            Info<< "Reading constraint penalty function type from dict" << endl;
+            c_.reset(Function1<scalar>::New("c", coeffsDict(type)));
+        }
+        else
+        {
+            Info<< "Setting constant penalty factor" << endl;
+            c_.reset(new Function1Types::Constant<scalar>("c", 100));
+        }
+    }
 
     // Allocate multipliers and slack variables for the bound constraints
     allocateBoundMultipliers();

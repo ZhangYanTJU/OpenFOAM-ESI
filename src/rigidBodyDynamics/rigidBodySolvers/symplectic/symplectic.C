@@ -75,6 +75,7 @@ void Foam::RBD::rigidBodySolvers::symplectic::solve
     qDot() = qDot0() + 0.5*deltaT0()*qDdot();
     q() = q0() + deltaT()*qDot();
 
+    // Update joints from new locations (q, q0)
     correctQuaternionJoints();
 
     // Update the body-state prior to the evaluation of the restraints

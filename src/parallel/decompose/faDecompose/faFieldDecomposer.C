@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,14 +57,13 @@ processorAreaPatchFieldDecomposer
     const labelUList& owner,  // == mesh.edgeOwner()
     const labelUList& neigh,  // == mesh.edgeNeighbour()
     const labelUList& addressingSlice,
-    const scalarField& weights
+    const bitSet& flip
 )
 :
     sizeBeforeMapping_(nTotalFaces),
-    addressing_(addressingSlice.size()),
-    weights_(addressingSlice.size())
+    directAddressing_(addressingSlice.size())
 {
-    forAll(addressing_, i)
+    forAll(directAddressing_, i)
     {
         // Subtract one to align addressing.
         label ai = addressingSlice[i];
@@ -75,23 +74,16 @@ processorAreaPatchFieldDecomposer
             // This is a regular edge. it has been an internal edge
             // of the original mesh and now it has become a edge
             // on the parallel boundary
-            addressing_[i].resize(2);
-            weights_[i].resize(2);
 
-            addressing_[i][0] = owner[ai];
-            addressing_[i][1] = neigh[ai];
-
-            if (ai < weights.size())
+            if (flip[i])
             {
-                // Edge weights exist/are usable
-                weights_[i][0] = weights[ai];
-                weights_[i][1] = 1.0 - weights[ai];
+                // We are the neighbour side so use the owner value
+                directAddressing_[i] = owner[ai];
             }
             else
             {
-                // No edge weights. use equal weighting
-                weights_[i][0] = 0.5;
-                weights_[i][1] = 0.5;
+                // We are the owner side so use the neighbour value
+                directAddressing_[i] = neigh[ai];
             }
         }
         else
@@ -102,37 +94,10 @@ processorAreaPatchFieldDecomposer
             // up the different (edge) list of data), so I will
             // just grab the value from the owner face
 
-            addressing_[i].resize(1);
-            weights_[i].resize(1);
-
-            addressing_[i][0] = owner[ai];
-
-            weights_[i][0] = 1.0;
+            directAddressing_[i] = owner[ai];
         }
     }
 }
-
-
-Foam::faFieldDecomposer::processorAreaPatchFieldDecomposer::
-processorAreaPatchFieldDecomposer
-(
-    const faMesh& mesh,
-    const labelUList& addressingSlice
-)
-:
-    processorAreaPatchFieldDecomposer
-    (
-        mesh.nFaces(),
-        mesh.edgeOwner(),
-        mesh.edgeNeighbour(),
-        addressingSlice,
-        (
-            mesh.hasWeights()
-          ? mesh.weights().primitiveField()
-          : scalarField::null()
-        )
-    )
-{}
 
 
 Foam::faFieldDecomposer::processorEdgePatchFieldDecomposer::
@@ -253,7 +218,6 @@ void Foam::faFieldDecomposer::reset
 {
     clear();
     const label nMappers = procMesh_.boundary().size();
-
     patchFieldDecomposerPtrs_.resize(nMappers);
     processorAreaPatchFieldDecomposerPtrs_.resize(nMappers);
     processorEdgePatchFieldDecomposerPtrs_.resize(nMappers);
@@ -279,6 +243,16 @@ void Foam::faFieldDecomposer::reset
         }
         else
         {
+            // No oldPatch - is processor patch. edgeAddressing_ does
+            // not have 'flip' sign so use the face map to see which side
+            // we've got.
+            bitSet flipMap(localPatchSlice.size());
+            forAll(flipMap, i)
+            {
+                const label ownFacei = faceAddressing_[fap.edgeFaces()[i]];
+                flipMap[i] = (edgeOwner[localPatchSlice[i]] != ownFacei);
+            }
+
             processorAreaPatchFieldDecomposerPtrs_.set
             (
                 patchi,
@@ -287,7 +261,8 @@ void Foam::faFieldDecomposer::reset
                     nTotalFaces,
                     edgeOwner,
                     edgeNeigbour,
-                    localPatchSlice
+                    localPatchSlice,
+                    flipMap
                 )
             );
 
@@ -345,13 +320,29 @@ void Foam::faFieldDecomposer::reset(const faMesh& completeMesh)
         }
         else
         {
+            const auto& edgeOwner = completeMesh.edgeOwner();
+            const auto& edgeNeighbour = completeMesh.edgeNeighbour();
+
+            // No oldPatch - is processor patch. edgeAddressing_ does
+            // not have 'flip' sign so use the face map to see which side
+            // we've got.
+            bitSet flipMap(localPatchSlice.size());
+            forAll(flipMap, i)
+            {
+                const label ownFacei = faceAddressing_[fap.edgeFaces()[i]];
+                flipMap[i] = (edgeOwner[localPatchSlice[i]] != ownFacei);
+            }
+
             processorAreaPatchFieldDecomposerPtrs_.set
             (
                 patchi,
                 new processorAreaPatchFieldDecomposer
                 (
-                    completeMesh,
-                    localPatchSlice
+                    completeMesh.nFaces(),
+                    edgeOwner,
+                    edgeNeighbour,
+                    localPatchSlice,
+                    flipMap
                 )
             );
 

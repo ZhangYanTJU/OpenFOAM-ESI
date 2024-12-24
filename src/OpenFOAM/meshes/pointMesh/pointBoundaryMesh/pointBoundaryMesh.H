@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,6 +39,7 @@ SourceFiles
 #define Foam_pointBoundaryMesh_H
 
 #include "pointPatch.H"
+#include "regIOobject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,18 +57,28 @@ class wordRes;
 
 class pointBoundaryMesh
 :
-    public pointPatchList
+    public pointPatchList,
+    public regIOobject
 {
     // Private Data
 
         //- Reference to mesh
         const pointMesh& mesh_;
 
+        //- Demand-driven: list of patch ids per group
+        mutable autoPtr<HashTable<labelList>> groupIDsPtr_;
+
 
     // Private Member Functions
 
         //- Calculate geometry for the patches (transformation tensors etc.)
         void calcGeometry();
+
+        //- Some patches have inGroup entries
+        bool hasGroupIDs() const;
+
+        //- Calculate group name to patch ids lookup
+        void calcGroupIDs() const;
 
         //- Assign facePointPatches corresponding to the given polyBoundaryMesh
         void addPatches(const polyBoundaryMesh& pbm);
@@ -85,10 +96,26 @@ public:
     friend class pointMesh;
 
 
+    //- Runtime type information
+    TypeName("pointBoundaryMesh");
+
+
     // Constructors
 
         //- Construct from polyBoundaryMesh
         pointBoundaryMesh(const pointMesh&, const polyBoundaryMesh&);
+
+        //- Construct from IOobject and polyBoundaryMesh
+        pointBoundaryMesh
+        (
+            const IOobject& io,
+            const pointMesh&,
+            const polyBoundaryMesh&
+        );
+
+
+    //- Destructor
+    virtual ~pointBoundaryMesh() = default;
 
 
     // Member Functions
@@ -98,6 +125,21 @@ public:
         {
             return mesh_;
         }
+
+        //- The number of patches before the first processor patch.
+        label nNonProcessor() const;
+
+        //- The number of processorPointPatch patches
+        label nProcessorPatches() const;
+
+        //- Return a list of patch names
+        wordList names() const;
+
+        //- Return a list of patch types
+        wordList types() const;
+
+        //- Return a list of physical types
+        wordList physicalTypes() const;
 
         //- Return (sorted) patch indices for all matches.
         //  A no-op (returns empty list) for an empty matcher
@@ -121,13 +163,30 @@ public:
 
         //- Find patch index given a name
         //  A no-op (returns -1) for an empty patchName
-        label findPatchID(const word& patchName) const;
+        label findPatchID
+        (
+            const word& patchName,
+            const bool allowNotFound = true
+        ) const;
 
-        //- Correct polyBoundaryMesh after moving points
+        //- The patch indices per patch group
+        const HashTable<labelList>& groupPatchIDs() const;
+
+        //- Correct pointBoundaryMesh after moving points
         void movePoints(const pointField&);
 
-        //- Correct polyBoundaryMesh after topology update
+        //- Correct pointBoundaryMesh after topology update
         void updateMesh();
+
+        //- Reorders patches. Ordering does not have to be done in
+        //  ascending or descending order. Reordering has to be unique.
+        //  (is shuffle) If validBoundary calls updateMesh()
+        //  after reordering to recalculate data (so call needs to be parallel
+        //  sync in that case)
+        void reorder(const labelUList& oldToNew, const bool validBoundary);
+
+        //- writeData member function required by regIOobject
+        virtual bool writeData(Ostream&) const;
 
 
     // Housekeeping

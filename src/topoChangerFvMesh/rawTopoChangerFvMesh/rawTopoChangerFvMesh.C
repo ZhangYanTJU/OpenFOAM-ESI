@@ -65,12 +65,6 @@ Foam::rawTopoChangerFvMesh::rawTopoChangerFvMesh
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::rawTopoChangerFvMesh::~rawTopoChangerFvMesh()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::rawTopoChangerFvMesh::update()
@@ -121,30 +115,24 @@ bool Foam::rawTopoChangerFvMesh::update()
             }
         }
 
-        const List<objectMap>& fromFaces = topoChangeMap().facesFromFacesMap();
-
-        forAll(fromFaces, i)
+        for (const auto& map : topoChangeMap().facesFromFacesMap())
         {
-            mappedFace.set(fromFaces[i].index());
+            mappedFace.set(map.index());
         }
 
-        const List<objectMap>& fromEdges = topoChangeMap().facesFromEdgesMap();
-
-        forAll(fromEdges, i)
+        for (const auto& map : topoChangeMap().facesFromEdgesMap())
         {
-            mappedFace.set(fromEdges[i].index());
+            mappedFace.set(map.index());
         }
 
-        const List<objectMap>& fromPts = topoChangeMap().facesFromPointsMap();
-
-        forAll(fromPts, i)
+        for (const auto& map : topoChangeMap().facesFromPointsMap())
         {
-            mappedFace.set(fromPts[i].index());
+            mappedFace.set(map.index());
         }
 
         // Set unmapped faces to zero
-        Info<< "rawTopoChangerFvMesh : zeroing unmapped boundary values."
-            << endl;
+        Info<< "rawTopoChangerFvMesh : zeroing unmapped boundary values." << nl;
+
         zeroUnmappedValues<scalar, fvPatchField, volMesh>(mappedFace);
         zeroUnmappedValues<vector, fvPatchField, volMesh>(mappedFace);
         zeroUnmappedValues<sphericalTensor, fvPatchField, volMesh>(mappedFace);
@@ -155,8 +143,8 @@ bool Foam::rawTopoChangerFvMesh::update()
         Info<< "rawTopoChangerFvMesh :"
             << " recreating phi for unmapped boundary values." << endl;
 
-        const volVectorField& U = lookupObject<volVectorField>("U");
-        surfaceScalarField& phi = lookupObjectRef<surfaceScalarField>("phi");
+        const auto& U = lookupObject<volVectorField>("U");
+        auto& phi = lookupObjectRef<surfaceScalarField>("phi");
 
         setUnmappedValues
         (

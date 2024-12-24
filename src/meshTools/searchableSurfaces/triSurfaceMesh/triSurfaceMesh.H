@@ -216,6 +216,9 @@ public:
                 return triSurface::size();
             }
 
+            //- Flip triangles, outsideVolumeType and all cached inside/outside.
+            virtual void flip();
+
             //- Get representative set of element coordinates
             //  Usually the element centres (should be of length size()).
             virtual tmp<pointField> coordinates() const;

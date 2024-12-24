@@ -111,6 +111,36 @@ public:
             const pointBoundaryMesh& bm
         );
 
+        //- Construct given the original patch and a map
+        processorPointPatch
+        (
+            const processorPointPatch& patch,
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        );
+
+        //- Construct and return a subset clone,
+        //- resetting the point list and boundary mesh
+        virtual autoPtr<pointPatch> clone
+        (
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        ) const
+        {
+            return autoPtr<pointPatch>::NewFrom<processorPointPatch>
+            (
+                *this,
+                bm,
+                index,
+                mapAddressing,
+                reversePointMap
+            );
+        }
+
 
     //- Destructor
     virtual ~processorPointPatch() = default;

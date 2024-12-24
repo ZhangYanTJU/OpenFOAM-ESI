@@ -82,6 +82,13 @@ Foam::lduMatrix::lduMatrix(const lduMatrix& A)
     {
         lowerPtr_ = std::make_unique<scalarField>(*(A.lowerPtr_));
     }
+
+    if (A.lowerCSRPtr_)
+    {
+        lowerCSRPtr_ = std::make_unique<scalarField>(*(A.lowerCSRPtr_));
+    }
+
+    // No need to copy work
 }
 
 
@@ -90,7 +97,9 @@ Foam::lduMatrix::lduMatrix(lduMatrix&& A)
     lduMesh_(A.lduMesh_),
     diagPtr_(std::move(A.diagPtr_)),
     lowerPtr_(std::move(A.lowerPtr_)),
-    upperPtr_(std::move(A.upperPtr_))
+    upperPtr_(std::move(A.upperPtr_)),
+    lowerCSRPtr_(std::move(A.lowerCSRPtr_)),
+    workPtr_(std::move(A.workPtr_))
 {}
 
 
@@ -103,6 +112,8 @@ Foam::lduMatrix::lduMatrix(lduMatrix& A, bool reuse)
         diagPtr_ = std::move(A.diagPtr_);
         upperPtr_ = std::move(A.upperPtr_);
         lowerPtr_ = std::move(A.lowerPtr_);
+        lowerCSRPtr_ = std::move(A.lowerCSRPtr_);
+        workPtr_ = std::move(A.workPtr_);
     }
     else
     {
@@ -121,6 +132,13 @@ Foam::lduMatrix::lduMatrix(lduMatrix& A, bool reuse)
         {
             lowerPtr_ = std::make_unique<scalarField>(*(A.lowerPtr_));
         }
+
+        // Note: no real need to keep lowerCSR except we use it (hasLowerCSR())
+        //       to trigger certain actions
+        if (A.lowerCSRPtr_)
+        {
+            lowerCSRPtr_ = std::make_unique<scalarField>(*(A.lowerCSRPtr_));
+        }
     }
 }
 
@@ -129,9 +147,9 @@ Foam::lduMatrix::lduMatrix(const lduMesh& mesh, Istream& is)
 :
     lduMesh_(mesh)
 {
-    bool withLower, withDiag, withUpper;
+    bool withLower, withDiag, withUpper, withLowerCSR;
 
-    is >> withLower >> withDiag >> withUpper;
+    is >> withLower >> withDiag >> withUpper >> withLowerCSR;
 
     if (withLower)
     {
@@ -144,6 +162,20 @@ Foam::lduMatrix::lduMatrix(const lduMesh& mesh, Istream& is)
     if (withUpper)
     {
         upperPtr_ = std::make_unique<scalarField>(is);
+    }
+    if (withLowerCSR)
+    {
+        // Check if it has been sent over or we need to construct it. We need
+        // to set the lowerCSRPtr since it determines behaviour.
+        if (withLower)
+        {
+            // Construct from lower
+            (void)lowerCSR();
+        }
+        else
+        {
+            lowerCSRPtr_ = std::make_unique<scalarField>(is);
+        }
     }
 }
 
@@ -237,6 +269,9 @@ Foam::scalarField& Foam::lduMatrix::upper()
         }
         else
         {
+            // no lowerPtr so any lowerCSR was constructed from upper
+            lowerCSRPtr_.reset(nullptr);
+
             upperPtr_ =
                 std::make_unique<scalarField>
                 (
@@ -260,6 +295,9 @@ Foam::scalarField& Foam::lduMatrix::upper(label nCoeffs)
         }
         else
         {
+            // no lowerPtr so any lowerCSR was constructed from upper
+            lowerCSRPtr_.reset(nullptr);
+
             // if (nCoeffs < 0)
             // {
             //     nCoeffs = lduAddr().lowerAddr().size();
@@ -296,6 +334,8 @@ Foam::scalarField& Foam::lduMatrix::lower()
 {
     if (!lowerPtr_)
     {
+        lowerCSRPtr_.reset(nullptr);
+
         if (upperPtr_)
         {
             lowerPtr_ = std::make_unique<scalarField>(*upperPtr_);
@@ -319,6 +359,8 @@ Foam::scalarField& Foam::lduMatrix::lower(label nCoeffs)
 {
     if (!lowerPtr_)
     {
+        lowerCSRPtr_.reset(nullptr);
+
         if (upperPtr_)
         {
             lowerPtr_ = std::make_unique<scalarField>(*upperPtr_);
@@ -335,6 +377,86 @@ Foam::scalarField& Foam::lduMatrix::lower(label nCoeffs)
     }
 
     return *lowerPtr_;
+}
+
+
+const Foam::scalarField& Foam::lduMatrix::lowerCSR() const
+{
+    if (!lowerCSRPtr_)
+    {
+        const label nLower = lduAddr().losortAddr().size();
+
+        lowerCSRPtr_ = std::make_unique<scalarField>(nLower);
+
+        if (lowerPtr_)
+        {
+            lduAddr().map(*lowerPtr_, *lowerCSRPtr_);
+        }
+        else if (upperPtr_)
+        {
+            lduAddr().map(*upperPtr_, *lowerCSRPtr_);
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "lowerPtr_ and upperPtr_ unallocated"
+                << abort(FatalError);
+        }
+    }
+
+    return *lowerCSRPtr_;
+}
+
+
+Foam::scalarField& Foam::lduMatrix::lowerCSR()
+{
+    if (!lowerCSRPtr_)
+    {
+        const label nLower = lduAddr().losortAddr().size();
+
+        lowerCSRPtr_ = std::make_unique<scalarField>(nLower);
+
+        if (lowerPtr_)
+        {
+            lduAddr().map(*lowerPtr_, *lowerCSRPtr_);
+        }
+        else if (upperPtr_)
+        {
+            lduAddr().map(*upperPtr_, *lowerCSRPtr_);
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "lowerPtr_ and upperPtr_ unallocated"
+                << abort(FatalError);
+        }
+    }
+
+    return *lowerCSRPtr_;
+}
+
+
+Foam::solveScalarField& Foam::lduMatrix::work(label size) const
+{
+    if (!workPtr_ || workPtr_->size() != size)
+    {
+        workPtr_ = std::make_unique<solveScalarField>(size, Foam::zero{});
+    }
+
+    return *workPtr_;
+}
+
+
+const Foam::solveScalarField& Foam::lduMatrix::work() const
+{
+    if (!workPtr_)
+    {
+        FatalErrorInFunction
+            << "workPtr_ unallocated"
+            << abort(FatalError);
+    }
+
+    return *workPtr_;
 }
 
 
@@ -389,7 +511,8 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const lduMatrix& mat)
 {
     os  << mat.hasLower() << token::SPACE
         << mat.hasDiag() << token::SPACE
-        << mat.hasUpper() << token::SPACE;
+        << mat.hasUpper() << token::SPACE
+        << mat.hasLowerCSR() << token::SPACE;
 
     if (mat.hasLower())
     {
@@ -404,6 +527,12 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const lduMatrix& mat)
     if (mat.hasUpper())
     {
         os  << mat.upper();
+    }
+
+    if (mat.hasLowerCSR() && !mat.hasLower())
+    {
+        // Only send over if can not be reconstructed locally
+        os  << mat.lowerCSR();
     }
 
     os.check(FUNCTION_NAME);
@@ -422,7 +551,9 @@ Foam::Ostream& Foam::operator<<
 
     os  << "Lower:" << Switch::name(mat.hasLower())
         << " Diag:" << Switch::name(mat.hasDiag())
-        << " Upper:" << Switch::name(mat.hasUpper()) << endl;
+        << " Upper:" << Switch::name(mat.hasUpper())
+        << " lowerCSR:" << Switch::name(mat.hasLowerCSR())
+        << endl;
 
     if (mat.hasLower())
     {

@@ -67,6 +67,12 @@ public:
             const lduMatrix& matrix,
             const dictionary& controlDict
         );
+
+
+    // Member Functions
+
+        //- Update when the mesh moves
+        virtual bool movePoints();
 };
 
 

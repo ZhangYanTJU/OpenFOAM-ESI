@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2020,2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,6 +101,7 @@ bool Foam::triSurfaceMesh::isSurfaceClosed() const
     if (debug)
     {
         Pout<< "triSurfaceMesh::isSurfaceClosed:"
+            << " surface:" << searchableSurface::name()
             << " determining closedness for surface with "
             << triSurface::size() << " triangles" << endl;
     }
@@ -223,6 +224,7 @@ bool Foam::triSurfaceMesh::isSurfaceClosed() const
                 if (debug)
                 {
                     Pout<< "triSurfaceMesh::isSurfaceClosed :"
+                        << " surface:" << searchableSurface::name()
                         << " surface is non-manifold" << endl;
                 }
                 return false;
@@ -240,6 +242,7 @@ bool Foam::triSurfaceMesh::isSurfaceClosed() const
             if (debug)
             {
                 Pout<< "triSurfaceMesh::isSurfaceClosed :"
+                    << " surface:" << searchableSurface::name()
                     << " surface is open" << endl;
             }
             return false;
@@ -274,6 +277,7 @@ bool Foam::triSurfaceMesh::isSurfaceClosed() const
     if (debug)
     {
         Pout<< "triSurfaceMesh::isSurfaceClosed :"
+            << " surface:" << searchableSurface::name()
             << " surface is closed" << endl;
     }
     return true;
@@ -738,6 +742,7 @@ void Foam::triSurfaceMesh::movePoints(const pointField& newPoints)
     if (debug)
     {
         Pout<< "triSurfaceMesh::movePoints :"
+            << " surface:" << searchableSurface::name()
             << " moving at time " << objectRegistry::time().timeName()
             << endl;
     }
@@ -773,6 +778,7 @@ Foam::triSurfaceMesh::edgeTree() const
         if (debug)
         {
             Pout<< "triSurfaceMesh::edgeTree :"
+                << " surface:" << searchableSurface::name()
                 << " constructing tree for " << nEdges() - nInternalEdges()
                 << " boundary edges" << endl;
         }
@@ -882,6 +888,7 @@ Foam::volumeType Foam::triSurfaceMesh::outsideVolumeType() const
         if (debug)
         {
             Pout<< "triSurfaceMesh::outsideVolumeType :"
+                << " surface:" << searchableSurface::name()
                 << " triggering outsidePoint:" << outsidePt
                 << " orientation" << endl;
         }
@@ -906,6 +913,49 @@ Foam::volumeType Foam::triSurfaceMesh::outsideVolumeType() const
 }
 
 
+void Foam::triSurfaceMesh::flip()
+{
+    if (debug)
+    {
+        Pout<< "triSurfaceMesh::flip :"
+            << " surface:" << searchableSurface::name()
+            << " with current orientation "
+            << volumeType::names[outsideVolType_]
+            << endl;
+    }
+
+    // Don't bother getting nearest etc. Just flip the triangles.
+
+    // triSurface
+    {
+        triSurface& s = *this;
+        s.clearOut();
+        for (auto& tri : s)
+        {
+            tri.flip();
+        }
+    }
+
+    // triSurfaceRegionSearch (if cached volume type)
+    triSurfaceRegionSearch::flip();
+
+    // edge tree not relevant
+
+    if (hasVolumeType())
+    {
+        // outsideVolType_
+        if (outsideVolType_ == volumeType::INSIDE)
+        {
+            outsideVolType_ = volumeType::OUTSIDE;
+        }
+        else if (outsideVolType_ == volumeType::OUTSIDE)
+        {
+            outsideVolType_ = volumeType::INSIDE;
+        }
+    }
+}
+
+
 void Foam::triSurfaceMesh::findNearest
 (
     const pointField& samples,
@@ -916,6 +966,7 @@ void Foam::triSurfaceMesh::findNearest
     if (debug)
     {
         Pout<< "triSurfaceMesh::findNearest :"
+            << " surface:" << searchableSurface::name()
             << " trying to find nearest for " << samples.size()
             << " samples with max sphere "
             << (samples.size() ? Foam::sqrt(max(nearestDistSqr)) : Zero)
@@ -942,6 +993,7 @@ void Foam::triSurfaceMesh::findNearest
     if (debug)
     {
         Pout<< "triSurfaceMesh::findNearest :"
+            << " surface:" << searchableSurface::name()
             << " trying to find nearest and region for " << samples.size()
             << " samples with max sphere "
             << (samples.size() ? Foam::sqrt(max(nearestDistSqr)) : Zero)
@@ -973,6 +1025,7 @@ void Foam::triSurfaceMesh::findLine
     if (debug)
     {
         Pout<< "triSurfaceMesh::findLine :"
+            << " surface:" << searchableSurface::name()
             << " intersecting with "
             << start.size() << " rays" << endl;
     }
@@ -996,6 +1049,7 @@ void Foam::triSurfaceMesh::findLineAny
     if (debug)
     {
         Pout<< "triSurfaceMesh::findLineAny :"
+            << " surface:" << searchableSurface::name()
             << " intersecting with "
             << start.size() << " rays" << endl;
     }
@@ -1019,6 +1073,7 @@ void Foam::triSurfaceMesh::findLineAll
     if (debug)
     {
         Pout<< "triSurfaceMesh::findLineAll :"
+            << " surface:" << searchableSurface::name()
             << " intersecting with "
             << start.size() << " rays" << endl;
     }
@@ -1041,6 +1096,7 @@ void Foam::triSurfaceMesh::getRegion
     if (debug)
     {
         Pout<< "triSurfaceMesh::getRegion :"
+            << " surface:" << searchableSurface::name()
             << " getting region for "
             << info.size() << " triangles" << endl;
     }
@@ -1074,6 +1130,7 @@ void Foam::triSurfaceMesh::getNormal
     if (debug)
     {
         Pout<< "triSurfaceMesh::getNormal :"
+            << " surface:" << searchableSurface::name()
             << " getting normal for "
             << info.size() << " triangles" << endl;
     }
@@ -1182,6 +1239,7 @@ void Foam::triSurfaceMesh::setField(const labelList& values)
     if (debug)
     {
         Pout<< "triSurfaceMesh::setField :"
+            << " surface:" << searchableSurface::name()
             << " finished setting field for "
             << values.size() << " triangles" << endl;
     }
@@ -1213,6 +1271,7 @@ void Foam::triSurfaceMesh::getField
     if (debug)
     {
         Pout<< "triSurfaceMesh::setField :"
+            << " surface:" << searchableSurface::name()
             << " finished getting field for "
             << info.size() << " triangles" << endl;
     }
@@ -1231,6 +1290,7 @@ void Foam::triSurfaceMesh::getVolumeType
     if (debug)
     {
         Pout<< "triSurfaceMesh::getVolumeType :"
+            << " surface:" << searchableSurface::name()
             << " finding orientation for " << points.size()
             << " samples" << endl;
     }

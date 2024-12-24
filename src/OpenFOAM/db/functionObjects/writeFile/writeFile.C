@@ -98,7 +98,7 @@ Foam::autoPtr<Foam::OFstream> Foam::functionObjects::writeFile::newFile
 
         mkDir(outputDir);
 
-        osPtr.reset(new OFstream(outputDir/(fName.name() + ".dat")));
+        osPtr.reset(new OFstream(outputDir/(fName.name() + ext_)));
 
         if (!osPtr->good())
         {
@@ -137,13 +137,13 @@ Foam::autoPtr<Foam::OFstream> Foam::functionObjects::writeFile::newFileAtTime
         word fName(name);
 
         // Check if file already exists
-        IFstream is(outputDir/(fName + ".dat"));
+        IFstream is(outputDir/(fName + ext_));
         if (is.good())
         {
             fName = fName + "_" + timeName;
         }
 
-        osPtr.reset(new OFstream(outputDir/(fName + ".dat")));
+        osPtr.reset(new OFstream(outputDir/(fName + ext_)));
 
         if (!osPtr->good())
         {
@@ -198,7 +198,8 @@ Foam::functionObjects::writeFile::writeFile(const writeFile& wf)
     updateHeader_(wf.updateHeader_),
     writtenHeader_(wf.writtenHeader_),
     useUserTime_(wf.useUserTime_),
-    startTime_(wf.startTime_)
+    startTime_(wf.startTime_),
+    ext_(wf.ext_)
 {}
 
 
@@ -207,7 +208,8 @@ Foam::functionObjects::writeFile::writeFile
     const objectRegistry& obr,
     const fileName& prefix,
     const word& name,
-    const bool writeToFile
+    const bool writeToFile,
+    const string& ext
 )
 :
     fileObr_(obr),
@@ -219,7 +221,8 @@ Foam::functionObjects::writeFile::writeFile
     updateHeader_(true),
     writtenHeader_(false),
     useUserTime_(true),
-    startTime_(obr.time().startTime().value())
+    startTime_(obr.time().startTime().value()),
+    ext_(ext)
 {}
 
 
@@ -229,17 +232,13 @@ Foam::functionObjects::writeFile::writeFile
     const fileName& prefix,
     const word& name,
     const dictionary& dict,
-    const bool writeToFile
+    const bool writeToFile,
+    const string& ext
 )
 :
-    writeFile(obr, prefix, name, writeToFile)
+    writeFile(obr, prefix, name, writeToFile, ext)
 {
     read(dict);
-
-    if (writeToFile_)
-    {
-        filePtr_ = newFileAtStartTime(fileName_);
-    }
 }
 
 
@@ -268,6 +267,13 @@ bool Foam::functionObjects::writeFile::read(const dictionary& dict)
 }
 
 
+const Foam::string& Foam::functionObjects::writeFile::setExt(const string& ext)
+{
+    ext_ = ext;
+    return ext_;
+}
+
+
 Foam::OFstream& Foam::functionObjects::writeFile::file()
 {
     if (!writeToFile_)
@@ -275,10 +281,9 @@ Foam::OFstream& Foam::functionObjects::writeFile::file()
         return Snull;
     }
 
-    if (!filePtr_)
+    if (!filePtr_ && writeToFile_)
     {
-        FatalErrorInFunction
-            << "File pointer not allocated\n";
+        filePtr_ = newFileAtStartTime(fileName_);
     }
 
     return *filePtr_;

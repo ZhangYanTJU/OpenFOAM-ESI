@@ -39,6 +39,16 @@ inline Foam::pointConstraint::pointConstraint(const Tuple2<label, vector>& pc)
 {}
 
 
+inline Foam::pointConstraint::pointConstraint
+(
+    const label count,
+    const vector& n
+)
+:
+    Tuple2<label, vector>(count, n)
+{}
+
+
 inline Foam::pointConstraint::pointConstraint(Istream& is)
 :
     Tuple2<label, vector>(is)

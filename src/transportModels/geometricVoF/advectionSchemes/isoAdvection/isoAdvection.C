@@ -397,6 +397,15 @@ void Foam::isoAdvection::timeIntegratedFlux()
                     magSf
                 );
 
+                // Handling upwind cyclic boundary patches
+                const polyPatch& pp = boundaryMesh[patchi];
+                const cyclicPolyPatch* cpp = isA<cyclicPolyPatch>(pp);
+                if (cpp)
+                {
+                    const label neiPatchID(cpp->neighbPolyPatchID());
+                    dVfb[neiPatchID][patchFacei] = -dVfb[patchi][patchFacei];
+                }
+
                 // Check if the face is on processor patch and append it to
                 // the list if necessary
                 checkIfOnProcPatch(facei);

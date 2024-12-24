@@ -7,7 +7,7 @@ ifeq (,$(strip $(NVARCH)))
     NVARCH  = 70
 endif
 
-NVCC        = nvcc -std=c++14 --compiler-options='-fPIC'
+NVCC        = nvcc -std=c++17 --compiler-options='-fPIC'
 
 cuARCH      = -arch=sm_$(NVARCH)
 cuOPT       = -O3
