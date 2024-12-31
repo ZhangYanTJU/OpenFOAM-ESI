@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -134,6 +134,56 @@ Foam::jumpCyclicAMIFvPatchField<Type>::patchNeighbourField() const
 
 
 template<class Type>
+void Foam::jumpCyclicAMIFvPatchField<Type>::initEvaluate
+(
+    const Pstream::commsTypes commsType
+)
+{
+    // Bypass cyclicAMI to avoid caching
+    coupledFvPatchField<Type>::initEvaluate(commsType);
+}
+
+
+template<class Type>
+void Foam::jumpCyclicAMIFvPatchField<Type>::evaluate
+(
+    const Pstream::commsTypes commsType
+)
+{
+    // Bypass cyclicAMI to avoid caching
+    coupledFvPatchField<Type>::evaluate(commsType);
+}
+
+
+template<class Type>
+void Foam::jumpCyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
+(
+    solveScalarField& result,
+    const bool add,
+    const lduAddressing& lduAddr,
+    const label patchId,
+    const solveScalarField& psiInternal,
+    const scalarField& coeffs,
+    const direction cmpt,
+    const Pstream::commsTypes commsType
+) const
+{
+    // Bypass cyclicAMI to avoid caching
+    coupledFvPatchField<Type>::initInterfaceMatrixUpdate
+    (
+        result,
+        add,
+        lduAddr,
+        patchId,
+        psiInternal,
+        coeffs,
+        cmpt,
+        commsType
+    );
+}
+
+
+template<class Type>
 void Foam::jumpCyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 (
     solveScalarField& result,
@@ -147,6 +197,32 @@ void Foam::jumpCyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     NotImplemented;
+}
+
+
+template<class Type>
+void Foam::jumpCyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
+(
+    Field<Type>& result,
+    const bool add,
+    const lduAddressing& lduAddr,
+    const label patchId,
+    const Field<Type>& psiInternal,
+    const scalarField& coeffs,
+    const Pstream::commsTypes commsType
+) const
+{
+    // Bypass cyclicAMI to avoid caching
+    coupledFvPatchField<Type>::initInterfaceMatrixUpdate
+    (
+        result,
+        add,
+        lduAddr,
+        patchId,
+        psiInternal,
+        coeffs,
+        commsType
+    );
 }
 
 

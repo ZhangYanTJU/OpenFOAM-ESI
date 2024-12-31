@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -128,7 +128,26 @@ public:
         // Evaluation functions
 
             //- Return neighbour coupled given internal cell data
-            tmp<Field<Type>> patchNeighbourField() const;
+            virtual tmp<Field<Type>> patchNeighbourField() const;
+
+            //- Initialise the evaluation of the patch field
+            virtual void initEvaluate(const Pstream::commsTypes commsType);
+
+            //- Evaluate the patch field
+            virtual void evaluate(const Pstream::commsTypes commsType);
+
+            //- Initialise interface functionality
+            void initInterfaceMatrixUpdate
+            (
+                solveScalarField& result,
+                const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
+                const solveScalarField& psiInternal,
+                const scalarField& coeffs,
+                const direction cmpt,
+                const Pstream::commsTypes commsType
+            ) const;
 
             //- Update result field based on interface functionality
             virtual void updateInterfaceMatrix
@@ -140,6 +159,18 @@ public:
                 const solveScalarField& psiInternal,
                 const scalarField& coeffs,
                 const direction cmpt,
+                const Pstream::commsTypes commsType
+            ) const;
+
+            //- Initialise interface functionality
+            void initInterfaceMatrixUpdate
+            (
+                Field<Type>& result,
+                const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
+                const Field<Type>& psiInternal,
+                const scalarField& coeffs,
                 const Pstream::commsTypes commsType
             ) const;
 
