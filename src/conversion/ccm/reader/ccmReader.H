@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -147,8 +147,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ccmReader_H
-#define ccmReader_H
+#ifndef Foam_ccmReader_H
+#define Foam_ccmReader_H
 
 #include "ccmBase.H"
 #include "STARCDCore.H"
@@ -188,7 +188,7 @@ class reader
 {
 public:
 
-    // Forward declarations
+    // Forward Declarations
     class options;
 
 
@@ -361,8 +361,8 @@ private:
         //- Read the monitoring
         void readMonitoring(const ccmID& topoId);
 
-        //- Move solid faces from Default_Boundary_Region to
-        //  Default_Boundary_Solid
+        //- Move solid faces from 'Default_Boundary_Region'
+        //- to 'Default_Boundary_Solid'
         void juggleSolids();
 
         //- Remove unwanted fluid/porous/solid regions
@@ -426,29 +426,34 @@ public:
     // Static Members
 
         //- Warn about repeated name
+        FOAM_DLL_EXPORT
         static void warnDuplicates(const word& context, const wordList& lst);
 
 
     // Constructors
 
         //- Open a file for reading
+        FOAM_DLL_EXPORT
         reader(const fileName& file, const reader::options& opts);
 
 
     //- Destructor (closes file)
+    FOAM_DLL_EXPORT
     ~reader();
 
 
     // Member Functions
 
-      // Access
+    // Access
 
         //- Reference to the reader options
+        FOAM_DLL_EXPORT
         const reader::options& option() const;
 
 
         //- Construct the polyMesh from the read geometry
         //  provide optional remapping dictionary
+        FOAM_DLL_EXPORT
         autoPtr<polyMesh> mesh
         (
             const objectRegistry& registry,
@@ -467,18 +472,21 @@ public:
         // const pointField& points() const { return points_; }
 
 
-      // Check
+    // Check
 
         //- Return true if file has geometry associated with it
+        FOAM_DLL_EXPORT
         bool hasGeometry();
 
         //- Return true if file has solutions associated with it
+        FOAM_DLL_EXPORT
         bool hasSolution();
 
 
-      // Edit
+    // Edit
 
         //- Remap cellTable and boundaryRegion according to dictionary
+        FOAM_DLL_EXPORT
         bool remapMeshInfo
         (
             const objectRegistry& registry,
@@ -486,9 +494,10 @@ public:
         );
 
 
-      // Write
+    // Write
 
         //- Write the polyMesh
+        FOAM_DLL_EXPORT
         void writeMesh
         (
             const polyMesh& mesh,
@@ -496,43 +505,47 @@ public:
         ) const;
 
         //- Write cellTable, boundaryRegion and interface information
+        FOAM_DLL_EXPORT
         void writeAux(const objectRegistry& registry) const;
 
         //- Detect and read geometry if possible
+        FOAM_DLL_EXPORT
         bool readGeometry(const scalar scaleFactor = 1.0);
 
         //- Print general information about the mesh
+        FOAM_DLL_EXPORT
         void printInfo() const;
 
         //- Clear out some information after obtaining a polyMesh
+        FOAM_DLL_EXPORT
         void clearGeom();
 
         //- Map to original cell Id
-        const labelList& origCellId() const
+        const labelList& origCellId() const noexcept
         {
             return origCellId_;
         }
 
         //- Map to original face Id
-        const labelList& origFaceId() const
+        const labelList& origFaceId() const noexcept
         {
             return origFaceId_;
         }
 
         //- Return interface definitions map
-        const interfaceDefinitions& interfaceDefinitionsInfo() const
+        const interfaceDefinitions& interfaceDefinitionsInfo() const noexcept
         {
             return interfaceDefinitions_;
         }
 
         //- Return boundaryRegion table
-        const boundaryRegion& boundaryTableInfo() const
+        const boundaryRegion& boundaryTableInfo() const noexcept
         {
             return boundaryRegion_;
         }
 
         //- Return cell table
-        const cellTable& cellTableInfo() const
+        const cellTable& cellTableInfo() const noexcept
         {
             return cellTable_;
         }
@@ -571,13 +584,13 @@ public:
         }
 
         //- Read solution and field combination
+        FOAM_DLL_EXPORT
         tmp<scalarField> readField
         (
             const word& solutionName,
             const word& fieldName,
             const bool wallData = false
         );
-
 };
 
 
@@ -587,7 +600,7 @@ public:
 
 class reader::options
 {
-    // Private data
+    // Private Data
 
         //- Keep fluid regions (default true)
         bool keepFluid_;
@@ -623,77 +636,89 @@ public:
 
     // Constructors
 
-        //- Construct with the defaults
-        options();
+        //- Construct with default values
+        constexpr options() noexcept
+        :
+            keepFluid_(true),
+            keepPorous_(true),
+            keepSolid_(true),
+            mergeInterfaces_(false),
+            renameInterfaces_(true),
+            removeBaffles_(false),
+            useNumberedNames_(false),
+            mergeTol_(0.05e-3),
+            undefScalar_(NAN)
+        {}
 
 
     // Member Functions
 
-      // Access
+    // Access
 
         //- Keep fluid regions (default true)
-        bool keepFluid() const;
+        bool keepFluid() const noexcept { return keepFluid_; }
 
         //- Keep porous regions (default true)
-        bool keepPorous() const;
+        bool keepPorous() const noexcept { return keepPorous_; }
 
         //- Keep solid regions (default true)
-        bool keepSolid() const;
+        bool keepSolid() const noexcept { return keepSolid_; }
 
         //- Some region (fluid, porous, solid) is kept.
-        bool keptSomeRegion() const;
+        bool keptSomeRegion() const noexcept
+        {
+            return keepFluid_ || keepPorous_ || !keepSolid_;
+        }
 
         //- Merge in-place interfaces (default true)
-        bool mergeInterfaces() const;
+        bool mergeInterfaces() const noexcept { return mergeInterfaces_; }
 
         //- Rename interface boundaries as InterfaceN_0, InterfaceN_1
         //  (default true)
-        bool renameInterfaces() const;
+        bool renameInterfaces() const noexcept { return renameInterfaces_; }
 
         //- Remove baffles by merging their respective faces (default false)
-        bool removeBaffles() const;
+        bool removeBaffles() const noexcept { return removeBaffles_; }
 
         //- Use numbered names (eg, patch_0, zone_0) instead of human-readable
         //  names (default false)
-        bool useNumberedNames() const;
+        bool useNumberedNames() const noexcept { return useNumberedNames_; }
 
         //- Merge tolerance for points (default 0.05e-3)
-        scalar mergeTol() const;
+        scalar mergeTol() const noexcept { return mergeTol_; }
 
         //- Value to assign for undefined solutions (default: NaN)
-        scalar undefScalar() const;
+        scalar undefScalar() const noexcept { return undefScalar_; }
 
 
-      // Edit
+    // Edit
 
         //- Keep fluid regions
-        void keepFluid(bool b);
+        void keepFluid(bool b) noexcept { keepFluid_ = b; }
 
         //- Keep porous regions
-        void keepPorous(bool b);
+        void keepPorous(bool b) noexcept { keepPorous_ = b; }
 
         //- Keep solid regions
-        void keepSolid(bool b);
+        void keepSolid(bool b) noexcept { keepSolid_ = b; }
 
         //- Merge in-place interfaces
-        void mergeInterfaces(bool b);
+        void mergeInterfaces(bool b) noexcept { mergeInterfaces_ = b; }
 
         //- Rename interface boundaries as InterfaceN_0, InterfaceN_1
-        void renameInterfaces(bool b);
-
+        void renameInterfaces(bool b) noexcept { renameInterfaces_ = b; }
 
         //- Remove baffles by merging their respective faces
-        void removeBaffles(bool b);
+        void removeBaffles(bool b) noexcept { removeBaffles_ = b; }
 
         //- Use numbered names (eg, patch_0, zone_0) instead of human-readable
-        void useNumberedNames(bool b);
+        void useNumberedNames(bool b) noexcept { useNumberedNames_ = b; }
 
         //- Merge tolerance for points (default 0.05e-3)
-        void mergeTol(const scalar& tol);
+        void mergeTol(scalar tol) noexcept { mergeTol_ = tol; }
 
         //- Value to assign for undefined solutions (default: NaN)
-        void undefScalar(const scalar& val);
-
+        void undefScalar(scalar val) noexcept { undefScalar_ = val; }
 };
 
 

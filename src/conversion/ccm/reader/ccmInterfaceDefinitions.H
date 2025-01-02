@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,8 +28,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ccmInterfaceDefinitions_H
-#define ccmInterfaceDefinitions_H
+#ifndef Foam_ccmInterfaceDefinitions_H
+#define Foam_ccmInterfaceDefinitions_H
 
 #include "Map.H"
 #include "Ostream.H"
@@ -55,6 +55,7 @@ Ostream& operator<<(Ostream& os, const interfaceDefinitions& defs);
 class interfaceEntry
 {
 public:
+
     // Public Data
 
         //- The internal interface id
@@ -69,31 +70,29 @@ public:
 
     // Constructors
 
-        //- Construct null
-        interfaceEntry()
+        //- Default construct
+        constexpr interfaceEntry() noexcept
         :
             id(-1),
             bnd0(-1),
             bnd1(-1)
         {}
 
-
         //- Construct empty interface definition
-        interfaceEntry(const label index)
+        constexpr interfaceEntry(const label index) noexcept
         :
             id(index),
             bnd0(-1),
             bnd1(-1)
         {}
 
-
         //- Construct from components
-        interfaceEntry
+        constexpr interfaceEntry
         (
             const label index,
             const label boundary0,
             const label boundary1
-        )
+        ) noexcept
         :
             id(index),
             bnd0(boundary0),
@@ -111,7 +110,7 @@ public:
 
 
         //- True if the boundary id is in this interface
-        bool inInterface(label bndId) const
+        bool inInterface(label bndId) const noexcept
         {
             return bndId == bnd0 || bndId == bnd1;
         }
@@ -151,7 +150,7 @@ public:
             }
             else
             {
-                return word::null;
+                return word();
             }
         }
 
@@ -164,10 +163,9 @@ public:
             const interfaceEntry& entry
         )
         {
-            os  << "(" << entry.bnd0 << " " << entry.bnd1 << ")";
+            os  << '(' << entry.bnd0 << ' ' << entry.bnd1 << ')';
             return os;
         }
-
 };
 
 
@@ -180,48 +178,32 @@ class interfaceDefinitions
 :
     public Map<interfaceEntry>
 {
+    typedef Map<interfaceEntry> map_type;
 
-    inline Map<interfaceEntry>& map()
-    {
-        return *this;
-    }
-
-    inline const Map<interfaceEntry>& map() const
-    {
-        return *this;
-    }
+    const map_type& map() const noexcept { return *this; }
 
 
 public:
+
     // Constructor
 
-        //- Null construct
-        interfaceDefinitions()
-        {}
+        //- Default construct
+        interfaceDefinitions() noexcept = default;
 
-        //- Size
-        label size() const
-        {
-            return map().size();
-        }
+        //- Map size
+        using map_type::size;
 
-        //- Size
-        bool empty() const
-        {
-            return map().empty();
-        }
+        //- Map empty?
+        using map_type::empty;
 
-        //- Clear
-        void clear()
-        {
-            map().clear();
-        }
+        //- Map clear
+        using map_type::clear;
 
 
         //- Add (valid) interface entry
         bool add(const interfaceEntry& entry)
         {
-            return (entry.good() && map().set(entry.id, entry));
+            return (entry.good() && map_type::set(entry.id, entry));
         }
 
 
@@ -268,7 +250,6 @@ public:
             os  << defs.map() << nl;
             return os;
         }
-
 };
 
 

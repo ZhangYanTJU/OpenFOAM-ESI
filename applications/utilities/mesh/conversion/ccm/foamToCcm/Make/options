@@ -7,4 +7,6 @@ EXE_INC = \
 EXE_LIBS = \
     -lfiniteVolume \
     -lgenericPatchFields \
+    -lfileFormats \
+    -lmeshTools \
     -lconversion -lccm

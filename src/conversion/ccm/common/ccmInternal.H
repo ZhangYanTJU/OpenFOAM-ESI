@@ -28,8 +28,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ccmInternal_H
-#define ccmInternal_H
+#ifndef Foam_ccmInternal_H
+#define Foam_ccmInternal_H
 
 #include "className.H"
 #include "List.H"
@@ -136,7 +136,6 @@ public:
     //- Die with msg if there is an error
     //  Return true if there is no error
     bool assertNoError(const std::string& msg) const;
-
 };
 
 

@@ -5,7 +5,6 @@ reader/ccmReader.C
 reader/ccmReaderAux.C
 reader/ccmReaderMesh.C
 reader/ccmReaderSolution.C
-reader/ccmReaderOptions.C
 
 writer/ccmWriter.C
 writer/ccmWriterMesh.C

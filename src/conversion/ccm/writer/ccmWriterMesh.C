@@ -33,8 +33,8 @@ License
 
 Foam::label Foam::ccm::writer::prostarCellFaceId
 (
-    const label& cellId,
-    const label& faceI
+    const label cellId,
+    const label faceI
 ) const
 {
     const faceList&   faces = mesh_.faces();

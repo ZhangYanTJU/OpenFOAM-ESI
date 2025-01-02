@@ -114,9 +114,11 @@ void Foam::ccm::reader::determineFieldInfo
 
             if (dims == kCCMIOScalar)
             {
-                // Add to table as required
-                if (!table.found(fieldName))
+                auto tableIter = table.find(fieldName);
+
+                if (!tableIter.good())
                 {
+                    // Add to table as required
                     fieldEntry entry(fieldName, fullName);
 
                     entry.units
@@ -124,10 +126,11 @@ void Foam::ccm::reader::determineFieldInfo
                         ccmReadOptstr("Units", fieldNode)
                     );
 
-                    table.append(entry);
-                }
+                    table.push_back(entry);
 
-                fieldEntry& entry = table.find(fieldName)();
+                    tableIter = table.find(fieldName);
+                }
+                fieldEntry& entry = *tableIter;
 
                 // Obtain sizes of data field
                 // - only process cell/face data
@@ -375,26 +378,30 @@ Foam::ccm::reader::readField
             &stateNode
         )
      != kCCMIONoErr
-
-     || !fieldTable_.found(fieldName)
     )
     {
         return tmp<scalarField>::New();
     }
 
+    label maxId = 0;
     CCMIODataLocation requestedLocation = kCCMIOCell;
 
-    fieldEntry& entry = fieldTable_.find(fieldName)();
+    const auto tableIter = fieldTable_.find(fieldName);
 
-    label maxId = entry.maxCellId();
-
-    if (wallData)
+    if (tableIter.good())
     {
-        maxId = entry.maxFaceId();
-        requestedLocation = kCCMIOFace;
+        const fieldEntry& entry = *tableIter;
+
+        maxId = entry.maxCellId();
+
+        if (wallData)
+        {
+            maxId = entry.maxFaceId();
+            requestedLocation = kCCMIOFace;
+        }
     }
 
-    // we can skip empty fields immediately
+    // Can skip empty/unknown fields immediately
     if (!maxId)
     {
         return tmp<scalarField>::New();
@@ -405,11 +412,8 @@ Foam::ccm::reader::readField
     List<label>  mapData;
     List<scalar> rawData;
 
-    tmp<scalarField> tscalarData
-    (
-        new scalarField(maxId + 1, option().undefScalar())
-    );
-    scalarField& scalarData = tscalarData.ref();
+    auto tscalarData = tmp<scalarField>::New(maxId + 1, option().undefScalar());
+    auto& scalarData = tscalarData.ref();
 
 
     CCMIODimensionality dims;

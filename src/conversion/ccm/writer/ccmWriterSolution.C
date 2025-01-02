@@ -456,8 +456,10 @@ void Foam::ccm::writer::writeSolution
 
     forAllConstIters(objects, iter)
     {
-        const word fieldName = (*iter()).name();
-        const word fieldType = (*iter()).headerClassName();
+        const IOobject& io = *iter.val();
+
+        const word fieldName = io.name();
+        const word fieldType = io.headerClassName();
 
         if (!nameMapping.found(fieldName))
         {
@@ -476,7 +478,8 @@ void Foam::ccm::writer::writeSolution
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::NO_WRITE
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
                 ),
                 refCast<const fvMesh>(mesh_)
             );
@@ -566,7 +569,8 @@ void Foam::ccm::writer::writeSolution
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::NO_WRITE
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
                 ),
                 refCast<const fvMesh>(mesh_)
             );
@@ -588,7 +592,8 @@ void Foam::ccm::writer::writeSolution
                 volScalarField field(vfield.component(cmpt));
 
                 CCMIOComponent ccmComponent = kCCMIOVectorX;
-                switch(cmpt) {
+                switch (cmpt)
+                {
                     case 0:
                         ccmComponent = kCCMIOVectorX;
                         break;
@@ -699,7 +704,8 @@ void Foam::ccm::writer::writeSolution
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::NO_WRITE
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
                 ),
                 refCast<const fvMesh>(mesh_)
             );

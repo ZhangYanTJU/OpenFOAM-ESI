@@ -28,8 +28,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ccmBoundaryInfo_H
-#define ccmBoundaryInfo_H
+#ifndef Foam_ccmBoundaryInfo_H
+#define Foam_ccmBoundaryInfo_H
 
 #include "word.H"
 #include "Ostream.H"
@@ -54,6 +54,7 @@ Ostream& operator<<(Ostream& os, const ccmBoundaryInfo& entry);
 class ccmBoundaryInfo
 {
 public:
+
     //- The ccm region
     int ccmIndex;
 
@@ -70,7 +71,7 @@ public:
     std::string patchType;
 
 
-    //- Construct null
+    //- Default construct
     ccmBoundaryInfo()
     :
         ccmIndex(0),

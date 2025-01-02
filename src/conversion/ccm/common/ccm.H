@@ -24,12 +24,12 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Reader/writer for handling ccm files.
+    Reader/writer routines for handling ccm files.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ccm_H
-#define ccm_H
+#ifndef Foam_ccm_H
+#define Foam_ccm_H
 
 #include "ccmReader.H"
 #include "ccmWriter.H"

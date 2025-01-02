@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,8 +88,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ccmWriter_H
-#define ccmWriter_H
+#ifndef Foam_ccmWriter_H
+#define Foam_ccmWriter_H
 
 #include "ccmBase.H"
 #include "STARCDCore.H"
@@ -106,8 +106,7 @@ namespace Foam
 namespace ccm
 {
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
+// Forward Declarations
 class ccmID;
 class ccmMaps;
 class ccmDimension;
@@ -150,17 +149,10 @@ class writer
 
     // Private Member Functions
 
-        //- No copy construct
-        writer(const writer&) = delete;
-
-        //- No copy assignment
-        void operator=(const writer&) = delete;
-
-
         //- create a filled linear map with 'size' from 'start + 1'
         void addLinearMap
         (
-            const string& mapName,
+            const std::string& mapName,
             ccmID& mapId,
             label size,
             label start = 0
@@ -174,7 +166,7 @@ class writer
         void writeProblem(const ccmID& stateNode) const;
 
         //- Return the PROSTAR face id for the given cell/face
-        label prostarCellFaceId(const label& cellId, const label& faceI) const;
+        label prostarCellFaceId(const label cellId, const label faceI) const;
 
         // write the faces, the number of vertices appears before each entry
         void writeFaces
@@ -211,17 +203,29 @@ class writer
         //- Return patch named 'Default_Boundary_Region' or -1 on error
         label findDefaultBoundary() const;
 
+
 public:
 
-    // Static data members
+    // Static Data Members
 
         //- The name for the topology file reference
+        FOAM_DLL_EXPORT
         static string defaultMeshName;
+
+
+    // Generated Methods
+
+        //- No copy construct
+        writer(const writer&) = delete;
+
+        //- No copy assignment
+        void operator=(const writer&) = delete;
 
 
     // Constructors
 
         //- Open a file for writing, with backup/overwrite existing file
+        FOAM_DLL_EXPORT
         writer
         (
             const fileName& file,
@@ -231,24 +235,26 @@ public:
 
 
     //- Destructor (closes file)
+    FOAM_DLL_EXPORT
     ~writer();
 
 
     // Member Functions
 
-      // Write
+    // Write
 
         //- Write the mesh
+        FOAM_DLL_EXPORT
         void writeGeometry();
 
         //- Write the solutions
         //  provide optional remapping dictionary
+        FOAM_DLL_EXPORT
         void writeSolution
         (
             const IOobjectList& objects,
             const fileName& remappingDictName = fileName::null
         );
-
 };
 
 

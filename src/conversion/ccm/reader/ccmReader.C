@@ -381,7 +381,7 @@ void Foam::ccm::reader::readProblemDescription_boundaryRegion
 
             if (option().useNumberedNames())
             {
-                str = "patch_" + ::Foam::name(Id);
+                str = "patch_" + std::to_string(Id);
             }
             else if
             (
@@ -470,7 +470,7 @@ void Foam::ccm::reader::readProblemDescription_cellTable
 
             if (str.empty())
             {
-                str = "zone_" + ::Foam::name(Id);
+                str = "zone_" + std::to_string(Id);
             }
 
             dict.add(opt, word::validate(str, true));
@@ -647,34 +647,16 @@ bool Foam::ccm::reader::remapMeshInfo
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-// Construct from reading a file
 Foam::ccm::reader::reader(const fileName& file, const reader::options& opts)
 :
     base(),
     options_(new options(opts)),
     geometryStatus_(UNKNOWN),
     solutionStatus_(UNKNOWN),
-    interfaceDefinitions_(),
-    boundaryRegion_(),
-    cellTable_(),
     nPoints_(0),
     nInternalFaces_(0),
     nFaces_(0),
-    nCells_(0),
-    points_(),
-    faces_(),
-    faceOwner_(),
-    faceNeighbour_(),
-    bafInterfaces_(),
-    domInterfaces_(),
-    origFaceId_(),
-    origCellId_(),
-    cellTableId_(),
-    origBndId_(),
-    patchSizes_(),
-    solutionTable_(),
-    fieldTable_(),
-    lagrangianTable_()
+    nCells_(0)
 {
     if (!option().keptSomeRegion())
     {

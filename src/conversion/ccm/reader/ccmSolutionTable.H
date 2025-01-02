@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,8 +28,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ccmSolutionTable_H
-#define ccmSolutionTable_H
+#ifndef Foam_ccmSolutionTable_H
+#define Foam_ccmSolutionTable_H
 
 #include "SLList.H"
 #include "Ostream.H"
@@ -289,6 +289,7 @@ public:
             iter_(iteration),
             time_(timeValue)
         {}
+
 
     // Access
 

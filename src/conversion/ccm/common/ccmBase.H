@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,11 +38,23 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ccmBase_H
-#define ccmBase_H
+#ifndef Foam_ccmBase_H
+#define Foam_ccmBase_H
 
 #include <memory>
 #include <string>
+
+// Normally mingw will export *all* symbols, but since the ADF library
+// explicitly uses __declspec(dllexport) itself we must do the same otherwise
+// none of our library symbols are exported and linking fails (issue #3199).
+
+#undef FOAM_DLL_EXPORT
+#ifdef __MINGW32__
+    #define FOAM_DLL_EXPORT  __declspec(dllexport)
+#else
+    #define FOAM_DLL_EXPORT
+#endif
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -89,6 +101,9 @@ protected:
         //  Return true if there is no error
         bool assertNoError(const std::string& msg) const;
 
+public:
+
+    // Generated Methods
 
         //- No copy construct
         base(const base&) = delete;
@@ -96,8 +111,6 @@ protected:
         //- No copy assignment
         void operator=(const base&) = delete;
 
-
-public:
 
     // Constructors
 
@@ -114,8 +127,8 @@ public:
         //- Explicitly close the file and terminate ccmio access.
         //  Return false if it was already closed.
         bool close();
-
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

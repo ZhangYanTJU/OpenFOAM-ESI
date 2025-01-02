@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,16 +46,16 @@ License
 
 Foam::labelList Foam::ccm::reader::patchStartList(label initial) const
 {
-    labelList startLst(patchSizes_.size(), Zero);
+    labelList starts(patchSizes_.size());
 
-    label patchFaceI = initial;
-    forAll(patchSizes_, patchI)
+    label patchFacei = initial;
+    forAll(patchSizes_, patchi)
     {
-        startLst[patchI] = patchFaceI;
-        patchFaceI += patchSizes_[patchI];
+        starts[patchi] = patchFacei;
+        patchFacei += patchSizes_[patchi];
     }
 
-    return startLst;
+    return starts;
 }
 
 
@@ -203,7 +203,7 @@ void Foam::ccm::reader::readMeshTopology
 
         // Renumber vertex labels (ccm -> Foam)
         {
-            label maxId = max(origPointId);
+            label maxId = Foam::max(origPointId);
             labelList mapToFoam(invert(maxId+1, origPointId));
 
             for (face& f : faces_)
@@ -215,7 +215,7 @@ void Foam::ccm::reader::readMeshTopology
 
         // Renumber owners/neighbours cell labels (ccm -> Foam)
         {
-            label maxId = max(origCellId_);
+            label maxId = Foam::max(origCellId_);
             labelList mapToFoam(invert(maxId+1, origCellId_));
 
             inplaceRenumber(mapToFoam, faceOwner_);

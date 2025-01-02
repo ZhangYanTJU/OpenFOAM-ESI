@@ -41,7 +41,7 @@ Foam::string Foam::ccm::writer::defaultMeshName = "meshExport";
 // Create a filled linear map with 'size' from 'start + 1'
 void Foam::ccm::writer::addLinearMap
 (
-    const string& mapName,
+    const std::string& mapName,
     ccmID& mapId,
     label size,
     label start
@@ -98,7 +98,7 @@ void Foam::ccm::writer::writeBoundaryRegion
 
     forAllConstIters(boundaryRegion_, iter)
     {
-        const dictionary& dict = iter();
+        const dictionary& dict = iter.val();
         word nameEntry;
         word typeEntry;
 
@@ -357,7 +357,7 @@ Foam::ccm::writer::writer
     {
         if (patches[patchI].size() > 0)
         {
-            string mapName = "boundaryMap-" + Foam::name(patchI);
+            std::string mapName = "boundaryMap-" + std::to_string(patchI);
 
             addLinearMap
             (
