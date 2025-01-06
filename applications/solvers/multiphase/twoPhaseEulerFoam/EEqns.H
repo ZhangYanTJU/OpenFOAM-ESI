@@ -50,7 +50,7 @@
       + (
             he2.name() == thermo2.phasePropertyName("e")
           ? fvc::div(fvc::absolute(alphaPhi2, alpha2, U2), p)
-          + p*fvc::ddt(alpha1)
+          + p*fvc::ddt(alpha2)
           : -alpha2*dpdt
         )
 
