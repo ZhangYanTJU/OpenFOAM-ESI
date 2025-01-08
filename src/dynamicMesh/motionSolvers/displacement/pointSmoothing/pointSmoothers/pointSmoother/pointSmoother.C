@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,33 +65,19 @@ bool Foam::pointSmoother::isInternalOrProcessorFace(const label faceI) const
 }
 
 
-Foam::autoPtr<Foam::PackedBoolList> Foam::pointSmoother::pointsToMove
+Foam::bitSet Foam::pointSmoother::pointsToMove
 (
     const labelList& facesToMove,
     const bool moveInternalFaces
 ) const
 {
-    autoPtr<PackedBoolList> markerPtr
-    (
-        new PackedBoolList(mesh().nPoints(), false)
-    );
+    bitSet marker(mesh().nPoints());
 
-    PackedBoolList& marker(markerPtr());
-
-    forAll(facesToMove, faceToMoveI)
+    for (const label facei : facesToMove)
     {
-        const label faceI(facesToMove[faceToMoveI]);
-
-        if (moveInternalFaces || !isInternalOrProcessorFace(faceI))
+        if (moveInternalFaces || !isInternalOrProcessorFace(facei))
         {
-            const face& fPoints(mesh().faces()[faceI]);
-
-            forAll(fPoints, fPointI)
-            {
-                const label pointI(fPoints[fPointI]);
-
-                marker[pointI] = true;
-            }
+            marker.set(mesh().faces()[facei]);
         }
     }
 
@@ -103,7 +89,7 @@ Foam::autoPtr<Foam::PackedBoolList> Foam::pointSmoother::pointsToMove
         0U
     );
 
-    return markerPtr;
+    return marker;
 }
 
 
@@ -139,19 +125,20 @@ Foam::pointSmoother::New
 {
     Info<< "Selecting pointSmoother type " << pointSmootherType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->find(pointSmootherType);
+    auto* ctorPtr = dictionaryConstructorTable(pointSmootherType);
 
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    if (!ctorPtr)
     {
-        FatalErrorIn("pointSmoother::New")
-            << "Unknown " << typeName << " type "
-            << pointSmootherType << endl << endl
-            << "Valid " << typeName << " types are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
+        FatalIOErrorInLookup
+        (
+            dict,
+            typeName,
+            pointSmootherType,
+            *dictionaryConstructorTablePtr_
+        ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, dict);
+    return autoPtr<pointSmoother>(ctorPtr(mesh, dict));
 }
 
 
@@ -162,16 +149,10 @@ Foam::pointSmoother::New
     const dictionary& dict
 )
 {
-    word pointSmootherType(dict.lookup(typeName));
+    word pointSmootherType(dict.get<word>(typeName));
 
     return New(pointSmootherType, mesh, dict);
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::pointSmoother::~pointSmoother()
-{}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
@@ -203,7 +184,7 @@ void Foam::pointSmoother::update
     );
 
     // Note: do not want to apply boundary conditions whilst smoothing so
-    //       disable for now        
+    //       disable for now
     //// Take over boundary values
     //for (auto& ppf : pointDisplacement.boundaryFieldRef())
     //{
@@ -247,7 +228,7 @@ Foam::tmp<Foam::scalarField> Foam::pointSmoother::faceQuality
         )
     );
 
-    //return max(tortho, scalar(0.0));
+    // tortho.ref().clamp_min(0);
     return tortho;
 }
 
@@ -276,7 +257,7 @@ Foam::tmp<Foam::scalarField> Foam::pointSmoother::cellQuality
     const auto& faceOrtho = tfaceOrtho();
 
     // Min over cells
-    tmp<scalarField> tortho(new scalarField(mesh().nCells(), GREAT));
+    auto tortho = tmp<scalarField>::New(mesh().nCells(), GREAT);
     auto& ortho = tortho.ref();
 
     const auto& own = mesh().faceOwner();

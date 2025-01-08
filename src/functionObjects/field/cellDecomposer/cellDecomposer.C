@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +34,6 @@ License
 #include "dummyTransform.H"
 #include "ReadFields.H"
 #include "surfaceFields.H"
-#include "PackedBoolList.H"
 #include "fvMeshTools.H"
 #include "cellSetOption.H"
 #include "cellBitSet.H"

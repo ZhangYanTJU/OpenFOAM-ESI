@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,20 +66,11 @@ void Foam::displacementSmartPointSmoothingMotionSolver::markAffectedFaces
     labelHashSet& affectedFaces
 )
 {
-    PackedBoolList affectedPoints(mesh().nPoints(), false);
+    bitSet affectedPoints(mesh().nPoints());
 
-    forAllConstIter(labelHashSet, changedFaces, iter)
+    for (const label facei : changedFaces)
     {
-        const label faceI(iter.key());
-
-        const face& fPoints(mesh().faces()[faceI]);
-
-        forAll(fPoints, fPointI)
-        {
-            const label pointI(fPoints[fPointI]);
-
-            affectedPoints[pointI] = true;
-        }
+        affectedPoints.set(mesh().faces()[facei]);
     }
 
     syncTools::syncPointList
@@ -90,20 +81,11 @@ void Foam::displacementSmartPointSmoothingMotionSolver::markAffectedFaces
         0U
     );
 
-    forAll(affectedPoints, pointI)
+    for (const label pointi : affectedPoints)
     {
-        if (affectedPoints[pointI])
+        for (const label celli : mesh().pointCells()[pointi])
         {
-            const labelList& pCells(mesh().pointCells()[pointI]);
-
-            forAll(pCells, pointCellI)
-            {
-                const label cellI(pCells[pointCellI]);
-
-                const labelList& cFaces(mesh().cells()[cellI]);
-
-                affectedFaces.insert(cFaces);
-            }
+            affectedFaces.insert(mesh().cells()[celli]);
         }
     }
 }
@@ -113,7 +95,7 @@ bool Foam::displacementSmartPointSmoothingMotionSolver::relax()
 {
     if
     (
-        (relaxationFactors_.size() == 0)
+        relaxationFactors_.empty()
      || (relaxationFactors_.size() == 1 && relaxationFactors_[0] == 1.0)
     )
     {
@@ -130,17 +112,11 @@ bool Foam::displacementSmartPointSmoothingMotionSolver::relax()
     // -1 indicates a point which is not to be moved
     //  0 is the starting value for a moving point
     labelList relaxationLevel(mesh().nPoints(), -1);
-    forAllConstIter(labelHashSet, affectedFaces, iter)
+    for (const label facei : affectedFaces)
     {
-        const label faceI(iter.key());
-
-        const face& fPoints(mesh().faces()[faceI]);
-
-        forAll(fPoints, fPointI)
+        for (const label pointi : mesh().faces()[facei])
         {
-            const label pointI(fPoints[fPointI]);
-
-            relaxationLevel[pointI] = 0;
+            relaxationLevel[pointi] = 0;
         }
     }
 
@@ -242,29 +218,16 @@ bool Foam::displacementSmartPointSmoothingMotionSolver::relax()
         }
 
         // Increase relaxation and check convergence
-        PackedBoolList pointsToRelax(mesh().nPoints(), false);
+        bitSet pointsToRelax(mesh().nPoints());
         complete = true;
-        forAllConstIter(labelHashSet, affectedFaces, iter)
+        for (const label facei : affectedFaces)
         {
-            const label faceI(iter.key());
-
-            const face& fPoints(mesh().faces()[faceI]);
-
-            forAll(fPoints, fPointI)
-            {
-                const label pointI(fPoints[fPointI]);
-
-                pointsToRelax[pointI] = true;
-            }
+            pointsToRelax.set(mesh().faces()[facei]);
         }
 
-        forAll(pointsToRelax, pointI)
+        for (const label pointI : pointsToRelax)
         {
-            if
-            (
-                pointsToRelax[pointI]
-             && (relaxationLevel[pointI] < relaxationFactors_.size() - 1)
-            )
+            if (relaxationLevel[pointI] < relaxationFactors_.size() - 1)
             {
                 ++ relaxationLevel[pointI];
 
@@ -287,17 +250,13 @@ bool Foam::displacementSmartPointSmoothingMotionSolver::relax()
 
     // Check for convergence
     bool converged(true);
-    forAll(mesh().faces(), faceI)
+    forAll(mesh().faces(), facei)
     {
-        const face& fPoints(mesh().faces()[faceI]);
-
-        forAll(fPoints, fPointI)
+        for (const label pointi : mesh().faces()[facei])
         {
-            const label pointI(fPoints[fPointI]);
-
-            if (relaxationLevel[pointI] > 0)
+            if (relaxationLevel[pointi] > 0)
             {
-                facesToMove_.insert(faceI);
+                facesToMove_.insert(facei);
 
                 converged = false;
 
@@ -404,7 +363,7 @@ displacementSmartPointSmoothingMotionSolver
     pointSmoother_(pointSmoother::New(mesh, coeffDict())),
     nPointSmootherIter_
     (
-        readLabel(coeffDict().lookup("nPointSmootherIter"))
+        coeffDict().get<label>("nPointSmootherIter")
     ),
     relaxedPoints_(mesh.points())
 {
@@ -448,7 +407,7 @@ displacementSmartPointSmoothingMotionSolver
     ),
     nPointSmootherIter_
     (
-        readLabel(coeffDict().lookup("nPointSmootherIter"))
+        coeffDict().get<label>("nPointSmootherIter")
     ),
     relaxedPoints_(mesh.points())
 {
