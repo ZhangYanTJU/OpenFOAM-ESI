@@ -708,19 +708,19 @@ public:
         //- Matrix has diagonal only
         bool diagonal() const noexcept
         {
-            return (diagPtr_ && !lowerPtr_ && !lowerCSRPtr_ && !upperPtr_);
+            return (diagPtr_ && !lowerPtr_ && !upperPtr_);
         }
 
         //- Matrix is symmetric
         bool symmetric() const noexcept
         {
-            return (diagPtr_ && !(lowerPtr_ || lowerCSRPtr_) && upperPtr_);
+            return (diagPtr_ && !lowerPtr_ && upperPtr_);
         }
 
         //- Matrix is asymmetric (ie, full)
         bool asymmetric() const noexcept
         {
-            return (diagPtr_ && (lowerPtr_ || lowerCSRPtr_) && upperPtr_);
+            return (diagPtr_ && lowerPtr_ && upperPtr_);
         }
 
 
