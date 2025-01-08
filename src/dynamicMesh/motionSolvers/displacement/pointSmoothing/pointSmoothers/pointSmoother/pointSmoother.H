@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,12 +36,12 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pointSmoother_H
-#define pointSmoother_H
+#ifndef Foam_pointSmoother_H
+#define Foam_pointSmoother_H
 
 #include "polyMeshGeometry.H"
 #include "runTimeSelectionTables.H"
-#include "PackedBoolList.H"
+#include "bitSet.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,7 +56,7 @@ class pointSmoother
 {
 private:
 
-    // Private data
+    // Private Data
 
         //- Reference to the polyMesh
         const polyMesh& mesh_;
@@ -67,11 +67,11 @@ private:
 
     // Private Member Functions
 
-        //- Disallow default bitwise copy construct
-        pointSmoother(const pointSmoother&);
+        //- No copy construct
+        pointSmoother(const pointSmoother&) = delete;
 
-        //- Disallow default bitwise assignment
-        void operator=(const pointSmoother&);
+        //- No copy assignment
+        void operator=(const pointSmoother&) = delete;
 
 
 protected:
@@ -81,8 +81,8 @@ protected:
         //- Test if the given face is internal or on a processor boundary
         bool isInternalOrProcessorFace(const label faceI) const;
 
-        //- Get a boolean list of the points to be moved
-        autoPtr<PackedBoolList> pointsToMove
+        //- Get list of the points to be moved
+        bitSet pointsToMove
         (
             const labelList& facesToMove,
             const bool moveInternalFaces
@@ -150,13 +150,13 @@ public:
 
 
     //- Destructor
-    virtual ~pointSmoother();
+    virtual ~pointSmoother() = default;
 
 
     // Member Functions
 
-        // Access the mesh
-        const polyMesh& mesh() const
+        //- Access the mesh
+        const polyMesh& mesh() const noexcept
         {
             return mesh_;
         }

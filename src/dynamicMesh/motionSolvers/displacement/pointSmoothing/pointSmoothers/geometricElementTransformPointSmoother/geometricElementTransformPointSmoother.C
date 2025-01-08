@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -118,7 +118,7 @@ geometricElementTransformPointSmoother
     pointSmoother(mesh, dict),
     transformationParameter_
     (
-        readScalar(dict.lookup("transformationParameter"))
+        dict.get<scalar>("transformationParameter")
     )
 {}
 
@@ -168,10 +168,8 @@ void Foam::pointSmoothers::geometricElementTransformPointSmoother::calculate
     pointField transformedPoints(currentPoints);
 
     // Calculate the internal transformations
-    forAllConstIter(labelHashSet, cellsToMove, iter)
+    for (const label cellI : cellsToMove)
     {
-        const label cellI(iter.key());
-
         const cell& cFaces
         (
             mesh().cells()[cellI]

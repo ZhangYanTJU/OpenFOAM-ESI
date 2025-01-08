@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cellPointConnectivity_H
-#define cellPointConnectivity_H
+#ifndef Foam_cellPointConnectivity_H
+#define Foam_cellPointConnectivity_H
 
 #include "polyMesh.H"
 #include "MeshObject.H"
@@ -56,7 +56,7 @@ class cellPointConnectivity
 :
     public MoveableMeshObject<polyMesh>
 {
-    // Private data
+    // Private Data
 
         //- Reference to the polyMesh
         const polyMesh& mesh_;
@@ -70,11 +70,11 @@ class cellPointConnectivity
 
     // Private Member Functions
 
-        //- Disallow default bitwise copy construct
-        cellPointConnectivity(const cellPointConnectivity&);
+        //- No copy construct
+        cellPointConnectivity(const cellPointConnectivity&) = delete;
 
-        //- Disallow default bitwise assignment
-        void operator=(const cellPointConnectivity&);
+        //- No copy assignment
+        void operator=(const cellPointConnectivity&) = delete;
 
         //- Generate the connectivity
         void generateCellPointConnectivity(label cellI);
@@ -89,11 +89,11 @@ public:
     // Constructors
 
         //- Construct an IOobject and a polymesh
-        cellPointConnectivity(const polyMesh&);
+        explicit cellPointConnectivity(const polyMesh&);
 
 
     //- Destructor
-    ~cellPointConnectivity();
+    ~cellPointConnectivity() = default;
 
 
     // Member Functions

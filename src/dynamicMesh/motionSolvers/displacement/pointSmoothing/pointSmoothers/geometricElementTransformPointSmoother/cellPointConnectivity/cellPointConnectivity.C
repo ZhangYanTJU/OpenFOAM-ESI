@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -281,12 +281,6 @@ Foam::cellPointConnectivity::cellPointConnectivity(const polyMesh& mesh)
         generateCellPointConnectivity(cellI);
     }
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::cellPointConnectivity::~cellPointConnectivity()
-{}
 
 
 // ************************************************************************* //

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,20 +39,15 @@ void Foam::pointSmoother::reset
     const bool resetInternalFaces
 ) const
 {
-    autoPtr<PackedBoolList> resetPointsPtr
+    bitSet resetPoints
     (
         pointsToMove(facesToMove, resetInternalFaces)
     );
 
-    const PackedBoolList& resetPoints(resetPointsPtr);
-
-    forAll(resetPoints, pointI)
+    for (const label pointi: resetPoints)
     {
-        if (resetPoints[pointI])
-        {
-            weights[pointI] = pTraits<weightType>::zero;
-            pointDisplacement[pointI] = vector::zero;
-        }
+        weights[pointi] = pTraits<weightType>::zero;
+        pointDisplacement[pointi] = vector::zero;
     }
 }
 
@@ -81,22 +76,16 @@ void Foam::pointSmoother::average
         vector::zero
     );
 
-    autoPtr<PackedBoolList> averagePointsPtr
+    bitSet averagePoints
     (
         pointsToMove(facesToMove, true)
     );
 
-    const PackedBoolList& averagePoints(averagePointsPtr);
-
-    forAll(averagePoints, pointI)
+    for (const label pointi : averagePoints)
     {
-        if
-        (
-            averagePoints[pointI]
-         && weights[pointI] != pTraits<weightType>::zero
-        )
+        if (weights[pointi] != pTraits<weightType>::zero)
         {
-            pointDisplacement[pointI] /= weights[pointI];
+            pointDisplacement[pointi] /= weights[pointi];
         }
     }
 }

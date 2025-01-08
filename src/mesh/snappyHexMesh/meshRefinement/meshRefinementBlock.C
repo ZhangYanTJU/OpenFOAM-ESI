@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1652,7 +1652,7 @@ void Foam::meshRefinement::selectIntersectedFaces
 //        //        // Match pp edges to coupled edges
 //        //        labelList patchEdges;
 //        //        labelList coupledEdges;
-//        //        PackedBoolList sameEdgeOrientation;
+//        //        bitSet sameEdgeOrientation;
 //        //        PatchTools::matchEdges
 //        //        (
 //        //            pp,

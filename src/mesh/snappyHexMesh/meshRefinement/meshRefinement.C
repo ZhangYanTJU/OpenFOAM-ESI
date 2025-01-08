@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,7 +61,6 @@ License
 #include "faceSet.H"
 #include "topoDistanceData.H"
 #include "FaceCellWave.H"
-#include "PackedBoolList.H"
 
 // Leak path
 #include "shortestPathSet.H"
@@ -2778,7 +2777,7 @@ Foam::labelList Foam::meshRefinement::countEdgeFaces
         // Match pp edges to coupled edges
         labelList patchEdges;
         labelList coupledEdges;
-        PackedBoolList sameEdgeOrientation;
+        bitSet sameEdgeOrientation;
         PatchTools::matchEdges
         (
             pp,

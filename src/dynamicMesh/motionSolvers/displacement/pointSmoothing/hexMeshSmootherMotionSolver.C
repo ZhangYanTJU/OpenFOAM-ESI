@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021,2024 OpenCFD Ltd.
+    Copyright (C) 2021,2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -752,9 +752,9 @@ hexMeshSmootherMotionSolver
     pointSmoother_(pointSmoother::New(mesh, coeffDict())),
     nPointSmootherIter_
     (
-        readLabel(coeffDict().lookup("nPointSmootherIter"))
+        coeffDict().get<label>("nPointSmootherIter")
     ),
-    relaxationFactors_(coeffDict().lookup("relaxationFactors")),
+    relaxationFactors_(coeffDict().get<scalarList>("relaxationFactors")),
     relaxationLevel_(mesh.nPoints(), 0),
     relaxedPoints_(mesh.points()),
     //surfacesDict_(coeffDict().subDict("geometry")),
@@ -885,9 +885,9 @@ hexMeshSmootherMotionSolver
     //),
     nPointSmootherIter_
     (
-        readLabel(coeffDict().lookup("nPointSmootherIter"))
+        coeffDict().get<label>("nPointSmootherIter")
     ),
-    relaxationFactors_(coeffDict().lookup("relaxationFactors")),
+    relaxationFactors_(coeffDict().get<scalarList>("relaxationFactors")),
     relaxationLevel_(mesh.nPoints(), 0),
     relaxedPoints_(mesh.points()),
     //surfacesDict_(coeffDict().subDict("geometry")),
