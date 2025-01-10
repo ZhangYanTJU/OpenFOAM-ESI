@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "zoneDistribute.H"
+#include "processorPolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -44,10 +45,48 @@ Foam::zoneDistribute::zoneDistribute(const fvMesh& mesh)
     stencil_(zoneCPCStencil::New(mesh)),
     globalNumbering_(stencil_.globalNumbering()),
     send_(UPstream::nProcs()),
-    pBufs_(UPstream::commsTypes::nonBlocking)
+    pBufs_(UPstream::commsTypes::nonBlocking),
+    cyclicBoundaryCells_(mesh.nCells(), false)
 {
     // Don't clear storage on persistent buffer
     pBufs_.allowClearRecv(false);
+
+    // Loop over boundary patches and store cells with a face on a cyclic patch
+    bool hasCyclicPatches = false;
+    forAll(mesh.boundaryMesh(), patchi)
+    {
+        const cyclicPolyPatch* cpp =
+            isA<cyclicPolyPatch>(mesh.boundaryMesh()[patchi]);
+
+        if (cpp)
+        {
+            cyclicBoundaryCells_.set(cpp->faceCells());
+            hasCyclicPatches = true;
+        }
+    }
+
+    // Populate cyclicCentres_
+    if(hasCyclicPatches)
+    {
+        // Make a boolList from the bitSet
+        boolList isCyclicCell(mesh.nCells(), false);
+
+        forAll(cyclicBoundaryCells_, celli)
+        {
+            if (cyclicBoundaryCells_.test(celli))
+            {
+                isCyclicCell[celli] = true;
+            }
+        }
+
+        // Use getFields to get map of cell centres across processor boundaries
+        setUpCommforZone(isCyclicCell, true);
+
+        cyclicCentres_.reset
+        (
+            new Map<vectorField>(getFields(isCyclicCell, mesh_.C()))
+        );
+    }
 }
 
 
@@ -139,6 +178,227 @@ void Foam::zoneDistribute::setUpCommforZone
             }
         }
     }
+}
+
+Foam::List<Foam::label> Foam::zoneDistribute::getCyclicPatches
+(
+    const label celli,
+    const label globalIdx
+) const
+{
+    // Initialise cyclic patch label list
+    List<label> patches(0);
+
+    // If celli is not on a cyclic boundary, return the empty list
+    if (!cyclicBoundaryCells_.test(celli))
+    {
+        return patches;
+    }
+
+    const polyBoundaryMesh& bMesh = mesh_.boundaryMesh();
+
+    // So celli belongs to at least one cyclic patch.
+    // Let us figure out which.
+    if (globalNumbering_.isLocal(globalIdx)) // celli and globalIdx on same proc
+    {
+        // Making list of cyclic patches to which celli belongs
+        List<label> celliCyclicPatches;
+        forAll(bMesh, patchi)
+        {
+            if (isA<cyclicPolyPatch>(bMesh[patchi]))
+            {
+                // Note: Probably not efficient due to use of found(celli) but
+                // typically only used for very cells (interface cells and their
+                // point neighbours on cyclic boundaries).
+                if (bMesh[patchi].faceCells().found(celli))
+                {
+                    celliCyclicPatches.append(patchi);
+                }
+            }
+        }
+
+        // Get all local point neighbor cells of celli, i.e. all point
+        // neighbours that are not on the other side of a cyclic patch.
+        List<label> localPointNeiCells(0);
+        const labelList& cellPoints = mesh_.cellPoints()[celli];
+
+        for (const label cellPoint : cellPoints)
+        {
+            const labelList& pointKCells = mesh_.pointCells()[cellPoint];
+
+            for (const label pointKCell : pointKCells)
+            {
+                if (!localPointNeiCells.found(pointKCell))
+                {
+                    localPointNeiCells.append(pointKCell);
+                }
+            }
+        }
+
+        // Since globalIdx is a global cell index obtained from the point
+        // neighbour list, stencil[celli], all cells in this that are not in
+        // localPointNeiCells must be cyclic neighbour cells.
+        const label localIdx = globalNumbering_.toLocal(globalIdx);
+        if (!localPointNeiCells.found(localIdx))
+        {
+            for (const label patchi : celliCyclicPatches)
+            {
+                // find the corresponding cyclic neighbor patch ID
+                const cyclicPolyPatch& cpp =
+                    static_cast<const cyclicPolyPatch&>(bMesh[patchi]);
+
+                const label neiPatch = cpp.neighbPatchID();
+
+                // Check if the cell globalIdx is on neiPatch.
+                // If it is, append neiPatch to list of
+                if (bMesh[neiPatch].faceCells().found(localIdx))
+                {
+                    patches.append(neiPatch);
+                    // Here it may be possible to append patchi and do:
+                    //
+                    //    cpp.transformPosition()
+                    //
+                    // instead of
+                    //
+                    //    cpp.neighbPatch().transformPosition() in getPosition()
+                }
+            }
+        }
+    }
+    else // celli and globalIdx on differet processors
+    {
+        // Note: The following is needed if a celli is located at the interface
+        // (plicRDF), on a cyclic patch and a processor patch. In this case
+        // globalIdx may be on a different processor, but requires the
+        // transformation from a cyclic patch on the processor of celli.
+
+        const List<label>& faces = mesh_.cells()[celli];
+
+        // Loop over all faces of celli and find cyclic patches
+        for (const label facei : faces)
+        {
+            if (mesh_.isInternalFace(facei)) continue;
+
+            const label patchi = bMesh.whichPatch(facei);
+            const cyclicPolyPatch* cpp = isA<cyclicPolyPatch>(bMesh[patchi]);
+
+            if (cpp)
+            {
+                // Get the neighbor cell across the cyclic face
+                const label cycNeiPatch = cpp->neighbPatchID();
+                const label cycNeiCell =
+                    bMesh[cycNeiPatch].faceCells()[facei - cpp->start()];
+                const List<label>& cycNeiCellFaces = mesh_.cells()[cycNeiCell];
+
+                // Loop over all the faces of the neighbor cell
+                for (const label cycNeiCellFace : cycNeiCellFaces)
+                {
+                    if (mesh_.isInternalFace(cycNeiCellFace))
+                    {
+                        continue;
+                    }
+
+                    // Check if the neighbor cell has processor patches
+                    const label neiPatch = bMesh.whichPatch(cycNeiCellFace);
+                    const processorPolyPatch* ppp =
+                        isA<processorPolyPatch>(bMesh[neiPatch]);
+
+                    if (ppp)
+                    {
+                        // Avoid duplicate entries
+                        if (patches.found(cycNeiPatch))
+                        {
+                            continue;
+                        }
+
+                        // Since we can not access any information on globalIdx
+                        // we use the cell centre map from the stencil to
+                        // identify the cell.
+                        const label localFaceID = cycNeiCellFace - ppp->start();
+                        const vector neiCentre =
+                            ppp->neighbFaceCellCentres()[localFaceID];
+
+                        forAll(cyclicCentres_()[celli], k)
+                        {
+                            if
+                            (
+                                (
+                                    mag(cyclicCentres_()[celli][k] - neiCentre)
+                                        < 100*SMALL
+                                )
+                                && (stencil_[celli][k] == globalIdx)
+                            )
+                            {
+                                patches.append(cycNeiPatch);
+                                // Here an alternative might be to append patchi
+                                // and do:
+                                //     cpp.transformPosition()
+                                // instead of
+                                //     cpp.neighbPatch().transformPosition()
+                                // in getValue()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return patches;
+}
+
+
+Foam::vector Foam::zoneDistribute::getPosition
+(
+    const VolumeField<vector>& positions,
+    const Map<vector>& valuesFromOtherProc,
+    const label gblIdx,
+    const List<label> cyclicPatchID
+) const
+{
+    // Position vector, possibly from other processor, to be returned
+    vector position(getValue(positions, valuesFromOtherProc, gblIdx));
+
+    // Dealing with position transformation across cyclic patches.
+    // If no transformation is required (most cases), cyclicPatchID is empty
+    forAll(cyclicPatchID, i)
+    {
+        const label patchi = cyclicPatchID[i];
+
+        const cyclicPolyPatch& cpp =
+            static_cast<const cyclicPolyPatch&>
+                (
+                    positions.mesh().boundaryMesh()[patchi]
+                );
+
+        if (cpp.transform() != coupledPolyPatch::transformType::ROTATIONAL)
+        {
+            cpp.neighbPatch().transformPosition(position, 0);
+        }
+        else if (globalNumbering_.isLocal(gblIdx))
+        {
+            const label localIdx = globalNumbering_.toLocal(gblIdx);
+
+            for (const label facei : mesh_.cells()[localIdx])
+            {
+                if (mesh_.boundaryMesh().whichPatch(facei) == cyclicPatchID[i])
+                {
+                    cpp.neighbPatch().transformPosition(position, facei);
+                    continue;
+                }
+            }
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "Rotational cyclic patches are not supported in parallel.\n"
+                << "Try to decompose the domain so that the rotational cyclic"
+                << "patch is not split in between processors."
+                << exit(FatalError);
+        }
+    }
+
+    return position;
 }
 
 

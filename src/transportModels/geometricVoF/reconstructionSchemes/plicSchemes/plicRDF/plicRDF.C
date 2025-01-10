@@ -96,8 +96,16 @@ void Foam::reconstruction::plicRDF::interpolateNormal()
             if (mag(n) != 0)
             {
                 n /= mag(n);
-                vector centre =
-                    exchangeFields.getValue(centre_, mapCentre, gblIdx);
+                vector centre
+                (
+                    exchangeFields.getPosition
+                    (
+                        centre_,
+                        mapCentre,
+                        gblIdx,
+                        exchangeFields.getCyclicPatches(celli, gblIdx)
+                    )
+                );
                 vector distanceToIntSeg = (tensor::I- n*n) & (p - centre);
                 estimatedNormal += n /max(mag(distanceToIntSeg), SMALL);
                 weight += 1/max(mag(distanceToIntSeg), SMALL);
@@ -146,7 +154,11 @@ void Foam::reconstruction::plicRDF::interpolateNormal()
                 const label gblIdx = stencil[celli][i];
                 cellCentre.append
                 (
-                    exchangeFields.getValue(mesh_.C(), mapCC, gblIdx)
+                    exchangeFields.getPosition
+                    (
+                        mesh_.C(), mapCC, gblIdx,
+                        exchangeFields.getCyclicPatches(celli, gblIdx)
+                    )
                 );
                 alphaValues.append
                 (
@@ -193,7 +205,11 @@ void Foam::reconstruction::plicRDF::gradSurf(const volScalarField& phi)
         {
             cellCentre.append
             (
-                exchangeFields.getValue(mesh_.C(), mapCC, gblIdx)
+                exchangeFields.getPosition
+                (
+                    mesh_.C(), mapCC, gblIdx,
+                    exchangeFields.getCyclicPatches(celli, gblIdx)
+                )
             );
             phiValues.append
             (

@@ -282,9 +282,18 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
                     if (mag(n) != 0)
                     {
                         n /= mag(n);
-                        vector c = distribute.getValue(centre,mapCentres,gblIdx);
-                        vector distanceToIntSeg = (c - p);
-                        scalar distToSurf = distanceToIntSeg & (n);
+                        vector c
+                        (
+                            distribute.getPosition
+                            (
+                                centre,
+                                mapCentres,
+                                gblIdx,
+                                distribute.getCyclicPatches(celli, gblIdx)
+                            )
+                        );
+                        vector distanceToIntSeg(c - p);
+                        scalar distToSurf = distanceToIntSeg & n;
                         scalar weight = 0;
 
                         if (mag(distanceToIntSeg) != 0)
@@ -336,10 +345,18 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
                         if (mag(n) != 0)
                         {
                             n /= mag(n);
-                            vector c =
-                                distribute.getValue(centre, mapCentres, gblIdx);
-                            vector distanceToIntSeg = (c - p);
-                            scalar distToSurf = distanceToIntSeg & (n);
+                            vector c
+                            (
+                                distribute.getPosition
+                                (
+                                    centre,
+                                    mapCentres,
+                                    gblIdx,
+                                    distribute.getCyclicPatches(pCellI, gblIdx)
+                                )
+                            );
+                            vector distanceToIntSeg(c - p);
+                            scalar distToSurf = distanceToIntSeg & n;
                             scalar weight = 0;
 
                             if (mag(distanceToIntSeg) != 0)

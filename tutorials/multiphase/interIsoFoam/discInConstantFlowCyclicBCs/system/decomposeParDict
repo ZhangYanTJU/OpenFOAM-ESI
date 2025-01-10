@@ -24,5 +24,13 @@ coeffs
     n   ( 2 1 2 );
 }
 
+constraints
+{
+    preservePatches
+    {
+        type            preservePatches;
+        patches         (left right top bottom);
+    }
+}
 
 // ************************************************************************* //
