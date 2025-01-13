@@ -323,7 +323,7 @@ bool Foam::functionObjects::cellDecomposer::mapFieldType() const
             mapPtr_().faceMap(),
             false             //allowUnmapped
         );
-        Log << "    " << fieldName << ": interpolated";
+        Log << "    " << fieldName << ": interpolated" << nl;
 
         //evaluateConstraintTypes(mappedField);
     }
@@ -354,7 +354,7 @@ bool Foam::functionObjects::cellDecomposer::writeFieldType() const
 
         mappedField.write();
 
-        Log << "    " << fieldName << ": written";
+        Log << "    " << fieldName << ": written" << nl;
     }
 
     return processed;

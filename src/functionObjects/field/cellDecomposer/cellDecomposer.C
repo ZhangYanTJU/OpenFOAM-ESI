@@ -372,15 +372,14 @@ bool Foam::functionObjects::cellDecomposer::execute()
     ok = mapFieldType<symmTensor>() || ok;
     ok = mapFieldType<tensor>() || ok;
 
-    if (log)
-    {
-        if (!ok)
-        {
-            Info<< "    none" << nl;
-        }
 
-        Info<< endl;
+    if (!ok)
+    {
+        Log << "    none" << nl;
     }
+
+    Log << endl;
+
     return true;
 }
 
@@ -397,15 +396,13 @@ bool Foam::functionObjects::cellDecomposer::write()
     ok = writeFieldType<symmTensor>() || ok;
     ok = writeFieldType<tensor>() || ok;
 
-    if (log)
-    {
-        if (!ok)
-        {
-            Info<< "    none" << nl;
-        }
 
-        Info<< endl;
+    if (!ok)
+    {
+        Log << "    none" << nl;
     }
+
+    Log << endl;
 
     return true;
 }
