@@ -6,24 +6,16 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
-#     Copyright (C) 2016-2025 OpenCFD Ltd.
+#     Copyright (C) 2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
 #
 # Script
-#     foamGrepExeTargets
+#     foamGrepLibTargets
 #
 # Description
-#     Trivial script to lists all "EXE =" targets for solvers and utilities.
-#     Uses git for the grep operation.
-#
-# Examples
-#     Confirm that all available EXE targets have actually been created:
-#
-#       foamGrepExeTargets           > targets-available
-#       foamGrepExeTargets -bin      > targets-created
-#       diff -uw targets-available targets-created
+#     List library targets (contain "LIB_LIBS =")
 #
 #------------------------------------------------------------------------------
 # Locations
@@ -33,11 +25,13 @@ printHelp() {
     cat<<USAGE
 
 usage: ${0##*/}
-  -bin          List contents of \$FOAM_APPBIN (no git required)
+  -no-git       Disable use of git for obtaining information
+  -app          Search applications/solvers/ applications/utilities/
+  -src          Search src/
   -no-git       Disable use of git for obtaining information
   -help         Print the usage
 
-List exe targets (contains EXE). Uses git when possible
+List library targets (contains LIB_LIBS). Uses git when possible
 
 USAGE
     exit 0  # clean exit
@@ -57,6 +51,7 @@ die()
 }
 
 #------------------------------------------------------------------------------
+unset locations
 
 # Parse options
 while [ "$#" -gt 0 ]
@@ -66,15 +61,14 @@ do
         printHelp
         ;;
 
-    -bin)
-        if [ -n "$FOAM_APPBIN" ] && cd "$FOAM_APPBIN"
-        then
-            /bin/ls -1
-            exit 0
-        else
-            die "FOAM_APPBIN is not valid"
-        fi
+    -app)
+        locations="$locations applications/solvers applications/utilities"
         ;;
+
+    -src)
+        locations="$locations src"
+        ;;
+
     -no-git)
         unset FOAM_GIT_DIR
         ;;
@@ -89,13 +83,24 @@ done
 [ -d "$WM_PROJECT_DIR" ] || \
     die "Bad or unset environment variable: \$WM_PROJECT_DIR"
 
-cd "$WM_PROJECT_DIR" || die "No project directory: $WM_PROJECT_DIR"
+# Fallback to all locations
+if [ -z "$locations" ]
+then
+    locations="applications/solvers applications/utilities src"
+fi
+
+set -- $locations
+
+if [ "$#" -eq 0 ]
+then
+   die "No search locations"
+fi
 
 # Run from top-level directory - otherwise the grep is quite difficult
-# A version with 'find' is likewise possible, but not as fast.
 
-# Check 'src' too, in case somehow something is there as well.
-for dir in applications/solvers applications/utilities src
+cd "$WM_PROJECT_DIR" || die "No project directory: $WM_PROJECT_DIR"
+
+for dir in "$@"
 do
     if [ -d "$dir" ]
     then
@@ -107,14 +112,14 @@ do
 
     if [ -d "$FOAM_GIT_DIR" ]
     then
-        git grep --cached -H -P '^\s*EXE\s*=' "$dir" 2>/dev/null
+        git grep --cached -H -P '^\s*LIB_LIBS\s*=' "$dir" 2>/dev/null
     else
         # Filesystem find (not quite as fast)
-        for i in $(find "$dir" -name files)
+        for i in $(find "$dir" -name options)
         do
-            grep -H -P '^\s*EXE\s*=' "$i" 2>/dev/null
+            grep -H -P '^\s*LIB_LIBS\s*=' "$i" 2>/dev/null
         done
     fi
-done | sed -ne 's@/Make/files:.*$@@p' | sed -e 's@.*/@@' | sort | uniq
+done | sed -ne 's@/Make/options:.*$@@p' | sort | uniq
 
 # -----------------------------------------------------------------------------
