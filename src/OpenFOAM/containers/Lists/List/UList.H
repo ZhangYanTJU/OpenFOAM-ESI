@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -599,17 +599,19 @@ public:
                 unsigned seed=0
             ) const
             {
-                if (is_contiguous<T>::value)
+                if constexpr (is_contiguous<T>::value)
                 {
                     return Foam::Hasher(obj.cdata(), obj.size_bytes(), seed);
                 }
-
-                Foam::Hash<T> op;
-                for (const T& val : obj)
+                else
                 {
-                    seed = op(val, seed);
+                    Foam::Hash<T> op;
+                    for (const T& val : obj)
+                    {
+                        seed = op(val, seed);
+                    }
+                    return seed;
                 }
-                return seed;
             }
         };
 

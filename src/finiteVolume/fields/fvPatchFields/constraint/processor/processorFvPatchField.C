@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -224,7 +224,7 @@ void Foam::processorFvPatchField<Type>::initEvaluate
          && (std::is_integral<Type>::value || !UPstream::floatTransfer)
         )
         {
-            if (!is_contiguous<Type>::value)
+            if constexpr (!is_contiguous<Type>::value)
             {
                 FatalErrorInFunction
                     << "Invalid for non-contiguous data types"

@@ -58,7 +58,7 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     // Similar to doTransform.
     // - could also check if !std::is_same<sphericalTensor, Type>:value
 
-    if (is_vectorspace<Type>::value)
+    if constexpr (is_vectorspace<Type>::value)
     {
         cs.reset(cylindricalCS());
     }
@@ -207,7 +207,7 @@ void Foam::cyclicAMIPolyPatch::initInterpolate
 
     autoPtr<coordSystem::cylindrical> cs;
 
-    if (is_vectorspace<Type>::value)
+    if constexpr (is_vectorspace<Type>::value)
     {
         cs.reset(cylindricalCS());
     }
@@ -279,7 +279,7 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     // Note: tresult is optionally in transformed coord system
     autoPtr<coordSystem::cylindrical> cs;
 
-    if (is_vectorspace<Type>::value)
+    if constexpr (is_vectorspace<Type>::value)
     {
         cs.reset(cylindricalCS());
     }
@@ -340,7 +340,7 @@ void Foam::cyclicAMIPolyPatch::interpolate
     /*
     autoPtr<coordSystem::cylindrical> cs;
 
-    if (is_vectorspace<Type>::value)
+    if constexpr (is_vectorspace<Type>::value)
     {
         cs.reset(cylindricalCS());
     }

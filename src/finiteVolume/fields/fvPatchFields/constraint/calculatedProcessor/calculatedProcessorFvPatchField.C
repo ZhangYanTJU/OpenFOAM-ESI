@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -118,7 +118,7 @@ void Foam::calculatedProcessorFvPatchField<Type>::initEvaluate
 {
     if (UPstream::parRun())
     {
-        if (!is_contiguous<Type>::value)
+        if constexpr (!is_contiguous<Type>::value)
         {
             FatalErrorInFunction
                 << "Invalid for non-contiguous data types"

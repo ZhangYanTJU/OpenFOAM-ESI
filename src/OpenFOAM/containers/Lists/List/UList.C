@@ -166,7 +166,7 @@ void Foam::UList<T>::operator=(const Foam::zero)
 template<class T>
 std::streamsize Foam::UList<T>::byteSize() const
 {
-    if (!is_contiguous<T>::value)
+    if constexpr (!is_contiguous<T>::value)
     {
         FatalErrorInFunction
             << "Invalid for non-contiguous data types"

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -131,7 +131,7 @@ void Foam::vtk::writeValueParallel
     const label count
 )
 {
-    if (!is_contiguous<Type>::value)
+    if constexpr (!is_contiguous<Type>::value)
     {
         // Non-contiguous data does not make sense
         FatalErrorInFunction
@@ -161,7 +161,7 @@ void Foam::vtk::writeListParallel
     const UList<Type>& values
 )
 {
-    if (!is_contiguous<Type>::value)
+    if constexpr (!is_contiguous<Type>::value)
     {
         // Non-contiguous data does not make sense
         FatalErrorInFunction
@@ -224,7 +224,7 @@ void Foam::vtk::writeListParallel
     const labelUList& addressing
 )
 {
-    if (!is_contiguous<Type>::value)
+    if constexpr (!is_contiguous<Type>::value)
     {
         // Non-contiguous data does not make sense
         FatalErrorInFunction
@@ -293,7 +293,7 @@ void Foam::vtk::writeListParallel
     const bitSet& selected
 )
 {
-    if (!is_contiguous<Type>::value)
+    if constexpr (!is_contiguous<Type>::value)
     {
         // Non-contiguous data does not make sense
         FatalErrorInFunction
@@ -363,7 +363,7 @@ void Foam::vtk::writeListsParallel
     const UList<Type>& values2
 )
 {
-    if (!is_contiguous<Type>::value)
+    if constexpr (!is_contiguous<Type>::value)
     {
         // Non-contiguous data does not make sense
         FatalErrorInFunction
@@ -460,7 +460,7 @@ void Foam::vtk::writeListsParallel
     const labelUList& addressing
 )
 {
-    if (!is_contiguous<Type>::value)
+    if constexpr (!is_contiguous<Type>::value)
     {
         // Non-contiguous data does not make sense
         FatalErrorInFunction

@@ -45,7 +45,7 @@ using namespace Foam;
 template<class Type>
 word report()
 {
-    if (is_globalIOobject<Type>::value)
+    if constexpr (is_globalIOobject<Type>::value)
     {
         return "global";
     }

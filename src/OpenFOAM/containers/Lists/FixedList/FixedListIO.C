@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,10 +40,13 @@ void Foam::FixedList<T, N>::writeEntry(Ostream& os) const
     if (token::compound::isCompound(tag))
     {
         os  << tag << token::SPACE;
-        if (os.format() == IOstreamOption::BINARY && is_contiguous<T>::value)
+        if constexpr (is_contiguous<T>::value)
         {
-            // Need the size too so that List<Type>::readList parses correctly
-            os << static_cast<label>(N);
+            if (os.format() == IOstreamOption::BINARY)
+            {
+                // Need size too so that List<Type>::readList parses correctly
+                os << static_cast<label>(N);
+            }
         }
     }
     os << *this;

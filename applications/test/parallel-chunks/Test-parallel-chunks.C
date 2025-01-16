@@ -44,55 +44,17 @@ Description
 using namespace Foam;
 
 
-//- Number of elements corresponding to max byte transfer.
-//  Normal upper limit is INT_MAX since MPI sizes are limited to <int>.
-template<class Type>
-inline std::size_t maxTransferCount
-(
-    const std::size_t max_bytes = std::size_t(0)
-) noexcept
-{
-    return
-    (
-        (max_bytes == 0)                        // ie, unlimited
-      ? (std::size_t(0))                        //
-      : (max_bytes > std::size_t(INT_MAX))      // MPI limit is <int>
-      ? (std::size_t(INT_MAX) / sizeof(Type))   //
-      : (max_bytes > sizeof(Type))              // require an integral number
-      ? (max_bytes / sizeof(Type))              //
-      : (std::size_t(1))                        // min of one element
-    );
-}
-
-
-//- Upper limit on number of transfer bytes.
-//  Max bytes is normally INT_MAX since MPI sizes are limited to <int>.
-//  Negative values indicate a subtraction from INT_MAX.
-inline std::size_t PstreamDetail_maxTransferBytes
-(
-    const int64_t max_bytes
-) noexcept
-{
-    return
-    (
-        (max_bytes < 0)  // (numBytes fewer than INT_MAX)
-      ? std::size_t(INT_MAX + max_bytes)
-      : std::size_t(max_bytes)
-    );
-}
-
-
 template<class Container, class Type>
 void broadcast_chunks
 (
     Container& sendData,
     const int tag = UPstream::msgType(),
-    const label comm = UPstream::worldComm
+    const label comm = UPstream::worldComm,
     const int64_t maxComms_bytes = UPstream::maxCommsSize
 )
 {
     // OR  static_assert(is_contiguous<T>::value, "Contiguous data only!")
-    if (!is_contiguous<Type>::value)
+    if constexpr (!is_contiguous<Type>::value)
     {
         FatalErrorInFunction
             << "Contiguous data only." << sizeof(Type)
@@ -119,9 +81,9 @@ void broadcast_chunks
     // Is zero for non-chunked exchanges.
     const std::size_t chunkSize
     (
-        PstreamDetail_maxTransferCount<Type>
+        PstreamDetail::maxTransferCount<Type>
         (
-            PstreamDetail_maxTransferBytes(maxComms_bytes)
+            PstreamDetail::maxTransferBytes(maxComms_bytes)
         )
     );
 

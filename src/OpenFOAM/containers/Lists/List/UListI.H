@@ -69,7 +69,7 @@ inline void Foam::UList<T>::fill_uniform(const Foam::zero)
     // issues.
     // May also have special triggers when assigning non-contiguous from zero...
 
-    if (is_contiguous<T>::value)
+    if constexpr (is_contiguous<T>::value)
     {
         // Can dispatch with
         // - std::execution::parallel_unsequenced_policy

@@ -254,7 +254,7 @@ Foam::label Foam::CompactListList<T>::maxNonLocalSize(const label rowi) const
 template<class T>
 std::streamsize Foam::CompactListList<T>::byteSize() const
 {
-    if (!is_contiguous<T>::value)
+    if constexpr (!is_contiguous<T>::value)
     {
         FatalErrorInFunction
             << "Invalid for non-contiguous data types"

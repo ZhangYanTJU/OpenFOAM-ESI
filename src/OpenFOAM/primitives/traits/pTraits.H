@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,20 +40,8 @@ Description
 #define Foam_pTraits_H
 
 #include "direction.H"
-#include <type_traits>  // For std::integral_constant, std::void_t (C++17)
+#include <type_traits>  // For std::integral_constant, std::void_t
 #include <utility>      // For declval
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace stdFoam
-{
-
-//- Map a sequence of any types to \c void as per C++17 \c std::void_t
-template<class... >
-using void_t = void;
-
-} // End namespace stdFoam
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -108,7 +96,7 @@ struct is_vectorspace : std::false_type {};
 //- Test for VectorSpace : test for T::rank != 0 static member directly
 //  Do not need pTraits layer since rank is defined via VectorSpace etc
 template<class T>
-struct is_vectorspace<T, stdFoam::void_t<decltype(T::rank)>>
+struct is_vectorspace<T, std::void_t<decltype(T::rank)>>
 :
     std::integral_constant<bool, (T::rank != 0)>
 {};
@@ -124,7 +112,7 @@ template<class T>
 struct pTraits_rank
 <
     T,
-    stdFoam::void_t<decltype(pTraits<T>::rank)>
+    std::void_t<decltype(pTraits<T>::rank)>
 >
 :
     std::integral_constant<Foam::direction, pTraits<T>::rank>
@@ -140,7 +128,7 @@ struct pTraits_cmptType { typedef T type; };
 //  such as for arithmetic primitives, vector-space etc. where the concept
 //  of a component type also makes sense.
 template<class T>
-struct pTraits_cmptType<T, stdFoam::void_t<decltype(pTraits<T>::zero)>>
+struct pTraits_cmptType<T, std::void_t<decltype(pTraits<T>::zero)>>
 {
     typedef typename pTraits<T>::cmptType type;
 };
@@ -156,7 +144,7 @@ template<class T>
 struct pTraits_nComponents
 <
     T,
-    stdFoam::void_t<decltype(pTraits<T>::nComponents)>
+    std::void_t<decltype(pTraits<T>::nComponents)>
 >
 :
     std::integral_constant<Foam::direction, pTraits<T>::nComponents>
@@ -172,7 +160,7 @@ template<class T>
 struct pTraits_has_zero
 <
     T,
-    stdFoam::void_t<decltype(pTraits<T>::zero)>
+    std::void_t<decltype(pTraits<T>::zero)>
 >
 :
     std::true_type
@@ -193,7 +181,7 @@ template<class T>
 struct is_range
 <
     T,
-    stdFoam::void_t
+    std::void_t
     <
         decltype(std::declval<T>().begin()),
         decltype(std::declval<T>().end())

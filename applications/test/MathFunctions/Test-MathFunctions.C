@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -128,18 +128,17 @@ void test_member_funcs(Type)
 
 // Do compile-time recursion over the given types
 template<std::size_t I = 0, typename... Tp>
-inline typename std::enable_if<I == sizeof...(Tp), void>::type
-run_tests(const std::tuple<Tp...>& types, const List<word>& typeID){}
-
-
-template<std::size_t I = 0, typename... Tp>
-inline typename std::enable_if<I < sizeof...(Tp), void>::type
-run_tests(const std::tuple<Tp...>& types, const List<word>& typeID)
+void run_tests(const std::tuple<Tp...>& types, const List<word>& names)
 {
-    Info<< nl << "    ## Test member functions: "<< typeID[I] <<" ##" << nl;
-    test_member_funcs(std::get<I>(types));
+    if constexpr (I < sizeof...(Tp))
+    {
+        const auto& name = names[I];
 
-    run_tests<I + 1, Tp...>(types, typeID);
+        Info<< nl << "    ## Test member functions: " << name << " ##" << nl;
+        test_member_funcs(std::get<I>(types));
+
+        run_tests<I + 1, Tp...>(types, names);
+    }
 }
 
 

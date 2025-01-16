@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +34,7 @@ License
 template<class Type>
 void Foam::Pstream::broadcast(Type& value, const label comm)
 {
-    if (is_contiguous<Type>::value)
+    if constexpr (is_contiguous<Type>::value)
     {
         // Note: contains parallel guard internally
         UPstream::broadcast
@@ -82,7 +82,7 @@ void Foam::Pstream::broadcasts(const label comm, Type& arg1, Args&&... args)
 template<class ListType>
 void Foam::Pstream::broadcastList(ListType& list, const label comm)
 {
-    if (is_contiguous<typename ListType::value_type>::value)
+    if constexpr (is_contiguous<typename ListType::value_type>::value)
     {
         // List data are contiguous
         // 1. broadcast the size

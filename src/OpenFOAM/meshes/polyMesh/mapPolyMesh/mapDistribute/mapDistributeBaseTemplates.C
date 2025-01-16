@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -162,7 +162,7 @@ void Foam::mapDistributeBase::send
     const label comm
 )
 {
-    if (!is_contiguous<T>::value)
+    if constexpr (!is_contiguous<T>::value)
     {
         FatalErrorInFunction
             << "Only contiguous is currently supported"
@@ -318,7 +318,7 @@ void Foam::mapDistributeBase::receive
     const label comm
 )
 {
-    if (!is_contiguous<T>::value)
+    if constexpr (!is_contiguous<T>::value)
     {
         FatalErrorInFunction
             << "Only contiguous is currently supported"
@@ -679,7 +679,7 @@ void Foam::mapDistributeBase::distribute
     {
         const label startOfRequests = UPstream::nRequests();
 
-        if (!is_contiguous<T>::value)
+        if constexpr (!is_contiguous<T>::value)
         {
             PstreamBuffers pBufs(comm, tag);
 
@@ -1119,7 +1119,7 @@ void Foam::mapDistributeBase::distribute
     {
         const label startOfRequests = UPstream::nRequests();
 
-        if (!is_contiguous<T>::value)
+        if constexpr (!is_contiguous<T>::value)
         {
             PstreamBuffers pBufs(comm, tag);
 

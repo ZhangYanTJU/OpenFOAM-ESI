@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,9 +32,9 @@ Description
 #include "pTraits.H"
 #include "contiguous.H"
 #include "boolVector.H"  // A FixedList pretending to be a vector
+#include "complex.H"
 #include "vector.H"
 #include "tensor.H"
-#include "complex.H"
 #include "uLabel.H"
 #include "Switch.H"
 
@@ -52,26 +52,24 @@ struct has_typeName : std::false_type {};
 //- Test if Type has typeName member
 
 template<class T>
-struct has_typeName<T, stdFoam::void_t<decltype(pTraits<T>::typeName)>>
+struct has_typeName<T, std::void_t<decltype(pTraits<T>::typeName)>>
 :
     std::true_type
 {};
 
 
 template<class T>
-typename std::enable_if<has_typeName<T>::value, void>::type
-printTypeName()
+void printTypeName()
 {
-    Info<< pTraits<T>::typeName;
+    if constexpr (has_typeName<T>::value)
+    {
+        Info<< pTraits<T>::typeName;
+    }
+    else
+    {
+        Info<< typeid(T).name();
+    }
 }
-
-template<class T>
-typename std::enable_if<!has_typeName<T>::value, void>::type
-printTypeName()
-{
-    Info<< typeid(T).name();
-}
-
 
 template<class T, class = void>
 struct has_zero_one : std::false_type {};
@@ -80,22 +78,19 @@ template<class T>
 struct has_zero_one
 <
     T,
-    stdFoam::void_t<decltype(pTraits<T>::zero), decltype(pTraits<T>::one)>
+    std::void_t<decltype(pTraits<T>::zero), decltype(pTraits<T>::one)>
 > : std::true_type {};
 
 
 template<class T>
-typename std::enable_if<has_zero_one<T>::value, void>::type
-printMinMaxRange()
+void printMinMaxRange()
 {
-    Info<< " zero=" << pTraits<T>::zero
-        << " one=" << pTraits<T>::one;
+    if constexpr (has_zero_one<T>::value)
+    {
+        Info<< " zero=" << pTraits<T>::zero
+            << " one=" << pTraits<T>::one;
+    }
 }
-
-template<class T>
-typename std::enable_if<!has_zero_one<T>::value, void>::type
-printMinMaxRange()
-{}
 
 
 template<class T>

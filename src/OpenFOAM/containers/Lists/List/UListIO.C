@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,7 +101,10 @@ Foam::Ostream& Foam::UList<T>::writeList
             os.write(list.cdata_bytes(), list.size_bytes());
         }
     }
-    else if (std::is_same<char, typename std::remove_cv<T>::type>::value)
+    else if constexpr
+    (
+        std::is_same<char, typename std::remove_cv<T>::type>::value
+    )
     {
         // Special treatment for char data (binary I/O only)
 
@@ -254,7 +257,10 @@ Foam::Istream& Foam::UList<T>::readList(Istream& is)
                 );
             }
         }
-        else if (std::is_same<char, typename std::remove_cv<T>::type>::value)
+        else if constexpr
+        (
+            std::is_same<char, typename std::remove_cv<T>::type>::value
+        )
         {
             // Special treatment for char data (binary I/O only)
             const auto oldFmt = is.format(IOstreamOption::BINARY);

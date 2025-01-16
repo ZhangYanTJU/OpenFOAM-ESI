@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -237,7 +237,7 @@ namespace Detail
     {
         is.beginRawRead();
 
-        if (is_contiguous_label<T>::value)
+        if constexpr (is_contiguous_label<T>::value)
         {
             readRawLabel
             (
@@ -246,7 +246,7 @@ namespace Detail
                 byteCount/sizeof(label)
             );
         }
-        else if (is_contiguous_scalar<T>::value)
+        else if constexpr (is_contiguous_scalar<T>::value)
         {
             readRawScalar
             (

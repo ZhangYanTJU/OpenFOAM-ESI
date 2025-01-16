@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,8 +36,6 @@ Description
 
 #ifndef Foam_ops_H
 #define Foam_ops_H
-
-#include "stdFoam.H"    // For FOAM_NODISCARD
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -109,7 +107,7 @@ EqOp(nopEq, (void)x)
     template<class T, class T1, class T2>                                      \
     struct opName##Op3                                                         \
     {                                                                          \
-        FOAM_NODISCARD T operator()(const T1& x, const T2& y) const            \
+        [[nodiscard]] T operator()(const T1& x, const T2& y) const             \
         {                                                                      \
             return op;                                                         \
         }                                                                      \
@@ -118,7 +116,7 @@ EqOp(nopEq, (void)x)
     template<class T1, class T2>                                               \
     struct opName##Op2                                                         \
     {                                                                          \
-        FOAM_NODISCARD T1 operator()(const T1& x, const T2& y) const           \
+        [[nodiscard]] T1 operator()(const T1& x, const T2& y) const            \
         {                                                                      \
             return op;                                                         \
         }                                                                      \
@@ -127,7 +125,7 @@ EqOp(nopEq, (void)x)
     template<class T>                                                          \
     struct opName##Op                                                          \
     {                                                                          \
-        FOAM_NODISCARD T operator()(const T& x, const T& y) const              \
+        [[nodiscard]] T operator()(const T& x, const T& y) const               \
         {                                                                      \
             return op;                                                         \
         }                                                                      \
@@ -141,7 +139,7 @@ EqOp(nopEq, (void)x)
     template<class T1, class T2>                                               \
     struct opName##Op2                                                         \
     {                                                                          \
-        FOAM_NODISCARD bool operator()(const T1& x, const T2& y) const         \
+        [[nodiscard]] bool operator()(const T1& x, const T2& y) const          \
         {                                                                      \
             return op;                                                         \
         }                                                                      \
@@ -150,7 +148,7 @@ EqOp(nopEq, (void)x)
     template<class T>                                                          \
     struct opName##Op                                                          \
     {                                                                          \
-        FOAM_NODISCARD bool operator()(const T& x, const T& y) const           \
+        [[nodiscard]] bool operator()(const T& x, const T& y) const            \
         {                                                                      \
             return op;                                                         \
         }                                                                      \
@@ -169,7 +167,7 @@ EqOp(nopEq, (void)x)
                                                                                \
         opName##Op1(const T& v) : value(v) {}                                  \
                                                                                \
-        FOAM_NODISCARD bool operator()(const T& x) const                       \
+        [[nodiscard]] bool operator()(const T& x) const                        \
         {                                                                      \
             return op;                                                         \
         }                                                                      \
@@ -262,7 +260,7 @@ WeightedOp(multiply, (weight*y))
 template<class T>
 struct compareOp
 {
-    FOAM_NODISCARD int operator()(const T& a, const T& b) const
+    [[nodiscard]] int operator()(const T& a, const T& b) const
     {
         return (a < b) ? -1 : (b < a) ? 1 : 0;
     }
@@ -273,7 +271,7 @@ struct compareOp
 template<class T>
 struct lerpOp
 {
-    FOAM_NODISCARD T operator()(const T& a, const T& b, const scalar t) const
+    [[nodiscard]] T operator()(const T& a, const T& b, const scalar t) const
     {
         return lerp(a, b, t);
     }
@@ -288,7 +286,7 @@ struct lerpOp1
 
     lerpOp1(scalar v) : value(v) {}
 
-    FOAM_NODISCARD T operator()(const T& a, const T& b) const
+    [[nodiscard]] T operator()(const T& a, const T& b) const
     {
         return lerp(a, b, value);
     }

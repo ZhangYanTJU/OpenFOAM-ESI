@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -222,7 +222,10 @@ Foam::Istream& Foam::DynamicList<T, SizeMin>::readList(Istream& is)
                 );
             }
         }
-        else if (std::is_same<char, typename std::remove_cv<T>::type>::value)
+        else if constexpr
+        (
+            std::is_same<char, typename std::remove_cv<T>::type>::value
+        )
         {
             // Special treatment for char data (binary I/O only)
             const auto oldFmt = is.format(IOstreamOption::BINARY);

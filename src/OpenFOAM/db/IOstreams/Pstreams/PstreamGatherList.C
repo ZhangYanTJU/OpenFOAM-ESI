@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,7 +72,7 @@ void Foam::Pstream::gatherList
         {
             const labelList& belowLeaves = comms[belowID].allBelow();
 
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous<T>::value)
             {
                 List<T> received(belowLeaves.size() + 1);
 
@@ -141,7 +141,7 @@ void Foam::Pstream::gatherList
                     << " data:" << values[myProci] << endl;
             }
 
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous<T>::value)
             {
                 List<T> sending(belowLeaves.size() + 1);
                 sending[0] = values[myProci];
@@ -223,7 +223,7 @@ void Foam::Pstream::scatterList
         {
             const labelList& notBelowLeaves = myComm.allNotBelow();
 
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous<T>::value)
             {
                 List<T> received(notBelowLeaves.size());
 
@@ -273,7 +273,7 @@ void Foam::Pstream::scatterList
             const label belowID = myComm.below()[belowI];
             const labelList& notBelowLeaves = comms[belowID].allNotBelow();
 
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous<T>::value)
             {
                 List<T> sending(notBelowLeaves.size());
 
@@ -368,7 +368,7 @@ void Foam::Pstream::allGatherList
 {
     if (UPstream::is_parallel(comm))
     {
-        if (is_contiguous<T>::value)
+        if constexpr (is_contiguous<T>::value)
         {
             if (values.size() < UPstream::nProcs(comm))
             {
@@ -379,13 +379,14 @@ void Foam::Pstream::allGatherList
             }
 
             UPstream::mpiAllGather(values.data_bytes(), sizeof(T), comm);
-            return;
         }
+        else
+        {
+            const auto& comms = UPstream::whichCommunication(comm);
 
-        const auto& comms = UPstream::whichCommunication(comm);
-
-        Pstream::gatherList(comms, values, tag, comm);
-        Pstream::scatterList(comms, values, tag, comm);
+            Pstream::gatherList(comms, values, tag, comm);
+            Pstream::scatterList(comms, values, tag, comm);
+        }
     }
 }
 

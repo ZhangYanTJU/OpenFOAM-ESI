@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,6 +60,8 @@ void Foam::ensightOutput::Detail::copyComponent
     UList<float>& cmptBuffer
 )
 {
+    typedef typename pTraits<Type>::cmptType cmptType;
+
     if (cmptBuffer.size() < input.size())
     {
         FatalErrorInFunction
@@ -70,7 +72,7 @@ void Foam::ensightOutput::Detail::copyComponent
 
     auto iter = cmptBuffer.begin();
 
-    if (std::is_same<float, typename pTraits<Type>::cmptType>::value)
+    if constexpr (std::is_same<float, cmptType>::value)
     {
         // Direct copy
         for (const Type& val : input)

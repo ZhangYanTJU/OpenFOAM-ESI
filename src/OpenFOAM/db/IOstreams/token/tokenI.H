@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -920,12 +920,12 @@ Foam::token::tokenType Foam::token::Compound<T>::typeCode() const
 
     typedef typename T::value_type valueType;
 
-    if (std::is_same<valueType, bool>::value)
+    if constexpr (std::is_same<bool, valueType>::value)
     {
         // List<bool>
         return token::tokenType::BOOL;
     }
-    else if (is_contiguous_label<valueType>::value)
+    else if constexpr (is_contiguous_label<valueType>::value)
     {
         // List<label>, List<labelVector> etc
         return token::tokenType::LABEL;
@@ -939,7 +939,7 @@ Foam::token::tokenType Foam::token::Compound<T>::typeCode() const
         // );
 
     }
-    else if (is_contiguous_scalar<valueType>::value)
+    else if constexpr (is_contiguous_scalar<valueType>::value)
     {
         // List<scalar>, List<vector>, List<tensor> etc
         return
@@ -949,7 +949,7 @@ Foam::token::tokenType Foam::token::Compound<T>::typeCode() const
           : token::tokenType::DOUBLE
         );
     }
-    else if (std::is_same<valueType, char>::value)
+    else if constexpr (std::is_same<char, valueType>::value)
     {
         // List<char>
         return token::tokenType::PUNCTUATION;

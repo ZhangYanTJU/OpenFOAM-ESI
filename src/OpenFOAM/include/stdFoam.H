@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,39 +34,27 @@ Description
 
 #include <algorithm>
 #include <initializer_list>
+#include <iterator>  // for std::begin, std::end, ...
 #include <memory>
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Compile-time warning for use of deprecated methods (compiler-dependent).
 // Use within the class declaration.
 
-#if (__cplusplus >= 201402L)
-# define FOAM_DEPRECATED(since) [[deprecated("Since " #since)]]
-# define FOAM_DEPRECATED_FOR(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
-# define FOAM_DEPRECATED_STRICT(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
-#elif defined(__GNUC__)
-# define FOAM_DEPRECATED(since) __attribute__((__deprecated__("Since " #since)))
-# define FOAM_DEPRECATED_FOR(since, replacement) __attribute__((__deprecated__("Since " #since "; use " #replacement)))
-# define FOAM_DEPRECATED_STRICT(since, replacement) __attribute__((__deprecated__("Since " #since "; use " #replacement)))
-#else
-# define FOAM_DEPRECATED(since)
-# define FOAM_DEPRECATED_FOR(since, replacement)
-# define FOAM_DEPRECATED_STRICT(since, replacement)
-#endif
-#ifndef FOAM_COMPILE_STRICT
-# undef  FOAM_DEPRECATED_STRICT
-# define FOAM_DEPRECATED_STRICT(since, replacement)
-#endif
+#define FOAM_DEPRECATED(since) [[deprecated("Since " #since)]]
+#define FOAM_DEPRECATED_FOR(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
+#define FOAM_DEPRECATED_STRICT(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
 
-// Compile-time warning about unused result
-// FUTURE: check __has_cpp_attribute(nodiscard) and define with [[nodiscard]]
-#if defined(__GNUC__)
-# define FOAM_NODISCARD __attribute__((warn_unused_result))
+// Branch prediction helpers. With C++20 can use [[likely]], [[unlikely]]
+#if defined(__GNUC__) || defined(__clang__)
+#  define FOAM_UNLIKELY(cond) __builtin_expect(!!(cond),0)
+#  define FOAM_LIKELY(cond)   __builtin_expect(!!(cond),1)
 #else
-# define FOAM_NODISCARD
+#  define FOAM_UNLIKELY(cond) (cond)
+#  define FOAM_LIKELY(cond)   (cond)
 #endif
 
 
@@ -103,6 +91,8 @@ struct identityOp
     }
 };
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Swap non-array types as per std::swap, but in Foam namespace.
 //  \sa http://www.cplusplus.com/reference/utility/swap/
@@ -141,127 +131,13 @@ void Swap(T (&a)[N], T (&b)[N])
 //     - https://en.cppreference.com/w/cpp/iterator/rbegin
 //     - https://en.cppreference.com/w/cpp/iterator/rend
 
+
 namespace stdFoam
 {
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-// Forward iteration
-
-//- Return iterator to the beginning of the container \a c.
-//  Definition as per std::begin C++17
-template<class C>
-constexpr auto begin(C& c) -> decltype(c.begin())
-{
-    return c.begin();
-}
-
-//- Return const_iterator to the beginning of the container \a c.
-//  Definition as per std::begin C++17
-template<class C>
-constexpr auto begin(const C& c) -> decltype(c.begin())
-{
-    return c.begin();
-}
-
-//- Return const_iterator to the beginning of the container \a c.
-//  Definition as per std::cbegin C++17
-template<class C>
-constexpr auto cbegin(const C& c) -> decltype(c.begin())
-{
-    return c.begin();
-}
-
-//- Return iterator to the end of the container \a c.
-//  Definition as per std::end C++17
-template<class C>
-constexpr auto end(C& c) -> decltype(c.end())
-{
-    return c.end();
-}
-
-//- Return const_iterator to the end of the container \a c.
-//  Definition as per std::end C++17
-template<class C>
-constexpr auto end(const C& c) -> decltype(c.end())
-{
-    return c.end();
-}
-
-//- Return const_iterator to the end of the container \a c.
-//  Definition as per std::cend C++17
-template<class C>
-constexpr auto cend(const C& c) -> decltype(c.end())
-{
-    return c.end();
-}
-
-
-// Reverse iteration
-
-//- Return reverse_iterator to the reverse-begin of container \a c.
-//  Definition as per std::rbegin C++17
-template<class C>
-constexpr auto rbegin(C& c) -> decltype(c.rbegin())
-{
-    return c.rbegin();
-}
-
-//- Return const_reverse_iterator to the reverse-begin of container \a c.
-//  Definition as per std::rbegin C++17
-template<class C>
-constexpr auto rbegin(const C& c) -> decltype(c.rbegin())
-{
-    return c.rbegin();
-}
-
-//- Return const_reverse_iterator to the reverse-begin of container \a c.
-//  Definition as per std::crbegin C++17
-template<class C>
-constexpr auto crbegin(const C& c) -> decltype(c.rbegin())
-{
-    return c.rbegin();
-}
-
-//- Return reverse_iterator to reverse-end of container \a c.
-//  Definition as per std::rend C++17
-template<class C>
-constexpr auto rend(C& c) -> decltype(c.rend())
-{
-    return c.rend();
-}
-
-//- Return const_reverse_iterator to reverse-end of container \a c.
-//  Definition as per std::rend C++17
-template<class C>
-constexpr auto rend(const C& c) -> decltype(c.rend())
-{
-    return c.rend();
-}
-
-//- Return const_reverse_iterator to reverse-end of container \a c.
-//  Definition as per std::crend C++17
-template<class C>
-constexpr auto crend(const C& c) -> decltype(c.rend())
-{
-    return c.rend();
-}
-
-//- Return the lesser of the parameters.
-//  Definition as per std::min C++14
-template<class T>
-constexpr inline const T& min(const T& a, const T& b)
-{
-    return (b < a) ? b : a;
-}
-
-//- Return the greater of the parameters.
-//  Definition as per std::max C++14
-template<class T>
-constexpr inline const T& max(const T& a, const T& b)
-{
-    return (a < b) ? b : a;
-}
+//- Map any dependent type to false (workaround before CWG2518)
+template<typename...>
+inline constexpr bool dependent_false_v = false;
 
 } // End namespace stdFoam
 
@@ -280,8 +156,8 @@ constexpr inline const T& max(const T& a, const T& b)
 #define forAllIters(container,iter)                                            \
     for                                                                        \
     (                                                                          \
-        auto iter = stdFoam::begin(container);                                 \
-        iter != stdFoam::end(container);                                       \
+        auto iter = std::begin(container);                                     \
+        iter != std::end(container);                                           \
         ++iter                                                                 \
     )
 
@@ -298,8 +174,8 @@ constexpr inline const T& max(const T& a, const T& b)
 #define forAllConstIters(container,iter)                                       \
     for                                                                        \
     (                                                                          \
-        auto iter = stdFoam::cbegin(container);                                \
-        iter != stdFoam::cend(container);                                      \
+        auto iter = std::cbegin(container);                                    \
+        iter != std::cend(container);                                          \
         ++iter                                                                 \
     )
 
@@ -317,8 +193,8 @@ constexpr inline const T& max(const T& a, const T& b)
 #define forAllReverseIters(container,iter)                                     \
     for                                                                        \
     (                                                                          \
-        auto iter = stdFoam::rbegin(container);                                \
-        iter != stdFoam::rend(container);                                      \
+        auto iter = std::rbegin(container);                                    \
+        iter != std::rend(container);                                          \
         ++iter                                                                 \
     )
 
@@ -335,8 +211,8 @@ constexpr inline const T& max(const T& a, const T& b)
 #define forAllConstReverseIters(container,iter)                                \
     for                                                                        \
     (                                                                          \
-        auto iter = stdFoam::crbegin(container);                               \
-        iter != stdFoam::crend(container);                                     \
+        auto iter = std::crbegin(container);                                   \
+        iter != std::crend(container);                                         \
         ++iter                                                                 \
     )
 

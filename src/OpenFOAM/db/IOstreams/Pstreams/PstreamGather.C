@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,7 +59,7 @@ void Foam::Pstream::gather
         {
             T received;
 
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous<T>::value)
             {
                 UIPstream::read
                 (
@@ -82,7 +82,7 @@ void Foam::Pstream::gather
         // Send up value
         if (myComm.above() >= 0)
         {
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous<T>::value)
             {
                 UOPstream::write
                 (
@@ -111,40 +111,26 @@ Foam::List<T> Foam::Pstream::listGatherValues
     const int tag
 )
 {
-    // OR
-    // if (is_contiguous<T>::value)
-    // {
-    //     return UPstream::listGatherValues(localValue, comm);
-    // }
-
-    List<T> allValues;
-
-    if (UPstream::is_parallel(comm))
+    if constexpr (is_contiguous<T>::value)
     {
-        const label numProc = UPstream::nProcs(comm);
+        // UPstream version is contiguous only
+        return UPstream::listGatherValues(localValue, comm);
+    }
+    else
+    {
+        List<T> allValues;
 
-        if (UPstream::master(comm))
+        if (UPstream::is_parallel(comm))
         {
-            allValues.resize(numProc);
-        }
+            const label numProc = UPstream::nProcs(comm);
 
-        if (is_contiguous<T>::value)
-        {
-            UPstream::mpiGather
-            (
-                reinterpret_cast<const char*>(&localValue),
-                allValues.data_bytes(),
-                sizeof(T),  // The send/recv size per rank
-                comm
-            );
-        }
-        else
-        {
             if (UPstream::master(comm))
             {
+                allValues.resize(numProc);
+
                 // Non-trivial to manage non-blocking gather without a
-                // PEX/NBX approach (eg, PstreamBuffers) but leave with
-                // with simple exchange for now
+                // PEX/NBX approach (eg, PstreamBuffers).
+                // Leave with simple exchange for now
 
                 allValues[0] = localValue;
 
@@ -158,16 +144,16 @@ Foam::List<T> Foam::Pstream::listGatherValues
                 OPstream::send(localValue, UPstream::masterNo(), tag, comm);
             }
         }
-    }
-    else
-    {
-        // non-parallel: return own value
-        // TBD: only when UPstream::is_rank(comm) as well?
-        allValues.resize(1);
-        allValues[0] = localValue;
-    }
+        else
+        {
+            // non-parallel: return own value
+            // TBD: only when UPstream::is_rank(comm) as well?
+            allValues.resize(1);
+            allValues[0] = localValue;
+        }
 
-    return allValues;
+        return allValues;
+    }
 }
 
 
@@ -179,82 +165,70 @@ T Foam::Pstream::listScatterValues
     const int tag
 )
 {
-    // OR
-    // if (is_contiguous<T>::value)
-    // {
-    //     return UPstream::listScatterValues(allValues, comm);
-    // }
-
-    T localValue{};
-
-    if (UPstream::is_parallel(comm))
+    if constexpr (is_contiguous<T>::value)
     {
-        const label numProc = UPstream::nProcs(comm);
-
-        if (UPstream::master(comm) && allValues.size() < numProc)
-        {
-            FatalErrorInFunction
-                << "Attempting to send " << allValues.size()
-                << " values to " << numProc << " processors" << endl
-                << Foam::abort(FatalError);
-        }
-
-        if (is_contiguous<T>::value)
-        {
-            UPstream::mpiScatter
-            (
-                allValues.cdata_bytes(),
-                reinterpret_cast<char*>(&localValue),
-                sizeof(T),  // The send/recv size per rank
-                comm
-            );
-        }
-        else
-        {
-            if (UPstream::master(comm))
-            {
-                const label startOfRequests = UPstream::nRequests();
-
-                List<DynamicList<char>> sendBuffers(numProc);
-
-                for (int proci = 1; proci < numProc; ++proci)
-                {
-                    UOPstream toProc
-                    (
-                        UPstream::commsTypes::nonBlocking,
-                        proci,
-                        sendBuffers[proci],
-                        tag,
-                        comm
-                    );
-                    toProc << allValues[proci];
-                }
-
-                // Wait for outstanding requests
-                UPstream::waitRequests(startOfRequests);
-
-                return allValues[0];
-            }
-            else if (UPstream::is_rank(comm))
-            {
-                IPstream::recv(localValue, UPstream::masterNo(), tag, comm);
-            }
-        }
+        // UPstream version is contiguous only
+        return UPstream::listScatterValues(allValues, comm);
     }
     else
     {
-        // non-parallel: return first value
-        // TBD: only when UPstream::is_rank(comm) as well?
+         T localValue{};
 
-        if (!allValues.empty())
-        {
-            return allValues[0];
-        }
+         if (UPstream::is_parallel(comm))
+         {
+             const label numProc = UPstream::nProcs(comm);
+
+             if (UPstream::master(comm) && allValues.size() < numProc)
+             {
+                 FatalErrorInFunction
+                     << "Attempting to send " << allValues.size()
+                     << " values to " << numProc << " processors" << endl
+                     << Foam::abort(FatalError);
+             }
+
+             if (UPstream::master(comm))
+             {
+                 const label startOfRequests = UPstream::nRequests();
+
+                 List<DynamicList<char>> sendBuffers(numProc);
+
+                 for (int proci = 1; proci < numProc; ++proci)
+                 {
+                     UOPstream toProc
+                     (
+                         UPstream::commsTypes::nonBlocking,
+                         proci,
+                         sendBuffers[proci],
+                         tag,
+                         comm
+                     );
+                     toProc << allValues[proci];
+                 }
+
+                 // Wait for outstanding requests
+                 UPstream::waitRequests(startOfRequests);
+
+                 return allValues[0];
+             }
+             else if (UPstream::is_rank(comm))
+             {
+                 IPstream::recv(localValue, UPstream::masterNo(), tag, comm);
+             }
+         }
+         else
+         {
+             // non-parallel: return first value
+             // TBD: only when UPstream::is_rank(comm) as well?
+
+             if (!allValues.empty())
+             {
+                 return allValues[0];
+             }
+          }
+
+          return localValue;
      }
-
-     return localValue;
 }
-
 
 
 // ************************************************************************* //

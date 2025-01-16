@@ -72,7 +72,7 @@ Type Foam::Function1Types::CSV<Type>::readValue
 {
     Type result;
 
-    if (std::is_integral<Type>::value)
+    if constexpr (std::is_integral<Type>::value)
     {
         // nComponents == 1
         setComponent(result, 0) = readLabel(strings[componentColumns_[0]]);

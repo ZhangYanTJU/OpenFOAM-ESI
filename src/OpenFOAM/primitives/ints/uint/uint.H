@@ -50,13 +50,13 @@ namespace Foam
 
 #define MAXMIN(RetType, Type1, Type2)                                          \
                                                                                \
-/*! \brief Floating/integral min. Use stdFoam::min() to preserve references */ \
+/*! \brief Floating/integral min. Use std::min() to preserve references */     \
 inline RetType min(const Type1 s1, const Type2 s2)                             \
 {                                                                              \
     return (s1 < s2) ? s1 : s2;                                                \
 }                                                                              \
                                                                                \
-/*! \brief Floating/integral max. Use stdFoam::max() to preserve references */ \
+/*! \brief Floating/integral max. Use std::max() to preserve references */     \
 inline RetType max(const Type1 s1, const Type2 s2)                             \
 {                                                                              \
     return (s2 < s1) ? s1 : s2;                                                \

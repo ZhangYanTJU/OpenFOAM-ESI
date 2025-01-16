@@ -53,6 +53,27 @@ namespace Foam
       {}
    };
 
+
+   // Test compilation with static_assert workaround
+   // (workaround before CWG2518)
+   template<class T>
+   inline unsigned sizeof_float()
+   {
+       if constexpr (std::is_floating_point<T>::value)
+       {
+           return sizeof(T);
+       }
+       else
+       {
+           // static_assert(false, "only use for floats");
+           static_assert
+           (
+               stdFoam::dependent_false_v<T>,
+               "only use for floats"
+           );
+           return 0u;
+       }
+   }
 }
 
 

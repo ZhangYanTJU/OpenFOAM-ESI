@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -652,7 +652,7 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::adjustFieldTemplate
 
     // Output scaling for the variable, but not for integer types
     // which are typically ids etc.
-    if (!std::is_integral<Type>::value)
+    if constexpr (!std::is_integral<Type>::value)
     {
         scalar value;
 

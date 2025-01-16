@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -36,10 +36,10 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
+#include "complex.H"
 #include "scalarMatrices.H"
 #include "RectangularMatrix.H"
 #include "SquareMatrix.H"
-#include "complex.H"
 #include "IOmanip.H"
 #include "EigenMatrix.H"
 #include "TestTools.H"
@@ -335,27 +335,26 @@ void test_eigenvectors(Type)
 
 // Do compile-time recursion over the given types
 template<std::size_t I = 0, typename... Tp>
-inline typename std::enable_if<I == sizeof...(Tp), void>::type
-run_tests(const std::tuple<Tp...>& types, const List<word>& typeID){}
-
-
-template<std::size_t I = 0, typename... Tp>
-inline typename std::enable_if<I < sizeof...(Tp), void>::type
-run_tests(const std::tuple<Tp...>& types, const List<word>& typeID)
+void run_tests(const std::tuple<Tp...>& types, const List<word>& names)
 {
-    Info<< nl << "    ## Test constructors: "<< typeID[I] <<" ##" << nl;
-    test_constructors(std::get<I>(types));
+    if constexpr (I < sizeof...(Tp))
+    {
+        const auto& name = names[I];
 
-    Info<< nl << "    ## Test member functions: "<< typeID[I] <<" ##" << nl;
-    test_member_funcs(std::get<I>(types));
+        Info<< nl << "    ## Test constructors: " << name << " ##" << nl;
+        test_constructors(std::get<I>(types));
 
-    Info<< nl << "    ## Test eigenvalues: "<< typeID[I] <<" ##" << nl;
-    test_eigenvalues(std::get<I>(types));
+        Info<< nl << "    ## Test member functions: " << name << " ##" << nl;
+        test_member_funcs(std::get<I>(types));
 
-    Info<< nl << "    ## Test eigenvectors: "<< typeID[I] <<" ##" << nl;
-    test_eigenvectors(std::get<I>(types));
+        Info<< nl << "    ## Test eigenvalues: " << name << " ##" << nl;
+        test_eigenvalues(std::get<I>(types));
 
-    run_tests<I + 1, Tp...>(types, typeID);
+        Info<< nl << "    ## Test eigenvectors: " << name << " ##" << nl;
+        test_eigenvectors(std::get<I>(types));
+
+        run_tests<I + 1, Tp...>(types, names);
+    }
 }
 
 
@@ -372,8 +371,8 @@ int main()
 
     const List<word> typeID
     ({
-        "SquareMatrix<floatScalar>",
-        "SquareMatrix<doubleScalar>"
+        "SquareMatrix<float>",
+        "SquareMatrix<double>"
     });
 
     run_tests(types, typeID);
@@ -539,3 +538,6 @@ int main()
     Info<< nl << "        #### Passed all " << nTest_ <<" tests ####\n" << endl;
     return 0;
 }
+
+
+// ************************************************************************* //

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,7 +72,7 @@ void Foam::LUscalarMatrix::solve
                 {
                     // Nothing to do
                 }
-                else if (is_contiguous<Type>::value)
+                else if constexpr (is_contiguous<Type>::value)
                 {
                     UIPstream::read
                     (
@@ -96,7 +96,7 @@ void Foam::LUscalarMatrix::solve
             {
                 // Nothing to do
             }
-            else if (is_contiguous<Type>::value)
+            else if constexpr (is_contiguous<Type>::value)
             {
                 UOPstream::write
                 (
@@ -136,7 +136,7 @@ void Foam::LUscalarMatrix::solve
                 {
                     // Nothing to do
                 }
-                else if (is_contiguous<Type>::value)
+                else if constexpr (is_contiguous<Type>::value)
                 {
                     UOPstream::write
                     (
@@ -160,7 +160,7 @@ void Foam::LUscalarMatrix::solve
             {
                 // Nothing to do
             }
-            else if (is_contiguous<Type>::value)
+            else if constexpr (is_contiguous<Type>::value)
             {
                 UIPstream::read
                 (

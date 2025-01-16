@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,7 +64,7 @@ class ConstPrecisionAdaptor
         //- Set adaptor for different input, copying as required
         void setInput(const Container<InputType>& src)
         {
-            if (std::is_same<Type, InputType>::value)
+            if constexpr (std::is_same<Type, InputType>::value)
             {
                 // Use reference directly
                 this->cref(reinterpret_cast<const Container<Type>&>(src));
@@ -164,7 +164,7 @@ public:
             Container<Type>& other
         )
         {
-            if (std::is_same<Type, InputType>::value)
+            if constexpr (std::is_same<Type, InputType>::value)
             {
                 return reinterpret_cast<const Container<Type>&>(input);
             }
@@ -200,7 +200,7 @@ class PrecisionAdaptor
         void setInput(Container<InputType>& src, const bool doCopy)
         {
             orig_.ref(src);
-            if (std::is_same<Type, InputType>::value)
+            if constexpr (std::is_same<Type, InputType>::value)
             {
                 // Use reference directly
                 this->ref(reinterpret_cast<Container<Type>&>(src));

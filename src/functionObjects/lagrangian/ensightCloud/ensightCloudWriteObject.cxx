@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -145,7 +145,7 @@ bool Foam::functionObjects::ensightCloudWriteObject::writeCloud
 
         if (applyFilter_)
         {
-            if (std::is_same<float, vector::cmptType>::value)
+            if constexpr (std::is_same<float, vector::cmptType>::value)
             {
                 for (const label idx : parcelAddr_)
                 {
@@ -168,7 +168,7 @@ bool Foam::functionObjects::ensightCloudWriteObject::writeCloud
         }
         else
         {
-            if (std::is_same<float, vector::cmptType>::value)
+            if constexpr (std::is_same<float, vector::cmptType>::value)
             {
                 for (const auto& pos : points)
                 {

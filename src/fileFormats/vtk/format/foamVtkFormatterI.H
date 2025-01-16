@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2018 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,10 +33,6 @@ inline Foam::vtk::formatter& Foam::vtk::formatter::xmlAttr()
 }
 
 
-inline void Foam::vtk::formatter::xmlCommentLoop()
-{}
-
-
 template<class... Args>
 inline void Foam::vtk::formatter::xmlCommentLoop
 (
@@ -50,7 +46,10 @@ inline void Foam::vtk::formatter::xmlCommentLoop
         os_ << text << nl;
     }
 
-    xmlCommentLoop(std::forward<Args>(args)...);
+    if constexpr (sizeof...(Args))
+    {
+        xmlCommentLoop(std::forward<Args>(args)...);
+    }
 }
 
 
@@ -111,7 +110,7 @@ inline Foam::vtk::formatter& Foam::vtk::formatter::xmlComment
         indent();
         os_ << "<!--";
 
-        if (sizeof...(Args))
+        if constexpr (sizeof...(Args))
         {
             os_ << nl;
 

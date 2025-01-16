@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,11 +39,13 @@ Foam::wordList Foam::functionObjects::vtkCloud::writeFields
 {
     const direction nCmpt(pTraits<Type>::nComponents);
 
+    typedef typename pTraits<Type>::cmptType cmptType;
+
     static_assert
     (
         (
-            std::is_same<label, typename pTraits<Type>::cmptType>::value
-         || std::is_floating_point<typename pTraits<Type>::cmptType>::value
+            std::is_same<label, cmptType>::value
+         || std::is_floating_point<cmptType>::value
         ),
         "Label and Floating-point vector space only"
     );
@@ -72,7 +74,7 @@ Foam::wordList Foam::functionObjects::vtkCloud::writeFields
 
         if (UPstream::master())
         {
-            if (std::is_same<label, typename pTraits<Type>::cmptType>::value)
+            if constexpr (std::is_same<label, cmptType>::value)
             {
                 const uint64_t payLoad =
                     vtk::sizeofData<label, nCmpt>(nTotParcels);

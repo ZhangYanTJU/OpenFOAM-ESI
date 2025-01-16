@@ -322,12 +322,12 @@ int main(int argc, char *argv[])
     Info<< "_GLIBCXX_RELEASE = " << (_GLIBCXX_RELEASE) << nl;
     #endif
 
-    if (std::is_same<regExp, regExpCxx>::value)
+    if constexpr (std::is_same<regExp, regExpCxx>::value)
     {
         Info<< "Foam::regExp uses C++11 regex" << nl;
     }
     #ifndef _WIN32
-    if (std::is_same<regExp, regExpPosix>::value)
+    if constexpr (std::is_same<regExp, regExpPosix>::value)
     {
         Info<< "Foam::regExp uses POSIX regex" << nl;
     }

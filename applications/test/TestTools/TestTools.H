@@ -67,13 +67,9 @@ doubleScalar getTol(complex)
 }
 
 
-// Create a non-complex random Matrix.
+// Create a random Matrix (real or complex)
 template<class MatrixType>
-typename std::enable_if
-<
-    !std::is_same<complex, typename MatrixType::cmptType>:: value,
-    MatrixType
->::type makeRandomMatrix
+MatrixType makeRandomMatrix
 (
     const labelPair& dims,
     Random& rndGen
@@ -81,34 +77,22 @@ typename std::enable_if
 {
     MatrixType mat(dims);
 
-    std::generate
-    (
-        mat.begin(),
-        mat.end(),
-        [&]{return rndGen.GaussNormal<scalar>();}
-    );
-
-    return mat;
-}
-
-
-// Create a complex random Matrix.
-template<class MatrixType>
-typename std::enable_if
-<
-    std::is_same<complex, typename MatrixType::cmptType>:: value,
-    MatrixType
->::type makeRandomMatrix
-(
-    const labelPair& dims,
-    Random& rndGen
-)
-{
-    MatrixType mat(dims);
-
-    for (auto& x : mat)
+    if constexpr (std::is_same<complex, typename MatrixType::cmptType>::value)
     {
-        x = complex(rndGen.GaussNormal<scalar>(), rndGen.GaussNormal<scalar>());
+        for (auto& x : mat)
+        {
+            x.real(rndGen.GaussNormal<scalar>());
+            x.imag(rndGen.GaussNormal<scalar>());
+        }
+    }
+    else
+    {
+        std::generate
+        (
+            mat.begin(),
+            mat.end(),
+            [&]{ return rndGen.GaussNormal<scalar>(); }
+        );
     }
 
     return mat;
@@ -179,126 +163,56 @@ List<Type> flt
 }
 
 
-// Compare two floating point types, and print output.
+// Compare two values or two containers (elementwise), and print output.
 // Do ++nFail_ if values of two objects are not equal within a given tolerance.
 // The function is converted from PEP-485.
-template<class Type>
-typename std::enable_if
-<
-    std::is_same<floatScalar, Type>::value ||
-    std::is_same<doubleScalar, Type>::value ||
-    std::is_same<complex, Type>::value,
-    void
->::type cmp
+template<class Type1, class Type2 = Type1>
+void cmp
 (
     const word& msg,
-    const Type& x,
-    const Type& y,
+    const Type1& x,
+    const Type2& y,
     const scalar absTol = 0,    //<! useful for cmps near zero
     const scalar relTol = 1e-8, //<! are values the same within 8 decimals
     const bool verbose = false
 )
 {
-    if (verbose)
+    const auto notEqual = [=](const auto& a, const auto& b) -> bool
     {
-        Info<< msg << x << "?=" << y << endl;
-    }
+        return
+        (
+            Foam::max(absTol, relTol*Foam::max(Foam::mag(a), Foam::mag(b)))
+          < Foam::mag(a - b)
+        );
+    };
 
     unsigned nFail = 0;
 
-    if (max(absTol, relTol*max(mag(x), mag(y))) < mag(x - y))
+    if constexpr
+    (
+        std::is_floating_point<Type1>::value
+     || std::is_same<complex, Type1>::value
+    )
     {
-        ++nFail;
-    }
-
-    if (nFail)
-    {
-        Info<< nl
-            << "        #### Fail in " << nFail << " comps ####" << nl << endl;
-        ++nFail_;
-    }
-    ++nTest_;
-}
-
-
-// Compare two containers elementwise, and print output.
-// Do ++nFail_ if two components are not equal within a given tolerance.
-// The function is converted from PEP-485
-template<class Type>
-typename std::enable_if
-<
-    !std::is_same<floatScalar, Type>::value &&
-    !std::is_same<doubleScalar, Type>::value &&
-    !std::is_same<complex, Type>::value,
-    void
->::type cmp
-(
-    const word& msg,
-    const Type& x,
-    const Type& y,
-    const scalar absTol = 0,
-    const scalar relTol = 1e-8,
-    const bool verbose = false
-)
-{
-    if (verbose)
-    {
-        Info<< msg << x << "?=" << y << endl;
-    }
-
-    unsigned nFail = 0;
-
-    for (label i = 0; i < x.size(); ++i)
-    {
-        if (max(absTol, relTol*max(mag(x[i]), mag(y[i]))) < mag(x[i] - y[i]))
+        if (notEqual(x, y))
         {
             ++nFail;
         }
     }
-
-    if (nFail)
+    else
     {
-        Info<< nl
-            << "        #### Fail in " << nFail << " comps ####" << nl << endl;
-        ++nFail_;
+        for (label i = 0; i < x.size(); ++i)
+        {
+            if (notEqual(x[i], y[i]))
+            {
+                ++nFail;
+            }
+        }
     }
-    ++nTest_;
-}
 
-
-// Compare two containers elementwise, and print output.
-// Do ++nFail_ if two components are not equal within a given tolerance.
-// The function is converted from PEP-485
-template<class Type1, class Type2>
-typename std::enable_if
-<
-    !std::is_same<floatScalar, Type1>::value &&
-    !std::is_same<doubleScalar, Type1>::value &&
-    !std::is_same<complex, Type1>::value,
-    void
->::type cmp
-(
-    const word& msg,
-    const Type1& x,
-    const Type2& y,
-    const scalar absTol = 0,
-    const scalar relTol = 1e-8,
-    const bool verbose = false
-)
-{
     if (verbose)
     {
         Info<< msg << x << "?=" << y << endl;
-    }
-
-    unsigned nFail = 0;
-
-    for (label i = 0; i < x.size(); ++i)
-    {
-        if (max(absTol, relTol*max(mag(x[i]), mag(y[i]))) < mag(x[i] - y[i]))
-        {
-            ++nFail;
-        }
     }
 
     if (nFail)
@@ -321,16 +235,16 @@ void cmp
     const bool verbose = false
 )
 {
-    if (verbose)
-    {
-        Info<< msg << x << "?=" << y << endl;
-    }
-
     unsigned nFail = 0;
 
     if (x != y)
     {
         ++nFail;
+    }
+
+    if (verbose)
+    {
+        Info<< msg << x << "?=" << y << endl;
     }
 
     if (nFail)

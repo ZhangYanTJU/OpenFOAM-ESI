@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
 
     Info<< nl
         << "solverPerformanceDict: "
-        << mesh.solverPerformanceDict() << endl;
+        << mesh.data().solverPerformanceDict() << endl;
 
 
     if (args.found("zip"))

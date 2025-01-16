@@ -33,7 +33,7 @@ License
 template<class T, unsigned N>
 std::streamsize Foam::FixedList<T, N>::byteSize()
 {
-    if (!is_contiguous<T>::value)
+    if constexpr (!is_contiguous<T>::value)
     {
         FatalErrorInFunction
             << "Invalid for non-contiguous data types"

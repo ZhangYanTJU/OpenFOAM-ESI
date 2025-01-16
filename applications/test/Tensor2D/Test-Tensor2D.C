@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,13 +41,13 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
+#include "scalar.H"
+#include "complex.H"
 #include "vector2DField.H"
 #include "tensor2D.H"
 #include "symmTensor2D.H"
 #include "transform.H"
 #include "Random.H"
-#include "scalar.H"
-#include "complex.H"
 
 using namespace Foam;
 
@@ -70,12 +70,11 @@ tensor2D makeRandomContainer(Random& rnd)
 }
 
 
-// Compare two floating point types, and print output.
-// Do ++nFail_ if values of two objects are not equal within a given tolerance.
-// The function is converted from PEP-485.
+// Compare two containers elementwise, and print output.
+// Do ++nFail_ if two components are not equal within a given tolerance.
+// The function is converted from PEP-485
 template<class Type>
-typename std::enable_if<pTraits<Type>::rank == 0, void>::type
-cmp
+void cmp
 (
     const word& msg,
     const Type& x,
@@ -84,50 +83,36 @@ cmp
     const scalar relTol = 1e-8   //<! are values the same within 8 decimals
 )
 {
-    Info<< msg << x << "?=" << y << endl;
+    const auto notEqual = [=](const auto& a, const auto& b) -> bool
+    {
+        return
+        (
+            Foam::max(absTol, relTol*Foam::max(Foam::mag(a), Foam::mag(b)))
+          < Foam::mag(a - b)
+        );
+    };
 
     unsigned nFail = 0;
 
-    if (max(absTol, relTol*max(mag(x), mag(y))) < mag(x - y))
+    if constexpr (is_vectorspace<Type>::value)
     {
-        ++nFail;
+        for (direction i = 0; i < pTraits<Type>::nComponents; ++i)
+        {
+            if (notEqual(x[i], y[i]))
+            {
+                ++nFail;
+            }
+        }
     }
-
-    if (nFail)
+    else
     {
-        Info<< nl
-            << "        #### Fail in " << nFail << " comps ####" << nl << endl;
-        ++nFail_;
-    }
-    ++nTest_;
-}
-
-
-// Compare two containers elementwise, and print output.
-// Do ++nFail_ if two components are not equal within a given tolerance.
-// The function is converted from PEP-485
-template<class Type>
-typename std::enable_if<pTraits<Type>::rank != 0, void>::type
-cmp
-(
-    const word& msg,
-    const Type& x,
-    const Type& y,
-    const scalar absTol = 0,
-    const scalar relTol = 1e-8
-)
-{
-    Info<< msg << x << "?=" << y << endl;
-
-    unsigned nFail = 0;
-
-    for (direction i = 0; i < pTraits<Type>::nComponents; ++i)
-    {
-        if (max(absTol, relTol*max(mag(x[i]), mag(y[i]))) < mag(x[i] - y[i]))
+        if (notEqual(x, y))
         {
             ++nFail;
         }
     }
+
+    Info<< msg << x << "?=" << y << endl;
 
     if (nFail)
     {
@@ -795,27 +780,26 @@ void test_eigen_funcs(const tensor2D& T)
 
 // Do compile-time recursion over the given types
 template<std::size_t I = 0, typename... Tp>
-inline typename std::enable_if<I == sizeof...(Tp), void>::type
-run_tests(const std::tuple<Tp...>& types, const List<word>& typeID){}
-
-
-template<std::size_t I = 0, typename... Tp>
-inline typename std::enable_if<I < sizeof...(Tp), void>::type
-run_tests(const std::tuple<Tp...>& types, const List<word>& typeID)
+void run_tests(const std::tuple<Tp...>& types, const List<word>& names)
 {
-    Info<< nl << "    ## Test constructors: "<< typeID[I] <<" ##" << nl;
-    test_constructors(std::get<I>(types));
+    if constexpr (I < sizeof...(Tp))
+    {
+        const auto& name = names[I];
 
-    Info<< nl << "    ## Test member functions: "<< typeID[I] <<" ##" << nl;
-    test_member_funcs(std::get<I>(types));
+        Info<< nl << "    ## Test constructors: " << name << " ##" << nl;
+        test_constructors(std::get<I>(types));
 
-    Info<< nl << "    ## Test global functions: "<< typeID[I] << " ##" << nl;
-    test_global_funcs(std::get<I>(types));
+        Info<< nl << "    ## Test member functions: " << name << " ##" << nl;
+        test_member_funcs(std::get<I>(types));
 
-    Info<< nl << "    ## Test global operators: "<< typeID[I] <<" ##" << nl;
-    test_global_opers(std::get<I>(types));
+        Info<< nl << "    ## Test global functions: " << name << " ##" << nl;
+        test_global_funcs(std::get<I>(types));
 
-    run_tests<I + 1, Tp...>(types, typeID);
+        Info<< nl << "    ## Test global operators: " << name << " ##" << nl;
+        test_global_opers(std::get<I>(types));
+
+        run_tests<I + 1, Tp...>(types, names);
+    }
 }
 
 
@@ -831,8 +815,8 @@ int main(int argc, char *argv[])
 
     const List<word> typeID
     ({
-        "Tensor2D<floatScalar>",
-        "Tensor2D<doubleScalar>",
+        "Tensor2D<float>",
+        "Tensor2D<double>",
         "Tensor2D<complex>"
     });
 

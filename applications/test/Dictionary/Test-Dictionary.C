@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
     }
 
     std::cout<< "iter type: "
-        << typeid(stdFoam::begin(scalarDict2)).name() << '\n';
+        << typeid(std::begin(scalarDict2)).name() << '\n';
 
     scalarDict.transfer(scalarDict2);
 

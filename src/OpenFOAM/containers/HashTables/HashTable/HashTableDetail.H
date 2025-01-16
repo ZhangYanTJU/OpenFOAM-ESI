@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -165,39 +165,28 @@ struct HashTablePair
             return key_ < rhs.key_;
         }
 
-        //- Write (key, val) pair - for pointer types
-        template<class TypeT = V>
-        typename std::enable_if
-        <
-            (
-                std::is_pointer<TypeT>::value
-             || Detail::isPointerLike<TypeT>::value
-            ),
-            void
-        >::type
-        print(Ostream& os) const
+        //- Write (key, val) pair
+        void print(Ostream& os) const
         {
             os << key_;
 
-            if (val_)
-            {
-                os << ' ' << *val_;
-            }
-        }
-
-        //- Write (key, val) pair - for non-pointer types
-        template<class TypeT = V>
-        typename std::enable_if
-        <
+            if constexpr
             (
-                !std::is_pointer<TypeT>::value
-             && !Detail::isPointerLike<TypeT>::value
-            ),
-            void
-        >::type
-        print(Ostream& os) const
-        {
-            os << key_ << ' ' << val_;
+                std::is_pointer<V>::value
+             || Detail::isPointerLike<V>::value
+            )
+            {
+                // Pointer or pointer-like types
+                if (val_)
+                {
+                    os << ' ' << *val_;
+                }
+            }
+            else
+            {
+                // Non-pointer types
+                os << ' ' << val_;
+            }
         }
 };
 
