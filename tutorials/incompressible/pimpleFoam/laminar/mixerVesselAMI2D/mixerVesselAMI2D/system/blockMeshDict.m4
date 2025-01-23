@@ -788,9 +788,14 @@ boundary
 
     AMI1
     {
+        cacheSize       360;
+
         type            cyclicAMI;
         neighbourPatch  AMI2;
         transform       noOrdering;
+        rotationCentre  (0 0 0);
+        rotationAxis    (0 0 1);
+
 /* optional
         surface
         {
@@ -815,9 +820,13 @@ boundary
 
     AMI2
     {
+        cacheSize       360;
+
         type            cyclicAMI;
         neighbourPatch  AMI1;
         transform       noOrdering;
+        rotationCentre  (0 0 0);
+        rotationAxis    (0 0 1);
 /* optional
         surface
         {
