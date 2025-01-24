@@ -1,6 +1,7 @@
 include $(GENERAL_RULES)/cgal-header-only
 
 EXE_INC = \
+    $(c++LESSWARN) \
     $(COMP_FLAGS) \
     ${CGAL_INC} \
     -I$(LIB_SRC)/finiteVolume/lnInclude \

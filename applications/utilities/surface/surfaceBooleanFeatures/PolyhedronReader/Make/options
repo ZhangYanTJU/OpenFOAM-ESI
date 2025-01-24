@@ -6,6 +6,7 @@ EXE_NDEBUG = -DNDEBUG
 include $(GENERAL_RULES)/cgal
 
 EXE_INC = \
+    $(c++LESSWARN) \
     ${ROUNDING_MATH} \
     ${EXE_NDEBUG} \
     ${CGAL_INC} \

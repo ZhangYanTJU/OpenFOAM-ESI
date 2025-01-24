@@ -3,6 +3,7 @@ MarchingCubes = fastdualoctree_sgp
 include $(GENERAL_RULES)/cgal
 
 EXE_INC = \
+    $(c++LESSWARN) \
     -DUNIX \
     /* -IMarchingCubes */ \
     -I$(FASTDUALOCTREE_SRC_PATH) \
