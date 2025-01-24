@@ -521,7 +521,7 @@ void Foam::displacementSmartPointSmoothingMotionSolver::solve()
     markAffectedFaces(facesToMove_, affectedFaces);
 
 
-    for(label i = 0; i < nPointSmootherIter_; i ++)
+    for (label nIter = 0; nIter < nPointSmootherIter_; ++nIter)
     {
         const pointField wantedPoints
         (
@@ -665,7 +665,7 @@ void Foam::displacementSmartPointSmoothingMotionSolver::solve()
 
             if (debug & 2)
             {
-                OBJstream os(debugDir/"untangle_" + Foam::name(i) + ".obj");
+                OBJstream os(debugDir/"untangle_" + Foam::name(nIter) + ".obj");
 
                 const pointField wantedPoints
                 (
