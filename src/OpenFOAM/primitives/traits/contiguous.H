@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,15 +76,20 @@ namespace Foam
 template<class T>
 struct is_contiguous : std::is_arithmetic<T> {};
 
+//- The is_contiguous value of Type (after stripping of qualifiers)
+template<class T>
+inline constexpr bool is_contiguous_v
+    = is_contiguous<std::remove_cv_t<T>>::value;
+
 
 // Base definition for 'label'
 template<class T>
-struct is_contiguous_label : std::is_same<T, label> {};
+struct is_contiguous_label : std::is_same<label, std::remove_cv_t<T>> {};
 
 
 // Base definition for 'scalar'
 template<class T>
-struct is_contiguous_scalar : std::is_same<T, scalar> {};
+struct is_contiguous_scalar : std::is_same<scalar, std::remove_cv_t<T>> {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

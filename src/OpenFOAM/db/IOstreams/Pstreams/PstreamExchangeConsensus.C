@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023-2024 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,7 +70,7 @@ void exchangeConsensus
     const label comm
 )
 {
-    static_assert(is_contiguous<Type>::value, "Contiguous data only!");
+    static_assert(is_contiguous_v<Type>, "Contiguous data only!");
 
     const bool initialBarrier = (UPstream::tuning_NBX_ > 0);
 
@@ -252,7 +252,7 @@ void exchangeConsensus
     const label comm
 )
 {
-    static_assert(is_contiguous<Type>::value, "Contiguous data only!");
+    static_assert(is_contiguous_v<Type>, "Contiguous data only!");
 
     const bool initialBarrier = (UPstream::tuning_NBX_ > 0);
 
@@ -419,7 +419,7 @@ void Foam::Pstream::exchangeConsensus
     const bool /* wait (ignored) */
 )
 {
-    static_assert(is_contiguous<Type>::value, "Contiguous data only!");
+    static_assert(is_contiguous_v<Type>, "Contiguous data only!");
 
     if (sendBufs.size() != UPstream::nProcs(comm))
     {
@@ -454,7 +454,7 @@ void Foam::Pstream::exchangeConsensus
     const bool  /* wait (ignored) */
 )
 {
-    static_assert(is_contiguous<Type>::value, "Contiguous data only!");
+    static_assert(is_contiguous_v<Type>, "Contiguous data only!");
 
     PstreamDetail::exchangeConsensus<Container, Type>
     (
@@ -478,7 +478,7 @@ Foam::Pstream::exchangeConsensus
 {
     Map<Container> recvBufs;
 
-    static_assert(is_contiguous<Type>::value, "Contiguous data only!");
+    static_assert(is_contiguous_v<Type>, "Contiguous data only!");
 
     PstreamDetail::exchangeConsensus<Container, Type>
     (

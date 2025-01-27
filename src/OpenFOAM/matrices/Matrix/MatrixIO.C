@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -69,7 +69,7 @@ bool Foam::Matrix<Form, Type>::readMatrix(Istream& is)
         // The total size
         const label len = size();
 
-        if (is.format() == IOstreamOption::BINARY && is_contiguous<Type>::value)
+        if (is.format() == IOstreamOption::BINARY && is_contiguous_v<Type>)
         {
             // Binary and contiguous
 
@@ -152,7 +152,7 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
     // Rows, columns size
     os  << mat.nRows() << token::SPACE << mat.nCols();
 
-    if (os.format() == IOstreamOption::BINARY && is_contiguous<Type>::value)
+    if (os.format() == IOstreamOption::BINARY && is_contiguous_v<Type>)
     {
         // Binary and contiguous
 
@@ -162,7 +162,7 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
             os.write(mat.cdata_bytes(), mat.size_bytes());
         }
     }
-    else if (is_contiguous<Type>::value && len > 1 && mat.uniform())
+    else if (is_contiguous_v<Type> && len > 1 && mat.uniform())
     {
         // Two or more entries, and all entries have identical values.
         os  << token::BEGIN_BLOCK << *iter << token::END_BLOCK;
@@ -170,7 +170,7 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
     else if
     (
         (len <= 1 || !shortLen)
-     || (len <= shortLen && is_contiguous<Type>::value)
+     || (len <= shortLen && is_contiguous_v<Type>)
     )
     {
         // Single-line output (entire matrix)
@@ -201,7 +201,7 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
     else if
     (
         (mat.nCols() <= 1 || !shortLen)
-     || (mat.nCols() <= shortLen && is_contiguous<Type>::value)
+     || (mat.nCols() <= shortLen && is_contiguous_v<Type>)
     )
     {
         // Multi-line matrix, single-line rows

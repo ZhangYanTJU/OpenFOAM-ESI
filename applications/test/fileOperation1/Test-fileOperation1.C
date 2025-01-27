@@ -48,7 +48,7 @@ word toString(const fileOperation::procRangeType& group)
     {
         return word::null;
     }
-    return Foam::name(group.first()) + "-" + Foam::name(group.last());
+    return Foam::name(group.min()) + "-" + Foam::name(group.max());
 }
 
 

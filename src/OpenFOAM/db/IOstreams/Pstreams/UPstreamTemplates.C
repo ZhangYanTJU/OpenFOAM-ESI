@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,6 +34,14 @@ Foam::List<T> Foam::UPstream::allGatherValues
     const label comm
 )
 {
+    if constexpr (!is_contiguous_v<T>)
+    {
+        FatalErrorInFunction
+            << "Cannot all-gather values for non-contiguous types"
+               " - consider Pstream variant instead" << endl
+            << Foam::abort(FatalError);
+    }
+
     List<T> allValues;
 
     if (UPstream::is_parallel(comm))
@@ -41,17 +49,7 @@ Foam::List<T> Foam::UPstream::allGatherValues
         allValues.resize(UPstream::nProcs(comm));
         allValues[UPstream::myProcNo(comm)] = localValue;
 
-        if (is_contiguous<T>::value)
-        {
-            UPstream::mpiAllGather(allValues.data_bytes(), sizeof(T), comm);
-        }
-        else
-        {
-            FatalErrorInFunction
-                << "Cannot all-gather values for non-contiguous types"
-                   " - consider Pstream variant instead" << endl
-                << Foam::abort(FatalError);
-        }
+        UPstream::mpiAllGather(allValues.data_bytes(), sizeof(T), comm);
     }
     else
     {
@@ -72,6 +70,14 @@ Foam::List<T> Foam::UPstream::listGatherValues
     const label comm
 )
 {
+    if constexpr (!is_contiguous_v<T>)
+    {
+        FatalErrorInFunction
+            << "Cannot gather values for non-contiguous types"
+               " - consider Pstream variant instead" << endl
+            << Foam::abort(FatalError);
+    }
+
     List<T> allValues;
 
     if (UPstream::is_parallel(comm))
@@ -81,23 +87,13 @@ Foam::List<T> Foam::UPstream::listGatherValues
             allValues.resize(UPstream::nProcs(comm));
         }
 
-        if (is_contiguous<T>::value)
-        {
-            UPstream::mpiGather
-            (
-                reinterpret_cast<const char*>(&localValue),
-                allValues.data_bytes(),
-                sizeof(T),  // The send/recv size per rank
-                comm
-            );
-        }
-        else
-        {
-            FatalErrorInFunction
-                << "Cannot gather values for non-contiguous types"
-                   " - consider Pstream variant instead" << endl
-                << Foam::abort(FatalError);
-        }
+        UPstream::mpiGather
+        (
+            reinterpret_cast<const char*>(&localValue),
+            allValues.data_bytes(),
+            sizeof(T),  // The send/recv size per rank
+            comm
+        );
     }
     else
     {
@@ -118,6 +114,14 @@ T Foam::UPstream::listScatterValues
     const label comm
 )
 {
+    if constexpr (!is_contiguous_v<T>)
+    {
+        FatalErrorInFunction
+            << "Cannot scatter values for non-contiguous types"
+               " - consider Pstream variant instead" << endl
+            << Foam::abort(FatalError);
+    }
+
     T localValue{};
 
     if (UPstream::is_parallel(comm))
@@ -132,23 +136,13 @@ T Foam::UPstream::listScatterValues
                 << Foam::abort(FatalError);
         }
 
-        if (is_contiguous<T>::value)
-        {
-            UPstream::mpiScatter
-            (
-                allValues.cdata_bytes(),
-                reinterpret_cast<char*>(&localValue),
-                sizeof(T),  // The send/recv size per rank
-                comm
-            );
-        }
-        else
-        {
-            FatalErrorInFunction
-                << "Cannot scatter values for non-contiguous types"
-                   " - consider Pstream variant instead" << endl
-                << Foam::abort(FatalError);
-        }
+        UPstream::mpiScatter
+        (
+            allValues.cdata_bytes(),
+            reinterpret_cast<char*>(&localValue),
+            sizeof(T),  // The send/recv size per rank
+            comm
+        );
     }
     else
     {

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,12 +60,12 @@ class IntegralScaleBox
     // Private Typedefs
 
         //- Type of input set of integral scales
-        typedef typename std::conditional
+        using TypeL = std::conditional_t
         <
-            std::is_same<Type, scalar>::value,
+            std::is_same_v<scalar, Type>,
             vector,
             tensor
-        >::type TypeL;
+        >;
 
 
     // Private Enumerations

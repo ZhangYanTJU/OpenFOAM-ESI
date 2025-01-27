@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -508,11 +508,11 @@ Foam::scalar Foam::Matrix<Form, Type>::norm(const bool noSqrt) const
 template<class Form, class Type>
 std::streamsize Foam::Matrix<Form, Type>::byteSize() const
 {
-    if (!is_contiguous<Type>::value)
+    if constexpr (!is_contiguous_v<Type>)
     {
         FatalErrorInFunction
             << "Invalid for non-contiguous data types"
-            << abort(FatalError);
+            << Foam::abort(FatalError);
     }
     return this->size_bytes();
 }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,9 +42,11 @@ Note
 #include "Hash.H"
 
 #ifdef FULLDEBUG
-#define HashTypeInfo(Args)  void info() { std::cerr<< "" Args << "\n"; }
+#define HashTypeInfo(Name)  \
+    static constexpr const char* name() noexcept { return Name; } \
+    void info() const { std::cerr<< name() << " hashing\n"; }
 #else
-#define HashTypeInfo(Args)  void info() {}
+#define HashTypeInfo(Name)  void info() const {}
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -53,20 +55,36 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                            Class Hash Declaration
+                          Class HashFunc Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class T, class SFINAEType=bool>
+template<class T>
 struct HashFun
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "default"; }
-    #endif
-    HashTypeInfo("plain hash")
+    void info() const
+    {
+        #ifdef FULLDEBUG
+        if constexpr (std::is_base_of_v<std::string, T>)
+        {
+            std::cerr<< "std::string hashing\n";
+        }
+        else
+        {
+            std::cerr<< "default hashing\n";
+        }
+        #endif
+    }
 
     unsigned operator()(const T& obj, unsigned seed=0) const
     {
-        return Foam::Hasher(&obj, sizeof(obj), seed);
+        if constexpr (std::is_base_of_v<std::string, T>)
+        {
+            return Foam::Hasher(obj.data(), obj.size(), seed);
+        }
+        else
+        {
+            return Foam::Hasher(&obj, sizeof(obj), seed);
+        }
     }
 };
 
@@ -76,44 +94,16 @@ struct HashFun
 //- Hashing for label
 template<> struct HashFun<Foam::label> : Hash<label>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "label"; }
-    #endif
-    HashTypeInfo("hash label")
+    HashTypeInfo("label")
 };
 
 
 //- Hashing for pointers, interpret pointer as a integer type
 template<> struct HashFun<void*> : Hash<void *>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "pointer"; }
-    #endif
-    HashTypeInfo("hash ptr")
+    HashTypeInfo("pointer")
 };
 
-
-//- Hashing for string types
-template<class StringType>
-struct HashFun
-<
-    StringType,
-    typename std::enable_if
-    <
-        std::is_base_of<std::string, StringType>::value, bool
-    >::type
->
-{
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "string"; }
-    #endif
-    HashTypeInfo("hash string")
-
-    unsigned operator()(const std::string& obj, unsigned seed=0) const
-    {
-        return Foam::Hasher(obj.data(), obj.size(), seed);
-    }
-};
 
 } // End namespace Foam
 
@@ -133,83 +123,56 @@ namespace Foam
 
 template<> struct HashFun<edge> : Hash<edge>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "edge"; }
-    #endif
-    HashTypeInfo("hash edge")
+    HashTypeInfo("edge")
 };
 
 
 template<> struct HashFun<face> : Hash<face>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "face"; }
-    #endif
-    HashTypeInfo("hash face")
+    HashTypeInfo("face")
 };
 
 
 template<> struct HashFun<triFace> : Hash<triFace>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "triFace"; }
-    #endif
-    HashTypeInfo("hash triFace")
+    HashTypeInfo("triFace")
 };
 
 
 template<class T>
 struct HashFun<Pair<T>> : Hash<Pair<T>>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "Pair"; }
-    #endif
-    HashTypeInfo("hash Pair")
+    HashTypeInfo("Pair")
 };
 
 template<class T1, class T2>
 struct HashFun<Tuple2<T1, T2>> : Hash<Tuple2<T1, T2>>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "Tuple2"; }
-    #endif
-    HashTypeInfo("hash Tuple2")
+    HashTypeInfo("Tuple2")
 };
 
 
 template<class T>
 struct HashFun<List<T>> : Hash<List<T>>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "List"; }
-    #endif
-    HashTypeInfo("hash List")
+    HashTypeInfo("List")
 };
 
 template<class T> struct HashFun<UList<T>> : Hash<UList<T>>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "UList"; }
-    #endif
-    HashTypeInfo("hash UList")
+    HashTypeInfo("UList")
 };
 
 template<class T, int SizeMin>
 struct HashFun<DynamicList<T, SizeMin>> : Hash<DynamicList<T, SizeMin>>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "DynamicList"; }
-    #endif
-    HashTypeInfo("hash DynamicList")
+    HashTypeInfo("DynamicList")
 };
 
 template<class T, unsigned N>
 struct HashFun<FixedList<T, N>> : Hash<FixedList<T, N>>
 {
-    #ifdef FULLDEBUG
-    static constexpr const char* name() noexcept { return "FixedList"; }
-    #endif
-    HashTypeInfo("hash FixedList")
+    HashTypeInfo("FixedList")
 };
 
 

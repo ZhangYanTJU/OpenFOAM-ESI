@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,36 +53,32 @@ namespace PstreamUtils
 // Casting helpers
 struct Cast
 {
-    // Cast UPstream::Communicator to MPI_Comm (pointer)
+    //- Cast UPstream::Communicator to MPI_Comm
     template<typename Type = MPI_Comm>
-    static typename std::enable_if<std::is_pointer<Type>::value, Type>::type
-    to_mpi(const UPstream::Communicator& arg) noexcept
+    static Type to_mpi(UPstream::Communicator arg) noexcept
     {
-        return reinterpret_cast<Type>(arg.value());
+        if constexpr (std::is_pointer_v<Type>)
+        {
+            return reinterpret_cast<Type>(arg.value());
+        }
+        else  // std::is_integral_v<Type>
+        {
+            return static_cast<Type>(arg.value());
+        }
     }
 
-    // Cast UPstream::Communicator to MPI_Comm (integer)
-    template<typename Type = MPI_Comm>
-    static typename std::enable_if<std::is_integral<Type>::value, Type>::type
-    to_mpi(const UPstream::Communicator& arg) noexcept
-    {
-        return static_cast<Type>(arg.value());
-    }
-
-    // Cast UPstream::Request to MPI_Request (pointer)
+    //- Cast UPstream::Request to MPI_Request
     template<typename Type = MPI_Request>
-    static typename std::enable_if<std::is_pointer<Type>::value, Type>::type
-    to_mpi(const UPstream::Request& arg) noexcept
+    static Type to_mpi(UPstream::Request arg) noexcept
     {
-        return reinterpret_cast<Type>(arg.value());
-    }
-
-    // Cast UPstream::Request to MPI_Request (integer)
-    template<typename Type = MPI_Request>
-    static typename std::enable_if<std::is_integral<Type>::value, Type>::type
-    to_mpi(const UPstream::Request& arg) noexcept
-    {
-        return static_cast<Type>(arg.value());
+        if constexpr (std::is_pointer_v<Type>)
+        {
+            return reinterpret_cast<Type>(arg.value());
+        }
+        else  // std::is_integral_v<Type>
+        {
+            return static_cast<Type>(arg.value());
+        }
     }
 };
 

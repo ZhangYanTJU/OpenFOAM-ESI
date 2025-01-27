@@ -63,7 +63,7 @@ template<class T> class List;
 template<class IntType>
 class IntRange
 {
-    static_assert(std::is_integral<IntType>::value, "Integral required");
+    static_assert(std::is_integral_v<IntType>, "Integral required");
 
     // Private Data
 

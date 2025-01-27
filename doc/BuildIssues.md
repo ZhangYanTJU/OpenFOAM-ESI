@@ -137,15 +137,11 @@ cd $WM_THIRD_PARTY_DIR
 Subequent compilation with Allwmake will now run largely without any
 problems, except that the components linking against CGAL
 (foamyMesh and surfaceBooleanFeatures) will also try to link against
-a nonexistent mpfr library. As a workaround, the link-dependency can
-be removed in wmake/rules/General/CGAL :
+a nonexistent mpfr library. As a workaround, the link-dependency will
+be removed in wmake/rules/General/cgal by specifying the `CGAL_FLAVOUR`
+when compiling:
 ```
-CGAL_LIBS = \
-    -L$(BOOST_ARCH_PATH)/lib \
-    -L$(BOOST_ARCH_PATH)/lib$(WM_COMPILER_LIB_ARCH) \
-    -L$(CGAL_ARCH_PATH)/lib \
-    -L$(CGAL_ARCH_PATH)/lib$(WM_COMPILER_LIB_ARCH) \
-    -lCGAL
+no-cgal | cgal-header | cgal-header-no-mpfr | cgal-no-mpfr | cgal-mpfr
 ```
 
 A robuster solution is still being sought.

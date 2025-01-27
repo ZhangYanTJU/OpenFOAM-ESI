@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,11 +37,13 @@ void Foam::vtk::fileWriter::beginDataArray
     const label nValues
 )
 {
+    typedef typename pTraits<Type>::cmptType cmptType;
+
     static_assert
     (
         (
-            std::is_same<label, typename pTraits<Type>::cmptType>::value
-         || std::is_floating_point<typename pTraits<Type>::cmptType>::value
+            std::is_same_v<label, cmptType>
+         || std::is_floating_point_v<cmptType>
         ),
         "Label and Floating-point vector space only"
     );
@@ -50,7 +52,7 @@ void Foam::vtk::fileWriter::beginDataArray
 
     if (format_)
     {
-        if (std::is_same<label, typename pTraits<Type>::cmptType>::value)
+        if constexpr (std::is_same_v<label, cmptType>)
         {
             if (legacy())
             {

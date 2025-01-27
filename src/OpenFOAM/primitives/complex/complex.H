@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -320,22 +320,16 @@ namespace Detail
     //- The 'conjugate' of non-complex returns itself (pass-through)
     //- it does not return a complex!
     template<class T>
-    typename std::enable_if
-    <
-        !std::is_same<complex, T>::value,
-        const T&
-    >::type conj(const T& val)
+    std::enable_if_t<!std::is_same_v<complex, T>, const T&>
+    conj(const T& val)
     {
         return val;
     }
 
     //- The conjugate of a complex number
     template<class T>
-    typename std::enable_if
-    <
-        std::is_same<complex, T>::value,
-        complex
-    >::type conj(const T& val)
+    std::enable_if_t<std::is_same_v<complex, T>, complex>
+    conj(const T& val)
     {
         return val.conjugate();
     }

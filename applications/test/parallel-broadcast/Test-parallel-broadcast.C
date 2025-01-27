@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,7 +46,7 @@ using namespace Foam;
 template<class T>
 void printPre(const T& value)
 {
-    Info<< nl << "is_contiguous:" << is_contiguous<T>::value << endl;
+    Info<< nl << "is_contiguous:" << is_contiguous_v<T> << endl;
     Pout<< "pre-broadcast: " << value << endl;
 }
 
@@ -68,7 +68,7 @@ void testBroadcast(T& value)
 template<class T>
 void testBroadcast(List<T>& values)
 {
-    Info<< nl << "is_contiguous:" << is_contiguous<T>::value << endl;
+    Info<< nl << "is_contiguous:" << is_contiguous_v<T> << endl;
     Pout<< "pre-broadcast: " << flatOutput(values) << endl;
     Pstream::broadcast(values);
     Pout<< "post-broadcast: " << flatOutput(values) << endl;

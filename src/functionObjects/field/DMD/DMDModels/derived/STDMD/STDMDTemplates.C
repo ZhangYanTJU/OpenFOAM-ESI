@@ -184,41 +184,7 @@ bool Foam::DMDModels::STDMD::calcModes()
 
 
 template<class GeoFieldType>
-typename std::enable_if
-<
-    std::is_same<Foam::scalar, typename GeoFieldType::value_type>::value,
-    void
->::type Foam::DMDModels::STDMD::calcMode
-(
-    GeoFieldType& modeRe,
-    GeoFieldType& modeIm,
-    const RMatrix& primitiveMode,
-    const label magi,
-    const label rowi
-)
-{
-    const label szfld = modeRe.size();
-
-    for (label i = rowi; i < szfld + rowi; ++i)
-    {
-        complex mode(Zero);
-        for (label j = 0; j < evecs_.m(); ++j)
-        {
-            mode += primitiveMode(i, j)*evecs_(j, magi);
-        }
-        const label k = (i-rowi)%szfld;
-        modeRe[k] = mode.real();
-        modeIm[k] = mode.imag();
-    }
-}
-
-
-template<class GeoFieldType>
-typename std::enable_if
-<
-    !std::is_same<Foam::scalar, typename GeoFieldType::value_type>::value,
-    void
->::type Foam::DMDModels::STDMD::calcMode
+void Foam::DMDModels::STDMD::calcMode
 (
     GeoFieldType& modeRe,
     GeoFieldType& modeIm,
@@ -238,10 +204,23 @@ typename std::enable_if
         {
             mode += primitiveMode(i, j)*evecs_(j, magi);
         }
+
         const label k = (i-rowi)%szfld;
-        const label m = (i-rowi)/szfld;
-        modeRe[k][m] = mode.real();
-        modeIm[k][m] = mode.imag();
+
+        if constexpr
+        (
+            std::is_same_v<scalar, typename GeoFieldType::value_type>
+        )
+        {
+            modeRe[k] = mode.real();
+            modeIm[k] = mode.imag();
+        }
+        else
+        {
+            const label m = (i-rowi)/szfld;
+            modeRe[k][m] = mode.real();
+            modeIm[k][m] = mode.imag();
+        }
     }
 }
 

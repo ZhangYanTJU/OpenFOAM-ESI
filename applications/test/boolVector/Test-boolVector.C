@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 {
     Info<< "boolVector" << nl
         << "  size = " << boolVector::size() << nl
-        << "  contiguous = " << is_contiguous<boolVector>::value << nl
+        << "  contiguous = " << is_contiguous_v<boolVector> << nl
         << nl;
 
     {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -300,7 +300,7 @@ public:
         //- Check if the label byte-size associated with the stream
         //- is the same as the given type
         template<class T = label>
-        typename std::enable_if<std::is_integral<T>::value, bool>::type
+        std::enable_if_t<std::is_integral_v<T>, bool>
         checkLabelSize() const noexcept
         {
             return sizeofLabel_ == sizeof(T);
@@ -309,7 +309,7 @@ public:
         //- Check if the scalar byte-size associated with the stream
         //- is the same as the given type
         template<class T = scalar>
-        typename std::enable_if<std::is_floating_point<T>::value, bool>::type
+        std::enable_if_t<std::is_floating_point_v<T>, bool>
         checkScalarSize() const noexcept
         {
             return sizeofScalar_ == sizeof(T);
@@ -515,26 +515,26 @@ protected:
 namespace Detail
 {
 
-//- Termination for input looping (no-op)
-template<class IS> inline void inputLoop(IS&) {}
-
-//- Termination for output looping (no-op)
-template<class OS> inline void outputLoop(OS&) {}
-
 //- Input looping. Read into first parameter and recurse.
 template<class IS, class Type, class... Args>
-inline void inputLoop(IS& is, Type& arg1, Args&&... args)
+void inputLoop(IS& is, Type& arg1, Args&&... args)
 {
     is >> arg1;
-    Detail::inputLoop(is, std::forward<Args>(args)...);
+    if constexpr (sizeof...(args))
+    {
+        Detail::inputLoop(is, std::forward<Args>(args)...);
+    }
 }
 
 //- Output looping. Write first parameter and recurse.
 template<class OS, class Type, class... Args>
-inline void outputLoop(OS& os, const Type& arg1, Args&&... args)
+void outputLoop(OS& os, const Type& arg1, Args&&... args)
 {
     os << arg1;
-    Detail::outputLoop(os, std::forward<Args>(args)...);
+    if constexpr (sizeof...(args))
+    {
+        Detail::outputLoop(os, std::forward<Args>(args)...);
+    }
 }
 
 } // End namespace Detail

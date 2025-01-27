@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -199,12 +199,12 @@ class turbulentDigitalFilterInletFvPatchField
     // Private Typedefs
 
         //- Type of input set of Reynolds stresses
-        typedef typename std::conditional
+        using TypeR = std::conditional_t
         <
-            std::is_same<Type, scalar>::value,
+            std::is_same_v<scalar, Type>,
             scalar,
             symmTensor
-        >::type TypeR;
+        >;
 
 
     // Private Data

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2018 Bernhard Gschaider
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -512,7 +512,7 @@ bool Foam::expressions::exprResult::writeEntryChecked
 
     if (this->size() <= 0)
     {
-        if (value_.good() && is_contiguous<Type>::value)
+        if (value_.good() && is_contiguous_v<Type>)
         {
             const Type& val = value_.get<Type>();
 
@@ -534,7 +534,7 @@ bool Foam::expressions::exprResult::writeEntryChecked
     {
         const Field<Type>& fld = *static_cast<const Field<Type>*>(fieldPtr_);
 
-        if (value_.good() && is_contiguous<Type>::value)
+        if (value_.good() && is_contiguous_v<Type>)
         {
             if (keyword.size())
             {

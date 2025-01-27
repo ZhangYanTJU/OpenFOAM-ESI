@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,10 +40,13 @@ void Foam::FixedList<T, N>::writeEntry(Ostream& os) const
     if (token::compound::isCompound(tag))
     {
         os  << tag << token::SPACE;
-        if (os.format() == IOstreamOption::BINARY && is_contiguous<T>::value)
+        if constexpr (is_contiguous_v<T>)
         {
-            // Need the size too so that List<Type>::readList parses correctly
-            os << static_cast<label>(N);
+            if (os.format() == IOstreamOption::BINARY)
+            {
+                // Need size too so that List<Type>::readList parses correctly
+                os << static_cast<label>(N);
+            }
         }
     }
     os << *this;
@@ -90,7 +93,7 @@ Foam::Ostream& Foam::FixedList<T, N>::writeList
     // small and we prefer a consistent appearance.
     // Eg, FixedList<T,2> or Pair<T> as "(-1 -1)", never as "2{-1}"
 
-    if (os.format() == IOstreamOption::BINARY && is_contiguous<T>::value)
+    if (os.format() == IOstreamOption::BINARY && is_contiguous_v<T>)
     {
         // Binary and contiguous. Size is always non-zero
 
@@ -103,11 +106,7 @@ Foam::Ostream& Foam::FixedList<T, N>::writeList
      ||
         (
             (N <= unsigned(shortLen))
-         &&
-            (
-                is_contiguous<T>::value
-             || Detail::ListPolicy::no_linebreak<T>::value
-            )
+         && (is_contiguous_v<T> || Detail::ListPolicy::no_linebreak<T>::value)
         )
     )
     {
@@ -158,7 +157,7 @@ Foam::Istream& Foam::FixedList<T, N>::readList
 
     is.fatalCheck(FUNCTION_NAME);
 
-    if (is.format() == IOstreamOption::BINARY && is_contiguous<T>::value)
+    if (is.format() == IOstreamOption::BINARY && is_contiguous_v<T>)
     {
         // Binary and contiguous. Length is non-zero
 

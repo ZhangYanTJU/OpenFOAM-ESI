@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,7 +46,7 @@ namespace Foam
 
 //- No-op rotational transform for base types
 template<class T>
-constexpr typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+constexpr std::enable_if_t<std::is_arithmetic_v<T>, T>
 transform(const symmTensor&, const T val)
 {
     return val;

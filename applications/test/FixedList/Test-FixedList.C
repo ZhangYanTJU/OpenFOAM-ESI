@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,8 +85,7 @@ void compileInfo()
 
 
 template<class FixedListType>
-typename std::enable_if
-<(FixedListType::max_size() == 2), bool>::type
+std::enable_if_t<(FixedListType::max_size() == 2), bool>
 is_pair()
 {
      return true;
@@ -94,7 +93,7 @@ is_pair()
 
 
 template<class FixedListType>
-typename std::enable_if<(FixedListType::max_size() != 2), std::string>::type
+std::enable_if_t<(FixedListType::max_size() != 2), std::string>
 is_pair()
 {
      return "not really at all";

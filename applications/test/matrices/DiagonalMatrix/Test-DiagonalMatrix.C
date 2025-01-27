@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,10 +36,9 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
+#include "complex.H"
 #include "DiagonalMatrix.H"
 #include "RectangularMatrix.H"
-#include "scalar.H"
-#include "complex.H"
 #include "TestTools.H"
 
 using namespace Foam;
@@ -173,24 +172,23 @@ void test_global_funcs(Type)
 
 // Do compile-time recursion over the given types
 template<std::size_t I = 0, typename... Tp>
-inline typename std::enable_if<I == sizeof...(Tp), void>::type
-run_tests(const std::tuple<Tp...>& types, const List<word>& typeID){}
-
-
-template<std::size_t I = 0, typename... Tp>
-inline typename std::enable_if<I < sizeof...(Tp), void>::type
-run_tests(const std::tuple<Tp...>& types, const List<word>& typeID)
+void run_tests(const std::tuple<Tp...>& types, const List<word>& names)
 {
-    Info<< nl << "    ## Test constructors: "<< typeID[I] <<" ##" << nl;
-    test_constructors(std::get<I>(types));
+    if constexpr (I < sizeof...(Tp))
+    {
+        const auto& name = names[I];
 
-    Info<< nl << "    ## Test member functions: "<< typeID[I] <<" ##" << nl;
-    test_member_funcs(std::get<I>(types));
+        Info<< nl << "    ## Test constructors: " << name << " ##" << nl;
+        test_constructors(std::get<I>(types));
 
-    Info<< nl << "    ## Test global functions: "<< typeID[I] << " ##" << nl;
-    test_global_funcs(std::get<I>(types));
+        Info<< nl << "    ## Test member functions: " << name << " ##" << nl;
+        test_member_funcs(std::get<I>(types));
 
-    run_tests<I + 1, Tp...>(types, typeID);
+        Info<< nl << "    ## Test global functions: " << name << " ##" << nl;
+        test_global_funcs(std::get<I>(types));
+
+        run_tests<I + 1, Tp...>(types, names);
+    }
 }
 
 
@@ -205,8 +203,8 @@ int main()
 
     const List<word> typeID
     ({
-        "DiagonalMatrix<floatScalar>",
-        "DiagonalMatrix<doubleScalar>",
+        "DiagonalMatrix<float>",
+        "DiagonalMatrix<double>",
         "DiagonalMatrix<complex>"
     });
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -322,12 +322,12 @@ int main(int argc, char *argv[])
     Info<< "_GLIBCXX_RELEASE = " << (_GLIBCXX_RELEASE) << nl;
     #endif
 
-    if (std::is_same<regExp, regExpCxx>::value)
+    if constexpr (std::is_same_v<regExp, regExpCxx>)
     {
         Info<< "Foam::regExp uses C++11 regex" << nl;
     }
     #ifndef _WIN32
-    if (std::is_same<regExp, regExpPosix>::value)
+    if constexpr (std::is_same_v<regExp, regExpPosix>)
     {
         Info<< "Foam::regExp uses POSIX regex" << nl;
     }

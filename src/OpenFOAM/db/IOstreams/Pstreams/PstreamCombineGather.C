@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,7 +62,7 @@ void Foam::Pstream::combineGather
         // Receive from my downstairs neighbours
         for (const label belowID : myComm.below())
         {
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous_v<T>)
             {
                 T received;
 
@@ -115,7 +115,7 @@ void Foam::Pstream::combineGather
                     << " data:" << value << endl;
             }
 
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous_v<T>)
             {
                 UOPstream::write
                 (
@@ -174,7 +174,7 @@ void Foam::Pstream::listCombineGather
         // Receive from my downstairs neighbours
         for (const label belowID : myComm.below())
         {
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous_v<T>)
             {
                 List<T> received(values.size());
 
@@ -233,7 +233,7 @@ void Foam::Pstream::listCombineGather
                     << " data:" << values << endl;
             }
 
-            if (is_contiguous<T>::value)
+            if constexpr (is_contiguous_v<T>)
             {
                 UOPstream::write
                 (

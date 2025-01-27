@@ -94,18 +94,16 @@ namespace Foam
     template<>
     class pTraits<labelList>
     {
-
     public:
 
         //- Component type
         typedef labelList cmptType;
     };
 
-    //- Template specialization for pTraits<labelList> so we can have fields
+    //- Template specialization for pTraits<vectorList> so we can have fields
     template<>
     class pTraits<vectorList>
     {
-
     public:
 
         //- Component type

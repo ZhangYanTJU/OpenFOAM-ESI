@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -413,12 +413,8 @@ protected:
         // Typedefs
 
             //- The list container type
-            using list_type = typename std::conditional
-            <
-                Const,
-                const UPtrList<T>,
-                UPtrList<T>
-            >::type;
+            using list_type =
+                std::conditional_t<Const, const UPtrList<T>, UPtrList<T>>;
 
 
         protected:

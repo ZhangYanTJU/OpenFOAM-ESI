@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -254,11 +254,11 @@ Foam::label Foam::CompactListList<T>::maxNonLocalSize(const label rowi) const
 template<class T>
 std::streamsize Foam::CompactListList<T>::byteSize() const
 {
-    if (!is_contiguous<T>::value)
+    if constexpr (!is_contiguous_v<T>)
     {
         FatalErrorInFunction
             << "Invalid for non-contiguous data types"
-            << abort(FatalError);
+            << Foam::abort(FatalError);
     }
     return this->size_bytes();
 }

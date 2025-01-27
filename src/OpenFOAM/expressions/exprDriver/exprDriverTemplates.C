@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2010-2018 Bernhard Gschaider
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -137,7 +137,7 @@ bool Foam::expressions::exprDriver::isFunction(const word& name) const
     // Currently only scalar, vector
     #undef doLocalCode
     #define doLocalCode(WhichType, MapperMember)                    \
-    if (std::is_same<Type, WhichType>::value)                       \
+    if constexpr (std::is_same_v<Type, WhichType>)                  \
     {                                                               \
         return bool                                                 \
         (                                                           \
@@ -172,7 +172,7 @@ Type Foam::expressions::exprDriver::getFunctionValue
         // Currently only scalar, vector
         #undef doLocalCode
         #define doLocalCode(WhichType, MapperMember)                \
-        if (std::is_same<Type, WhichType>::value)                   \
+        if constexpr (std::is_same_v<Type, WhichType>)              \
         {                                                           \
             const Function1<WhichType>* ptr =                       \
                 this->template getFunction1Ptr<WhichType>           \
@@ -230,7 +230,7 @@ void Foam::expressions::exprDriver::fillFunctionValues
         // Currently only scalar, vector
         #undef doLocalCode
         #define doLocalCode(WhichType, MapperMember)                \
-        if (std::is_same<Type, WhichType>::value)                   \
+        if constexpr (std::is_same_v<Type, WhichType>)              \
         {                                                           \
             const Function1<WhichType>* ptr =                       \
                 this->template getFunction1Ptr<WhichType>           \

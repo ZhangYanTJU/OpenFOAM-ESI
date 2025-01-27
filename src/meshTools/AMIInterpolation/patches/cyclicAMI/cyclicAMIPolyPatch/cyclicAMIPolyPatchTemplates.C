@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021-2024 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,12 +53,15 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     const UList<Type>& defaultValues
 ) const
 {
+    // Can rotate fields (vector and non-spherical tensors)
+    constexpr bool transform_supported = is_rotational_vectorspace_v<Type>;
+
+    [[maybe_unused]]
     autoPtr<coordSystem::cylindrical> cs;
 
     // Similar to doTransform.
-    // - could also check if !std::is_same<sphericalTensor, Type>:value
 
-    if (is_vectorspace<Type>::value)
+    if constexpr (transform_supported)
     {
         cs.reset(cylindricalCS());
     }
@@ -67,7 +70,8 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     {
         return interpolateUntransformed(fld, defaultValues);
     }
-    else
+
+    if constexpr (transform_supported)
     {
         const cyclicAMIPolyPatch& nbrPp = this->neighbPatch();
 
@@ -144,6 +148,15 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
             interpolateUntransformed(localFld, localDeflt)
         );
     }
+    else  // (!transform_supported)
+    {
+        FatalErrorInFunction
+            << "CODING ERROR??" << nl
+            << "calculated cylindrical coordinate system,"
+               " but does not appear to be a vector-space type" << endl
+            << Foam::abort(FatalError);
+        return nullptr;
+    }
 }
 
 
@@ -205,9 +218,13 @@ void Foam::cyclicAMIPolyPatch::initInterpolate
         return;
     }
 
+    // Can rotate fields (vector and non-spherical tensors)
+    constexpr bool transform_supported = is_rotational_vectorspace_v<Type>;
+
+    [[maybe_unused]]
     autoPtr<coordSystem::cylindrical> cs;
 
-    if (is_vectorspace<Type>::value)
+    if constexpr (transform_supported)
     {
         cs.reset(cylindricalCS());
     }
@@ -223,7 +240,7 @@ void Foam::cyclicAMIPolyPatch::initInterpolate
             recvBuffers
         );
     }
-    else
+    else if constexpr (transform_supported)
     {
         const cyclicAMIPolyPatch& nbrPp = this->neighbPatch();
 
@@ -276,10 +293,14 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
 
     auto tresult = tmp<Field<Type>>::New(this->size(), Zero);
 
-    // Note: tresult is optionally in transformed coord system
+    // Rotate fields (vector and non-spherical tensors)
+    constexpr bool transform_supported = is_rotational_vectorspace_v<Type>;
+
+    [[maybe_unused]]
     autoPtr<coordSystem::cylindrical> cs;
 
-    if (is_vectorspace<Type>::value)
+    // Rotate fields (vector and non-spherical tensors)
+    if constexpr (transform_supported)
     {
         cs.reset(cylindricalCS());
     }
@@ -294,7 +315,7 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
             defaultValues
         );
     }
-    else
+    else if constexpr (transform_supported)
     {
         const tensorField ownT(cs().R(this->faceCentres()));
 
@@ -338,9 +359,15 @@ void Foam::cyclicAMIPolyPatch::interpolate
     //- Commented out for now since called with non-primitives (e.g. wallPoint
     //  from FaceCellWave) - missing Foam::transform, Foam::invTransform
     /*
+     *
+    // Rotate fields (vector and non-spherical tensors)
+    constexpr bool transform_supported = is_rotational_vectorspace_v<Type>;
+
+    [[maybe_unused]]
     autoPtr<coordSystem::cylindrical> cs;
 
-    if (is_vectorspace<Type>::value)
+    // Rotate fields (vector and non-spherical tensors)
+    if constexpr (transform_supported)
     {
         cs.reset(cylindricalCS());
     }

@@ -72,7 +72,7 @@ class Enum
     // Allow enums and integrals (should fit within an int)
     static_assert
     (
-        std::is_enum<EnumType>::value || std::is_integral<EnumType>::value,
+        std::is_enum_v<EnumType> || std::is_integral_v<EnumType>,
         "Enum must be enum or an integral type"
     );
 

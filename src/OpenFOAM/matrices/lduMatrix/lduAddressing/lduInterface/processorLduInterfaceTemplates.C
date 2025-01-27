@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,10 +36,15 @@ template<class Type>
 void Foam::processorLduInterface::send
 (
     const UPstream::commsTypes commsType,
-    const UList<Type>& f
+    const UList<Type>& fld
 ) const
 {
-    const label nBytes = f.byteSize();
+    if constexpr (!is_contiguous_v<Type>)
+    {
+        FatalErrorInFunction
+            << "Invalid for non-contiguous data types"
+            << Foam::abort(FatalError);
+    }
 
     if
     (
@@ -51,27 +56,29 @@ void Foam::processorLduInterface::send
         (
             commsType,
             neighbProcNo(),
-            f.cdata_bytes(),
-            nBytes,
+            fld.cdata_bytes(),
+            fld.size_bytes(),
             tag(),
             comm()
         );
     }
     else if (commsType == UPstream::commsTypes::nonBlocking)
     {
-        resizeBuf(byteSendBuf_, nBytes);
-        std::memcpy
-        (
-            static_cast<void*>(byteSendBuf_.data()), f.cdata(), nBytes
-        );
-
-        resizeBuf(byteRecvBuf_, nBytes);
-
-        if (!nBytes)
+        if (fld.empty())
         {
             // Can skip empty messages
             return;
         }
+
+        const label nBytes = fld.size_bytes();
+
+        resizeBuf(byteSendBuf_, nBytes);
+        resizeBuf(byteRecvBuf_, nBytes);
+
+        std::memcpy
+        (
+            static_cast<void*>(byteSendBuf_.data()), fld.cdata(), nBytes
+        );
 
         UIPstream::read
         (
@@ -106,10 +113,15 @@ template<class Type>
 void Foam::processorLduInterface::receive
 (
     const UPstream::commsTypes commsType,
-    UList<Type>& f
+    UList<Type>& fld
 ) const
 {
-    const label nBytes = f.byteSize();
+    if constexpr (!is_contiguous_v<Type>)
+    {
+        FatalErrorInFunction
+            << "Invalid for non-contiguous data types"
+            << Foam::abort(FatalError);
+    }
 
     if
     (
@@ -121,17 +133,19 @@ void Foam::processorLduInterface::receive
         (
             commsType,
             neighbProcNo(),
-            f.data_bytes(),
-            nBytes,
+            fld.data_bytes(),
+            fld.size_bytes(),
             tag(),
             comm()
         );
     }
     else if (commsType == UPstream::commsTypes::nonBlocking)
     {
+        const label nBytes = fld.size_bytes();
+
         std::memcpy
         (
-            static_cast<void*>(f.data()), byteRecvBuf_.cdata(), nBytes
+            static_cast<void*>(fld.data()), byteRecvBuf_.cdata(), nBytes
         );
     }
     else
@@ -163,20 +177,23 @@ void Foam::processorLduInterface::compressedSend
     const UList<Type>& f
 ) const
 {
-    if
+    if constexpr
     (
-        f.size()
-     && UPstream::floatTransfer
-     && (!std::is_integral<Type>::value && sizeof(scalar) != sizeof(float))
+        std::is_integral_v<Type>
+     || (sizeof(float) == sizeof(scalar))
     )
     {
-        static const label nCmpts =
-        (
-            // Placeholder value for unusable template instantiation
-            std::is_integral<Type>::value
-          ? 1
-          : sizeof(Type)/sizeof(scalar)
-        );
+        // No compression if integral or scalar is float
+        this->send(commsType, f);
+    }
+    else if (f.empty() || !UPstream::floatTransfer)
+    {
+        // No compression
+        this->send(commsType, f);
+    }
+    else  // (!f.empty() && UPstream::floatTransfer)
+    {
+        static const label nCmpts = (sizeof(Type)/sizeof(scalar));
         const label nm1 = (f.size() - 1)*nCmpts;
         const label nBytes = f.size()*nCmpts*sizeof(float);
 
@@ -239,10 +256,6 @@ void Foam::processorLduInterface::compressedSend
                 << exit(FatalError);
         }
     }
-    else
-    {
-        this->send(commsType, f);
-    }
 }
 
 
@@ -253,20 +266,23 @@ void Foam::processorLduInterface::compressedReceive
     UList<Type>& f
 ) const
 {
-    if
+    if constexpr
     (
-        f.size()
-     && UPstream::floatTransfer
-     && (!std::is_integral<Type>::value && sizeof(scalar) != sizeof(float))
+        std::is_integral_v<Type>
+     || (sizeof(float) == sizeof(scalar))
     )
     {
-        static const label nCmpts =
-        (
-            // Placeholder value for unusable template instantiation
-            std::is_integral<Type>::value
-          ? 1
-          : sizeof(Type)/sizeof(scalar)
-        );
+        // No compression if integral or scalar is float
+        this->receive<Type>(commsType, f);
+    }
+    else if (f.empty() || !UPstream::floatTransfer)
+    {
+        // Nothing to compress
+        this->receive<Type>(commsType, f);
+    }
+    else  // (!f.empty() && UPstream::floatTransfer)
+    {
+        static const label nCmpts = (sizeof(Type)/sizeof(scalar));
         const label nm1 = (f.size() - 1)*nCmpts;
         const label nBytes = f.size()*nCmpts*sizeof(float);
 
@@ -305,10 +321,6 @@ void Foam::processorLduInterface::compressedReceive
         {
             sArray[i] = fArray[i] + slast[i%nCmpts];
         }
-    }
-    else
-    {
-        this->receive<Type>(commsType, f);
     }
 }
 

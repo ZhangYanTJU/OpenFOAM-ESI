@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -734,7 +734,7 @@ void Foam::Field<Type>::writeEntry(const word& keyword, Ostream& os) const
     // The contents are 'uniform' if the list is non-empty
     // and all entries have identical values.
 
-    if (is_contiguous<Type>::value && List<Type>::uniform())
+    if (is_contiguous_v<Type> && List<Type>::uniform())
     {
         os << word("uniform") << token::SPACE << List<Type>::front();
     }

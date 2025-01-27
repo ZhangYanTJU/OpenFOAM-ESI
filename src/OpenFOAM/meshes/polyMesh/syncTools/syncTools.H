@@ -555,7 +555,7 @@ public:
             //- Return neighbour cell values for all boundary faces
             //- by swapping via boundary faces
             template<class T>
-            FOAM_NODISCARD static List<T> swapBoundaryCellList
+            [[nodiscard]] static List<T> swapBoundaryCellList
             (
                 const polyMesh& mesh,
                 const UList<T>& cellData,
@@ -570,7 +570,7 @@ public:
 
             //- Return neighbour cell positions for all boundary faces
             //- by swapping via boundary faces
-            FOAM_NODISCARD static List<point> swapBoundaryCellPositions
+            [[nodiscard]] static List<point> swapBoundaryCellPositions
             (
                 const polyMesh& mesh,
                 const UList<point>& cellData,

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -154,24 +154,24 @@ public:
             friend dictionary;
 
             //- The const/non-const type for the context and sub-dictionaries
-            typedef typename std::conditional
-                <Const, const dictionary, dictionary>::type dict_type;
+            using dict_type =
+                std::conditional_t<Const, const dictionary, dictionary>;
 
             //- The const/non-const type for entries
-            typedef typename std::conditional
-                <Const, const entry, entry>::type value_type;
+            using value_type =
+                std::conditional_t<Const, const entry, entry>;
 
             //- A pointer to a const/non-const dictionary
-            typedef dict_type* dict_pointer;
+            using dict_pointer = dict_type*;
 
             //- A reference to a const/non-const dictionary
-            typedef dict_type& dict_reference;
+            using dict_reference = dict_type&;
 
             //- A pointer to a const/non-const entry
-            typedef value_type* pointer;
+            using pointer = value_type*;
 
             //- A reference to a const/non-const entry
-            typedef value_type& reference;
+            using reference = value_type&;
 
 
         protected:

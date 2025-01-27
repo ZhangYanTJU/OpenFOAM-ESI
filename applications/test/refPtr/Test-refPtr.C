@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -36,13 +36,13 @@ template<class T>
 void constructInfo()
 {
     Info<< " move-constructible:"
-        << std::is_move_constructible<T>::value
+        << std::is_move_constructible_v<T>
         << " move-assignable:"
-        << std::is_move_assignable<T>::value
+        << std::is_move_assignable_v<T>
         << " nothrow:"
-        << std::is_nothrow_move_assignable<T>::value
+        << std::is_nothrow_move_assignable_v<T>
         << " trivially:"
-        << std::is_trivially_move_assignable<T>::value
+        << std::is_trivially_move_assignable_v<T>
         << nl;
 }
 

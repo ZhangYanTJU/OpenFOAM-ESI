@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2024 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
     // Regular broadcast doesn't work
     Info<< "exprValue"
         << " sizeof:" << sizeof(expressions::exprValue)
-        << " contiguous:" << is_contiguous<expressions::exprValue>::value
+        << " contiguous:" << is_contiguous_v<expressions::exprValue>
         << nl << nl;
 
     {

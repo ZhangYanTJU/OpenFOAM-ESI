@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,8 +32,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef VectorSpaceOps_H
-#define VectorSpaceOps_H
+#ifndef Foam_VectorSpaceOps_H
+#define Foam_VectorSpaceOps_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -41,56 +42,76 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//- General looping form. Executing at index \<I\> with termination at \<N\>
+//- Recursive execution. Terminating at \<N\>, starting at index \<I\>
 template<direction N, direction I>
 struct VectorSpaceOps
 {
     template<class V, class S, class EqOp>
     static inline void eqOpS(V& vs, const S& s, EqOp eo)
     {
-        eo(vs.v_[I], s);
-        VectorSpaceOps<N, I+1>::eqOpS(vs, s, eo);
+        // if constexpr (I < N)
+        {
+            eo(vs.v_[I], s);
+            VectorSpaceOps<N, I+1>::eqOpS(vs, s, eo);
+        }
     }
 
     template<class S, class V, class EqOp>
     static inline void SeqOp(S& s, const V& vs, EqOp eo)
     {
-        eo(s, vs.v_[I]);
-        VectorSpaceOps<N, I+1>::SeqOp(s, vs, eo);
+        // if constexpr (I < N)
+        {
+            eo(s, vs.v_[I]);
+            VectorSpaceOps<N, I+1>::SeqOp(s, vs, eo);
+        }
     }
 
     template<class V1, class V2, class EqOp>
     static inline void eqOp(V1& vs1, const V2& vs2, EqOp eo)
     {
-        eo(vs1.v_[I], vs2.v_[I]);
-        VectorSpaceOps<N, I+1>::eqOp(vs1, vs2, eo);
+        // if constexpr (I < N)
+        {
+            eo(vs1.v_[I], vs2.v_[I]);
+            VectorSpaceOps<N, I+1>::eqOp(vs1, vs2, eo);
+        }
     }
 
 
     template<class V, class V1, class S, class Op>
     static inline void opVS(V& vs, const V1& vs1, const S& s, Op o)
     {
-        vs.v_[I] = o(vs1.v_[I], s);
-        VectorSpaceOps<N, I+1>::opVS(vs, vs1, s, o);
+        // if constexpr (I < N)
+        {
+            vs.v_[I] = o(vs1.v_[I], s);
+            VectorSpaceOps<N, I+1>::opVS(vs, vs1, s, o);
+        }
     }
 
     template<class V, class S, class V1, class Op>
     static inline void opSV(V& vs, const S& s,  const V1& vs1, Op o)
     {
-        vs.v_[I] = o(s, vs1.v_[I]);
-        VectorSpaceOps<N, I+1>::opSV(vs, s, vs1, o);
+        // if constexpr (I < N)
+        {
+            vs.v_[I] = o(s, vs1.v_[I]);
+            VectorSpaceOps<N, I+1>::opSV(vs, s, vs1, o);
+        }
     }
 
     template<class V, class V1, class Op>
     static inline void op(V& vs, const V1& vs1, const V1& vs2, Op o)
     {
-        vs.v_[I] = o(vs1.v_[I], vs2.v_[I]);
-        VectorSpaceOps<N, I+1>::op(vs, vs1, vs2, o);
+        // if constexpr (I < N)
+        {
+            vs.v_[I] = o(vs1.v_[I], vs2.v_[I]);
+            VectorSpaceOps<N, I+1>::op(vs, vs1, vs2, o);
+        }
     }
 };
 
 
 //- Loop termination form, when index and loop count \<N\> are identical
+//  Not really needed with c++17 'if constexpr' except that gcc-7, gcc-8
+//  produce spurious warnings about unused parameters
 template<direction N>
 struct VectorSpaceOps<N, N>
 {

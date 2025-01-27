@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -652,7 +652,11 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::adjustFieldTemplate
 
     // Output scaling for the variable, but not for integer types
     // which are typically ids etc.
-    if (!std::is_integral<Type>::value)
+    if constexpr (std::is_integral_v<Type>)
+    {
+        return tfield;
+    }
+    else
     {
         scalar value;
 
@@ -667,9 +671,13 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::adjustFieldTemplate
             // or automatically scale by 1/sqrt(nComponents) instead ...
 
             Type refLevel;
-            for (direction cmpt = 0; cmpt < pTraits<Type>::nComponents; ++cmpt)
+            if constexpr (is_vectorspace_v<Type>)
             {
-                setComponent(refLevel, cmpt) = value;
+                refLevel.fill(value);
+            }
+            else
+            {
+                refLevel = value;
             }
 
             if (verbose_)
@@ -708,14 +716,13 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::adjustFieldTemplate
             // Apply scaling
             tadjusted.ref() *= value;
         }
+    }
 
-        // Rotate fields (vector and non-spherical tensors)
-        if
-        (
-            (is_vectorspace<Type>::value && pTraits<Type>::nComponents > 1)
-         && geometryTransform_.good()
-         && !geometryTransform_.R().is_identity()
-        )
+
+    // Rotate fields (vector and non-spherical tensors)
+    if constexpr (is_rotational_vectorspace_v<Type>)
+    {
+        if (geometryTransform_.good() && !geometryTransform_.R().is_identity())
         {
             if (!tadjusted)
             {

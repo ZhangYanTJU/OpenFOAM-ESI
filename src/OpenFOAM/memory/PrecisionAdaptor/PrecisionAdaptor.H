@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,7 +64,7 @@ class ConstPrecisionAdaptor
         //- Set adaptor for different input, copying as required
         void setInput(const Container<InputType>& src)
         {
-            if (std::is_same<Type, InputType>::value)
+            if constexpr (std::is_same_v<Type, InputType>)
             {
                 // Use reference directly
                 this->cref(reinterpret_cast<const Container<Type>&>(src));
@@ -80,7 +80,7 @@ class ConstPrecisionAdaptor
         //- Set from tmp, steal pointer if possible
         void tmpInput(tmp<Container<InputType>>& tsrc)
         {
-            if (std::is_same<Type, InputType>::value && tsrc.is_pointer())
+            if (std::is_same_v<Type, InputType> && tsrc.is_pointer())
             {
                 // Acquire control of the managed pointer
                 this->reset(reinterpret_cast<Container<Type>*>(tsrc.ptr()));
@@ -161,10 +161,10 @@ public:
         static const Container<Type>& select
         (
             const Container<InputType>& input,
-            Container<Type>& other
+            [[maybe_unused]] Container<Type>& other
         )
         {
-            if (std::is_same<Type, InputType>::value)
+            if constexpr (std::is_same_v<Type, InputType>)
             {
                 return reinterpret_cast<const Container<Type>&>(input);
             }
@@ -197,10 +197,14 @@ class PrecisionAdaptor
     // Private Member Functions
 
         //- Set adaptor for different input, copying as required
-        void setInput(Container<InputType>& src, const bool doCopy)
+        void setInput
+        (
+            Container<InputType>& src,
+            [[maybe_unused]] const bool doCopy
+        )
         {
             orig_.ref(src);
-            if (std::is_same<Type, InputType>::value)
+            if constexpr (std::is_same_v<Type, InputType>)
             {
                 // Use reference directly
                 this->ref(reinterpret_cast<Container<Type>&>(src));

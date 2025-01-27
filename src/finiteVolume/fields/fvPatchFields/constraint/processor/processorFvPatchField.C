@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -221,10 +221,10 @@ void Foam::processorFvPatchField<Type>::initEvaluate
         if
         (
             commsType == UPstream::commsTypes::nonBlocking
-         && (std::is_integral<Type>::value || !UPstream::floatTransfer)
+         && (std::is_integral_v<Type> || !UPstream::floatTransfer)
         )
         {
-            if (!is_contiguous<Type>::value)
+            if constexpr (!is_contiguous_v<Type>)
             {
                 FatalErrorInFunction
                     << "Invalid for non-contiguous data types"
@@ -275,7 +275,7 @@ void Foam::processorFvPatchField<Type>::evaluate
         if
         (
             commsType == UPstream::commsTypes::nonBlocking
-         && (std::is_integral<Type>::value || !UPstream::floatTransfer)
+         && (std::is_integral_v<Type> || !UPstream::floatTransfer)
         )
         {
             // Fast path: received into *this
@@ -456,7 +456,7 @@ void Foam::processorFvPatchField<Type>::initInterfaceMatrixUpdate
     if
     (
         commsType == UPstream::commsTypes::nonBlocking
-     && (std::is_integral<Type>::value || !UPstream::floatTransfer)
+     && (std::is_integral_v<Type> || !UPstream::floatTransfer)
     )
     {
         // Fast path.
@@ -522,7 +522,7 @@ void Foam::processorFvPatchField<Type>::updateInterfaceMatrix
     if
     (
         commsType == UPstream::commsTypes::nonBlocking
-     && (std::is_integral<Type>::value || !UPstream::floatTransfer)
+     && (std::is_integral_v<Type> || !UPstream::floatTransfer)
     )
     {
         // Fast path: consume straight from receive buffer

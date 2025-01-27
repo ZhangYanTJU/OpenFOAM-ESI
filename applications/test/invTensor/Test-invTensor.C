@@ -31,13 +31,12 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
+#include "complex.H"
 #include "tensor.H"
 #include "symmTensor.H"
 #include "transform.H"
 #include "unitConversion.H"
 #include "Random.H"
-#include "scalar.H"
-#include "complex.H"
 #include "sigFpe.H"
 
 using namespace Foam;

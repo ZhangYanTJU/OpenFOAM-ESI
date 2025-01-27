@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,8 +32,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef unitConversion_H
-#define unitConversion_H
+#ifndef Foam_unitConversion_H
+#define Foam_unitConversion_H
 
 #include "mathematicalConstants.H"
 
@@ -121,13 +121,13 @@ inline constexpr scalar paToBar(const scalar pa) noexcept
 
 
 //- User literal for degrees to radians conversion (integers)
-inline constexpr scalar operator "" _deg(unsigned long long int deg) noexcept
+inline constexpr scalar operator ""_deg(unsigned long long int deg) noexcept
 {
     return (deg*M_PI/180.0);
 }
 
 //- User literal for degrees to radians conversion (floats)
-inline constexpr scalar operator "" _deg(long double deg) noexcept
+inline constexpr scalar operator ""_deg(long double deg) noexcept
 {
     return (deg*M_PI/180.0);
 }

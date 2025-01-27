@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,11 +37,13 @@ Foam::wordList Foam::functionObjects::ensightCloudWriteObject::writeFields
     const objectRegistry& obrTmp
 )
 {
+    using cmptType = typename pTraits<Type>::cmptType;
+
     static_assert
     (
         (
-            std::is_same<label, typename pTraits<Type>::cmptType>::value
-         || std::is_floating_point<typename pTraits<Type>::cmptType>::value
+            std::is_same_v<label, cmptType>
+         || std::is_floating_point_v<cmptType>
         ),
         "Label and Floating-point vector space only"
     );

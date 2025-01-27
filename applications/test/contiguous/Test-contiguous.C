@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,13 +72,14 @@ void printInfo(const char* const name = nullptr)
         Info<< name;
     }
 
-    Info<< " contiguous=" <<  Switch(is_contiguous<T>::value);
+    Info<< " contiguous=" <<  Switch(is_contiguous<T>::value)
+        << " / " <<  Switch(is_contiguous_v<T>);
 
-    if (is_contiguous_label<T>::value)
+    if constexpr (is_contiguous_label<T>::value)
     {
         Info<< " label";
     }
-    if (is_contiguous_scalar<T>::value)
+    if constexpr (is_contiguous_scalar<T>::value)
     {
         Info<< " scalar";
     }
@@ -97,9 +98,10 @@ int main(int argc, char *argv[])
     argList::noFunctionObjects();
 
     printInfo<label>();
+    printInfo<label>();
     printInfo<double>();
     printInfo<FixedList<double, 4>>();
-    printInfo<Pair<long>>();
+    printInfo<const Pair<long>>();
 
     printInfo<FixedList<word, 2>>();
     printInfo<Pair<word>>();
