@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "thermo.H"
+#include "thermoPyrolysis.H"
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 #include "absorptionEmissionModel.H"

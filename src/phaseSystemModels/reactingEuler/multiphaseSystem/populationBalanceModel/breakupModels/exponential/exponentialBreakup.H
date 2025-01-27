@@ -31,12 +31,12 @@ Description
     formulation implemented in the populationBalanceModel class.
 
 SourceFiles
-    exponential.C
+    exponentialBreakup.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef exponential_H
-#define exponential_H
+#ifndef Foam_diameterModels_breakup_exponential_H
+#define Foam_diameterModels_breakup_exponential_H
 
 #include "breakupModel.H"
 

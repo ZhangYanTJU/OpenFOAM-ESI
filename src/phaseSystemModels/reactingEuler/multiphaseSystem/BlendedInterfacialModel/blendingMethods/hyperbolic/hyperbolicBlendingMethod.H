@@ -29,12 +29,12 @@ Class
 Description
 
 SourceFiles
-    hyperbolic.C
+    hyperbolicBlendingMethod.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef hyperbolic_H
-#define hyperbolic_H
+#ifndef Foam_blendingMethod_hyperbolic_H
+#define Foam_blendingMethod_hyperbolic_H
 
 #include "blendingMethod.H"
 

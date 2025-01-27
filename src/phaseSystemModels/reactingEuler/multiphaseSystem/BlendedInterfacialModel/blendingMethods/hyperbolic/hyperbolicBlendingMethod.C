@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2014-2018 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,50 +25,88 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "exponential.H"
+#include "hyperbolicBlendingMethod.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace diameterModels
+namespace blendingMethods
 {
-namespace breakupModels
-{
-    defineTypeNameAndDebug(exponential, 0);
-    addToRunTimeSelectionTable(breakupModel, exponential, dictionary);
-}
-}
-}
+    defineTypeNameAndDebug(hyperbolic, 0);
 
+    addToRunTimeSelectionTable
+    (
+        blendingMethod,
+        hyperbolic,
+        dictionary
+    );
+}
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::diameterModels::breakupModels::exponential::exponential
+Foam::blendingMethods::hyperbolic::hyperbolic
 (
-    const populationBalanceModel& popBal,
-    const dictionary& dict
+    const dictionary& dict,
+    const wordList& phaseNames
 )
 :
-    breakupModel(popBal, dict),
-    exponent_(dict.get<scalar>("exponent")),
-    C_(dict.get<scalar>("C"))
-{}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::diameterModels::breakupModels::exponential::setBreakupRate
-(
-    volScalarField& breakupRate,
-    const label i
-)
+    blendingMethod(dict),
+    transitionAlphaScale_("transitionAlphaScale", dimless, dict)
 {
-    const sizeGroup& fi = popBal_.sizeGroups()[i];
+    for (const word& phaseName : phaseNames)
+    {
+        minContinuousAlpha_.insert
+        (
+            phaseName,
+            dimensionedScalar
+            (
+                IOobject::groupName("minContinuousAlpha", phaseName),
+                dimless,
+                dict
+            )
+        );
+    }
+}
 
-    breakupRate.primitiveFieldRef() =
-        C_*exp(exponent_*fi.x().value());
+
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField> Foam::blendingMethods::hyperbolic::f1
+(
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    return
+        (
+            1
+          + tanh
+            (
+                (4/transitionAlphaScale_)
+               *(phase2 - minContinuousAlpha_[phase2.name()])
+            )
+        )/2;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::blendingMethods::hyperbolic::f2
+(
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    return
+        (
+            1
+          + tanh
+            (
+                (4/transitionAlphaScale_)
+               *(phase1 - minContinuousAlpha_[phase1.name()])
+            )
+        )/2;
 }
 
 

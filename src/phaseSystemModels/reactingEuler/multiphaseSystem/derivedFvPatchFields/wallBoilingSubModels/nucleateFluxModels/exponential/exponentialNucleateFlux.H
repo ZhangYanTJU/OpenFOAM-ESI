@@ -67,12 +67,12 @@ Usage
     \endtable
 
 SourceFiles
-    exponential.C
+    exponentialNucleateFlux.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef exponential_H
-#define exponential_H
+#ifndef Foam_wallBoiling_nucleateFlux_exponential_H
+#define Foam_wallBoiling_nucleateFlux_exponential_H
 
 #include "nucleateFluxModel.H"
 

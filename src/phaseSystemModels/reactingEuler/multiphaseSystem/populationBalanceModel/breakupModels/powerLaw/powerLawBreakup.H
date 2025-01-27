@@ -31,12 +31,12 @@ Description
     formulation implemented in the populationBalanceModel class.
 
 SourceFiles
-    powerLaw.C
+    powerLawBreakup.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef powerLaw_H
-#define powerLaw_H
+#ifndef Foam_diameterModels_breakup_powerLaw_H
+#define Foam_diameterModels_breakup_powerLaw_H
 
 #include "breakupModel.H"
 

@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2014-2018 OpenFOAM Foundation
+    Copyright (C) 2017-2018 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,88 +26,48 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "hyperbolic.H"
+#include "powerLawBreakup.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace blendingMethods
+namespace diameterModels
 {
-    defineTypeNameAndDebug(hyperbolic, 0);
+namespace breakupModels
+{
+    defineTypeNameAndDebug(powerLaw, 0);
+    addToRunTimeSelectionTable(breakupModel, powerLaw, dictionary);
+}
+}
+}
 
-    addToRunTimeSelectionTable
-    (
-        blendingMethod,
-        hyperbolic,
-        dictionary
-    );
-}
-}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::blendingMethods::hyperbolic::hyperbolic
+Foam::diameterModels::breakupModels::powerLaw::powerLaw
 (
-    const dictionary& dict,
-    const wordList& phaseNames
+    const populationBalanceModel& popBal,
+    const dictionary& dict
 )
 :
-    blendingMethod(dict),
-    transitionAlphaScale_("transitionAlphaScale", dimless, dict)
-{
-    for (const word& phaseName : phaseNames)
-    {
-        minContinuousAlpha_.insert
-        (
-            phaseName,
-            dimensionedScalar
-            (
-                IOobject::groupName("minContinuousAlpha", phaseName),
-                dimless,
-                dict
-            )
-        );
-    }
-}
+    breakupModel(popBal, dict),
+    power_(dict.get<scalar>("power"))
+{}
 
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::blendingMethods::hyperbolic::f1
+void Foam::diameterModels::breakupModels::powerLaw::setBreakupRate
 (
-    const phaseModel& phase1,
-    const phaseModel& phase2
-) const
+    volScalarField& breakupRate,
+    const label i
+)
 {
-    return
-        (
-            1
-          + tanh
-            (
-                (4/transitionAlphaScale_)
-               *(phase2 - minContinuousAlpha_[phase2.name()])
-            )
-        )/2;
-}
+    const sizeGroup& fi = popBal_.sizeGroups()[i];
 
-
-Foam::tmp<Foam::volScalarField> Foam::blendingMethods::hyperbolic::f2
-(
-    const phaseModel& phase1,
-    const phaseModel& phase2
-) const
-{
-    return
-        (
-            1
-          + tanh
-            (
-                (4/transitionAlphaScale_)
-               *(phase1 - minContinuousAlpha_[phase1.name()])
-            )
-        )/2;
+    breakupRate.primitiveFieldRef() = pow(fi.x().value(), power_);
 }
 
 
