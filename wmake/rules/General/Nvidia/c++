@@ -12,7 +12,7 @@ ptFLAGS    := -DNoRepository
 
 c++WARN     = \
     -Wall -Wextra \
-    --diag_suppress=111,128,177,185,612,998,1098 \
+    --diag_suppress=111,128,177,185,612,998,1098,1428 \
     --display_error_number
 
 # Less restrictive warnings (eg, for flex++, CGAL, etc.)
@@ -34,5 +34,6 @@ sinclude $(GENERAL_RULES)/common/c++$(WM_COMPILE_OPTION)
 #612-D: overloaded virtual function ... is only partially overridden
 #998-D: function XX is hidden by YY -- virtual function override intended?
 #1098-D: unknown attribute "fallthrough"
+#1428-D: [offset_in_non_POD_nonstandard]
 #
 #------------------------------------------------------------------------------

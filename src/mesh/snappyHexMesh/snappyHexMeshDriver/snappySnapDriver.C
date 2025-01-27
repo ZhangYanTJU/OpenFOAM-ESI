@@ -3262,6 +3262,10 @@ void Foam::snappySnapDriver::doSnap
 
             // Update mesh mover
             ppPtr = meshRefinement::makePatch(mesh, adaptPatchIDs);
+
+            // Update distance to attract to nearest feature on surface
+            snapDist = calcSnapDistance(mesh, snapParams, ppPtr());
+
             meshMoverPtr.reset
             (
                 new motionSmoother

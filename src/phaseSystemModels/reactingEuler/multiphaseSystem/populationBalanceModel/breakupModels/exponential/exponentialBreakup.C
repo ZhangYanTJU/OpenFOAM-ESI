@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd
+    Copyright (C) 2017-2018 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,72 +26,50 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "exponential.H"
+#include "exponentialBreakup.H"
 #include "addToRunTimeSelectionTable.H"
-#include "uniformDimensionedFields.H"
-#include "phasePairKey.H"
-#include "phaseSystem.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace wallBoilingModels
+namespace diameterModels
 {
-namespace nucleateFluxModels
+namespace breakupModels
 {
     defineTypeNameAndDebug(exponential, 0);
-    addToRunTimeSelectionTable
-    (
-        nucleateFluxModel,
-        exponential,
-        dictionary
-    );
+    addToRunTimeSelectionTable(breakupModel, exponential, dictionary);
 }
 }
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::wallBoilingModels::nucleateFluxModels::exponential::exponential
+Foam::diameterModels::breakupModels::exponential::exponential
 (
+    const populationBalanceModel& popBal,
     const dictionary& dict
 )
 :
-    nucleateFluxModel(),
-    a_(dict.getOrDefault<scalar>("a", 6309)),
-    b_(dict.getOrDefault<scalar>("b", 2.52))
+    breakupModel(popBal, dict),
+    exponent_(dict.get<scalar>("exponent")),
+    C_(dict.get<scalar>("C"))
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField>
-Foam::wallBoilingModels::nucleateFluxModels::exponential::qNucleate
+void Foam::diameterModels::breakupModels::exponential::setBreakupRate
 (
-    const phaseModel& liquid,
-    const phaseModel& vapor,
-    const label patchi,
-    const scalarField& Tl,
-    const scalarField& Tsatw,
-    const scalarField& L
-) const
+    volScalarField& breakupRate,
+    const label i
+)
 {
-    const fvPatchScalarField& Tw =
-        liquid.thermo().T().boundaryField()[patchi];
+    const sizeGroup& fi = popBal_.sizeGroups()[i];
 
-    return a_*pow(max((Tw-Tsatw), scalar(0)), b_);
-}
-
-
-void Foam::wallBoilingModels::nucleateFluxModels::exponential::write
-(
-    Ostream& os
-) const
-{
-    nucleateFluxModel::write(os);
-    os.writeEntry("a", a_);
-    os.writeEntry("b", b_);
+    breakupRate.primitiveFieldRef() =
+        C_*exp(exponent_*fi.x().value());
 }
 
 

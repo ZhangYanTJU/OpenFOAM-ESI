@@ -30,12 +30,12 @@ Description
     Pyrolysis model which solves only the energy equation in the region.
 
 SourceFiles
-    thermo.C
+    thermoPyrolysis.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef regionModels_pyrolysisModels_thermo_H
-#define regionModels_pyrolysisModels_thermo_H
+#ifndef Foam_regionModels_pyrolysisModels_thermo_H
+#define Foam_regionModels_pyrolysisModels_thermo_H
 
 #include "pyrolysisModel.H"
 #include "volFieldsFwd.H"

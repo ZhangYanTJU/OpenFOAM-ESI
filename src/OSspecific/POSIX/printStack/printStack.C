@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,12 +64,11 @@ std::string pipeOpen(const std::string& cmd, const int lineNum = 0)
         if (cnt == lineNum)
         {
             // Retain the last line, trimming trailing newline
-            str.assign(buf);
-
-            if (str.size())
+            if (nread > 0)
             {
-                str.resize(str.size()-1);
+                buf[nread-1] = '\0';
             }
+            str.assign(buf);
         }
     }
 

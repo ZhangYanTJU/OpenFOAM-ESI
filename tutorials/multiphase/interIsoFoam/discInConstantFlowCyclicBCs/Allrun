@@ -5,10 +5,20 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 restore0Dir
 
+touch case.foam
+
 runApplication blockMesh
 
 runApplication setAlphaField
 
-runApplication $(getApplication)
+runApplication decomposePar
+
+runParallel $(getApplication)
+
+grep "Phase-1" log.$(getApplication) | cut -d' ' -f5 > Phase1
+
+echo "Volume conservation:"
+echo "Initial Phase-1: " $(head -1 Phase1)
+echo "Final Phase-1  : " $(tail -1 Phase1)
 
 #------------------------------------------------------------------------------

@@ -128,7 +128,59 @@ Foam::Map<Foam::Field<Type>> Foam::zoneDistribute::getFields
 
             for (const label gblIdx : stencil_[celli])
             {
-                tmpField.append(getValue(phi,neiValues,gblIdx));
+                tmpField.append(getValue(phi, neiValues, gblIdx));
+            }
+
+            stencilWithValues.emplace(celli, tmpField);
+        }
+    }
+
+    return stencilWithValues;
+}
+
+template<typename Type>
+Foam::Map<Foam::Field<Type>> Foam::zoneDistribute::getPositionFields
+(
+    const boolList& zone,
+    const VolumeField<Type>& phi,
+    const bool& checkTransformation
+)
+{
+    if (zone.size() != phi.size())
+    {
+        FatalErrorInFunction
+            << "size of zone: " << zone.size()
+            << "size of phi:" <<  phi.size()
+            << "do not match. Did the mesh change?"
+            << exit(FatalError);
+    }
+
+
+    // Get values from other proc
+    Map<Type> neiValues = getDatafromOtherProc(zone, phi);
+
+    Map<Field<Type>> stencilWithValues;
+
+    DynamicField<Type> tmpField(128);
+
+    forAll(zone, celli)
+    {
+        if (zone[celli])
+        {
+            tmpField.clear();
+
+            for (const label gblIdx : stencil_[celli])
+            {
+                List<label> cyclicPatches(0);
+                if(checkTransformation)
+                {
+                    cyclicPatches = getCyclicPatches(celli, gblIdx);
+                }
+
+                tmpField.append
+                (
+                    getPosition(phi, neiValues, gblIdx, cyclicPatches)
+                );
             }
 
             stencilWithValues.emplace(celli, tmpField);

@@ -115,6 +115,15 @@ class zoneDistribute
         //- Persistent set of exchange buffers
         PstreamBuffers pBufs_;
 
+        //- Cell labels for all cells with a face on a cyclic boundary
+        bitSet cyclicBoundaryCells_;
+
+        //- Holds for each cell on cyclic patch the centres of the cells in its
+        //  point neighbour stencil.
+        //  Used in getCyclicPatches to identify neigbhour patch ID of point
+        //  neighbours on other side of a processorPolyPatch.
+        autoPtr<Map<vectorField>> cyclicCentres_;
+
 
     // Private Member Functions
 
@@ -175,6 +184,19 @@ public:
             return globalNumbering_;
         }
 
+        //- Finds and returns list of all cyclic patch labels to which celli's
+        //  point neighbour cell, globalIdx, belongs. celli and globalIdx touch
+        //  in at least one point on these patces. globalIdx typically belongs
+        //  to stencil_[celli]. The returned label list is used to transform
+        //  positions across cyclic boundaries e.g. to be able to calculate
+        //  distances between cell centres and interface centres in plicRDF
+        //  across such boundaries.
+        List<label> getCyclicPatches
+        (
+            const label celli,
+            const label globalIdx
+        ) const;
+
         //- Gives patchNumber and patchFaceNumber for a given
         //- Geometric volume field
         template<typename Type>
@@ -185,12 +207,31 @@ public:
             const label gblIdx
         ) const;
 
+        vector getPosition
+        (
+            const VolumeField<vector>& positions,
+            const Map<vector>& valuesFromOtherProc,
+            const label gblIdx,
+            const List<label> cyclicPatchID = List<label>()
+        ) const;
+
         //- Returns stencil and provides a Map with globalNumbering
         template<typename Type>
         Map<Field<Type>> getFields
         (
             const boolList& zone,
             const VolumeField<Type>& phi
+        );
+
+        //- Returns stencil and provides a Map with globalNumbering
+        //  Note: Not used currently (v2412) but needed for future surface
+        //  tension modelling.
+        template<typename Type>
+        Map<Field<Type>> getPositionFields
+        (
+            const boolList& zone,
+            const VolumeField<Type>& phi,
+            const bool& checkTransformation = false
         );
 
         //- Returns stencil and provides a Map with globalNumbering
