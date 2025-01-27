@@ -1,0 +1,26 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+mkdir -p constant/triSurface
+
+cp -f \
+    "$FOAM_TUTORIALS"/resources/geometry/cylinder.vtk.gz \
+    constant/triSurface/
+
+# Generate mesh from surface (in constant/triSurface)
+runApplication extrudeMesh
+
+# Make front and back type empty
+runApplication createPatch -overwrite
+
+runApplication -s "level1" topoSet -dict system/topoSetDict_level1
+
+runApplication -s "level1" refineMesh
+
+runApplication -s "level2" topoSet -dict system/topoSetDict_level2
+
+runApplication -s "level2" refineMesh
+
+#------------------------------------------------------------------------------
