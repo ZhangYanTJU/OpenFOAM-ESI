@@ -31,11 +31,12 @@ License
 #include "parsing.H"
 #include "IOstreams.H"
 
+#include <cstdlib>  // For string -> floating point conversions
 #include <sstream>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Scalar.C is used for template-like substitution
+// scalarImpl.C is used for template-like substitution (but using macros)
 
 #define Scalar floatScalar
 #define ScalarVGREAT floatScalarVGREAT
@@ -46,7 +47,9 @@ License
 // Convert using larger representation to properly capture underflow
 #define ScalarConvert ::strtod
 
-#include "Scalar.C"
+#define Foam_use_scalarImpl_code
+#include "scalarImpl.C"
+#undef Foam_use_scalarImpl_code
 
 #undef Scalar
 #undef ScalarVGREAT

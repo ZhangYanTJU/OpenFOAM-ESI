@@ -51,9 +51,15 @@ Note
     \endcode
 
 SourceFiles
-    Scalar.C
+    scalarImpl.C
 
 \*---------------------------------------------------------------------------*/
+
+// Could also check if 'Scalar' is defined...
+#ifndef Foam_use_scalarImpl_header
+#error  "scalarImpl.H" is only to be included internally
+#endif
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

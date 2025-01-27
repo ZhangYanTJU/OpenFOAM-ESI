@@ -144,7 +144,11 @@ inline Scalar func(const Scalar s)                              \
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "Scalar.H"
+// scalarImpl.H is used for template-like substitution (but using macros)
+
+#define Foam_use_scalarImpl_header
+#include "scalarImpl.H"
+#undef Foam_use_scalarImpl_header
 
 #undef Scalar
 #undef ScalarVGREAT

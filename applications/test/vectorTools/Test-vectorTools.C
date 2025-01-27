@@ -31,8 +31,9 @@ void test(const vector& a, const vector& b, const scalar tolerance)
 
 int main()
 {
-    vector a(1.0, 1.0, 1.0);
-    vector b(2.0, 2.0, 2.0);
+    vector a(vector::uniform(1));
+    vector b;
+    b.fill(2);
 
     test(a, b, 0.0);
     test(a, b, VSMALL);
@@ -67,5 +68,9 @@ int main()
     test(a, b, 1e-3);
     test(a, b, 1e-1);
 
+    Info<< "\nEnd\n" << nl;
+
     return 0;
 }
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

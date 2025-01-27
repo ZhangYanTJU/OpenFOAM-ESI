@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -190,6 +190,9 @@ public:
 
         //- Return pointer to the first data element
         inline Cmpt* data() noexcept;
+
+        //- Assign all components to given value
+        inline void fill(const Cmpt& s);
 
         //- Return a VectorSpace with all elements = s
         inline static Form uniform(const Cmpt& s);

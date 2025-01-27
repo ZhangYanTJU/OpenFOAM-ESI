@@ -26,6 +26,11 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// Could also check if 'Scalar' is defined...
+#ifndef Foam_use_scalarImpl_code
+#error  "scalarImpl.C" is only to be included internally
+#endif
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
