@@ -369,7 +369,7 @@ void checkFields
 // Ternary Free Function : f1 OP FUNC(f2, f3, s4)
 
 #define TFOR_ALL_F_OP_FUNC_F_F_S\
-(typeF1, f1, OP, FUNC, typeF2, f2, typeF3, f3, typeF4, s4)                     \
+(typeF1, f1, OP, FUNC, typeF2, f2, typeF3, f3, typeS4, s4)                     \
 {                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, f3, "f1 " #OP " " #FUNC "(f2, f3, s)");                \
