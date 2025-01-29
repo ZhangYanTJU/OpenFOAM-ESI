@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,10 +31,11 @@ Description
     Set of directions for each cell in the mesh. Either uniform and size=1
     or one set of directions per cell.
 
-    Used in splitting cells.
-    Either all cells have similar refinement direction ('global') or
-    direction is dependent on local cell geometry, or loads selected fields
-    by name ('fieldBased'). Controlled by dictionary.
+    Used in splitting cells. Options:
+    - global        : global xyz coordinate system
+    - user          : user-defined coordinate system
+    - patchLocal    : normal direction from (flat) given patch
+    - fieldBased    : supply separate vectorIOField for each direction
 
 SourceFiles
     directions.C

@@ -22,12 +22,15 @@ set c0;
 //   x,y,z axis. Specify in globalCoeffs section below.
 // - patchLocal : coordinate system different for every cell. Specify in
 //   patchLocalCoeffs section below.
+// - user : coordinate system provided. Usually cylindrical or spherical.
+//   Specify in userCoeffs section below.
 // - fieldBased : uses the list of field names from the directions list for
 //   selecting the directions to cut. Meant to be used with geometricCut, but
 //   can also be used with useHexTopology.
 coordinateSystem global;
 //coordinateSystem patchLocal;
 //coordinateSystem fieldBased;
+//coordinateSystem user;
 
 // .. and its coefficients. x,y in this case. (normal direction is calculated
 // as tan1^tan2)
@@ -42,6 +45,15 @@ patchLocalCoeffs
     patch outside;  // Normal direction is facenormal of zero'th face of patch
     tan1 (1 0 0);
 }
+
+userCoeffs
+{
+    type    cylindrical;
+    origin  (0 0 0);
+    e1      (1 0 0);    // tan1 direction
+    e3      (0 1 0);    // normal direction
+}
+
 
 // List of directions to refine, if global or patchLocal
 directions

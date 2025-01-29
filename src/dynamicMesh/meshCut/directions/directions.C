@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,6 +35,7 @@ License
 #include "meshTools.H"
 #include "hexMatcher.H"
 #include "globalMeshData.H"
+#include "coordinateSystem.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -339,6 +340,30 @@ Foam::directions::directions
         if (wantTan2)
         {
             operator[](nDirs++) = vectorField(1, tan2);
+        }
+    }
+    else if (coordSystem == "user")
+    {
+        const dictionary& globalDict = dict.subDict("userCoeffs");
+
+        auto csysPtr(coordinateSystem::New(mesh.thisDb(), globalDict));
+        const auto& cs = csysPtr();
+
+        if (wantNormal)
+        {
+            // 'Normal' is usually e3.
+            vectorField& result = operator[](nDirs++);
+            result = cs.transform(mesh.cellCentres(), vector(0, 0, 1));
+        }
+        if (wantTan1)
+        {
+            vectorField& result = operator[](nDirs++);
+            result = cs.transform(mesh.cellCentres(), vector(1, 0, 0));
+        }
+        if (wantTan2)
+        {
+            vectorField& result = operator[](nDirs++);
+            result = cs.transform(mesh.cellCentres(), vector(0, 1, 0));
         }
     }
     else if (coordSystem == "patchLocal")
