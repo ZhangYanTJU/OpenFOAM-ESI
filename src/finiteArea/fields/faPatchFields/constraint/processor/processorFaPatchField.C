@@ -227,15 +227,15 @@ void Foam::processorFaPatchField<Type>::initEvaluate
             }
 
             // Receive straight into *this
-            this->resize_nocopy(sendBuf_.size());
+            Field<Type>& self = *this;
+            self.resize_nocopy(sendBuf_.size());
 
             recvRequest_ = UPstream::nRequests();
             UIPstream::read
             (
                 UPstream::commsTypes::nonBlocking,
                 procPatch_.neighbProcNo(),
-                this->data_bytes(),
-                this->size_bytes(),
+                self,
                 procPatch_.tag(),
                 procPatch_.comm()
             );
@@ -245,8 +245,7 @@ void Foam::processorFaPatchField<Type>::initEvaluate
             (
                 UPstream::commsTypes::nonBlocking,
                 procPatch_.neighbProcNo(),
-                sendBuf_.cdata_bytes(),
-                sendBuf_.size_bytes(),
+                sendBuf_,
                 procPatch_.tag(),
                 procPatch_.comm()
             );
@@ -328,8 +327,7 @@ void Foam::processorFaPatchField<Type>::initInterfaceMatrixUpdate
         (
             UPstream::commsTypes::nonBlocking,
             procPatch_.neighbProcNo(),
-            scalarRecvBuf_.data_bytes(),
-            scalarRecvBuf_.size_bytes(),
+            scalarRecvBuf_,
             procPatch_.tag(),
             procPatch_.comm()
         );
@@ -339,8 +337,7 @@ void Foam::processorFaPatchField<Type>::initInterfaceMatrixUpdate
         (
             UPstream::commsTypes::nonBlocking,
             procPatch_.neighbProcNo(),
-            scalarSendBuf_.cdata_bytes(),
-            scalarSendBuf_.size_bytes(),
+            scalarSendBuf_,
             procPatch_.tag(),
             procPatch_.comm()
         );
@@ -434,8 +431,7 @@ void Foam::processorFaPatchField<Type>::initInterfaceMatrixUpdate
         (
             UPstream::commsTypes::nonBlocking,
             procPatch_.neighbProcNo(),
-            recvBuf_.data_bytes(),
-            recvBuf_.size_bytes(),
+            recvBuf_,
             procPatch_.tag(),
             procPatch_.comm()
         );
@@ -445,8 +441,7 @@ void Foam::processorFaPatchField<Type>::initInterfaceMatrixUpdate
         (
             UPstream::commsTypes::nonBlocking,
             procPatch_.neighbProcNo(),
-            sendBuf_.cdata_bytes(),
-            sendBuf_.size_bytes(),
+            sendBuf_,
             procPatch_.tag(),
             procPatch_.comm()
         );

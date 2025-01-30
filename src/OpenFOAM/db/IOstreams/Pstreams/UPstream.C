@@ -94,7 +94,7 @@ static List<int> getHostGroupIds(const label parentCommunicator)
     (
         myDigest.cdata_bytes(),     // Send
         digests.data_bytes(),       // Recv
-        SHA1Digest::max_size(),     // Num send/recv data per rank
+        SHA1Digest::size_bytes(),   // Num send/recv data per rank
         parentCommunicator
     );
 

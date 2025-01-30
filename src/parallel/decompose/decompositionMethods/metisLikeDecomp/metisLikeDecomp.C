@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -100,8 +100,7 @@ Foam::label Foam::metisLikeDecomp::decomposeGeneral
                 (
                     commsType,
                     proci,
-                    procSlot.data_bytes(),
-                    procSlot.size_bytes(),
+                    procSlot,
                     UPstream::msgType(),
                     UPstream::worldComm
                 );
@@ -124,8 +123,7 @@ Foam::label Foam::metisLikeDecomp::decomposeGeneral
             (
                 commsType,
                 UPstream::masterNo(),
-                procSlot.cdata_bytes(),
-                procSlot.size_bytes(),
+                procSlot,
                 UPstream::msgType(),
                 UPstream::worldComm
             );

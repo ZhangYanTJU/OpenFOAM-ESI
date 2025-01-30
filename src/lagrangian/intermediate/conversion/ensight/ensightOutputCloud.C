@@ -143,8 +143,7 @@ bool Foam::ensightOutput::writeCloudPositions
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    positions.data_bytes(),
-                    positions.size_bytes()
+                    positions
                 );
 
                 if (isBinaryOutput)
@@ -166,8 +165,7 @@ bool Foam::ensightOutput::writeCloudPositions
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                positions.cdata_bytes(),
-                positions.size_bytes()
+                positions
             );
         }
     }

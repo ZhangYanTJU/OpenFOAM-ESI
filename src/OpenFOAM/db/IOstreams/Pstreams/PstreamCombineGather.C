@@ -182,8 +182,7 @@ void Foam::Pstream::listCombineGather
                 (
                     UPstream::commsTypes::scheduled,
                     belowID,
-                    received.data_bytes(),
-                    received.size_bytes(),
+                    received,
                     tag,
                     comm
                 );
@@ -239,8 +238,7 @@ void Foam::Pstream::listCombineGather
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
-                    values.cdata_bytes(),
-                    values.size_bytes(),
+                    values,
                     tag,
                     comm
                 );

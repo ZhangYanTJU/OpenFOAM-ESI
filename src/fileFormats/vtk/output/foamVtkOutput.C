@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -155,8 +155,7 @@ void Foam::vtk::writeListParallel
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    recvData.data_bytes(),
-                    recvData.size_bytes()
+                    recvData
                 );
 
                 // With value offset
@@ -176,8 +175,7 @@ void Foam::vtk::writeListParallel
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                values.cdata_bytes(),
-                values.size_bytes()
+                values
             );
         }
     }

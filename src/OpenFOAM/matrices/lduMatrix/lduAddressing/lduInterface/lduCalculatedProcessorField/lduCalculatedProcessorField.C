@@ -114,8 +114,7 @@ void Foam::lduCalculatedProcessorField<Type>::initInterfaceMatrixUpdate
     (
         UPstream::commsTypes::nonBlocking,
         procInterface_.neighbProcNo(),
-        scalarRecvBuf_.data_bytes(),
-        scalarRecvBuf_.size_bytes(),
+        scalarRecvBuf_,
         procInterface_.tag(),
         procInterface_.comm()
     );
@@ -125,8 +124,7 @@ void Foam::lduCalculatedProcessorField<Type>::initInterfaceMatrixUpdate
     (
         UPstream::commsTypes::nonBlocking,
         procInterface_.neighbProcNo(),
-        scalarSendBuf_.cdata_bytes(),
-        scalarSendBuf_.size_bytes(),
+        scalarSendBuf_,
         procInterface_.tag(),
         procInterface_.comm()
     );

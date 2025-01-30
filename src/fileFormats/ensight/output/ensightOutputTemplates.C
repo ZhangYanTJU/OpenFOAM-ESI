@@ -217,8 +217,7 @@ void Foam::ensightOutput::Detail::writeFieldComponents
                     (
                         UPstream::commsTypes::scheduled,
                         proci,
-                        slot.data_bytes(),
-                        slot.size_bytes()
+                        slot
                     );
                 }
             }
@@ -244,8 +243,7 @@ void Foam::ensightOutput::Detail::writeFieldComponents
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                scratch.cdata_bytes(),
-                scratch.size_bytes()
+                scratch
             );
         }
     }

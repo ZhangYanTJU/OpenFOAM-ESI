@@ -56,8 +56,7 @@ void Foam::processorLduInterface::send
         (
             commsType,
             neighbProcNo(),
-            fld.cdata_bytes(),
-            fld.size_bytes(),
+            fld,
             tag(),
             comm()
         );
@@ -133,8 +132,7 @@ void Foam::processorLduInterface::receive
         (
             commsType,
             neighbProcNo(),
-            fld.data_bytes(),
-            fld.size_bytes(),
+            fld,
             tag(),
             comm()
         );

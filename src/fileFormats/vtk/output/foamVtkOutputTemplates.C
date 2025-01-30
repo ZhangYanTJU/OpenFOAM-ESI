@@ -193,8 +193,7 @@ void Foam::vtk::writeListParallel
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    recvData.data_bytes(),
-                    recvData.size_bytes()
+                    recvData
                 );
                 vtk::writeList(fmt, recvData);
             }
@@ -208,8 +207,7 @@ void Foam::vtk::writeListParallel
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                values.cdata_bytes(),
-                values.size_bytes()
+                values
             );
         }
     }
@@ -262,8 +260,7 @@ void Foam::vtk::writeListParallel
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    recvData.data_bytes(),
-                    recvData.size_bytes()
+                    recvData
                 );
                 vtk::writeList(fmt, recvData);
             }
@@ -277,8 +274,7 @@ void Foam::vtk::writeListParallel
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                sendData.cdata_bytes(),
-                sendData.size_bytes()
+                sendData
             );
         }
     }
@@ -332,8 +328,7 @@ void Foam::vtk::writeListParallel
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    recvData.data_bytes(),
-                    recvData.size_bytes()
+                    recvData
                 );
                 vtk::writeList(fmt, recvData);
             }
@@ -347,8 +342,7 @@ void Foam::vtk::writeListParallel
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                sendData.cdata_bytes(),
-                sendData.size_bytes()
+                sendData
             );
         }
     }
@@ -401,8 +395,7 @@ void Foam::vtk::writeListsParallel
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    recvData.data_bytes(),
-                    recvData.size_bytes()
+                    recvData
                 );
                 vtk::writeList(fmt, recvData);
             }
@@ -417,8 +410,7 @@ void Foam::vtk::writeListsParallel
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    recvData.data_bytes(),
-                    recvData.size_bytes()
+                    recvData
                 );
                 vtk::writeList(fmt, recvData);
             }
@@ -432,8 +424,7 @@ void Foam::vtk::writeListsParallel
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                values1.cdata_bytes(),
-                values1.size_bytes()
+                values1
             );
         }
 
@@ -443,8 +434,7 @@ void Foam::vtk::writeListsParallel
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                values2.cdata_bytes(),
-                values2.size_bytes()
+                values2
             );
         }
     }
@@ -506,8 +496,7 @@ void Foam::vtk::writeListsParallel
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    recvData.data_bytes(),
-                    recvData.size_bytes()
+                    recvData
                 );
                 vtk::writeList(fmt, recvData);
             }
@@ -522,8 +511,7 @@ void Foam::vtk::writeListsParallel
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    recvData.data_bytes(),
-                    recvData.size_bytes()
+                    recvData
                 );
                 vtk::writeList(fmt, recvData);
             }
@@ -537,8 +525,7 @@ void Foam::vtk::writeListsParallel
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                values1.cdata_bytes(),
-                values1.size_bytes()
+                values1
             );
         }
 
@@ -548,8 +535,7 @@ void Foam::vtk::writeListsParallel
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                sendData2.cdata_bytes(),
-                sendData2.size_bytes()
+                sendData2
             );
         }
     }

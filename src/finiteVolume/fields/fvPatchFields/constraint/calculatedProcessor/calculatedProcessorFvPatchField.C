@@ -138,15 +138,15 @@ void Foam::calculatedProcessorFvPatchField<Type>::initEvaluate
         }
 
         // Receive straight into *this
-        this->resize_nocopy(sendBuf_.size());
+        Field<Type>& self = *this;
+        self.resize_nocopy(sendBuf_.size());
 
         recvRequest_ = UPstream::nRequests();
         UIPstream::read
         (
             UPstream::commsTypes::nonBlocking,
             procInterface_.neighbProcNo(),
-            this->data_bytes(),
-            this->size_bytes(),
+            self,
             procInterface_.tag(),
             procInterface_.comm()
         );
@@ -156,8 +156,7 @@ void Foam::calculatedProcessorFvPatchField<Type>::initEvaluate
         (
             UPstream::commsTypes::nonBlocking,
             procInterface_.neighbProcNo(),
-            sendBuf_.cdata_bytes(),
-            sendBuf_.size_bytes(),
+            sendBuf_,
             procInterface_.tag(),
             procInterface_.comm()
         );
@@ -218,8 +217,7 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
     (
         UPstream::commsTypes::nonBlocking,
         procInterface_.neighbProcNo(),
-        scalarRecvBuf_.data_bytes(),
-        scalarRecvBuf_.size_bytes(),
+        scalarRecvBuf_,
         procInterface_.tag(),
         procInterface_.comm()
     );
@@ -229,8 +227,7 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
     (
         UPstream::commsTypes::nonBlocking,
         procInterface_.neighbProcNo(),
-        scalarSendBuf_.cdata_bytes(),
-        scalarSendBuf_.size_bytes(),
+        scalarSendBuf_,
         procInterface_.tag(),
         procInterface_.comm()
     );

@@ -259,8 +259,7 @@ void Foam::globalIndex::gather
                 (
                     commsType,
                     procIDs[i],
-                    procSlot.data_bytes(),
-                    procSlot.size_bytes(),
+                    procSlot,
                     tag,
                     comm
                 );
@@ -283,8 +282,7 @@ void Foam::globalIndex::gather
             (
                 commsType,
                 masterProci,
-                fld.cdata_bytes(),
-                fld.size_bytes(),
+                fld,
                 tag,
                 comm
             );
@@ -948,8 +946,7 @@ void Foam::globalIndex::scatter
                 (
                     commsType,
                     procIDs[i],
-                    procSlot.cdata_bytes(),
-                    procSlot.size_bytes(),
+                    procSlot,
                     tag,
                     comm
                 );
@@ -984,8 +981,7 @@ void Foam::globalIndex::scatter
             (
                 commsType,
                 masterProci,
-                fld.data_bytes(),
-                fld.size_bytes(),
+                fld,
                 tag,
                 comm
             );

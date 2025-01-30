@@ -160,7 +160,7 @@ static labelList parseIOranks
         (
             myDigest.cdata_bytes(),     // Send
             digests.data_bytes(),       // Recv
-            SHA1Digest::max_size(),     // Num send/recv per rank
+            SHA1Digest::size_bytes(),   // Num send/recv per rank
             UPstream::worldComm
         );
 

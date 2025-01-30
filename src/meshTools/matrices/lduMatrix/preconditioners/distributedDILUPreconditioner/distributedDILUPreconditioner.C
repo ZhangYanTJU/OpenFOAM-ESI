@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -194,13 +194,11 @@ void Foam::distributedDILUPreconditioner::receive
         auto& recvBuf = recvBufs_[inti];
         recvBuf.resize_nocopy(interfaceBouCoeffs[inti].size());
 
-        requests.push_back(UPstream::Request());
         UIPstream::read
         (
-            requests.back(),
+            requests.emplace_back(),
             ppp->neighbProcNo(),
-            recvBuf.data_bytes(),
-            recvBuf.size_bytes(),
+            recvBuf,
             ppp->tag()+70,          // random offset
             ppp->comm()
         );
@@ -232,13 +230,11 @@ void Foam::distributedDILUPreconditioner::send
             sendBuf[face] = psiInternal[faceCells[face]];
         }
 
-        requests.push_back(UPstream::Request());
         UOPstream::write
         (
-            requests.back(),
+            requests.emplace_back(),
             ppp->neighbProcNo(),
-            sendBuf.cdata_bytes(),
-            sendBuf.size_bytes(),
+            sendBuf,
             ppp->tag()+70,          // random offset
             ppp->comm()
         );
