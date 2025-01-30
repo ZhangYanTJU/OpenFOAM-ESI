@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -126,7 +126,7 @@ Foam::labelList Foam::fileOperation::getGlobalHostIORanks()
     (
         myDigest.cdata_bytes(),     // Send
         digests.data_bytes(),       // Recv
-        SHA1Digest::max_size(),     // Num send/recv per rank
+        SHA1Digest::size_bytes(),   // Num send/recv per rank
         UPstream::worldComm
     );
 

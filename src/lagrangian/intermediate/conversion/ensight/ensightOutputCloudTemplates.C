@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -110,8 +110,7 @@ bool Foam::ensightOutput::writeCloudField
                 (
                     UPstream::commsTypes::scheduled,
                     proci,
-                    recvData.data_bytes(),
-                    recvData.size_bytes()
+                    recvData
                 );
 
                 count = ensightOutput::Detail::writeCloudFieldContent
@@ -137,8 +136,7 @@ bool Foam::ensightOutput::writeCloudField
             (
                 UPstream::commsTypes::scheduled,
                 UPstream::masterNo(),
-                field.cdata_bytes(),
-                field.size_bytes()
+                field
             );
         }
     }

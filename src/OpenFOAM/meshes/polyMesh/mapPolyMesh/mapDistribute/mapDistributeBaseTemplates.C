@@ -201,8 +201,7 @@ void Foam::mapDistributeBase::send
             (
                 UPstream::commsTypes::nonBlocking,
                 proci,
-                subField.data_bytes(),
-                subField.size_bytes(),
+                subField,
                 tag,
                 comm
             );
@@ -244,8 +243,7 @@ void Foam::mapDistributeBase::send
             (
                 UPstream::commsTypes::nonBlocking,
                 proci,
-                subField.cdata_bytes(),
-                subField.size_bytes(),
+                subField,
                 tag,
                 comm
             );
@@ -778,8 +776,7 @@ void Foam::mapDistributeBase::distribute
                     (
                         UPstream::commsTypes::nonBlocking,
                         proci,
-                        subField.data_bytes(),
-                        subField.size_bytes(),
+                        subField,
                         tag,
                         comm
                     );
@@ -806,8 +803,7 @@ void Foam::mapDistributeBase::distribute
                     (
                         UPstream::commsTypes::nonBlocking,
                         proci,
-                        subField.cdata_bytes(),
-                        subField.size_bytes(),
+                        subField,
                         tag,
                         comm
                     );
@@ -1218,8 +1214,7 @@ void Foam::mapDistributeBase::distribute
                     (
                         UPstream::commsTypes::nonBlocking,
                         proci,
-                        subField.data_bytes(),
-                        subField.size_bytes(),
+                        subField,
                         tag,
                         comm
                     );
@@ -1246,8 +1241,7 @@ void Foam::mapDistributeBase::distribute
                     (
                         UPstream::commsTypes::nonBlocking,
                         proci,
-                        subField.cdata_bytes(),
-                        subField.size_bytes(),
+                        subField,
                         tag,
                         comm
                     );

@@ -80,6 +80,20 @@ struct Cast
             return static_cast<Type>(arg.value());
         }
     }
+
+    //- Cast UPstream::Window to MPI_Win
+    template<typename Type = MPI_Win>
+    static Type to_mpi(UPstream::Window arg) noexcept
+    {
+        if constexpr (std::is_pointer_v<Type>)
+        {
+            return reinterpret_cast<Type>(arg.value());
+        }
+        else  // std::is_integral_v<Type>
+        {
+            return static_cast<Type>(arg.value());
+        }
+    }
 };
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -98,6 +98,9 @@ public:
 
         //- Wrapper for MPI_Request
         class Request;  // Forward Declaration
+
+        //- Wrapper for MPI_Win
+        class Window;  // Forward Declaration
 
         //- Structure for communicating between processors
         class commsStruct
@@ -1459,6 +1462,12 @@ UList<UPstream::commsStruct>::operator[](const label procID) const;
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Traits, nested classes etc
+#include "UPstreamTraits.H"
+#include "UPstreamWindow.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

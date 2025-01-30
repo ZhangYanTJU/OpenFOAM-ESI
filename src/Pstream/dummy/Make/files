@@ -5,6 +5,7 @@ UPstreamCommunicator.C
 UPstreamGatherScatter.C
 UPstreamReduce.C
 UPstreamRequest.C
+UPstreamWindow.C
 
 UIPstreamRead.C
 UOPstreamWrite.C

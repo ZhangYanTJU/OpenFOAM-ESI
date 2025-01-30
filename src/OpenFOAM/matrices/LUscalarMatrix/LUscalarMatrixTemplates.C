@@ -78,8 +78,7 @@ void Foam::LUscalarMatrix::solve
                     (
                         UPstream::commsTypes::nonBlocking,
                         proci,
-                        procSlot.data_bytes(),
-                        procSlot.size_bytes(),
+                        procSlot,
                         tag,
                         comm_
                     );
@@ -102,8 +101,7 @@ void Foam::LUscalarMatrix::solve
                 (
                     UPstream::commsTypes::nonBlocking,
                     UPstream::masterNo(),
-                    x.cdata_bytes(),
-                    x.size_bytes(),
+                    x,
                     tag,
                     comm_
                 );
@@ -142,8 +140,7 @@ void Foam::LUscalarMatrix::solve
                     (
                         UPstream::commsTypes::nonBlocking,
                         proci,
-                        procSlot.cdata_bytes(),
-                        procSlot.size_bytes(),
+                        procSlot,
                         tag,
                         comm_
                     );
@@ -166,8 +163,7 @@ void Foam::LUscalarMatrix::solve
                 (
                     UPstream::commsTypes::nonBlocking,
                     UPstream::masterNo(),
-                    x.data_bytes(),
-                    x.size_bytes(),
+                    x,
                     tag,
                     comm_
                 );

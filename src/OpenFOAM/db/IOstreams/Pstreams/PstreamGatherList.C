@@ -80,8 +80,7 @@ void Foam::Pstream::gatherList
                 (
                     UPstream::commsTypes::scheduled,
                     belowID,
-                    received.data_bytes(),
-                    received.size_bytes(),
+                    received,
                     tag,
                     comm
                 );
@@ -155,8 +154,7 @@ void Foam::Pstream::gatherList
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
-                    sending.cdata_bytes(),
-                    sending.size_bytes(),
+                    sending,
                     tag,
                     comm
                 );
@@ -231,8 +229,7 @@ void Foam::Pstream::scatterList
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
-                    received.data_bytes(),
-                    received.size_bytes(),
+                    received,
                     tag,
                     comm
                 );
@@ -286,8 +283,7 @@ void Foam::Pstream::scatterList
                 (
                     UPstream::commsTypes::scheduled,
                     belowID,
-                    sending.cdata_bytes(),
-                    sending.size_bytes(),
+                    sending,
                     tag,
                     comm
                 );

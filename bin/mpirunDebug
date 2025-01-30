@@ -24,7 +24,6 @@
 . "${WM_PROJECT_DIR:?}"/bin/tools/RunFunctions  # Run functions
 
 printHelp() {
-    exec 1>&2
     cat<<USAGE
 
 Usage: ${0##*/} [OPTION] -np <N> <executable> <args>
@@ -203,7 +202,7 @@ do
 
     # Processing application arguments
     case "$1" in
-    (-help* | --help*) usage ;;
+    (-help* | --help*) printHelp ;;
     ('') ;;  ## Ignore junk
 
     (-np)
@@ -235,15 +234,16 @@ done
 # Cleanup only
 if [ -n "$optClean" ]
 then
-    echo "Cleanup old mpirunDebug files..." 1>&2
-    rm -f gdbCommands    mpirun.schema
-    rm -rf mpirun.log mpirun.files
+    exec 1>&2
+    echo "Cleanup old mpirunDebug files..."
+    rm -f gdbCommands mpirun.schema vgcore.*
     rm -f processor*.log processor*.sh
-    echo "    gdbCommands     mpirun.schema" 1>&2
-    echo "    mpirun.{files,log}/" 1>&2
-    echo "    processor*.{log,sh}" 1>&2
-    echo "Done" 1>&2
-    exit 0
+    rm -rf mpirun.log mpirun.files
+    echo "    gdbCommands mpirun.schema vgcore.*"
+    echo "    processor*.{log,sh}"
+    echo "    mpirun.{files,log}/"
+    echo "Done"
+    exit 0  # A clean exit
 fi
 
 
@@ -344,11 +344,14 @@ esac
 
 echo "**sourceFoam: $sourceFoam" 1>&2
 
-rm -f ./mpirun.schema
-touch ./mpirun.schema
-
 mkdir -p ./mpirun.files
 mkdir -p ./mpirun.log
+
+schema_file="$PWD/mpirun.files/mpirun.schema"
+
+rm -f "$schema_file"
+touch "$schema_file"
+
 
 proc=0
 xpos=0
@@ -374,8 +377,8 @@ COMMANDS
 
     # Add to the mpirun.schema
     case "$method" in
-    (*xterm*) echo "${node}${xterm} -e ${procCmdFile}" >> "$PWD"/mpirun.schema ;;
-    (*)       echo "${node}${procCmdFile}" >> "$PWD"/mpirun.schema ;;
+    (*xterm*) echo "${node}${xterm} -e ${procCmdFile}" >> "$schema_file" ;;
+    (*)       echo "${node}${procCmdFile}" >> "$schema_file" ;;
     esac
 
     case "$method" in
@@ -421,17 +424,33 @@ COMMANDS
     fi
 done
 
-for ((proc=0; proc<$nProcs; proc++))
-do
-    procLog="mpirun.log/processor${proc}.log"
-    echo "    tail -f $procLog" 1>&2
-done
+
+if [ "$nProcs" -lt 10 ]
+then
+    for ((proc = 0; proc < $nProcs; proc++))
+    do
+        procLog="mpirun.log/processor${proc}.log"
+        echo "    tail -f $procLog" 1>&2
+    done
+else
+    for ((proc = 0; proc < 4; proc++))
+    do
+        procLog="mpirun.log/processor${proc}.log"
+        echo "    tail -f $procLog" 1>&2
+    done
+    echo "    ..." 1>&2
+    for ((proc = $nProcs-2; proc < $nProcs; proc++))
+    do
+        procLog="mpirun.log/processor${proc}.log"
+        echo "    tail -f $procLog" 1>&2
+    done
+fi
 
 unset cmd
 
 case "$WM_MPLIB" in
 *OPENMPI*)
-    cmd="mpirun --oversubscribe -app $PWD/mpirun.schema </dev/null"
+    cmd="mpirun --oversubscribe -app "$schema_file" </dev/null"
     ;;
 MPICH)
     cmd="mpiexec"
@@ -448,7 +467,7 @@ MPICH)
             cmd="${cmd} :"
         fi
         cmd="${cmd} -n 1 ${procXtermCmdFile}"
-    done < "$PWD"/mpirun.schema
+    done < "$schema_file"
     ;;
 *)
     die "Unsupported WM_MPLIB setting : $WM_MPLIB"
@@ -456,7 +475,7 @@ MPICH)
 esac
 
 echo 1>&2
-echo "Constructed $PWD/mpirun.schema file:" 1>&2
+echo "Constructed $schema_file file:" 1>&2
 echo 1>&2
 echo "    $cmd" 1>&2
 echo 1>&2

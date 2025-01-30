@@ -1086,8 +1086,7 @@ void Foam::syncTools::syncBoundaryFaceList
                     (
                         UPstream::commsTypes::nonBlocking,
                         procPatch.neighbProcNo(),
-                        fld.data_bytes(),
-                        fld.size_bytes()
+                        fld
                     );
                 }
             }
@@ -1112,8 +1111,7 @@ void Foam::syncTools::syncBoundaryFaceList
                     (
                         UPstream::commsTypes::nonBlocking,
                         procPatch.neighbProcNo(),
-                        fld.cdata_bytes(),
-                        fld.size_bytes()
+                        fld
                     );
                 }
             }
