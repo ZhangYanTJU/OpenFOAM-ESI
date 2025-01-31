@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -150,7 +150,7 @@ inline tensor Ra(const vector& a, const scalar omega)
 
 //- No-op rotational transform for base types
 template<class T>
-constexpr typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+constexpr std::enable_if_t<std::is_arithmetic_v<T>, T>
 transform(const tensor&, const T val)
 {
     return val;
@@ -171,7 +171,7 @@ inline SphericalTensor<Cmpt> transform
 
 //- No-op inverse rotational transform for base types
 template<class T>
-constexpr typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+constexpr std::enable_if_t<std::is_arithmetic_v<T>, T>
 invTransform(const tensor&, const T val)
 {
     return val;

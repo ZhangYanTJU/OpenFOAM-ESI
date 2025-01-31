@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -115,9 +115,6 @@ protected:
         //- No-op write XML attribute (for templating code).
         //  \return formatter for chaining
         inline formatter& xmlAttr();
-
-        //- No-op XML comment loop (for templating code).
-        inline void xmlCommentLoop();
 
         //- Loop/output XML comments
         template<class... Args>

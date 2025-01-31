@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -356,7 +356,7 @@ public:
         //
         //  \return True if value changed.
         template<class TypeT = T>
-        typename std::enable_if<std::is_same<bool, TypeT>::value, bool>::type
+        std::enable_if_t<std::is_same_v<bool, TypeT>, bool>
         inline set(const label i, bool val = true)
         {
             if (i < 0)

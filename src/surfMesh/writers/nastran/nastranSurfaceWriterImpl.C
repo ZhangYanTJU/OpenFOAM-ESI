@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -103,7 +103,7 @@ Foam::Ostream& Foam::surfaceWriters::nastranWriter::writeFaceValue
     {
         case loadFormat::PLOAD2 :
         {
-            if (pTraits<Type>::nComponents > 1)
+            if constexpr (pTraits_nComponents<Type>::value > 1)
             {
                 writeValue(os, Foam::mag(value));
             }
@@ -162,11 +162,11 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
     // Default is PLOAD2
     loadFormat format = loadFormat::PLOAD2;
 
-    if
-    (
-        !std::is_integral<Type>::value  // Handle 'Ids' etc silently
-     && !pload4_.empty()
-    )
+    if constexpr (std::is_integral_v<Type>)
+    {
+        // Handle 'Ids' etc silently
+    }
+    else if (!pload4_.empty())
     {
         const wordRes::filter matcher(pload4_, pload2_);
 

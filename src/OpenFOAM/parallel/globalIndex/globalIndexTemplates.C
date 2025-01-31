@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,7 +40,7 @@ License
 //     return
 //     (
 //         (
-//             !is_contiguous<Type>::value
+//             !is_contiguous_v<Type>
 //          && UPstream::commsTypes::nonBlocking == preferred
 //         )
 //       ? UPstream::commsTypes::scheduled
@@ -138,7 +138,7 @@ void Foam::globalIndex::gatherValues
     const UPstream::commsTypes commsType =
     (
         (
-            !is_contiguous<Type>::value
+            !is_contiguous_v<Type>
          && UPstream::commsTypes::nonBlocking == preferredCommsType
         )
       ? UPstream::commsTypes::scheduled
@@ -156,7 +156,7 @@ void Foam::globalIndex::gatherValues
 
         for (label i = 1; i < procIDs.size(); ++i)
         {
-            if (is_contiguous<Type>::value)
+            if constexpr (is_contiguous_v<Type>)
             {
                 UIPstream::read
                 (
@@ -178,7 +178,7 @@ void Foam::globalIndex::gatherValues
     {
         allValues.clear();  // safety: zero-size on non-master
 
-        if (is_contiguous<Type>::value)
+        if constexpr (is_contiguous_v<Type>)
         {
             UOPstream::write
             (
@@ -222,7 +222,7 @@ void Foam::globalIndex::gather
     const UPstream::commsTypes commsType =
     (
         (
-            !is_contiguous<Type>::value
+            !is_contiguous_v<Type>
          && UPstream::commsTypes::nonBlocking == preferredCommsType
         )
       ? UPstream::commsTypes::scheduled
@@ -253,7 +253,7 @@ void Foam::globalIndex::gather
             {
                 // Nothing to do
             }
-            else if (is_contiguous<Type>::value)
+            else if constexpr (is_contiguous_v<Type>)
             {
                 UIPstream::read
                 (
@@ -277,7 +277,7 @@ void Foam::globalIndex::gather
         {
             // Nothing to do
         }
-        else if (is_contiguous<Type>::value)
+        else if constexpr (is_contiguous_v<Type>)
         {
             UOPstream::write
             (
@@ -317,7 +317,7 @@ void Foam::globalIndex::gather
 {
     // low-level: no parRun guard
 
-    if (is_contiguous<Type>::value)
+    if constexpr (is_contiguous_v<Type>)
     {
         // Flatten list (locally) so that we can benefit from using direct
         // read/write of contiguous data
@@ -339,7 +339,7 @@ void Foam::globalIndex::gather
     const UPstream::commsTypes commsType =
     (
         (
-            !is_contiguous<Type>::value
+            !is_contiguous_v<Type>
          && UPstream::commsTypes::nonBlocking == preferredCommsType
         )
       ? UPstream::commsTypes::scheduled
@@ -567,14 +567,14 @@ void Foam::globalIndex::mpiGather
     char dataMode(0);
     int nCmpts(0);
 
-    if (is_contiguous<Type>::value)
+    if constexpr (is_contiguous_v<Type>)
     {
-        if (is_contiguous_scalar<Type>::value)
+        if constexpr (is_contiguous_scalar<Type>::value)
         {
             dataMode = 'f';
             nCmpts = static_cast<int>(sizeof(Type)/sizeof(scalar));
         }
-        else if (is_contiguous_label<Type>::value)
+        else if constexpr (is_contiguous_label<Type>::value)
         {
             dataMode = 'i';
             nCmpts = static_cast<int>(sizeof(Type)/sizeof(label));
@@ -921,7 +921,7 @@ void Foam::globalIndex::scatter
     const UPstream::commsTypes commsType =
     (
         (
-            !is_contiguous<Type>::value
+            !is_contiguous_v<Type>
          && UPstream::commsTypes::nonBlocking == preferredCommsType
         )
       ? UPstream::commsTypes::scheduled
@@ -942,7 +942,7 @@ void Foam::globalIndex::scatter
             {
                 // Nothing to do
             }
-            else if (is_contiguous<Type>::value)
+            else if constexpr (is_contiguous_v<Type>)
             {
                 UOPstream::write
                 (
@@ -978,7 +978,7 @@ void Foam::globalIndex::scatter
         {
             // Nothing to do
         }
-        else if (is_contiguous<Type>::value)
+        else if constexpr (is_contiguous_v<Type>)
         {
             UIPstream::read
             (

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -631,7 +631,7 @@ void Foam::Pstream::exchange
     const bool wait
 )
 {
-    static_assert(is_contiguous<Type>::value, "Contiguous data only!");
+    static_assert(is_contiguous_v<Type>, "Contiguous data only!");
 
     if (!UPstream::is_rank(comm))
     {
@@ -695,7 +695,7 @@ void Foam::Pstream::exchange
     const bool wait
 )
 {
-    static_assert(is_contiguous<Type>::value, "Contiguous data only!");
+    static_assert(is_contiguous_v<Type>, "Contiguous data only!");
 
     const int myProci = UPstream::myProcNo(comm);
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -312,20 +312,20 @@ public:
     {
         // Private Member Functions
 
-            //- Fill with zero (contiguous types)
-            template<class ValT = typename T::value_type>
-            typename std::enable_if<pTraits_has_zero<ValT>::value, void>::type
-            _m_fill_zero()
+            //- Fill with zero (contiguous types) or with default value
+            //- initialized (non-contiguous types)
+            void _m_fill_zero()
             {
-                T::operator=(pTraits<ValT>::zero);
-            }
+                typedef typename T::value_type valueType;
 
-            //- Fill with default value initialized (non-contiguous types)
-            template<class ValT = typename T::value_type>
-            typename std::enable_if<!pTraits_has_zero<ValT>::value, void>::type
-            _m_fill_zero()
-            {
-                T::operator=(ValT());
+                if constexpr (pTraits_has_zero<valueType>::value)
+                {
+                    T::operator=(pTraits<valueType>::zero);
+                }
+                else
+                {
+                    T::operator=(valueType());
+                }
             }
 
     public:

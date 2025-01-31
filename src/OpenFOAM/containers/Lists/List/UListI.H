@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -69,7 +69,7 @@ inline void Foam::UList<T>::fill_uniform(const Foam::zero)
     // issues.
     // May also have special triggers when assigning non-contiguous from zero...
 
-    if (is_contiguous<T>::value)
+    if constexpr (is_contiguous_v<T>)
     {
         // Can dispatch with
         // - std::execution::parallel_unsequenced_policy

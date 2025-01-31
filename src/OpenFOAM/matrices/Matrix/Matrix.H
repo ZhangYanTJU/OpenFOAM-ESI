@@ -210,7 +210,7 @@ public:
         inline bool empty() const noexcept;
 
         //- The number of elements in Matrix (m*n)
-        inline label size() const;
+        inline label size() const noexcept;
 
         //- Return row/column sizes
         inline labelPair sizes() const;

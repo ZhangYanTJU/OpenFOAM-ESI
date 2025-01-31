@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,7 +72,7 @@ struct short_length : std::integral_constant<int,10> {};
 //  Default definition: (integral | floating-point) are contiguous and thus
 //  never need any line breaks
 template<class T>
-struct no_linebreak : std::is_arithmetic<T> {};
+struct no_linebreak : std::is_arithmetic<std::remove_cv_t<T>> {};
 
 // Specialization for word-like classes
 // These elements are normally fairly short, so ok to output a few (eg, 10)

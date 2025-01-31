@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1057,7 +1057,7 @@ void Foam::syncTools::syncBoundaryFaceList
 
         if
         (
-            is_contiguous<T>::value
+            is_contiguous_v<T>
          && UPstream::defaultCommsType == UPstream::commsTypes::nonBlocking
         )
         {

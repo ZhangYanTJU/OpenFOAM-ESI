@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -118,7 +118,7 @@ Ostream& printListOutputType(const char* what)
 {
     Info<< what
         << " (contiguous="
-        << is_contiguous<T>::value << " no_linebreak="
+        << is_contiguous_v<T> << " no_linebreak="
         << Detail::ListPolicy::no_linebreak<T>::value
         << " short_length="
         << Detail::ListPolicy::short_length<T>::value << ')';

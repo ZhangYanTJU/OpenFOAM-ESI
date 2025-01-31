@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -162,11 +162,11 @@ void Foam::mapDistributeBase::send
     const label comm
 )
 {
-    if (!is_contiguous<T>::value)
+    if constexpr (!is_contiguous_v<T>)
     {
         FatalErrorInFunction
             << "Only contiguous is currently supported"
-            << exit(FatalError);
+            << Foam::abort(FatalError);
     }
 
     const auto myRank = UPstream::myProcNo(comm);
@@ -318,14 +318,15 @@ void Foam::mapDistributeBase::receive
     const label comm
 )
 {
-    if (!is_contiguous<T>::value)
+    if constexpr (!is_contiguous_v<T>)
     {
         FatalErrorInFunction
             << "Only contiguous is currently supported"
-            << exit(FatalError);
+            << Foam::abort(FatalError);
     }
 
     const auto myRank = UPstream::myProcNo(comm);
+    [[maybe_unused]]
     const auto nProcs = UPstream::nProcs(comm);
 
 
@@ -463,6 +464,7 @@ void Foam::mapDistributeBase::distribute
 )
 {
     const auto myRank = UPstream::myProcNo(comm);
+    [[maybe_unused]]
     const auto nProcs = UPstream::nProcs(comm);
 
     if (!UPstream::parRun())
@@ -679,7 +681,7 @@ void Foam::mapDistributeBase::distribute
     {
         const label startOfRequests = UPstream::nRequests();
 
-        if (!is_contiguous<T>::value)
+        if constexpr (!is_contiguous_v<T>)
         {
             PstreamBuffers pBufs(comm, tag);
 
@@ -909,6 +911,7 @@ void Foam::mapDistributeBase::distribute
 )
 {
     const auto myRank = UPstream::myProcNo(comm);
+    [[maybe_unused]]
     const auto nProcs = UPstream::nProcs(comm);
 
     if (!UPstream::parRun())
@@ -1119,7 +1122,7 @@ void Foam::mapDistributeBase::distribute
     {
         const label startOfRequests = UPstream::nRequests();
 
-        if (!is_contiguous<T>::value)
+        if constexpr (!is_contiguous_v<T>)
         {
             PstreamBuffers pBufs(comm, tag);
 

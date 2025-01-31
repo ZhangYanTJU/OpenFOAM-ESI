@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -136,12 +136,12 @@ public:
 
         //- A table entry (node) that encapsulates the key/val tuple
         //- with an additional linked-list entry for hash collisions
-        typedef typename std::conditional
+        using node_type = std::conditional_t
         <
-            std::is_same<Foam::zero, typename std::remove_cv<T>::type>::value,
+            std::is_same_v<Foam::zero, std::remove_cv_t<T>>,
             Detail::HashTableSingle<Key>,
             Detail::HashTablePair<Key, T>
-        >::type node_type;
+        >;
 
 
     // STL type definitions
@@ -652,31 +652,31 @@ protected:
             using difference_type = this_type::difference_type;
 
             //- The HashTable container type
-            using table_type = typename std::conditional
+            using table_type = std::conditional_t
             <
                 Const,
                 const this_type,
                 this_type
-            >::type;
+            >;
 
             //- The node-type being addressed
-            using node_type = typename std::conditional
+            using node_type = std::conditional_t
             <
                 Const,
                 const this_type::node_type,
                 this_type::node_type
-            >::type;
+            >;
 
             //- The key type
             using key_type = this_type::key_type;
 
             //- The object type being addressed
-            using mapped_type = typename std::conditional
+            using mapped_type = std::conditional_t
             <
                 Const,
                 const this_type::mapped_type,
                 this_type::mapped_type
-            >::type;
+            >;
 
 
         protected:

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -131,7 +131,7 @@ bool Foam::functionObjects::ensightCloudWriteObject::writeCloud
 
 
     // Copy positions (for simplicity and for filtering).
-    // Store as floatVector, since that is what Ensight will write anyhow
+    // Store as floatVector, since Ensight will write float components anyhow
 
     DynamicList<floatVector> positions;
     positions.reserve(UPstream::master() ? procAddr_.maxSize() : nParcels);
@@ -145,46 +145,42 @@ bool Foam::functionObjects::ensightCloudWriteObject::writeCloud
 
         if (applyFilter_)
         {
-            if (std::is_same<float, vector::cmptType>::value)
+            for (const label idx : parcelAddr_)
             {
-                for (const label idx : parcelAddr_)
-                {
-                    *iter = points[idx];
-                    ++iter;
-                }
-            }
-            else
-            {
-                for (const label idx : parcelAddr_)
-                {
-                    const auto& pos = points[idx];
+                const auto& pos = points[idx];
 
+                if constexpr (std::is_same_v<float, vector::cmptType>)
+                {
+                    // Direct copy
+                    *iter = pos;
+                }
+                else
+                {
+                    // Copy with narrowing
                     (*iter).x() = narrowFloat(pos.x());
                     (*iter).y() = narrowFloat(pos.y());
                     (*iter).z() = narrowFloat(pos.z());
-                    ++iter;
                 }
+                ++iter;
             }
         }
         else
         {
-            if (std::is_same<float, vector::cmptType>::value)
+            for (const auto& pos : points)
             {
-                for (const auto& pos : points)
+                if constexpr (std::is_same_v<float, vector::cmptType>)
                 {
+                    // Direct copy
                     *iter = pos;
-                    ++iter;
                 }
-            }
-            else
-            {
-                for (const auto& pos : points)
+                else
                 {
+                    // Copy with narrowing
                     (*iter).x() = narrowFloat(pos.x());
                     (*iter).y() = narrowFloat(pos.y());
                     (*iter).z() = narrowFloat(pos.z());
-                    ++iter;
                 }
+                ++iter;
             }
         }
     }

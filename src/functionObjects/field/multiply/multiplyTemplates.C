@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,11 +88,7 @@ bool Foam::functionObjects::multiply::multiplyResult
 
 
 template<class Type1, class Type2>
-typename std::enable_if
-<
-    Foam::functionObjects::multiply::is_valid_op<Type1, Type2>::value, bool
->::type
-Foam::functionObjects::multiply::multiplyFieldType
+bool Foam::functionObjects::multiply::multiplyFieldType
 (
     GeometricField<Type1, fvPatchField, volMesh>& result,
     const word& fieldName,
@@ -107,46 +103,30 @@ Foam::functionObjects::multiply::multiplyFieldType
 
     if (fieldPtr)
     {
-        Log << "    Performing " << result.name() << " * " << fieldPtr->name()
-            << endl;
+        if constexpr
+        (
+            Foam::functionObjects::multiply::is_valid_op<Type1, Type2>::value
+        )
+        {
+            Log << "    Performing "
+                << result.name() << " * " << fieldPtr->name()
+                << endl;
 
-        auto newResult(result*(*fieldPtr));
-        result.checkOut();
+            auto newResult(result*(*fieldPtr));
+            result.checkOut();
 
-        store(resultName_, newResult);
+            store(resultName_, newResult);
 
-        processed = true;
-    }
-
-    return processed;
-}
-
-
-template<class Type1, class Type2>
-typename std::enable_if
-<
-    !Foam::functionObjects::multiply::is_valid_op<Type1, Type2>::value, bool
->::type
-Foam::functionObjects::multiply::multiplyFieldType
-(
-    GeometricField<Type1, fvPatchField, volMesh>& result,
-    const word& fieldName,
-    bool& processed
-)
-{
-    if (processed) return processed;
-
-    typedef GeometricField<Type2, fvPatchField, volMesh> volFieldType;
-
-    auto* fieldPtr = mesh_.cfindObject<volFieldType>(fieldName);
-
-    if (fieldPtr)
-    {
-        Info<< "    Unsupported operation for "
-            << result.name() << '(' << pTraits<Type1>::typeName << ')'
-            << " * "
-            << fieldPtr->name() << '(' << pTraits<Type2>::typeName << ')'
-            << endl;
+            processed = true;
+        }
+        else
+        {
+            Info<< "    Unsupported operation for "
+                << result.name() << '(' << pTraits<Type1>::typeName << ')'
+                << " * "
+                << fieldPtr->name() << '(' << pTraits<Type2>::typeName << ')'
+                << endl;
+        }
     }
 
     return processed;

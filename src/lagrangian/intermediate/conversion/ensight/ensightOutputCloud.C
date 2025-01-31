@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -230,7 +230,7 @@ bool Foam::ensightOutput::writeCloudPositions
 
         auto iter = positions.begin();
 
-        if (std::is_same<float, vector::cmptType>::value)
+        if constexpr (std::is_same_v<float, vector::cmptType>)
         {
             for (const auto& p : parcels)
             {

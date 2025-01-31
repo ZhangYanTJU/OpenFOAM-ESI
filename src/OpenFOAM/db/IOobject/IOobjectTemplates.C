@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,12 +56,14 @@ bool Foam::IOobject::typeHeaderOk
 template<class Type>
 Foam::fileName Foam::IOobject::typeFilePath(const bool search) const
 {
-    return
-    (
-        is_globalIOobject<Type>::value
-      ? this->globalFilePath(Type::typeName, search)
-      : this->localFilePath(Type::typeName, search)
-    );
+    if constexpr (is_globalIOobject<Type>::value)
+    {
+        return this->globalFilePath(Type::typeName, search);
+    }
+    else
+    {
+        return this->localFilePath(Type::typeName, search);
+    }
 }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,7 +49,7 @@ void Foam::UList<T>::writeEntry(Ostream& os) const
     else if
     (
         os.format() == IOstreamOption::BINARY
-     || std::is_same<char, typename std::remove_cv<T>::type>::value
+     || std::is_same_v<char, std::remove_cv_t<T>>
     )
     {
         // Zero-sized binary - Write size only
@@ -89,7 +89,7 @@ Foam::Ostream& Foam::UList<T>::writeList
 
     const label len = list.size();
 
-    if (os.format() == IOstreamOption::BINARY && is_contiguous<T>::value)
+    if (os.format() == IOstreamOption::BINARY && is_contiguous_v<T>)
     {
         // Binary and contiguous
 
@@ -101,7 +101,7 @@ Foam::Ostream& Foam::UList<T>::writeList
             os.write(list.cdata_bytes(), list.size_bytes());
         }
     }
-    else if (std::is_same<char, typename std::remove_cv<T>::type>::value)
+    else if constexpr (std::is_same_v<char, std::remove_cv_t<T>>)
     {
         // Special treatment for char data (binary I/O only)
 
@@ -116,7 +116,7 @@ Foam::Ostream& Foam::UList<T>::writeList
 
         os.format(oldFmt);
     }
-    else if (is_contiguous<T>::value && len > 1 && list.uniform())
+    else if (is_contiguous_v<T> && len > 1 && list.uniform())
     {
         // Two or more entries, and all entries have identical values.
         os  << len << token::BEGIN_BLOCK << list[0] << token::END_BLOCK;
@@ -127,11 +127,7 @@ Foam::Ostream& Foam::UList<T>::writeList
      ||
         (
             (len <= shortLen)
-         &&
-            (
-                is_contiguous<T>::value
-             || Detail::ListPolicy::no_linebreak<T>::value
-            )
+         && (is_contiguous_v<T> || Detail::ListPolicy::no_linebreak<T>::value)
         )
     )
     {
@@ -234,7 +230,7 @@ Foam::Istream& Foam::UList<T>::readList(Istream& is)
                 << exit(FatalIOError);
         }
 
-        if (is.format() == IOstreamOption::BINARY && is_contiguous<T>::value)
+        if (is.format() == IOstreamOption::BINARY && is_contiguous_v<T>)
         {
             // Binary and contiguous
 
@@ -254,7 +250,7 @@ Foam::Istream& Foam::UList<T>::readList(Istream& is)
                 );
             }
         }
-        else if (std::is_same<char, typename std::remove_cv<T>::type>::value)
+        else if constexpr (std::is_same_v<char, std::remove_cv_t<T>>)
         {
             // Special treatment for char data (binary I/O only)
             const auto oldFmt = is.format(IOstreamOption::BINARY);

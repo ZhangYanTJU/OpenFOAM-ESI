@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,8 +88,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_multiply_H
-#define functionObjects_multiply_H
+#ifndef Foam_functionObjects_multiply_H
+#define Foam_functionObjects_multiply_H
 
 #include "fieldsExpression.H"
 
@@ -127,23 +127,7 @@ class multiply
         bool multiplyResult(const word& fieldName, bool& processed);
 
         template<class Type1, class Type2>
-        typename std::enable_if
-        <
-            is_valid_op<Type1, Type2>::value, bool
-        >::type
-        multiplyFieldType
-        (
-            GeometricField<Type1, fvPatchField, volMesh>& result,
-            const word& fieldName,
-            bool& processed
-        );
-
-        template<class Type1, class Type2>
-        typename std::enable_if
-        <
-            !is_valid_op<Type1, Type2>::value, bool
-        >::type
-        multiplyFieldType
+        bool multiplyFieldType
         (
             GeometricField<Type1, fvPatchField, volMesh>& result,
             const word& fieldName,

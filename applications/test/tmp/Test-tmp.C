@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -45,13 +45,13 @@ void printInfo(const tmp<T>& item, const bool verbose = false)
     }
 
     Info<< " move-constructible:"
-        << std::is_move_constructible<tmp<T>>::value
+        << std::is_move_constructible_v<tmp<T>>
         << " move-assignable:"
-        << std::is_move_assignable<tmp<T>>::value
+        << std::is_move_assignable_v<tmp<T>>
         << " nothrow:"
-        << std::is_nothrow_move_assignable<tmp<T>>::value
+        << std::is_nothrow_move_assignable_v<tmp<T>>
         << " trivially:"
-        << std::is_trivially_move_assignable<tmp<T>>::value
+        << std::is_trivially_move_assignable_v<tmp<T>>
         << nl;
 
     if (verbose && item)

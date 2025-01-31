@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -648,7 +648,7 @@ inline std::streamsize Foam::PackedList<Width>::size_data() const noexcept
 template<unsigned Width>
 inline std::streamsize Foam::PackedList<Width>::size_bytes() const noexcept
 {
-    return num_blocks(size()) * sizeof(block_type);
+    return size_data() * sizeof(block_type);
 }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2015 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -120,20 +120,20 @@ public:
         using difference_type = typename Container::difference_type;
 
         //- The container iterator type (const/non-const)
-        using iterator = typename std::conditional
+        using iterator = std::conditional_t
         <
             Const,
             typename Container::const_iterator,
             typename Container::iterator
-        >::type;
+        >;
 
         //- The reference type (const/non-const)
-        using reference = typename std::conditional
+        using reference = std::conditional_t
         <
             Const,
             typename Container::const_reference,
             typename Container::reference
-        >::type;
+        >;
 
 
 private:

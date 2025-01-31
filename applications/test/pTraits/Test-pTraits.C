@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,9 +32,11 @@ Description
 #include "pTraits.H"
 #include "contiguous.H"
 #include "boolVector.H"  // A FixedList pretending to be a vector
+#include "complex.H"
 #include "vector.H"
 #include "tensor.H"
-#include "complex.H"
+#include "sphericalTensor.H"
+#include "symmTensor.H"
 #include "uLabel.H"
 #include "Switch.H"
 
@@ -50,26 +52,37 @@ template<class T, class = void>
 struct has_typeName : std::false_type {};
 
 //- Test if Type has typeName member
-
 template<class T>
-struct has_typeName<T, stdFoam::void_t<decltype(pTraits<T>::typeName)>>
+struct has_typeName
+<
+    T,
+    std::void_t<decltype(pTraits<std::remove_cv_t<T>>::typeName)>
+>
 :
     std::true_type
 {};
 
 
 template<class T>
-typename std::enable_if<has_typeName<T>::value, void>::type
-printTypeName()
+void printTypeName()
 {
-    Info<< pTraits<T>::typeName;
-}
-
-template<class T>
-typename std::enable_if<!has_typeName<T>::value, void>::type
-printTypeName()
-{
-    Info<< typeid(T).name();
+    // Both float and double have pTraits typeName = "scalar"!
+    if constexpr (std::is_same_v<float, std::remove_cv_t<T>>)
+    {
+        Info<< "<float>";
+    }
+    else if constexpr (std::is_same_v<double, std::remove_cv_t<T>>)
+    {
+        Info<< "<double>";
+    }
+    else if constexpr (has_typeName<T>::value)
+    {
+        Info<< pTraits<std::remove_cv_t<T>>::typeName;
+    }
+    else
+    {
+        Info<< typeid(T).name();
+    }
 }
 
 
@@ -80,22 +93,23 @@ template<class T>
 struct has_zero_one
 <
     T,
-    stdFoam::void_t<decltype(pTraits<T>::zero), decltype(pTraits<T>::one)>
+    std::void_t
+    <
+        decltype(pTraits<std::remove_cv_t<T>>::zero),
+        decltype(pTraits<std::remove_cv_t<T>>::one)
+    >
 > : std::true_type {};
 
 
 template<class T>
-typename std::enable_if<has_zero_one<T>::value, void>::type
-printMinMaxRange()
+void printMinMaxRange()
 {
-    Info<< " zero=" << pTraits<T>::zero
-        << " one=" << pTraits<T>::one;
+    if constexpr (has_zero_one<T>::value)
+    {
+        Info<< " zero=" << pTraits<std::remove_cv_t<T>>::zero
+            << " one=" << pTraits<std::remove_cv_t<T>>::one;
+    }
 }
-
-template<class T>
-typename std::enable_if<!has_zero_one<T>::value, void>::type
-printMinMaxRange()
-{}
 
 
 template<class T>
@@ -104,11 +118,12 @@ void printTraits()
     printTypeName<T>();
     printMinMaxRange<T>();
 
-    Info<< " integral=" << std::is_integral<T>::value
-        << " floating=" << std::is_floating_point<T>::value
+    Info<< " integral=" << std::is_integral_v<T>
+        << " floating=" << std::is_floating_point_v<T>
         << " rank=" << pTraits_rank<T>::value
         << " nComponents=" << pTraits_nComponents<T>::value
-        << " vector-space=" << Switch::name(is_vectorspace<T>::value)
+        << " vector-space=" << Switch::name(is_vectorspace_v<T>)
+        << " rotate=" << Switch::name(is_rotational_vectorspace_v<T>)
         << " is_label=" << Switch::name(is_contiguous_label<T>::value)
         << " is_scalar=" << Switch::name(is_contiguous_scalar<T>::value)
         << " cmptType=" << typeid(typename pTraits_cmptType<T>::type).name()
@@ -137,9 +152,11 @@ int main()
     printTraits<bool>();
     printTraits<label>();
     printTraits<scalar>();
-    printTraits<complex>();     // Uses specialized pTraits_...
+    printTraits<const complex>();     // Uses specialized pTraits_...
     printTraits<floatVector>();
     printTraits<doubleVector>();
+    printTraits<sphericalTensor>();
+    printTraits<symmTensor>();
     printTraits<tensor>();
     printTraits<boolVector>();  // Uses specialized pTraits_...
     printTraits<word>();

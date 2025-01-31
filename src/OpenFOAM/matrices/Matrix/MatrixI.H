@@ -86,7 +86,7 @@ Foam::Matrix<Form, Type>::clone() const
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Form, class Type>
-inline Foam::label Foam::Matrix<Form, Type>::size() const
+inline Foam::label Foam::Matrix<Form, Type>::size() const noexcept
 {
     return mRows_ * nCols_;
 }
@@ -209,7 +209,7 @@ inline char* Foam::Matrix<Form, Type>::data_bytes() noexcept
 template<class Form, class Type>
 inline std::streamsize Foam::Matrix<Form, Type>::size_bytes() const noexcept
 {
-    return mRows_*nCols_*sizeof(Type);
+    return std::streamsize(mRows_*nCols_)*sizeof(Type);
 }
 
 

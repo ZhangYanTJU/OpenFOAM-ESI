@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,8 +38,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef foam_gltf_base_H
-#define foam_gltf_base_H
+#ifndef Foam_gltf_base_H
+#define Foam_gltf_base_H
 
 #include "word.H"
 #include "label.H"
@@ -106,14 +106,15 @@ namespace glTF
 
     // Helper function to return the enum value
     template<class Type>
-    auto key(const Type& t) -> typename std::enable_if
+    auto key(const Type& t) -> std::enable_if_t
     <
-        std::is_enum<Type>::value,
-        typename std::underlying_type<Type>::type
-    >::type
+        std::is_enum_v<Type>,
+        std::underlying_type_t<Type>
+    >
     {
-        return static_cast<typename std::underlying_type<Type>::type>(t);
+        return static_cast<std::underlying_type_t<Type>>(t);
     }
+
 
 /*---------------------------------------------------------------------------*\
                           Class base Declaration

@@ -213,11 +213,10 @@ int main(int argc, char *argv[])
             mesh
         );
 
-        Info<< "points path: " << io.typeFilePath<labelIOList>() << nl;
-        Info<< "points path: " << io.typeFilePath<void>() << nl;
+        Info<< "points path: " << io.typeFilePath<pointIOField>() << nl;
 
         io.resetHeader("bad-points");
-        Info<< "bad path: " << io.typeFilePath<void>() << nl;
+        Info<< "bad path: " << io.typeFilePath<labelIOList>() << nl;
     }
 
     IOobject io

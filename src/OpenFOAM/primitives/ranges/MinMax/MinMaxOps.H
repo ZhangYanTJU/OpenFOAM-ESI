@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -338,28 +338,28 @@ inline MinMax<T> operator/(const MinMax<T>& x, const scalar& s)
 // Comparison
 
 template<class T, class U>
-inline typename std::enable_if<std::is_convertible<U, T>::value, bool>::type
+inline std::enable_if_t<std::is_convertible_v<U, T>, bool>
 operator<(const MinMax<T>& range, const U& val)
 {
     return (range.compare(val) < 0);
 }
 
 template<class T, class U>
-inline typename std::enable_if<std::is_convertible<U, T>::value, bool>::type
+inline std::enable_if_t<std::is_convertible_v<U, T>, bool>
 operator<=(const MinMax<T>& range, const U& val)
 {
     return (range.compare(val) <= 0);
 }
 
 template<class T, class U>
-inline typename std::enable_if<std::is_convertible<U, T>::value, bool>::type
+inline std::enable_if_t<std::is_convertible_v<U, T>, bool>
 operator>(const MinMax<T>& range, const U& val)
 {
     return (range.compare(val) > 0);
 }
 
 template<class T, class U>
-inline typename std::enable_if<std::is_convertible<U, T>::value, bool>::type
+inline std::enable_if_t<std::is_convertible_v<U, T>, bool>
 operator>=(const MinMax<T>& range, const U& val)
 {
     return (range.compare(val) >= 0);
@@ -367,28 +367,28 @@ operator>=(const MinMax<T>& range, const U& val)
 
 
 template<class T, class U>
-inline typename std::enable_if<std::is_convertible<U, T>::value, bool>::type
+inline std::enable_if_t<std::is_convertible_v<U, T>, bool>
 operator<(const U& val, const MinMax<T>& range)
 {
     return (range.compare(val) > 0);
 }
 
 template<class T, class U>
-inline typename std::enable_if<std::is_convertible<U, T>::value, bool>::type
+inline std::enable_if_t<std::is_convertible_v<U, T>, bool>
 operator<=(const U& val, const MinMax<T>& range)
 {
     return (range.compare(val) >= 0);
 }
 
 template<class T, class U>
-inline typename std::enable_if<std::is_convertible<U, T>::value, bool>::type
+inline std::enable_if_t<std::is_convertible_v<U, T>, bool>
 operator>(const U& val, const MinMax<T>& range)
 {
     return (range.compare(val) < 0);
 }
 
 template<class T, class U>
-inline typename std::enable_if<std::is_convertible<U, T>::value, bool>::type
+inline std::enable_if_t<std::is_convertible_v<U, T>, bool>
 operator>=(const U& val, const MinMax<T>& range)
 {
     return (range.compare(val) <= 0);

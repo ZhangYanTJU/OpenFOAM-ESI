@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -187,8 +187,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef DMDModels_STDMD_H
-#define DMDModels_STDMD_H
+#ifndef Foam_DMDModels_STDMD_H
+#define Foam_DMDModels_STDMD_H
 
 #include "DMDModel.H"
 #include "SquareMatrix.H"
@@ -400,28 +400,9 @@ class STDMD
             template<class GeoFieldType>
             bool calcModes();
 
-            //- Compute a mode for a given scalar-based input field
+            //- Compute a mode for a given scalar-based or other input field
             template<class GeoFieldType>
-            typename std::enable_if
-            <
-                std::is_same<scalar, typename GeoFieldType::value_type>::value,
-                void
-            >::type calcMode
-            (
-                GeoFieldType& modeRe,
-                GeoFieldType& modeIm,
-                const RMatrix& primitiveMode,
-                const label magi,
-                const label rowi = 0
-            );
-
-            //- Compute a mode for a given non-scalar-based input field
-            template<class GeoFieldType>
-            typename std::enable_if
-            <
-                !std::is_same<scalar, typename GeoFieldType::value_type>::value,
-                void
-            >::type calcMode
+            void calcMode
             (
                 GeoFieldType& modeRe,
                 GeoFieldType& modeIm,

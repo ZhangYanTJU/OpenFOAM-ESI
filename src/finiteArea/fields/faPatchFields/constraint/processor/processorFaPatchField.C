@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -219,7 +219,7 @@ void Foam::processorFaPatchField<Type>::initEvaluate
 
         if (commsType == UPstream::commsTypes::nonBlocking)
         {
-            if (!is_contiguous<Type>::value)
+            if constexpr (!is_contiguous_v<Type>)
             {
                 FatalErrorInFunction
                     << "Invalid for non-contiguous data types"
