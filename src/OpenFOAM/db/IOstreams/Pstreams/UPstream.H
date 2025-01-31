@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -217,17 +217,27 @@ private:
         //- Standard transfer message type
         static int msgType_;
 
+        //- Index to the world-communicator as defined at startup
+        //- (after any multi-world definitions).
+        //- Is unaffected by any later changes to worldComm.
+        static label constWorldComm_;
+
+        //- The number of shared/host nodes in the (const) world communicator.
+        static label numNodes_;
+
+        //- Index to the inter-host communicator (between hosts/nodes),
+        //- defined based on realWorldComm_
+        static label interHostComm_;
+
+        //- Index to the intra-host communicator (withing a host/node),
+        //- defined based on realWorldComm_
+        static label intraHostComm_;
+
         //- Names of all worlds
         static wordList allWorlds_;
 
         //- Per processor the world index (into allWorlds_)
         static labelList worldIDs_;
-
-        //- Intra-host communicator
-        static label intraHostComm_;
-
-        //- Inter-host communicator (between host leaders)
-        static label interHostComm_;
 
 
     // Communicator specific data
@@ -256,23 +266,58 @@ private:
         //- Set data for parallel running
         static void setParRun(const label nProcs, const bool haveThreads);
 
-        //- Initialise entries for new communicator. Return the index
+        //- Initialise entries for new communicator.
+        //
+        //  Resets corresponding entry in myProcNo_, procIDs_,
+        //  linearCommunication_, treeCommunication_
+        //  \return the communicator index
         static label getAvailableCommIndex(const label parentIndex);
 
-        //- Allocate MPI components of communicator with given index
+        //- Define inter-host/intra-host communicators. Uses comm-world.
+        //  Optionally specify a given number per node.
+        static bool setHostCommunicators(const int numPerNode = 0);
+
+        //- Define inter-host/intra-host communicators based on
+        //- shared-memory information. Uses comm-world.
+        static bool setSharedMemoryCommunicators();
+
+        //- Allocate MPI components of communicator with given index.
+        //  This represents a "top-down" approach, creating a communicator
+        //  based on the procIDs_ groupings.
+        //
+        //  Modifies myProcNo_, reads and modifies procIDs_
         static void allocateCommunicatorComponents
         (
             const label parentIndex,
             const label index
         );
 
+        //- Allocate MPI components as duplicate of the parent communicator
+        //
+        //  Modifies myProcNo_, procIDs_
+        static void dupCommunicatorComponents
+        (
+            const label parentIndex,
+            const label index
+        );
+
+        //- Allocate MPI components for the given index by splitting
+        //- the parent communicator on the given \em colour.
+        //  This represents a "bottom-up" approach, when the individual ranks
+        //  only know which group they should belong to, but don't yet know
+        //  which other ranks will be in their group.
+        //
+        //  Modifies myProcNo_, procIDs_
+        static void splitCommunicatorComponents
+        (
+            const label parentIndex,
+            const label index,
+            const int colour
+        );
+
         //- Free MPI components of communicator.
         //  Does not touch the first two communicators (SELF, WORLD)
         static void freeCommunicatorComponents(const label index);
-
-        //- Allocate inter-host, intra-host communicators
-        //- with comm-world as parent
-        static bool allocateHostCommunicatorPairs();
 
 
 public:
@@ -282,6 +327,13 @@ public:
 
 
     // Static Data
+
+        //- Use of host topology-aware routines
+        //  0: disabled
+        //  1: split by hostname
+        //  2: split by shared
+        //  >=8: (debug) split with given number per node
+        static int hostCommsEnabled_;
 
         //- Should compact transfer be used in which floats replace doubles
         //- reducing the bandwidth requirement at the expense of some loss
@@ -320,11 +372,18 @@ public:
         //- Debugging: warn for use of any communicator differing from warnComm
         static label warnComm;
 
-        //- Communicator for all ranks, irrespective of any local worlds
+        //- Communicator for all ranks, irrespective of any local worlds.
+        //  This value \em never changes during a simulation.
         static constexpr label commGlobal() noexcept { return 0; }
 
         //- Communicator within the current rank only
+        //  This value \em never changes during a simulation.
         static constexpr label commSelf() noexcept { return 1; }
+
+        //- Communicator for all ranks (respecting any local worlds).
+        //  This value \em never changes after startup. Unlike the commWorld()
+        //  which can be temporarily overriden.
+        static label commConstWorld() noexcept { return constWorldComm_; }
 
         //- Communicator for all ranks (respecting any local worlds)
         static label commWorld() noexcept { return worldComm; }
@@ -340,6 +399,7 @@ public:
 
         //- Alter communicator debugging setting.
         //- Warns for use of any communicator differing from specified.
+        //- Negative values disable.
         //  \returns the previous warn index
         static label commWarn(const label communicator) noexcept
         {
@@ -357,17 +417,17 @@ public:
 
     // Host Communicators
 
-        //- Demand-driven: Intra-host communicator (respects any local worlds)
-        static label commIntraHost();
+        //- Inter-host communicator (respects any local worlds)
+        static label commInterHost() noexcept;
 
-        //- Demand-driven: Inter-host communicator (respects any local worlds)
-        static label commInterHost();
+        //- Intra-host communicator (respects any local worlds)
+        static label commIntraHost() noexcept;
 
-        //- Test for presence of any intra or inter host communicators
-        static bool hasHostComms();
-
-        //- Remove any existing intra and inter host communicators
-        static void clearHostComms();
+        //- True if host topology-aware routines have been enabled,
+        //- it is running in parallel, the starting point is the
+        // world-communicator and it is not an odd corner case
+        // (ie, all processes on one node, all processes on different nodes)
+        static bool usingHostComms(const label communicator = worldComm);
 
 
     // Constructors
@@ -408,6 +468,28 @@ public:
             const bool withComponents = true
         );
 
+        //- Duplicate the parent communicator
+        //
+        //  Always calls dupCommunicatorComponents() internally
+        static label dupCommunicator
+        (
+            //! The parent communicator
+            const label parent
+        );
+
+        //- Allocate a new communicator by splitting the parent communicator
+        //- on the given \em colour.
+        //  Always calls splitCommunicatorComponents() internally
+        static label splitCommunicator
+        (
+            //! The parent communicator
+            const label parent,
+
+            //! The colouring to select which ranks to include.
+            //! Negative values correspond to 'ignore'
+            const int colour
+        );
+
         //- Free a previously allocated communicator.
         //  Ignores placeholder (negative) communicators.
         static void freeCommunicator
@@ -415,19 +497,6 @@ public:
             const label communicator,
             const bool withComponents = true
         );
-
-        //- Allocate an inter-host communicator
-        static label allocateInterHostCommunicator
-        (
-            const label parentCommunicator = worldComm
-        );
-
-        //- Allocate an intra-host communicator
-        static label allocateIntraHostCommunicator
-        (
-            const label parentCommunicator = worldComm
-        );
-
 
         //- Wrapper class for allocating/freeing communicators. Always invokes
         //- allocateCommunicatorComponents() and freeCommunicatorComponents()
@@ -454,7 +523,6 @@ public:
             (
                 //! The parent communicator
                 const label parentComm,
-
                 //! The contiguous sub-ranks of parent to use
                 const labelRange& subRanks
             )
@@ -467,13 +535,37 @@ public:
             (
                 //! The parent communicator
                 const label parentComm,
-
                 //! The sub-ranks of parent to use (negative values ignored)
                 const labelUList& subRanks
             )
             :
                 comm_(UPstream::allocateCommunicator(parentComm, subRanks))
             {}
+
+            //- Factory Method :
+            //- Duplicate the given communicator
+            static communicator duplicate(const label parentComm)
+            {
+                communicator c;
+                c.comm_ = UPstream::dupCommunicator(parentComm);
+                return c;
+            }
+
+            //- Factory Method :
+            //- Split the communicator on the given \em colour.
+            static communicator split
+            (
+                //! The parent communicator
+                const label parentComm,
+                //! The colouring to select which ranks to include.
+                //! Negative values correspond to 'ignore'
+                const int colour
+            )
+            {
+                communicator c;
+                c.comm_ = UPstream::splitCommunicator(parentComm, colour);
+                return c;
+            }
 
             //- Free allocated communicator
             ~communicator() { UPstream::freeCommunicator(comm_); }
@@ -837,6 +929,12 @@ public:
             (
                 parRun_ && is_rank(communicator) && nProcs(communicator) > 1
             );
+        }
+
+        //- The number of shared/host nodes in the (const) world communicator.
+        static label numNodes() noexcept
+        {
+            return numNodes_;
         }
 
         //- The parent communicator

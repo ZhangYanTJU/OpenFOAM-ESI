@@ -1,0 +1,4 @@
+include $(GENERAL_RULES)/mpi-rules
+
+EXE_INC = $(PFLAGS) $(PINC)
+EXE_LIBS = $(PLIBS)

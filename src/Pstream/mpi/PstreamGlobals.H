@@ -63,8 +63,29 @@ extern DynamicList<MPI_Request> outstandingRequests_;
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
-//- Fatal if comm is outside the allocated range
-void checkCommunicator(const label comm, const label toProcNo);
+//- Initialize bookkeeping for MPI communicator
+void initCommunicator(const label index);
+
+//- Fatal if communicator is outside the allocated range
+inline void checkCommunicator(int comm, int rank)
+{
+    if
+    (
+        FOAM_UNLIKELY
+        (
+            comm < 0
+         || comm >= PstreamGlobals::MPICommunicators_.size()
+        )
+    )
+    {
+        FatalErrorInFunction
+            << "rank:" << rank << " : illegal communicator "
+            << comm << nl
+            << "Communicator should be within range [0,"
+            << PstreamGlobals::MPICommunicators_.size()
+            << ')' << Foam::abort(FatalError);
+    }
+}
 
 
 //- Reset UPstream::Request to null and/or the index of the outstanding

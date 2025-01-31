@@ -37,20 +37,25 @@ Foam::DynamicList<MPI_Request> Foam::PstreamGlobals::outstandingRequests_;
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
-void Foam::PstreamGlobals::checkCommunicator
-(
-    const label comm,
-    const label toProcNo
-)
+void Foam::PstreamGlobals::initCommunicator(const label index)
 {
-    if (comm < 0 || comm >= PstreamGlobals::MPICommunicators_.size())
+    if (FOAM_UNLIKELY(index < 0 || index > MPICommunicators_.size()))
     {
         FatalErrorInFunction
-            << "toProcNo:" << toProcNo << " : illegal communicator "
-            << comm << nl
-            << "Communicator should be within range [0,"
-            << PstreamGlobals::MPICommunicators_.size()
-            << ')' << abort(FatalError);
+            << "PstreamGlobals out of sync with UPstream data. Problem."
+            << Foam::abort(FatalError);
+    }
+    else if (index == MPICommunicators_.size())
+    {
+        // Extend storage with null values
+        pendingMPIFree_.emplace_back(false);
+        MPICommunicators_.emplace_back(MPI_COMM_NULL);
+    }
+    else
+    {
+        // Init with null values
+        pendingMPIFree_[index] = false;
+        MPICommunicators_[index] = MPI_COMM_NULL;
     }
 }
 

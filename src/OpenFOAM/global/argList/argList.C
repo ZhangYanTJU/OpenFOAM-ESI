@@ -2046,8 +2046,22 @@ void Foam::argList::parse
                     Info<< "Roots  : " << roots << nl;
                 }
             }
+
             Info<< "Pstream initialized with:" << nl
-                << "    floatTransfer      : "
+                << "    inter/intra nodes  : ";
+            if (UPstream::hostCommsEnabled_ > 0)
+            {
+                Info<< Switch::name(UPstream::usingHostComms())
+                    << " type=" << UPstream::hostCommsEnabled_;
+            }
+            else
+            {
+                Info<< "disabled";
+            }
+            Info<< " (" << UPstream::nProcs() << " ranks, "
+                << UPstream::numNodes() << " nodes)" << nl;
+
+            Info<< "    floatTransfer      : "
                 << Switch::name(UPstream::floatTransfer) << nl
                 << "    maxCommsSize       : "
                 << UPstream::maxCommsSize << nl

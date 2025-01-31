@@ -135,6 +135,13 @@ OptimisationSwitches
     // Default communication type (nonBlocking | scheduled | buffered)
     commsType       nonBlocking;
 
+    // Use host topology-aware routines
+    //  0: disabled
+    //  1: split by hostname [default]
+    //  2: split by shared
+    //  >=8: (debug) split with given number per node
+    withHostComms   1;
+
     // Transfer double as float for processor boundaries. Mostly defunct.
     floatTransfer   0;
 

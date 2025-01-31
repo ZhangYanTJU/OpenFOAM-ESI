@@ -106,54 +106,103 @@ Foam::labelRange Foam::fileOperation::subRanks(const labelUList& mainIOranks)
 
 Foam::labelList Foam::fileOperation::getGlobalHostIORanks()
 {
-    const label numProcs = UPstream::nProcs(UPstream::worldComm);
+    // Very similar to the code in UPstream::setHostCommunicators()
+    // except we need the leader information on *all* ranks!
 
-    // Use hostname
-    // Lowest rank per hostname is the IO rank
-
-    List<SHA1Digest> digests;
-    if (UPstream::master(UPstream::worldComm))
-    {
-        digests.resize(numProcs);
-    }
+    const label myProci = UPstream::myProcNo(UPstream::worldComm);
+    const label numProc = UPstream::nProcs(UPstream::worldComm);
 
     // Could also add lowercase etc, but since hostName()
     // will be consistent within the same node, there is no need.
-    SHA1Digest myDigest(SHA1(hostName()).digest());
+    const SHA1Digest myDigest(SHA1(hostName()).digest());
 
-    // The fixed-length digest allows use of MPI_Gather
-    UPstream::mpiGather
+    List<SHA1Digest> digests(numProc);
+    digests[myProci] = myDigest;
+
+    // The fixed-length digest allows use of MPI_Allgather.
+    UPstream::mpiAllGather
     (
-        myDigest.cdata_bytes(),     // Send
-        digests.data_bytes(),       // Recv
+        digests.data_bytes(),       // Send/Recv
         SHA1Digest::size_bytes(),   // Num send/recv per rank
         UPstream::worldComm
     );
 
-    labelList ranks;
-    DynamicList<label> dynRanks;
 
-    if (UPstream::master(UPstream::worldComm))
+    DynamicList<label> hostLeaders(UPstream::numNodes());
+
+    hostLeaders.push_back(0);  // Always include master
+    for (label previ = 0, proci = 1; proci < digests.size(); ++proci)
     {
-        dynRanks.reserve(numProcs);
-
-        dynRanks.push_back(0);  // Always include master
-        label previ = 0;
-
-        for (label proci = 1; proci < digests.size(); ++proci)
+        if (digests[previ] != digests[proci])
         {
-            if (digests[proci] != digests[previ])
-            {
-                dynRanks.push_back(proci);
-                previ = proci;
-            }
+            hostLeaders.push_back(proci);
+            previ = proci;
         }
-
-        ranks.transfer(dynRanks);
     }
 
-    Pstream::broadcast(ranks, UPstream::worldComm);
-    return ranks;
+    return labelList(std::move(hostLeaders));
+
+    // Alternative.
+    // Recover information from inter-host communicator and broadcast
+    // it intra-node
+
+    #if 0
+    labelList hostLeaders(UPstream::numNodes());
+
+    if (UPstream::usingHostComms(UPstream::worldComm))
+    {
+        // Can simply broadcast it intra-node, since the leaders
+        // have that information (on the inter-node)
+
+        if (UPstream::master(UPstream::commIntraHost()))
+        {
+            // OR: (UPstream::is_rank(UPstream::commInterHost))
+
+            const auto& procIds = UPstream::procID(UPstream::commInterHost());
+
+            std::copy
+            (
+                procIds.cbegin(),
+                procIds.cend(),
+                hostLeaders.begin()
+            );
+        }
+
+        // Broadcast via intra-node.
+        // Note: size of hostLeaders is identical on all ranks
+        UPstream::broadcast
+        (
+            hostLeaders.data_bytes(),
+            hostLeaders.size_bytes(),
+            UPstream::commIntraHost()
+        );
+    }
+    else
+    {
+        if (UPstream::master(UPstream::worldComm))
+        {
+            const auto& procIds = UPstream::procID(UPstream::commInterHost());
+
+            std::copy
+            (
+                procIds.cbegin(),
+                procIds.cend(),
+                hostLeaders.begin()
+            );
+        }
+
+        // Broadcast via world-comm.
+        // Note: size of hostLeaders is identical on all ranks
+        UPstream::broadcast
+        (
+            hostLeaders.data_bytes(),
+            hostLeaders.size_bytes(),
+            UPstream::worldComm
+        );
+    }
+
+    return hostLeaders;
+    #endif
 }
 
 
