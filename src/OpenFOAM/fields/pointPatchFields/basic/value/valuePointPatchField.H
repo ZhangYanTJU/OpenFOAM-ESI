@@ -167,6 +167,15 @@ public:
 
     // Member Functions
 
+        // Attributes
+
+            //- True if the value of the patch field is altered by assignment
+            virtual bool assignable() const
+            {
+                return true;
+            }
+
+
         // Access
 
             //- Return size
