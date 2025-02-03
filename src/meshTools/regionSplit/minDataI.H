@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -170,6 +170,35 @@ inline bool Foam::minData::equal
 ) const
 {
     return operator==(rhs);
+}
+
+
+template<class TrackingData>
+inline bool Foam::minData::interpolate
+(
+    const polyMesh& mesh,
+    const point& pt,
+    const label i0,
+    const minData& f0,
+    const label i1,
+    const minData& f1,
+    const scalar weight,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    if (f0.valid(td))
+    {
+        return updateFace(mesh, -1, f0, tol, td);
+    }
+    if (f1.valid(td))
+    {
+        return updateFace(mesh, -1, f1, tol, td);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 

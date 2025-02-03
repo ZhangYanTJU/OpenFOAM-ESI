@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -195,12 +195,12 @@ protected:
 
             List<labelListList> cachedSrcAddress_;
             List<scalarListList> cachedSrcWeights_;
-            List<scalarList> cachedSrcWeightsSum_;
+            List<scalarField> cachedSrcWeightsSum_;
             List<autoPtr<mapDistribute>> cachedSrcMapPtr_;
 
             List<labelListList> cachedTgtAddress_;
             List<scalarListList> cachedTgtWeights_;
-            List<scalarList> cachedTgtWeightsSum_;
+            List<scalarField> cachedTgtWeightsSum_;
             List<autoPtr<mapDistribute>> cachedTgtMapPtr_;
 
 
@@ -563,7 +563,8 @@ public:
 
             // Low-level
 
-                //- Weighted sum of contributions
+                //- Weighted sum of contributions. Note: cop operates on
+                //- single Type only.
                 template<class Type, class CombineOp>
                 static void weightedSum
                 (
@@ -577,20 +578,35 @@ public:
                     const UList<Type>& defaultValues
                 );
 
-                //- Weighted sum of contributions
+                //- Weighted sum of contributions (includes caching+interp)
+                //- (for primitive types only)
                 template<class Type>
                 void weightedSum
                 (
-                    const bool interpolateToSource,
+                    const bool toSource,
                     const UList<Type>& fld,
                     List<Type>& result,
                     const UList<Type>& defaultValues
                 ) const;
 
-                //- Interpolate from target to source with supplied op
+                //- Weighted sum of (potentially distributed) contributions
+                //- and apply caching+interpolation. Note: iop
+                //- operates on single Type only
+                template<class Type, class CombineOp, class InterpolateOp>
+                void interpolate
+                (
+                    const bool toSource,
+                    const UList<Type>& fld,
+                    const CombineOp& cop,
+                    const InterpolateOp& iop,
+                    List<Type>& result,
+                    const UList<Type>& defaultValues
+                ) const;
+
+                //- Interpolate from source to target with supplied op
                 //- to combine existing value with remote value and weight
                 template<class Type, class CombineOp>
-                void interpolateToSource
+                void interpolateToTarget
                 (
                     const UList<Type>& fld,
                     const CombineOp& cop,
@@ -598,10 +614,10 @@ public:
                     const UList<Type>& defaultValues = UList<Type>::null()
                 ) const;
 
-                //- Interpolate from source to target with supplied op
+                //- Interpolate from target to source with supplied op
                 //- to combine existing value with remote value and weight
                 template<class Type, class CombineOp>
-                void interpolateToTarget
+                void interpolateToSource
                 (
                     const UList<Type>& fld,
                     const CombineOp& cop,
