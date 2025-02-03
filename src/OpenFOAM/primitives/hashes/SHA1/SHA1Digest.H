@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,6 +43,7 @@ SourceFiles
 
 #include <array>
 #include <string>
+#include "contiguous.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -169,15 +170,26 @@ public:
 
 
         //- Inequality operator
-        bool operator!=(const SHA1Digest& rhs) const;
+        bool operator!=(const SHA1Digest& rhs) const
+        {
+            return !(*this == rhs);
+        }
 
         //- Inequality operator
-        bool operator!=(const std::string& hexdigits) const;
+        bool operator!=(const std::string& hexdigits) const
+        {
+            return !(*this == hexdigits);
+        }
 
         //- Inequality operator
-        bool operator!=(const char* hexdigits) const;
+        bool operator!=(const char* hexdigits) const
+        {
+            return !(*this == hexdigits);
+        }
 };
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // IOstream Operators
 
@@ -186,6 +198,12 @@ Istream& operator>>(Istream& is, SHA1Digest& dig);
 
 //- Write (40-byte) text representation, unquoted and without prefix
 Ostream& operator<<(Ostream& os, const SHA1Digest& dig);
+
+
+// * * * * * * * * * * * * * * * * * Traits  * * * * * * * * * * * * * * * * //
+
+//- Contiguous data for SHA1Digest
+template<> struct is_contiguous<SHA1Digest> : std::true_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

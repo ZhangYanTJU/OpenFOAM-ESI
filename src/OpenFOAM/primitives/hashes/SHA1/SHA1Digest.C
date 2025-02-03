@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +28,7 @@ License
 
 #include "SHA1Digest.H"
 #include "IOstreams.H"
+#include <algorithm>
 #include <cstring>
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -94,13 +95,7 @@ bool assign
 
     if (len == digest.size())
     {
-        // ie, std::copy
-        for (auto& val : digest)
-        {
-            val = *content;
-            ++content;
-        }
-
+        std::copy_n(content, len, digest.data());
         return true;
     }
 
@@ -169,27 +164,27 @@ bool isEqual
 
 Foam::SHA1Digest::SHA1Digest()
 {
-    clear();
+    dig_.fill(0);
 }
 
 
 Foam::SHA1Digest::SHA1Digest(const char* content, std::size_t len)
 {
-    clear();
+    dig_.fill(0);
     assign(dig_, reinterpret_cast<const unsigned char*>(content), len);
 }
 
 
 Foam::SHA1Digest::SHA1Digest(const unsigned char* content, std::size_t len)
 {
-    clear();
+    dig_.fill(0);
     assign(dig_, content, len);
 }
 
 
 Foam::SHA1Digest::SHA1Digest(Istream& is)
 {
-    clear();
+    dig_.fill(0);
     read(is);
 }
 
@@ -198,7 +193,7 @@ Foam::SHA1Digest::SHA1Digest(Istream& is)
 
 void Foam::SHA1Digest::clear()
 {
-    dig_.fill(0);  // Same as memset(dig_.data(), 0, dig_.size());
+    dig_.fill(0);
 }
 
 
@@ -234,7 +229,7 @@ Foam::Istream& Foam::SHA1Digest::read(Istream& is)
 std::string Foam::SHA1Digest::str(const bool prefixed) const
 {
     std::string buf;
-    std::size_t nChar = 0;
+    int nChar = 0;
 
     if (prefixed)
     {
@@ -297,24 +292,6 @@ bool Foam::SHA1Digest::operator==(const char* hexdigits) const
     size_t len = (hexdigits ? strlen(hexdigits) : 0);
 
     return len ? isEqual(dig_, hexdigits, len) : empty();
-}
-
-
-bool Foam::SHA1Digest::operator!=(const SHA1Digest& rhs) const
-{
-    return !this->operator==(rhs);
-}
-
-
-bool Foam::SHA1Digest::operator!=(const std::string& hexdigits) const
-{
-    return !this->operator==(hexdigits);
-}
-
-
-bool Foam::SHA1Digest::operator!=(const char* hexdigits) const
-{
-    return !this->operator==(hexdigits);
 }
 
 
