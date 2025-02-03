@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2020,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -189,6 +189,23 @@ public:
                 template<class TrackingData>
                 inline bool equal(const deltaData&, TrackingData& td) const;
 
+                //- Interpolate between two values (lerp). Returns true if
+                //- causes changes. Not sure if needs to be specialised between
+                //- face and cell and what index is needed...
+                template<class TrackingData>
+                inline bool interpolate
+                (
+                    const polyMesh&,
+                    const point& pt,
+                    const label i0,
+                    const deltaData& f0,
+                    const label i1,
+                    const deltaData& f1,
+                    const scalar weight,
+                    const scalar tol,
+                    TrackingData& td
+                );
+
 
         // Member Operators
 
@@ -295,6 +312,17 @@ public:
 //- Contiguous data for deltaData
 template<>
 struct is_contiguous<LESModels::smoothDelta::deltaData> : std::true_type {};
+
+//- Interpolation - used in e.g. cyclicAMI interpolation
+inline LESModels::smoothDelta::deltaData lerp
+(
+    const LESModels::smoothDelta::deltaData& a,
+    const LESModels::smoothDelta::deltaData& b,
+    const scalar t
+)
+{
+    return LESModels::smoothDelta::deltaData(lerp(a.delta(), b.delta(), t));
+}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

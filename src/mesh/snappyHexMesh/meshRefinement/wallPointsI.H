@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -440,6 +440,41 @@ inline bool Foam::wallPoints::equal
 ) const
 {
     return operator==(rhs);
+}
+
+
+template<class TrackingData>
+inline bool Foam::wallPoints::interpolate
+(
+    const polyMesh&,
+    const point& pt,
+    const label i0,
+    const wallPoints& f0,
+    const label i1,
+    const wallPoints& f1,
+    const scalar weight,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    if (valid(td))
+    {
+        return false;
+    }
+    else if (f0.valid(td))
+    {
+        operator=(f0);
+        return true;
+    }
+    else if (f1.valid(td))
+    {
+        operator=(f1);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 

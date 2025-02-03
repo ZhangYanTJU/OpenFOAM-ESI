@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -188,6 +188,45 @@ inline bool Foam::smoothData::equal
 ) const
 {
     return operator==(rhs);
+}
+
+
+template<class TrackingData>
+inline bool Foam::smoothData::interpolate
+(
+    const polyMesh&,
+    const point& pt,
+    const label i0,
+    const smoothData& f0,
+    const label i1,
+    const smoothData& f1,
+    const scalar weight,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    // TBD. What to interpolate? Do we have a position? cell/face centre?
+
+    if (!valid(td))
+    {
+        if (f0.valid(td))
+        {
+            operator=(f0);
+        }
+        else
+        {
+            operator=(f1);
+        }
+    }
+    else if (f0.valid(td))
+    {
+        operator=(f0);
+    }
+    else
+    {
+        operator=(f1);
+    }
+    return true;
 }
 
 
