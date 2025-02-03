@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,6 +89,102 @@ namespace Foam
                         solver_.mesh(),
                         meshFacei,
                         y,
+                        solver_.propagationTol(),
+                        solver_.data()
+                    );
+                }
+            }
+    };
+
+    template<class Type, class TrackingData>
+    class interpolate
+    {
+        //- Combine operator for AMIInterpolation
+
+        FaceCellWave<Type, TrackingData>& solver_;
+
+        const cyclicAMIPolyPatch& patch_;
+
+    public:
+
+            interpolate
+            (
+                FaceCellWave<Type, TrackingData>& solver,
+                const cyclicAMIPolyPatch& patch
+            )
+            :
+                solver_(solver),
+                patch_(patch)
+            {}
+
+
+            void operator()
+            (
+                Type& x,
+                const label localFacei,
+                const label f0i,
+                const Type& y0,
+                const label f1i,
+                const Type& y1,
+                const scalar weight
+            ) const
+            {
+                if (y0.valid(solver_.data()))
+                {
+                    if (y1.valid(solver_.data()))
+                    {
+                        x.interpolate
+                        (
+                            solver_.mesh(),
+                            patch_.faceCentres()[localFacei],
+                            f0i,
+                            y0,
+                            f1i,
+                            y1,
+                            weight,
+                            solver_.propagationTol(),
+                            solver_.data()
+                        );
+                    }
+                    else
+                    {
+                        // Convert patch face into mesh face
+                        label meshFacei = -1;
+                        if (patch_.owner())
+                        {
+                            meshFacei = patch_.start() + f0i;
+                        }
+                        else
+                        {
+                            meshFacei = patch_.neighbPatch().start() + f0i;
+                        }
+                        x.updateFace
+                        (
+                            solver_.mesh(),
+                            meshFacei,
+                            y0,
+                            solver_.propagationTol(),
+                            solver_.data()
+                        );
+                    }
+                }
+                else if (y1.valid(solver_.data()))
+                {
+                    // Convert patch face into mesh face
+                    label meshFacei = -1;
+                    if (patch_.owner())
+                    {
+                        meshFacei = patch_.start() + f1i;
+                    }
+                    else
+                    {
+                        meshFacei = patch_.neighbPatch().start() + f1i;
+                    }
+                    x.updateFace
+                    (
+                        solver_.mesh(),
+                        meshFacei,
+                        y1,
                         solver_.propagationTol(),
                         solver_.data()
                     );
@@ -784,23 +880,43 @@ void Foam::FaceCellWave<Type, TrackingData>::handleAMICyclicPatches()
                 // Transfer sendInfo to cycPatch
                 combine<Type, TrackingData> cmb(*this, cycPatch);
 
+                // Linear interpolation
+                interpolate<Type, TrackingData> interp(*this, cycPatch);
+
+                const auto& AMI =
+                (
+                    cycPatch.owner()
+                  ? cycPatch.AMI()
+                  : cycPatch.neighbPatch().AMI()
+                );
+
                 if (cycPatch.applyLowWeightCorrection())
                 {
-                    List<Type> defVals
+                    const List<Type> defVals
                     (
                         cycPatch.patchInternalList(allCellInfo_)
                     );
-WarningInFunction
-    << "Disabled for MD24 cache AMI"
-    << endl;
-                    //cycPatch.interpolate(sendInfo, cmb, receiveInfo, defVals);
+                    AMI.interpolate
+                    (
+                        cycPatch.owner(),
+                        sendInfo,
+                        cmb,
+                        interp,
+                        receiveInfo,
+                        defVals
+                    );
                 }
                 else
                 {
-WarningInFunction
-    << "Disabled for MD24 cache AMI"
-    << endl;
-                    //cycPatch.interpolate(sendInfo, cmb, receiveInfo);
+                    AMI.interpolate
+                    (
+                        cycPatch.owner(),
+                        sendInfo,
+                        cmb,
+                        interp,
+                        receiveInfo,
+                        UList<Type>::null() // no default values needed
+                    );
                 }
             }
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -196,6 +196,38 @@ inline bool Foam::topoDistanceData<Type>::equal
 ) const
 {
     return operator==(rhs);
+}
+
+
+template<class Type>
+template<class TrackingData>
+inline bool Foam::topoDistanceData<Type>::interpolate
+(
+    const polyMesh&,
+    const point& pt,
+    const label i0,
+    const topoDistanceData<Type>& f0,
+    const label i1,
+    const topoDistanceData<Type>& f1,
+    const scalar weight,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    // Topological distance - how to interpolate?
+    if (!valid(td))
+    {
+        if (f0.valid(td))
+        {
+            this->operator=(f0);
+        }
+        else
+        {
+            this->operator=(f1);
+        }
+        return true;
+    }
+    return false;
 }
 
 

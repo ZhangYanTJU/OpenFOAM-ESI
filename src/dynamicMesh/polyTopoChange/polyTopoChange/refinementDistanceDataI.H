@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2020,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -274,6 +274,35 @@ inline bool Foam::refinementDistanceData::equal
     else
     {
         return operator==(rhs);
+    }
+}
+
+
+template<class TrackingData>
+inline bool Foam::refinementDistanceData::interpolate
+(
+    const polyMesh&,
+    const point& pt,
+    const label i0,
+    const refinementDistanceData& f0,
+    const label i1,
+    const refinementDistanceData& f1,
+    const scalar weight,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    if (f0.valid(td))
+    {
+        return update(pt, f0, tol, td);
+    }
+    if (f1.valid(td))
+    {
+        return update(pt, f1, tol, td);
+    }
+    else
+    {
+        return false;
     }
 }
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -188,6 +188,40 @@ inline bool Foam::LESModels::smoothDelta::deltaData::equal
 ) const
 {
     return operator==(rhs);
+}
+
+
+template<class TrackingData>
+inline bool Foam::LESModels::smoothDelta::deltaData::interpolate
+(
+    const polyMesh&,
+    const point& pt,
+    const label i0,
+    const deltaData& f0,
+    const label i1,
+    const deltaData& f1,
+    const scalar weight,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    if (f0.valid(td) && f1.valid(td))
+    {
+        const deltaData w2(lerp(f0.delta(), f1.delta(), weight));
+        return update(w2, 1.0, tol, td);
+    }
+    else if (f0.valid(td))
+    {
+        return update(f0, 1.0, tol, td);
+    }
+    else if (f1.valid(td))
+    {
+        return update(f1, 1.0, tol, td);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
