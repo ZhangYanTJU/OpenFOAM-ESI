@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -188,6 +188,35 @@ inline bool Foam::wallNormalInfo::equal
 ) const
 {
     return operator==(rhs);
+}
+
+
+template<class TrackingData>
+inline bool Foam::wallNormalInfo::interpolate
+(
+    const polyMesh&,
+    const point& pt,
+    const label i0,
+    const wallNormalInfo& f0,
+    const label i1,
+    const wallNormalInfo& f1,
+    const scalar weight,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    if (f0.valid(td))
+    {
+        return update(f0, td);
+    }
+    if (f1.valid(td))
+    {
+        return update(f1, td);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 

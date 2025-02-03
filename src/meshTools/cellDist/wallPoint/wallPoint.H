@@ -76,6 +76,16 @@ class wallPoint
 
     // Private Member Functions
 
+        // Update this with w2 if distance less
+        template<class TrackingData>
+        inline bool update
+        (
+            const wallPoint& w2,
+            const scalar dist2,
+            const scalar tol,
+            TrackingData& td
+        );
+
         //- Evaluate distance to point.
         //  Update distSqr, origin from whomever is nearer pt.
         //  \return true if w2 is closer to point, false otherwise.
@@ -206,9 +216,40 @@ public:
                 TrackingData& td
             );
 
+            //- Interpolate different values
+            template<class TrackingData>
+            wallPoint
+            (
+                const polyMesh&,
+                const scalar weight,
+                const label face0,
+                const wallPoint& info0,
+                const label face1,
+                const wallPoint& info1,
+                const scalar tol,
+                TrackingData& td
+            );
+
             //- Test for equality, with TrackingData
             template<class TrackingData>
             inline bool equal(const wallPoint&, TrackingData& td) const;
+
+            //- Interpolate between two values (lerp). Returns true if
+            //- causes changes. Not sure if needs to be specialised between
+            //- face and cell and what index is needed...
+            template<class TrackingData>
+            inline bool interpolate
+            (
+                const polyMesh&,
+                const point& pt,
+                const label i0,
+                const wallPoint& f0,
+                const label i1,
+                const wallPoint& f1,
+                const scalar weight,
+                const scalar tol,
+                TrackingData& td
+            );
 
 
     // Member Operators

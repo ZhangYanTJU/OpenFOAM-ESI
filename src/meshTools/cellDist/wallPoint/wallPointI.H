@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,21 +35,12 @@ License
 template<class TrackingData>
 inline bool Foam::wallPoint::update
 (
-    const point& pt,
     const wallPoint& w2,
+    const scalar dist2,
     const scalar tol,
     TrackingData& td
 )
 {
-    //Already done in calling algorithm
-    //if (w2.origin() == origin_)
-    //{
-    //    // Shortcut. Same input so same distance.
-    //    return false;
-    //}
-
-    const scalar dist2 = magSqr(pt - w2.origin());
-
     if (!valid(td))
     {
         // current not yet set so use any value
@@ -80,6 +71,26 @@ inline bool Foam::wallPoint::update
 
         return true;
     }
+}
+
+
+// Update this with w2 if w2 nearer to pt.
+template<class TrackingData>
+inline bool Foam::wallPoint::update
+(
+    const point& pt,
+    const wallPoint& w2,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    return update
+    (
+        w2,
+        magSqr(pt - w2.origin()),
+        tol,
+        td
+    );
 }
 
 
@@ -257,6 +268,58 @@ inline bool Foam::wallPoint::equal
 ) const
 {
     return operator==(rhs);
+}
+
+
+template<class TrackingData>
+inline bool Foam::wallPoint::interpolate
+(
+    const polyMesh&,
+    const point& pt,
+    const label i0,
+    const wallPoint& f0,
+    const label i1,
+    const wallPoint& f1,
+    const scalar weight,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    if (f0.valid(td))
+    {
+        if (f1.valid(td))
+        {
+            // What do we do about the origin? Should be consistent with the
+            // distance? But then interpolating between a point 'on the left'
+            // and a point 'on the right' the interpolate might just be on
+            // top of us so suddenly setting the distance to be zero...
+
+            const scalar dist2 =
+                sqr(lerp(sqrt(f0.distSqr()), sqrt(f1.distSqr()), weight));
+
+            if (f0.distSqr() < f1.distSqr())
+            {
+                // Update with interpolated distance and f0 origin
+                return update(f0, dist2, tol, td);
+            }
+            else
+            {
+                return update(f1, dist2, tol, td);
+            }
+        }
+        else
+        {
+            return update(f0, f0.distSqr(), tol, td);
+        }
+    }
+    else if (f1.valid(td))
+    {
+        return update(f1, f1.distSqr(), tol, td);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
