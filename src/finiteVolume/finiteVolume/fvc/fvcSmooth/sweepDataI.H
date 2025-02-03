@@ -210,6 +210,45 @@ inline bool Foam::sweepData::equal
 }
 
 
+template<class TrackingData>
+inline bool Foam::sweepData::interpolate
+(
+    const polyMesh&,
+    const point& pt,
+    const label i0,
+    const sweepData& f0,
+    const label i1,
+    const sweepData& f1,
+    const scalar weight,
+    const scalar tol,
+    TrackingData& td
+)
+{
+    // TBD. What to interpolate? Do we have a position? cell/face centre?
+
+    if (!valid(td))
+    {
+        if (f0.valid(td))
+        {
+            operator=(f0);
+        }
+        else
+        {
+            operator=(f1);
+        }
+    }
+    else if (f0.valid(td))
+    {
+        operator=(f0);
+    }
+    else
+    {
+        operator=(f1);
+    }
+    return true;
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 inline bool Foam::sweepData::operator==

@@ -197,6 +197,23 @@ public:
             template<class TrackingData>
             inline bool equal(const refinementData&, TrackingData& td) const;
 
+            //- Interpolate between two values (lerp). Returns true if
+            //- causes changes. Not sure if needs to be specialised between
+            //- face and cell and what index is needed...
+            template<class TrackingData>
+            inline bool interpolate
+            (
+                const polyMesh&,
+                const point& pt,
+                const label i0,
+                const refinementData& f0,
+                const label i1,
+                const refinementData& f1,
+                const scalar weight,
+                const scalar tol,
+                TrackingData& td
+            );
+
 
     // Member Operators
 
