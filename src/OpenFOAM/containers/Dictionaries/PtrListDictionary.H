@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,30 +66,60 @@ public:
 
     // Constructors
 
+        //- Default construct: empty without allocation (capacity=0).
+        PtrListDictionary() = default;
+
         //- Construct given initial list size
-        explicit PtrListDictionary(const label size);
+        explicit PtrListDictionary(const label len)
+        {
+            dict_type(2*len);
+            PtrList<T>::resize(len);
+        }
 
         //- Copy construct
-        PtrListDictionary(const PtrListDictionary& dict);
+        PtrListDictionary(const PtrListDictionary& dict) = default;
 
         //- Construct from Istream using given Istream constructor class
         template<class INew>
-        PtrListDictionary(Istream& is, const INew& inew);
+        PtrListDictionary(Istream& is, const INew& inew)
+        :
+            dict_type(is, inew)
+        {}
 
         //- Construct from Istream
-        explicit PtrListDictionary(Istream& is);
+        explicit PtrListDictionary(Istream& is)
+        :
+            dict_type(is)
+        {}
 
 
-    // Member functions
+    // Member Functions
 
         //- Set element to pointer provided and return old element
-        autoPtr<T> set(const label i, const word& key, T* ptr);
+        autoPtr<T> set(const label i, const word& key, T* ptr)
+        {
+            autoPtr<T> old(PtrList<T>::set(i, ptr));
+
+            if (!dict_type::addHashEntry(key, ptr))
+            {
+                FatalErrorInFunction
+                    << "Cannot insert '" << key << "' into hash-table"
+                    << Foam::abort(FatalError);
+            }
+            return old;
+        }
 
         //- Set element to autoPtr value provided and return old element
-        autoPtr<T> set(const label i, const word& key, autoPtr<T>& ptr);
+        autoPtr<T> set(const label i, const word& key, autoPtr<T>& ptr)
+        {
+            return this->set(i, key, ptr.release());
+        }
 
         //- Set element to tmp value provided and return old element
-        autoPtr<T> set(const label i, const word& key, tmp<T>& ptr);
+        autoPtr<T> set(const label i, const word& key, tmp<T>& ptr)
+        {
+            return this->set(i, key, ptr.ptr());  // release or clone
+        }
 
 
     // Member Operators
@@ -112,12 +143,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "PtrListDictionary.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

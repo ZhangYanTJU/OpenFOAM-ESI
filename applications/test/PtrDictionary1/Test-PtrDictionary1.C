@@ -25,10 +25,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    Test-Dictionary
+    Test-PtrDictionary1
 
 Description
-    Tests for Dictionary (not dictionary)
+    Tests for Dictionary (not dictionary) and PtrDictionary
 
 \*---------------------------------------------------------------------------*/
 

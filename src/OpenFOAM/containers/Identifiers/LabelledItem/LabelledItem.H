@@ -36,7 +36,6 @@ SeeAlso
     Foam::PointIndexHit
 
 SourceFiles
-    LabelledItemI.H
 
 \*---------------------------------------------------------------------------*/
 
