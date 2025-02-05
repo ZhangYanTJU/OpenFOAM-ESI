@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,8 +49,8 @@ void Foam::primitiveMesh::calcCellShapes() const
     }
     else
     {
-        cellShapesPtr_ = new cellShapeList(nCells());
-        cellShapeList& cellShapes = *cellShapesPtr_;
+        cellShapesPtr_ = std::make_unique<cellShapeList>(nCells());
+        auto& cellShapes = *cellShapesPtr_;
 
         forAll(cellShapes, celli)
         {

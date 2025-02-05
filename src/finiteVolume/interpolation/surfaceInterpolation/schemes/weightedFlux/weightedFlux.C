@@ -26,15 +26,14 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "weightedFlux.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 
 template<class Type>
 void Foam::weightedFlux<Type>::clearOut()
 {
-    deleteDemandDrivenData(oDelta_);
-    deleteDemandDrivenData(nDelta_);
+    oDelta_.reset(nullptr);
+    nDelta_.reset(nullptr);
 }
 
 
@@ -54,7 +53,7 @@ void Foam::weightedFlux<Type>::makeDeltas() const
 {
     const fvMesh& mesh = this->mesh();
 
-    oDelta_ = new surfaceScalarField
+    oDelta_ = std::make_unique<surfaceScalarField>
     (
         IOobject
         (
@@ -67,7 +66,7 @@ void Foam::weightedFlux<Type>::makeDeltas() const
     );
     auto& oDelta = *oDelta_;
 
-    nDelta_ = new surfaceScalarField
+    nDelta_ = std::make_unique<surfaceScalarField>
     (
         IOobject
         (

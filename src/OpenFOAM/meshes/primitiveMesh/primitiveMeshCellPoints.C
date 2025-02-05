@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,14 +61,14 @@ void Foam::primitiveMesh::calcCellPoints() const
     else if (hasPointCells())
     {
         // Invert pointCells
-        cpPtr_ = new labelListList(nCells());
+        cpPtr_ = std::make_unique<labelListList>(nCells());
         invertManyToMany(nCells(), pointCells(), *cpPtr_);
     }
     else
     {
         // Calculate cell-point topology
 
-        cpPtr_ = new labelListList(nCells());
+        cpPtr_ = std::make_unique<labelListList>(nCells());
         auto& cellPointAddr = *cpPtr_;
 
         const cellList& cellLst = cells();

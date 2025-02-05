@@ -33,7 +33,6 @@ License
 #include "coupledFvPatchFields.H"
 #include "IndirectList.H"
 #include "UniformList.H"
-#include "demandDrivenData.H"
 
 #include "cyclicFvPatchField.H"
 #include "cyclicAMIFvPatchField.H"

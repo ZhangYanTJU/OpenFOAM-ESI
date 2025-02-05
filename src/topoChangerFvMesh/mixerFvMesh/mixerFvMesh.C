@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,7 +33,6 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "mapPolyMesh.H"
 #include "unitConversion.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -186,8 +185,8 @@ void Foam::mixerFvMesh::calcMovingMasks() const
     }
 
     // Set the point mask
-    movingPointsMaskPtr_ = new scalarField(points().size(), Zero);
-    scalarField& movingPointsMask = *movingPointsMaskPtr_;
+    movingPointsMaskPtr_ = std::make_unique<scalarField>(points().size(), Zero);
+    auto& movingPointsMask = *movingPointsMaskPtr_;
 
     const cellList& c = cells();
     const faceList& f = faces();
@@ -267,9 +266,7 @@ Foam::mixerFvMesh::mixerFvMesh
             )
         ).optionalSubDict(typeName + "Coeffs")
     ),
-    csys_(),
-    rpm_(motionDict_.get<scalar>("rpm")),
-    movingPointsMaskPtr_(nullptr)
+    rpm_(motionDict_.get<scalar>("rpm"))
 {
     // New() for access to indirect (global) coordSystem.
 
@@ -277,7 +274,7 @@ Foam::mixerFvMesh::mixerFvMesh
 
     if (csysPtr)
     {
-        static_cast<coordinateSystem&>(csys_) = csysPtr();
+        static_cast<coordinateSystem&>(csys_) = *csysPtr;
     }
     else
     {
@@ -297,7 +294,7 @@ Foam::mixerFvMesh::mixerFvMesh
 
 Foam::mixerFvMesh::~mixerFvMesh()
 {
-    deleteDemandDrivenData(movingPointsMaskPtr_);
+    movingPointsMaskPtr_.reset(nullptr);
 }
 
 
@@ -337,7 +334,7 @@ bool Foam::mixerFvMesh::update()
     {
         DebugInFunction << "Mesh topology is changing" << nl;
 
-        deleteDemandDrivenData(movingPointsMaskPtr_);
+        movingPointsMaskPtr_.reset(nullptr);
     }
 
     movePoints

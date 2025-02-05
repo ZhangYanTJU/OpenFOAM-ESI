@@ -524,8 +524,6 @@ Foam::polyMesh::polyMesh
     comm_(UPstream::worldComm),
     geometricD_(Zero),
     solutionD_(Zero),
-    tetBasePtIsPtr_(nullptr),
-    cellTreePtr_(nullptr),
     pointZones_
     (
         IOobject
@@ -568,13 +566,10 @@ Foam::polyMesh::polyMesh
         *this,
         Foam::zero{}
     ),
-    globalMeshDataPtr_(nullptr),
     moving_(false),
     topoChanging_(false),
     storeOldCellCentres_(false),
-    curMotionTimeIndex_(time().timeIndex()),
-    oldPointsPtr_(nullptr),
-    oldCellCentresPtr_(nullptr)
+    curMotionTimeIndex_(time().timeIndex())
 {
     DebugInfo
         << "Constructing polyMesh from cell and boundary shapes." << endl;
@@ -806,8 +801,6 @@ Foam::polyMesh::polyMesh
     comm_(UPstream::worldComm),
     geometricD_(Zero),
     solutionD_(Zero),
-    tetBasePtIsPtr_(nullptr),
-    cellTreePtr_(nullptr),
     pointZones_
     (
         IOobject
@@ -850,13 +843,10 @@ Foam::polyMesh::polyMesh
         *this,
         Foam::zero{}
     ),
-    globalMeshDataPtr_(nullptr),
     moving_(false),
     topoChanging_(false),
     storeOldCellCentres_(false),
-    curMotionTimeIndex_(time().timeIndex()),
-    oldPointsPtr_(nullptr),
-    oldCellCentresPtr_(nullptr)
+    curMotionTimeIndex_(time().timeIndex())
 {
     DebugInfo
         << "Constructing polyMesh from cell and boundary shapes." << endl;

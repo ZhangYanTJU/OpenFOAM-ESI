@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,12 +53,12 @@ void Foam::primitiveMesh::calcCellCentresAndVols() const
     }
 
     // set the accumulated cell centre to zero vector
-    cellCentresPtr_ = new vectorField(nCells(), Zero);
-    vectorField& cellCtrs = *cellCentresPtr_;
+    cellCentresPtr_ = std::make_unique<vectorField>(nCells(), Zero);
+    auto& cellCtrs = *cellCentresPtr_;
 
     // Initialise cell volumes to 0
-    cellVolumesPtr_ = new scalarField(nCells(), Zero);
-    scalarField& cellVols = *cellVolumesPtr_;
+    cellVolumesPtr_ = std::make_unique<scalarField>(nCells(), Zero);
+    auto& cellVols = *cellVolumesPtr_;
 
     // Make centres and volumes
     primitiveMeshTools::makeCellCentresAndVols

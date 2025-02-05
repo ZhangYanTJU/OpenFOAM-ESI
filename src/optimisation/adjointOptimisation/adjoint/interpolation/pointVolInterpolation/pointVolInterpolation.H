@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pointVolInterpolation_H
-#define pointVolInterpolation_H
+#ifndef Foam_pointVolInterpolation_H
+#define Foam_pointVolInterpolation_H
 
 #include "primitiveFieldsFwd.H"
 #include "primitivePatchInterpolation.H"
@@ -66,16 +66,17 @@ class pointVolInterpolation
     // Private Data
 
         const pointMesh& pointMesh_;
+
         const fvMesh& fvMesh_;
 
         //- Interpolation scheme weighting factor array.
-        mutable FieldField<Field, scalar>* volWeightsPtr_;
+        mutable std::unique_ptr<FieldField<Field, scalar>> volWeightsPtr_;
 
         //- Primitive patch interpolators
-        mutable PtrList<primitivePatchInterpolation>* patchInterpolatorsPtr_;
+        mutable PtrList<primitivePatchInterpolation> patchInterpolators_;
 
 
-    // Private member functions
+    // Private Member Functions
 
         //- Return patch interpolators
         const PtrList<primitivePatchInterpolation>& patchInterpolators() const;
@@ -92,15 +93,9 @@ class pointVolInterpolation
 
 protected:
 
-        const pointMesh& pMesh() const
-        {
-            return pointMesh_;
-        }
+        const pointMesh& pMesh() const noexcept { return pointMesh_; }
 
-        const fvMesh& vMesh() const
-        {
-            return fvMesh_;
-        }
+        const fvMesh& vMesh() const noexcept { return fvMesh_; }
 
 
 public:
@@ -119,7 +114,7 @@ public:
     ~pointVolInterpolation();
 
 
-    // Member functions
+    // Member Functions
 
         // Access
 

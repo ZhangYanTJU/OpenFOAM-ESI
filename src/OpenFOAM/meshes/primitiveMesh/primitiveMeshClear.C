@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "primitiveMesh.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -132,10 +132,10 @@ void Foam::primitiveMesh::clearGeom()
             << endl;
     }
 
-    deleteDemandDrivenData(cellCentresPtr_);
-    deleteDemandDrivenData(cellVolumesPtr_);
-    deleteDemandDrivenData(faceCentresPtr_);
-    deleteDemandDrivenData(faceAreasPtr_);
+    cellCentresPtr_.reset(nullptr);
+    cellVolumesPtr_.reset(nullptr);
+    faceCentresPtr_.reset(nullptr);
+    faceAreasPtr_.reset(nullptr);
 }
 
 
@@ -148,8 +148,8 @@ void Foam::primitiveMesh::clearCellGeom()
             << endl;
     }
 
-    deleteDemandDrivenData(cellCentresPtr_);
-    deleteDemandDrivenData(cellVolumesPtr_);
+    cellCentresPtr_.reset(nullptr);
+    cellVolumesPtr_.reset(nullptr);
 }
 
 
@@ -162,23 +162,23 @@ void Foam::primitiveMesh::clearAddressing()
             << endl;
     }
 
-    deleteDemandDrivenData(cellShapesPtr_);
+    cellShapesPtr_.reset(nullptr);
 
     clearOutEdges();
 
-    deleteDemandDrivenData(ccPtr_);
-    deleteDemandDrivenData(ecPtr_);
-    deleteDemandDrivenData(pcPtr_);
+    ccPtr_.reset(nullptr);
+    ecPtr_.reset(nullptr);
+    pcPtr_.reset(nullptr);
 
-    deleteDemandDrivenData(cfPtr_);
-    deleteDemandDrivenData(efPtr_);
-    deleteDemandDrivenData(pfPtr_);
+    cfPtr_.reset(nullptr);
+    efPtr_.reset(nullptr);
+    pfPtr_.reset(nullptr);
 
-    deleteDemandDrivenData(cePtr_);
-    deleteDemandDrivenData(fePtr_);
-    deleteDemandDrivenData(pePtr_);
-    deleteDemandDrivenData(ppPtr_);
-    deleteDemandDrivenData(cpPtr_);
+    cePtr_.reset(nullptr);
+    fePtr_.reset(nullptr);
+    pePtr_.reset(nullptr);
+    ppPtr_.reset(nullptr);
+    cpPtr_.reset(nullptr);
 }
 
 

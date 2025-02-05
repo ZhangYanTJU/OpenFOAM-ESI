@@ -96,10 +96,10 @@ class weightedFlux
     // Demand-driven data
 
         //- Face to owner cell distance
-        mutable surfaceScalarField* oDelta_;
+        mutable std::unique_ptr<surfaceScalarField> oDelta_;
 
         //- Face to neighbour cell distance
-        mutable surfaceScalarField* nDelta_;
+        mutable std::unique_ptr<surfaceScalarField> nDelta_;
 
 
     // Private Member Functions

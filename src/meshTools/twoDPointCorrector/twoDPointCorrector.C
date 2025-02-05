@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,6 @@ License
 #include "emptyPolyPatch.H"
 #include "SubField.H"
 #include "meshTools.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -49,8 +48,8 @@ const Foam::scalar Foam::twoDPointCorrector::edgeOrthogonalityTol = 1.0 - 1e-4;
 void Foam::twoDPointCorrector::calcAddressing() const
 {
     // Find geometry normal
-    planeNormalPtr_ = new vector(0, 0, 0);
-    vector& pn = *planeNormalPtr_;
+    planeNormalPtr_ = std::make_unique<vector>(0, 0, 0);
+    auto& pn = *planeNormalPtr_;
 
     // Algorithm:
     // Attempt to find wedge patch and work out the normal from it.
@@ -120,8 +119,8 @@ void Foam::twoDPointCorrector::calcAddressing() const
     }
 
     // Select edges to be included in check.
-    normalEdgeIndicesPtr_ = new labelList(mesh_.nEdges());
-    labelList& neIndices = *normalEdgeIndicesPtr_;
+    normalEdgeIndicesPtr_ = std::make_unique<labelList>(mesh_.nEdges());
+    auto& neIndices = *normalEdgeIndicesPtr_;
 
     const edgeList& meshEdges = mesh_.edges();
 
@@ -176,8 +175,8 @@ void Foam::twoDPointCorrector::calcAddressing() const
 
 void Foam::twoDPointCorrector::clearAddressing() const
 {
-    deleteDemandDrivenData(planeNormalPtr_);
-    deleteDemandDrivenData(normalEdgeIndicesPtr_);
+    planeNormalPtr_.reset(nullptr);
+    normalEdgeIndicesPtr_.reset(nullptr);
 }
 
 
@@ -201,8 +200,6 @@ Foam::twoDPointCorrector::twoDPointCorrector(const polyMesh& mesh)
 :
     MeshObject_type(mesh),
     required_(mesh_.nGeometricD() == 2),
-    planeNormalPtr_(nullptr),
-    normalEdgeIndicesPtr_(nullptr),
     isWedge_(false),
     wedgeAxis_(Zero),
     wedgeAngle_(0.0)

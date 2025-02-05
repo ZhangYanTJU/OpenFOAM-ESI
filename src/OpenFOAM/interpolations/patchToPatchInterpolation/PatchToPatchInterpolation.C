@@ -113,13 +113,7 @@ PatchToPatchInterpolation<FromPatch, ToPatch>::PatchToPatchInterpolation
     fromPatch_(fromPatch),
     toPatch_(toPatch),
     alg_(alg),
-    dir_(dir),
-    pointAddressingPtr_(nullptr),
-    pointWeightsPtr_(nullptr),
-    pointDistancePtr_(nullptr),
-    faceAddressingPtr_(nullptr),
-    faceWeightsPtr_(nullptr),
-    faceDistancePtr_(nullptr)
+    dir_(dir)
 {}
 
 

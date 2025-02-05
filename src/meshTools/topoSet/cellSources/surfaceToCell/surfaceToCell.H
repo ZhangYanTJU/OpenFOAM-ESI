@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -115,10 +115,11 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef surfaceToCell_H
-#define surfaceToCell_H
+#ifndef Foam_surfaceToCell_H
+#define Foam_surfaceToCell_H
 
 #include "topoSetCellSource.H"
+#include "refPtr.H"
 #include "Map.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -170,15 +171,11 @@ class surfaceToCell
         //  varying more than curvature_.
         const scalar curvature_;
 
-        //- triSurface to search on. On pointer since can be external.
-        const triSurface* surfPtr_;
+        //- triSurface to search on (can be external reference)
+        const refPtr<triSurface> surfPtr_;
 
         //- Search engine on surface.
-        const triSurfaceSearch* querySurfPtr_;
-
-        //- Whether I allocated above surface ptrs or whether they are
-        //  external.
-        const bool IOwnPtrs_;
+        const refPtr<triSurfaceSearch> querySurfPtr_;
 
 
     // Private Member Functions

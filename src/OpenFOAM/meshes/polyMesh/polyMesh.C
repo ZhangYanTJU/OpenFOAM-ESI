@@ -247,8 +247,6 @@ Foam::polyMesh::polyMesh(const IOobject& io, const bool doInit)
     comm_(UPstream::worldComm),
     geometricD_(Zero),
     solutionD_(Zero),
-    tetBasePtIsPtr_(nullptr),
-    cellTreePtr_(nullptr),
     pointZones_
     (
         IOobject
@@ -291,13 +289,10 @@ Foam::polyMesh::polyMesh(const IOobject& io, const bool doInit)
         *this,
         PtrList<entry>()
     ),
-    globalMeshDataPtr_(nullptr),
     moving_(false),
     topoChanging_(false),
     storeOldCellCentres_(false),
-    curMotionTimeIndex_(time().timeIndex()),
-    oldPointsPtr_(nullptr),
-    oldCellCentresPtr_(nullptr)
+    curMotionTimeIndex_(time().timeIndex())
 {
     if (owner_.hasHeaderClass())
     {
@@ -454,8 +449,6 @@ Foam::polyMesh::polyMesh
     comm_(UPstream::worldComm),
     geometricD_(Zero),
     solutionD_(Zero),
-    tetBasePtIsPtr_(nullptr),
-    cellTreePtr_(nullptr),
     pointZones_
     (
         IOobject
@@ -498,13 +491,10 @@ Foam::polyMesh::polyMesh
         *this,
         Foam::zero{}
     ),
-    globalMeshDataPtr_(nullptr),
     moving_(false),
     topoChanging_(false),
     storeOldCellCentres_(false),
-    curMotionTimeIndex_(time().timeIndex()),
-    oldPointsPtr_(nullptr),
-    oldCellCentresPtr_(nullptr)
+    curMotionTimeIndex_(time().timeIndex())
 {
     // Check if the faces and cells are valid
     forAll(faces_, facei)
@@ -608,8 +598,6 @@ Foam::polyMesh::polyMesh
     comm_(UPstream::worldComm),
     geometricD_(Zero),
     solutionD_(Zero),
-    tetBasePtIsPtr_(nullptr),
-    cellTreePtr_(nullptr),
     pointZones_
     (
         IOobject
@@ -652,13 +640,10 @@ Foam::polyMesh::polyMesh
         *this,
         Foam::zero{}
     ),
-    globalMeshDataPtr_(nullptr),
     moving_(false),
     topoChanging_(false),
     storeOldCellCentres_(false),
-    curMotionTimeIndex_(time().timeIndex()),
-    oldPointsPtr_(nullptr),
-    oldCellCentresPtr_(nullptr)
+    curMotionTimeIndex_(time().timeIndex())
 {
     // Check if faces are valid
     forAll(faces_, facei)

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,7 +72,7 @@ void Foam::primitiveMesh::calcCellCells() const
         }
 
         // Create the storage
-        ccPtr_ = new labelListList(ncc.size());
+        ccPtr_ = std::make_unique<labelListList>(ncc.size());
         auto& cellCellAddr = *ccPtr_;
 
 
