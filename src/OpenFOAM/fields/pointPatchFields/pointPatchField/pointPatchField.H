@@ -165,6 +165,12 @@ public:
 
     // Attributes
 
+        //- True if the value of the patch field is altered by assignment
+        virtual bool assignable() const
+        {
+            return false;
+        }
+
         //- True if the patch field fixes a value
         virtual bool fixesValue() const
         {

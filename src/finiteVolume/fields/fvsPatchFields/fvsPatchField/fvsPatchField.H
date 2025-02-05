@@ -145,6 +145,12 @@ public:
 
     // Attributes
 
+        //- True if the value of the patch field is altered by assignment
+        virtual bool assignable() const
+        {
+            return true;
+        }
+
         //- True if the patch field fixes a value.
         //  Needed to check if a level has to be specified while solving
         //  Poissons equations.
