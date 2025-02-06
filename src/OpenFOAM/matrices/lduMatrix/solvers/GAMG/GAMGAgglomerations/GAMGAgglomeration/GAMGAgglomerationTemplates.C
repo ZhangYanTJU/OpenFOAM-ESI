@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -78,17 +78,17 @@ void Foam::GAMGAgglomeration::restrictField
         const label coarseComm =
             UPstream::parent(procCommunicator_[coarseLevelIndex]);
 
-        const List<label>& procIDs = agglomProcIDs(coarseLevelIndex);
-        const labelList& offsets = cellOffsets(coarseLevelIndex);
+        const auto& procIDs = agglomProcIDs(coarseLevelIndex);
+        const auto& offsets = cellOffsets(coarseLevelIndex);
 
-        globalIndex::gather
+        globalIndex::gatherInplace
         (
             offsets,
             coarseComm,
             procIDs,
             cf,
             UPstream::msgType(),
-            Pstream::commsTypes::nonBlocking    //Pstream::commsTypes::scheduled
+            UPstream::commsTypes::nonBlocking
         );
     }
 }
@@ -145,8 +145,8 @@ void Foam::GAMGAgglomeration::prolongField
         const label coarseComm =
             UPstream::parent(procCommunicator_[coarseLevelIndex]);
 
-        const List<label>& procIDs = agglomProcIDs(coarseLevelIndex);
-        const labelList& offsets = cellOffsets(coarseLevelIndex);
+        const auto& procIDs = agglomProcIDs(coarseLevelIndex);
+        const auto& offsets = cellOffsets(coarseLevelIndex);
 
         const label localSize = nCells_[levelIndex];
 
@@ -159,7 +159,7 @@ void Foam::GAMGAgglomeration::prolongField
             cf,
             allCf,
             UPstream::msgType(),
-            Pstream::commsTypes::nonBlocking    //Pstream::commsTypes::scheduled
+            UPstream::commsTypes::nonBlocking
         );
 
         forAll(fineToCoarse, i)
@@ -195,8 +195,8 @@ const Foam::Field<Type>& Foam::GAMGAgglomeration::prolongField
         const label coarseComm =
             UPstream::parent(procCommunicator_[coarseLevelIndex]);
 
-        const List<label>& procIDs = agglomProcIDs(coarseLevelIndex);
-        const labelList& offsets = cellOffsets(coarseLevelIndex);
+        const auto& procIDs = agglomProcIDs(coarseLevelIndex);
+        const auto& offsets = cellOffsets(coarseLevelIndex);
 
         const label localSize = nCells_[levelIndex];
         allCf.resize_nocopy(localSize);
@@ -209,7 +209,7 @@ const Foam::Field<Type>& Foam::GAMGAgglomeration::prolongField
             cf,
             allCf,
             UPstream::msgType(),
-            Pstream::commsTypes::nonBlocking    //Pstream::commsTypes::scheduled
+            UPstream::commsTypes::nonBlocking
         );
 
         forAll(fineToCoarse, i)

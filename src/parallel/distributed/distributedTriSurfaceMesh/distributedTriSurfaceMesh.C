@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -2441,12 +2441,7 @@ void Foam::distributedTriSurfaceMesh::independentlyDistributedBbs
 //        // Gather all borderTris
 //        //globalIndex globalBorderTris(borderTris.size());
 //        //pointField globalBorderCentres(allCentres, borderTris);
-//        //globalBorderTris.gather
-//        //(
-//        //    UPstream::worldComm,
-//        //    UPstream::allProcs(UPstream::worldComm),
-//        //    globalBorderCentres
-//        //);
+//        //globalBorderTris.gatherInplace(globalBorderCentres);
 //        pointField globalBorderCentres(allCentres);
 //        map.distribute(globalBorderCentres);
 //
@@ -2586,12 +2581,7 @@ void Foam::distributedTriSurfaceMesh::independentlyDistributedBbs
             {
                 allCentres[trii] = s[trii].centre(s.points());
             }
-            globalTris().gather
-            (
-                UPstream::worldComm,
-                UPstream::allProcs(UPstream::worldComm),
-                allCentres
-            );
+            globalTris().gatherInplace(allCentres);
         }
 
         // Determine local decomposition
@@ -2635,13 +2625,8 @@ void Foam::distributedTriSurfaceMesh::independentlyDistributedBbs
             }
 
             // Scatter back to processors
-            globalTris().scatter
-            (
-                UPstream::worldComm,
-                UPstream::allProcs(UPstream::worldComm),
-                allDistribution,
-                distribution
-            );
+            globalTris().scatter(allDistribution, distribution);
+
             if (debug)
             {
                 Pout<< "distributedTriSurfaceMesh::"

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -559,29 +559,28 @@ void Foam::GAMGAgglomeration::procAgglomerateRestrictAddressing
     const label levelIndex
 )
 {
+    const bool master =
+    (
+        UPstream::myProcNo(comm) == (procIDs.empty() ? 0 : procIDs[0])
+    );
+
     // Collect number of cells
-    labelList nFineCells;
-    globalIndex::gatherValues
+    labelList nFineCells = globalIndex::listGatherValues
     (
         comm,
         procIDs,
         restrictAddressing_[levelIndex].size(),
-        nFineCells,
-
         UPstream::msgType(),
         UPstream::commsTypes::scheduled
     );
     labelList fineOffsets(globalIndex::calcOffsets(nFineCells));
 
     // Combine and renumber nCoarseCells
-    labelList nCoarseCells;
-    globalIndex::gatherValues
+    labelList nCoarseCells = globalIndex::listGatherValues
     (
         comm,
         procIDs,
         nCells_[levelIndex],
-        nCoarseCells,
-
         UPstream::msgType(),
         UPstream::commsTypes::scheduled
     );
@@ -589,6 +588,11 @@ void Foam::GAMGAgglomeration::procAgglomerateRestrictAddressing
 
     // (cell)restrictAddressing
     labelList procRestrictAddressing;
+    if (master)
+    {
+        // pre-size on master
+        procRestrictAddressing.resize(fineOffsets.back());
+    }
     globalIndex::gather
     (
         fineOffsets,
@@ -596,15 +600,13 @@ void Foam::GAMGAgglomeration::procAgglomerateRestrictAddressing
         procIDs,
         restrictAddressing_[levelIndex],
         procRestrictAddressing,
-
         UPstream::msgType(),
-        Pstream::commsTypes::nonBlocking    //Pstream::commsTypes::scheduled
+        UPstream::commsTypes::nonBlocking
     );
 
-
-    if (Pstream::myProcNo(comm) == procIDs[0])
+    if (master)
     {
-        nCells_[levelIndex] = coarseOffsets.last();  // ie, totalSize()
+        nCells_[levelIndex] = coarseOffsets.back();  // ie, totalSize()
 
         // Renumber consecutively
         for (label proci = 1; proci < procIDs.size(); ++proci)

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,9 +87,8 @@ class globalIndex
         // template<class Type>
         // inline static UPstream::commsTypes getCommsType
         // (
-        //     const UPstream::commsTypes preferred
-        //   = UPstream::commsTypes::nonBlocking
-        // );
+        //     UPstream::commsTypes commsType
+        // ) noexcept;
 
         //- Report overflow at specified (non-negative) index
         static void reportOverflowAndExit
@@ -597,19 +596,20 @@ public:
         ) const;
 
 
-    // Low-level gather routines
+    // Misc low-level gather routines
 
         //- Collect single values in processor order on master (== procIDs[0]).
         //  Handles contiguous/non-contiguous data.
+        //  non-zero output field (master only)
         template<class ProcIDsContainer, class Type>
-        static void gatherValues
+        [[nodiscard]]
+        static List<Type> listGatherValues
         (
             const label comm,           //!< communicator
             const ProcIDsContainer& procIDs,
             const Type& localValue,
-            List<Type>& allValues,      //! output field (master only)
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking
         );
 
         //- Collect data in processor order on master (== procIDs[0]).
@@ -620,10 +620,11 @@ public:
             const labelUList& offsets,  //!< offsets (master only)
             const label comm,           //!< communicator
             const ProcIDsContainer& procIDs,
-            const UList<Type>& fld,
-            List<Type>& allFld,         //! output field (master only)
+            const UList<Type>& fld,     //!< [in] all ranks
+            //! [out] result (master only). Must be adequately sized!
+            UList<Type>& allFld,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking
         );
 
         //- Collect indirect data in processor order on master
@@ -634,37 +635,24 @@ public:
             const labelUList& offsets,  //!< offsets (master only)
             const label comm,           //!< communicator
             const ProcIDsContainer& procIDs,
-            const IndirectListBase<Type, Addr>& fld,
-            List<Type>& allFld,         //! output field (master only)
+            const IndirectListBase<Type, Addr>& fld,  //!< [in] all ranks
+            //! [out] result (master only). Must be adequately sized!
+            UList<Type>& allFld,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking
         );
 
-
-    // Misc low-level gather routines
-
         //- Inplace collect in processor order on master (== procIDs[0]).
-        //  Note: adjust naming?
         template<class ProcIDsContainer, class Type>
-        static void gather
+        static void gatherInplace
         (
             const labelUList& offsets,  //!< offsets (master only)
             const label comm,           //!< communicator
             const ProcIDsContainer& procIDs,
-            List<Type>& fld,            //!< in/out field
+            List<Type>& fld,            //!< [in,out]
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes ct = UPstream::commsTypes::nonBlocking
-        )
-        {
-            List<Type> allData;
-            gather(offsets, comm, procIDs, fld, allData, tag, ct);
-
-            const int masterProci = procIDs.size() ? procIDs[0] : 0;
-            if (UPstream::myProcNo(comm) == masterProci)
-            {
-                fld.transfer(allData);
-            }
-        }
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking
+        );
 
         //- Collect data in processor order on master (== procIDs[0]).
         //  \note the globalIndex offsets needed on master only.
@@ -673,29 +661,26 @@ public:
         (
             const label comm,           //!< communicator
             const ProcIDsContainer& procIDs,
-            const UList<Type>& fld,     //!< input field
-            List<Type>& allFld,         //! output field (master only)
+            const UList<Type>& fld,     //!< [in] input field
+            //! [out] resized to have results on master, empty elsewhere.
+            List<Type>& allFld,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes ct = UPstream::commsTypes::nonBlocking
-        ) const
-        {
-            gather(offsets_, comm, procIDs, fld, allFld, tag, ct);
-        }
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking
+        ) const;
 
         //- Inplace collect in processor order on master (== procIDs[0]).
         //  \note the globalIndex offsets needed on master only.
-        //  Note: adjust naming?
         template<class ProcIDsContainer, class Type>
-        void gather
+        void gatherInplace
         (
             const label comm,           //!< communicator
             const ProcIDsContainer& procIDs,
-            List<Type>& fld,            //!< in/out field
+            List<Type>& fld,            //!< [in,out]
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes ct = UPstream::commsTypes::nonBlocking
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking
         ) const
         {
-            gather(offsets_, comm, procIDs, fld, tag, ct);
+            gatherInplace(offsets_, comm, procIDs, fld, tag, commsType);
         }
 
 
@@ -707,10 +692,12 @@ public:
         template<class Type>
         void gather
         (
+            //! [in] input on all ranks
             const UList<Type>& sendData,
+            //! [out] resized to have results on master, empty elsewhere.
             List<Type>& allData,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         ) const;
 
@@ -720,10 +707,12 @@ public:
         template<class Type, class Addr>
         void gather
         (
+            //! [in] input on all ranks
             const IndirectListBase<Type, Addr>& sendData,
+            //! [out] resized to have results on master, empty elsewhere.
             List<Type>& allData,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         ) const;
 
@@ -733,11 +722,12 @@ public:
         //
         //  \return output (master), zero-sized on non-master
         template<class Type, class OutputContainer = List<Type>>
+        [[nodiscard]]
         OutputContainer gather
         (
-            const UList<Type>& sendData,
+            const UList<Type>& sendData,  //!< [in] all ranks
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         ) const;
 
@@ -746,11 +736,12 @@ public:
         //
         //  \return output (master), zero-sized on non-master
         template<class Type, class Addr, class OutputContainer = List<Type>>
+        [[nodiscard]]
         OutputContainer gather
         (
-            const IndirectListBase<Type, Addr>& sendData,
+            const IndirectListBase<Type, Addr>& sendData, //!< [in] all ranks
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         ) const;
 
@@ -761,10 +752,9 @@ public:
         template<class Type>
         void gatherInplace
         (
-            //! [in,out]
-            List<Type>& fld,
+            List<Type>& fld,  //!< [in,out]
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         ) const;
 
@@ -782,7 +772,7 @@ public:
             const label comm = UPstream::worldComm,  //!< communicator
 
             // For fallback routines:
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const int tag = UPstream::msgType()
         ) const;
 
@@ -794,13 +784,14 @@ public:
         //
         //  \return output (master), zero-sized on non-master
         template<class Type, class OutputContainer = List<Type>>
+        [[nodiscard]]
         OutputContainer mpiGather
         (
             const UList<Type>& sendData,
             const label comm = UPstream::worldComm,  //!< communicator
 
             // For fallback routines:
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const int tag = UPstream::msgType()
         ) const;
 
@@ -820,7 +811,7 @@ public:
             const label comm = UPstream::worldComm,  //!< communicator
 
             // For fallback routines:
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const int tag = UPstream::msgType()
         ) const;
 
@@ -840,7 +831,7 @@ public:
             const label comm = UPstream::worldComm,  //!< communicator
 
             // For fallback routines:
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const int tag = UPstream::msgType()
         );
 
@@ -850,13 +841,14 @@ public:
         //
         //  \return output (master), zero-sized on non-master
         template<class Type, class OutputContainer = List<Type>>
+        [[nodiscard]]
         static OutputContainer mpiGatherOp
         (
             const UList<Type>& sendData,
             const label comm = UPstream::worldComm,  //!< communicator
 
             // For fallback routines:
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const int tag = UPstream::msgType()
         );
 
@@ -874,7 +866,7 @@ public:
             const label comm = UPstream::worldComm,  //!< communicator
 
             // For fallback routines:
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const int tag = UPstream::msgType()
         );
 
@@ -888,7 +880,7 @@ public:
             //! [out] output on master, zero-sized on non-master
             List<Type>& allData,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         );
 
@@ -902,7 +894,7 @@ public:
             //! [out] output on master, zero-sized on non-master
             List<Type>& allData,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         );
 
@@ -912,11 +904,12 @@ public:
         //
         //  \return output (master), zero-sized on non-master
         template<class Type, class OutputContainer = List<Type>>
+        [[nodiscard]]
         static OutputContainer gatherOp
         (
             const UList<Type>& sendData,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         );
 
@@ -926,11 +919,12 @@ public:
         //
         //  \return output (master), zero-sized on non-master
         template<class Type, class Addr, class OutputContainer = List<Type>>
+        [[nodiscard]]
         static OutputContainer gatherOp
         (
             const IndirectListBase<Type, Addr>& sendData,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         );
 
@@ -945,7 +939,7 @@ public:
             //! [in,out]
             List<Type>& fld,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         );
 
@@ -964,7 +958,7 @@ public:
             const UList<Type>& allFld,
             UList<Type>& fld,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking
         );
 
         //- Distribute data in processor order.
@@ -979,11 +973,10 @@ public:
             const UList<Type>& allFld,
             UList<Type>& fld,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes ct =
-                UPstream::commsTypes::nonBlocking
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking
         ) const
         {
-            scatter(offsets_, comm, procIDs, allFld, fld, tag, ct);
+            scatter(offsets_, comm, procIDs, allFld, fld, tag, commsType);
         }
 
         //- Distribute data in processor order.
@@ -996,7 +989,7 @@ public:
             const UList<Type>& allData,
             UList<Type>& localData,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         ) const;
 
@@ -1005,11 +998,12 @@ public:
         //  Communication with default/specified communicator, message tag.
         //  \note the globalIndex offsets needed on master only.
         template<class Type, class OutputContainer = List<Type>>
+        [[nodiscard]]
         OutputContainer scatter
         (
             const UList<Type>& allData,
             const int tag = UPstream::msgType(),
-            const UPstream::commsTypes = UPstream::commsTypes::nonBlocking,
+            UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             const label comm = UPstream::worldComm  //!< communicator
         ) const;
 
