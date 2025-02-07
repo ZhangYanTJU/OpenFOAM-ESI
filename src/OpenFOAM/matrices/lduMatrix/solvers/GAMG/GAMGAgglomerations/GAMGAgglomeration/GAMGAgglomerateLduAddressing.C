@@ -564,27 +564,52 @@ void Foam::GAMGAgglomeration::procAgglomerateRestrictAddressing
         UPstream::myProcNo(comm) == (procIDs.empty() ? 0 : procIDs[0])
     );
 
-    // Collect number of cells
-    labelList nFineCells = globalIndex::listGatherValues
-    (
-        comm,
-        procIDs,
-        restrictAddressing_[levelIndex].size(),
-        UPstream::msgType(),
-        UPstream::commsTypes::scheduled
-    );
-    labelList fineOffsets(globalIndex::calcOffsets(nFineCells));
+    // Determine the fine/coarse sizes (offsets) for gathering
+    labelList fineOffsets;
+    labelList coarseOffsets;
 
-    // Combine and renumber nCoarseCells
-    labelList nCoarseCells = globalIndex::listGatherValues
-    (
-        comm,
-        procIDs,
-        nCells_[levelIndex],
-        UPstream::msgType(),
-        UPstream::commsTypes::scheduled
-    );
-    labelList coarseOffsets(globalIndex::calcOffsets(nCoarseCells));
+    {
+        List<labelPair> sizes = globalIndex::listGatherValues
+        (
+            comm,
+            procIDs,
+            labelPair
+            (
+                // fine
+                restrictAddressing_[levelIndex].size(),
+                // coarse
+                nCells_[levelIndex]
+            ),
+            UPstream::msgType(),
+            UPstream::commsTypes::scheduled
+        );
+
+        // Calculate offsets, as per globalIndex::calcOffsets()
+        // but extracting from the pair
+        if (master && !sizes.empty())
+        {
+            const label len = sizes.size();
+
+            fineOffsets.resize(len+1);
+            coarseOffsets.resize(len+1);
+
+            label fineCount = 0;
+            label coarseCount = 0;
+
+            for (label i = 0; i < len; ++i)
+            {
+                fineOffsets[i] = fineCount;
+                fineCount += sizes[i].first();
+
+                coarseOffsets[i] = coarseCount;
+                coarseCount += sizes[i].second();
+            }
+
+            fineOffsets[len] = fineCount;
+            coarseOffsets[len] = coarseCount;
+        }
+    }
+
 
     // (cell)restrictAddressing
     labelList procRestrictAddressing;
