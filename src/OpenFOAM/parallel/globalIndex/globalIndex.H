@@ -582,6 +582,23 @@ public:
             const bool checkOverflow = false
         );
 
+        //- Split the top-level offsets into inter-node and local-node
+        //- components suitable to a two-stage hierarchy.
+        bool splitNodeOffsets
+        (
+            //! [out] Offsets between nodes (only non-empty on node leaders)
+            labelList& interNodeOffsets,
+            //! [out] Offsets within a node (only non-empty on node leaders)
+            labelList& localNodeOffsets,
+            //! The communicator. Must resolve to const world-comm
+            const label communicator = UPstream::worldComm,
+            //! Retain absolute values for the localNode offsets
+            const bool absoluteLocalNodeOffsets = false
+        ) const;
+
+
+    // Low-level gather routines
+
         //- Collect single values in processor order on master (== procIDs[0]).
         //  Handles contiguous/non-contiguous data.
         template<class ProcIDsContainer, class Type>

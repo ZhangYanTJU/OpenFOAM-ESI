@@ -28,6 +28,178 @@ License
 
 #include "UPstream.H"
 
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// This outputs as depth-first, but graphviz sorts that for us
+static void printGraph_impl
+(
+    Ostream& os,
+    const UList<UPstream::commsStruct>& comms,
+    const label proci,
+    label depth,
+    const label maxDepth = 1024
+)
+{
+    if (proci >= comms.size())
+    {
+        // Corner case when only a single rank involved
+        // (eg, for node-local communicator)
+        return;
+    }
+
+    const auto& below = comms[proci].below();
+
+    if (proci == 0)
+    {
+        os << nl << "// communication graph:" << nl;
+        os.beginBlock("graph");
+
+        // Prefer left-to-right layout for large graphs
+        os << indent << "rankdir=LR" << nl;
+
+        if (below.empty())
+        {
+            // A graph with a single-node (eg, self-comm)
+            os << indent << proci << nl;
+        }
+    }
+
+    int pos = 0;
+
+    for (const auto nbrProci : below)
+    {
+        if (pos)
+        {
+            os << "  ";
+        }
+        else
+        {
+            os << indent;
+        }
+        os << proci << " -- " << nbrProci;
+
+        if (++pos >= 4)  // Max 4 items per line
+        {
+            pos = 0;
+            os << nl;
+        }
+    }
+
+    if (pos)
+    {
+        os << nl;
+    }
+
+    // Limit the maximum depth
+    ++depth;
+    if (depth >= maxDepth && (proci != 0))
+    {
+        return;
+    }
+
+    for (const auto nbrProci : below)
+    {
+        // if (proci == nbrProci) continue;  // Extreme safety!
+        printGraph_impl(os, comms, nbrProci, depth, maxDepth);
+    }
+
+    if (proci == 0)
+    {
+        os.endBlock();
+
+        os << "// end graph" << nl;
+    }
+}
+
+} // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Create a tree-like schedule. For 8 procs:
+// (level 0)
+//      0 receives from 1
+//      2 receives from 3
+//      4 receives from 5
+//      6 receives from 7
+// (level 1)
+//      0 receives from 2
+//      4 receives from 6
+// (level 2)
+//      0 receives from 4
+//
+// The sends/receives for all levels are collected per processor
+// (one send per processor; multiple receives possible) creating
+// a table:
+//
+// So per processor:
+// proc     receives from   sends to
+// ----     -------------   --------
+//  0       1,2,4           -
+//  1       -               0
+//  2       3               0
+//  3       -               2
+//  4       5               0
+//  5       -               4
+//  6       7               4
+//  7       -               6
+
+namespace Foam
+{
+
+static label simpleTree
+(
+    const label procID,
+    const label numProcs,
+
+    DynamicList<label>& below,
+    DynamicList<label>& allBelow
+)
+{
+    label above(-1);
+
+    for (label mod = 2, step = 1; step < numProcs; step = mod)
+    {
+        mod = step * 2;
+
+        if (procID % mod)
+        {
+            // The rank above
+            above = procID - (procID % mod);
+            break;
+        }
+        else
+        {
+            for
+            (
+                label j = procID + step;
+                j < numProcs && j < procID + mod;
+                j += step
+            )
+            {
+                below.push_back(j);
+            }
+            for
+            (
+                label j = procID + step;
+                j < numProcs && j < procID + mod;
+                j++
+            )
+            {
+                allBelow.push_back(j);
+            }
+        }
+    }
+
+    return above;
+}
+
+} // End namespace Foam
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::UPstream::commsStruct::commsStruct
@@ -91,7 +263,6 @@ Foam::UPstream::commsStruct::commsStruct
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-// This outputs as depth-first, but graphviz sorts that for us
 void Foam::UPstream::commsStruct::printGraph
 (
     Ostream& os,
@@ -99,59 +270,13 @@ void Foam::UPstream::commsStruct::printGraph
     const label proci
 )
 {
-    // if (proci >= comms.size()) return;  // Extreme safety!
+    // Print graph - starting at depth 0
+    // Avoid corner case when only a single rank involved
+    // (eg, for node-local communicator)
 
-    const auto& below = comms[proci].below();
-
-    if (proci == 0)
+    if (proci < comms.size())
     {
-        os << nl << "// communication graph:" << nl;
-        os.beginBlock("graph");
-
-        if (below.empty())
-        {
-            // A graph with a single-node (eg, self-comm)
-            os << indent << proci << nl;
-        }
-    }
-
-    int pos = 0;
-
-    for (const label nbrProci : below)
-    {
-        if (pos)
-        {
-            os << "  ";
-        }
-        else
-        {
-            os << indent;
-        }
-        os << proci << " -- " << nbrProci;
-
-        if (++pos >= 4)  // Max 4 items per line
-        {
-            pos = 0;
-            os << nl;
-        }
-    }
-
-    if (pos)
-    {
-        os << nl;
-    }
-
-    for (const label nbrProci : below)
-    {
-        // if (proci == nbrProci) continue;  // Extreme safety!
-        printGraph(os, comms, nbrProci);
-    }
-
-    if (proci == 0)
-    {
-        os.endBlock();
-
-        os << "// end graph" << nl;
+        printGraph_impl(os, comms, proci, 0);
     }
 }
 
@@ -181,88 +306,37 @@ void Foam::UPstream::commsStruct::reset
 {
     reset();
 
-    label above(-1);
-    DynamicList<label> below;
-    DynamicList<label> allBelow;
-
-    if (numProcs < UPstream::nProcsSimpleSum)
+    if (numProcs <= 2 || numProcs < UPstream::nProcsSimpleSum)
     {
-        // Linear schedule
+        // Linear communication pattern
+        label above(-1);
+        labelList below;
 
         if (procID == 0)
         {
             below = identity(numProcs-1, 1);
-            allBelow = below;
         }
         else
         {
             above = 0;
         }
+
+        *this = UPstream::commsStruct(numProcs, procID, above, below, below);
+        return;
     }
-    else
-    {
-        // Use tree like schedule. For 8 procs:
-        // (level 0)
-        //      0 receives from 1
-        //      2 receives from 3
-        //      4 receives from 5
-        //      6 receives from 7
-        // (level 1)
-        //      0 receives from 2
-        //      4 receives from 6
-        // (level 2)
-        //      0 receives from 4
-        //
-        // The sends/receives for all levels are collected per processor
-        // (one send per processor; multiple receives possible) creating
-        // a table:
-        //
-        // So per processor:
-        // proc     receives from   sends to
-        // ----     -------------   --------
-        //  0       1,2,4           -
-        //  1       -               0
-        //  2       3               0
-        //  3       -               2
-        //  4       5               0
-        //  5       -               4
-        //  6       7               4
-        //  7       -               6
 
-        label mod = 0;
 
-        for (label step = 1; step < numProcs; step = mod)
-        {
-            mod = step * 2;
+    // Simple tree communication pattern
+    DynamicList<label> below;
+    DynamicList<label> allBelow;
 
-            if (procID % mod)
-            {
-                above = procID - (procID % mod);
-                break;
-            }
-            else
-            {
-                for
-                (
-                    label j = procID + step;
-                    j < numProcs && j < procID + mod;
-                    j += step
-                )
-                {
-                    below.push_back(j);
-                }
-                for
-                (
-                    label j = procID + step;
-                    j < numProcs && j < procID + mod;
-                    j++
-                )
-                {
-                    allBelow.push_back(j);
-                }
-            }
-        }
-    }
+    label above = simpleTree
+    (
+        procID,
+        numProcs,
+        below,
+        allBelow
+    );
 
     *this = UPstream::commsStruct(numProcs, procID, above, below, allBelow);
 }
