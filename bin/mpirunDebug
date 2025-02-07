@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2015 OpenFOAM Foundation
-#     Copyright (C) 2017-2023 OpenCFD Ltd.
+#     Copyright (C) 2017-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -23,9 +23,8 @@
 #------------------------------------------------------------------------------
 . "${WM_PROJECT_DIR:?}"/bin/tools/RunFunctions  # Run functions
 
-usage() {
+printHelp() {
     exec 1>&2
-    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
     cat<<USAGE
 
 Usage: ${0##*/} [OPTION] -np <N> <executable> <args>
@@ -44,12 +43,13 @@ options:
   -yes          Start without additional prompting
   -local        Same as -spawn=1
   -remote       Same as -spawn=2
-  -clean        Remove old processor*.{log,sh} files, mpirun.schema etc
+  -clean        Remove log and startup files
   -decompose-dict=<file>   Specific decomposeParDict name
   -help         Print the usage
 
-Invoke mpirun with separate per-processor log files or running in
-separate XTerms.
+Invoke mpirun with separate per-processor log files or with separate XTerms.
+Also detects some OpenFOAM options:
+  -decomposeParDict <file>   Use specified file for decomposePar dictionary
 
 Common shortcuts. Sets default spawn to -local, add -yes.
   -normal       = -method=0
@@ -57,9 +57,6 @@ Common shortcuts. Sets default spawn to -local, add -yes.
   -xlog         = -method=4  (log + xterm)
   -valgrind     = -method=5l (valgrind + log)
   -xvalgrind    = -method=5  (valgrind + xterm)
-
-Also detects some OpenFOAM options:
-  -decomposeParDict <file>   Use specified file for decomposePar dictionary
 
 USAGE
     exit 0  # A clean exit
@@ -240,9 +237,11 @@ if [ -n "$optClean" ]
 then
     echo "Cleanup old mpirunDebug files..." 1>&2
     rm -f gdbCommands    mpirun.schema
+    rm -rf mpirun.log mpirun.files
     rm -f processor*.log processor*.sh
     echo "    gdbCommands     mpirun.schema" 1>&2
-    echo "    processor*.log  processor*.sh" 1>&2
+    echo "    mpirun.{files,log}/" 1>&2
+    echo "    processor*.{log,sh}" 1>&2
     echo "Done" 1>&2
     exit 0
 fi
@@ -345,16 +344,19 @@ esac
 
 echo "**sourceFoam: $sourceFoam" 1>&2
 
-rm -f "$PWD"/mpirun.schema
-touch "$PWD"/mpirun.schema
+rm -f ./mpirun.schema
+touch ./mpirun.schema
+
+mkdir -p ./mpirun.files
+mkdir -p ./mpirun.log
 
 proc=0
 xpos=0
 ypos=0
 for ((proc=0; proc<$nProcs; proc++))
 do
-    procCmdFile="$PWD/processor${proc}.sh"
-    procLog="processor${proc}.log"
+    procCmdFile="$PWD/mpirun.files/processor${proc}.sh"
+    procLog="./mpirun.log/processor${proc}.log"
     xterm="xterm -font fixed -title processor${proc} -geometry 120x15+$xpos+$ypos"
 
     unset node
@@ -421,7 +423,7 @@ done
 
 for ((proc=0; proc<$nProcs; proc++))
 do
-    procLog="processor${proc}.log"
+    procLog="mpirun.log/processor${proc}.log"
     echo "    tail -f $procLog" 1>&2
 done
 
@@ -437,11 +439,11 @@ MPICH)
     do
         read procCmd
 
-        procXtermCmdFile="$PWD/processor${proc}Xterm.sh"
-        echo "#!/bin/sh" > $procXtermCmdFile
-        echo "$procCmd" >> $procXtermCmdFile
-        chmod +x $procXtermCmdFile
-        if [ $proc -ne 0 ]
+        procXtermCmdFile="$PWD/mpirun.files/xterm-processor${proc}.sh"
+        echo "#!/bin/sh" > "$procXtermCmdFile"
+        echo "$procCmd" >> "$procXtermCmdFile"
+        chmod +x "$procXtermCmdFile"
+        if [ "$proc" -ne 0 ]
         then
             cmd="${cmd} :"
         fi
