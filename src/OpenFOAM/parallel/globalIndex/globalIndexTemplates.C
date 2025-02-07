@@ -136,14 +136,14 @@ Foam::List<Type> Foam::globalIndex::listGatherValues
     // low-level: no parRun guard?
     const int masterProci = (procIDs.empty() ? 0 : procIDs[0]);
 
-    List<Type> allValues;
-
     // if (!UPstream::is_parallel(comm))
     // {
-    //     allValues.resize(1);
+    //     List<Type> allValues(1);
     //     allValues[0] = localValue;
     //     return allValues;
     // }
+
+    List<Type> allValues;
 
     // Cannot use non-blocking for non-contiguous data
     if constexpr (!is_contiguous_v<Type>)
@@ -241,9 +241,9 @@ void Foam::globalIndex::gather
 
         for (label i = 1; i < procIDs.size(); ++i)
         {
-            SubList<Type> procSlot(allFld, off[i+1]-off[i], off[i]);
+            SubList<Type> slot(allFld, off[i+1]-off[i], off[i]);
 
-            if (procSlot.empty())
+            if (slot.empty())
             {
                 // Nothing to do
             }
@@ -253,14 +253,14 @@ void Foam::globalIndex::gather
                 (
                     commsType,
                     procIDs[i],
-                    procSlot,
+                    slot,
                     tag,
                     comm
                 );
             }
             else
             {
-                IPstream::recv(procSlot, procIDs[i], tag, comm);
+                IPstream::recv(slot, procIDs[i], tag, comm);
             }
         }
 
@@ -361,15 +361,15 @@ void Foam::globalIndex::gather
 
         for (label i = 1; i < procIDs.size(); ++i)
         {
-            SubList<Type> procSlot(allFld, off[i+1]-off[i], off[i]);
+            SubList<Type> slot(allFld, off[i+1]-off[i], off[i]);
 
-            if (procSlot.empty())
+            if (slot.empty())
             {
                 // Nothing to do
             }
             else
             {
-                IPstream::recv(procSlot, procIDs[i], tag, comm);
+                IPstream::recv(slot, procIDs[i], tag, comm);
             }
         }
 
@@ -498,6 +498,7 @@ void Foam::globalIndex::gather
         allData.clear();  // zero-size on non-master
     }
 
+    if (!UPstream::usingNodeComms(comm))
     {
         globalIndex::gather
         (
@@ -509,6 +510,62 @@ void Foam::globalIndex::gather
             tag,
             commsType
         );
+    }
+    else
+    {
+        // Using node-based hierarchy
+
+        // Using comm-world and have node communication active
+        const auto interNodeComm = UPstream::commInterNode();
+        const auto localNodeComm = UPstream::commLocalNode();
+
+        // Stage 0 : The inter-node/intra-node offsets
+        labelList interNodeOffsets;
+        labelList localNodeOffsets;
+        this->splitNodeOffsets(interNodeOffsets, localNodeOffsets, comm);
+
+        // The first node re-uses the output (allData) when collecting
+        // content. All other nodes require temporary node-local storage.
+
+        List<Type> tmpNodeData;
+        if (UPstream::is_subrank(interNodeComm))
+        {
+            tmpNodeData.resize(localNodeOffsets.back());
+        }
+
+        List<Type>& nodeData =
+        (
+            UPstream::master(interNodeComm) ? allData : tmpNodeData
+        );
+
+        // Stage 1 : Gather data within the node
+        {
+            globalIndex::gather
+            (
+                localNodeOffsets,  // (master only)
+                localNodeComm,
+                UPstream::allProcs(localNodeComm),
+                sendData,
+                nodeData,  // node-local dest (or the allData parameter)
+                tag,
+                commsType
+            );
+        }
+
+        // Stage 2 : Gather data between nodes
+        if (UPstream::is_rank(interNodeComm))
+        {
+            globalIndex::gather
+            (
+                interNodeOffsets,  // (master only)
+                interNodeComm,
+                UPstream::allProcs(interNodeComm),
+                nodeData,
+                allData,
+                tag,
+                commsType
+            );
+        }
     }
 }
 
@@ -1029,9 +1086,9 @@ void Foam::globalIndex::scatter
     {
         for (label i = 1; i < procIDs.size(); ++i)
         {
-            const SubList<Type> procSlot(allFld, off[i+1]-off[i], off[i]);
+            const SubList<Type> slot(allFld, off[i+1]-off[i], off[i]);
 
-            if (procSlot.empty())
+            if (slot.empty())
             {
                 // Nothing to do
             }
@@ -1041,14 +1098,14 @@ void Foam::globalIndex::scatter
                 (
                     commsType,
                     procIDs[i],
-                    procSlot,
+                    slot,
                     tag,
                     comm
                 );
             }
             else
             {
-                OPstream::send(procSlot, commsType, procIDs[i], tag, comm);
+                OPstream::send(slot, commsType, procIDs[i], tag, comm);
             }
         }
 
