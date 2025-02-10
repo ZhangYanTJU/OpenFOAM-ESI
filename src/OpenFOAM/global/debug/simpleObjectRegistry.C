@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,13 +38,17 @@ License
 void Foam::simpleObjectRegistry::setValues
 (
     const dictionary& dict,
-    bool report
+    bool verbose,
+    bool dryrun
 )
 {
     // Report enables output, but respect DetailInfo state as well.
-    // The local log variable captures this logic.
+    verbose = (verbose && Foam::infoDetailLevel > 0);
 
-    const bool log = (report && Foam::infoDetailLevel > 0);
+    if (dryrun && !verbose)
+    {
+        return;
+    }
 
     for (const entry& dEntry : dict)
     {
@@ -52,10 +56,24 @@ void Foam::simpleObjectRegistry::setValues
 
         simpleObjectRegistryEntry* objPtr = this->find(name);
 
-        if (objPtr)
+        if (verbose)
         {
-            Log << "    " << dEntry << nl;
+            if (objPtr)
+            {
+                Info<< "    " << dEntry << nl;
+            }
+            else
+            {
+                Info<< "    " << name << " (unregistered)" << nl;
+            }
+        }
 
+        if (dryrun)
+        {
+            // Nothing else to do
+        }
+        else if (objPtr)
+        {
             const List<simpleRegIOobject*>& objects = *objPtr;
 
             OCharStream os;
@@ -85,66 +103,88 @@ void Foam::simpleObjectRegistry::setValues
                 }
             }
         }
-        else
-        {
-            Log << "    " << name << " (unregistered)" << nl;
-        }
     }
 }
 
 
 void Foam::simpleObjectRegistry::setNamedValue
 (
-    std::string name,
+    const std::string_view name,
     int val,
-    bool report
+    bool verbose,
+    bool dryrun
 )
 {
-    // Report enables output, but respect DetailInfo state as well.
-    // The local log variable captures this logic.
+    // Respect DetailInfo state
+    verbose = (verbose && Foam::infoDetailLevel > 0);
 
-    const bool log = (report && Foam::infoDetailLevel > 0);
+    if (dryrun && !verbose)
+    {
+        return;
+    }
 
     token tok(static_cast<label>(val));
 
-    // Handle name=value
+    // Handle name=value,
+    // treating 'name=' like 'name' (ie, default value)
+
     const auto eq = name.find('=');
+    std::string_view objName = name;
+    std::string_view param;
+    std::string key;
 
-    if (eq != std::string::npos)
+    if (eq != std::string_view::npos)
     {
-        string strval(name.substr(eq+1));
-        name.erase(eq);  // Truncate the name
+        key = name.substr(0, eq);
+        param = name.substr(eq+1);
+        objName = key;
+    }
 
-        // Treat 'name=' like 'name' (ie, default value)
-        if (strval.length())
+    simpleObjectRegistryEntry* objPtr = this->find(objName.data());
+
+    // Fail early
+    if (!objPtr)
+    {
+        if (verbose)
         {
-            float fvalue(0);
-
-            if (Foam::readInt(strval, val))
-            {
-                // Parses as int
-                tok = static_cast<label>(val);
-            }
-            else if (Foam::readFloat(strval, fvalue))
-            {
-                // Parses as float
-                tok = fvalue;
-            }
-            else
-            {
-                // Accept 'name=string' for named enums,
-                tok = std::move(strval);
-            }
+            Info<< objName.data() << " (unregistered)" << nl;
         }
+        return;
     }
 
 
-    simpleObjectRegistryEntry* objPtr = this->find(name.c_str());
-
-    if (objPtr)
+    if (!param.empty())
     {
-        Log << name.c_str() << '=' << tok << nl;
+        float fvalue(0);
 
+        if (Foam::readInt(param.data(), val))
+        {
+            // Parses as int
+            tok = static_cast<label>(val);
+        }
+        else if (Foam::readFloat(param.data(), fvalue))
+        {
+            // Parses as float
+            tok = fvalue;
+        }
+        else
+        {
+            // Accept 'name=string' for named enums
+            tok = Foam::string(param.data(), param.size());
+        }
+    }
+
+    if (verbose)
+    {
+        Info<< objName.data() << '=' << tok << nl;
+    }
+
+    if (dryrun)
+    {
+        // Nothing else to do
+    }
+    else if (objPtr)
+    {
         // The generic interface requires an Istream.
         ITstream is(tokenList(Foam::one{}, std::move(tok)));
 
@@ -155,10 +195,6 @@ void Foam::simpleObjectRegistry::setNamedValue
             is.rewind();
             obj->readData(is);
         }
-    }
-    else
-    {
-        Log << name.c_str() << " (unregistered)" << nl;
     }
 }
 

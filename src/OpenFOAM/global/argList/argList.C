@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -916,6 +916,8 @@ Foam::argList::argList
     // Pre-scan for some options needed for initial setup:
     //   -fileHandler (takes an argument)
     //   -mpi-threads (bool option)
+    //   -debug-switch, -info-switch, -opt-switch
+    //        so their values can also influence the initial setup
     //
     // Also handle -dry-run and -verbose counting
     // (it is left to the application to decide what to do with them).
@@ -963,6 +965,53 @@ Foam::argList::argList
                     emitErrorMessage = true;
                 }
             }
+            else if (strcmp(optName, "debug-switch") == 0)
+            {
+                // The '-debug-switch' option:
+                // change registered debug switch
+                if (argi < argc-1)
+                {
+                    ++argi;
+                    debug::debugObjects()
+                        .setNamedValue(argv[argi], 1);  // silent
+                }
+                else
+                {
+                    // emit error on the second pass
+                }
+            }
+            else if (strcmp(optName, "info-switch") == 0)
+            {
+                // The '-info-switch' option:
+                // change registered info switch
+                if (argi < argc-1)
+                {
+                    ++argi;
+                    DetailInfo << "info-switch ";
+                    debug::infoObjects()
+                        .setNamedValue(argv[argi], 1);  // silent
+                }
+                else
+                {
+                    // emit error on the second pass
+                }
+            }
+            else if (strcmp(optName, "opt-switch") == 0)
+            {
+                // The '-opt-switch' option:
+                // change registered optimisation switch
+                if (argi < argc-1)
+                {
+                    ++argi;
+                    DetailInfo << "opt-switch ";
+                    debug::optimisationObjects()
+                        .setNamedValue(argv[argi], 1);  // silent
+                }
+                else
+                {
+                    // emit error on the second pass
+                }
+            }
             else if (validParOptions.contains(optName))
             {
                 // Contains a parallel run option
@@ -977,8 +1026,6 @@ Foam::argList::argList
                 Info<< nl
                     << "Error: option '-" << optName
                     << "' requires an argument" << nl << nl;
-
-                //NO: UPstream::exit(1);  // works for serial and parallel
             }
         }
     }
@@ -1102,26 +1149,26 @@ Foam::argList::argList
                 else if (strcmp(optName, "debug-switch") == 0)
                 {
                     // The '-debug-switch' option:
-                    // change registered debug switch
+                    // dryrun reporting only (already set above)
                     DetailInfo << "debug-switch ";
                     debug::debugObjects()
-                        .setNamedValue(args_[argi], 1, true);
+                        .setNamedValue(args_[argi], 1, true, true);  // dryrun
                 }
                 else if (strcmp(optName, "info-switch") == 0)
                 {
                     // The '-info-switch' option:
-                    // change registered info switch
+                    // dryrun reporting only (already set above)
                     DetailInfo << "info-switch ";
                     debug::infoObjects()
-                        .setNamedValue(args_[argi], 1, true);
+                        .setNamedValue(args_[argi], 1, true, true);  // dryrun
                 }
                 else if (strcmp(optName, "opt-switch") == 0)
                 {
                     // The '-opt-switch' option:
-                    // change registered optimisation switch
+                    // dryrun reporting only (already set above)
                     DetailInfo << "opt-switch ";
                     debug::optimisationObjects()
-                        .setNamedValue(args_[argi], 1, true);
+                        .setNamedValue(args_[argi], 1, true, true);  // dryrun
                 }
                 else
                 {

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,10 +67,6 @@ int main(int argc, char *argv[])
 {
     argList::noBanner();
     argList::noCheckProcessorDirectories();
-    argList::addVerboseOption("Set UPstream::debug level");
-
-    // Check -verbose before initialisation
-    UPstream::debug = argList::verbose(argc, argv);
 
     #include "setRootCase.H"
 

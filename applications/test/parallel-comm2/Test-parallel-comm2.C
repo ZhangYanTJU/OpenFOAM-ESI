@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,16 +66,12 @@ int main(int argc, char *argv[])
 {
     argList::noBanner();
     argList::noCheckProcessorDirectories();
-    argList::addVerboseOption("Set UPstream::debug level");
     argList::addBoolOption("info", "information");
     argList::addBoolOption("print-tree", "Report tree(s) as graph");
     argList::addBoolOption("comm-split", "Test simple comm split");
     argList::addBoolOption("mpi-host-comm", "Test DIY host-comm split");
     argList::addBoolOption("host-comm", "Test Pstream host-comm");
     argList::addBoolOption("host-broadcast", "Test host-base broadcasts");
-
-    // Check -verbose before initialisation
-    UPstream::debug = argList::verbose(argc, argv);
 
     #include "setRootCase.H"
 

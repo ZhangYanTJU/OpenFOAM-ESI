@@ -123,15 +123,12 @@ int main(int argc, char *argv[])
     argList::addDryRunOption("Just for testing");
     argList::addVerboseOption("Increase verbosity");
 
-    // Check -verbose before initialisation
-    UPstream::debug = argList::verbose(argc, argv);
-
     #include "setRootCase.H"
 
     Pout<< "command-line ("
         << args.options().size() << " options, "
         << args.args().size() << " args)" << nl
-        << "    " << args.commandLine().c_str() << nl << nl;
+        << "    " << args.commandLine().data() << nl << nl;
 
     Pout<< "rootPath:   " << args.rootPath() << nl
         << "globalCase: " << args.globalCaseName() << nl

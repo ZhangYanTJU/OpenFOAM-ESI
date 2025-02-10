@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,19 +44,15 @@ using namespace Foam;
 int main(int argc, char *argv[])
 {
     argList::noFunctionObjects();
-    argList::addVerboseOption("Set UPstream::debug level");
     argList::addBoolOption("comm-graph", "Test simple graph communicator");
     argList::addNote
     (
         "Create graph of OpenFOAM mesh connections"
     );
 
-    // Check -verbose before initialisation
-    UPstream::debug = argList::verbose(argc, argv);
-
     #include "setRootCase.H"
 
-    if (!Pstream::parRun())
+    if (!UPstream::parRun())
     {
         FatalErrorInFunction
             << "Only meaningful in parallel"

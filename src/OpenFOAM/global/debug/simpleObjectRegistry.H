@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,21 +101,39 @@ public:
 
         //- Set values (invoke callbacks) from dictionary entries
         //  Reporting honours the infoDetailLevel
-        void setValues(const dictionary& dict, bool report=false);
+        void setValues
+        (
+            const dictionary& dict,
+            //! Report changes to Info (respects infoDetailLevel)
+            bool verbose = false,
+            //! Report requested changes only, but do not effect them
+            bool dryrun = false
+        );
 
         //- Set named value, but also handle embedded 'name=value' syntax
         //  Treats 'name=' and 'name' identically.
-        //
-        //  Will also accept a floating point value, but the called objects
-        //  need to handle that.
-        //  Reporting honours the infoDetailLevel
-        void setNamedValue(std::string name, int val, bool report=false);
+        //  Also accepts a floating point value (and even strings),
+        //  but the called objects need to handle those.
+        void setNamedValue
+        (
+            const std::string_view name,
+            int val,
+            //! Report changes to Info (respects infoDetailLevel)
+            bool verbose = false,
+            //! Report requested changes only, but do not effect them
+            bool dryrun = false
+        );
 
         //- Deprecated(2021-09) renamed to setNamedValue
         //  \deprecated(2021-09) renamed to setNamedValue
-        void setNamedInt(std::string name, int val, bool report=false)
+        void setNamedInt
+        (
+            const std::string_view name,
+            int val,
+            bool verbose = false
+        )
         {
-            this->setNamedValue(name, val, report);
+            this->setNamedValue(name, val, verbose);
         }
 };
 
