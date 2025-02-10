@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1520,6 +1520,10 @@ int main(int argc, char *argv[])
 
     const bool adaptMesh(dict.get<bool>("adaptMesh"));
 
+    const bool addSidePatches(dict.getOrDefault<bool>("addSidePatches", true));
+
+
+
     if (hasZones)
     {
         Info<< "Extruding zones " << zoneNames
@@ -1564,6 +1568,15 @@ int main(int argc, char *argv[])
     }
 
 
+    if (addSidePatches && zoneNames.size() > 1)
+    {
+        Info<< "Extruding edges on more than one faceZone into boundary faces"
+            << endl;
+    }
+    else
+    {
+        Info<< "Extruding internal edges into internal faces" << endl;
+    }
 
 
     //// Read objects in time directory
@@ -1918,7 +1931,12 @@ int main(int argc, char *argv[])
         edgeMaxZoneID
     );
 
-
+    if (!addSidePatches)
+    {
+        // Disabling inter-zone multiple boundary faces by setting 'left' and
+        // 'right' zone to be the same
+        edgeMaxZoneID = edgeMinZoneID;
+    }
 
 
     DynamicList<polyPatch*> regionPatches(patches.size());
@@ -2190,7 +2208,7 @@ int main(int argc, char *argv[])
             label zone0 = zoneID[eFaces[0]];
             label zone1 = zoneID[eFaces[1]];
 
-            if (zone0 != zone1) // || (cos(angle) > blabla))
+            if (addSidePatches && (zone0 != zone1)) // || (cos(angle) > blabla))
             {
                 label minZone = min(zone0,zone1);
                 label maxZone = max(zone0,zone1);

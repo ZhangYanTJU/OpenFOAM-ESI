@@ -28,6 +28,16 @@ faceZones       (f0 f1);
 //faceSets       (f0 f1);
 //faceSetsShadow (f0Shadow f1Shadow);
 
+
+// Optional : if edge on multiple sets/zones :
+// - addSidePatches false : extrude as an internal face (same as a zone-internal
+//                          edge)
+// - addSidePatches true  : extrude each zone separately so creating multiple
+//   (default)              boundary faces. These faces go into a cyclic type
+//                          patch with corresponding transform.
+addSidePatches  false;
+
+
 // Adapt the original mesh to have mapped patches at where the
 // faceZones are?
 // If true:
