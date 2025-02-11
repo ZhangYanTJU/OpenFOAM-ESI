@@ -151,19 +151,10 @@ public:
 
             // Member Functions
 
-                //- Print un-directed graph in graphviz dot format
-                static void printGraph
-                (
-                    Ostream& os,
-                    const UList<UPstream::commsStruct>& comms,
-                    const label proci = 0  // starting node
-                );
-
-
             // Access
 
                 //- The number of processors addressed by the structure
-                label nProcs() const;
+                label nProcs() const noexcept;
 
                 //- The procID of the processor \em directly above
                 label above() const noexcept { return above_; }
@@ -188,8 +179,14 @@ public:
                 //- Reset to default constructed state
                 void reset();
 
-                //- Reset with automatic linear/tree selection
-                void reset(const label procID, const label numProcs);
+                //- Reset (automatic linear/tree selection),
+                //- possibly with communicator-specific adjustments
+                void reset
+                (
+                    const label procID,
+                    const label numProcs,
+                    const label comm = -1
+                );
 
 
             // Member / Friend Operators
@@ -198,6 +195,67 @@ public:
                 bool operator!=(const commsStruct&) const;
 
                 friend Ostream& operator<<(Ostream&, const commsStruct&);
+        };
+
+        //- Collection of communication structures
+        class commsStructList
+        {
+            // Private Data
+
+                //- The communicator index
+                label comm_;
+
+                //- The communication tree
+                List<commsStruct> tree_;
+
+        public:
+
+            // Constructors
+
+                //- Construct empty with invalid communicator
+                commsStructList() noexcept : comm_(-1) {}
+
+                //- Construct empty with given communicator
+                commsStructList(label comm) noexcept : comm_(comm) {}
+
+
+            // Static Functions
+
+                //- An empty structure. Used for placeholders etc.
+                static const commsStructList& null();
+
+
+            // Member Functions
+
+                //- True if communicator is non-negative (ie, was assigned)
+                bool good() const noexcept { return (comm_ >= 0); }
+
+                //- The communicator label
+                label comm() const noexcept { return comm_; }
+
+                //- Clear the list
+                void clear() { return tree_.clear(); }
+
+                //- True if the list is empty
+                bool empty() const noexcept { return tree_.empty(); }
+
+                //- The number of entries
+                label size() const noexcept { return tree_.size(); }
+
+                //- Reset communicator index and clear demand-driven entries
+                void init(const label comm);
+
+                //- Get existing or create (demand-driven) entry
+                const UPstream::commsStruct& get(const label proci) const;
+
+                //- Get existing or create (demand-driven) entry
+                const UPstream::commsStruct& operator[](const label proci) const
+                {
+                    return get(proci);
+                }
+
+                //- Print un-directed graph in graphviz dot format
+                void printGraph(Ostream& os, label proci = 0) const;
         };
 
 
@@ -258,10 +316,10 @@ private:
         static DynamicList<label> freeComms_;
 
         //- Linear communication schedule
-        static DynamicList<List<commsStruct>> linearCommunication_;
+        static DynamicList<commsStructList> linearCommunication_;
 
         //- Multi level communication schedule
-        static DynamicList<List<commsStruct>> treeCommunication_;
+        static DynamicList<commsStructList> treeCommunication_;
 
 
     // Private Member Functions
@@ -1017,15 +1075,13 @@ public:
         }
 
         //- Communication schedule for linear all-to-master (proc 0)
-        static const List<commsStruct>&
-        linearCommunication
+        static const commsStructList& linearCommunication
         (
             const label communicator = worldComm
         );
 
         //- Communication schedule for tree all-to-master (proc 0)
-        static const List<commsStruct>&
-        treeCommunication
+        static const commsStructList& treeCommunication
         (
             const label communicator = worldComm
         );
@@ -1033,7 +1089,7 @@ public:
         //- Communication schedule for all-to-master (proc 0) as
         //- linear/tree/none with switching based on UPstream::nProcsSimpleSum
         //- and the is_parallel() state
-        static const List<commsStruct>& whichCommunication
+        static const commsStructList& whichCommunication
         (
             const label communicator = worldComm
         )
@@ -1048,7 +1104,7 @@ public:
             return
             (
                 np <= 1
-              ? List<commsStruct>::null()
+              ? commsStructList::null()
               : (np <= 2 || np < nProcsSimpleSum)
               ? linearCommunication(communicator)
               : treeCommunication(communicator)
@@ -1579,18 +1635,6 @@ public:
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 Ostream& operator<<(Ostream&, const UPstream::commsStruct&);
-
-
-// * * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * //
-
-// Template specialisation for access of commsStruct
-template<>
-UPstream::commsStruct&
-UList<UPstream::commsStruct>::operator[](const label procID);
-
-template<>
-const UPstream::commsStruct&
-UList<UPstream::commsStruct>::operator[](const label procID) const;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

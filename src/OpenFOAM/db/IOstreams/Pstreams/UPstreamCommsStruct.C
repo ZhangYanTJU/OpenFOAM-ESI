@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,7 +37,7 @@ namespace Foam
 static void printGraph_impl
 (
     Ostream& os,
-    const UList<UPstream::commsStruct>& comms,
+    const UPstream::commsStructList& comms,
     const label proci,
     label depth,
     const label maxDepth = 1024
@@ -263,27 +263,26 @@ Foam::UPstream::commsStruct::commsStruct
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-void Foam::UPstream::commsStruct::printGraph
+void Foam::UPstream::commsStructList::printGraph
 (
     Ostream& os,
-    const UList<UPstream::commsStruct>& comms,
     const label proci
-)
+) const
 {
     // Print graph - starting at depth 0
     // Avoid corner case when only a single rank involved
     // (eg, for node-local communicator)
 
-    if (proci < comms.size())
+    if (proci < size())
     {
-        printGraph_impl(os, comms, proci, 0);
+        printGraph_impl(os, *this, proci, 0);
     }
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::label Foam::UPstream::commsStruct::nProcs() const
+Foam::label Foam::UPstream::commsStruct::nProcs() const noexcept
 {
     return (1 + allBelow_.size() + allNotBelow_.size());
 }
@@ -301,7 +300,8 @@ void Foam::UPstream::commsStruct::reset()
 void Foam::UPstream::commsStruct::reset
 (
     const label procID,
-    const label numProcs
+    const label numProcs,
+    [[maybe_unused]] const label comm
 )
 {
     reset();
@@ -342,29 +342,46 @@ void Foam::UPstream::commsStruct::reset
 }
 
 
-// * * * * * * * * * * * * * * * Specializations * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-template<>
-Foam::UPstream::commsStruct&
-Foam::UList<Foam::UPstream::commsStruct>::operator[](const label procID)
+const Foam::UPstream::commsStructList&
+Foam::UPstream::commsStructList::null()
 {
-    auto& val = this->v_[procID];   // or this->data()[procID]
+    static std::unique_ptr<commsStructList> singleton;
 
-    if (val.nProcs() != size())
+    if (!singleton)
     {
-        // Create/update
-        val.reset(procID, size());
+        singleton = std::make_unique<commsStructList>();
     }
 
-    return val;
+    return *singleton;
 }
 
 
-template<>
-const Foam::UPstream::commsStruct&
-Foam::UList<Foam::UPstream::commsStruct>::operator[](const label procID) const
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::UPstream::commsStructList::init(const label comm)
 {
-    return const_cast<UList<UPstream::commsStruct>&>(*this).operator[](procID);
+    comm_ = comm;
+    tree_.clear();
+    tree_.resize(UPstream::nProcs(comm));
+}
+
+
+const Foam::UPstream::commsStruct&
+Foam::UPstream::commsStructList::get(const label proci) const
+{
+    const UPstream::commsStruct& entry = tree_[proci];
+    const auto numProcs = tree_.size();
+
+    if (entry.nProcs() != numProcs)
+    {
+        // Create/update
+        const_cast<UPstream::commsStruct&>(entry)
+            .reset(proci, numProcs, comm_);
+    }
+
+    return entry;
 }
 
 

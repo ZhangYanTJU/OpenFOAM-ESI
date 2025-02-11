@@ -310,7 +310,7 @@ public:
         template<class T>
         static void gatherList
         (
-            const UList<commsStruct>& comms,
+            const UPstream::commsStructList& comms,
             //! [in,out]
             UList<T>& values,
             const int tag,
@@ -349,7 +349,7 @@ public:
         template<class T>
         static void scatterList
         (
-            const UList<commsStruct>& comms,
+            const UPstream::commsStructList& comms,
             UList<T>& values,
             const int tag,
             const label comm

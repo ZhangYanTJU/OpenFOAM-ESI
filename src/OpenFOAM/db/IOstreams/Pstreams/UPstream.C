@@ -183,8 +183,8 @@ Foam::label Foam::UPstream::getAvailableCommIndex(const label parentIndex)
 
         procIDs_.emplace_back();
         // Sizing and filling are demand-driven
-        linearCommunication_.emplace_back();
-        treeCommunication_.emplace_back();
+        linearCommunication_.emplace_back(index);
+        treeCommunication_.emplace_back(index);
     }
 
     return index;
@@ -616,26 +616,24 @@ Foam::label Foam::UPstream::procNo
 }
 
 
-const Foam::List<Foam::UPstream::commsStruct>&
+const Foam::UPstream::commsStructList&
 Foam::UPstream::linearCommunication(const label communicator)
 {
     if (linearCommunication_[communicator].empty())
     {
-        linearCommunication_[communicator] =
-            List<commsStruct>(UPstream::nProcs(communicator));
+        linearCommunication_[communicator].init(communicator);
     }
 
     return linearCommunication_[communicator];
 }
 
 
-const Foam::List<Foam::UPstream::commsStruct>&
+const Foam::UPstream::commsStructList&
 Foam::UPstream::treeCommunication(const label communicator)
 {
     if (treeCommunication_[communicator].empty())
     {
-        treeCommunication_[communicator] =
-            List<commsStruct>(UPstream::nProcs(communicator));
+        treeCommunication_[communicator].init(communicator);
     }
 
     return treeCommunication_[communicator];
@@ -648,7 +646,7 @@ void Foam::UPstream::printCommTree(const label communicator)
 
     if (UPstream::master(communicator))
     {
-        commsStruct::printGraph(Info(), comms);
+        comms.printGraph(Info());
     }
 }
 
@@ -692,10 +690,10 @@ Foam::DynamicList<Foam::List<int>> Foam::UPstream::procIDs_(16);
 Foam::DynamicList<Foam::label> Foam::UPstream::parentComm_(16);
 Foam::DynamicList<Foam::label> Foam::UPstream::freeComms_;
 
-Foam::DynamicList<Foam::List<Foam::UPstream::commsStruct>>
+Foam::DynamicList<Foam::UPstream::commsStructList>
 Foam::UPstream::linearCommunication_(16);
 
-Foam::DynamicList<Foam::List<Foam::UPstream::commsStruct>>
+Foam::DynamicList<Foam::UPstream::commsStructList>
 Foam::UPstream::treeCommunication_(16);
 
 
