@@ -45,7 +45,7 @@ Description
 template<class T>
 void Foam::Pstream::gatherList
 (
-    const UList<UPstream::commsStruct>& comms,
+    const UPstream::commsStructList& comms,
     UList<T>& values,
     const int tag,
     const label comm
@@ -190,7 +190,7 @@ void Foam::Pstream::gatherList
 template<class T>
 void Foam::Pstream::scatterList
 (
-    const UList<UPstream::commsStruct>& comms,
+    const UPstream::commsStructList& comms,
     UList<T>& values,
     const int tag,
     const label comm

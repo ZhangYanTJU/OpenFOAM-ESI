@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -290,14 +290,7 @@ Foam::OFstreamCollator::OFstreamCollator(const off_t maxBufferSize)
     maxBufferSize_(maxBufferSize),
     threadRunning_(false),
     localComm_(UPstream::worldComm),
-    threadComm_
-    (
-        UPstream::allocateCommunicator
-        (
-            localComm_,
-            labelRange(UPstream::nProcs(localComm_))
-        )
-    )
+    threadComm_(UPstream::dupCommunicator(localComm_))
 {}
 
 
@@ -310,14 +303,7 @@ Foam::OFstreamCollator::OFstreamCollator
     maxBufferSize_(maxBufferSize),
     threadRunning_(false),
     localComm_(comm),
-    threadComm_
-    (
-        UPstream::allocateCommunicator
-        (
-            localComm_,
-            labelRange(UPstream::nProcs(localComm_))
-        )
-    )
+    threadComm_(UPstream::dupCommunicator(localComm_))
 {}
 
 

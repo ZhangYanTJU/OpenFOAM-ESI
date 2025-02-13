@@ -162,7 +162,7 @@ Foam::label Foam::multiWorldConnections::createCommunicator(const edge& worlds)
     }
 
     // Allocate new communicator with global world
-    comm = UPstream::allocateCommunicator(UPstream::commGlobal(), subRanks);
+    comm = UPstream::newCommunicator(UPstream::commGlobal(), subRanks);
 
     if (debug & 2)
     {

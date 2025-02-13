@@ -401,15 +401,15 @@ extern messageStream SeriousError;
 
 //- Write to Foam::Info if the Foam::infoDetailLevel is +ve non-zero (default)
 #define DetailInfo                                                             \
-    if (::Foam::infoDetailLevel > 0) Info
+    if (::Foam::infoDetailLevel > 0) ::Foam::Info
 
 //- Report write to Foam::Info if the local log switch is true
 #define Log                                                                    \
-    if (log) Info
+    if (log) ::Foam::Info
 
 //- Report write to Foam::Info if the class log switch is true
 #define Log_                                                                   \
-    if (this->log) Info
+    if (this->log) ::Foam::Info
 
 
 //- Report an IO information message using Foam::Info
@@ -427,7 +427,7 @@ extern messageStream SeriousError;
 //- Report an information message using Foam::Info
 //  if the local debug switch is true
 #define DebugInfo                                                              \
-    if (debug) Info
+    if (debug) ::Foam::Info
 
 //- Report an information message using Foam::Info
 //  for FUNCTION_NAME in file __FILE__ at line __LINE__
@@ -438,7 +438,7 @@ extern messageStream SeriousError;
 //- Report an information message using Foam::Pout
 //  if the local debug switch is true
 #define DebugPout                                                              \
-    if (debug) Pout
+    if (debug) ::Foam::Pout
 
 //- Report an information message using Foam::Pout
 //  for FUNCTION_NAME in file __FILE__ at line __LINE__

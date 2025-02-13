@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 
     for (label count = 0; count < repeat; ++count)
     {
-        label comm = UPstream::allocateCommunicator(UPstream::worldComm, top);
+        label comm = UPstream::newCommunicator(UPstream::worldComm, top);
 
         scalar localValue = 111*UPstream::myProcNo(UPstream::worldComm);
 

@@ -286,7 +286,7 @@ bool Foam::procFacesGAMGProcAgglomeration::agglomerate()
                     // Communicator for the processor-agglomerated matrix
                     comms_.push_back
                     (
-                        UPstream::allocateCommunicator
+                        UPstream::newCommunicator
                         (
                             levelComm,
                             masterProcs

@@ -34,7 +34,7 @@ License
 #include <cctype>
 
 #undef  DetailInfo
-#define DetailInfo  if (::Foam::infoDetailLevel > 0) InfoErr
+#define DetailInfo  if (::Foam::infoDetailLevel > 0) ::Foam::InfoErr
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

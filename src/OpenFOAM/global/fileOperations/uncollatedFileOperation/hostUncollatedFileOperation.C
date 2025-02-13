@@ -85,7 +85,7 @@ static Tuple2<label, labelList> getCommPattern()
     if (UPstream::parRun() && commAndIORanks.second().size() > 1)
     {
         // Multiple masters: ranks for my IO range
-        commAndIORanks.first() = UPstream::allocateCommunicator
+        commAndIORanks.first() = UPstream::newCommunicator
         (
             UPstream::worldComm,
             fileOperation::subRanks(commAndIORanks.second())

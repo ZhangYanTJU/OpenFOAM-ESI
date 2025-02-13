@@ -2093,8 +2093,24 @@ void Foam::argList::parse
                     Info<< "Roots  : " << roots << nl;
                 }
             }
+
             Info<< "Pstream initialized with:" << nl
-                << "    floatTransfer      : "
+                << "    node communication : ";
+            if (UPstream::nodeCommsControl_ > 0)
+            {
+                Info<< Switch::name(UPstream::usingNodeComms())
+                    << " [min=" << UPstream::nodeCommsMin_
+                    << ", type=" << UPstream::nodeCommsControl_
+                    << "]";
+            }
+            else
+            {
+                Info<< "disabled";
+            }
+            Info<< " (" << UPstream::nProcs() << " ranks, "
+                << UPstream::numNodes() << " nodes)" << nl;
+
+            Info<< "    floatTransfer      : "
                 << Switch::name(UPstream::floatTransfer) << nl
                 << "    maxCommsSize       : "
                 << UPstream::maxCommsSize << nl

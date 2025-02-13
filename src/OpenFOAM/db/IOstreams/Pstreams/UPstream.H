@@ -151,19 +151,10 @@ public:
 
             // Member Functions
 
-                //- Print un-directed graph in graphviz dot format
-                static void printGraph
-                (
-                    Ostream& os,
-                    const UList<UPstream::commsStruct>& comms,
-                    const label proci = 0  // starting node
-                );
-
-
             // Access
 
                 //- The number of processors addressed by the structure
-                label nProcs() const;
+                label nProcs() const noexcept;
 
                 //- The procID of the processor \em directly above
                 label above() const noexcept { return above_; }
@@ -188,8 +179,14 @@ public:
                 //- Reset to default constructed state
                 void reset();
 
-                //- Reset with automatic linear/tree selection
-                void reset(const label procID, const label numProcs);
+                //- Reset (automatic linear/tree selection),
+                //- possibly with communicator-specific adjustments
+                void reset
+                (
+                    const label procID,
+                    const label numProcs,
+                    const label comm = -1
+                );
 
 
             // Member / Friend Operators
@@ -198,6 +195,67 @@ public:
                 bool operator!=(const commsStruct&) const;
 
                 friend Ostream& operator<<(Ostream&, const commsStruct&);
+        };
+
+        //- Collection of communication structures
+        class commsStructList
+        {
+            // Private Data
+
+                //- The communicator index
+                label comm_;
+
+                //- The communication tree
+                List<commsStruct> tree_;
+
+        public:
+
+            // Constructors
+
+                //- Construct empty with invalid communicator
+                commsStructList() noexcept : comm_(-1) {}
+
+                //- Construct empty with given communicator
+                commsStructList(label comm) noexcept : comm_(comm) {}
+
+
+            // Static Functions
+
+                //- An empty structure. Used for placeholders etc.
+                static const commsStructList& null();
+
+
+            // Member Functions
+
+                //- True if communicator is non-negative (ie, was assigned)
+                bool good() const noexcept { return (comm_ >= 0); }
+
+                //- The communicator label
+                label comm() const noexcept { return comm_; }
+
+                //- Clear the list
+                void clear() { return tree_.clear(); }
+
+                //- True if the list is empty
+                bool empty() const noexcept { return tree_.empty(); }
+
+                //- The number of entries
+                label size() const noexcept { return tree_.size(); }
+
+                //- Reset communicator index and clear demand-driven entries
+                void init(const label comm);
+
+                //- Get existing or create (demand-driven) entry
+                const UPstream::commsStruct& get(const label proci) const;
+
+                //- Get existing or create (demand-driven) entry
+                const UPstream::commsStruct& operator[](const label proci) const
+                {
+                    return get(proci);
+                }
+
+                //- Print un-directed graph in graphviz dot format
+                void printGraph(Ostream& os, label proci = 0) const;
         };
 
 
@@ -220,17 +278,27 @@ private:
         //- Standard transfer message type
         static int msgType_;
 
+        //- Index to the world-communicator as defined at startup
+        //- (after any multi-world definitions).
+        //- Is unaffected by any later changes to worldComm.
+        static label constWorldComm_;
+
+        //- The number of shared/host nodes in the (const) world communicator.
+        static label numNodes_;
+
+        //- Index to the inter-node communicator (between nodes),
+        //- defined based on constWorldComm_
+        static label commInterNode_;
+
+        //- Index to the intra-host communicator (within a node),
+        //- defined based on constWorldComm_
+        static label commLocalNode_;
+
         //- Names of all worlds
         static wordList allWorlds_;
 
         //- Per processor the world index (into allWorlds_)
         static labelList worldIDs_;
-
-        //- Intra-host communicator
-        static label intraHostComm_;
-
-        //- Inter-host communicator (between host leaders)
-        static label interHostComm_;
 
 
     // Communicator specific data
@@ -248,10 +316,10 @@ private:
         static DynamicList<label> freeComms_;
 
         //- Linear communication schedule
-        static DynamicList<List<commsStruct>> linearCommunication_;
+        static DynamicList<commsStructList> linearCommunication_;
 
         //- Multi level communication schedule
-        static DynamicList<List<commsStruct>> treeCommunication_;
+        static DynamicList<commsStructList> treeCommunication_;
 
 
     // Private Member Functions
@@ -259,23 +327,58 @@ private:
         //- Set data for parallel running
         static void setParRun(const label nProcs, const bool haveThreads);
 
-        //- Initialise entries for new communicator. Return the index
+        //- Initialise entries for new communicator.
+        //
+        //  Resets corresponding entry in myProcNo_, procIDs_,
+        //  linearCommunication_, treeCommunication_
+        //  \return the communicator index
         static label getAvailableCommIndex(const label parentIndex);
 
-        //- Allocate MPI components of communicator with given index
+        //- Define inter-host/intra-host communicators (uses commConstWorld).
+        //  Optionally specify a given number per node.
+        static bool setHostCommunicators(const int numPerNode = 0);
+
+        //- Define inter-host/intra-host communicators based on
+        //- shared-memory information. Uses comm-world.
+        static bool setSharedMemoryCommunicators();
+
+        //- Allocate MPI components of communicator with given index.
+        //  This represents a "top-down" approach, creating a communicator
+        //  based on the procIDs_ groupings.
+        //
+        //  Modifies myProcNo_, reads and modifies procIDs_
         static void allocateCommunicatorComponents
         (
             const label parentIndex,
             const label index
         );
 
+        //- Allocate MPI components as duplicate of the parent communicator
+        //
+        //  Modifies myProcNo_, procIDs_
+        static void dupCommunicatorComponents
+        (
+            const label parentIndex,
+            const label index
+        );
+
+        //- Allocate MPI components for the given index by splitting
+        //- the parent communicator on the given \em colour.
+        //  This represents a "bottom-up" approach, when the individual ranks
+        //  only know which group they should belong to, but don't yet know
+        //  which other ranks will be in their group.
+        //
+        //  Modifies myProcNo_, procIDs_
+        static void splitCommunicatorComponents
+        (
+            const label parentIndex,
+            const label index,
+            const int colour
+        );
+
         //- Free MPI components of communicator.
         //  Does not touch the first two communicators (SELF, WORLD)
         static void freeCommunicatorComponents(const label index);
-
-        //- Allocate inter-host, intra-host communicators
-        //- with comm-world as parent
-        static bool allocateHostCommunicatorPairs();
 
 
 public:
@@ -285,6 +388,18 @@ public:
 
 
     // Static Data
+
+        //- Use of host/node topology-aware routines
+        //  0: disabled
+        //  1: split by hostname [default]
+        //  2: split by shared
+        //  >=4: (debug) split with given number per node
+        static int nodeCommsControl_;
+
+        //- Minimum number of nodes before topology-aware routines are enabled
+        //  <= 2 : always
+        //  >= 3 : when there are more than N nodes
+        static int nodeCommsMin_;
 
         //- Should compact transfer be used in which floats replace doubles
         //- reducing the bandwidth requirement at the expense of some loss
@@ -323,11 +438,18 @@ public:
         //- Debugging: warn for use of any communicator differing from warnComm
         static label warnComm;
 
-        //- Communicator for all ranks, irrespective of any local worlds
+        //- Communicator for all ranks, irrespective of any local worlds.
+        //  This value \em never changes during a simulation.
         static constexpr label commGlobal() noexcept { return 0; }
 
         //- Communicator within the current rank only
+        //  This value \em never changes during a simulation.
         static constexpr label commSelf() noexcept { return 1; }
+
+        //- Communicator for all ranks (respecting any local worlds).
+        //  This value \em never changes after startup. Unlike the commWorld()
+        //  which can be temporarily overriden.
+        static label commConstWorld() noexcept { return constWorldComm_; }
 
         //- Communicator for all ranks (respecting any local worlds)
         static label commWorld() noexcept { return worldComm; }
@@ -343,6 +465,7 @@ public:
 
         //- Alter communicator debugging setting.
         //- Warns for use of any communicator differing from specified.
+        //- Negative values disable.
         //  \returns the previous warn index
         static label commWarn(const label communicator) noexcept
         {
@@ -360,17 +483,33 @@ public:
 
     // Host Communicators
 
-        //- Demand-driven: Intra-host communicator (respects any local worlds)
-        static label commIntraHost();
+        //- Communicator between nodes/hosts (respects any local worlds)
+        static label commInterNode() noexcept
+        {
+            return (parRun_ ? commInterNode_ : constWorldComm_);
+        }
 
-        //- Demand-driven: Inter-host communicator (respects any local worlds)
-        static label commInterHost();
+        //- Communicator within the node/host (respects any local worlds)
+        static label commLocalNode() noexcept
+        {
+            return (parRun_ ? commLocalNode_ : constWorldComm_);
+        }
 
-        //- Test for presence of any intra or inter host communicators
-        static bool hasHostComms();
+        //- Both inter-node and local-node communicators have been created
+        static bool hasNodeCommunicators() noexcept
+        {
+            return
+            (
+                (commInterNode_ > constWorldComm_)
+             && (commLocalNode_ > constWorldComm_)
+            );
+        }
 
-        //- Remove any existing intra and inter host communicators
-        static void clearHostComms();
+        //- True if node topology-aware routines have been enabled,
+        //- it is running in parallel, the starting point is the
+        //- world-communicator and it is not an odd corner case
+        //- (ie, all processes on one node, all processes on different nodes)
+        static bool usingNodeComms(const label communicator = worldComm);
 
 
     // Constructors
@@ -384,9 +523,8 @@ public:
 
     // Member Functions
 
-        //- Allocate new communicator with contiguous sub-ranks
-        //- on the parent communicator.
-        static label allocateCommunicator
+        //- Create new communicator with sub-ranks on the parent communicator
+        static label newCommunicator
         (
             //! The parent communicator
             const label parent,
@@ -398,8 +536,8 @@ public:
             const bool withComponents = true
         );
 
-        //- Allocate new communicator with sub-ranks on the parent communicator
-        static label allocateCommunicator
+        //- Creaet new communicator with sub-ranks on the parent communicator
+        static label newCommunicator
         (
             //! The parent communicator
             const label parent,
@@ -411,6 +549,28 @@ public:
             const bool withComponents = true
         );
 
+        //- Duplicate the parent communicator
+        //
+        //  Always calls dupCommunicatorComponents() internally
+        static label dupCommunicator
+        (
+            //! The parent communicator
+            const label parent
+        );
+
+        //- Allocate a new communicator by splitting the parent communicator
+        //- on the given \em colour.
+        //  Always calls splitCommunicatorComponents() internally
+        static label splitCommunicator
+        (
+            //! The parent communicator
+            const label parent,
+
+            //! The colouring to select which ranks to include.
+            //! Negative values correspond to 'ignore'
+            const int colour
+        );
+
         //- Free a previously allocated communicator.
         //  Ignores placeholder (negative) communicators.
         static void freeCommunicator
@@ -418,19 +578,6 @@ public:
             const label communicator,
             const bool withComponents = true
         );
-
-        //- Allocate an inter-host communicator
-        static label allocateInterHostCommunicator
-        (
-            const label parentCommunicator = worldComm
-        );
-
-        //- Allocate an intra-host communicator
-        static label allocateIntraHostCommunicator
-        (
-            const label parentCommunicator = worldComm
-        );
-
 
         //- Wrapper class for allocating/freeing communicators. Always invokes
         //- allocateCommunicatorComponents() and freeCommunicatorComponents()
@@ -457,12 +604,11 @@ public:
             (
                 //! The parent communicator
                 const label parentComm,
-
                 //! The contiguous sub-ranks of parent to use
                 const labelRange& subRanks
             )
             :
-                comm_(UPstream::allocateCommunicator(parentComm, subRanks))
+                comm_(UPstream::newCommunicator(parentComm, subRanks))
             {}
 
             //- Allocate communicator for sub-ranks on given parent
@@ -470,13 +616,37 @@ public:
             (
                 //! The parent communicator
                 const label parentComm,
-
                 //! The sub-ranks of parent to use (negative values ignored)
                 const labelUList& subRanks
             )
             :
-                comm_(UPstream::allocateCommunicator(parentComm, subRanks))
+                comm_(UPstream::newCommunicator(parentComm, subRanks))
             {}
+
+            //- Factory Method :
+            //- Duplicate the given communicator
+            static communicator duplicate(const label parentComm)
+            {
+                communicator c;
+                c.comm_ = UPstream::dupCommunicator(parentComm);
+                return c;
+            }
+
+            //- Factory Method :
+            //- Split the communicator on the given \em colour.
+            static communicator split
+            (
+                //! The parent communicator
+                const label parentComm,
+                //! The colouring to select which ranks to include.
+                //! Negative values correspond to 'ignore'
+                const int colour
+            )
+            {
+                communicator c;
+                c.comm_ = UPstream::splitCommunicator(parentComm, colour);
+                return c;
+            }
 
             //- Free allocated communicator
             ~communicator() { UPstream::freeCommunicator(comm_); }
@@ -498,14 +668,14 @@ public:
             void reset(label parent, const labelRange& subRanks)
             {
                 UPstream::freeCommunicator(comm_);
-                comm_ = UPstream::allocateCommunicator(parent, subRanks);
+                comm_ = UPstream::newCommunicator(parent, subRanks);
             }
 
             //- Allocate with sub-ranks of parent communicator
             void reset(label parent, const labelUList& subRanks)
             {
                 UPstream::freeCommunicator(comm_);
-                comm_ = UPstream::allocateCommunicator(parent, subRanks);
+                comm_ = UPstream::newCommunicator(parent, subRanks);
             }
 
             //- Take ownership, free allocated communicator
@@ -805,7 +975,7 @@ public:
         }
 
         //- Rank of this process in the communicator (starting from masterNo()).
-        //- Can be negative if the process is not a rank in the communicator
+        //- Negative if the process is not a rank in the communicator.
         static int myProcNo(const label communicator = worldComm)
         {
             return myProcNo_[communicator];
@@ -817,11 +987,11 @@ public:
             return myProcNo_[communicator] == masterNo();
         }
 
-        //- True if process corresponds to any rank (master or sub-rank)
+        //- True if process corresponds to \b any rank (master or sub-rank)
         //- in the given communicator
         static bool is_rank(const label communicator = worldComm)
         {
-            return myProcNo_[communicator] >= 0;
+            return myProcNo_[communicator] >= masterNo();
         }
 
         //- True if process corresponds to a sub-rank in the given communicator
@@ -840,6 +1010,12 @@ public:
             (
                 parRun_ && is_rank(communicator) && nProcs(communicator) > 1
             );
+        }
+
+        //- The number of shared/host nodes in the (const) world communicator.
+        static label numNodes() noexcept
+        {
+            return numNodes_;
         }
 
         //- The parent communicator
@@ -899,15 +1075,13 @@ public:
         }
 
         //- Communication schedule for linear all-to-master (proc 0)
-        static const List<commsStruct>&
-        linearCommunication
+        static const commsStructList& linearCommunication
         (
             const label communicator = worldComm
         );
 
         //- Communication schedule for tree all-to-master (proc 0)
-        static const List<commsStruct>&
-        treeCommunication
+        static const commsStructList& treeCommunication
         (
             const label communicator = worldComm
         );
@@ -915,7 +1089,7 @@ public:
         //- Communication schedule for all-to-master (proc 0) as
         //- linear/tree/none with switching based on UPstream::nProcsSimpleSum
         //- and the is_parallel() state
-        static const List<commsStruct>& whichCommunication
+        static const commsStructList& whichCommunication
         (
             const label communicator = worldComm
         )
@@ -930,8 +1104,8 @@ public:
             return
             (
                 np <= 1
-              ? List<commsStruct>::null()
-              : np < nProcsSimpleSum
+              ? commsStructList::null()
+              : (np <= 2 || np < nProcsSimpleSum)
               ? linearCommunication(communicator)
               : treeCommunication(communicator)
             );
@@ -983,7 +1157,7 @@ public:
         static void shutdown(int errNo = 0);
 
         //- Call MPI_Abort with no other checks or cleanup
-        static void abort();
+        static void abort(int errNo = 1);
 
         //- Shutdown (finalize) MPI as required and exit program with errNo.
         static void exit(int errNo = 1);
@@ -1205,27 +1379,43 @@ public:
 
     // Housekeeping
 
+        //- Create new communicator with sub-ranks on the parent communicator
+        //  \deprecated(2025-02)
+        static label allocateCommunicator
+        (
+            const label parent,
+            const labelRange& subRanks,
+            const bool withComponents = true
+        )
+        {
+            return newCommunicator(parent, subRanks, withComponents);
+        }
+
+        //- Create new communicator with sub-ranks on the parent communicator
+        //  \deprecated(2025-02)
+        static label allocateCommunicator
+        (
+            const label parent,
+            const labelUList& subRanks,
+            const bool withComponents = true
+        )
+        {
+            return newCommunicator(parent, subRanks, withComponents);
+        }
+
+        //- Communicator between nodes (respects any local worlds)
+        FOAM_DEPRECATED_FOR(2025-02, "commInterNode()")
+        static label commInterHost() noexcept { return commInterNode(); }
+
+        //- Communicator within the node (respects any local worlds)
+        FOAM_DEPRECATED_FOR(2025-02, "commLocalNode()")
+        static label commIntraHost() noexcept { return commLocalNode(); }
+
         //- Wait for all requests to finish.
         //  \deprecated(2023-01) Probably not what you want.
         //     Should normally be restricted to a particular starting request.
         FOAM_DEPRECATED_FOR(2023-01, "waitRequests(int) method")
         static void waitRequests() { waitRequests(0); }
-
-        //- Process index of first sub-process
-        //  \deprecated(2020-09) use subProcs() method instead
-        FOAM_DEPRECATED_FOR(2020-09, "subProcs() method")
-        static constexpr int firstSlave() noexcept
-        {
-            return 1;
-        }
-
-        //- Process index of last sub-process
-        //  \deprecated(2020-09) use subProcs() method instead
-        FOAM_DEPRECATED_FOR(2020-09, "subProcs() or allProcs() method")
-        static int lastSlave(const label communicator = worldComm)
-        {
-            return nProcs(communicator) - 1;
-        }
 };
 
 
@@ -1445,18 +1635,6 @@ public:
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 Ostream& operator<<(Ostream&, const UPstream::commsStruct&);
-
-
-// * * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * //
-
-// Template specialisation for access of commsStruct
-template<>
-UPstream::commsStruct&
-UList<UPstream::commsStruct>::operator[](const label procID);
-
-template<>
-const UPstream::commsStruct&
-UList<UPstream::commsStruct>::operator[](const label procID) const;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

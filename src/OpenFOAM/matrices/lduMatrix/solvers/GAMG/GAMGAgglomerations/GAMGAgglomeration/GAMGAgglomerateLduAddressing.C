@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -559,36 +559,65 @@ void Foam::GAMGAgglomeration::procAgglomerateRestrictAddressing
     const label levelIndex
 )
 {
-    // Collect number of cells
-    labelList nFineCells;
-    globalIndex::gatherValues
+    const bool master =
     (
-        comm,
-        procIDs,
-        restrictAddressing_[levelIndex].size(),
-        nFineCells,
-
-        UPstream::msgType(),
-        UPstream::commsTypes::scheduled
+        UPstream::myProcNo(comm) == (procIDs.empty() ? 0 : procIDs[0])
     );
-    labelList fineOffsets(globalIndex::calcOffsets(nFineCells));
 
-    // Combine and renumber nCoarseCells
-    labelList nCoarseCells;
-    globalIndex::gatherValues
-    (
-        comm,
-        procIDs,
-        nCells_[levelIndex],
-        nCoarseCells,
+    // Determine the fine/coarse sizes (offsets) for gathering
+    labelList fineOffsets;
+    labelList coarseOffsets;
 
-        UPstream::msgType(),
-        UPstream::commsTypes::scheduled
-    );
-    labelList coarseOffsets(globalIndex::calcOffsets(nCoarseCells));
+    {
+        List<labelPair> sizes = globalIndex::listGatherValues
+        (
+            comm,
+            procIDs,
+            labelPair
+            (
+                // fine
+                restrictAddressing_[levelIndex].size(),
+                // coarse
+                nCells_[levelIndex]
+            ),
+            UPstream::msgType(),
+            UPstream::commsTypes::scheduled
+        );
+
+        // Calculate offsets, as per globalIndex::calcOffsets()
+        // but extracting from the pair
+        if (master && !sizes.empty())
+        {
+            const label len = sizes.size();
+
+            fineOffsets.resize(len+1);
+            coarseOffsets.resize(len+1);
+
+            label fineCount = 0;
+            label coarseCount = 0;
+
+            for (label i = 0; i < len; ++i)
+            {
+                fineOffsets[i] = fineCount;
+                fineCount += sizes[i].first();
+
+                coarseOffsets[i] = coarseCount;
+                coarseCount += sizes[i].second();
+            }
+
+            fineOffsets[len] = fineCount;
+            coarseOffsets[len] = coarseCount;
+        }
+    }
+
 
     // (cell)restrictAddressing
     labelList procRestrictAddressing;
+    if (master)
+    {
+        // pre-size on master
+        procRestrictAddressing.resize(fineOffsets.back());
+    }
     globalIndex::gather
     (
         fineOffsets,
@@ -596,15 +625,13 @@ void Foam::GAMGAgglomeration::procAgglomerateRestrictAddressing
         procIDs,
         restrictAddressing_[levelIndex],
         procRestrictAddressing,
-
         UPstream::msgType(),
-        Pstream::commsTypes::nonBlocking    //Pstream::commsTypes::scheduled
+        UPstream::commsTypes::nonBlocking
     );
 
-
-    if (Pstream::myProcNo(comm) == procIDs[0])
+    if (master)
     {
-        nCells_[levelIndex] = coarseOffsets.last();  // ie, totalSize()
+        nCells_[levelIndex] = coarseOffsets.back();  // ie, totalSize()
 
         // Renumber consecutively
         for (label proci = 1; proci < procIDs.size(); ++proci)

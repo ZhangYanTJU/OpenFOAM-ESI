@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,6 +50,8 @@ namespace Foam
 namespace PstreamGlobals
 {
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
 // Track if MPI_Comm_free is needed for communicator index in MPICommunicators_
 extern DynamicList<bool> pendingMPIFree_;
 
@@ -61,11 +63,27 @@ extern DynamicList<MPI_Comm> MPICommunicators_;
 extern DynamicList<MPI_Request> outstandingRequests_;
 
 
-// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Communicators * * * * * * * * * * * * * * * //
 
-//- Fatal if comm is outside the allocated range
-void checkCommunicator(const label comm, const label toProcNo);
+//- Initialize bookkeeping for MPI communicator index
+void initCommunicator(const label index);
 
+//- Fatal if communicator is outside the allocated range
+inline void checkCommunicator(int comm, int rank)
+{
+    if (FOAM_UNLIKELY(comm < 0 || comm >= MPICommunicators_.size()))
+    {
+        FatalErrorInFunction
+            << "rank:" << rank << " : illegal communicator "
+            << comm << nl
+            << "Communicator should be within range [0,"
+            << MPICommunicators_.size()
+            << ')' << Foam::abort(FatalError);
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * Requests  * * * * * * * * * * * * * * * * //
 
 //- Reset UPstream::Request to null and/or the index of the outstanding
 //- request to -1.

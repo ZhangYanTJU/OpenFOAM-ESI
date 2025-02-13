@@ -238,8 +238,7 @@ void Foam::functionObjects::AMIWeights::writeWeightField
     );
 
     // Collect field
-    scalarField mergedWeights;
-    globalFaces().gather(weightSum, mergedWeights);
+    scalarField mergedWeights = globalFaces().gather(weightSum);
 
     const bool isACMI = isA<cyclicACMIPolyPatch>(cpp);
 
@@ -248,7 +247,7 @@ void Foam::functionObjects::AMIWeights::writeWeightField
     {
         const cyclicACMIPolyPatch& pp = refCast<const cyclicACMIPolyPatch>(cpp);
 
-        globalFaces().gather(pp.mask(), mergedMask);
+        mergedMask = globalFaces().gather(pp.mask());
     }
 
     if (Pstream::master())

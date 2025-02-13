@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2018 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,7 +77,7 @@ public:
     // Constructors
 
         //- Default construct
-        ParRunControl() noexcept
+        constexpr ParRunControl() noexcept
         :
             dryRun_(0),
             verbose_(0),
@@ -92,7 +92,9 @@ public:
     {
         if (parallel_)
         {
-            Info<< "Finalising parallel run" << endl;
+            // Report shutdown (stdout or stderr)
+            (Foam::infoDetailLevel > 0 ? Info.stream() : InfoErr.stream())
+                << "Finalising parallel run" << endl;
         }
         UPstream::shutdown();
     }
@@ -104,10 +106,10 @@ public:
         int dryRun() const noexcept { return dryRun_; }
 
         //- Increase the dry-run level
-        void incrDryRun(int level = 1) noexcept { dryRun_ += level; }
+        void incrDryRun(int i=1) noexcept { dryRun_ += i; }
 
         //- Change dry-run level, returns old value
-        int dryRun(const int level) noexcept
+        int dryRun(int level) noexcept
         {
             int old(dryRun_);
             dryRun_ = level;
@@ -118,10 +120,10 @@ public:
         int verbose() const noexcept { return verbose_; }
 
         //- Increase the verbosity level
-        void incrVerbose(int level = 1) noexcept { verbose_ += level; }
+        void incrVerbose(int i=1) noexcept { verbose_ += i; }
 
         //- Change verbosity level, returns old value
-        int verbose(const int level) noexcept
+        int verbose(int level) noexcept
         {
             int old(verbose_);
             verbose_ = level;
@@ -140,7 +142,7 @@ public:
         //- Set as parallel run on/off, return the previous value.
         //  Use with \b extreme caution if runPar() has already been
         //  called.
-        bool parRun(const bool on) noexcept
+        bool parRun(bool on) noexcept
         {
             bool old(parallel_);
             parallel_ = on;
@@ -176,7 +178,10 @@ public:
         {
             if (!UPstream::init(argc, argv, needsThread_))
             {
-                Info<< "Failed to start parallel run" << endl;
+                // Report failure (stdout or stderr)
+                (Foam::infoDetailLevel > 0 ? Info.stream() : InfoErr.stream())
+                    << "Failed to start parallel run" << endl;
+
                 UPstream::exit(1);
             }
             parallel_ = true;

@@ -32,22 +32,22 @@ License
 
 // Cannot use non-blocking for non-contiguous data.
 // template<class Type>
-// inline Foam::UPstream::commsTypes getCommsType
+// inline Foam::UPstream::commsTypes Foam::globalIndex::getCommsType
 // (
-//     const UPstream::commsTypes preferred
-// )
+//     UPstream::commsTypes commsType
+// ) noexcept
 // {
-//     return
-//     (
-//         (
-//             !is_contiguous_v<Type>
-//          && UPstream::commsTypes::nonBlocking == preferred
-//         )
-//       ? UPstream::commsTypes::scheduled
-//       : preferred
-//     );
+//     if constexpr (!is_contiguous_v<Type>)
+//     {
+//         return UPstream::commsTypes::scheduled;
+//     }
+//     else
+//     {
+//         return commsType;
+//     }
 // }
 
+// Helpers
 
 template<class Addr>
 Foam::labelList
@@ -121,33 +121,38 @@ Foam::globalIndex::calcListOffsets
 }
 
 
+// Low-level
+
 template<class ProcIDsContainer, class Type>
-void Foam::globalIndex::gatherValues
+Foam::List<Type> Foam::globalIndex::listGatherValues
 (
     const label comm,
     const ProcIDsContainer& procIDs,
     const Type& localValue,
-    List<Type>& allValues,
     const int tag,
-    const UPstream::commsTypes preferredCommsType
+    UPstream::commsTypes commsType
 )
 {
-    // low-level: no parRun guard
+    // low-level: no parRun guard?
+    const int masterProci = (procIDs.empty() ? 0 : procIDs[0]);
 
-    // Cannot use non-blocking for non-contiguous data.
-    const UPstream::commsTypes commsType =
-    (
-        (
-            !is_contiguous_v<Type>
-         && UPstream::commsTypes::nonBlocking == preferredCommsType
-        )
-      ? UPstream::commsTypes::scheduled
-      : preferredCommsType
-    );
+    // if (!UPstream::is_parallel(comm))
+    // {
+    //     List<Type> allValues(1);
+    //     allValues[0] = localValue;
+    //     return allValues;
+    // }
+
+    List<Type> allValues;
+
+    // Cannot use non-blocking for non-contiguous data
+    if constexpr (!is_contiguous_v<Type>)
+    {
+        commsType = UPstream::commsTypes::scheduled;
+    }
+
 
     const label startOfRequests = UPstream::nRequests();
-
-    const int masterProci = procIDs.size() ? procIDs[0] : 0;
 
     if (UPstream::myProcNo(comm) == masterProci)
     {
@@ -176,8 +181,6 @@ void Foam::globalIndex::gatherValues
     }
     else
     {
-        allValues.clear();  // safety: zero-size on non-master
-
         if constexpr (is_contiguous_v<Type>)
         {
             UOPstream::write
@@ -196,11 +199,10 @@ void Foam::globalIndex::gatherValues
         }
     }
 
-    if (commsType == UPstream::commsTypes::nonBlocking)
-    {
-        // Wait for outstanding requests
-        UPstream::waitRequests(startOfRequests);
-    }
+    // Process sync
+    UPstream::waitRequests(startOfRequests);
+
+    return allValues;
 }
 
 
@@ -211,45 +213,37 @@ void Foam::globalIndex::gather
     const label comm,
     const ProcIDsContainer& procIDs,
     const UList<Type>& fld,
-    List<Type>& allFld,
+    UList<Type>& allFld,    // must be adequately sized on master
     const int tag,
-    const UPstream::commsTypes preferredCommsType
+    UPstream::commsTypes commsType
 )
 {
     // low-level: no parRun guard
+    const int masterProci = (procIDs.empty() ? 0 : procIDs[0]);
 
-    // Cannot use non-blocking for non-contiguous data.
-    const UPstream::commsTypes commsType =
-    (
-        (
-            !is_contiguous_v<Type>
-         && UPstream::commsTypes::nonBlocking == preferredCommsType
-        )
-      ? UPstream::commsTypes::scheduled
-      : preferredCommsType
-    );
+    // Cannot use non-blocking for non-contiguous data
+    if constexpr (!is_contiguous_v<Type>)
+    {
+        commsType = UPstream::commsTypes::scheduled;
+    }
 
     const label startOfRequests = UPstream::nRequests();
 
-    const int masterProci = procIDs.size() ? procIDs[0] : 0;
-
     if (UPstream::myProcNo(comm) == masterProci)
     {
-        allFld.resize_nocopy(off.back());  // == totalSize()
-
-        // Assign my local data - respect offset information
-        // so that we can request 0 entries to be copied.
-        // Also handle the case where we have a slice of the full
-        // list.
-
-        SubList<Type>(allFld, off[1]-off[0], off[0]) =
-           SubList<Type>(fld, off[1]-off[0]);
+        if (FOAM_UNLIKELY(allFld.size() < off.back()))  // ie, totalSize()
+        {
+            FatalErrorInFunction
+                << "[out] UList size=" << allFld.size()
+                << " too small to receive " << off.back() << nl
+                << Foam::abort(FatalError);
+        }
 
         for (label i = 1; i < procIDs.size(); ++i)
         {
-            SubList<Type> procSlot(allFld, off[i+1]-off[i], off[i]);
+            SubList<Type> slot(allFld, off[i+1]-off[i], off[i]);
 
-            if (procSlot.empty())
+            if (slot.empty())
             {
                 // Nothing to do
             }
@@ -259,14 +253,28 @@ void Foam::globalIndex::gather
                 (
                     commsType,
                     procIDs[i],
-                    procSlot,
+                    slot,
                     tag,
                     comm
                 );
             }
             else
             {
-                IPstream::recv(procSlot, procIDs[i], tag, comm);
+                IPstream::recv(slot, procIDs[i], tag, comm);
+            }
+        }
+
+        // Assign my local data - respect offset information
+        // so that we can request 0 entries to be copied.
+        // Also handle the case where we have a slice of the full
+        // list.
+        {
+            SubList<Type> dst(allFld, off[1]-off[0], off[0]);
+            SubList<Type> src(fld, off[1]-off[0]);
+
+            if (!dst.empty() && (dst.data() != src.data()))
+            {
+                dst = src;
             }
         }
     }
@@ -293,11 +301,8 @@ void Foam::globalIndex::gather
         }
     }
 
-    if (commsType == UPstream::commsTypes::nonBlocking)
-    {
-        // Wait for outstanding requests
-        UPstream::waitRequests(startOfRequests);
-    }
+    // Process sync
+    UPstream::waitRequests(startOfRequests);
 }
 
 
@@ -308,71 +313,74 @@ void Foam::globalIndex::gather
     const label comm,
     const ProcIDsContainer& procIDs,
     const IndirectListBase<Type, Addr>& fld,
-    List<Type>& allFld,
+    UList<Type>& allFld,    // must be adequately sized on master
     const int tag,
-    const UPstream::commsTypes preferredCommsType
+    UPstream::commsTypes commsType
 )
 {
     // low-level: no parRun guard
+    const int masterProci = (procIDs.empty() ? 0 : procIDs[0]);
 
     if constexpr (is_contiguous_v<Type>)
     {
-        // Flatten list (locally) so that we can benefit from using direct
-        // read/write of contiguous data
+        if (commsType == UPstream::commsTypes::nonBlocking)
+        {
+            // Contiguous data and requested nonBlocking.
+            //
+            // Flatten list (locally) so that we can benefit from using
+            // direct read/write of contiguous data
 
-        gather
-        (
-            off,
-            comm,
-            procIDs,
-            List<Type>(fld),
-            allFld,
-            tag,
-            preferredCommsType
-        );
-        return;
+            List<Type> flattened(fld);
+
+            gather
+            (
+                off,
+                comm,
+                procIDs,
+                flattened,
+                allFld,
+                tag,
+                commsType
+            );
+            return;
+        }
     }
 
-    // Cannot use non-blocking for non-contiguous data.
-    const UPstream::commsTypes commsType =
-    (
-        (
-            !is_contiguous_v<Type>
-         && UPstream::commsTypes::nonBlocking == preferredCommsType
-        )
-      ? UPstream::commsTypes::scheduled
-      : preferredCommsType
-    );
 
-    const label startOfRequests = UPstream::nRequests();
-
-    const int masterProci = procIDs.size() ? procIDs[0] : 0;
+    // Non-contiguous is always non-blocking
 
     if (UPstream::myProcNo(comm) == masterProci)
     {
-        allFld.resize_nocopy(off.back());  // == totalSize()
-
-        // Assign my local data - respect offset information
-        // so that we can request 0 entries to be copied
-
-        SubList<Type> localSlot(allFld, off[1]-off[0], off[0]);
-        if (!localSlot.empty())
+        if (FOAM_UNLIKELY(allFld.size() < off.back()))  // ie, totalSize()
         {
-            localSlot = fld;
+            FatalErrorInFunction
+                << "[out] UList size=" << allFld.size()
+                << " too small to receive " << off.back() << nl
+                << Foam::abort(FatalError);
         }
 
-        // Already verified commsType != nonBlocking
         for (label i = 1; i < procIDs.size(); ++i)
         {
-            SubList<Type> procSlot(allFld, off[i+1]-off[i], off[i]);
+            SubList<Type> slot(allFld, off[i+1]-off[i], off[i]);
 
-            if (procSlot.empty())
+            if (slot.empty())
             {
                 // Nothing to do
             }
             else
             {
-                IPstream::recv(procSlot, procIDs[i], tag, comm);
+                IPstream::recv(slot, procIDs[i], tag, comm);
+            }
+        }
+
+        // Assign my local data - respect offset information
+        // so that we can request 0 entries to be copied
+        {
+            SubList<Type> dst(allFld, off[1]-off[0], off[0]);
+
+            if (!dst.empty() && (dst.size() == fld.size()))
+            {
+                dst.deepCopy(fld);
             }
         }
     }
@@ -384,15 +392,81 @@ void Foam::globalIndex::gather
         }
         else
         {
-            OPstream::send(fld, commsType, masterProci, tag, comm);
+            OPstream::send(fld, masterProci, tag, comm);
         }
     }
+}
 
-    if (commsType == UPstream::commsTypes::nonBlocking)
+
+template<class ProcIDsContainer, class Type>
+void Foam::globalIndex::gatherInplace
+(
+    const labelUList& off,  // needed on master only
+    const label comm,
+    const ProcIDsContainer& procIDs,
+    List<Type>& fld,
+    const int tag,
+    UPstream::commsTypes commsType
+)
+{
+    if (!UPstream::is_parallel(comm))
     {
-        // Wait for outstanding requests
-        UPstream::waitRequests(startOfRequests);
+        // Serial: (no-op)
+        return;
     }
+
+    const bool master =
+    (
+        UPstream::myProcNo(comm) == (procIDs.empty() ? 0 : procIDs[0])
+    );
+
+    List<Type> allData;
+    if (master)
+    {
+        allData.resize_nocopy(off.back());  // == totalSize()
+    }
+
+    globalIndex::gather(off, comm, procIDs, fld, allData, tag, commsType);
+
+    if (master)
+    {
+        fld = std::move(allData);
+    }
+    else
+    {
+        fld.clear();  // zero-size on non-master
+    }
+}
+
+
+template<class ProcIDsContainer, class Type>
+void Foam::globalIndex::gather
+(
+    const label comm,
+    const ProcIDsContainer& procIDs,
+    const UList<Type>& fld,
+    List<Type>& allData,
+    const int tag,
+    UPstream::commsTypes commsType
+) const
+{
+    if (!UPstream::is_parallel(comm))
+    {
+        // Serial: (no-op)
+        return;
+    }
+
+    if (UPstream::myProcNo(comm) == (procIDs.empty() ? 0 : procIDs[0]))
+    {
+        // presize => totalSize()
+        allData.resize_nocopy(offsets_.back());
+    }
+    else
+    {
+        allData.clear();  // zero-size on non-master
+    }
+
+    globalIndex::gather(offsets_, comm, procIDs, fld, allData, tag, commsType);
 }
 
 
@@ -404,7 +478,7 @@ void Foam::globalIndex::gather
     const UList<Type>& sendData,
     List<Type>& allData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 ) const
 {
@@ -415,6 +489,16 @@ void Foam::globalIndex::gather
         return;
     }
 
+    if (UPstream::master(comm))
+    {
+        allData.resize_nocopy(offsets_.back());  // == totalSize()
+    }
+    else
+    {
+        allData.clear();  // zero-size on non-master
+    }
+
+    if (!UPstream::usingNodeComms(comm))
     {
         globalIndex::gather
         (
@@ -426,9 +510,61 @@ void Foam::globalIndex::gather
             tag,
             commsType
         );
-        if (!UPstream::master(comm))
+    }
+    else
+    {
+        // Using node-based hierarchy
+
+        // Using comm-world and have node communication active
+        const auto interNodeComm = UPstream::commInterNode();
+        const auto localNodeComm = UPstream::commLocalNode();
+
+        // Stage 0 : The inter-node/intra-node offsets
+        labelList interNodeOffsets;
+        labelList localNodeOffsets;
+        this->splitNodeOffsets(interNodeOffsets, localNodeOffsets, comm);
+
+        // The first node re-uses the output (allData) when collecting
+        // content. All other nodes require temporary node-local storage.
+
+        List<Type> tmpNodeData;
+        if (UPstream::is_subrank(interNodeComm))
         {
-            allData.clear();  // safety: zero-size on non-master
+            tmpNodeData.resize(localNodeOffsets.back());
+        }
+
+        List<Type>& nodeData =
+        (
+            UPstream::master(interNodeComm) ? allData : tmpNodeData
+        );
+
+        // Stage 1 : Gather data within the node
+        {
+            globalIndex::gather
+            (
+                localNodeOffsets,  // (master only)
+                localNodeComm,
+                UPstream::allProcs(localNodeComm),
+                sendData,
+                nodeData,  // node-local dest (or the allData parameter)
+                tag,
+                commsType
+            );
+        }
+
+        // Stage 2 : Gather data between nodes
+        if (UPstream::is_rank(interNodeComm))
+        {
+            globalIndex::gather
+            (
+                interNodeOffsets,  // (master only)
+                interNodeComm,
+                UPstream::allProcs(interNodeComm),
+                nodeData,
+                allData,
+                tag,
+                commsType
+            );
         }
     }
 }
@@ -440,7 +576,7 @@ void Foam::globalIndex::gather
     const IndirectListBase<Type, Addr>& sendData,
     List<Type>& allData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 ) const
 {
@@ -449,6 +585,37 @@ void Foam::globalIndex::gather
         // Serial: direct copy
         allData = sendData;
         return;
+    }
+    else if constexpr (is_contiguous_v<Type>)
+    {
+        if (commsType == UPstream::commsTypes::nonBlocking)
+        {
+            // Contiguous data and requested nonBlocking.
+            //
+            // Flatten list (locally) so that we can benefit from using
+            // direct read/write of contiguous data
+
+            List<Type> flattened(sendData);
+
+            this->gather
+            (
+                flattened,
+                allData,
+                tag,
+                commsType,
+                comm
+            );
+            return;
+        }
+    }
+
+    if (UPstream::master(comm))
+    {
+        allData.resize_nocopy(offsets_.back());  // == totalSize()
+    }
+    else
+    {
+        allData.clear();  // zero-size on non-master
     }
 
     {
@@ -462,10 +629,6 @@ void Foam::globalIndex::gather
             tag,
             commsType
         );
-        if (!UPstream::master(comm))
-        {
-            allData.clear();  // safety: zero-size on non-master
-        }
     }
 }
 
@@ -475,12 +638,12 @@ OutputContainer Foam::globalIndex::gather
 (
     const UList<Type>& sendData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 ) const
 {
     OutputContainer allData;
-    gather(sendData, allData, tag, commsType, comm);
+    this->gather(sendData, allData, tag, commsType, comm);
     return allData;
 }
 
@@ -490,12 +653,12 @@ OutputContainer Foam::globalIndex::gather
 (
     const IndirectListBase<Type, Addr>& sendData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 ) const
 {
     OutputContainer allData;
-    gather(sendData, allData, tag, commsType, comm);
+    this->gather(sendData, allData, tag, commsType, comm);
     return allData;
 }
 
@@ -505,18 +668,18 @@ void Foam::globalIndex::gatherInplace
 (
     List<Type>& fld,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 ) const
 {
     if (UPstream::parRun())
     {
         List<Type> allData;
-        gather(fld, allData, tag, commsType, comm);
+        this->gather(fld, allData, tag, commsType, comm);
 
         if (UPstream::master(comm))
         {
-            fld.transfer(allData);
+            fld = std::move(allData);
         }
         else
         {
@@ -533,8 +696,7 @@ void Foam::globalIndex::mpiGather
     const UList<Type>& sendData,
     OutputContainer& allData,
     const label comm,
-
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const int tag
 ) const
 {
@@ -696,8 +858,7 @@ OutputContainer Foam::globalIndex::mpiGather
 (
     const UList<Type>& sendData,
     const label comm,
-
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const int tag
 ) const
 {
@@ -712,8 +873,7 @@ void Foam::globalIndex::mpiGatherInplace
 (
     List<Type>& fld,
     const label comm,
-
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const int tag
 ) const
 {
@@ -724,7 +884,7 @@ void Foam::globalIndex::mpiGatherInplace
 
         if (UPstream::master(comm))
         {
-            fld.transfer(allData);
+            fld = std::move(allData);
         }
         else
         {
@@ -741,8 +901,7 @@ void Foam::globalIndex::mpiGatherOp
     const UList<Type>& sendData,
     OutputContainer& allData,
     const label comm,
-
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const int tag
 )
 {
@@ -765,8 +924,7 @@ OutputContainer Foam::globalIndex::mpiGatherOp
 (
     const UList<Type>& sendData,
     const label comm,
-
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const int tag
 )
 {
@@ -781,8 +939,7 @@ void Foam::globalIndex::mpiGatherInplaceOp
 (
     List<Type>& fld,
     const label comm,
-
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const int tag
 )
 {
@@ -793,7 +950,7 @@ void Foam::globalIndex::mpiGatherInplaceOp
 
         if (UPstream::master(comm))
         {
-            fld.transfer(allData);
+            fld = std::move(allData);
         }
         else
         {
@@ -810,7 +967,7 @@ void Foam::globalIndex::gatherOp
     const UList<Type>& sendData,
     List<Type>& allData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 )
 {
@@ -834,7 +991,7 @@ void Foam::globalIndex::gatherOp
     const IndirectListBase<Type, Addr>& sendData,
     List<Type>& allData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 )
 {
@@ -857,7 +1014,7 @@ OutputContainer Foam::globalIndex::gatherOp
 (
     const UList<Type>& sendData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 )
 {
@@ -872,7 +1029,7 @@ OutputContainer Foam::globalIndex::gatherOp
 (
     const IndirectListBase<Type, Addr>& sendData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 )
 {
@@ -887,7 +1044,7 @@ void Foam::globalIndex::gatherInplaceOp
 (
     List<Type>& fld,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 )
 {
@@ -910,33 +1067,28 @@ void Foam::globalIndex::scatter
     const UList<Type>& allFld,
     UList<Type>& fld,
     const int tag,
-    const UPstream::commsTypes preferredCommsType
+    UPstream::commsTypes commsType
 )
 {
     // low-level: no parRun guard
+    const int masterProci = (procIDs.empty() ? 0 : procIDs[0]);
 
-    // Cannot use non-blocking for non-contiguous data.
-    const UPstream::commsTypes commsType =
-    (
-        (
-            !is_contiguous_v<Type>
-         && UPstream::commsTypes::nonBlocking == preferredCommsType
-        )
-      ? UPstream::commsTypes::scheduled
-      : preferredCommsType
-    );
+    // Cannot use non-blocking for non-contiguous data
+    if constexpr (!is_contiguous_v<Type>)
+    {
+        commsType = UPstream::commsTypes::scheduled;
+    }
+
 
     const label startOfRequests = UPstream::nRequests();
-
-    const int masterProci = procIDs.size() ? procIDs[0] : 0;
 
     if (UPstream::myProcNo(comm) == masterProci)
     {
         for (label i = 1; i < procIDs.size(); ++i)
         {
-            const SubList<Type> procSlot(allFld, off[i+1]-off[i], off[i]);
+            const SubList<Type> slot(allFld, off[i+1]-off[i], off[i]);
 
-            if (procSlot.empty())
+            if (slot.empty())
             {
                 // Nothing to do
             }
@@ -946,14 +1098,14 @@ void Foam::globalIndex::scatter
                 (
                     commsType,
                     procIDs[i],
-                    procSlot,
+                    slot,
                     tag,
                     comm
                 );
             }
             else
             {
-                OPstream::send(procSlot, commsType, procIDs[i], tag, comm);
+                OPstream::send(slot, commsType, procIDs[i], tag, comm);
             }
         }
 
@@ -962,8 +1114,15 @@ void Foam::globalIndex::scatter
         // Also handle the case where we have a slice of the full
         // list.
 
-        SubList<Type>(fld, off[1]-off[0]) =
-            SubList<Type>(allFld, off[1]-off[0], off[0]);
+        {
+            SubList<Type> dst(fld, off[1]-off[0]);
+            SubList<Type> src(allFld, off[1]-off[0], off[0]);
+
+            if (!dst.empty() && (dst.data() != src.data()))
+            {
+                dst = src;
+            }
+        }
     }
     else
     {
@@ -992,11 +1151,8 @@ void Foam::globalIndex::scatter
         }
     }
 
-    if (commsType == UPstream::commsTypes::nonBlocking)
-    {
-        // Wait for outstanding requests
-        UPstream::waitRequests(startOfRequests);
-    }
+    // Process sync
+    UPstream::waitRequests(startOfRequests);
 }
 
 
@@ -1006,7 +1162,7 @@ void Foam::globalIndex::scatter
     const UList<Type>& allData,
     UList<Type>& localData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 ) const
 {
@@ -1037,7 +1193,7 @@ OutputContainer Foam::globalIndex::scatter
 (
     const UList<Type>& allData,
     const int tag,
-    const UPstream::commsTypes commsType,
+    UPstream::commsTypes commsType,
     const label comm
 ) const
 {
@@ -1051,7 +1207,8 @@ OutputContainer Foam::globalIndex::scatter
             UPstream::listScatterValues<label>(this->localSizes(), comm)
         );
 
-        OutputContainer localData(count);
+        OutputContainer localData;
+        localData.resize(count);
         this->scatter(allData, localData, tag, commsType, comm);
 
         return localData;

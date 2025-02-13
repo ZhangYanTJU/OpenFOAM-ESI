@@ -135,6 +135,18 @@ OptimisationSwitches
     // Default communication type (nonBlocking | scheduled | buffered)
     commsType       nonBlocking;
 
+    // Use host/node topology-aware routines
+    //  0: disabled
+    //  1: split by hostname [default]
+    //  2: split by shared
+    //  >=4: (debug/manual) split with given number per node
+    nodeComms       1;
+
+    // Minimum number of nodes before topology-aware routines are enabled
+    //  <= 2 : always
+    //  >= 3 : when there are more than N nodes
+    nodeComms.min   0;
+
     // Transfer double as float for processor boundaries. Mostly defunct.
     floatTransfer   0;
 

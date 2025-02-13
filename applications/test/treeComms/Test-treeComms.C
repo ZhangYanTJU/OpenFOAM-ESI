@@ -51,7 +51,7 @@ void printConnection(Ostream& os, const label proci, const labelUList& below)
 // The number of receives - as per gatherList (v2112)
 void printRecvCount_gatherList
 (
-    const UList<UPstream::commsStruct>& comms,
+    const UPstream::commsStructList& comms,
     const label comm = UPstream::worldComm
 )
 {
@@ -91,7 +91,7 @@ void printRecvCount_gatherList
 // The number of sends - as per scatterList (v2112)
 void printSendCount_scatterList
 (
-    const UList<UPstream::commsStruct>& comms,
+    const UPstream::commsStructList& comms,
     const label comm = UPstream::worldComm
 )
 {
@@ -131,7 +131,7 @@ void printSendCount_scatterList
 // Transmission widths (contiguous data)
 void printWidths
 (
-    const UList<UPstream::commsStruct>& comms,
+    const UPstream::commsStructList& comms,
     const label comm = UPstream::worldComm
 )
 {

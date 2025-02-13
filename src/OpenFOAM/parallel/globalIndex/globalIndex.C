@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -260,6 +260,117 @@ Foam::globalIndex::calcRanges
     }
 
     return values;
+}
+
+
+bool Foam::globalIndex::splitNodeOffsets
+(
+    labelList& interNodeOffsets,
+    labelList& localNodeOffsets,
+    const label communicator,
+    const bool absoluteLocalNodeOffsets
+) const
+{
+    // Require const-world as the starting point
+    if (!UPstream::parRun() || communicator != UPstream::commConstWorld())
+    {
+        interNodeOffsets.clear();
+        localNodeOffsets.clear();
+        return false;
+    }
+
+    const auto interNodeComm = UPstream::commInterNode();
+
+    // Only generate information on the node leaders
+    if (!UPstream::is_rank(interNodeComm))
+    {
+        interNodeOffsets.clear();
+        localNodeOffsets.clear();
+        return true;  // Not involved, but return true to match others...
+    }
+
+    const label numProc = UPstream::nProcs(UPstream::commConstWorld());
+    const auto& procIds = UPstream::procID(interNodeComm);
+    const int ranki = UPstream::myProcNo(interNodeComm);
+
+    if (FOAM_UNLIKELY(procIds.empty()))
+    {
+        // Should not happen...
+        interNodeOffsets.clear();
+        localNodeOffsets.clear();
+        return true;  // Return true to match others...
+    }
+
+    // The inter-node offsets from the node-specific segment of the
+    // overall offsets, but avoiding MPI_Scatterv (slow, doesn't
+    // handle overlaps) and using MPI_Bcast() instead.
+
+    // Send top-level offsets to the node leaders.
+    // Could also be a mutable operation and use offsets_ directly.
+    //
+    // - number of overall offsets is always (nProc+1) [worldComm]
+    labelList allOffsets;
+    if (UPstream::master(interNodeComm))
+    {
+        allOffsets = offsets_;
+    }
+    else  // ie, UPstream::is_subrank(interNodeComm)
+    {
+        allOffsets.resize_nocopy(numProc+1);
+    }
+
+    UPstream::broadcast
+    (
+        allOffsets.data_bytes(),
+        allOffsets.size_bytes(),
+        interNodeComm
+    );
+
+
+    if (FOAM_UNLIKELY(allOffsets.empty()))
+    {
+        // Should not happen...
+        interNodeOffsets.clear();
+        localNodeOffsets.clear();
+        return true;  // Return true to match others...
+    }
+
+    // The local node span
+    const label firstProc = procIds[ranki];
+    const label lastProc =
+    (
+        (ranki+1 < procIds.size())
+      ? procIds[ranki+1]
+      : numProc
+    );
+
+    // Offsets (within a node)
+    localNodeOffsets = allOffsets.slice
+    (
+        firstProc,
+        (lastProc - firstProc) + 1  // +1 since offsets
+    );
+
+    if (!absoluteLocalNodeOffsets && !localNodeOffsets.empty())
+    {
+        const auto start0 = localNodeOffsets.front();
+        for (auto& val : localNodeOffsets)
+        {
+            val -= start0;
+        }
+    }
+
+    // Offsets (between nodes)
+    interNodeOffsets.resize_nocopy(procIds.size()+1);
+    {
+        forAll(procIds, i)
+        {
+            interNodeOffsets[i] = allOffsets[procIds[i]];
+        }
+        interNodeOffsets.back() = allOffsets.back();
+    }
+
+    return true;
 }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2018 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,6 +55,12 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
 }
 
 
+bool Foam::UPstream::setSharedMemoryCommunicators()
+{
+    return false;
+}
+
+
 void Foam::UPstream::shutdown(int errNo)
 {}
 
@@ -66,7 +72,7 @@ void Foam::UPstream::exit(int errNo)
 }
 
 
-void Foam::UPstream::abort()
+void Foam::UPstream::abort(int errNo)
 {
     // No MPI - just abort
     std::abort();
@@ -77,13 +83,29 @@ void Foam::UPstream::abort()
 
 void Foam::UPstream::allocateCommunicatorComponents
 (
-    const label,
-    const label
+    const label parentIndex,
+    const label index
 )
 {}
 
 
-void Foam::UPstream::freeCommunicatorComponents(const label)
+void Foam::UPstream::dupCommunicatorComponents
+(
+    const label parentIndex,
+    const label index
+)
+{}
+
+void Foam::UPstream::splitCommunicatorComponents
+(
+    const label parentIndex,
+    const label index,
+    int colour
+)
+{}
+
+
+void Foam::UPstream::freeCommunicatorComponents(const label index)
 {}
 
 

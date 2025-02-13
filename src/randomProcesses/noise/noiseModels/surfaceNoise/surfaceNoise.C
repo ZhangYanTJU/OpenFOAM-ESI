@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -274,12 +274,9 @@ scalar surfaceNoise::surfaceAverage
         if (Pstream::parRun())
         {
             // Collect the surface data so that we can output the surfaces
-            scalarField allData;
-
-            procFaceAddr.gather
+            scalarField allData = procFaceAddr.gather
             (
                 data,
-                allData,
                 UPstream::msgType(),
                 commType_,
                 UPstream::worldComm
@@ -343,12 +340,9 @@ scalar surfaceNoise::writeSurfaceData
     if (Pstream::parRun())
     {
         // Collect the surface data so that we can output the surfaces
-        scalarField allData;
-
-        procFaceAddr.gather
+        scalarField allData = procFaceAddr.gather
         (
             data,
-            allData,
             UPstream::msgType(),
             commType_,
             UPstream::worldComm

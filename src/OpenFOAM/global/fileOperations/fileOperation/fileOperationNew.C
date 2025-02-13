@@ -362,7 +362,7 @@ Foam::fileOperation::New_impl
             // Warning: MS-MPI currently uses MPI_Comm_create() instead of
             // MPI_Comm_create_group() so it will block there!
 
-            commAndIORanks.first() = UPstream::allocateCommunicator
+            commAndIORanks.first() = UPstream::newCommunicator
             (
                 UPstream::worldComm,
                 siblings
