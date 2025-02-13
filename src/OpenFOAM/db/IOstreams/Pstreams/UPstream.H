@@ -32,8 +32,8 @@ Description
 
 SourceFiles
     UPstream.C
+    UPstream.txx
     UPstreamCommsStruct.C
-    UPstreamTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -1689,7 +1689,7 @@ Ostream& operator<<(Ostream&, const UPstream::commsStruct&);
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "UPstreamTemplates.C"
+    #include "UPstream.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

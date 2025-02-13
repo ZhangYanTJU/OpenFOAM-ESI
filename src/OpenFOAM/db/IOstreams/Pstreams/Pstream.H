@@ -32,11 +32,11 @@ Description
 
 SourceFiles
     Pstream.C
-    PstreamBroadcast.C
-    PstreamGather.C
-    PstreamGatherList.C
-    PstreamExchangeConsensus.C
-    PstreamExchange.C
+    PstreamBroadcast.txx
+    PstreamGather.txx
+    PstreamGatherList.txx
+    PstreamExchange.txx
+    PstreamExchangeConsensus.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -660,10 +660,10 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "PstreamBroadcast.C"
-    #include "PstreamGather.C"
-    #include "PstreamGatherList.C"
-    #include "PstreamExchange.C"
+    #include "PstreamBroadcast.txx"
+    #include "PstreamGather.txx"
+    #include "PstreamGatherList.txx"
+    #include "PstreamExchange.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
