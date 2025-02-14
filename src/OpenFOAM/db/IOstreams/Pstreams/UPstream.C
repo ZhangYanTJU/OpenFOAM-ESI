@@ -640,7 +640,7 @@ Foam::UPstream::treeCommunication(const label communicator)
 }
 
 
-void Foam::UPstream::printCommTree(const label communicator)
+void Foam::UPstream::printCommTree(int communicator)
 {
     const auto& comms = UPstream::whichCommunication(communicator);
 
@@ -663,11 +663,57 @@ bool Foam::UPstream::usingNodeComms(const label communicator)
     (
         parRun_ && (constWorldComm_ == communicator)
      && (nodeCommsControl_ > 0)
+
         // More than one node and above defined threshold
      && (numNodes_ > 1) && (numNodes_ >= nodeCommsMin_)
         // Some processes do share nodes
      && (numNodes_ < procIDs_[constWorldComm_].size())
+
+        // Extra paranoid (guard against calling during startup)
+     && (commInterNode_ > constWorldComm_)
+     && (commLocalNode_ > constWorldComm_)
     );
+}
+
+
+const Foam::List<int>& Foam::UPstream::interNode_offsets()
+{
+    static std::unique_ptr<List<int>> singleton;
+
+    if (!singleton)
+    {
+        // Extra paranoid (guard against calling during startup)
+        if
+        (
+            (commInterNode_ <= constWorldComm_)
+         || (commInterNode_ >= procIDs_.size())
+        )
+        {
+            return List<int>::null();
+        }
+
+        singleton = std::make_unique<List<int>>();
+        auto& offsets = *singleton;
+
+        const auto& procs = procIDs_[commInterNode_];
+
+        // The procIDs_ are already the offsets, but missing the end offset
+        if (!procs.empty())
+        {
+            const auto count = procs.size();
+
+            offsets.resize(count+1);
+            std::copy_n
+            (
+                procs.begin(),
+                count,
+                offsets.begin()
+            );
+            offsets[count] = UPstream::nProcs(constWorldComm_);
+        }
+    }
+
+    return *singleton;
 }
 
 

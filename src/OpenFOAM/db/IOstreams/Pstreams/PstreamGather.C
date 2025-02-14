@@ -44,18 +44,18 @@ void Foam::Pstream::gather
     T& value,
     const BinaryOp& bop,
     const int tag,
-    const label comm
+    const label communicator
 )
 {
-    if (UPstream::is_parallel(comm))
+    if (UPstream::is_parallel(communicator))
     {
         // Communication order
-        const auto& comms = UPstream::whichCommunication(comm);
+        const auto& comms = UPstream::whichCommunication(communicator);
         // if (comms.empty()) return;  // extra safety?
-        const auto& myComm = comms[UPstream::myProcNo(comm)];
+        const auto& myComm = comms[UPstream::myProcNo(communicator)];
 
         // Receive from my downstairs neighbours
-        for (const label belowID : myComm.below())
+        for (const auto belowID : myComm.below())
         {
             T received;
 
@@ -68,12 +68,12 @@ void Foam::Pstream::gather
                     reinterpret_cast<char*>(&received),
                     sizeof(T),
                     tag,
-                    comm
+                    communicator
                 );
             }
             else
             {
-                IPstream::recv(received, belowID, tag, comm);
+                IPstream::recv(received, belowID, tag, communicator);
             }
 
             value = bop(value, received);
@@ -91,12 +91,12 @@ void Foam::Pstream::gather
                     reinterpret_cast<const char*>(&value),
                     sizeof(T),
                     tag,
-                    comm
+                    communicator
                 );
             }
             else
             {
-                OPstream::send(value, myComm.above(), tag, comm);
+                OPstream::send(value, myComm.above(), tag, communicator);
             }
         }
     }

@@ -60,7 +60,7 @@ void Foam::Pstream::combineGather
         const auto& myComm = comms[UPstream::myProcNo(comm)];
 
         // Receive from my downstairs neighbours
-        for (const label belowID : myComm.below())
+        for (const auto belowID : myComm.below())
         {
             if constexpr (is_contiguous_v<T>)
             {
@@ -172,7 +172,7 @@ void Foam::Pstream::listCombineGather
         const auto& myComm = comms[UPstream::myProcNo(comm)];
 
         // Receive from my downstairs neighbours
-        for (const label belowID : myComm.below())
+        for (const auto belowID : myComm.below())
         {
             if constexpr (is_contiguous_v<T>)
             {
@@ -288,7 +288,7 @@ void Foam::Pstream::mapCombineGather
         const auto& myComm = comms[UPstream::myProcNo(comm)];
 
         // Receive from my downstairs neighbours
-        for (const label belowID : myComm.below())
+        for (const auto belowID : myComm.below())
         {
             // Map/HashTable: non-contiguous
 

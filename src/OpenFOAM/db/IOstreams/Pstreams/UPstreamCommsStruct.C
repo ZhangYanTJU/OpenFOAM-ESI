@@ -28,6 +28,9 @@ License
 
 #include "UPstream.H"
 
+#include <algorithm>
+#include <numeric>
+
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -38,9 +41,9 @@ static void printGraph_impl
 (
     Ostream& os,
     const UPstream::commsStructList& comms,
-    const label proci,
-    label depth,
-    const label maxDepth = 1024
+    const int proci,
+    int depth,
+    const int maxDepth = 1024
 )
 {
     if (proci >= comms.size())
@@ -59,41 +62,80 @@ static void printGraph_impl
 
         // Prefer left-to-right layout for large graphs
         os << indent << "rankdir=LR" << nl;
+    }
 
-        if (below.empty())
+
+    // Output the immediate neighbours below
+
+    if (below.empty())
+    {
+        if (proci == 0)
         {
             // A graph with a single-node (eg, self-comm)
             os << indent << proci << nl;
         }
     }
-
-    int pos = 0;
-
-    for (const auto nbrProci : below)
+    else
     {
-        if (pos)
-        {
-            os << "  ";
-        }
-        else
-        {
-            os << indent;
-        }
-        os << proci << " -- " << nbrProci;
+        os << indent << proci << " -- " << token::BEGIN_BLOCK;
 
-        if (++pos >= 4)  // Max 4 items per line
+        // Accumulate into ranges whenever possible
+        IntRange<int> range;
+
+        // Print accumulated range and reset
+        auto emit_range = [&]()
         {
-            pos = 0;
-            os << nl;
+            if (!range.empty())
+            {
+                os << ' ';
+                if (range.min() < range.max())
+                {
+                    os << '"' << range.min() << ".." << range.max() << '"';
+                }
+                else
+                {
+                    os << range.min();
+                }
+                range.reset();
+            }
+        };
+
+        for (const auto nbrProci : below)
+        {
+            const bool terminal = comms[nbrProci].below().empty();
+
+            if
+            (
+                terminal
+             && (!range.empty() && (range.max()+1 == nbrProci))
+            )
+            {
+                // Accumulate
+                ++range;
+                continue;
+            }
+
+            // Emit accumulated range
+            emit_range();
+
+            if (terminal)
+            {
+                range.reset(nbrProci, 1);
+            }
+            else
+            {
+                os << token::SPACE << nbrProci;
+            }
         }
+
+        // Emit accumulated range
+        emit_range();
+
+        os << token::SPACE << token::END_BLOCK << nl;
     }
 
-    if (pos)
-    {
-        os << nl;
-    }
 
-    // Limit the maximum depth
+    // Recurse into below neighbours, but limit the maximum depth
     ++depth;
     if (depth >= maxDepth && (proci != 0))
     {
@@ -109,7 +151,6 @@ static void printGraph_impl
     if (proci == 0)
     {
         os.endBlock();
-
         os << "// end graph" << nl;
     }
 }
@@ -150,46 +191,46 @@ static void printGraph_impl
 namespace Foam
 {
 
-static label simpleTree
+static int simpleTree
 (
-    const label procID,
-    const label numProcs,
+    const int myProci,
+    const int numProcs,
 
-    DynamicList<label>& below,
-    DynamicList<label>& allBelow
+    DynamicList<int>& below,
+    DynamicList<int>& allBelow
 )
 {
-    label above(-1);
+    int above(-1);
 
-    for (label mod = 2, step = 1; step < numProcs; step = mod)
+    for (int mod = 2, step = 1; step < numProcs; step = mod)
     {
         mod = step * 2;
 
-        if (procID % mod)
+        if (myProci % mod)
         {
             // The rank above
-            above = procID - (procID % mod);
+            above = myProci - (myProci % mod);
             break;
         }
         else
         {
             for
             (
-                label j = procID + step;
-                j < numProcs && j < procID + mod;
-                j += step
+                int i = myProci + step;
+                i < numProcs && i < myProci + mod;
+                i += step
             )
             {
-                below.push_back(j);
+                below.push_back(i);
             }
             for
             (
-                label j = procID + step;
-                j < numProcs && j < procID + mod;
-                j++
+                int i = myProci + step;
+                i < numProcs && i < myProci + mod;
+                ++i
             )
             {
-                allBelow.push_back(j);
+                allBelow.push_back(i);
             }
         }
     }
@@ -204,10 +245,10 @@ static label simpleTree
 
 Foam::UPstream::commsStruct::commsStruct
 (
-    const label above,
-    labelList&& below,
-    labelList&& allBelow,
-    labelList&& allNotBelow
+    const int above,
+    List<int>&& below,
+    List<int>&& allBelow,
+    List<int>&& allNotBelow
 )
 :
     above_(above),
@@ -219,11 +260,11 @@ Foam::UPstream::commsStruct::commsStruct
 
 Foam::UPstream::commsStruct::commsStruct
 (
-    const label numProcs,
-    const label myProcID,
-    const label above,
-    const labelUList& below,
-    const labelUList& allBelow
+    const int numProcs,
+    const int myProcID,
+    const int above,
+    const UList<int>& below,
+    const UList<int>& allBelow
 )
 :
     above_(above),
@@ -237,14 +278,14 @@ Foam::UPstream::commsStruct::commsStruct
     isNotBelow[myProcID] = false;
 
     // Exclude allBelow
-    for (const label proci : allBelow)
+    for (const auto proci : allBelow)
     {
         isNotBelow[proci] = false;
     }
 
     // Compacting to obtain allNotBelow_
-    label nNotBelow = 0;
-    forAll(isNotBelow, proci)
+    int nNotBelow = 0;
+    for (int proci = 0; proci < numProcs; ++proci)
     {
         if (isNotBelow[proci])
         {
@@ -266,7 +307,7 @@ Foam::UPstream::commsStruct::commsStruct
 void Foam::UPstream::commsStructList::printGraph
 (
     Ostream& os,
-    const label proci
+    const int proci
 ) const
 {
     // Print graph - starting at depth 0
@@ -282,9 +323,9 @@ void Foam::UPstream::commsStructList::printGraph
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::label Foam::UPstream::commsStruct::nProcs() const noexcept
+int Foam::UPstream::commsStruct::nProcs() const noexcept
 {
-    return (1 + allBelow_.size() + allNotBelow_.size());
+    return (1 + int(allBelow_.size() + allNotBelow_.size()));
 }
 
 
@@ -299,46 +340,65 @@ void Foam::UPstream::commsStruct::reset()
 
 void Foam::UPstream::commsStruct::reset
 (
-    const label procID,
-    const label numProcs,
-    [[maybe_unused]] const label comm
+    const int myProci,
+    const int numProcs,
+    const int communicator
 )
 {
     reset();
 
-    if (numProcs <= 2 || numProcs < UPstream::nProcsSimpleSum)
+    // Linear (flat) communication pattern
+    if
+    (
+        // Trivially small domains
+        (numProcs <= 2 || numProcs < UPstream::nProcsSimpleSum)
+
+        // local-node: assume that the local communication is low-latency
+     || (
+            UPstream::commLocalNode() == communicator
+         && UPstream::commLocalNode() > UPstream::commConstWorld()
+        )
+        // inter-node: presumably relatively few nodes and/or
+        //     higher latency with larger messages being sent
+     || (
+            UPstream::commInterNode() == communicator
+         && UPstream::commInterNode() > UPstream::commConstWorld()
+        )
+    )
     {
         // Linear communication pattern
-        label above(-1);
-        labelList below;
+        int above(-1);
+        List<int> below;
 
-        if (procID == 0)
+        if (myProci == 0)
         {
-            below = identity(numProcs-1, 1);
+            below.resize(numProcs-1);
+            std::iota(below.begin(), below.end(), 1);
         }
         else
         {
             above = 0;
         }
 
-        *this = UPstream::commsStruct(numProcs, procID, above, below, below);
+        *this = UPstream::commsStruct(numProcs, myProci, above, below, below);
         return;
     }
 
 
-    // Simple tree communication pattern
-    DynamicList<label> below;
-    DynamicList<label> allBelow;
 
-    label above = simpleTree
+    DynamicList<int> below;
+    DynamicList<int> allBelow;
+
+    // Simple tree communication pattern
+    int above = simpleTree
     (
-        procID,
+        myProci,
         numProcs,
         below,
         allBelow
     );
 
-    *this = UPstream::commsStruct(numProcs, procID, above, below, allBelow);
+    *this = UPstream::commsStruct(numProcs, myProci, above, below, allBelow);
 }
 
 
@@ -360,19 +420,36 @@ Foam::UPstream::commsStructList::null()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::UPstream::commsStructList::init(const label comm)
+void Foam::UPstream::commsStructList::init(int communicator)
 {
-    comm_ = comm;
+    comm_ = communicator;
     tree_.clear();
-    tree_.resize(UPstream::nProcs(comm));
+    if (comm_ >= 0)
+    {
+        tree_.resize(UPstream::nProcs(comm_));
+    }
+}
+
+
+void Foam::UPstream::commsStructList::reset(int communicator)
+{
+    comm_ = communicator;
+    tree_.clear();
 }
 
 
 const Foam::UPstream::commsStruct&
-Foam::UPstream::commsStructList::get(const label proci) const
+Foam::UPstream::commsStructList::get(int proci) const
 {
+    const auto numProcs = UPstream::nProcs(comm_);
+
+    // Only if reset(comm) instead of init(comm) was used
+    if (tree_.size() < numProcs)
+    {
+        const_cast<List<commsStruct>&>(tree_).resize(numProcs);
+    }
+
     const UPstream::commsStruct& entry = tree_[proci];
-    const auto numProcs = tree_.size();
 
     if (entry.nProcs() != numProcs)
     {
@@ -391,10 +468,8 @@ bool Foam::UPstream::commsStruct::operator==(const commsStruct& comm) const
 {
     return
     (
-        (above_ == comm.above())
-     && (below_ == comm.below())
-     // && (allBelow_ == comm.allBelow())
-     // && (allNotBelow_ == comm.allNotBelow())
+        (above() == comm.above())
+     && (below() == comm.below())
     );
 }
 
@@ -409,10 +484,10 @@ bool Foam::UPstream::commsStruct::operator!=(const commsStruct& comm) const
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const UPstream::commsStruct& comm)
 {
-    os  << comm.above() << nl << token::SPACE << token::SPACE;
-    comm.below().writeList(os) << nl << token::SPACE << token::SPACE;
-    comm.allBelow().writeList(os) << nl << token::SPACE << token::SPACE;
-    comm.allNotBelow().writeList(os);
+    os  << comm.above() << nl;
+    os  << "  "; comm.below().writeList(os) << nl;
+    os  << "  "; comm.allBelow().writeList(os) << nl;
+    os  << "  "; comm.allNotBelow().writeList(os);
 
     os.check(FUNCTION_NAME);
     return os;

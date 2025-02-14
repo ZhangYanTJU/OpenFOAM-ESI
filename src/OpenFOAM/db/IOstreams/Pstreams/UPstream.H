@@ -108,18 +108,18 @@ public:
             // Private Data
 
                 //- The procID of the processor \em directly above
-                label above_;
+                int above_;
 
                 //- The procIDs of processors \em directly below
-                labelList below_;
+                List<int> below_;
 
                 //- The procIDs of all processors below myProcNo,
                 //- not just directly below
-                labelList allBelow_;
+                List<int> allBelow_;
 
                 //- The procIDs of all processors not below myProcNo
-                //  (inverse of allBelow_ without myProcNo)
-                labelList allNotBelow_;
+                //- (inverse of allBelow_ without myProcNo)
+                List<int> allNotBelow_;
 
 
         public:
@@ -132,20 +132,20 @@ public:
                 //- Move construct from components
                 commsStruct
                 (
-                    const label above,
-                    labelList&& below,
-                    labelList&& allBelow,
-                    labelList&& allNotBelow
+                    const int above,
+                    List<int>&& below,
+                    List<int>&& allBelow,
+                    List<int>&& allNotBelow
                 );
 
                 //- Copy construct from below, allBelow components
                 commsStruct
                 (
-                    const label numProcs,
-                    const label myProcID,
-                    const label above,
-                    const labelUList& below,
-                    const labelUList& allBelow
+                    const int numProcs,
+                    const int myProcID,
+                    const int above,
+                    const UList<int>& below,
+                    const UList<int>& allBelow
                 );
 
 
@@ -153,25 +153,25 @@ public:
 
             // Access
 
-                //- The number of processors addressed by the structure
-                label nProcs() const noexcept;
-
                 //- The procID of the processor \em directly above
-                label above() const noexcept { return above_; }
+                int above() const noexcept { return above_; }
 
                 //- The procIDs of the processors \em directly below
-                const labelList& below() const noexcept { return below_; }
+                const List<int>& below() const noexcept { return below_; }
 
-                //- The procIDs of all processors below
+                //- The procIDs of \em all processors below
                 //- (so not just directly below)
-                const labelList& allBelow() const noexcept { return allBelow_; }
+                const List<int>& allBelow() const noexcept { return allBelow_; }
 
                 //- The procIDs of all processors not below myProcNo.
                 //- The inverse set of allBelow without myProcNo.
-                const labelList& allNotBelow() const noexcept
+                const List<int>& allNotBelow() const noexcept
                 {
                     return allNotBelow_;
                 }
+
+                //- The number of processors addressed by the structure
+                int nProcs() const noexcept;
 
 
             // Edit
@@ -183,9 +183,9 @@ public:
                 //- possibly with communicator-specific adjustments
                 void reset
                 (
-                    const label procID,
-                    const label numProcs,
-                    const label comm = -1
+                    const int myProci,
+                    const int numProcs,
+                    const int communicator
                 );
 
 
@@ -203,7 +203,7 @@ public:
             // Private Data
 
                 //- The communicator index
-                label comm_;
+                int comm_;
 
                 //- The communication tree
                 List<commsStruct> tree_;
@@ -216,7 +216,7 @@ public:
                 commsStructList() noexcept : comm_(-1) {}
 
                 //- Construct empty with given communicator
-                commsStructList(label comm) noexcept : comm_(comm) {}
+                explicit commsStructList(int comm) noexcept : comm_(comm) {}
 
 
             // Static Functions
@@ -230,8 +230,8 @@ public:
                 //- True if communicator is non-negative (ie, was assigned)
                 bool good() const noexcept { return (comm_ >= 0); }
 
-                //- The communicator label
-                label comm() const noexcept { return comm_; }
+                //- The communicator internal index
+                int comm() const noexcept { return comm_; }
 
                 //- Clear the list
                 void clear() { return tree_.clear(); }
@@ -242,20 +242,23 @@ public:
                 //- The number of entries
                 label size() const noexcept { return tree_.size(); }
 
-                //- Reset communicator index and clear demand-driven entries
-                void init(const label comm);
+                //- Reset communicator index, fill tree with empty entries
+                void init(int communicator);
+
+                //- Reset communicator index, clear tree entries
+                void reset(int communicator);
 
                 //- Get existing or create (demand-driven) entry
-                const UPstream::commsStruct& get(const label proci) const;
+                const UPstream::commsStruct& get(int proci) const;
 
                 //- Get existing or create (demand-driven) entry
-                const UPstream::commsStruct& operator[](const label proci) const
+                const UPstream::commsStruct& operator[](int proci) const
                 {
                     return get(proci);
                 }
 
                 //- Print un-directed graph in graphviz dot format
-                void printGraph(Ostream& os, label proci = 0) const;
+                void printGraph(Ostream& os, int proci = 0) const;
         };
 
 
@@ -1074,6 +1077,10 @@ public:
             return rangeType(1, static_cast<int>(nProcs(communicator)-1));
         }
 
+        //- Processor offsets corresponding to the inter-node communicator
+        static const List<int>& interNode_offsets();
+
+
         //- Communication schedule for linear all-to-master (proc 0)
         static const commsStructList& linearCommunication
         (
@@ -1105,7 +1112,7 @@ public:
             (
                 np <= 1
               ? commsStructList::null()
-              : (np <= 2 || np < nProcsSimpleSum)
+              : (np <= 2 || np < UPstream::nProcsSimpleSum)
               ? linearCommunication(communicator)
               : treeCommunication(communicator)
             );

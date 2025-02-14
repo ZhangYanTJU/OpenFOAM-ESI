@@ -32,13 +32,13 @@ Description
     values[UPstream::myProcNo(comm)].
     Note: after gather every processor only knows its own data and that of the
     processors below it. Only the 'master' of the communication schedule holds
-    a fully filled List. Use scatter to distribute the data.
+    a fully filled List. Use broadcast to distribute the data.
 
 \*---------------------------------------------------------------------------*/
 
+#include "contiguous.H"
 #include "IPstream.H"
 #include "OPstream.H"
-#include "contiguous.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -48,13 +48,13 @@ void Foam::Pstream::gatherList
     const UPstream::commsStructList& comms,
     UList<T>& values,
     const int tag,
-    const label comm
+    const label communicator
 )
 {
-    if (!comms.empty() && UPstream::is_parallel(comm))
+    if (!comms.empty() && UPstream::is_parallel(communicator))
     {
-        const label myProci = UPstream::myProcNo(comm);
-        const label numProc = UPstream::nProcs(comm);
+        const label myProci = UPstream::myProcNo(communicator);
+        const label numProc = UPstream::nProcs(communicator);
 
         if (values.size() < numProc)
         {
@@ -67,29 +67,71 @@ void Foam::Pstream::gatherList
         // My communication order
         const auto& myComm = comms[myProci];
 
-        // Receive from my downstairs neighbours
-        for (const label belowID : myComm.below())
+
+        // Local buffer for send/recv of contiguous
+        [[maybe_unused]] DynamicList<T> buffer;
+
+        // Presize buffer
+        if constexpr (is_contiguous_v<T>)
         {
-            const labelList& belowLeaves = comms[belowID].allBelow();
+            label maxCount = 0;
+
+            for (const auto belowID : myComm.below())
+            {
+                auto count = comms[belowID].allBelow().size();
+                maxCount = Foam::max(maxCount, count);
+            }
+
+            if (myComm.above() >= 0)
+            {
+                auto count = myComm.allBelow().size();
+                maxCount = Foam::max(maxCount, count);
+            }
+
+            buffer.reserve(maxCount + 1);
+        }
+
+
+        // Receive from my downstairs neighbours
+        for (const auto belowID : myComm.below())
+        {
+            const auto& leaves = comms[belowID].allBelow();
 
             if constexpr (is_contiguous_v<T>)
             {
-                List<T> received(belowLeaves.size() + 1);
-
-                UIPstream::read
-                (
-                    UPstream::commsTypes::scheduled,
-                    belowID,
-                    received,
-                    tag,
-                    comm
-                );
-
-                values[belowID] = received[0];
-
-                forAll(belowLeaves, leafI)
+                if (leaves.empty())
                 {
-                    values[belowLeaves[leafI]] = received[leafI + 1];
+                    // Receive directly into destination
+                    UIPstream::read
+                    (
+                        UPstream::commsTypes::scheduled,
+                        belowID,
+                        values[belowID],
+                        tag,
+                        communicator
+                    );
+                }
+                else
+                {
+                    // Receive via intermediate buffer
+                    buffer.resize_nocopy(leaves.size() + 1);
+
+                    UIPstream::read
+                    (
+                        UPstream::commsTypes::scheduled,
+                        belowID,
+                        buffer,
+                        tag,
+                        communicator
+                    );
+
+                    label recvIdx(0);
+                    values[belowID] = buffer[recvIdx++];
+
+                    for (const auto leafID : leaves)
+                    {
+                        values[leafID] = buffer[recvIdx++];
+                    }
                 }
             }
             else
@@ -100,7 +142,7 @@ void Foam::Pstream::gatherList
                     belowID,
                     0,  // bufsize
                     tag,
-                    comm
+                    communicator
                 );
                 fromBelow >> values[belowID];
 
@@ -112,7 +154,7 @@ void Foam::Pstream::gatherList
                 }
 
                 // Receive from all other processors below belowID
-                for (const label leafID : belowLeaves)
+                for (const auto leafID : leaves)
                 {
                     fromBelow >> values[leafID];
 
@@ -131,7 +173,7 @@ void Foam::Pstream::gatherList
         // - all belowLeaves next
         if (myComm.above() >= 0)
         {
-            const labelList& belowLeaves = myComm.allBelow();
+            const auto& leaves = myComm.allBelow();
 
             if (debug & 2)
             {
@@ -142,22 +184,40 @@ void Foam::Pstream::gatherList
 
             if constexpr (is_contiguous_v<T>)
             {
-                List<T> sending(belowLeaves.size() + 1);
-                sending[0] = values[myProci];
-
-                forAll(belowLeaves, leafI)
+                if (leaves.empty())
                 {
-                    sending[leafI + 1] = values[belowLeaves[leafI]];
+                    // Send directly
+                    UOPstream::write
+                    (
+                        UPstream::commsTypes::scheduled,
+                        myComm.above(),
+                        values[myProci],
+                        tag,
+                        communicator
+                    );
                 }
+                else
+                {
+                    // Send via intermediate buffer
+                    buffer.resize_nocopy(leaves.size() + 1);
 
-                UOPstream::write
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    sending,
-                    tag,
-                    comm
-                );
+                    label sendIdx(0);
+                    buffer[sendIdx++] = values[myProci];
+
+                    for (const auto leafID : leaves)
+                    {
+                        buffer[sendIdx++] = values[leafID];
+                    }
+
+                    UOPstream::write
+                    (
+                        UPstream::commsTypes::scheduled,
+                        myComm.above(),
+                        buffer,
+                        tag,
+                        communicator
+                    );
+                }
             }
             else
             {
@@ -167,11 +227,11 @@ void Foam::Pstream::gatherList
                     myComm.above(),
                     0,  // bufsize
                     tag,
-                    comm
+                    communicator
                 );
                 toAbove << values[myProci];
 
-                for (const label leafID : belowLeaves)
+                for (const auto leafID : leaves)
                 {
                     if (debug & 2)
                     {
@@ -193,17 +253,17 @@ void Foam::Pstream::scatterList
     const UPstream::commsStructList& comms,
     UList<T>& values,
     const int tag,
-    const label comm
+    const label communicator
 )
 {
     // Apart from the additional size check, the only difference
     // between scatterList() and using broadcast(List<T>&) or a regular
     // scatter(List<T>&) is that processor-local data is skipped.
 
-    if (!comms.empty() && UPstream::is_parallel(comm))
+    if (!comms.empty() && UPstream::is_parallel(communicator))
     {
-        const label myProci = UPstream::myProcNo(comm);
-        const label numProc = UPstream::nProcs(comm);
+        const label myProci = UPstream::myProcNo(communicator);
+        const label numProc = UPstream::nProcs(communicator);
 
         if (values.size() < numProc)
         {
@@ -216,27 +276,53 @@ void Foam::Pstream::scatterList
         // My communication order
         const auto& myComm = comms[myProci];
 
+
+        // Local buffer for send/recv of contiguous
+        [[maybe_unused]] DynamicList<T> buffer;
+
+        // Presize buffer
+        if constexpr (is_contiguous_v<T>)
+        {
+            label maxCount = 0;
+
+            if (myComm.above() >= 0)
+            {
+                auto count = myComm.allNotBelow().size();
+                maxCount = Foam::max(maxCount, count);
+            }
+
+            for (const auto belowID : myComm.below())
+            {
+                auto count = comms[belowID].allNotBelow().size();
+                maxCount = Foam::max(maxCount, count);
+            }
+
+            buffer.reserve(maxCount);
+        }
+
+
         // Receive from up
         if (myComm.above() >= 0)
         {
-            const labelList& notBelowLeaves = myComm.allNotBelow();
+            const auto& leaves = myComm.allNotBelow();
 
             if constexpr (is_contiguous_v<T>)
             {
-                List<T> received(notBelowLeaves.size());
+                buffer.resize_nocopy(leaves.size());
 
                 UIPstream::read
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
-                    received,
+                    buffer,
                     tag,
-                    comm
+                    communicator
                 );
 
-                forAll(notBelowLeaves, leafI)
+                label recvIdx(0);
+                for (const auto leafID : leaves)
                 {
-                    values[notBelowLeaves[leafI]] = received[leafI];
+                    values[leafID] = buffer[recvIdx++];
                 }
             }
             else
@@ -247,10 +333,10 @@ void Foam::Pstream::scatterList
                     myComm.above(),
                     0,  // bufsize
                     tag,
-                    comm
+                    communicator
                 );
 
-                for (const label leafID : notBelowLeaves)
+                for (const auto leafID : leaves)
                 {
                     fromAbove >> values[leafID];
 
@@ -267,25 +353,26 @@ void Foam::Pstream::scatterList
         // Send to my downstairs neighbours
         forAllReverse(myComm.below(), belowI)
         {
-            const label belowID = myComm.below()[belowI];
-            const labelList& notBelowLeaves = comms[belowID].allNotBelow();
+            const auto belowID = myComm.below()[belowI];
+            const auto& leaves = comms[belowID].allNotBelow();
 
             if constexpr (is_contiguous_v<T>)
             {
-                List<T> sending(notBelowLeaves.size());
+                buffer.resize_nocopy(leaves.size());
 
-                forAll(notBelowLeaves, leafI)
+                label sendIdx(0);
+                for (const auto leafID : leaves)
                 {
-                    sending[leafI] = values[notBelowLeaves[leafI]];
+                    buffer[sendIdx++] = values[leafID];
                 }
 
                 UOPstream::write
                 (
                     UPstream::commsTypes::scheduled,
                     belowID,
-                    sending,
+                    buffer,
                     tag,
-                    comm
+                    communicator
                 );
             }
             else
@@ -296,11 +383,11 @@ void Foam::Pstream::scatterList
                     belowID,
                     0,  // bufsize
                     tag,
-                    comm
+                    communicator
                 );
 
                 // Send data destined for all other processors below belowID
-                for (const label leafID : notBelowLeaves)
+                for (const auto leafID : leaves)
                 {
                     toBelow << values[leafID];
 

@@ -2110,21 +2110,33 @@ void Foam::argList::parse
             Info<< " (" << UPstream::nProcs() << " ranks, "
                 << UPstream::numNodes() << " nodes)" << nl;
 
-            Info<< "    floatTransfer      : "
-                << Switch::name(UPstream::floatTransfer) << nl
-                << "    maxCommsSize       : "
-                << UPstream::maxCommsSize << nl
-                << "    nProcsSimpleSum    : "
-                << UPstream::nProcsSimpleSum << nl
-                << "    nonBlockingExchange: "
-                << UPstream::nProcsNonblockingExchange
-                << " (tuning: " << UPstream::tuning_NBX_ << ')' << nl
-                << "    exchange algorithm : "
-                << PstreamBuffers::algorithm << nl
-                << "    commsType          : "
-                << UPstream::commsTypeNames[UPstream::defaultCommsType] << nl
-                << "    polling iterations : "
-                << UPstream::nPollProcInterfaces << nl;
+            if (UPstream::floatTransfer)
+            {
+                Info<< "    floatTransfer      : enabled" << nl;
+            }
+            if (UPstream::maxCommsSize)
+            {
+                Info<< "    maxCommsSize       : "
+                    << UPstream::maxCommsSize << nl;
+            }
+            if (UPstream::nProcsSimpleSum > 2)
+            {
+                Info<< "    nProcsSimpleSum    : "
+                    << UPstream::nProcsSimpleSum << nl;
+            }
+            {
+                const auto& commsType =
+                    UPstream::commsTypeNames[UPstream::defaultCommsType];
+
+                Info<< "    nonBlockingExchange: "
+                    << UPstream::nProcsNonblockingExchange
+                    << " (tuning: " << UPstream::tuning_NBX_ << ')' << nl
+                    << "    exchange algorithm : "
+                    << PstreamBuffers::algorithm << nl
+                    << "    commsType          : " << commsType << nl
+                    << "    polling iterations : "
+                    << UPstream::nPollProcInterfaces << nl;
+            }
 
             if (UPstream::allWorlds().size() > 1)
             {
