@@ -1606,6 +1606,141 @@ Foam::Ostream& Foam::operator<<
 }
 
 
+// * * * * * * * * * * * * * Expression Templates  * * * * * * * * * * * * * //
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<typename E>
+Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
+(
+    const IOobject& io,
+    const Mesh& mesh,
+    const Expression::GeometricFieldExpression
+    <
+        E,
+        typename E::wrapType,
+        typename E::value_type
+    >& expr
+)
+:
+    Internal(io, mesh, expr.dimensions(), false),
+    timeIndex_(this->time().timeIndex()),
+    boundaryField_(mesh.boundary(), *this, PatchField<Type>::calculatedType())
+{
+    DebugInFunction
+        << "Creating from expression " << nl << this->info() << endl;
+
+    bool hasRead = readIfPresent();
+    if (!hasRead)
+    {
+        expr.evaluate(*this);
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<typename E>
+Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
+(
+    const word& name,
+    const Mesh& mesh,
+    const Expression::GeometricFieldExpression
+    <
+        E,
+        typename E::wrapType,
+        typename E::value_type
+    >& expr
+)
+:
+    Internal
+    (
+        IOobject
+        (
+            name,
+            mesh.time().timeName(),
+            mesh.thisDb()
+        ),
+        mesh,
+        expr.dimensions(),
+        false
+    ),
+    timeIndex_(this->time().timeIndex()),
+    boundaryField_(mesh.boundary(), *this, PatchField<Type>::calculatedType())
+{
+    DebugInFunction
+        << "Creating from expression " << nl << this->info() << endl;
+
+    expr.evaluate(*this);
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::Expression::GeometricFieldConstRefWrap
+<
+    Foam::GeometricField<Type, PatchField, GeoMesh>
+>
+Foam::GeometricField<Type, PatchField, GeoMesh>::expr() const
+{
+    return Expression::GeometricFieldConstRefWrap<this_type>(*this);
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<typename E>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
+(
+    const Expression::GeometricFieldExpression
+    <
+        E,
+        typename E::wrapType,
+        typename E::value_type
+    >& expr
+)
+{
+    Expression::GeometricFieldRefWrap<this_type>(*this, expr);
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<typename E>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
+(
+    const Expression::GeometricFieldExpression
+    <
+        E,
+        typename E::wrapType,
+        typename E::value_type
+    >& expr
+)
+{
+    // Do not check assignable. TBD: merge into expr.evaluate helper.
+    auto& fld = *this;
+
+    Expression::ListRefWrap<Type> wfld
+    (
+        fld.internalFieldRef(),
+        expr.internalField()
+    );
+
+    // Do boundary field
+    auto& bfld = fld.boundaryFieldRef();
+    const label n = bfld.size();
+    for (label i = 0; i < n; ++i)
+    {
+        auto& pfld = bfld[i];
+
+        const auto* vp = isA<List<Type>>(pfld);
+        if (vp)
+        {
+            // Get patch expression
+            const auto patchExpr = expr.patchField(i);
+
+            patchExpr.evaluate(const_cast<List<Type>&>(*vp));
+        }
+    }
+    fld.correctLocalBoundaryConditions();
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #undef checkField

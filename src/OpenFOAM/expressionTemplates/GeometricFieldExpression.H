@@ -1,0 +1,1234 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2024,2025 M. Janssens
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Namespace
+    Foam::Expression
+
+Description
+    Expression templates for GeometricFields
+
+SourceFiles
+    GeometricFieldExpression.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef Foam_GeometricFieldExpression_H
+#define Foam_GeometricFieldExpression_H
+
+#include "ListExpression.H"
+#include "fixedValuePointPatchField.H"  // no assignable yet. tbd.
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace Expression
+{
+
+/*---------------------------------------------------------------------------*\
+                   Namespace Expression Declarations
+\*---------------------------------------------------------------------------*/
+
+
+// Expression of GeometricField
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+template<typename E, typename WrapType, typename Type>
+class GeometricFieldExpression
+{
+public:
+    static constexpr bool is_leaf = false;
+
+    Type operator[](const label i) const
+    {
+        // Delegation to the actual expression type. This avoids dynamic
+        // polymorphism (a.k.a. virtual functions in C++)
+        return static_cast<E const&>(*this)[i];
+    }
+    label size() const { return static_cast<const E&>(*this).size(); }
+
+    const dimensionSet& dimensions() const
+    {
+        return static_cast<const E&>(*this).dimensions();
+    }
+
+    orientedType oriented() const
+    {
+        return static_cast<const E&>(*this).oriented();
+    }
+
+    WrapType internalField() const
+    {
+        return static_cast<const E&>(*this).internalField();
+    }
+
+    WrapType internalField()
+    {
+        return static_cast<E&>(*this).internalField();
+    }
+
+    WrapType patchField(const label i)
+    {
+        return static_cast<E&>(*this).patchField(i);
+    }
+
+    WrapType patchField(const label i) const
+    {
+        return static_cast<const E&>(*this).patchField(i);
+    }
+
+    //- Helper to evaluate a GeometricField
+    template<class GeoField>
+    GeoField& evaluate(GeoField& fld) const
+    {
+        // TBd. Force checking upon evaluation. Needs whole chain to be
+        // evaluated.
+        //fld.dimensions() = this->dimensions();
+        //fld.oriented() = this->oriented();
+
+        //if (fld.size() != this->size())
+        //{
+        //    FatalErrorInFunction<< "field:" << fld.size()
+        //        << " info:" << fld.info()
+        //        << " expression:" << this->size()
+        //        << exit(FatalError);
+        //}
+        assert(fld.size() == this->size());
+
+        ListRefWrap<Type> wfld(fld.internalFieldRef(), internalField());
+        //auto& vals = fld.ref();
+        //for (label i = 0; i < this->size(); ++i)
+        //{
+        //    vals[i] = operator[](i);
+        //}
+
+        // Do boundary field
+        auto& bfld = fld.boundaryFieldRef();
+        const label n = bfld.size();
+        for (label i = 0; i < n; ++i)
+        {
+            auto& pfld = bfld[i];
+
+            // Get patch expression
+            const auto patchExpr = this->patchField(i);
+
+            if constexpr
+            (
+                std::is_same_v<pointMesh, typename GeoField::Mesh>
+            )
+            {
+                if (pfld.assignable())
+                {
+                    const auto* vp = isA<Field<Type>>(pfld);
+                    if (vp)
+                    {
+                        patchExpr.evaluate(const_cast<Field<Type>&>(*vp));
+                    }
+                }
+            }
+            else
+            {
+                if (pfld.assignable())
+                {
+                    patchExpr.evaluate(pfld);
+                }
+                //else
+                //{
+                //    Pout<< "** skipping patch " << i << endl;
+                //}
+            }
+        }
+        fld.correctLocalBoundaryConditions();
+        return fld;
+    }
+};
+
+
+template<class GeoField>
+class GeometricFieldRefWrap
+:
+    public GeometricFieldExpression
+    <
+        GeometricFieldRefWrap<GeoField>,
+        ListRefWrap<typename GeoField::value_type>,
+        typename GeoField::value_type
+    >
+{
+public:
+
+    static constexpr bool is_leaf = false;  //true;
+
+    //- The GeometricField type
+    typedef GeoField this_type;
+
+    //- Type to return for internal field
+    typedef typename GeoField::value_type value_type;
+
+    //- Type to return for patchField
+    typedef ListRefWrap<value_type> wrapType;
+
+
+private:
+
+    this_type& elems_;
+
+
+public:
+
+    //- Copy construct
+    GeometricFieldRefWrap(this_type& init)
+    :
+        elems_(init)
+    {}
+
+    //- Move construct
+    GeometricFieldRefWrap(this_type&& elems)
+    :
+        elems_(elems)
+    {}
+
+    // Construct from ListExpression, forcing its evaluation.
+    template<typename E>
+    GeometricFieldRefWrap
+    (
+        this_type& elems,
+        const GeometricFieldExpression
+        <
+            E,
+            typename E::wrapType,
+            typename E::value_type
+        >& expr
+    )
+    :
+        elems_(elems)
+    {
+        expr.evaluate(elems_);
+    }
+
+    //- Assignment
+    template<typename E>
+    void operator=
+    (
+        const GeometricFieldExpression
+        <
+            E,
+            typename E::wrapType,
+            typename E::value_type
+        >& expr
+    )
+    {
+        expr.evaluate(elems_);
+    }
+
+    //- Evaluate and return as GeoField. Rename to evaluate to make it clear
+    //- it takes time? Or leave as indexing for convenience?
+    template<typename E>
+    this_type& evaluate
+    (
+        const GeometricFieldExpression
+        <
+            E,
+            typename E::wrapType,
+            typename E::value_type
+        >& expr
+    )
+    {
+        return expr.evaluate(elems_);
+    }
+
+    value_type operator[](const label i) const
+    {
+        return elems_[i];
+    }
+
+    value_type& operator[](const label  i)
+    {
+        return elems_[i];
+    }
+
+    label size() const
+    {
+        return elems_.size();
+    }
+
+    const dimensionSet& dimensions() const
+    {
+        return elems_.dimensions();
+    }
+
+    orientedType oriented() const
+    {
+        return elems_.oriented();
+    }
+
+    wrapType internalField()
+    {
+        auto& fld = elems_.internalFieldRef();
+        return wrapType(fld.size(), fld);
+    }
+
+    wrapType internalField() const
+    {
+        auto& fld = elems_.internalField();
+        return wrapType(fld.size(), fld);
+    }
+
+    wrapType patchField(const label i)
+    {
+        auto& fld = elems_.boundaryFieldRef()[i];
+        if constexpr
+        (
+            std::is_same_v<pointMesh, typename GeoField::Mesh>
+        )
+        {
+            const auto* vp = isA<Field<value_type>>(fld);
+            if (vp)
+            {
+                auto& v = *vp;
+                return wrapType(v.size(), const_cast<Field<value_type>&>(v));
+            }
+            else
+            {
+                return wrapType(0, List<value_type>::null());
+            }
+        }
+        else
+        {
+            return wrapType(fld.size(), fld);
+        }
+    }
+
+    wrapType patchField(const label i) const
+    {
+        const auto& fld = elems_.boundaryField()[i];
+        if constexpr
+        (
+            std::is_same_v<pointMesh, typename GeoField::Mesh>
+        )
+        {
+            const auto* vp = isA<Field<value_type>>(fld);
+            if (vp)
+            {
+                return wrapType(vp->size(), *vp);
+            }
+            else
+            {
+                return wrapType(0, List<value_type>::null());
+            }
+        }
+        else
+        {
+            return wrapType(fld.size(), fld);
+        }
+    }
+
+    //wrapType patchField(const label i) const
+    //{
+    //    //Pout<< "    GeometricFieldRefWrap : for field:" << elems_.name()
+    //    //    << " asking for const pf:" << i
+    //    //    << " of size:" << elems_.boundaryField()[i].size()
+    //    //    << endl;
+    //
+    //    auto& fld = elems_.boundaryField()[i];
+    //    return wrapType(fld.size(), fld);
+    //}
+};
+
+
+template<class GeoField>
+class GeometricFieldConstRefWrap
+:
+    public GeometricFieldExpression
+    <
+        GeometricFieldConstRefWrap<GeoField>,
+        ListConstRefWrap<typename GeoField::value_type>,
+        typename GeoField::value_type
+    >
+{
+public:
+
+    static constexpr bool is_leaf = false;  //true;
+
+    //- The GeometricField type
+    typedef GeoField this_type;
+
+    //- Type to return for internal field
+    typedef typename GeoField::value_type value_type;
+
+    //- Type to return for patchField
+    typedef ListConstRefWrap<value_type> wrapType;
+
+
+private:
+
+    const this_type& elems_;
+
+
+public:
+
+    // Construct from components
+    GeometricFieldConstRefWrap(const this_type& init)
+    :
+        elems_(init)
+    {}
+
+    // return the underlying data
+    const auto& data() const
+    { 
+        return elems_; 
+    }
+
+    value_type operator[](const label i) const
+    {
+        return elems_[i];
+    }
+
+    label size() const
+    {
+        return elems_.size();
+    }
+
+    const dimensionSet& dimensions() const
+    {
+        return elems_.dimensions();
+    }
+
+    orientedType oriented() const
+    {
+        return elems_.oriented();
+    }
+
+    wrapType internalField() const
+    {
+        return elems_.internalField();
+    }
+
+    wrapType patchField(const label i) const
+    {
+        //return elems_.boundaryField()[i];
+        const auto& fld = elems_.boundaryField()[i];
+        if constexpr
+        (
+            std::is_same_v<pointMesh, typename GeoField::Mesh>
+        )
+        {
+            const auto* vp = isA<Field<value_type>>(fld);
+            if (vp)
+            {
+                return wrapType(*vp);
+            }
+            else
+            {
+                return wrapType(List<value_type>::null());
+            }
+        }
+        else
+        {
+            return wrapType(fld);
+        }
+
+    }
+};
+
+
+// Expressions on GeometricFields
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// Do '+' ourselves - just to show. Others done with macros below.
+template<typename E1, typename E2>
+class GeometricFieldAdd
+:
+    public GeometricFieldExpression
+    <
+        GeometricFieldAdd<E1, E2>,
+        List_add
+        <
+            typename E1::wrapType,
+            typename E2::wrapType
+        >,
+        typename E1::value_type
+    >
+{
+    // cref if leaf, copy otherwise
+    typename std::conditional<E1::is_leaf, const E1&, const E1>::type u_;
+    typename std::conditional<E2::is_leaf, const E2&, const E2>::type v_;
+
+public:
+    static constexpr bool is_leaf = false;
+
+    //- Type to return for internal field
+    typedef typename E1::value_type value_type;
+
+    //- Type to return for patchField
+    typedef List_add
+    <
+        typename E1::wrapType,
+        typename E2::wrapType
+    > wrapType;
+
+    GeometricFieldAdd(const E1& u, const E2& v)
+    :
+     u_(u), v_(v)
+    {
+        if (u.size() != v.size())
+        {
+            FatalErrorInFunction<< "u:" << u.size()
+                //<< " E1:" << E1::typename
+                << " v:" << v.size()
+                //<< " E2:" << E2::typename
+                << exit(FatalError);
+        }
+        assert(u.size() == v.size());
+        static_assert
+        (
+            std::is_same_v
+            <
+                typename E1::value_type,
+                typename E2::value_type
+            > == true
+        );
+
+        //u_.dimensions() = v_.dimensions();
+        u_.oriented() += v_.oriented();
+    }
+    decltype(auto) operator[](const label i) const
+    {
+        return u_[i] + v_[i];
+    }
+    label size() const { return u_.size(); }
+
+    const dimensionSet& dimensions() const {return u_.dimensions(); }
+
+    orientedType oriented() const {return u_.oriented(); }
+
+    wrapType internalField() const
+    {
+        return wrapType(u_.internalField(), v_.internalField());
+    }
+
+    wrapType patchField(const label i) const
+    {
+        return wrapType(u_.patchField(i), v_.patchField(i));
+    }
+};
+template<typename E1, typename E2>
+GeometricFieldAdd<E1, E2>
+operator+
+(
+    GeometricFieldExpression
+    <
+        E1,
+        typename E1::wrapType,
+        typename E1::value_type
+    > const& u,
+    GeometricFieldExpression
+    <
+        E2,
+        typename E2::wrapType,
+        typename E2::value_type
+    > const& v
+)
+{
+    return GeometricFieldAdd<E1, E2>
+    (
+        static_cast<const E1&>(u),
+        static_cast<const E2&>(v)
+    );
+}
+
+
+#define EXPRESSION_GF_FUNCTION1(Func, BaseFunc, WrapType, OpFunc)              \
+template<typename E1>                                                          \
+class OpFunc                                                                   \
+:                                                                              \
+    public GeometricFieldExpression                                            \
+    <                                                                          \
+        OpFunc<E1>,                                                            \
+        WrapType<typename E1::wrapType>,                                       \
+        typename E1::value_type                                                \
+    >                                                                          \
+{                                                                              \
+    /* cref if leaf, copy otherwise */                                         \
+    typename std::conditional<E1::is_leaf, const E1&, const E1>::type u_;      \
+                                                                               \
+public:                                                                        \
+    static constexpr bool is_leaf = false;                                     \
+                                                                               \
+    /* Type to return for internal field */                                    \
+    typedef typename E1::value_type value_type;                                \
+                                                                               \
+    /* Type to return for patchField */                                        \
+    typedef WrapType<typename E1::wrapType> wrapType;                          \
+                                                                               \
+    OpFunc(const E1& u)                                                        \
+    :                                                                          \
+     u_(u)                                                                     \
+    {}                                                                         \
+    decltype(auto) operator[](const label i) const                             \
+    {                                                                          \
+        return BaseFunc(u_[i]);                                                \
+    }                                                                          \
+    label size() const { return u_.size(); }                                   \
+                                                                               \
+    const dimensionSet& dimensions() const {return u_.dimensions(); }          \
+                                                                               \
+    orientedType oriented() const {return u_.oriented(); }                     \
+                                                                               \
+    wrapType internalField() const                                             \
+    {                                                                          \
+        return wrapType(u_.internalField());                                   \
+    }                                                                          \
+                                                                               \
+    wrapType patchField(const label i) const                                   \
+    {                                                                          \
+        return wrapType(u_.patchField(i));                                     \
+    }                                                                          \
+};                                                                             \
+template<typename E1>                                                          \
+OpFunc<E1> Func                                                                \
+(                                                                              \
+    GeometricFieldExpression                                                   \
+    <                                                                          \
+        E1,                                                                    \
+        typename E1::wrapType,                                                 \
+        typename E1::value_type                                                \
+    > const& u                                                                 \
+)                                                                              \
+{                                                                              \
+    return OpFunc<E1>(static_cast<const E1&>(u));                              \
+}
+
+
+// Do negation separately - problem with macro expansion. Tbd.
+template<typename E1>
+class GeometricFieldNegate
+:
+    public GeometricFieldExpression
+    <
+        GeometricFieldNegate<E1>,
+        List_negate<typename E1::wrapType>,
+        typename E1::value_type
+    >
+{
+    /* cref if leaf, copy otherwise */ 
+    typename std::conditional<E1::is_leaf, const E1&, const E1>::type u_;
+
+public:
+    static constexpr bool is_leaf = false;
+
+    /* Type to return for internal field */
+    typedef typename E1::value_type value_type;
+
+    /* Type to return for patchField */
+    typedef List_negate<typename E1::wrapType> wrapType;
+
+    GeometricFieldNegate(const E1& u)
+    :
+        u_(u)
+    {}
+    decltype(auto) operator[](const label i) const
+    {
+        return -u_[i];
+    }
+    label size() const { return u_.size(); }
+
+    const dimensionSet& dimensions() const {return u_.dimensions(); }
+
+    orientedType oriented() const {return u_.oriented(); }
+
+    wrapType internalField() const
+    {
+        return wrapType(u_.internalField());
+    }
+
+    wrapType patchField(const label i) const
+    {
+        return wrapType(u_.patchField(i));
+    }
+};
+template<typename E1>
+GeometricFieldNegate<E1> operator-
+(
+    GeometricFieldExpression
+    <
+        E1,
+        typename E1::wrapType,
+        typename E1::value_type
+    > const& u
+)
+{
+    return GeometricFieldNegate<E1>(static_cast<const E1&>(u));
+}
+
+
+#define EXPRESSION_GF_OPERATOR(Op, WrapType, OpFunc)                           \
+template<typename E1, typename E2>                                             \
+class OpFunc                                                                   \
+:                                                                              \
+    public GeometricFieldExpression                                            \
+    <                                                                          \
+        OpFunc<E1, E2>,                                                        \
+        WrapType                                                               \
+        <                                                                      \
+            typename E1::wrapType,                                             \
+            typename E2::wrapType                                              \
+        >,                                                                     \
+        typename E1::value_type                                                \
+    >                                                                          \
+{                                                                              \
+    /* cref if leaf, copy otherwise */                                         \
+    typename std::conditional<E1::is_leaf, const E1&, const E1>::type u_;      \
+    typename std::conditional<E2::is_leaf, const E2&, const E2>::type v_;      \
+                                                                               \
+public:                                                                        \
+    static constexpr bool is_leaf = false;                                     \
+                                                                               \
+    /* Type to return for internal field */                                    \
+    typedef typename E1::value_type value_type;                                \
+                                                                               \
+    /* Type to return for patchField */                                        \
+    typedef WrapType                                                           \
+    <                                                                          \
+        typename E1::wrapType,                                                 \
+        typename E2::wrapType                                                  \
+    > wrapType;                                                                \
+                                                                               \
+    OpFunc(const E1& u, const E2& v)                                           \
+    :                                                                          \
+     u_(u), v_(v)                                                              \
+    {                                                                          \
+        if (u.size() != v.size())                                              \
+        {                                                                      \
+            FatalErrorInFunction<< "u:" << u.size()                            \
+                << " v:" << v.size()                                           \
+                << exit(FatalError);                                           \
+        }                                                                      \
+        static_assert                                                          \
+        (                                                                      \
+            std::is_same_v                                                     \
+            <                                                                  \
+                typename E1::value_type,                                       \
+                typename E2::value_type                                        \
+            > == true                                                          \
+        );                                                                     \
+        assert(u.size() == v.size());                                          \
+    }                                                                          \
+    decltype(auto) operator[](const label i) const                             \
+    {                                                                          \
+        return u_[i] Op v_[i];                                                 \
+    }                                                                          \
+    label size() const { return u_.size(); }                                   \
+                                                                               \
+    const dimensionSet& dimensions() const {return u_.dimensions(); }          \
+                                                                               \
+    orientedType oriented() const {return u_.oriented(); }                     \
+                                                                               \
+    wrapType internalField() const                                             \
+    {                                                                          \
+        return wrapType(u_.internalField(), v_.internalField());               \
+    }                                                                          \
+                                                                               \
+    wrapType patchField(const label i) const                                   \
+    {                                                                          \
+        return wrapType(u_.patchField(i), v_.patchField(i));                   \
+    }                                                                          \
+};                                                                             \
+template<typename E1, typename E2>                                             \
+OpFunc<E1, E2>                                                                 \
+operator Op                                                                    \
+(                                                                              \
+    GeometricFieldExpression                                                   \
+    <                                                                          \
+        E1,                                                                    \
+        typename E1::wrapType,                                                 \
+        typename E1::value_type                                                \
+    > const& u,                                                                \
+    GeometricFieldExpression                                                   \
+    <                                                                          \
+        E2,                                                                    \
+        typename E2::wrapType,                                                 \
+        typename E2::value_type                                                \
+    > const& v                                                                 \
+)                                                                              \
+{                                                                              \
+    return OpFunc<E1, E2>                                                      \
+    (                                                                          \
+        static_cast<const E1&>(u),                                             \
+        static_cast<const E2&>(v)                                              \
+    );                                                                         \
+}
+
+
+#define EXPRESSION_GF_FUNCTION2(Func, BaseFunc, WrapType, OpFunc)              \
+template<typename E1, typename E2>                                             \
+class OpFunc                                                                   \
+:                                                                              \
+    public GeometricFieldExpression                                            \
+    <                                                                          \
+        OpFunc<E1, E2>,                                                        \
+        WrapType                                                               \
+        <                                                                      \
+            typename E1::wrapType,                                             \
+            typename E2::wrapType                                              \
+        >,                                                                     \
+        typename E1::value_type                                                \
+    >                                                                          \
+{                                                                              \
+    /* cref if leaf, copy otherwise */                                         \
+    typename std::conditional<E1::is_leaf, const E1&, const E1>::type u_;      \
+    typename std::conditional<E2::is_leaf, const E2&, const E2>::type v_;      \
+                                                                               \
+public:                                                                        \
+    static constexpr bool is_leaf = false;                                     \
+                                                                               \
+    /* Type to return for internal field */                                    \
+    typedef typename E1::value_type value_type;                                \
+                                                                               \
+    /* Type to return for patchField */                                        \
+    typedef WrapType                                                           \
+    <                                                                          \
+        typename E1::wrapType,                                                 \
+        typename E2::wrapType                                                  \
+    > wrapType;                                                                \
+                                                                               \
+    OpFunc(const E1& u, const E2& v)                                           \
+    :                                                                          \
+     u_(u), v_(v)                                                              \
+    {                                                                          \
+        static_assert                                                          \
+        (                                                                      \
+            std::is_same_v                                                     \
+            <                                                                  \
+                typename E1::value_type,                                       \
+                typename E2::value_type                                        \
+            > == true                                                          \
+        );                                                                     \
+    }                                                                          \
+    decltype(auto) operator[](const label i) const                             \
+    {                                                                          \
+        return BaseFunc(u_[i], v_[i]);                                         \
+    }                                                                          \
+    label size() const {return u_.size(); }                                    \
+                                                                               \
+    const dimensionSet& dimensions() const {return u_.dimensions(); }          \
+                                                                               \
+    orientedType oriented() const {return u_.oriented(); }                     \
+                                                                               \
+    wrapType internalField() const                                             \
+    {                                                                          \
+        return wrapType(u_.internalField(), v_.internalField());               \
+    }                                                                          \
+                                                                               \
+    wrapType patchField(const label i) const                                   \
+    {                                                                          \
+        return wrapType(u_.patchField(i), v_.patchField(i));                   \
+    }                                                                          \
+};                                                                             \
+template<typename E1, typename E2>                                             \
+OpFunc<E1, E2> Func                                                            \
+(                                                                              \
+    GeometricFieldExpression                                                   \
+    <                                                                          \
+        E1,                                                                    \
+        typename E1::wrapType,                                                 \
+        typename E1::value_type                                                \
+    > const& u,                                                                \
+    GeometricFieldExpression                                                   \
+    <                                                                          \
+        E2,                                                                    \
+        typename E2::wrapType,                                                 \
+        typename E2::value_type                                                \
+    > const& v                                                                 \
+)                                                                              \
+{                                                                              \
+    return OpFunc<E1, E2>                                                      \
+    (                                                                          \
+        static_cast<const E1&>(u),                                             \
+        static_cast<const E2&>(v)                                              \
+    );                                                                         \
+}
+
+//- GeometricField expressions.
+
+// macro arguments:
+//  - 'sin' : name of new function (in Expression namespace)
+//  - '::sin' : per-element function to call
+//  - 'List_sin' : helper class to handle patchFields
+//  - 'GF_sin' : generated expression helper class
+EXPRESSION_GF_FUNCTION1(sin, ::sin, List_sin, GF_sin)
+EXPRESSION_GF_FUNCTION1(cos, ::cos, List_cos, GF_cos)
+EXPRESSION_GF_FUNCTION1(tan, ::tan, List_tan, GF_tan)
+EXPRESSION_GF_FUNCTION1(sinh, ::sinh, List_sinh, GF_sinh)
+EXPRESSION_GF_FUNCTION1(cosh, ::cosh, List_cosh, GF_cosh)
+EXPRESSION_GF_FUNCTION1(tanh, ::tanh, List_tanh, GF_tanh)
+EXPRESSION_GF_FUNCTION1(sqr, Foam::sqr, List_sqr, GF_sqr)
+EXPRESSION_GF_FUNCTION1(sqrt, Foam::sqrt, List_sqrt, GF_sqrt)
+EXPRESSION_GF_FUNCTION1(magSqr, Foam::magSqr, List_magSqr, GF_magSqr)
+EXPRESSION_GF_FUNCTION1(symm, Foam::symm, List_symm, GF_symm)
+EXPRESSION_GF_FUNCTION1(pow2, Foam::pow2, List_pow2, GF_pow2)
+EXPRESSION_GF_FUNCTION1(pow3, Foam::pow3, List_pow3, GF_pow3)
+EXPRESSION_GF_FUNCTION1(pow4, Foam::pow4, List_pow4, GF_pow4)
+
+#undef EXPRESSION_GF_FUNCTION1
+
+EXPRESSION_GF_FUNCTION2(min, Foam::min, List_min, GF_min)
+EXPRESSION_GF_FUNCTION2(max, Foam::max, List_max, GF_max)
+
+#undef EXPRESSION_GF_FUNCTION2
+
+EXPRESSION_GF_OPERATOR(-, List_subtract, subtract)
+EXPRESSION_GF_OPERATOR(*, List_multiply, multiply)
+EXPRESSION_GF_OPERATOR(/, List_divide, divide)
+//EXPRESSION_GF_OPERATOR(+=, List_inplace_add, inplace_add)
+//EXPRESSION_GF_OPERATOR(-=, List_inplace_subtract, inplace_subtract)
+//EXPRESSION_GF_OPERATOR(*=, List_inplace_multiply, inplace_multiply)
+//EXPRESSION_GF_OPERATOR(/=, List_inplace_divide, inplace_divide)
+
+#undef EXPRESSION_GF_OPERATOR
+
+
+
+// Expressions on constants
+// ~~~~~~~~~~~~~~~~~~~~~~~~
+
+template<class GeoField>
+class geometricConstantFieldWrap
+:
+    public GeometricFieldExpression
+    <
+        geometricConstantFieldWrap<GeoField>,
+        constantListWrap<typename GeoField::value_type>,
+        typename GeoField::value_type
+    >
+{
+public:
+
+    static constexpr bool is_leaf = false;  //true;
+
+    //- Type to return for internal field
+    typedef typename GeoField::value_type value_type;
+
+    //- Type to return for patchField
+    typedef constantListWrap<value_type> wrapType;
+
+
+private:
+
+    const GeoField& elems_;
+
+    //const dimensionSet& dimensions_;
+
+    const value_type val_;
+
+public:
+
+    // Construct from field (sizes only) and value
+    geometricConstantFieldWrap(const GeoField& init, const value_type val)
+    :
+        elems_(init),
+        //dimensions_(init.dimensions()),
+        val_(val)
+    {}
+
+    // Construct from field (sizes only) and value, dimension
+    geometricConstantFieldWrap
+    (
+        const GeoField& init,
+        const dimensioned<value_type> val
+    )
+    :
+        elems_(init),
+        //dimensions_(val.dimensions()),
+        val_(val.value())
+    {}
+
+    value_type operator[](const label i) const
+    {
+        return val_;
+    }
+
+    label size() const
+    {
+        return elems_.size();
+    }
+
+    const dimensionSet& dimensions() const
+    {
+        return dimless; //dimensions_;
+    }
+
+    orientedType oriented() const
+    {
+        return elems_.oriented();
+    }
+
+    wrapType internalField() const
+    {
+        return wrapType(elems_.internalField().size(), val_);
+    }
+
+    wrapType patchField(const label i) const
+    {
+        return wrapType(elems_.boundaryField()[i].size(), val_);
+    }
+};
+
+
+//- Fully self-contained constant field wrapper. Not needed?
+//template<class GeoField>
+//class geometricConstantFieldWrap2
+//:
+//    public GeometricFieldExpression
+//    <
+//        geometricConstantFieldWrap2<GeoField>,
+//        constantListWrap<typename GeoField::value_type>,
+//        typename GeoField::value_type
+//    >
+//{
+//public:
+//
+//    static constexpr bool is_leaf = true;
+//
+//    //- Type to return for internal field
+//    typedef typename GeoField::value_type value_type;
+//
+//    //- Type to return for patchField
+//    typedef constantListWrap<value_type> wrapType;
+//
+//
+//private:
+//
+//    const value_type val_;
+//
+//    const label nInternal_;
+//
+//    labelList patchSizes_;
+//
+//    //const dimensionSet& dimensions_;
+//
+//public:
+//
+//    // Construct from field (sizes only) and value
+//    geometricConstantFieldWrap2(const GeoField& init, const value_type val)
+//    :
+//        val_(val),
+//        nInternal_(init.size()),
+//        patchSizes_(init.boundaryField().size())
+//        //dimensions_(init.dimensions()),
+//    {
+//        for (const auto& pfld : init.boundaryField())
+//        {
+//            patchSizes_[pfld.patch().index()] = pfld.size();
+//        }
+//    }
+//
+//    // Construct from field (sizes only) and value, dimension
+//    geometricConstantFieldWrap2
+//    (
+//        const GeoField& init,
+//        const dimensioned<value_type> val
+//    )
+//    :
+//        val_(val.value()),
+//        nInternal_(init.size()),
+//        patchSizes_(init.boundaryField().size())
+//        //dimensions_(val.dimensions()),
+//    {
+//        for (const auto& pfld : init.boundaryField())
+//        {
+//            patchSizes_[pfld.patch().index()] = pfld.size();
+//        }
+//    }
+//
+//    value_type operator[](const label i) const
+//    {
+//        return val_;
+//    }
+//
+//    label size() const
+//    {
+//        return nInternal_;
+//    }
+//
+//    const dimensionSet& dimensions() const
+//    {
+//        return dimless; //dimensions_;
+//    }
+//
+//    orientedType oriented() const
+//    {
+//        return orientedType();
+//    }
+//
+//    wrapType internalField() const
+//    {
+//        return wrapType(nInternal_, val_);
+//    }
+//
+//    wrapType patchField(const label i) const
+//    {
+//        return wrapType(patchSizes_[i], val_);
+//    }
+//};
+
+/*
+
+// Some fvm functions using expressions
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// Supply a multiplier, either 1 or -1
+template<class Expr, class Expr2>
+void Su
+(
+    fvMatrix<typename Expr::value_type>& m,
+    const Expr2& mult,
+    const Expr& expression
+)
+{
+    //- Wrap of List as an expression
+    typedef ListConstRefWrap<typename Expr::value_type> expr;
+    //- Evaluator of an expression
+    typedef ListRefWrap<typename Expr::value_type> evaluator;
+
+    // Wrap mesh volume
+    const expr V(m.psi().mesh().V());
+
+    // Add expression to source
+    auto& s = m.source();
+    evaluator(s, expr(s) + mult*V*expression);
+}
+
+
+// Always add
+template<class Expr>
+void Su
+(
+    fvMatrix<typename Expr::value_type>& m,
+    const Expr& expression
+)
+{
+    //- Wrap of List as an expression
+    typedef ListConstRefWrap<typename Expr::value_type> expr;
+    //- Evaluator of an expression
+    typedef ListRefWrap<typename Expr::value_type> evaluator;
+
+    // Wrap mesh volume
+    const expr V(m.psi().mesh().V());
+
+    // Add expression to source
+    auto& s = m.source();
+    evaluator(s, expr(s) + V*expression);
+}
+
+
+template<class Expr>
+void rhs
+(
+    fvMatrix<typename Expr::value_type>& m,
+    const Expr& expression
+)
+{
+    Su(m, expression);
+}
+
+
+template<class Expr, class Expr2>
+void Sp
+(
+    fvMatrix<typename Expr::value_type>& m,
+    const Expr2& mult,
+    const Expr& expression
+)
+{
+    //- Wrap of List as an expression
+    typedef ListConstRefWrap<typename Expr::value_type> expr;
+    //- Evaluator of an expression
+    typedef ListRefWrap<typename Expr::value_type> evaluator;
+
+    // Wrap mesh volume
+    const expr V(m.psi().mesh().V());
+
+    // Add expression onto diag
+    auto& d = m.diag();
+    evaluator(d, expr(d) - mult*V*expression);
+}
+
+
+template<class Expr, class Expr2>
+void SuSp
+(
+    fvMatrix<typename Expr::value_type>& m,
+    const Expr2& mult,
+    const Expr& expression
+)
+{
+    //- Wrap of constant as a list expression
+    typedef Expression::constantListWrap<scalar> constant;
+    //- Wrap of List as an expression
+    typedef ListConstRefWrap<typename Expr::value_type> expr;
+    //- Evaluator of an expression
+    typedef ListRefWrap<typename Expr::value_type> evaluator;
+
+    const constant constantZero(expression.size(), 0.0);
+
+    // Wrap mesh volume
+    const expr V(m.psi().mesh().V());
+
+    // Linearise expression
+    auto& diag = m.diag();
+    auto& source = m.source();
+
+    // diag() += domain*max(susp.field(), scalar(0));
+    evaluator
+    (
+        diag,
+        expr(diag) - mult*V*max(expression, constantZero)
+    );
+    // source() -= domain*min(susp.field(), scalar(0))*fld.primitiveField();
+    evaluator
+    (
+        source,
+        expr(source)
+      + (
+            mult
+           *V
+           *min(expression, constantZero)
+           *expr(m.psi().internalField())
+        )
+    );
+}
+*/
+
+} // End namespace Expression
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //
