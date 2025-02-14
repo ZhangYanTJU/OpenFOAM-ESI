@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,68 +31,74 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #undef  Pstream_CommonRoutines
-#define Pstream_CommonRoutines(Native)                                        \
+#define Pstream_CommonRoutines(Type)                                          \
                                                                               \
 void Foam::UPstream::mpiGather                                                \
 (                                                                             \
-    const Native* sendData,                                                   \
-    Native* recvData,                                                         \
+    const Type* sendData,                                                     \
+    Type* recvData,                                                           \
     int count,                                                                \
     const label comm                                                          \
 )                                                                             \
 {                                                                             \
-    std::memmove(recvData, sendData, count*sizeof(Native));                   \
+    if (sendData && recvData)                                                 \
+    {                                                                         \
+        std::memmove(recvData, sendData, count*sizeof(Type));                 \
+    }                                                                         \
 }                                                                             \
                                                                               \
                                                                               \
 void Foam::UPstream::mpiScatter                                               \
 (                                                                             \
-    const Native* sendData,                                                   \
-    Native* recvData,                                                         \
+    const Type* sendData,                                                     \
+    Type* recvData,                                                           \
     int count,                                                                \
     const label comm                                                          \
 )                                                                             \
 {                                                                             \
-    std::memmove(recvData, sendData, count*sizeof(Native));                   \
+    if (sendData && recvData)                                                 \
+    {                                                                         \
+        std::memmove(recvData, sendData, count*sizeof(Type));                 \
+    }                                                                         \
 }                                                                             \
                                                                               \
                                                                               \
 void Foam::UPstream::mpiAllGather                                             \
 (                                                                             \
-    Native* allData,                                                          \
+    Type* allData,                                                            \
     int count,                                                                \
     const label comm                                                          \
 )                                                                             \
 {}                                                                            \
                                                                               \
                                                                               \
-void Foam::UPstream::gather                                                   \
+void Foam::UPstream::mpiGatherv                                               \
 (                                                                             \
-    const Native* sendData,                                                   \
+    const Type* sendData,                                                     \
     int sendCount,                                                            \
                                                                               \
-    Native* recvData,                                                         \
+    Type* recvData,                                                           \
     const UList<int>& recvCounts,                                             \
     const UList<int>& recvOffsets,                                            \
     const label comm                                                          \
 )                                                                             \
 {                                                                             \
     /* recvCounts[0] may be invalid - use sendCount instead */                \
-    std::memmove(recvData, sendData, sendCount*sizeof(Native));               \
+    std::memmove(recvData, sendData, sendCount*sizeof(Type));                 \
 }                                                                             \
                                                                               \
-void Foam::UPstream::scatter                                                  \
+void Foam::UPstream::mpiScatterv                                              \
 (                                                                             \
-    const Native* sendData,                                                   \
+    const Type* sendData,                                                     \
     const UList<int>& sendCounts,                                             \
     const UList<int>& sendOffsets,                                            \
                                                                               \
-    Native* recvData,                                                         \
+    Type* recvData,                                                           \
     int recvCount,                                                            \
     const label comm                                                          \
 )                                                                             \
 {                                                                             \
-    std::memmove(recvData, sendData, recvCount*sizeof(Native));               \
+    std::memmove(recvData, sendData, recvCount*sizeof(Type));                 \
 }
 
 

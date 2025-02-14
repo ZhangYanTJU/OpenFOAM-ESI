@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -301,24 +301,38 @@ public:
         }
 
 
+private:
+
+    // Private implementations
+
+        //- Gather data, but keep individual values separate.
+        template<class T>
+        static void gatherList_tree_algorithm
+        (
+            //! [in,out]
+            UList<T>& values,
+            const int tag,
+            const label communicator
+        );
+
+        //- Inverse of gatherList_tree_algorithm
+        template<class T>
+        static void scatterList_tree_algorithm
+        (
+            //! [in,out]
+            UList<T>& values,
+            const int tag,
+            const label communicator
+        );
+
+
+public:
+
     // Gather/scatter keeping the individual processor data separate.
     // The values is a List of size UPstream::nProcs() where
     // values[UPstream::myProcNo()] is the data for the current processor.
 
         //- Gather data, but keep individual values separate.
-        //- Uses the specified communication schedule.
-        template<class T>
-        static void gatherList
-        (
-            const UPstream::commsStructList& comms,
-            //! [in,out]
-            UList<T>& values,
-            const int tag,
-            const label comm
-        );
-
-        //- Gather data, but keep individual values separate.
-        //- Uses linear/tree communication.
         template<class T>
         static void gatherList
         (
@@ -345,21 +359,10 @@ public:
     // Scatter
 
         //- Inverse of gatherList.
-        //- Uses the specified communication schedule.
         template<class T>
         static void scatterList
         (
-            const UPstream::commsStructList& comms,
-            UList<T>& values,
-            const int tag,
-            const label comm
-        );
-
-        //- Inverse of gatherList.
-        //- Uses linear/tree communication.
-        template<class T>
-        static void scatterList
-        (
+            //! [in,out]
             UList<T>& values,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm

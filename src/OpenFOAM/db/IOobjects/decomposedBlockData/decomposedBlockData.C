@@ -763,15 +763,15 @@ void Foam::decomposedBlockData::gather
         recvOffsets.setSize(nProcs);
         forAll(recvOffsets, proci)
         {
-            // Note: truncating long int to int since UPstream::gather limited
-            // to ints
+            // Note: truncating long int to int since
+            // UPstream::mpiGatherv is limited to ints
             recvOffsets[proci] =
                 int(reinterpret_cast<char*>(&datas[proci]) - data0Ptr);
         }
         recvSizes.setSize(nProcs, sizeof(label));
     }
 
-    UPstream::gather
+    UPstream::mpiGatherv
     (
         reinterpret_cast<const char*>(&data),
         sizeof(label),
@@ -824,11 +824,11 @@ void Foam::decomposedBlockData::gatherSlaveData
     }
     else if (fromProcs.contains(myProci))
     {
-        // Note: UPstream::gather limited to int
+        // Note: UPstream::mpiGatherv limited to int
         nSendBytes = int(data.size_bytes());
     }
 
-    UPstream::gather
+    UPstream::mpiGatherv
     (
         data.cdata(),
         nSendBytes,

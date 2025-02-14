@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,7 +101,7 @@ Pstream_CommonRoutines(int64_t, MPI_INT64_T);
 
 #undef  Pstream_CommonRoutines
 #define Pstream_CommonRoutines(Native, TaggedType)                            \
-void Foam::UPstream::allToAll                                                 \
+void Foam::UPstream::allToAllv                                                \
 (                                                                             \
     const Native* sendData,                                                   \
     const UList<int>& sendCounts,                                             \

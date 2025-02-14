@@ -43,28 +43,33 @@ Description
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T>
-void Foam::Pstream::gatherList
+void Foam::Pstream::gatherList_tree_algorithm
 (
-    const UPstream::commsStructList& comms,
     UList<T>& values,
     const int tag,
     const label communicator
 )
 {
-    if (!comms.empty() && UPstream::is_parallel(communicator))
+    if (FOAM_UNLIKELY(!UPstream::is_parallel(communicator)))
     {
-        const label myProci = UPstream::myProcNo(communicator);
-        const label numProc = UPstream::nProcs(communicator);
-
-        if (values.size() < numProc)
+        // Nothing to do
+        return;
+    }
+    else
+    {
+        if (FOAM_UNLIKELY(values.size() < UPstream::nProcs(communicator)))
         {
             FatalErrorInFunction
                 << "List of values:" << values.size()
-                << " < numProcs:" << numProc << nl
+                << " < numProcs:" << UPstream::nProcs(communicator) << nl
                 << Foam::abort(FatalError);
         }
 
-        // My communication order
+        const label myProci = UPstream::myProcNo(communicator);
+
+        // Communication order
+        const auto& comms = UPstream::whichCommunication(communicator);
+        // if (comms.empty()) return;  // extra safety?
         const auto& myComm = comms[myProci];
 
 
@@ -248,32 +253,37 @@ void Foam::Pstream::gatherList
 
 
 template<class T>
-void Foam::Pstream::scatterList
+void Foam::Pstream::scatterList_tree_algorithm
 (
-    const UPstream::commsStructList& comms,
     UList<T>& values,
     const int tag,
     const label communicator
 )
 {
-    // Apart from the additional size check, the only difference
-    // between scatterList() and using broadcast(List<T>&) or a regular
-    // scatter(List<T>&) is that processor-local data is skipped.
-
-    if (!comms.empty() && UPstream::is_parallel(communicator))
+    if (FOAM_UNLIKELY(!UPstream::is_parallel(communicator)))
     {
-        const label myProci = UPstream::myProcNo(communicator);
-        const label numProc = UPstream::nProcs(communicator);
+        // Nothing to do
+        return;
+    }
+    else
+    {
+        // Apart from the additional size check, the only difference
+        // between scatterList() and using broadcast(List<T>&) or a regular
+        // scatter(List<T>&) is that processor-local data is skipped.
 
-        if (values.size() < numProc)
+        if (FOAM_UNLIKELY(values.size() < UPstream::nProcs(communicator)))
         {
             FatalErrorInFunction
                 << "List of values:" << values.size()
-                << " < numProcs:" << numProc << nl
+                << " < numProcs:" << UPstream::nProcs(communicator) << nl
                 << Foam::abort(FatalError);
         }
 
-        // My communication order
+        const label myProci = UPstream::myProcNo(communicator);
+
+        // Communication order
+        const auto& comms = UPstream::whichCommunication(communicator);
+        // if (comms.empty()) return;  // extra safety?
         const auto& myComm = comms[myProci];
 
 
@@ -408,36 +418,69 @@ template<class T>
 void Foam::Pstream::gatherList
 (
     UList<T>& values,
-    const int tag,
-    const label comm
+    [[maybe_unused]] const int tag,
+    const label communicator
 )
 {
-    Pstream::gatherList
-    (
-        UPstream::whichCommunication(comm),
-        values,
-        tag,
-        comm
-    );
+    if (!UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else if constexpr (is_contiguous_v<T>)
+    {
+        if (FOAM_UNLIKELY(values.size() < UPstream::nProcs(communicator)))
+        {
+            FatalErrorInFunction
+                << "List of values:" << values.size()
+                << " < numProcs:" << UPstream::nProcs(communicator) << nl
+                << Foam::abort(FatalError);
+        }
+
+        // In-place gather for contiguous types
+        UPstream::mpiGather
+        (
+            nullptr,
+            values.data_bytes(),
+            sizeof(T),
+            communicator
+        );
+    }
+    else
+    {
+        Pstream::gatherList_tree_algorithm(values, tag, communicator);
+    }
 }
 
 
-// Unused - slate for removal? (MAY-2023)
 template<class T>
 void Foam::Pstream::scatterList
 (
     UList<T>& values,
-    const int tag,
-    const label comm
+    [[maybe_unused]] const int tag,
+    const label communicator
 )
 {
-    Pstream::scatterList
-    (
-        UPstream::whichCommunication(comm),
-        values,
-        tag,
-        comm
-    );
+    if (!UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else if constexpr (is_contiguous_v<T>)
+    {
+        // In-place scatter for contiguous types
+        UPstream::mpiScatter
+        (
+            nullptr,
+            values.data_bytes(),
+            sizeof(T),
+            communicator
+        );
+    }
+    else
+    {
+        Pstream::scatterList_tree_algorithm(values, tag, communicator);
+    }
 }
 
 
@@ -449,27 +492,27 @@ void Foam::Pstream::allGatherList
     const label comm
 )
 {
-    if (UPstream::is_parallel(comm))
+    if (!UPstream::is_parallel(comm))
     {
-        if constexpr (is_contiguous_v<T>)
+        // Nothing to do
+        return;
+    }
+    else if constexpr (is_contiguous_v<T>)
+    {
+        if (FOAM_UNLIKELY(values.size() < UPstream::nProcs(comm)))
         {
-            if (values.size() < UPstream::nProcs(comm))
-            {
-                FatalErrorInFunction
-                    << "List of values is too small:" << values.size()
-                    << " vs numProcs:" << UPstream::nProcs(comm) << nl
-                    << Foam::abort(FatalError);
-            }
-
-            UPstream::mpiAllGather(values.data_bytes(), sizeof(T), comm);
+            FatalErrorInFunction
+                << "List of values is too small:" << values.size()
+                << " vs numProcs:" << UPstream::nProcs(comm) << nl
+                << Foam::abort(FatalError);
         }
-        else
-        {
-            const auto& comms = UPstream::whichCommunication(comm);
 
-            Pstream::gatherList(comms, values, tag, comm);
-            Pstream::scatterList(comms, values, tag, comm);
-        }
+        UPstream::mpiAllGather(values.data_bytes(), sizeof(T), comm);
+    }
+    else
+    {
+        Pstream::gatherList(values, tag, comm);
+        Pstream::scatterList(values, tag, comm);
     }
 }
 

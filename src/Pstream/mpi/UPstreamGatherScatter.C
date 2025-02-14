@@ -81,7 +81,7 @@ void Foam::UPstream::mpiAllGather                                             \
     );                                                                        \
 }                                                                             \
                                                                               \
-void Foam::UPstream::gather                                                   \
+void Foam::UPstream::mpiGatherv                                               \
 (                                                                             \
     const Native* sendData,                                                   \
     int sendCount,                                                            \
@@ -100,7 +100,7 @@ void Foam::UPstream::gather                                                   \
     );                                                                        \
 }                                                                             \
                                                                               \
-void Foam::UPstream::scatter                                                  \
+void Foam::UPstream::mpiScatterv                                              \
 (                                                                             \
     const Native* sendData,                                                   \
     const UList<int>& sendCounts,                                             \

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,6 +30,7 @@ License
 #include "profilingPstream.H"
 #include "PstreamGlobals.H"
 #include "Map.H"
+#include <cstring>  // memmove
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
@@ -902,9 +903,9 @@ void Foam::PstreamDetail::gather
     {
         return;
     }
-    if (!UPstream::is_parallel(comm))
+    else if (!UPstream::is_parallel(comm))
     {
-        if (recvData)
+        if (sendData && recvData)
         {
             std::memmove(recvData, sendData, count*sizeof(Type));
         }
@@ -923,6 +924,10 @@ void Foam::PstreamDetail::gather
         {
             Perr<< "** MPI_Gather (blocking):";
         }
+        if (sendData == nullptr)
+        {
+            Perr<< " [inplace]";
+        }
         Perr<< " numProc:" << numProc
             << " count:" << count
             << " with comm:" << comm
@@ -931,6 +936,12 @@ void Foam::PstreamDetail::gather
         error::printStack(Perr);
     }
 
+    const void* send_buffer = sendData;
+    if (sendData == nullptr || (sendData == recvData))
+    {
+        // Appears to be an in-place request
+        send_buffer = MPI_IN_PLACE;
+    }
 
 #if defined(MPI_VERSION) && (MPI_VERSION >= 3)
     if (immediate)
@@ -943,7 +954,7 @@ void Foam::PstreamDetail::gather
         (
             MPI_Igather
             (
-                const_cast<Type*>(sendData), count, datatype,
+                send_buffer, count, datatype,
                 recvData, count, datatype,
                 0,  // root: UPstream::masterNo()
                 PstreamGlobals::MPICommunicators_[comm],
@@ -969,7 +980,7 @@ void Foam::PstreamDetail::gather
         (
             MPI_Gather
             (
-                const_cast<Type*>(sendData), count, datatype,
+                send_buffer, count, datatype,
                 recvData, count, datatype,
                 0,  // root: UPstream::masterNo()
                 PstreamGlobals::MPICommunicators_[comm]
@@ -1009,9 +1020,9 @@ void Foam::PstreamDetail::scatter
     {
         return;
     }
-    if (!UPstream::is_parallel(comm))
+    else if (!UPstream::is_parallel(comm))
     {
-        if (recvData)
+        if (sendData && recvData)
         {
             std::memmove(recvData, sendData, count*sizeof(Type));
         }
@@ -1030,6 +1041,10 @@ void Foam::PstreamDetail::scatter
         {
             Perr<< "** MPI_Scatter (blocking):";
         }
+        if (sendData == nullptr)
+        {
+            Perr<< " [inplace]";
+        }
         Perr<< " numProc:" << numProc
             << " count:" << count
             << " with comm:" << comm
@@ -1038,6 +1053,13 @@ void Foam::PstreamDetail::scatter
         error::printStack(Perr);
     }
 
+
+    const void* send_buffer = sendData;
+    if (sendData == nullptr || (sendData == recvData))
+    {
+        // Appears to be an in-place request
+        send_buffer = MPI_IN_PLACE;
+    }
 
 #if defined(MPI_VERSION) && (MPI_VERSION >= 3)
     if (immediate)
@@ -1050,7 +1072,7 @@ void Foam::PstreamDetail::scatter
         (
             MPI_Iscatter
             (
-                const_cast<Type*>(sendData), count, datatype,
+                send_buffer, count, datatype,
                 recvData, count, datatype,
                 0,  // root: UPstream::masterNo()
                 PstreamGlobals::MPICommunicators_[comm],
@@ -1076,7 +1098,7 @@ void Foam::PstreamDetail::scatter
         (
             MPI_Scatter
             (
-                const_cast<Type*>(sendData), count, datatype,
+                send_buffer, count, datatype,
                 recvData, count, datatype,
                 0,  // root: UPstream::masterNo()
                 PstreamGlobals::MPICommunicators_[comm]
@@ -1119,10 +1141,13 @@ void Foam::PstreamDetail::gatherv
     {
         return;
     }
-    if (!UPstream::is_parallel(comm))
+    else if (!UPstream::is_parallel(comm))
     {
         // recvCounts[0] may be invalid - use sendCount instead
-        std::memmove(recvData, sendData, sendCount*sizeof(Type));
+        if (sendData && recvData)
+        {
+            std::memmove(recvData, sendData, sendCount*sizeof(Type));
+        }
         return;
     }
 
@@ -1262,7 +1287,7 @@ void Foam::PstreamDetail::scatterv
     {
         return;
     }
-    if (!UPstream::is_parallel(comm))
+    else if (!UPstream::is_parallel(comm))
     {
         std::memmove(recvData, sendData, recvCount*sizeof(Type));
         return;

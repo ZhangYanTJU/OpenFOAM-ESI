@@ -520,7 +520,7 @@ void Foam::GAMGAgglomeration::procAgglomerateLduAddressing
         bMap.setSize(nOldInterfaces);
 
         // Scatter relevant section to originating processor
-        UPstream::scatter
+        UPstream::mpiScatterv
         (
             data.values().cdata(),
 

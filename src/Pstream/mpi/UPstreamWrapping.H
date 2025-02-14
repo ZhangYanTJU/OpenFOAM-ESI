@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -139,6 +139,7 @@ void allToAllConsensus
 
 
 // MPI_Gather or MPI_Igather
+// Uses recvData as send/recv when sendData is nullptr
 template<class Type>
 void gather
 (
@@ -153,6 +154,7 @@ void gather
 
 
 // MPI_Scatter or MPI_Iscatter
+// Uses recvData as send/recv when sendData is nullptr
 template<class Type>
 void scatter
 (

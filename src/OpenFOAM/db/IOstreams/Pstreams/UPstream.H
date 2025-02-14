@@ -1171,20 +1171,20 @@ public:
 
 
         #undef  Pstream_CommonRoutines
-        #define Pstream_CommonRoutines(Native)                                \
+        #define Pstream_CommonRoutines(Type)                                  \
                                                                               \
-        /*!\brief Exchange \c Native data with all ranks in communicator   */ \
+        /*!\brief Exchange \c Type data with all ranks in communicator     */ \
         /*! \em non-parallel : simple copy of \p sendData to \p recvData   */ \
         static void allToAll                                                  \
         (                                                                     \
             /*! [in] The value at [proci] is sent to proci */                 \
-            const UList<Native>& sendData,                                    \
+            const UList<Type>& sendData,                                      \
             /*! [out] The data received from the other ranks */               \
-            UList<Native>& recvData,                                          \
+            UList<Type>& recvData,                                            \
             const label communicator = worldComm                              \
         );                                                                    \
                                                                               \
-        /*!\brief Exchange \em non-zero \c Native data between ranks [NBX] */ \
+        /*!\brief Exchange \em non-zero \c Type data between ranks [NBX]   */ \
         /*! \p recvData is always initially assigned zero and no non-zero  */ \
         /*! values are sent/received from other ranks.                     */ \
         /*! \em non-parallel : simple copy of \p sendData to \p recvData   */ \
@@ -1195,15 +1195,15 @@ public:
         static void allToAllConsensus                                         \
         (                                                                     \
             /*! [in] The \em non-zero value at [proci] is sent to proci */    \
-            const UList<Native>& sendData,                                    \
+            const UList<Type>& sendData,                                      \
             /*! [out] The non-zero value received from each rank */           \
-            UList<Native>& recvData,                                          \
+            UList<Type>& recvData,                                            \
             /*! Message tag for the communication */                          \
             const int tag,                                                    \
             const label communicator = worldComm                              \
         );                                                                    \
                                                                               \
-        /*!\brief Exchange \c Native data between ranks [NBX]              */ \
+        /*!\brief Exchange \c Type data between ranks [NBX]                */ \
         /*! \p recvData map is always cleared initially so a simple check  */ \
         /*! of its keys is sufficient to determine connectivity.           */ \
         /*! \em non-parallel : copy own rank (if it exists)                */ \
@@ -1211,26 +1211,26 @@ public:
         static void allToAllConsensus                                         \
         (                                                                     \
             /*! [in] The value at [proci] is sent to proci. */                \
-            const Map<Native>& sendData,                                      \
+            const Map<Type>& sendData,                                        \
             /*! [out] The values received from given ranks. */                \
-            Map<Native>& recvData,                                            \
+            Map<Type>& recvData,                                              \
             /*! Message tag for the communication */                          \
             const int tag,                                                    \
             const label communicator = worldComm                              \
         );                                                                    \
                                                                               \
-        /*!\brief Exchange \c Native data between ranks [NBX]              */ \
+        /*!\brief Exchange \c Type data between ranks [NBX]                */ \
         /*! \returns any received data as a Map                            */ \
-        static Map<Native> allToAllConsensus                                  \
+        static Map<Type> allToAllConsensus                                    \
         (                                                                     \
             /*! [in] The value at [proci] is sent to proci. */                \
-            const Map<Native>& sendData,                                      \
+            const Map<Type>& sendData,                                        \
             /*! Message tag for the communication */                          \
             const int tag,                                                    \
             const label communicator = worldComm                              \
         )                                                                     \
         {                                                                     \
-            Map<Native> recvData;                                             \
+            Map<Type> recvData;                                               \
             allToAllConsensus(sendData, recvData, tag, communicator);         \
             return recvData;                                                  \
         }
@@ -1244,64 +1244,96 @@ public:
     // Low-level gather/scatter routines
 
         #undef  Pstream_CommonRoutines
-        #define Pstream_CommonRoutines(Native)                                \
+        #define Pstream_CommonRoutines(Type)                                  \
                                                                               \
-        /*! \brief Receive identically-sized \c Native data from all ranks */ \
+        /*! \brief Receive identically-sized \c Type data from all ranks */   \
         static void mpiGather                                                 \
         (                                                                     \
-            /*! On rank: individual value to send */                          \
-            const Native* sendData,                                           \
-            /*! On master: receive buffer with all values */                  \
-            Native* recvData,                                                 \
+            /*! On rank: individual value to send (or nullptr for inplace) */ \
+            const Type* sendData,                                             \
+            /*! Master: receive buffer with all values */                     \
+            /*! Or for in-place send/recv when sendData is nullptr */         \
+            Type* recvData,                                                   \
             /*! Number of send/recv data per rank. Globally consistent! */    \
             int count,                                                        \
             const label communicator = worldComm                              \
         );                                                                    \
                                                                               \
-        /*! \brief Send identically-sized \c Native data to all ranks */      \
+        /*! \brief Send identically-sized \c Type data to all ranks */        \
         static void mpiScatter                                                \
         (                                                                     \
-            /*! On master: send buffer with all values */                     \
-            const Native* sendData,                                           \
+            /*! Master: send buffer with all values (nullptr for inplace) */  \
+            const Type* sendData,                                             \
             /*! On rank: individual value to receive */                       \
-            Native* recvData,                                                 \
+            /*! Or for in-place send/recv when sendData is nullptr */         \
+            Type* recvData,                                                   \
             /*! Number of send/recv data per rank. Globally consistent! */    \
             int count,                                                        \
             const label communicator = worldComm                              \
         );                                                                    \
                                                                               \
-        /*! \brief Gather/scatter identically-sized \c Native data */         \
+        /*! \brief Gather/scatter identically-sized \c Type data */           \
         /*! Send data from proc slot, receive into all slots */               \
         static void mpiAllGather                                              \
         (                                                                     \
             /*! On all ranks: the base of the data locations */               \
-            Native* allData,                                                  \
+            Type* allData,                                                    \
             /*! Number of send/recv data per rank. Globally consistent! */    \
             int count,                                                        \
             const label communicator = worldComm                              \
         );                                                                    \
                                                                               \
-        /*! \brief Receive variable length \c Native data from all ranks */   \
-        static void gather                                                    \
+        /*! \brief Receive variable length \c Type data from all ranks */     \
+        static void mpiGatherv                                                \
         (                                                                     \
-            const Native* sendData,                                           \
+            const Type* sendData,                                             \
             int sendCount,  /*!< Ignored on master if recvCount[0] == 0 */    \
-            Native* recvData,               /*!< Ignored on non-root rank */  \
+            Type* recvData,                 /*!< Ignored on non-root rank */  \
             const UList<int>& recvCounts,   /*!< Ignored on non-root rank */  \
             const UList<int>& recvOffsets,  /*!< Ignored on non-root rank */  \
             const label communicator = worldComm                              \
         );                                                                    \
                                                                               \
-        /*! \brief Send variable length \c Native data to all ranks */        \
-        static void scatter                                                   \
+        /*! \brief Send variable length \c Type data to all ranks */          \
+        static void mpiScatterv                                               \
         (                                                                     \
-            const Native* sendData,         /*!< Ignored on non-root rank */  \
+            const Type* sendData,           /*!< Ignored on non-root rank */  \
             const UList<int>& sendCounts,   /*!< Ignored on non-root rank */  \
             const UList<int>& sendOffsets,  /*!< Ignored on non-root rank */  \
-            Native* recvData,                                                 \
+            Type* recvData,                                                   \
             int recvCount,                                                    \
             const label communicator = worldComm                              \
-        );
+        );                                                                    \
+                                                                              \
+        /*! \deprecated(2025-02) prefer mpiGatherv */                         \
+        FOAM_DEPRECATED_FOR(2025-02, "mpiGatherv()")                          \
+        inline static void gather                                             \
+        (                                                                     \
+            const Type* send,                                                 \
+            int count,                                                        \
+            Type* recv,                                                       \
+            const UList<int>& counts,                                         \
+            const UList<int>& offsets,                                        \
+            const label comm = worldComm                                      \
+        )                                                                     \
+        {                                                                     \
+            UPstream::mpiGatherv(send, count, recv, counts, offsets, comm);   \
+        }                                                                     \
+                                                                              \
+        /*! \deprecated(2025-02) prefer mpiScatterv */                        \
+        FOAM_DEPRECATED_FOR(2025-02, "mpiScatterv()")                         \
+        inline static void scatter                                            \
+        (                                                                     \
+            const Type* send,                                                 \
+            const UList<int>& counts,                                         \
+            const UList<int>& offsets,                                        \
+            Type* recv,                                                       \
+            int count,                                                        \
+            const label comm = worldComm                                      \
+        )                                                                     \
+        {                                                                     \
+            UPstream::mpiScatterv(send, counts, offsets, recv, count, comm);  \
+        }
 
         Pstream_CommonRoutines(char);
         Pstream_CommonRoutines(int32_t);
