@@ -42,6 +42,7 @@ SourceFiles
 #define Foam_GeometricField_H
 
 #include "GeometricBoundaryField.H"
+#include "GeometricFieldExpression.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -1142,6 +1143,79 @@ public:
         {
             return this->clamp_range(lo.value(), hi.value());
         }
+
+
+    // Expression templates
+
+        //- Have unique tag
+        using is_GeometricField = void;
+
+        //- Construct from IOobject and value expression. Supports
+        //  read_if_present
+        template<typename E>
+        GeometricField
+        (
+            const IOobject& io,
+            const Mesh& mesh,
+            const Expression::GeometricFieldExpression
+            <
+                E,
+                typename E::IntExpr,
+                typename E::UncoupledPatchExpr,
+                typename E::CoupledPatchExpr,
+                typename E::value_type
+            >& expr
+        );
+
+        //- Construct from name, mesh and value expression.
+        template<typename E>
+        GeometricField
+        (
+            const word& name,
+            const Mesh& mesh,
+            const Expression::GeometricFieldExpression
+            <
+                E,
+                typename E::IntExpr,
+                typename E::UncoupledPatchExpr,
+                typename E::CoupledPatchExpr,
+                typename E::value_type
+            >& expr
+        );
+
+        //- Wrap value as expression
+        typename Expression::GeometricFieldConstRefWrap
+        <
+            this_type
+        > expr() const;
+
+        //- Assign values from expression
+        template<typename E>
+        void operator=
+        (
+            const Expression::GeometricFieldExpression
+            <
+                E,
+                typename E::IntExpr,
+                typename E::UncoupledPatchExpr,
+                typename E::CoupledPatchExpr,
+                typename E::value_type
+            >& expr
+        );
+
+        //- Assign values from expression. Override asssignable.
+        template<typename E>
+        void operator==
+        (
+            const Expression::GeometricFieldExpression
+            <
+                E,
+                typename E::IntExpr,
+                typename E::UncoupledPatchExpr,
+                typename E::CoupledPatchExpr,
+                typename E::value_type
+            >& expr
+        );
 };
 
 

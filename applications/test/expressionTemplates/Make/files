@@ -1,0 +1,5 @@
+Test-expressionTemplates-volFields.C
+/* Test-expressionTemplates-pointFields.C */
+/* Test-expressionTemplates-Fields.C */
+
+EXE = $(FOAM_USER_APPBIN)/Test-expressionTemplates

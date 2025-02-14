@@ -80,6 +80,11 @@ typedef UList<bool> boolUList;      //!< A UList of bools
 typedef UList<char> charUList;      //!< A UList of chars
 typedef UList<label> labelUList;    //!< A UList of labels
 
+namespace Expression
+{
+template<class E, typename ValType> class ListExpression;
+template<class T> class ListConstRefWrap;
+}
 
 /*---------------------------------------------------------------------------*\
                            Class UList Declaration
@@ -696,6 +701,39 @@ public:
         bool found(const T& val, label pos = 0) const
         {
             return this->contains(val, pos);
+        }
+
+
+    // Expression templates
+
+        //- Have unique tag
+        using is_List = void;
+
+        //- Wrap value as expression
+        auto expr() const
+        {
+            return Expression::ListConstRefWrap<T>
+            (
+                reinterpret_cast<const List<T>&>(*this)
+            );
+        }
+
+        //- Assign values from expression
+        template<typename E>
+        void operator=
+        (
+            const Expression::ListExpression
+            <
+                E,
+                typename E::value_type
+            >& expr
+        )
+        {
+            // bypass expr.evaluate to avoid resize ...
+            for (label i = 0; i < expr.size(); ++i)
+            {
+                operator[](i) = expr[i];
+            }
         }
 };
 

@@ -65,6 +65,17 @@ class fusedGaussLaplacianScheme
 {
     // Private Member Functions
 
+        //- Helper for calculate source correction. Partially expression
+        //  templated. Move to fvMatrixExpression.H?
+        template<class E1, class E2>
+        static void fvmCorrection
+        (
+            fvMatrix<Type>& fvm,
+            const dimensionSet& gammaDim,
+            const E1& gammaMagSf,
+            const E2& corr
+        );
+
         //- See gaussLaplacianScheme
         tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> gammaSnGradCorr
         (
@@ -198,6 +209,8 @@ defineFvmLaplacianScalarGamma(sphericalTensor);
 defineFvmLaplacianScalarGamma(symmTensor);
 defineFvmLaplacianScalarGamma(tensor);
 
+#undef defineFvmLaplacianScalarGamma
+
 // Unweighted laplacian
 template<>
 tmp<GeometricField<scalar, fvPatchField, volMesh>>
@@ -223,20 +236,6 @@ fusedGaussLaplacianScheme<scalar, scalar>::fvcLaplacian
 template<>
 tmp<GeometricField<vector, fvPatchField, volMesh>>
 fusedGaussLaplacianScheme<vector, scalar>::fvcLaplacian
-(
-    const GeometricField<scalar, fvPatchField, volMesh>&,
-    const GeometricField<vector, fvPatchField, volMesh>&
-);
-template<>
-tmp<fvMatrix<scalar>>
-fusedGaussLaplacianScheme<scalar, scalar>::fvmLaplacian
-(
-    const GeometricField<scalar, fvPatchField, volMesh>&,
-    const GeometricField<scalar, fvPatchField, volMesh>&
-);
-template<>
-tmp<fvMatrix<vector>>
-fusedGaussLaplacianScheme<vector, scalar>::fvmLaplacian
 (
     const GeometricField<scalar, fvPatchField, volMesh>&,
     const GeometricField<vector, fvPatchField, volMesh>&

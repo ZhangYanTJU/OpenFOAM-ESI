@@ -60,6 +60,12 @@ template<class Type> class dimensioned;
 template<class Type>
 Istream& operator>>(Istream& is, dimensioned<Type>& dt);
 
+namespace Expression
+{
+template<class T> class UniformListWrap;
+template<class GeoField> class UniformGeometricFieldWrap;
+}
+
 /*---------------------------------------------------------------------------*\
                            Class dimensioned Declaration
 \*---------------------------------------------------------------------------*/
@@ -448,6 +454,28 @@ public:
         )
         {
             return getOrAddToDict(name, dict, deflt);
+        }
+
+
+    // Expression templates
+
+        //- Wrap value as constant-value List expression
+        auto expr(const label size) const
+        {
+            return Expression::UniformListWrap<Type>(size, value_);
+        }
+
+        //- Wrap value as constant-value GeometricField expression. Supplied
+        //  fields is used for sizing only and needs to be valid at time of
+        //  evaluation.
+        template<class GeoField>
+        auto expr(const GeoField& fld) const
+        {
+            return Expression::UniformGeometricFieldWrap<GeoField>
+            (
+                fld,
+                *this
+            );
         }
 };
 

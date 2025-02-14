@@ -59,8 +59,17 @@ See also
 namespace Foam
 {
 
+namespace Expression
+{
+template<class GeoField> class GeometricFieldConstTmpWrap;
+template<class T> class ListConstTmpWrap;
+}
+
 // Forward Declarations
 template<class T> class refPtr;
+template<class T> class tmp;
+template<class Type, template<class> class PatchField, class GeoMesh>
+class GeometricField;
 
 /*---------------------------------------------------------------------------*\
                              Class tmp Declaration
@@ -352,6 +361,33 @@ public:
         //  \deprecated(2020-07) - use bool operator
         FOAM_DEPRECATED_FOR(2020-07, "bool operator")
         bool empty() const noexcept { return !ptr_; }
+
+
+    // Expression templates
+
+        //- Wrap value as expression
+        auto expr() const
+        {
+            // Add 'using is_GeometricField = void' to GeometricField
+            // Add 'using is_List = void' to List
+
+            if constexpr
+            (
+                std::is_void_v<typename T::is_GeometricField>
+            )
+            {
+                return Expression::GeometricFieldConstTmpWrap<T>(*this);
+            }
+            else //if constexpr (std::is_void_v<T::is_List>)
+            {
+                return Expression::ListConstTmpWrap<T>(*this);
+            }
+            //else
+            //{
+            //    //static_assert("XXX",YYY);
+            //    return;
+            //}
+        }
 };
 
 

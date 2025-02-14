@@ -582,6 +582,37 @@ public:
 
         friend Ostream& operator<< <Type>
         (Ostream&, const tmp<Field<Type>>&);
+
+
+    // Expression templates
+
+        //- Construct from value expression
+        template<typename E>
+        explicit Field
+        (
+            const Expression::ListExpression
+            <
+                E,
+                typename E::value_type
+            >& expr
+        )
+        {
+            expr.evaluate(*this);
+        }
+
+        //- Assign values from expression
+        template<typename E>
+        void operator=
+        (
+            const Expression::ListExpression
+            <
+                E,
+                typename E::value_type
+            >& expr
+        )
+        {
+            expr.evaluate(*this);
+        }
 };
 
 

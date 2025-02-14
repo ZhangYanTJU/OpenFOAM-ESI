@@ -55,8 +55,6 @@ wmake $targetType fileFormats
 wmake $targetType surfMesh
 wmake $targetType meshTools
 
-#------------------------------------------------------------------------------
-
 wmake $targetType finiteArea
 wmake $targetType finiteVolume
 wmake $targetType fused/finiteVolume

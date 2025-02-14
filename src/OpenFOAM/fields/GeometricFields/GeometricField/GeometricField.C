@@ -1675,6 +1675,124 @@ Foam::Ostream& Foam::operator<<
 }
 
 
+// * * * * * * * * * * * * * Expression Templates  * * * * * * * * * * * * * //
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<typename E>
+Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
+(
+    const IOobject& io,
+    const Mesh& mesh,
+    const Expression::GeometricFieldExpression
+    <
+        E,
+        typename E::IntExpr,
+        typename E::UncoupledPatchExpr,
+        typename E::CoupledPatchExpr,
+        typename E::value_type
+    >& expr
+)
+:
+    Internal(io, mesh, expr.dimensions(), false),
+    timeIndex_(this->time().timeIndex()),
+    boundaryField_(mesh.boundary(), *this, PatchField<Type>::calculatedType())
+{
+    DebugInFunction
+        << "Creating from expression " << nl << this->info() << endl;
+
+    bool hasRead = readIfPresent();
+    if (!hasRead)
+    {
+        expr.evaluate(*this);
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<typename E>
+Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
+(
+    const word& name,
+    const Mesh& mesh,
+    const Expression::GeometricFieldExpression
+    <
+        E,
+        typename E::IntExpr,
+        typename E::UncoupledPatchExpr,
+        typename E::CoupledPatchExpr,
+        typename E::value_type
+    >& expr
+)
+:
+    Internal
+    (
+        IOobject
+        (
+            name,
+            mesh.time().timeName(),
+            mesh.thisDb()
+        ),
+        mesh,
+        expr.dimensions(),
+        false
+    ),
+    timeIndex_(this->time().timeIndex()),
+    boundaryField_(mesh.boundary(), *this, PatchField<Type>::calculatedType())
+{
+    DebugInFunction
+        << "Creating from expression " << nl << this->info() << endl;
+
+    expr.evaluate(*this);
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::Expression::GeometricFieldConstRefWrap
+<
+    Foam::GeometricField<Type, PatchField, GeoMesh>
+>
+Foam::GeometricField<Type, PatchField, GeoMesh>::expr() const
+{
+    return Expression::GeometricFieldConstRefWrap<this_type>(*this);
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<typename E>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
+(
+    const Expression::GeometricFieldExpression
+    <
+        E,
+        typename E::IntExpr,
+        typename E::UncoupledPatchExpr,
+        typename E::CoupledPatchExpr,
+        typename E::value_type
+    >& expr
+)
+{
+    Expression::GeometricFieldRefWrap<this_type>(*this, expr);
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<typename E>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
+(
+    const Expression::GeometricFieldExpression
+    <
+        E,
+        typename E::IntExpr,
+        typename E::UncoupledPatchExpr,
+        typename E::CoupledPatchExpr,
+        typename E::value_type
+    >& expr
+)
+{
+    expr.evaluate(*this, true);
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #undef checkField

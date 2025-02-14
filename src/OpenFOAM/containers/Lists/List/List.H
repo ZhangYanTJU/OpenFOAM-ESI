@@ -45,6 +45,7 @@ SourceFiles
 
 #include "autoPtr.H"
 #include "UList.H"
+#include "SLListFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,7 +65,6 @@ template<class T> Istream& operator>>(Istream& is, List<T>& list);
 typedef List<bool> boolList;        //!< A List of bools
 typedef List<char> charList;        //!< A List of chars
 typedef List<label> labelList;      //!< A List of labels
-
 
 /*---------------------------------------------------------------------------*\
                            Class List Declaration
@@ -395,6 +395,37 @@ public:
 
         //- Alias for resize()
         void setSize(label n, const T& val) { this->resize(n, val); }
+
+
+    // Expression templates
+
+        //- Construct from value expression
+        template<typename E>
+        explicit List
+        (
+            const Expression::ListExpression
+            <
+                E,
+                typename E::value_type
+            >& expr
+        )
+        {
+            expr.evaluate(*this);
+        }
+
+        //- Assign values from expression
+        template<typename E>
+        void operator=
+        (
+            const Expression::ListExpression
+            <
+                E,
+                typename E::value_type
+            >& expr
+        )
+        {
+            expr.evaluate(*this);
+        }
 };
 
 
