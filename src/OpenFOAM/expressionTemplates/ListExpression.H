@@ -39,9 +39,6 @@ SourceFiles
 
 #include <cassert>
 #include "List.H"
-#include <boost/core/demangle.hpp>
-#include <typeinfo>
-#include <iostream>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

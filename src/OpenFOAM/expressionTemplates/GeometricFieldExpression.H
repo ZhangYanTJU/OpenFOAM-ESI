@@ -58,8 +58,33 @@ namespace Expression
 template<typename E, typename WrapType, typename Type>
 class GeometricFieldExpression
 {
+protected:
+
+    const dimensionSet dimensions_;
+    const orientedType oriented_;
+
 public:
     static constexpr bool is_leaf = false;
+
+    GeometricFieldExpression
+    (
+        const dimensionSet& dimensions,
+        const orientedType oriented
+    )
+    :
+        dimensions_(dimensions),
+        oriented_(oriented)
+    {
+        //Pout<< "GeometricFieldExpression :" << nl
+        //    << "    E          : "
+        //    << boost::core::demangle(typeid(E).name())
+        //    << nl
+        //    << "    WrapType   : "
+        //    << boost::core::demangle(typeid(WrapType).name()) << nl
+        //    << "    dimensions : " << dimensions_ << nl
+        //    << "    oriented   : " << oriented_ << nl
+        //    << endl;
+    }
 
     Type operator[](const label i) const
     {
@@ -71,12 +96,12 @@ public:
 
     const dimensionSet& dimensions() const
     {
-        return static_cast<const E&>(*this).dimensions();
+        return dimensions_;
     }
 
     orientedType oriented() const
     {
-        return static_cast<const E&>(*this).oriented();
+        return oriented_;
     }
 
     WrapType internalField() const
@@ -103,26 +128,12 @@ public:
     template<class GeoField>
     GeoField& evaluate(GeoField& fld) const
     {
-        // TBd. Force checking upon evaluation. Needs whole chain to be
-        // evaluated.
-        //fld.dimensions() = this->dimensions();
-        //fld.oriented() = this->oriented();
+        fld.dimensions() = this->dimensions();
+        fld.oriented() = this->oriented();
 
-        //if (fld.size() != this->size())
-        //{
-        //    FatalErrorInFunction<< "field:" << fld.size()
-        //        << " info:" << fld.info()
-        //        << " expression:" << this->size()
-        //        << exit(FatalError);
-        //}
         assert(fld.size() == this->size());
 
         ListRefWrap<Type> wfld(fld.internalFieldRef(), internalField());
-        //auto& vals = fld.ref();
-        //for (label i = 0; i < this->size(); ++i)
-        //{
-        //    vals[i] = operator[](i);
-        //}
 
         // Do boundary field
         auto& bfld = fld.boundaryFieldRef();
@@ -134,10 +145,7 @@ public:
             // Get patch expression
             const auto patchExpr = this->patchField(i);
 
-            if constexpr
-            (
-                std::is_same_v<pointMesh, typename GeoField::Mesh>
-            )
+            if constexpr (std::is_same_v<pointMesh, typename GeoField::Mesh>)
             {
                 if (pfld.assignable())
                 {
@@ -154,10 +162,6 @@ public:
                 {
                     patchExpr.evaluate(pfld);
                 }
-                //else
-                //{
-                //    Pout<< "** skipping patch " << i << endl;
-                //}
             }
         }
         fld.correctLocalBoundaryConditions();
@@ -198,14 +202,34 @@ private:
 public:
 
     //- Copy construct
-    GeometricFieldRefWrap(this_type& init)
+    GeometricFieldRefWrap(this_type& elems)
     :
-        elems_(init)
+        GeometricFieldExpression
+        <
+            GeometricFieldRefWrap<GeoField>,
+            wrapType,
+            value_type
+        >
+        (
+            elems.dimensions(),
+            elems.oriented()
+        ),
+        elems_(elems)
     {}
 
     //- Move construct
     GeometricFieldRefWrap(this_type&& elems)
     :
+        GeometricFieldExpression
+        <
+            GeometricFieldRefWrap<GeoField>,
+            ListRefWrap<value_type>,
+            value_type
+        >
+        (
+            elems.dimensions(),
+            elems.oriented()
+        ),
         elems_(elems)
     {}
 
@@ -222,6 +246,16 @@ public:
         >& expr
     )
     :
+        GeometricFieldExpression
+        <
+            GeometricFieldRefWrap<GeoField>,
+            ListRefWrap<value_type>,
+            value_type
+        >
+        (
+            elems.dimensions(),
+            elems.oriented()
+        ),
         elems_(elems)
     {
         expr.evaluate(elems_);
@@ -271,16 +305,6 @@ public:
     label size() const
     {
         return elems_.size();
-    }
-
-    const dimensionSet& dimensions() const
-    {
-        return elems_.dimensions();
-    }
-
-    orientedType oriented() const
-    {
-        return elems_.oriented();
     }
 
     wrapType internalField()
@@ -343,17 +367,6 @@ public:
             return wrapType(fld.size(), fld);
         }
     }
-
-    //wrapType patchField(const label i) const
-    //{
-    //    //Pout<< "    GeometricFieldRefWrap : for field:" << elems_.name()
-    //    //    << " asking for const pf:" << i
-    //    //    << " of size:" << elems_.boundaryField()[i].size()
-    //    //    << endl;
-    //
-    //    auto& fld = elems_.boundaryField()[i];
-    //    return wrapType(fld.size(), fld);
-    //}
 };
 
 
@@ -389,9 +402,19 @@ private:
 public:
 
     // Construct from components
-    GeometricFieldConstRefWrap(const this_type& init)
+    GeometricFieldConstRefWrap(const this_type& elems)
     :
-        elems_(init)
+        GeometricFieldExpression
+        <
+            GeometricFieldConstRefWrap<GeoField>,
+            wrapType,
+            value_type
+        >
+        (
+            elems.dimensions(),
+            elems.oriented()
+        ),
+        elems_(elems)
     {}
 
     // return the underlying data
@@ -408,16 +431,6 @@ public:
     label size() const
     {
         return elems_.size();
-    }
-
-    const dimensionSet& dimensions() const
-    {
-        return elems_.dimensions();
-    }
-
-    orientedType oriented() const
-    {
-        return elems_.oriented();
     }
 
     wrapType internalField() const
@@ -490,16 +503,19 @@ public:
 
     GeometricFieldAdd(const E1& u, const E2& v)
     :
-     u_(u), v_(v)
+        GeometricFieldExpression
+        <
+            GeometricFieldAdd<E1, E2>,
+            wrapType,
+            value_type
+        >
+        (
+            u.dimensions() + v.dimensions(),
+            u.oriented()    // + v.oriented()
+        ),
+        u_(u),
+        v_(v)
     {
-        if (u.size() != v.size())
-        {
-            FatalErrorInFunction<< "u:" << u.size()
-                //<< " E1:" << E1::typename
-                << " v:" << v.size()
-                //<< " E2:" << E2::typename
-                << exit(FatalError);
-        }
         assert(u.size() == v.size());
         static_assert
         (
@@ -509,19 +525,12 @@ public:
                 typename E2::value_type
             > == true
         );
-
-        //u_.dimensions() = v_.dimensions();
-        u_.oriented() += v_.oriented();
     }
     decltype(auto) operator[](const label i) const
     {
         return u_[i] + v_[i];
     }
     label size() const { return u_.size(); }
-
-    const dimensionSet& dimensions() const {return u_.dimensions(); }
-
-    orientedType oriented() const {return u_.oriented(); }
 
     wrapType internalField() const
     {
@@ -584,17 +593,23 @@ public:                                                                        \
                                                                                \
     OpFunc(const E1& u)                                                        \
     :                                                                          \
-     u_(u)                                                                     \
+        GeometricFieldExpression                                               \
+        <                                                                      \
+            OpFunc<E1>,                                                        \
+            wrapType,                                                          \
+            value_type                                                         \
+        >                                                                      \
+        (                                                                      \
+            u.dimensions(),                                                    \
+            u.oriented()                                                       \
+        ),                                                                     \
+        u_(u)                                                                  \
     {}                                                                         \
     decltype(auto) operator[](const label i) const                             \
     {                                                                          \
         return BaseFunc(u_[i]);                                                \
     }                                                                          \
     label size() const { return u_.size(); }                                   \
-                                                                               \
-    const dimensionSet& dimensions() const {return u_.dimensions(); }          \
-                                                                               \
-    orientedType oriented() const {return u_.oriented(); }                     \
                                                                                \
     wrapType internalField() const                                             \
     {                                                                          \
@@ -646,6 +661,16 @@ public:
 
     GeometricFieldNegate(const E1& u)
     :
+        GeometricFieldExpression
+        <
+            GeometricFieldNegate<E1>,
+            wrapType,
+            value_type
+        >
+        (
+            u.dimensions(),
+            u.oriented()
+        ),
         u_(u)
     {}
     decltype(auto) operator[](const label i) const
@@ -653,10 +678,6 @@ public:
         return -u_[i];
     }
     label size() const { return u_.size(); }
-
-    const dimensionSet& dimensions() const {return u_.dimensions(); }
-
-    orientedType oriented() const {return u_.oriented(); }
 
     wrapType internalField() const
     {
@@ -717,14 +738,19 @@ public:                                                                        \
                                                                                \
     OpFunc(const E1& u, const E2& v)                                           \
     :                                                                          \
-     u_(u), v_(v)                                                              \
+        GeometricFieldExpression                                               \
+        <                                                                      \
+            OpFunc<E1, E2>,                                                    \
+            wrapType,                                                          \
+            typename E1::value_type                                            \
+        >                                                                      \
+        (                                                                      \
+            u.dimensions() Op v.dimensions(),                                  \
+            u.oriented()                                                       \
+        ),                                                                     \
+        u_(u),                                                                 \
+        v_(v)                                                                  \
     {                                                                          \
-        if (u.size() != v.size())                                              \
-        {                                                                      \
-            FatalErrorInFunction<< "u:" << u.size()                            \
-                << " v:" << v.size()                                           \
-                << exit(FatalError);                                           \
-        }                                                                      \
         static_assert                                                          \
         (                                                                      \
             std::is_same_v                                                     \
@@ -740,10 +766,6 @@ public:                                                                        \
         return u_[i] Op v_[i];                                                 \
     }                                                                          \
     label size() const { return u_.size(); }                                   \
-                                                                               \
-    const dimensionSet& dimensions() const {return u_.dimensions(); }          \
-                                                                               \
-    orientedType oriented() const {return u_.oriented(); }                     \
                                                                                \
     wrapType internalField() const                                             \
     {                                                                          \
@@ -815,7 +837,18 @@ public:                                                                        \
                                                                                \
     OpFunc(const E1& u, const E2& v)                                           \
     :                                                                          \
-     u_(u), v_(v)                                                              \
+        GeometricFieldExpression                                               \
+        <                                                                      \
+            OpFunc<E1, E2>,                                                    \
+            wrapType,                                                          \
+            value_type                                                         \
+        >                                                                      \
+        (                                                                      \
+            BaseFunc(u.dimensions(), v.dimensions()),                          \
+            u.oriented()                                                       \
+        ),                                                                     \
+        u_(u),                                                                 \
+        v_(v)                                                                  \
     {                                                                          \
         static_assert                                                          \
         (                                                                      \
@@ -831,10 +864,6 @@ public:                                                                        \
         return BaseFunc(u_[i], v_[i]);                                         \
     }                                                                          \
     label size() const {return u_.size(); }                                    \
-                                                                               \
-    const dimensionSet& dimensions() const {return u_.dimensions(); }          \
-                                                                               \
-    orientedType oriented() const {return u_.oriented(); }                     \
                                                                                \
     wrapType internalField() const                                             \
     {                                                                          \
@@ -938,29 +967,45 @@ private:
 
     const GeoField& elems_;
 
-    //const dimensionSet& dimensions_;
-
     const value_type val_;
 
 public:
 
     // Construct from field (sizes only) and value
-    geometricConstantFieldWrap(const GeoField& init, const value_type val)
+    geometricConstantFieldWrap(const GeoField& elems, const value_type val)
     :
-        elems_(init),
-        //dimensions_(init.dimensions()),
+        GeometricFieldExpression
+        <
+            geometricConstantFieldWrap<GeoField>,
+            wrapType,
+            value_type
+        >
+        (
+            dimless,
+            orientedType()
+        ),
+        elems_(elems),
         val_(val)
     {}
 
     // Construct from field (sizes only) and value, dimension
     geometricConstantFieldWrap
     (
-        const GeoField& init,
+        const GeoField& elems,
         const dimensioned<value_type> val
     )
     :
-        elems_(init),
-        //dimensions_(val.dimensions()),
+        GeometricFieldExpression
+        <
+            geometricConstantFieldWrap<GeoField>,
+            wrapType,
+            value_type
+        >
+        (
+            val.dimensions(),
+            orientedType()
+        ),
+        elems_(elems),
         val_(val.value())
     {}
 
@@ -972,16 +1017,6 @@ public:
     label size() const
     {
         return elems_.size();
-    }
-
-    const dimensionSet& dimensions() const
-    {
-        return dimless; //dimensions_;
-    }
-
-    orientedType oriented() const
-    {
-        return elems_.oriented();
     }
 
     wrapType internalField() const
@@ -1031,14 +1066,14 @@ public:
 //public:
 //
 //    // Construct from field (sizes only) and value
-//    geometricConstantFieldWrap2(const GeoField& init, const value_type val)
+//    geometricConstantFieldWrap2(const GeoField& elems, const value_type val)
 //    :
 //        val_(val),
-//        nInternal_(init.size()),
-//        patchSizes_(init.boundaryField().size())
-//        //dimensions_(init.dimensions()),
+//        nInternal_(elems.size()),
+//        patchSizes_(elems.boundaryField().size())
+//        //dimensions_(elems.dimensions()),
 //    {
-//        for (const auto& pfld : init.boundaryField())
+//        for (const auto& pfld : elems.boundaryField())
 //        {
 //            patchSizes_[pfld.patch().index()] = pfld.size();
 //        }
@@ -1047,16 +1082,16 @@ public:
 //    // Construct from field (sizes only) and value, dimension
 //    geometricConstantFieldWrap2
 //    (
-//        const GeoField& init,
+//        const GeoField& elems,
 //        const dimensioned<value_type> val
 //    )
 //    :
 //        val_(val.value()),
-//        nInternal_(init.size()),
-//        patchSizes_(init.boundaryField().size())
+//        nInternal_(elems.size()),
+//        patchSizes_(elems.boundaryField().size())
 //        //dimensions_(val.dimensions()),
 //    {
-//        for (const auto& pfld : init.boundaryField())
+//        for (const auto& pfld : elems.boundaryField())
 //        {
 //            patchSizes_[pfld.patch().index()] = pfld.size();
 //        }
@@ -1070,16 +1105,6 @@ public:
 //    label size() const
 //    {
 //        return nInternal_;
-//    }
-//
-//    const dimensionSet& dimensions() const
-//    {
-//        return dimless; //dimensions_;
-//    }
-//
-//    orientedType oriented() const
-//    {
-//        return orientedType();
 //    }
 //
 //    wrapType internalField() const
