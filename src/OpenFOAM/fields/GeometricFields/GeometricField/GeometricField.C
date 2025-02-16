@@ -1712,32 +1712,33 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
     >& expr
 )
 {
-    // Do not check assignable. TBD: merge into expr.evaluate helper.
-    auto& fld = *this;
-
-    Expression::ListRefWrap<Type> wfld
-    (
-        fld.internalFieldRef(),
-        expr.internalField()
-    );
-
-    // Do boundary field
-    auto& bfld = fld.boundaryFieldRef();
-    const label n = bfld.size();
-    for (label i = 0; i < n; ++i)
-    {
-        auto& pfld = bfld[i];
-
-        const auto* vp = isA<List<Type>>(pfld);
-        if (vp)
-        {
-            // Get patch expression
-            const auto patchExpr = expr.patchField(i);
-
-            patchExpr.evaluate(const_cast<List<Type>&>(*vp));
-        }
-    }
-    fld.correctLocalBoundaryConditions();
+    //// Do not check assignable. TBD: merge into expr.evaluate helper.
+    //auto& fld = *this;
+    //
+    //Expression::ListRefWrap<Type> wfld
+    //(
+    //    fld.internalFieldRef(),
+    //    expr.internalField()
+    //);
+    //
+    //// Do boundary field
+    //auto& bfld = fld.boundaryFieldRef();
+    //const label n = bfld.size();
+    //for (label i = 0; i < n; ++i)
+    //{
+    //    auto& pfld = bfld[i];
+    //
+    //    const auto* vp = isA<List<Type>>(pfld);
+    //    if (vp)
+    //    {
+    //        // Get patch expression
+    //        const auto patchExpr = expr.patchField(i);
+    //
+    //        patchExpr.evaluate(const_cast<List<Type>&>(*vp));
+    //    }
+    //}
+    //fld.correctLocalBoundaryConditions();
+    expr.evaluate(*this, true);
 }
 
 

@@ -53,6 +53,8 @@ SourceFiles
 #include "lduPrimitiveMeshAssembly.H"
 #include "lduMesh.H"
 
+#include "fvMatrixExpression.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -741,6 +743,47 @@ public:
             Ostream&,
             const fvMatrix<Type>&
         );
+
+
+    // Expression templates
+
+        //- Construct given a field to solve for and expressions for
+        //- all the components
+        template<typename E>
+        fvMatrix
+        (
+            const GeometricField<Type, fvPatchField, volMesh>& psi,
+            const Expression::fvMatrixExpression
+            <
+                E,
+                typename E::DiagExpr,
+                typename E::UpperExpr,
+                typename E::LowerExpr,
+                typename E::FaceFluxExpr,
+                typename E::SourceExpr
+           >& expr
+        );
+
+        //- Wrap value as expression
+        typename Expression::fvMatrixConstRefWrap
+        <
+            fvMatrix<Type>
+        > expr() const;
+
+        //- Assign values from expression
+        template<typename E>
+        void operator=
+        (
+            const Expression::fvMatrixExpression
+            <
+                E,
+                typename E::DiagExpr,
+                typename E::UpperExpr,
+                typename E::LowerExpr,
+                typename E::FaceFluxExpr,
+                typename E::SourceExpr
+           >& expr
+       );
 };
 
 

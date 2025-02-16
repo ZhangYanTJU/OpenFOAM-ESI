@@ -104,13 +104,13 @@ public:
             hasFaceFluxCorrection_(hasFaceFluxCorrection),
             dimensions_(dimensions)
         {
-            Pout<< "fvMatrixExpression :" << nl
-                << "    E        : "
-                << boost::core::demangle(typeid(E).name())
-                << nl
-                << "    DiagExpr : "
-                << boost::core::demangle(typeid(DiagExpr).name())
-                << endl;
+            //Pout<< "fvMatrixExpression :" << nl
+            //    << "    E        : "
+            //    << boost::core::demangle(typeid(E).name())
+            //    << nl
+            //    << "    DiagExpr : "
+            //    << boost::core::demangle(typeid(DiagExpr).name())
+            //    << endl;
         }
 
 
@@ -635,7 +635,7 @@ public:
 
         FaceFluxExpr faceFluxCorrection() const
         {
-            return *const_cast<this_type&>(elems_).faceFluxCorrectionPtr();
+            return *elems_.faceFluxCorrectionPtr();
         }
 };
 
@@ -735,11 +735,11 @@ public:
         u_(u),
         v_(v)
     {
-        Pout<< "fvm_add :" << nl
-            << "    u_ : " << boost::core::demangle(typeid(u_).name())
-            << nl
-            << "    v_ : " << boost::core::demangle(typeid(v_).name())
-            << endl;
+        //Pout<< "fvm_add :" << nl
+        //    << "    u_ : " << boost::core::demangle(typeid(u_).name())
+        //    << nl
+        //    << "    v_ : " << boost::core::demangle(typeid(v_).name())
+        //    << endl;
     }
 
 
@@ -1186,13 +1186,14 @@ public:
         diag_(diag),
         source_(source)
     {
-        Pout<< "fvMatrixInternal :" << nl
-            << "    diag_  : " << boost::core::demangle(typeid(diag_).name())
-            << nl
-            << "    source_: " << boost::core::demangle(typeid(source_).name())
-            << nl
-            << "    *this  : " << boost::core::demangle(typeid(*this).name())
-            << endl;
+        //Pout<< "fvMatrixInternal :" << nl
+        //    << "    diag_  : " << boost::core::demangle(typeid(diag_).name())
+        //    << nl
+        //    << "    source_: "
+        //    << boost::core::demangle(typeid(source_).name())
+        //    << nl
+        //    << "    *this  : " << boost::core::demangle(typeid(*this).name())
+        //    << endl;
     }
 
     // Construct from component expressions

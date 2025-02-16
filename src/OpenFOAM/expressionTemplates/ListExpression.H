@@ -69,9 +69,6 @@ public:
     template<class Container>
     Container& evaluate(Container& lst) const
     {
-        //Pout<< "in ListExpression evaluate with Container:" << lst.size()
-        //    << endl;
-
         lst.resize_nocopy(this->size());
         for (label i = 0; i < lst.size(); ++i)
         {
@@ -166,10 +163,7 @@ public:
     ListRefWrap(ListRefWrap<T>& w)
     :
         elems_(w.elems_)
-    {
-        //Pout<< "    constructed copy listRefWrap for size:" << elems_.size()
-        //    << endl;
-    }
+    {}
 
     //- Move construct
     ListRefWrap(ListRefWrap<T>&& elems)
@@ -185,9 +179,6 @@ public:
         elems_(elems)
     {
         elems_.resize_nocopy(size);
-
-        //Pout<< "    ListRefWrap : constructed from List:"
-        //    << " listRefWrap for size:" << elems_.size() << endl;
     }
 
     // Construct from ListExpression, forcing its evaluation.
@@ -200,9 +191,6 @@ public:
     :
         elems_(elems)
     {
-        //Pout<< "    ListRefWrap : constructed from expression size:"
-        //    << expr.size() << endl;
-
         expr.evaluate(elems_);
 
     }
@@ -272,10 +260,7 @@ public:
     ListConstRefWrap(const List<T>& elems)
     :
         elems_(elems)
-    {
-        //Pout<< "    ListConstRefWrap :"
-        //    << " constructed with elems_.size:" << elems_.size() << endl;
-    }
+    {}
 
     // returns the underlying data
     const List<T>& data() const
@@ -290,6 +275,49 @@ public:
     label size() const
     {
         return elems_.size();
+    }
+};
+
+
+// Wrap of tmp to List
+// ~~~~~~~~~~~~~~~~~~~
+
+template<class T>
+class ListConstTmpWrap
+:
+    public ListExpression<ListConstTmpWrap<T>, typename T::value_type>
+{
+    const tmp<T> elems_;
+
+public:
+
+    //- Have expressions refer to this to avoid too many tmp's referring
+    //  to the same object.
+    static constexpr bool is_leaf = true;
+
+    typedef typename T::value_type value_type;
+
+    // Construct from components
+    ListConstTmpWrap(const tmp<T>& elems)
+    :
+        elems_(elems)
+    {}
+
+    // returns the underlying data
+    const T& data() const
+    {
+        return elems_();
+    }
+
+    value_type operator[](const label i) const
+    {
+        // Redirection for every access. Slow?
+        return elems_()[i];
+    }
+
+    label size() const
+    {
+        return elems_().size();
     }
 };
 
@@ -545,20 +573,14 @@ public:
     :
         size_(size),
         val_(val)
-    {
-        //Pout<< "    constantListWrap : constructed from size:"
-        //    << size_ << " value:" << val_ << endl;
-    }
+    {}
 
     // construct from components
     constantListWrap(const label size, const dimensioned<T>& val)
     :
         size_(size),
         val_(val.value())
-    {
-        //Pout<< "    constantListWrap : constructed from size:"
-        //    << size_ << " dimensionedvalue:" << val_ << endl;
-    }
+    {}
 
     T operator[](const label i) const
     {
@@ -566,8 +588,6 @@ public:
     }
     label size() const
     {
-        //Pout<< "    constantListWrap : returning size:"
-        //    << size_ << " for dimensionedvalue:" << val_ << endl;
         return size_;
     }
 };

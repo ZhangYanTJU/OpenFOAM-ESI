@@ -126,7 +126,7 @@ public:
 
     //- Helper to evaluate a GeometricField
     template<class GeoField>
-    GeoField& evaluate(GeoField& fld) const
+    GeoField& evaluate(GeoField& fld, const bool force = false) const
     {
         fld.dimensions() = this->dimensions();
         fld.oriented() = this->oriented();
@@ -141,13 +141,18 @@ public:
         for (label i = 0; i < n; ++i)
         {
             auto& pfld = bfld[i];
-
-            // Get patch expression
-            const auto patchExpr = this->patchField(i);
-
-            if constexpr (std::is_same_v<pointMesh, typename GeoField::Mesh>)
+            if (force || pfld.assignable())
             {
-                if (pfld.assignable())
+                // Get patch expression
+                const auto patchExpr = this->patchField(i);
+
+                // Note: check can be removed once assignable also on
+                //       pointPatchFields. TBD.
+                if constexpr
+                (
+                    std::is_same_v<pointMesh,
+                    typename GeoField::Mesh>
+                )
                 {
                     const auto* vp = isA<Field<Type>>(pfld);
                     if (vp)
@@ -155,10 +160,7 @@ public:
                         patchExpr.evaluate(const_cast<Field<Type>&>(*vp));
                     }
                 }
-            }
-            else
-            {
-                if (pfld.assignable())
+                else
                 {
                     patchExpr.evaluate(pfld);
                 }
@@ -442,6 +444,98 @@ public:
     {
         //return elems_.boundaryField()[i];
         const auto& fld = elems_.boundaryField()[i];
+        if constexpr
+        (
+            std::is_same_v<pointMesh, typename GeoField::Mesh>
+        )
+        {
+            const auto* vp = isA<Field<value_type>>(fld);
+            if (vp)
+            {
+                return wrapType(*vp);
+            }
+            else
+            {
+                return wrapType(List<value_type>::null());
+            }
+        }
+        else
+        {
+            return wrapType(fld);
+        }
+
+    }
+};
+
+
+template<class GeoField>
+class GeometricFieldConstTmpWrap
+:
+    public GeometricFieldExpression
+    <
+        GeometricFieldConstTmpWrap<GeoField>,
+        ListConstRefWrap<typename GeoField::value_type>,
+        typename GeoField::value_type
+    >
+{
+public:
+
+    //- Have expressions refer to this to avoid too many tmp's referring
+    //  to the same object.
+    static constexpr bool is_leaf = true;
+
+    //- The GeometricField type
+    typedef GeoField this_type;
+
+    //- Type to return for internal field
+    typedef typename GeoField::value_type value_type;
+
+    //- Type to return for patchField
+    typedef ListConstRefWrap<value_type> wrapType;
+
+
+private:
+
+    const tmp<this_type> elems_;
+
+
+public:
+
+    // Construct from components
+    GeometricFieldConstTmpWrap(const tmp<this_type>& elems)
+    :
+        GeometricFieldExpression
+        <
+            GeometricFieldConstTmpWrap<GeoField>,
+            wrapType,
+            value_type
+        >
+        (
+            elems().dimensions(),
+            elems().oriented()
+        ),
+        elems_(elems)
+    {}
+
+    value_type operator[](const label i) const
+    {
+        // Redirection for every access. Slow?
+        return elems_()[i];
+    }
+
+    label size() const
+    {
+        return elems_().size();
+    }
+
+    wrapType internalField() const
+    {
+        return elems_().internalField();
+    }
+
+    wrapType patchField(const label i) const
+    {
+        const auto& fld = elems_().boundaryField()[i];
         if constexpr
         (
             std::is_same_v<pointMesh, typename GeoField::Mesh>
@@ -1118,8 +1212,8 @@ public:
 //    }
 //};
 
-/*
 
+/*
 // Some fvm functions using expressions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
