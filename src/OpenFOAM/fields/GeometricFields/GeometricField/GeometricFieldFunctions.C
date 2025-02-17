@@ -429,7 +429,8 @@ cmptAv(const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1)
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const GeometricField<Type, PatchField, GeoMesh>& f1                        \
+    const GeometricField<Type, PatchField, GeoMesh>& f1,                       \
+    const label comm                                                           \
 )                                                                              \
 {                                                                              \
     return dimensioned<ReturnType>                                             \
@@ -443,7 +444,9 @@ dimensioned<ReturnType> Func                                                   \
                 Foam::Func(f1.primitiveField()),                               \
                 Foam::Func(f1.boundaryField())                                 \
             ),                                                                 \
-            BinaryOp<ReturnType>()                                             \
+            BinaryOp<ReturnType>(),                                            \
+            UPstream::msgType(),                                               \
+            comm                                                               \
         )                                                                      \
     );                                                                         \
 }                                                                              \
@@ -451,13 +454,15 @@ dimensioned<ReturnType> Func                                                   \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1                  \
+    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1,                 \
+    const label comm                                                           \
 )                                                                              \
 {                                                                              \
-    dimensioned<ReturnType> res = Func(tf1());                                 \
+    dimensioned<ReturnType> res = Func(tf1(), comm);                           \
     tf1.clear();                                                               \
     return res;                                                                \
 }
+
 
 UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(Type, max, maxOp)
 UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(Type, min, minOp)
@@ -473,19 +478,21 @@ UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(scalarMinMax, minMaxMag, plusOp)
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const GeometricField<Type, PatchField, GeoMesh>& f1                        \
+    const GeometricField<Type, PatchField, GeoMesh>& f1,                       \
+    const label comm                                                           \
 )                                                                              \
 {                                                                              \
-    return Func(f1.internalField());                                           \
+    return Func(f1.internalField(), comm);                                     \
 }                                                                              \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1                  \
+    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1,                 \
+    const label comm                                                           \
 )                                                                              \
 {                                                                              \
-    auto result = Func(tf1());                                                 \
+    auto result = Func(tf1(), comm);                                           \
     tf1.clear();                                                               \
     return result;                                                             \
 }

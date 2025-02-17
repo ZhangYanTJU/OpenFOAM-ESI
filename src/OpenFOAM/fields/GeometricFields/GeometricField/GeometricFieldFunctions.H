@@ -225,13 +225,15 @@ cmptAv(const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1);
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const GeometricField<Type, PatchField, GeoMesh>& f1                        \
+    const GeometricField<Type, PatchField, GeoMesh>& f1,                       \
+    const label comm = UPstream::worldComm                                     \
 );                                                                             \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1                  \
+    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1,                 \
+    const label comm = UPstream::worldComm                                     \
 );
 
 UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(Type, max, maxOp)
@@ -248,13 +250,15 @@ UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(scalarMinMax, minMaxMag, plusOp)
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const GeometricField<Type, PatchField, GeoMesh>& f1                        \
+    const GeometricField<Type, PatchField, GeoMesh>& f1,                       \
+    const label comm = UPstream::worldComm                                     \
 );                                                                             \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1                  \
+    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1,                 \
+    const label comm = UPstream::worldComm                                     \
 );
 
 UNARY_REDUCTION_FUNCTION(Type, sum)

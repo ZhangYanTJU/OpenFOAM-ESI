@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -906,8 +906,9 @@ public:
         //- otherwise the standard parameters by returning the field name
         word select(bool final) const;
 
-        //- Helper function to write the min and max to an Ostream
-        void writeMinMax(Ostream& os) const;
+        //- Helper function to write the min and max to an Ostream.
+        //  Uses the specified communicator for reductions
+        void writeMinMax(Ostream& os, label comm = UPstream::worldComm) const;
 
 
     // Member Function *this Operators
