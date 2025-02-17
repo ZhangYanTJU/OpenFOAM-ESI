@@ -1052,7 +1052,7 @@ void Foam::globalIndex::gatherInplaceOp
     {
         // Gather sizes - only needed on master
         globalIndex(globalIndex::gatherOnly{}, fld.size(), comm)
-            .gather(fld, tag, commsType, comm);
+            .gatherInplace(fld, tag, commsType, comm);
     }
     // Serial: (no-op)
 }
