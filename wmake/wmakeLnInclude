@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2019-2023 OpenCFD Ltd.
+#     Copyright (C) 2019-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -25,6 +25,10 @@
 #     Header files    : .h .H .hh  .hpp .hxx
 #     Source files    : .c .C .cc  .cpp .cxx
 #     Template files  : -- .C .tcc .tpp .txx
+#
+# Environment
+#     WM_COMPILE_CONTROL
+#     - detects lnInclude-extra and treats like the '-extra' option
 #
 # Note
 #     OpenFOAM has historically used the '.C' extension for both compiled
@@ -47,7 +51,8 @@ options:
   -f | -force       Force remove of existing lnInclude/ before recreating
   -u | -update      Update existing lnInclude directories
   -s | -silent      Silent mode (do not echo command)
-  -extra            Include additional files (eg, source files)
+  -extra            Also include all source files in lnInclude/
+  -no-extra         Do not include all source files in lnInclude/ [default]
   -pwd              Locate root directory containing Make/ directory
   -help             Print the usage
 
@@ -82,6 +87,9 @@ link_option="-s"
 
 unset opt_extra opt_force opt_pwd opt_update
 
+# Handle control flags
+case "$WM_COMPILE_CONTROL" in (*lnInclude-extra*) opt_extra=true ;; esac
+
 while [ "$#" -gt 0 ]
 do
     case "$1" in
@@ -93,6 +101,9 @@ do
             ;;
         -extra)
             opt_extra=true      # Include additional files
+            ;;
+        -no-extra)
+            unset opt_extra
             ;;
         -f | -force)
             opt_force=true

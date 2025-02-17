@@ -96,6 +96,7 @@ export WM_COMPILE_OPTION=Opt
 #   +strict : more deprecation warnings (may generate *many* warnings)
 #   ccache=... : ccache command (unquoted, single/double or <> quoted)
 #   version=... : compiler suffix (eg, version=11 -> gcc-11)
+#   lnInclude-extra : add '-extra' option for wmakeLnInclude
 #export WM_COMPILE_CONTROL="+strict"
 
 # [WM_MPLIB] - MPI implementation:

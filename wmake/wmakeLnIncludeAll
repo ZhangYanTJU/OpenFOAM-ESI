@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2018-2023 OpenCFD Ltd.
+#     Copyright (C) 2018-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -35,7 +35,8 @@ options:
   -u | -update      Update existing lnInclude directories
   -j                Use all local cores/hyperthreads
   -jN | -j N        Use N cores/hyperthreads
-  -extra            Include additional files (eg, source files)
+  -extra            Also include all source files in lnInclude/
+  -no-extra         Do not include all source files in lnInclude/ [default]
   -help             Display short help and exit
 
 Find directories with a 'Make/files' containing a 'LIB =' directive
@@ -80,6 +81,9 @@ do
             ;;
         -extra)
             opt_extra='-extra'
+            ;;
+        -no-extra)
+            opt_extra='-no-extra'
             ;;
         -f | -force)
             opt_force='-force'
