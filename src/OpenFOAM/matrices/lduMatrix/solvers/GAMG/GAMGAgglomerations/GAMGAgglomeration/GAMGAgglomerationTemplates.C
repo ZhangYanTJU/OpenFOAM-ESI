@@ -69,6 +69,9 @@ void Foam::GAMGAgglomeration::restrictField
             << abort(FatalError);
     }
 
+    // By processor agglomeration the cf might be left zero size. Make sure
+    // it is large enough.
+    cf.resize_nocopy(nCells_[fineLevelIndex]);
     restrictField(cf, ff, fineToCoarse);
 
     const label coarseLevelIndex = fineLevelIndex+1;
