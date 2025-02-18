@@ -1084,6 +1084,9 @@ public:
 
     // Expression templates
 
+        //- Have unique tag
+        using is_GeometricField = void;
+
         //- Construct from IOobject and value expression. Supports
         //  read_if_present
         template<typename E>

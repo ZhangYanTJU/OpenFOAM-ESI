@@ -368,7 +368,22 @@ public:
         //- Wrap value as expression
         auto expr() const
         {
-            return Expression::GeometricFieldConstTmpWrap<T>(*this);
+            // Add 'using is_GeometricField = void' to GeometricField
+            // Add 'using is_List = void' to List
+
+            //if constexpr (std::is_void_v<decltype(typename T::is_GeometricField)>)
+            {
+                return Expression::GeometricFieldConstTmpWrap<T>(*this);
+            }
+            //else if constexpr (std::is_void_v(decltype(T::is_List)))
+            //{
+            //    return Expression::ListConstTmpWrap<T>(*this);
+            //}
+            //else
+            //{
+            //    //static_assert("XXX",YYY);
+            //    return;
+            //}
         }
 };
 

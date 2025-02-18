@@ -65,7 +65,6 @@ typedef List<bool> boolList;        //!< A List of bools
 typedef List<char> charList;        //!< A List of chars
 typedef List<label> labelList;      //!< A List of labels
 
-
 /*---------------------------------------------------------------------------*\
                            Class List Declaration
 \*---------------------------------------------------------------------------*/
@@ -411,6 +410,44 @@ public:
         //- Same as push_uniq()
         FOAM_DEPRECATED_FOR(2022-10, "push_uniq()")
         label appendUniq(const T& val) { return this->push_uniq(val); }
+
+
+        //- Copy construct from SLList
+        explicit List(const SLList<T>& list);
+
+        //- Copy assign from SLList in linear time
+        void operator=(const SLList<T>& list);
+
+
+    // Expression templates
+
+        //- Construct from value expression
+        template<typename E>
+        explicit List
+        (
+            const Expression::ListExpression
+            <
+                E,
+                typename E::value_type
+            >& expr
+        )
+        {
+            expr.evaluate(*this);
+        }
+
+        //- Assign values from expression
+        template<typename E>
+        void operator=
+        (
+            const Expression::ListExpression
+            <
+                E,
+                typename E::value_type
+            >& expr
+        )
+        {
+            expr.evaluate(*this);
+        }
 };
 
 
