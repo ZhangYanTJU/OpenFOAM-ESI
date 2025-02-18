@@ -163,7 +163,7 @@ Foam::label Foam::processorColour::colour
 
     if (debug)
     {
-        Info<< typeName << " : coloured " << Pstream::nProcs(mesh.comm())
+        Pout<< typeName << " : coloured " << Pstream::nProcs(mesh.comm())
             << " processors with in total " << nColours << " colours" << endl;
     }
 
@@ -202,12 +202,7 @@ void Foam::processorColour::walkFront
 
                 for (label facei=fStart; facei<fEnd; facei++)
                 {
-                    const label nbr =
-                    (
-                        lPtr[facei] == celli
-                      ? uPtr[facei]
-                      : lPtr[facei]
-                    );
+                    const label nbr = uPtr[facei];
                     if (cellColour[nbr] == -1)
                     {
                         cellColour[nbr] = colouri;
@@ -222,12 +217,7 @@ void Foam::processorColour::walkFront
                 for (label i=fStart; i<fEnd; i++)
                 {
                     label facei = losortAddrPtr[i];
-                    const label nbr =
-                    (
-                        lPtr[facei] == celli
-                      ? uPtr[facei]
-                      : lPtr[facei]
-                    );
+                    const label nbr = lPtr[facei];
                     if (cellColour[nbr] == -1)
                     {
                         cellColour[nbr] = colouri;
@@ -235,7 +225,6 @@ void Foam::processorColour::walkFront
                     }
                 }
             }
-
         }
 
         if (newFront.empty())
