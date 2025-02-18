@@ -3013,6 +3013,7 @@ Foam::fvMatrix<Type>::fvMatrix
     useImplicit_(false),
     lduAssemblyName_(),
     nMatrix_(0),
+    dimensions_(expr.dimensions()),
     source_(psi.size(), Zero),
     internalCoeffs_(psi.mesh().boundary().size()),
     boundaryCoeffs_(psi.mesh().boundary().size())

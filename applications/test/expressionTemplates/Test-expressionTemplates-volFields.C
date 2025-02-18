@@ -58,23 +58,39 @@ int main(int argc, char *argv[])
         mesh
     );
 
-    volScalarField result
-    (
-//        IOobject
-//        (
-//            "result",
-//            runTime.timeName(),
-//            mesh.thisDb(),
-//            IOobject::NO_READ,
-//            IOobject::NO_WRITE,
-//            IOobject::NO_REGISTER
-//        ),
-        "result",
-        mesh,
-        p.expr() + Expression::sqr(p.expr())
-    );
+    // Expresions of volFields
+    {
+        volScalarField result
+        (
+            //IOobject
+            //(
+            //    "result",
+            //    runTime.timeName(),
+            //    mesh.thisDb(),
+            //    IOobject::NO_READ,
+            //    IOobject::NO_WRITE,
+            //    IOobject::NO_REGISTER
+            //),
+            "result",
+            mesh,
+            p.expr() + Expression::sqr(p.expr())
+        );
+        DebugVar(result);
+    }
 
-    DebugVar(result);
+    // Expressions of fvMatrix
+    {
+        tmp<fvMatrix<scalar>> tm0(fvm::laplacian(p));
+        const fvMatrix<scalar>& m0 = tm0();
+        DebugVar(m0.dimensions());
+
+        tmp<fvMatrix<scalar>> tm1(fvm::laplacian(p));
+        const fvMatrix<scalar>& m1 = tm1();
+        DebugVar(m1.dimensions());
+
+        fvMatrix<scalar> m2(p, m0.expr() + m1.expr());
+        DebugVar(m2.dimensions());
+    }
 
     return 0;
 }
