@@ -694,7 +694,7 @@ public:                                                                        \
             value_type                                                         \
         >                                                                      \
         (                                                                      \
-            u.dimensions(),                                                    \
+            BaseFunc(u.dimensions()),                                          \
             u.oriented()                                                       \
         ),                                                                     \
         u_(u)                                                                  \

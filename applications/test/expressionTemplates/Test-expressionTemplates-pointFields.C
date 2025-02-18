@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 M. Janssens
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    volPointInterpolationTest
+    Test-expressionTemplates
 
 \*---------------------------------------------------------------------------*/
 
@@ -46,6 +46,16 @@ int main(int argc, char *argv[])
     #include "createPolyMesh.H"
 
     const pointMesh& pMesh = pointMesh::New(mesh);
+
+    // Field, dimensionedScalar as List expression
+    {
+        scalarField vals({1.0, 2.0, 3.0});
+        dimensionedScalar d(dimless, 4.0);
+
+        scalarField result(d.expr(vals.size())*vals.expr());
+
+        Pout<< "result:" << result << endl;
+    }
 
     Info<< "Reading field p\n" << endl;
     pointScalarField p
@@ -73,12 +83,28 @@ int main(int argc, char *argv[])
             IOobject::NO_REGISTER
         ),
         pMesh,
-        p.expr() + p.expr()
+        dimensionedScalar("zero", Foam::sqr(p().dimensions()), 0)
     );
 
-    result == p.expr() + p.expr();
+    // Construct value + dimensions with correct sizing
+    const auto oneField(dimensionedScalar(dimless, 1.0).expr(p));
+
+    // Make expression
+    auto expression = oneField * p.expr() + p.expr();
+
+    // Combine expressions
+    auto newExpression = sqr(expression);
+
+    // Assign values
+    result = newExpression;
 
     DebugVar(result);
+
+
+    // Construct from expression
+    pointScalarField result2("result2", pMesh, sqrt(p.expr()));
+
+    DebugVar(result2);
 
     return 0;
 }
