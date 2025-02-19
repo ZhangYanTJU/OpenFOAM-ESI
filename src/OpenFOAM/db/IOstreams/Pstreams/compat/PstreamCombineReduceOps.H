@@ -20,6 +20,8 @@ Description
 #ifndef FoamCompat_PstreamCombineReduceOps_H
 #define FoamCompat_PstreamCombineReduceOps_H
 
+#warning Deprecated header
+
 #include "Pstream.H"
 #include "ops.H"
 
@@ -32,6 +34,7 @@ namespace Foam
 
 //- Compatibility wrapper for Pstream::combineReduce
 template<class T, class CombineOp>
+FOAM_DEPRECATED_FOR(2022-08, "Pstream::combineReduce()")
 void combineReduce
 (
     T& value,

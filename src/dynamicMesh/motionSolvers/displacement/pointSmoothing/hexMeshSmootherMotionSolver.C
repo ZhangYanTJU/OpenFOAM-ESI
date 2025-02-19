@@ -455,7 +455,7 @@ Foam::labelList Foam::hexMeshSmootherMotionSolver::countZeroOrPos
     const labelList& elems
 ) const
 {
-    labelList n(size, 0);
+    labelList n(size, Zero);
     for (const label elem : elems)
     {
         if (elem >= 0)
@@ -463,8 +463,8 @@ Foam::labelList Foam::hexMeshSmootherMotionSolver::countZeroOrPos
             n[elem]++;
         }
     }
-    Pstream::listCombineGather(n, plusEqOp<label>());
-    Pstream::broadcast(n);
+
+    Pstream::listCombineReduce(n, plusEqOp<label>());
     return n;
 }
 

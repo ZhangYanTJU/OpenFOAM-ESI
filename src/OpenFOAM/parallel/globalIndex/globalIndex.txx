@@ -789,7 +789,7 @@ void Foam::globalIndex::mpiGather
     {
         case 'b':   // Byte-wise
         {
-            UPstream::gather
+            UPstream::mpiGatherv
             (
                 sendData.cdata_bytes(),
                 sendData.size_bytes(),
@@ -804,7 +804,7 @@ void Foam::globalIndex::mpiGather
         {
             typedef scalar cmptType;
 
-            UPstream::gather
+            UPstream::mpiGatherv
             (
                 reinterpret_cast<const cmptType*>(sendData.cdata()),
                 (sendData.size()*nCmpts),
@@ -819,7 +819,7 @@ void Foam::globalIndex::mpiGather
         {
             typedef label cmptType;
 
-            UPstream::gather
+            UPstream::mpiGatherv
             (
                 reinterpret_cast<const cmptType*>(sendData.cdata()),
                 (sendData.size()*nCmpts),

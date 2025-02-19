@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,12 +32,11 @@ Description
 
 SourceFiles
     Pstream.C
-    PstreamBroadcast.C
-    PstreamGather.C
-    PstreamCombineGather.C
-    PstreamGatherList.C
-    PstreamExchangeConsensus.C
-    PstreamExchange.C
+    PstreamBroadcast.txx
+    PstreamGather.txx
+    PstreamGatherList.txx
+    PstreamExchange.txx
+    PstreamExchangeConsensus.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -125,14 +124,18 @@ public:
         );
 
 
-    // Gather
+    // Gather/scatter : single value
 
         //- Gather (reduce) data, applying \c bop to combine \c value
         //- from different processors. The basis for Foam::reduce().
-        //  Uses linear/tree communication (with parallel guard).
-        template<class T, class BinaryOp>
+        //  A no-op for non-parallel.
+        //
+        //  \tparam InplaceMode indicates that the binary operator
+        //      modifies values in-place, not using assignment
+        template<class T, class BinaryOp, bool InplaceMode=false>
         static void gather
         (
+            //! [in,out] the result is only reliable on rank=0
             T& value,
             const BinaryOp& bop,
             const int tag = UPstream::msgType(),
@@ -168,17 +171,13 @@ public:
         );
 
 
-    // Gather/combine data
-    // Inplace combine values from processors.
-    // (Uses construct from Istream instead of \c << operator)
+    // Inplace combine (gather) : single value
 
-        //- Gather data, applying \c cop to inplace combine \c value
-        //- from different processors.
-        //  Uses linear/tree communication (with parallel guard).
+        //- Forwards to Pstream::gather with an \em in-place \c cop
         template<class T, class CombineOp>
         static void combineGather
         (
-            //! [in,out]
+            //! [in,out] the result is only reliable on rank=0
             T& value,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -188,13 +187,10 @@ public:
         //- Reduce inplace (cf. MPI Allreduce)
         //- applying \c cop to inplace combine \c value
         //- from different processors.
-        //- After completion all processors have the same data.
-        //  Uses linear/tree communication.
-        //  Wraps combineGather/broadcast (may change in the future).
         template<class T, class CombineOp>
         static void combineReduce
         (
-            //! [in,out]
+            //! [in,out] the result is consistent on all ranks
             T& value,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -205,37 +201,65 @@ public:
         template<class T, class CombineOp>
         static void combineAllGather
         (
+            //! [in,out] the result is consistent on all ranks
             T& value,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
         )
         {
-            Pstream::combineReduce(value, cop, tag, comm);
+            Pstream::listCombineReduce(value, cop, tag, comm);
         }
 
 
-    // Combine variants working on whole List at a time.
+    // Gather/combine variants working on entire List
 
-        //- Combines List elements.
-        //  Uses linear/tree communication (with parallel guard).
+        //- Gather (reduce) list elements,
+        //- applying \c bop to each list element
+        //
+        //  \tparam InplaceMode indicates that the binary operator
+        //      modifies values in-place, not using assignment
+        template<class T, class BinaryOp, bool InplaceMode=false>
+        static void listGather
+        (
+            //! [in,out] the result is only reliable on rank=0
+            UList<T>& values,
+            const BinaryOp& bop,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm
+        );
+
+        //- Forwards to Pstream::listGather with an \em in-place \c cop
         template<class T, class CombineOp>
         static void listCombineGather
         (
-            //! [in,out]
+            //! [in,out] the result is only reliable on rank=0
             UList<T>& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
         );
 
-        //- Combines List elements.
-        //- After completion all processors have the same data.
-        //  Uses linear/tree communication (with parallel guard).
+        //- Gather (reduce) list elements,
+        //- applying \c bop to combine each list element.
+        //
+        //  \tparam InplaceMode indicates that the binary operator
+        //      modifies values in-place, not using assignment
+        template<class T, class BinaryOp, bool InplaceMode=false>
+        static void listGatherReduce
+        (
+            //! [in,out] the result is consistent on all ranks
+            List<T>& values,
+            const BinaryOp& bop,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm
+        );
+
+        //- Forwards to Pstream::listGatherReduce with an \em in-place \c cop
         template<class T, class CombineOp>
         static void listCombineReduce
         (
-            //! [in,out] - List (not UList) due to broadcast()
+            //! [in,out] the result is consistent on all ranks
             List<T>& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -246,7 +270,7 @@ public:
         template<class T, class CombineOp>
         static void listCombineAllGather
         (
-            //! [in,out] - List (not UList) due to broadcast()
+            //! [in,out] the result is consistent on all ranks
             List<T>& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -257,14 +281,28 @@ public:
         }
 
 
-    // Combine variants working on whole map at a time.
-    // Container needs iterators, find() and insert methods defined.
+    // Gather/combine variants working on Map/HashTable containers
 
-        //- Combine Map elements.
-        //  Uses linear/tree communication (with parallel guard).
+        //- Gather (reduce) Map/HashTable containers,
+        //- applying \c bop to combine entries from different processors.
+        //
+        //  \tparam InplaceMode indicates that the binary operator
+        //      modifies values in-place, not using assignment
+        template<class Container, class BinaryOp, bool InplaceMode=false>
+        static void mapGather
+        (
+            //! [in,out] the result is only reliable on rank=0
+            Container& values,
+            const BinaryOp& bop,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm
+        );
+
+        //- Forwards to Pstream::mapGather with an \em in-place \c cop
         template<class Container, class CombineOp>
         static void mapCombineGather
         (
+            //! [in,out] the result is only reliable on rank=0
             Container& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -272,15 +310,26 @@ public:
         );
 
         //- Reduce inplace (cf. MPI Allreduce)
-        //- applying \c cop to inplace combine map \c values
+        //- applying \c bop to combine map \c values
         //- from different processors.
         //- After completion all processors have the same data.
-        //  Uses the specified communication schedule.
+        //
         //  Wraps mapCombineGather/broadcast (may change in the future).
-        //- After completion all processors have the same data.
+        template<class Container, class BinaryOp, bool InplaceMode=false>
+        static void mapGatherReduce
+        (
+            //! [in,out] the result is consistent on all ranks
+            Container& values,
+            const BinaryOp& bop,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm
+        );
+
+        //- Forwards to Pstream::mapGatherReduce with an \em in-place \c cop
         template<class Container, class CombineOp>
         static void mapCombineReduce
         (
+            //! [in,out] the result is consistent on all ranks
             Container& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -291,6 +340,7 @@ public:
         template<class Container, class CombineOp>
         static void mapCombineAllGather
         (
+            //! [in,out] the result is consistent on all ranks
             Container& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -301,24 +351,38 @@ public:
         }
 
 
+private:
+
+    // Private implementations
+
+        //- Gather data, but keep individual values separate.
+        template<class T>
+        static void gatherList_tree_algorithm
+        (
+            //! [in,out]
+            UList<T>& values,
+            const int tag,
+            const label communicator
+        );
+
+        //- Inverse of gatherList_tree_algorithm
+        template<class T>
+        static void scatterList_tree_algorithm
+        (
+            //! [in,out]
+            UList<T>& values,
+            const int tag,
+            const label communicator
+        );
+
+
+public:
+
     // Gather/scatter keeping the individual processor data separate.
     // The values is a List of size UPstream::nProcs() where
     // values[UPstream::myProcNo()] is the data for the current processor.
 
         //- Gather data, but keep individual values separate.
-        //- Uses the specified communication schedule.
-        template<class T>
-        static void gatherList
-        (
-            const UPstream::commsStructList& comms,
-            //! [in,out]
-            UList<T>& values,
-            const int tag,
-            const label comm
-        );
-
-        //- Gather data, but keep individual values separate.
-        //- Uses linear/tree communication.
         template<class T>
         static void gatherList
         (
@@ -329,7 +393,7 @@ public:
         );
 
         //- Gather data, but keep individual values separate.
-        //- Uses MPI_Allgather or manual linear/tree communication.
+        //- Uses MPI_Allgather or manual communication.
         //  After completion all processors have the same data.
         //  Wraps gatherList/scatterList (may change in the future).
         template<class T>
@@ -345,21 +409,10 @@ public:
     // Scatter
 
         //- Inverse of gatherList.
-        //- Uses the specified communication schedule.
         template<class T>
         static void scatterList
         (
-            const UPstream::commsStructList& comms,
-            UList<T>& values,
-            const int tag,
-            const label comm
-        );
-
-        //- Inverse of gatherList.
-        //- Uses linear/tree communication.
-        template<class T>
-        static void scatterList
-        (
+            //! [in,out]
             UList<T>& values,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
@@ -607,11 +660,10 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "PstreamBroadcast.C"
-    #include "PstreamGather.C"
-    #include "PstreamCombineGather.C"
-    #include "PstreamGatherList.C"
-    #include "PstreamExchange.C"
+    #include "PstreamBroadcast.txx"
+    #include "PstreamGather.txx"
+    #include "PstreamGatherList.txx"
+    #include "PstreamExchange.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

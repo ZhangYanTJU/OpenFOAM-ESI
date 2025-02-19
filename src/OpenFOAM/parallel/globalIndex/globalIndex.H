@@ -37,7 +37,7 @@ Description
 SourceFiles
     globalIndex.C
     globalIndexI.H
-    globalIndexTemplates.C
+    globalIndex.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -1098,7 +1098,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "globalIndexTemplates.C"
+    #include "globalIndex.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +32,7 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
+#include "argList.H"
 #include "labelPair.H"
 #include "Tuple2.H"
 #include "label.H"
@@ -102,8 +103,12 @@ void printTuple2(const Pair<word>& t)
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 // Main program:
 
-int main()
+int main(int argc, char *argv[])
 {
+    argList::noCheckProcessorDirectories();
+
+    #include "setRootCase.H"
+
     typedef Tuple2<label, scalar> indexedScalar;
 
     Info<< "Default constructed Tuple: " << indexedScalar() << nl;

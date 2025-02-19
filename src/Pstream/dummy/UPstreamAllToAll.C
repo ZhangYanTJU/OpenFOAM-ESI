@@ -34,11 +34,11 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #undef  Pstream_CommonRoutines
-#define Pstream_CommonRoutines(Native)                                        \
+#define Pstream_CommonRoutines(Type)                                          \
 void Foam::UPstream::allToAll                                                 \
 (                                                                             \
-    const UList<Native>& sendData,                                            \
-    UList<Native>& recvData,                                                  \
+    const UList<Type>& sendData,                                              \
+    UList<Type>& recvData,                                                    \
     const label comm                                                          \
 )                                                                             \
 {                                                                             \
@@ -55,11 +55,11 @@ Pstream_CommonRoutines(int64_t);
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #undef  Pstream_CommonRoutines
-#define Pstream_CommonRoutines(Native)                                        \
+#define Pstream_CommonRoutines(Type)                                          \
 void Foam::UPstream::allToAllConsensus                                        \
 (                                                                             \
-    const UList<Native>& sendData,                                            \
-    UList<Native>& recvData,                                                  \
+    const UList<Type>& sendData,                                              \
+    UList<Type>& recvData,                                                    \
     const int tag,                                                            \
     const label comm                                                          \
 )                                                                             \
@@ -68,8 +68,8 @@ void Foam::UPstream::allToAllConsensus                                        \
 }                                                                             \
 void Foam::UPstream::allToAllConsensus                                        \
 (                                                                             \
-    const Map<Native>& sendData,                                              \
-    Map<Native>& recvData,                                                    \
+    const Map<Type>& sendData,                                                \
+    Map<Type>& recvData,                                                      \
     const int tag,                                                            \
     const label comm                                                          \
 )                                                                             \
@@ -87,13 +87,13 @@ Pstream_CommonRoutines(int64_t);
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #undef  Pstream_CommonRoutines
-#define Pstream_CommonRoutines(Native)                                        \
-void Foam::UPstream::allToAll                                                 \
+#define Pstream_CommonRoutines(Type)                                          \
+void Foam::UPstream::allToAllv                                                \
 (                                                                             \
-    const Native* sendData,                                                   \
+    const Type* sendData,                                                     \
     const UList<int>& sendCounts,                                             \
     const UList<int>& sendOffsets,                                            \
-    Native* recvData,                                                         \
+    Type* recvData,                                                           \
     const UList<int>& recvCounts,                                             \
     const UList<int>& recvOffsets,                                            \
     const label comm                                                          \
@@ -106,7 +106,7 @@ void Foam::UPstream::allToAll                                                 \
             << " does not equal number to receive " << recvCounts[0]          \
             << Foam::abort(FatalError);                                       \
     }                                                                         \
-    std::memmove(recvData, sendData, recvCounts[0]*sizeof(Native));           \
+    std::memmove(recvData, sendData, recvCounts[0]*sizeof(Type));             \
 }
 
 

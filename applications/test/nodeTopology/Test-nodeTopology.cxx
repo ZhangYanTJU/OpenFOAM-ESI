@@ -59,13 +59,13 @@ int main(int argc, char *argv[])
 
     label nProcs = UPstream::nProcs(UPstream::worldComm);
 
-    List<int> interNodeProcs_fake;
+    DynamicList<int> fake_interNode_offsets;
 
     if (UPstream::parRun())
     {
         if (args.found("numProcs"))
         {
-            InfoErr<< "ignoring -np option in parallel" << nl;
+            InfoErr<< "ignoring -numProcs option in parallel" << nl;
         }
         if (args.found("cores"))
         {
@@ -78,25 +78,40 @@ int main(int argc, char *argv[])
         nProcs = args.getOrDefault<label>("numProcs", 16);
         label nCores = args.getOrDefault<label>("cores", 4);
 
+        auto& interNode_offsets = fake_interNode_offsets;
+
         if (nCores > 1 && nCores < nProcs)
         {
-            const label numNodes
-                = (nProcs/nCores) + ((nProcs % nCores) ? 1 : 0);
+            // Build the inter-node offsets
+            interNode_offsets.reserve((nProcs/nCores) + 4);
+            interNode_offsets.push_back(0);
 
-            interNodeProcs_fake.resize(numNodes);
-
-            for (label nodei = 0; nodei < numNodes; ++nodei)
+            for
+            (
+                int count = interNode_offsets.back() + nCores;
+                count < nProcs;
+                count += nCores
+            )
             {
-                interNodeProcs_fake[nodei] = nodei * nCores;
+                interNode_offsets.push_back(count);
             }
+
+            interNode_offsets.push_back(nProcs);
+        }
+        else
+        {
+            // Some fallback
+            interNode_offsets.reserve(2);
+            interNode_offsets.push_back(0);
+            interNode_offsets.push_back(nProcs);
         }
     }
 
-    const List<int>& interNodeProcs =
+    const List<int>& interNodeOffsets =
     (
         UPstream::parRun()
-      ? UPstream::procID(UPstream::commInterNode())
-      : interNodeProcs_fake
+      ? UPstream::interNode_offsets()
+      : fake_interNode_offsets
     );
 
 
@@ -111,79 +126,31 @@ int main(int argc, char *argv[])
         // Prefer left-to-right layout for large graphs
         os << indent << "rankdir=LR" << nl;
 
-        int pos = 0;
+        const label numNodes = interNodeOffsets.size()-1;
 
         // First level are the inter-node connections
-        const label parent = 0;
-        for (const auto proci : interNodeProcs)
         {
-            if (parent == proci) continue;
+            os  << indent << 0 << " -- " << token::LBRACE;
 
-            if (pos)
+            for (label nodei = 1; nodei < numNodes; ++nodei)
             {
-                os << "  ";
+                os  << ' ' << interNodeOffsets[nodei];
             }
-            else
-            {
-                os << indent;
-            }
-            os << parent << " -- " << proci;
 
-            if (++pos >= 4)  // Max 4 items per line
-            {
-                pos = 0;
-                os << nl;
-            }
+            os  << token::SPACE << token::RBRACE
+                << "  // inter-node: " << flatOutput(interNodeOffsets)
+                << nl;
         }
 
-        if (pos)
+        // Next level are the local-node connections
+        for (label nodei = 0; nodei < numNodes; ++nodei)
         {
-            pos = 0;
-            os << nl;
-        }
+            const auto firstProc = interNodeOffsets[nodei];
+            const auto lastProc = interNodeOffsets[nodei+1];
 
-        // Next level are within the nodes
-        for (label nodei = 0; nodei < interNodeProcs.size(); ++nodei)
-        {
-            pos = 0;
-
-            label firstProc = interNodeProcs[nodei];
-            const label lastProc =
-            (
-                (nodei+1 < interNodeProcs.size())
-              ? interNodeProcs[nodei+1]
-              : nProcs
-            );
-
-            os << indent << "// inter-node " << nodei
-                << " [" << firstProc
-                << ".." << lastProc-1 << "]" << nl;
-
-            for (label proci = firstProc; proci < lastProc; ++proci)
-            {
-                if (firstProc == proci) continue;
-
-                if (pos)
-                {
-                    os << "  ";
-                }
-                else
-                {
-                    os << indent;
-                }
-                os << firstProc << " -- " << proci;
-
-                if (++pos >= 4)  // Max 4 items per line
-                {
-                    pos = 0;
-                    os << nl;
-                }
-            }
-            if (pos)
-            {
-                pos = 0;
-                os << nl;
-            }
+            os  << indent << firstProc << " -- " << token::DQUOTE
+                << (firstProc+1) << ".." << (lastProc-1)
+                << token::DQUOTE << nl;
         }
 
         os.endBlock();

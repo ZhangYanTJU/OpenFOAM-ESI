@@ -616,7 +616,7 @@ void exchangeContainer
 } // namespace PstreamDetail
 } // namespace Foam
 
-#include "PstreamExchangeConsensus.C"
+#include "PstreamExchangeConsensus.txx"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
