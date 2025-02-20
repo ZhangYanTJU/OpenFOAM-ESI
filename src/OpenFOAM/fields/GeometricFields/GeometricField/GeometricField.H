@@ -1037,6 +1037,7 @@ public:
 
         //- Clamp field values (in-place) to the specified range.
         //  \deprecated(2023-01) prefer clamp_range() naming
+        FOAM_DEPRECATED_FOR(2023-01, "clamp_range() method")
         void clip(const dimensioned<MinMax<Type>>& range)
         {
             this->clamp_range(range);
@@ -1044,6 +1045,7 @@ public:
 
         //- Clamp field values (in-place) to the specified range.
         //  \deprecated(2023-01) prefer clamp_range() naming
+        FOAM_DEPRECATED_FOR(2023-01, "clamp_range() method")
         void clip(const dimensioned<Type>& lo, const dimensioned<Type>& hi)
         {
             this->clamp_range(lo.value(), hi.value());
@@ -1076,12 +1078,11 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "GeometricFieldI.H"
+#include "GeometricFieldFunctions.H"
 
 #ifdef NoRepository
     #include "GeometricField.C"
 #endif
-
-#include "GeometricFieldFunctions.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

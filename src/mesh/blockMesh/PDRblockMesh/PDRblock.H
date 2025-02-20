@@ -175,10 +175,12 @@ public:
             //  within bounds, but not aligned with a grid point.
             label findIndex(const scalar p, const scalar tol) const;
 
-            //- If out of range, return the respective min/max limits,
-            //- otherwise return the value itself.
+            //- Return value clamped to min/max limits.
             //  If the range is invalid, always return the value.
-            inline const scalar& clip(const scalar& val) const;
+            inline const scalar& clamp(const scalar& val) const;
+
+            //- Return value clamped to min/max limits.
+            const scalar& clip(const scalar& val) const { return clamp(val); }
         };
 
 

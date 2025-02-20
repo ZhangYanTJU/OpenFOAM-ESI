@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -280,7 +280,17 @@ public:
 };
 
 
-// Global Functions
+// * * * * * * * * * * * * * * * * * Traits  * * * * * * * * * * * * * * * * //
+
+//- Declare MinMax as non-contiguous (similar to Tuple2).
+//  Output remains separate (even in binary) and, since the defined
+//  \c operator+ is somewhat non-standard, also avoid false matching with
+//  any MPI intrinsic operation.
+template<class T>
+struct is_contiguous<MinMax<T>> : std::false_type {};
+
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
 //- Min/max range as a string
 template<class T>

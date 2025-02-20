@@ -161,14 +161,14 @@ void Foam::faMeshTools::printMeshChecks
         scalarMinMax limit(minMax(mesh.magLe().primitiveField()));
 
         // Include processor boundaries into 'internal' edges
-        if (Pstream::parRun())
+        if (UPstream::parRun())
         {
             for (label patchi = nNonProcessor; patchi < nPatches; ++patchi)
             {
                 limit.add(minMax(mesh.magLe().boundaryField()[patchi]));
             }
 
-            reduce(limit, minMaxOp<scalar>());
+            reduce(limit, plusOp<scalarMinMax>{});
         }
 
         Info<< "Edge length (internal):" << nl
@@ -181,9 +181,9 @@ void Foam::faMeshTools::printMeshChecks
             limit.add(minMax(mesh.magLe().boundaryField()[patchi]));
         }
 
-        if (Pstream::parRun())
+        if (UPstream::parRun())
         {
-            reduce(limit, minMaxOp<scalar>());
+            reduce(limit, plusOp<scalarMinMax>{});
         }
 
         Info<< "Edge length:" << nl

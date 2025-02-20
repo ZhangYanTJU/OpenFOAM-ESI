@@ -180,8 +180,7 @@ Foam::cyclicAMIGAMGInterface::cyclicAMIGAMGInterface
         const auto& AMI = amiPtr_();
         if (debug & 2)
         {
-            const auto oldWarnComm = UPstream::warnComm;
-            UPstream::warnComm = AMI.comm();
+            const auto oldWarnComm = UPstream::commWarn(AMI.comm());
 
             const label myRank = UPstream::myProcNo(AMI.comm());
             Pout<< "At level:" << fineLevelIndex
@@ -297,7 +296,7 @@ Foam::cyclicAMIGAMGInterface::cyclicAMIGAMGInterface
             }
             Pout<< "DONE agglomerating at level:" << fineLevelIndex << endl;
 
-            UPstream::warnComm = oldWarnComm;
+            UPstream::commWarn(oldWarnComm);
         }
     }
 }
@@ -820,8 +819,7 @@ Foam::cyclicAMIGAMGInterface::cyclicAMIGAMGInterface
         {
             const auto& AMI = amiPtr_();
 
-            const auto oldWarnComm = UPstream::warnComm;
-            UPstream::warnComm = AMI.comm();
+            const auto oldWarnComm = UPstream::commWarn(AMI.comm());
 
             const label myRank = UPstream::myProcNo(AMI.comm());
             Pout<< "PROCAGGLOMERATED :"
@@ -930,7 +928,7 @@ Foam::cyclicAMIGAMGInterface::cyclicAMIGAMGInterface
                 }
             }
             Pout<< "DONE PROCAGGLOMERATED" << endl;
-            UPstream::warnComm = oldWarnComm;
+            UPstream::commWarn(oldWarnComm);
         }
     }
 }

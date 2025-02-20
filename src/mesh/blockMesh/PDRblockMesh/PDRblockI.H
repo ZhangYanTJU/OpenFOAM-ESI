@@ -124,7 +124,7 @@ inline Foam::scalar Foam::PDRblock::location::C(const label i) const
 
 
 inline const Foam::scalar&
-Foam::PDRblock::location::clip(const scalar& val) const
+Foam::PDRblock::location::clamp(const scalar& val) const
 {
     if (scalarList::size())
     {

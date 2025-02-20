@@ -208,7 +208,7 @@ public:
             const label comm = UPstream::worldComm
         )
         {
-            Pstream::listCombineReduce(value, cop, tag, comm);
+            Pstream::combineReduce(value, cop, tag, comm);
         }
 
 
