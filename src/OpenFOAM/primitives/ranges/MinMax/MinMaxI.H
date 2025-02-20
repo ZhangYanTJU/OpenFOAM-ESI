@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,49 +53,65 @@ inline Foam::MinMax<T> Foam::MinMax<T>::zero_one()
 template<class T>
 inline Foam::MinMax<T>::MinMax()
 :
-    Tuple2<T,T>(pTraits<T>::max, pTraits<T>::min)
+    // An inverted range
+    min_(pTraits<T>::max),
+    max_(pTraits<T>::min)
 {}
 
 
 template<class T>
 inline Foam::MinMax<T>::MinMax(const T& minVal, const T& maxVal)
 :
-    Tuple2<T,T>(minVal, maxVal)
+    min_(minVal),
+    max_(maxVal)
 {}
 
 
 template<class T>
 inline Foam::MinMax<T>::MinMax(const std::pair<T,T>& range)
 :
-    Tuple2<T,T>(range.first, range.second)
+    min_(range.first),
+    max_(range.second)
 {}
 
 
 template<class T>
 inline Foam::MinMax<T>::MinMax(const Pair<T>& range)
 :
-    Tuple2<T,T>(range.first(), range.second())
+    min_(range.first()),
+    max_(range.second())
 {}
 
 
 template<class T>
-inline Foam::MinMax<T>::MinMax(const Foam::zero)
+inline Foam::MinMax<T>::MinMax(const Tuple2<T,T>& range)
 :
-    Tuple2<T,T>(pTraits<T>::zero, pTraits<T>::zero)
+    min_(range.first()),
+    max_(range.second())
 {}
 
 
 template<class T>
-inline Foam::MinMax<T>::MinMax(const Foam::zero_one)
+inline Foam::MinMax<T>::MinMax(Foam::zero)
 :
-    Tuple2<T,T>(pTraits<T>::zero, pTraits<T>::one)
+    min_(pTraits<T>::zero),
+    max_(pTraits<T>::zero)
+{}
+
+
+template<class T>
+inline Foam::MinMax<T>::MinMax(Foam::zero_one)
+:
+    min_(pTraits<T>::zero),
+    max_(pTraits<T>::one)
 {}
 
 
 template<class T>
 inline Foam::MinMax<T>::MinMax(const T& val)
 :
-    Tuple2<T,T>(val, val)
+    min_(val),
+    max_(val)
 {}
 
 
@@ -109,34 +125,6 @@ inline Foam::MinMax<T>::MinMax(const UList<T>& vals)
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-template<class T>
-inline const T& Foam::MinMax<T>::min() const noexcept
-{
-    return this->first();
-}
-
-
-template<class T>
-inline T& Foam::MinMax<T>::min() noexcept
-{
-    return this->first();
-}
-
-
-template<class T>
-inline const T& Foam::MinMax<T>::max() const noexcept
-{
-    return this->second();
-}
-
-
-template<class T>
-inline T& Foam::MinMax<T>::max() noexcept
-{
-    return this->second();
-}
-
 
 template<class T>
 inline T Foam::MinMax<T>::centre() const
@@ -156,7 +144,7 @@ inline T Foam::MinMax<T>::span() const
 template<class T>
 inline Foam::scalar Foam::MinMax<T>::mag() const
 {
-    return ::Foam::mag(span());
+    return (empty() ? scalar(0) : ::Foam::mag(max() - min()));
 }
 
 
@@ -171,31 +159,32 @@ inline bool Foam::MinMax<T>::empty() const
 template<class T>
 inline bool Foam::MinMax<T>::good() const
 {
-    return !empty();
+    return !(max() < min());
 }
 
 
 template<class T>
 inline void Foam::MinMax<T>::reset()
 {
-    min() = pTraits<T>::max;
-    max() = pTraits<T>::min;
+    // An inverted range
+    min_ = pTraits<T>::max;
+    max_ = pTraits<T>::min;
 }
 
 
 template<class T>
 inline void Foam::MinMax<T>::reset(const T& val)
 {
-    min() = val;
-    max() = val;
+    min_ = val;
+    max_ = val;
 }
 
 
 template<class T>
 inline void Foam::MinMax<T>::reset(const T& minVal, const T& maxVal)
 {
-    min() = minVal;
-    max() = maxVal;
+    min_ = minVal;
+    max_ = maxVal;
 }
 
 
@@ -246,6 +235,7 @@ inline T Foam::MinMax<T>::clamp(const T& val) const
 {
     if (good())
     {
+        // Uses Foam::min/Foam::max for component-wise handling
         return Foam::min(Foam::max(val, min()), max());
     }
 
@@ -256,6 +246,7 @@ inline T Foam::MinMax<T>::clamp(const T& val) const
 template<class T>
 inline Foam::MinMax<T>& Foam::MinMax<T>::add(const MinMax& other)
 {
+    // Uses Foam::min/Foam::max for component-wise handling
     min() = Foam::min(min(), other.min());
     max() = Foam::max(max(), other.max());
     return *this;
@@ -265,6 +256,7 @@ inline Foam::MinMax<T>& Foam::MinMax<T>::add(const MinMax& other)
 template<class T>
 inline Foam::MinMax<T>& Foam::MinMax<T>::add(const T& val)
 {
+    // Uses Foam::min/Foam::max for component-wise handling
     min() = Foam::min(min(), val);
     max() = Foam::max(max(), val);
     return *this;
@@ -278,6 +270,25 @@ inline Foam::MinMax<T>& Foam::MinMax<T>::add(const UList<T>& vals)
     {
         add(val);
     }
+    return *this;
+}
+
+
+template<class T>
+template<class... Args>
+inline Foam::MinMax<T>& Foam::MinMax<T>::add
+(
+    const T& val0,
+    const T& val1,
+    Args&&... values
+)
+{
+    add(val0);
+    add(val1);
+
+    // Add multiple values via fold expression
+    ((*this += std::forward<Args>(values)), ...);
+
     return *this;
 }
 
@@ -325,6 +336,7 @@ inline bool Foam::MinMax<T>::operator()(const T& val) const
 template<class T>
 inline Foam::MinMax<T>& Foam::MinMax<T>::operator&=(const MinMax<T>& b)
 {
+    // Uses Foam::min/Foam::max for component-wise handling
     min() = ::Foam::max(min(), b.min());
     max() = ::Foam::min(max(), b.max());
 
@@ -354,7 +366,7 @@ inline Foam::MinMax<T>& Foam::MinMax<T>::operator+=(const UList<T>& vals)
 
 
 template<class T>
-inline Foam::MinMax<T>& Foam::MinMax<T>::operator*=(const scalar& s)
+inline Foam::MinMax<T>& Foam::MinMax<T>::operator*=(scalar s)
 {
     min() *= s;
     max() *= s;
@@ -363,7 +375,7 @@ inline Foam::MinMax<T>& Foam::MinMax<T>::operator*=(const scalar& s)
 
 
 template<class T>
-inline Foam::MinMax<T>& Foam::MinMax<T>::operator/=(const scalar& s)
+inline Foam::MinMax<T>& Foam::MinMax<T>::operator/=(scalar s)
 {
     min() /= s;
     max() /= s;

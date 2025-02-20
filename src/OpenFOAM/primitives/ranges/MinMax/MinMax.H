@@ -110,9 +110,15 @@ typedef MinMax<scalar> scalarMinMax;    //!< A scalar min/max range
 
 template<class T>
 class MinMax
-:
-    public Tuple2<T,T>
 {
+    // Private Data
+
+        //- Min value
+        T min_;
+
+        //- Max value
+        T max_;
+
 public:
 
     // Typedefs
@@ -126,23 +132,26 @@ public:
 
     // Constructors
 
-        //- Construct inverted range
+        //- Default construct: an inverted range
         inline MinMax();
 
-        //- Copy construct from components
+        //- Construct from min/max limits
         inline MinMax(const T& minVal, const T& maxVal);
 
-        //- Copy construct from components
+        //- Implicit construct from min/max limits
         inline MinMax(const std::pair<T,T>& range);
 
-        //- Copy construct from components
+        //- Implicit construct from min/max limits
         inline MinMax(const Pair<T>& range);
 
+        //- Implicit construct from min/max limits
+        inline MinMax(const Tuple2<T,T>& range);
+
         //- Construct with a single zero value
-        inline explicit MinMax(const Foam::zero);
+        inline explicit MinMax(Foam::zero);
 
         //- Implicit construct from zero_one as 0-1 range (pTraits zero, one)
-        inline MinMax(const Foam::zero_one);
+        inline MinMax(Foam::zero_one);
 
         //- Construct with a single initial value
         inline explicit MinMax(const T& val);
@@ -167,25 +176,25 @@ public:
 
     // Access
 
-        //- The min value (first)
-        inline const T& min() const noexcept;
+        //- The min value
+        const T& min() const noexcept { return min_; }
 
-        //- The min value (first)
-        inline T& min() noexcept;
+        //- The min value
+        T& min() noexcept { return min_; }
 
-        //- The max value (second)
-        inline const T& max() const noexcept;
+        //- The max value
+        const T& max() const noexcept { return max_; }
 
-        //- The max value (second)
-        inline T& max() noexcept;
+        //- The max value
+        T& max() noexcept { return max_; }
 
         //- The min/max average value
         inline T centre() const;
 
-        //- The min to max span. Zero if the range is invalid.
+        //- The min to max span. Zero for invalid range.
         inline T span() const;
 
-        //- The magnitude of the min to max span. Zero if the range is invalid.
+        //- The magnitude of the min to max span. Zero for invalid range.
         inline scalar mag() const;
 
         //- Range is empty if it is inverted
@@ -193,9 +202,6 @@ public:
 
         //- Range is non-inverted
         inline bool good() const;
-
-        //- Range is non-inverted
-        bool valid() const { return good(); }
 
         //- Reset to an inverted (invalid) range
         inline void reset();
@@ -244,6 +250,11 @@ public:
         //- Include the values into the range
         inline MinMax<T>& add(const UList<T>& vals);
 
+        //- Include two or more values into the range.
+        //  All values must be similar types
+        template<class... Args>
+        inline MinMax<T>& add(const T& val0, const T& val1, Args&&... values);
+
 
     // Member Operators
 
@@ -264,19 +275,19 @@ public:
         inline MinMax<T>& operator+=(const UList<T>& vals);
 
         //- Multiply range by scalar factor
-        inline MinMax<T>& operator*=(const scalar& s);
+        inline MinMax<T>& operator*=(scalar s);
 
         //- Divide range by scalar factor
-        inline MinMax<T>& operator/=(const scalar& s);
+        inline MinMax<T>& operator/=(scalar s);
 
 
     // Housekeeping
 
+        //- Range is non-inverted. Same as good (2022-10)
+        bool valid() const { return good(); }
+
         //- Old method name. Same as clamp (2023-01)
         T clip(const T& val) const { return this->clamp(val); }
-
-        //- Old method (2023-01)
-        void inplaceClip(T& val) const { val = this->clamp(val); }
 };
 
 
@@ -297,6 +308,30 @@ template<class T>
 word name(const MinMax<T>& range)
 {
     return '(' + Foam::name(range.min()) + ',' + Foam::name(range.max()) + ')';
+}
+
+// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
+
+//- Read min/max range as (min max) tuple from Istream
+template<class T>
+inline Istream& operator>>(Istream& is, MinMax<T>& range)
+{
+    is.readBegin("min.max");
+    is >> range.min() >> range.max();
+    is.readEnd("min.max");
+
+    is.check(FUNCTION_NAME);
+    return is;
+}
+
+//- Write min/max range as (min max) tuple to Ostream
+template<class T>
+inline Ostream& operator<<(Ostream& os, const MinMax<T>& range)
+{
+    os  << token::BEGIN_LIST
+        << range.min() << token::SPACE << range.max()
+        << token::END_LIST;
+    return os;
 }
 
 

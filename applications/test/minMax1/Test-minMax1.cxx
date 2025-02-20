@@ -170,8 +170,19 @@ int main(int argc, char *argv[])
 
     values1 *= (Pstream::myProcNo()+1);
 
-    Pout<<"min-max of " << flatOutput(values1) << " = "
-        << minMax(values1) << endl;
+    {
+        auto limits = minMax(values1);
+
+        Pout<<"min-max of " << flatOutput(values1) << " = "
+            << limits << endl;
+
+        // add in some more values
+        limits.add(-100, 10, 1000, 500, 800);
+
+        limits.add(-120, 1200);
+
+        Pout<<"with more values: " << limits << endl;
+    }
 
     // Construct from values
     MinMax<scalar> minmax1(values1);
