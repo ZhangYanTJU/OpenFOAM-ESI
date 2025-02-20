@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -241,6 +241,9 @@ public:
         //- Include the value into the range
         inline MinMax<T>& add(const T& val);
 
+        //- Include two values into the range
+        inline MinMax<T>& add(const T& val1, const T& val2);
+
         //- Include the values into the range
         inline MinMax<T>& add(const UList<T>& vals);
 
@@ -264,10 +267,10 @@ public:
         inline MinMax<T>& operator+=(const UList<T>& vals);
 
         //- Multiply range by scalar factor
-        inline MinMax<T>& operator*=(const scalar& s);
+        inline MinMax<T>& operator*=(scalar s);
 
         //- Divide range by scalar factor
-        inline MinMax<T>& operator/=(const scalar& s);
+        inline MinMax<T>& operator/=(scalar s);
 
 
     // Housekeeping

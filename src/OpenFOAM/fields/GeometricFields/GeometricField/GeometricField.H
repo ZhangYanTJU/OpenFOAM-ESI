@@ -1076,12 +1076,11 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "GeometricFieldI.H"
+#include "GeometricFieldFunctions.H"
 
 #ifdef NoRepository
     #include "GeometricField.C"
 #endif
-
-#include "GeometricFieldFunctions.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

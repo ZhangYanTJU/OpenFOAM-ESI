@@ -44,7 +44,7 @@ Description
 namespace Foam
 {
 
-// Global Functions
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
 //- The mag() function for min/max range
 template<class T>
@@ -153,10 +153,8 @@ struct minMaxOp
         return MinMax<T>(y).add(x);
     }
 
-    MinMax<T> operator()(const MinMax<T>& x, const MinMax<T>& y) const
-    {
-        return MinMax<T>(x).add(y);  // Same as (x + y)
-    }
+    // Same (x + y), so use plusOp/sumOp - less fragile (issue #3326)
+    void operator()(const MinMax<T>& x, const MinMax<T>& y) const = delete;
 };
 
 
@@ -174,10 +172,8 @@ struct minMaxEqOp
         return x.add(y);
     }
 
-    MinMax<T>& operator()(MinMax<T>& x, const MinMax<T>& y) const
-    {
-        return x.add(y);
-    }
+    // Same as (x += y), so use plusEqOp - less fragile (issue #3326)
+    void operator()(MinMax<T>& x, const MinMax<T>& y) const = delete;
 };
 
 
@@ -234,12 +230,7 @@ inline scalarMinMax minMaxMag(const T& x, const T& y)
 template<class T>
 inline scalarMinMax minMaxMag(const MinMax<T>& x, const MinMax<T>& y)
 {
-    return
-    (
-        minMaxMag(x)
-        .add(Foam::mag(y.min()))
-        .add(Foam::mag(y.max()))
-    );
+    return minMaxMag(x).add(Foam::mag(y.min()), Foam::mag(y.max()));
 }
 
 
@@ -247,12 +238,7 @@ inline scalarMinMax minMaxMag(const MinMax<T>& x, const MinMax<T>& y)
 template<class T1, class T2>
 inline scalarMinMax minMaxMag(const MinMax<T1>& x, const MinMax<T2>& y)
 {
-    return
-    (
-        minMaxMag(x)
-        .add(Foam::mag(y.min()))
-        .add(Foam::mag(y.max()))
-    );
+    return minMaxMag(x).add(Foam::mag(y.min()), Foam::mag(y.max()));
 }
 
 
@@ -287,12 +273,7 @@ struct minMaxMagEqOp
     {
         x = minMaxMag(x);
 
-        return
-        (
-            x
-            .add(Foam::mag(y.min()))
-            .add(Foam::mag(y.max()))
-        );
+        return x.add(Foam::mag(y.min()), Foam::mag(y.max()));
     }
 
     scalarMinMax& operator()(scalarMinMax& x, const UList<T>& y) const
@@ -321,7 +302,7 @@ inline MinMax<T> operator+(const MinMax<T>& x, const MinMax<T>& y)
 
 //- Multiply range by scalar factor
 template<class T>
-inline MinMax<T> operator*(const MinMax<T>& x, const scalar& s)
+inline MinMax<T> operator*(const MinMax<T>& x, scalar s)
 {
     return MinMax<T>(x.min()*s, x.max()*s);
 }
@@ -329,7 +310,7 @@ inline MinMax<T> operator*(const MinMax<T>& x, const scalar& s)
 
 //- Divide range by scalar factor
 template<class T>
-inline MinMax<T> operator/(const MinMax<T>& x, const scalar& s)
+inline MinMax<T> operator/(const MinMax<T>& x, scalar s)
 {
     return MinMax<T>(x.min()/s, x.max()/s);
 }

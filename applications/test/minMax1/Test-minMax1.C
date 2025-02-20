@@ -182,10 +182,7 @@ int main(int argc, char *argv[])
 
     minmax1 += values1;
     Pout<<"range: " << minmax1 << endl;
-
-
     Info<< "Reduced: "<< returnReduce(minmax1, plusOp<scalarMinMax>()) << nl;
-    Info<< "Reduced: "<< returnReduce(minmax1, minMaxOp<scalar>()) << nl;
 
     // Info<< "gMinMax: "<< gMinMax(values1v) << nl;
 

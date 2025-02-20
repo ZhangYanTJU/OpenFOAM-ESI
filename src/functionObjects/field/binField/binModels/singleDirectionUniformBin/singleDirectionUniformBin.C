@@ -75,7 +75,7 @@ void Foam::binModels::singleDirectionUniformBin::initialise()
         }
 
         // Globally consistent
-        reduce(geomLimits, minMaxOp<scalar>());
+        reduce(geomLimits, sumOp<scalarMinMax>());
 
         if (!geomLimits.good())
         {

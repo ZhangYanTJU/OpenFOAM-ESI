@@ -58,9 +58,7 @@ void Foam::binModels::uniformBin::initialise()
             );
 
             MinMax<vector> limits(pts);
-
-            geomLimits.add(limits.min());
-            geomLimits.add(limits.max());
+            geomLimits.add(limits.min(), limits.max());
         }
 
         for (const label zonei : cellZoneIDs_)
@@ -72,9 +70,7 @@ void Foam::binModels::uniformBin::initialise()
             );
 
             MinMax<vector> limits(pts);
-
-            geomLimits.add(limits.min());
-            geomLimits.add(limits.max());
+            geomLimits.add(limits.min(), limits.max());
         }
 
         // Globally consistent

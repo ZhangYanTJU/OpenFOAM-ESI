@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -272,6 +272,15 @@ inline Foam::MinMax<T>& Foam::MinMax<T>::add(const T& val)
 
 
 template<class T>
+inline Foam::MinMax<T>& Foam::MinMax<T>::add(const T& val1, const T& val2)
+{
+    add(val1);
+    add(val2);
+    return *this;
+}
+
+
+template<class T>
 inline Foam::MinMax<T>& Foam::MinMax<T>::add(const UList<T>& vals)
 {
     for (const T& val : vals)
@@ -354,7 +363,7 @@ inline Foam::MinMax<T>& Foam::MinMax<T>::operator+=(const UList<T>& vals)
 
 
 template<class T>
-inline Foam::MinMax<T>& Foam::MinMax<T>::operator*=(const scalar& s)
+inline Foam::MinMax<T>& Foam::MinMax<T>::operator*=(scalar s)
 {
     min() *= s;
     max() *= s;
@@ -363,7 +372,7 @@ inline Foam::MinMax<T>& Foam::MinMax<T>::operator*=(const scalar& s)
 
 
 template<class T>
-inline Foam::MinMax<T>& Foam::MinMax<T>::operator/=(const scalar& s)
+inline Foam::MinMax<T>& Foam::MinMax<T>::operator/=(scalar s)
 {
     min() /= s;
     max() /= s;
