@@ -82,50 +82,40 @@ inline void checkCommunicator(int comm, int rank)
     }
 }
 
+//- True if warn communicator is active and not equal to given communicator
+inline bool warnCommunicator(int comm) noexcept
+{
+    return (UPstream::warnComm >= 0 && comm != UPstream::warnComm);
+}
+
 
 // * * * * * * * * * * * * * * * * Requests  * * * * * * * * * * * * * * * * //
 
-//- Reset UPstream::Request to null and/or the index of the outstanding
-//- request to -1.
-//  Does not affect the stack of outstanding requests.
-inline void reset_request
-(
-    UPstream::Request* requestPtr,
-    label* requestIdx = nullptr
-)
+//- Reset UPstream::Request to MPI_REQUEST_NULL
+//  Does not affect the stack of outstanding requests
+inline void reset_request(UPstream::Request* req) noexcept
 {
-    if (requestPtr) *requestPtr = UPstream::Request(MPI_REQUEST_NULL);
-    if (requestIdx) *requestIdx = -1;
+    if (req) *req = UPstream::Request(MPI_REQUEST_NULL);
 }
 
 
 //- Transcribe MPI_Request to UPstream::Request
 //- (does not affect the stack of outstanding requests)
 //- or else push onto list of outstanding requests
-//- and (optionally) record its location
 inline void push_request
 (
     MPI_Request request,
-    UPstream::Request* requestPtr = nullptr,
-    label* requestIdx = nullptr
+    UPstream::Request* req = nullptr
 )
 {
-    if (requestPtr)
+    if (req)
     {
         // Transcribe as UPstream::Request
-        *requestPtr = UPstream::Request(request);
-
-        // Not on stack of outstanding requests
-        if (requestIdx) *requestIdx = -1;
+        *req = UPstream::Request(request);
     }
     else
     {
-        if (requestIdx)
-        {
-            // Its index into outstanding requests
-            *requestIdx = PstreamGlobals::outstandingRequests_.size();
-        }
-
+        // Push onto list of requests
         PstreamGlobals::outstandingRequests_.push_back(request);
     }
 }
