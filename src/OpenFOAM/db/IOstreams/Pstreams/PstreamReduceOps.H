@@ -101,21 +101,6 @@ void reduce
 }
 
 //- Non-blocking reduce inplace (cf. MPI Iallreduce)
-//- single value. Sets request.
-template<class T, class BinaryOp>
-void reduce
-(
-    T& Value,
-    const BinaryOp&,
-    const int tag,
-    const label comm,
-    label& request
-)
-{
-    NotImplemented;
-}
-
-//- Non-blocking reduce inplace (cf. MPI Iallreduce)
 //- of multiple values (same size on all ranks!). Sets request.
 template<class T, class BinaryOp>
 void reduce
@@ -126,22 +111,6 @@ void reduce
     const int tag,
     const label comm,
     UPstream::Request& req
-)
-{
-    NotImplemented;
-}
-
-//- Non-blocking reduce inplace (cf. MPI Iallreduce)
-//- of multiple values (same size on all ranks!). Sets request.
-template<class T, class BinaryOp>
-void reduce
-(
-    T values[],
-    const int size,
-    const BinaryOp&,
-    const int tag,
-    const label comm,
-    label& request
 )
 {
     NotImplemented;
@@ -295,18 +264,6 @@ void reduce                                                                   \
     UPstream::Request& req  /*!< [out] request information */                 \
 );                                                                            \
                                                                               \
-/*! \brief Non-blocking reduce (sum) multiple Native values. Sets request */  \
-/*! \deprecated prefer version with UPstream::Request */                      \
-void reduce                                                                   \
-(                                                                             \
-    Native values[],                                                          \
-    const int size,                                                           \
-    const sumOp<Native>&,                                                     \
-    const int tag,  /*!< (ignored) */                                         \
-    const label comm,                                                         \
-    label& requestID                                                          \
-);                                                                            \
-                                                                              \
 /*! \brief Non-blocking reduce (sum) single Native value. Sets request */     \
 void reduce                                                                   \
 (                                                                             \
@@ -315,17 +272,6 @@ void reduce                                                                   \
     const int tag,  /*!< (ignored) */                                         \
     const label comm,                                                         \
     UPstream::Request& req  /*!< [out] request information */                 \
-);                                                                            \
-                                                                              \
-/*! \brief Non-blocking reduce (sum) single Native value. Sets request */     \
-/*! \deprecated prefer version with UPstream::Request */                      \
-void reduce                                                                   \
-(                                                                             \
-    Native& value,                                                            \
-    const sumOp<Native>&,                                                     \
-    const int tag,  /*!< (ignored) */                                         \
-    const label comm,                                                         \
-    label& requestID                                                          \
 );
 
 

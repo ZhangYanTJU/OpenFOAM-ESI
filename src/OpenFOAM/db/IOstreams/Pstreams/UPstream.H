@@ -780,8 +780,9 @@ public:
         //  A no-op for out-of-range values.
         static void resetRequests(const label n);
 
-        //- Transfer the (wrapped) MPI request to the internal global list.
-        //  A no-op for non-parallel. No special treatment for null requests.
+        //- Transfer the (wrapped) MPI request to the internal global list
+        //- and invalidate the parameter (ignores null requests)
+        //  A no-op for non-parallel,
         static void addRequest(UPstream::Request& req);
 
         //- Non-blocking comms: cancel and free outstanding request.
@@ -793,7 +794,7 @@ public:
 
         //- Non-blocking comms: cancel and free outstanding request.
         //- Corresponds to MPI_Cancel() + MPI_Request_free()
-        //  A no-op if parRun() == false
+        //  A no-op for non-parallel
         static void cancelRequest(UPstream::Request& req);
 
         //- Non-blocking comms: cancel and free outstanding requests.

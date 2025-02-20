@@ -72,7 +72,7 @@ bool Foam::UOPstream::write
     }
     #endif
 
-    if (UPstream::warnComm >= 0 && communicator != UPstream::warnComm)
+    if (FOAM_UNLIKELY(PstreamGlobals::warnCommunicator(communicator)))
     {
         Perr<< "UOPstream::write : starting write to:" << toProcNo
             << " size:" << label(bufSize)
@@ -82,7 +82,7 @@ bool Foam::UOPstream::write
             << Foam::endl;
         error::printStack(Perr);
     }
-    else if (UPstream::debug)
+    else if (FOAM_UNLIKELY(UPstream::debug))
     {
         Perr<< "UOPstream::write : starting write to:" << toProcNo
             << " size:" << label(bufSize)
@@ -112,7 +112,7 @@ bool Foam::UOPstream::write
         // Assume these are from scatters ...
         profilingPstream::addScatterTime();
 
-        if (UPstream::debug)
+        if (FOAM_UNLIKELY(UPstream::debug))
         {
             Perr<< "UOPstream::write : finished buffered send to:"
                 << toProcNo
@@ -150,7 +150,7 @@ bool Foam::UOPstream::write
         // Assume these are from scatters ...
         profilingPstream::addScatterTime();
 
-        if (UPstream::debug)
+        if (FOAM_UNLIKELY(UPstream::debug))
         {
             Perr<< "UOPstream::write : finished send to:"
                 << toProcNo
@@ -189,7 +189,7 @@ bool Foam::UOPstream::write
             );
         }
 
-        if (UPstream::debug)
+        if (FOAM_UNLIKELY(UPstream::debug))
         {
             Perr<< "UOPstream::write : started non-blocking send to:"
                 << toProcNo

@@ -41,7 +41,7 @@ void Foam::UPstream::mpiGather                                                \
     const label comm                                                          \
 )                                                                             \
 {                                                                             \
-    if (sendData && recvData)                                                 \
+    if (sendData && (sendData != recvData))                                   \
     {                                                                         \
         std::memmove(recvData, sendData, count*sizeof(Type));                 \
     }                                                                         \
@@ -56,7 +56,7 @@ void Foam::UPstream::mpiScatter                                               \
     const label comm                                                          \
 )                                                                             \
 {                                                                             \
-    if (sendData && recvData)                                                 \
+    if (sendData && (sendData != recvData))                                   \
     {                                                                         \
         std::memmove(recvData, sendData, count*sizeof(Type));                 \
     }                                                                         \

@@ -143,18 +143,6 @@ void Foam::reduce                                                             \
 )                                                                             \
 {}                                                                            \
                                                                               \
-/* Deprecated: prefer version with UPstream::Request */                       \
-void Foam::reduce                                                             \
-(                                                                             \
-    Native values[],                                                          \
-    const int size,                                                           \
-    const sumOp<Native>&,                                                     \
-    const int tag,                                                            \
-    const label comm,                                                         \
-    label& requestID                                                          \
-)                                                                             \
-{}                                                                            \
-                                                                              \
 void Foam::reduce                                                             \
 (                                                                             \
     Native& value,                                                            \
@@ -162,17 +150,6 @@ void Foam::reduce                                                             \
     const int tag,                                                            \
     const label comm,                                                         \
     UPstream::Request& req                                                    \
-)                                                                             \
-{}                                                                            \
-                                                                              \
-/* Deprecated: prefer version with UPstream::Request */                       \
-void Foam::reduce                                                             \
-(                                                                             \
-    Native& value,                                                            \
-    const sumOp<Native>&,                                                     \
-    const int tag,                                                            \
-    const label comm,                                                         \
-    label& requestID                                                          \
 )                                                                             \
 {}                                                                            \
                                                                               \
