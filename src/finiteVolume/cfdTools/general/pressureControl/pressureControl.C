@@ -87,7 +87,7 @@ Foam::pressureControl::pressureControl
             }
         }
 
-        reduce(rhoLimits, andOp<bool>());
+        UPstream::reduceAnd(rhoLimits);
         if (rhoLimits)
         {
             reduce(pMax, maxOp<scalar>());
