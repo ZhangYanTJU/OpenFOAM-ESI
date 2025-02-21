@@ -58,6 +58,58 @@ Foam::UPstream::commsTypeNames
 });
 
 
+// * * * * * * * * * * * * * Controls Information  * * * * * * * * * * * * * //
+
+void Foam::UPstream::printNodeCommsControl(Ostream& os)
+{
+    if (UPstream::nodeCommsControl_ > 0)
+    {
+        if (UPstream::usingNodeComms())
+        {
+            os << "on [";
+        }
+        else
+        {
+            os << "off [";
+        }
+        if (UPstream::nodeCommsMin_ > 2)
+        {
+            os  << "min=" << UPstream::nodeCommsMin_ << ",";
+        }
+        os  << "type=";
+
+        //  1: split by hostname [default]
+        //  2: split by shared
+        //  >=4: (debug/manual) split with given number per node
+        if (UPstream::nodeCommsControl_ >= 4)
+        {
+            os  << UPstream::nodeCommsControl_;
+        }
+        else if (UPstream::nodeCommsControl_ == 2)
+        {
+            os  << "shared";
+        }
+        else
+        {
+            os  << "host";
+        }
+        os  << "]";
+    }
+    else
+    {
+        os  << "disabled";
+    }
+    os  << " (" << UPstream::nProcs() << " ranks, "
+        << UPstream::numNodes() << " nodes)";
+}
+
+
+void Foam::UPstream::printTopoControl(Ostream& os)
+{
+    os  << "none";
+}
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::UPstream::setParRun(const label nProcs, const bool haveThreads)

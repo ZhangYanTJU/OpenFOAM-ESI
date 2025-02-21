@@ -757,6 +757,15 @@ public:
         );
 
 
+    // Information
+
+        //- Report the node-communication settings
+        static void printNodeCommsControl(Ostream& os);
+
+        //- Report the topology routines settings
+        static void printTopoControl(Ostream& os);
+
+
     // Requests (non-blocking comms).
     // Pending requests are usually handled as an internal (global) list,
     // since this simplifies the overall tracking and provides a convenient
