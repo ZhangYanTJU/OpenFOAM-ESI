@@ -2094,21 +2094,17 @@ void Foam::argList::parse
                 }
             }
 
-            Info<< "Pstream initialized with:" << nl
-                << "    node communication : ";
-            if (UPstream::nodeCommsControl_ > 0)
+            Info<< "Pstream initialized with:" << nl;
             {
-                Info<< Switch::name(UPstream::usingNodeComms())
-                    << " [min=" << UPstream::nodeCommsMin_
-                    << ", type=" << UPstream::nodeCommsControl_
-                    << "]";
+                Info<< "    node communication : ";
+                UPstream::printNodeCommsControl(Info);
+                Info<< nl;
             }
-            else
             {
-                Info<< "disabled";
+                Info<< "    topology controls  : ";
+                UPstream::printTopoControl(Info);
+                Info<< nl;
             }
-            Info<< " (" << UPstream::nProcs() << " ranks, "
-                << UPstream::numNodes() << " nodes)" << nl;
 
             if (UPstream::floatTransfer)
             {
@@ -2128,7 +2124,7 @@ void Foam::argList::parse
                 const auto& commsType =
                     UPstream::commsTypeNames[UPstream::defaultCommsType];
 
-                Info<< "    nonBlockingExchange: "
+                Info<< "    consensus exchange : "
                     << UPstream::nProcsNonblockingExchange
                     << " (tuning: " << UPstream::tuning_NBX_ << ')' << nl
                     << "    exchange algorithm : "

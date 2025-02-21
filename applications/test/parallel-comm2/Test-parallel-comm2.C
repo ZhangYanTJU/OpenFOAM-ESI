@@ -85,7 +85,8 @@ int main(int argc, char *argv[])
 
     if (UPstream::parRun() && optPrintTree)
     {
-        Info<< "comms: " << UPstream::whichCommunication() << endl;
+        Info<< "comms: "
+            << UPstream::whichCommunication(UPstream::worldComm) << nl;
         UPstream::printCommTree(UPstream::commWorld());
     }
 

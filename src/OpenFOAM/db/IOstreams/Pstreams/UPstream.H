@@ -404,6 +404,15 @@ public:
         //  >= 3 : when there are more than N nodes
         static int nodeCommsMin_;
 
+        //- Selection of topology-aware routines
+        static int topologyControl_;
+
+        //- Test for selection of given topology-aware routine (bitmask)
+        static bool usingTopoControl(int routine = 0) noexcept
+        {
+            return static_cast<bool>(topologyControl_ & routine);
+        }
+
         //- Should compact transfer be used in which floats replace doubles
         //- reducing the bandwidth requirement at the expense of some loss
         //- in accuracy
@@ -755,6 +764,15 @@ public:
             const int tag = UPstream::msgType(),
             const label communicator = worldComm
         );
+
+
+    // Information
+
+        //- Report the node-communication settings
+        static void printNodeCommsControl(Ostream& os);
+
+        //- Report the topology routines settings
+        static void printTopoControl(Ostream& os);
 
 
     // Requests (non-blocking comms).
