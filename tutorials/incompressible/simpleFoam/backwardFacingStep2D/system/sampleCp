@@ -3,5 +3,5 @@ libs            (sampling);
 writeControl    writeTime;
 
 patch           lowerWall;
-probeLocations  ();
+probeLocations  ((0 0 0.0127));
 fields          (cp);
