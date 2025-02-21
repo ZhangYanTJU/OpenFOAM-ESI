@@ -372,7 +372,7 @@ void Foam::turbulentDFSEMInletFvPatchVectorField::initialiseEddies()
             }
             // else eddy on remote processor
 
-            reduce(search, andOp<bool>());
+            UPstream::reduceAnd(search);
         }
 
 

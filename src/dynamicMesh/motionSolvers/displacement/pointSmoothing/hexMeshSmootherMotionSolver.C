@@ -405,7 +405,7 @@ bool Foam::hexMeshSmootherMotionSolver::relax
 
 
         // Synchronise convergence
-        reduce(complete, andOp<bool>());
+        UPstream::reduceAnd(complete);
 
         // Synchronise relaxation levels
         syncTools::syncPointList

@@ -245,7 +245,7 @@ bool Foam::displacementSmartPointSmoothingMotionSolver::relax()
         );
 
         // Synchronise completion
-        reduce(complete, andOp<bool>());
+        UPstream::reduceAnd(complete);
     }
 
     // Check for convergence
@@ -266,7 +266,7 @@ bool Foam::displacementSmartPointSmoothingMotionSolver::relax()
     }
 
     // Syncronise convergence
-    reduce(converged, andOp<bool>());
+    UPstream::reduceAnd(converged);
 
     //if (converged)
     //{
