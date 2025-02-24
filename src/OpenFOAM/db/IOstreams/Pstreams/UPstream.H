@@ -179,7 +179,14 @@ public:
                 //- Reset to default constructed state
                 void reset();
 
-                //- Reset (automatic linear/tree selection),
+                //- Reset to linear (flat) communication
+                void reset_linear
+                (
+                    const int myProci,
+                    const int numProcs
+                );
+
+                //- Reset to tree selection (linear when very small),
                 //- possibly with communicator-specific adjustments
                 void reset
                 (
@@ -205,6 +212,9 @@ public:
                 //- The communicator index
                 int comm_;
 
+                //- Linear (flat) communication instead of tree communication
+                bool flat_;
+
                 //- The communication tree
                 List<commsStruct> tree_;
 
@@ -213,10 +223,18 @@ public:
             // Constructors
 
                 //- Construct empty with invalid communicator
-                commsStructList() noexcept : comm_(-1) {}
+                commsStructList() noexcept
+                :
+                    comm_(-1),
+                    flat_(false)
+                {}
 
                 //- Construct empty with given communicator
-                explicit commsStructList(int comm) noexcept : comm_(comm) {}
+                explicit commsStructList(int comm, bool flat=false) noexcept
+                :
+                    comm_(comm),
+                    flat_(flat)
+                {}
 
 
             // Static Functions
@@ -233,6 +251,13 @@ public:
                 //- The communicator internal index
                 int comm() const noexcept { return comm_; }
 
+                //- Linear (flat) communication instead of tree communication
+                bool linear() const noexcept { return flat_; }
+
+                //- Change communication type (linear vs tree communication).
+                //- Resets existing structure.
+                void linear(bool on);
+
                 //- Clear the list
                 void clear() { return tree_.clear(); }
 
@@ -245,8 +270,16 @@ public:
                 //- Reset communicator index, fill tree with empty entries
                 void init(int communicator);
 
+                //- Reset communicator index, fill tree with empty entries.
+                //- Specify flat vs tree communication.
+                void init(int communicator, bool flat);
+
                 //- Reset communicator index, clear tree entries
                 void reset(int communicator);
+
+                //- Reset communicator index, clear tree entries.
+                //- Specify flat vs tree communication.
+                void reset(int communicator, bool flat);
 
                 //- Get existing or create (demand-driven) entry
                 const UPstream::commsStruct& get(int proci) const;
@@ -490,7 +523,7 @@ public:
         static label nComms() noexcept { return parentComm_.size(); }
 
         //- Debugging: print the communication tree
-        static void printCommTree(const label communicator);
+        static void printCommTree(int communicator, bool linear = false);
 
 
     // Host Communicators
@@ -1100,38 +1133,34 @@ public:
         static const List<int>& interNode_offsets();
 
 
-        //- Communication schedule for linear all-to-master (proc 0)
-        static const commsStructList& linearCommunication
-        (
-            const label communicator = worldComm
-        );
+        //- Linear communication schedule (special case) for given communicator
+        static const commsStructList& linearCommunication(int communicator);
 
-        //- Communication schedule for tree all-to-master (proc 0)
-        static const commsStructList& treeCommunication
-        (
-            const label communicator = worldComm
-        );
+        //- Tree communication schedule (standard case) for given communicator
+        static const commsStructList& treeCommunication(int communicator);
 
         //- Communication schedule for all-to-master (proc 0) as
         //- linear/tree/none with switching based on UPstream::nProcsSimpleSum
-        //- and the is_parallel() state
+        //- and the is_parallel() state and the optional \c linear parameter.
         static const commsStructList& whichCommunication
         (
-            const label communicator = worldComm
+            const int communicator,
+            //! optionally select linear schedule only
+            bool linear = false
         )
         {
             const label np
             (
                 parRun_ && is_rank(communicator)  // cf. is_parallel()
               ? nProcs(communicator)
-              : 0
+              : label(0)
             );
 
             return
             (
                 np <= 1
               ? commsStructList::null()
-              : (np <= 2 || np < UPstream::nProcsSimpleSum)
+              : (linear || np < UPstream::nProcsSimpleSum)
               ? linearCommunication(communicator)
               : treeCommunication(communicator)
             );

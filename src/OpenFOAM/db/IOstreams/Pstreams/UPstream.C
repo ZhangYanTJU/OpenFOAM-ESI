@@ -239,6 +239,10 @@ Foam::label Foam::UPstream::getAvailableCommIndex(const label parentIndex)
         treeCommunication_.emplace_back(index);
     }
 
+    // Set the communication pattern
+    linearCommunication_[index].linear(true);
+    treeCommunication_[index].linear(false);
+
     return index;
 }
 
@@ -669,32 +673,50 @@ Foam::label Foam::UPstream::procNo
 
 
 const Foam::UPstream::commsStructList&
-Foam::UPstream::linearCommunication(const label communicator)
+Foam::UPstream::linearCommunication(int communicator)
 {
+    // linear = true
+
     if (linearCommunication_[communicator].empty())
     {
-        linearCommunication_[communicator].init(communicator);
+        linearCommunication_[communicator].init(communicator, true);
     }
+    // Probably not needed
+    // else
+    // {
+    //     linearCommunication_[communicator].linear(true);
+    // }
 
     return linearCommunication_[communicator];
 }
 
 
 const Foam::UPstream::commsStructList&
-Foam::UPstream::treeCommunication(const label communicator)
+Foam::UPstream::treeCommunication(int communicator)
 {
+    // linear = false
+
     if (treeCommunication_[communicator].empty())
     {
-        treeCommunication_[communicator].init(communicator);
+        treeCommunication_[communicator].init(communicator, false);
     }
+    // Probably not needed
+    // else
+    // {
+    //     treeCommunication_[communicator].linear(false);
+    // }
 
     return treeCommunication_[communicator];
 }
 
 
-void Foam::UPstream::printCommTree(int communicator)
+void Foam::UPstream::printCommTree
+(
+    int communicator,
+    bool linear
+)
 {
-    const auto& comms = UPstream::whichCommunication(communicator);
+    const auto& comms = UPstream::whichCommunication(communicator, linear);
 
     if (UPstream::master(communicator))
     {
