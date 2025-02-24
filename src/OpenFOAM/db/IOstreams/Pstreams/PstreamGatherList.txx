@@ -43,11 +43,12 @@ Description
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T>
-void Foam::Pstream::gatherList_tree_algorithm
+void Foam::Pstream::gatherList_algorithm
 (
+    const UPstream::commsStructList& comms,  // Communication order
     UList<T>& values,
     const int tag,
-    const label communicator
+    const int communicator
 )
 {
     if (FOAM_UNLIKELY(!UPstream::is_parallel(communicator)))
@@ -65,11 +66,8 @@ void Foam::Pstream::gatherList_tree_algorithm
                 << Foam::abort(FatalError);
         }
 
-        const label myProci = UPstream::myProcNo(communicator);
-
-        // Communication order
-        const auto& comms = UPstream::whichCommunication(communicator);
         // if (comms.empty()) return;  // extra safety?
+        const label myProci = UPstream::myProcNo(communicator);
         const auto& myComm = comms[myProci];
 
 
@@ -253,11 +251,12 @@ void Foam::Pstream::gatherList_tree_algorithm
 
 
 template<class T>
-void Foam::Pstream::scatterList_tree_algorithm
+void Foam::Pstream::scatterList_algorithm
 (
+    const UPstream::commsStructList& comms,  // Communication order
     UList<T>& values,
     const int tag,
-    const label communicator
+    const int communicator
 )
 {
     if (FOAM_UNLIKELY(!UPstream::is_parallel(communicator)))
@@ -279,11 +278,8 @@ void Foam::Pstream::scatterList_tree_algorithm
                 << Foam::abort(FatalError);
         }
 
-        const label myProci = UPstream::myProcNo(communicator);
-
-        // Communication order
-        const auto& comms = UPstream::whichCommunication(communicator);
         // if (comms.empty()) return;  // extra safety?
+        const label myProci = UPstream::myProcNo(communicator);
         const auto& myComm = comms[myProci];
 
 
@@ -448,7 +444,10 @@ void Foam::Pstream::gatherList
     }
     else
     {
-        Pstream::gatherList_tree_algorithm(values, tag, communicator);
+        // Communication order
+        const auto& commOrder = UPstream::whichCommunication(communicator);
+
+        Pstream::gatherList_algorithm(commOrder, values, tag, communicator);
     }
 }
 
@@ -479,7 +478,10 @@ void Foam::Pstream::scatterList
     }
     else
     {
-        Pstream::scatterList_tree_algorithm(values, tag, communicator);
+        // Communication order
+        const auto& commOrder = UPstream::whichCommunication(communicator);
+
+        Pstream::scatterList_algorithm(commOrder, values, tag, communicator);
     }
 }
 
@@ -511,8 +513,11 @@ void Foam::Pstream::allGatherList
     }
     else
     {
-        Pstream::gatherList(values, tag, comm);
-        Pstream::scatterList(values, tag, comm);
+        // Communication order
+        const auto& commOrder = UPstream::whichCommunication(comm);
+
+        Pstream::gatherList_algorithm(commOrder, values, tag, comm);
+        Pstream::scatterList_algorithm(commOrder, values, tag, comm);
     }
 }
 

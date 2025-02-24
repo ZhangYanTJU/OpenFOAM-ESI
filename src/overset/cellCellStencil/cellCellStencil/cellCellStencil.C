@@ -498,7 +498,7 @@ void Foam::cellCellStencil::walkFront
         bitSet isFrontWork(isFront);
         label nCurrLayer = currLayer;
 
-        while (nCurrLayer > 1 && returnReduce(isFrontWork.any(), orOp<bool>()))
+        while (nCurrLayer > 1 && returnReduceOr(isFrontWork.any()))
         {
             bitSet newIsFront(mesh_.nFaces());
             forAll(isFrontWork, facei)
@@ -575,7 +575,7 @@ void Foam::cellCellStencil::walkFront
         scalarField allWeightWork(allCellTypes.size(), Zero);
         bitSet nHoles(allCellTypes.size());
 
-        while (returnReduce(isFront.any(), orOp<bool>()))
+        while (returnReduceOr(isFront.any()))
         {
             // Interpolate cells on front
             bitSet newIsFront(mesh_.nFaces());

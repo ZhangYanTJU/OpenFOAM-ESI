@@ -123,7 +123,7 @@ void Foam::printMeshStats(const polyMesh& mesh, const bool allTopology)
     {
         // Number of global patches and min-max range of total patches
         Info<< mesh.boundaryMesh().nNonProcessor() << ' '
-            << returnReduce(labelMinMax(nPatches), minMaxOp<label>()) << nl;
+            << returnReduce(labelMinMax(nPatches), sumOp<labelMinMax>{}) << nl;
     }
     else
     {

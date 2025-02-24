@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1132,10 +1132,11 @@ Foam::word Foam::GeometricField<Type, PatchField, GeoMesh>::select
 template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricField<Type, PatchField, GeoMesh>::writeMinMax
 (
-    Ostream& os
+    Ostream& os,
+    label comm
 ) const
 {
-    MinMax<Type> range = Foam::minMax(*this).value();
+    MinMax<Type> range = Foam::minMax(*this, comm).value();
 
     os  << "min/max(" << this->name() << ") = "
         << range.min() << ", " << range.max() << endl;

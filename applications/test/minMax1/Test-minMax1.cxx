@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -170,8 +170,19 @@ int main(int argc, char *argv[])
 
     values1 *= (Pstream::myProcNo()+1);
 
-    Pout<<"min-max of " << flatOutput(values1) << " = "
-        << minMax(values1) << endl;
+    {
+        auto limits = minMax(values1);
+
+        Pout<<"min-max of " << flatOutput(values1) << " = "
+            << limits << endl;
+
+        // add in some more values
+        limits.add(-100, 10, 1000, 500, 800);
+
+        limits.add(-120, 1200);
+
+        Pout<<"with more values: " << limits << endl;
+    }
 
     // Construct from values
     MinMax<scalar> minmax1(values1);
@@ -182,10 +193,7 @@ int main(int argc, char *argv[])
 
     minmax1 += values1;
     Pout<<"range: " << minmax1 << endl;
-
-
     Info<< "Reduced: "<< returnReduce(minmax1, plusOp<scalarMinMax>()) << nl;
-    Info<< "Reduced: "<< returnReduce(minmax1, minMaxOp<scalar>()) << nl;
 
     // Info<< "gMinMax: "<< gMinMax(values1v) << nl;
 

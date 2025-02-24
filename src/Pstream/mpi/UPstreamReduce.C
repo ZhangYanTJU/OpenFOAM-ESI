@@ -187,24 +187,7 @@ void Foam::reduce                                                             \
 {                                                                             \
     PstreamDetail::allReduce<Native>                                          \
     (                                                                         \
-        values, size, TaggedType, MPI_SUM, comm, &req, nullptr                \
-    );                                                                        \
-}                                                                             \
-                                                                              \
-/* Deprecated: prefer version with UPstream::Request */                       \
-void Foam::reduce                                                             \
-(                                                                             \
-    Native values[],                                                          \
-    const int size,                                                           \
-    const sumOp<Native>&,                                                     \
-    const int tag,  /* (unused) */                                            \
-    const label comm,                                                         \
-    label& requestID                                                          \
-)                                                                             \
-{                                                                             \
-    PstreamDetail::allReduce<Native>                                          \
-    (                                                                         \
-        values, size, TaggedType, MPI_SUM, comm, nullptr, &requestID          \
+        values, size, TaggedType, MPI_SUM, comm, &req                         \
     );                                                                        \
 }                                                                             \
                                                                               \
@@ -219,23 +202,7 @@ void Foam::reduce                                                             \
 {                                                                             \
     PstreamDetail::allReduce<Native>                                          \
     (                                                                         \
-        &value, 1, TaggedType, MPI_SUM, comm, &req, nullptr                   \
-    );                                                                        \
-}                                                                             \
-                                                                              \
-/* Deprecated: prefer version with UPstream::Request */                       \
-void Foam::reduce                                                             \
-(                                                                             \
-    Native& value,                                                            \
-    const sumOp<Native>&,                                                     \
-    const int tag,  /* (unused) */                                            \
-    const label comm,                                                         \
-    label& requestID                                                          \
-)                                                                             \
-{                                                                             \
-    PstreamDetail::allReduce<Native>                                          \
-    (                                                                         \
-        &value, 1, TaggedType, MPI_SUM, comm, nullptr, &requestID             \
+        &value, 1, TaggedType, MPI_SUM, comm, &req                            \
     );                                                                        \
 }                                                                             \
                                                                               \

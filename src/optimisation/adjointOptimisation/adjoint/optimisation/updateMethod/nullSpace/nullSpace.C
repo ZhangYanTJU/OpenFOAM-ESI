@@ -1030,7 +1030,7 @@ Foam::nullSpace::nullSpace
         }
         if (globalSum_)
         {
-            reduce(existsNonBoundVar, orOp<bool>());
+            UPstream::reduceOr(existsNonBoundVar);
         }
         if (!existsNonBoundVar)
         {

@@ -476,7 +476,7 @@ void Foam::NURBS3DVolume::confineInertControlPoints()
                     break;
                 }
             }
-            reduce(foundParamPt, orOp<bool>());
+            UPstream::reduceOr(foundParamPt);
             if (!foundParamPt)
             {
                 activeControlPoints_[cpI] = false;

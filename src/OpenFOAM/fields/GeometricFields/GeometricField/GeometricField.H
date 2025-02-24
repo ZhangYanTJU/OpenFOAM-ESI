@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -906,8 +906,9 @@ public:
         //- otherwise the standard parameters by returning the field name
         word select(bool final) const;
 
-        //- Helper function to write the min and max to an Ostream
-        void writeMinMax(Ostream& os) const;
+        //- Helper function to write the min and max to an Ostream.
+        //  Uses the specified communicator for reductions
+        void writeMinMax(Ostream& os, label comm = UPstream::worldComm) const;
 
 
     // Member Function *this Operators
@@ -1037,6 +1038,7 @@ public:
 
         //- Clamp field values (in-place) to the specified range.
         //  \deprecated(2023-01) prefer clamp_range() naming
+        FOAM_DEPRECATED_FOR(2023-01, "clamp_range() method")
         void clip(const dimensioned<MinMax<Type>>& range)
         {
             this->clamp_range(range);
@@ -1044,6 +1046,7 @@ public:
 
         //- Clamp field values (in-place) to the specified range.
         //  \deprecated(2023-01) prefer clamp_range() naming
+        FOAM_DEPRECATED_FOR(2023-01, "clamp_range() method")
         void clip(const dimensioned<Type>& lo, const dimensioned<Type>& hi)
         {
             this->clamp_range(lo.value(), hi.value());
@@ -1076,12 +1079,11 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "GeometricFieldI.H"
+#include "GeometricFieldFunctions.H"
 
 #ifdef NoRepository
     #include "GeometricField.C"
 #endif
-
-#include "GeometricFieldFunctions.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

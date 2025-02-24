@@ -66,7 +66,7 @@ static std::streamsize UPstream_mpi_receive
     }
     #endif
 
-    if (UPstream::warnComm >= 0 && communicator != UPstream::warnComm)
+    if (FOAM_UNLIKELY(PstreamGlobals::warnCommunicator(communicator)))
     {
         Perr<< "UIPstream::read : starting read from:" << fromProcNo
             << " size:" << label(bufSize)
@@ -76,7 +76,7 @@ static std::streamsize UPstream_mpi_receive
             << Foam::endl;
         error::printStack(Perr);
     }
-    else if (UPstream::debug)
+    else if (FOAM_UNLIKELY(UPstream::debug))
     {
         Perr<< "UIPstream::read : starting read from:" << fromProcNo
             << " size:" << label(bufSize)
@@ -121,7 +121,7 @@ static std::streamsize UPstream_mpi_receive
                 << Foam::abort(FatalError);
             return 0;
         }
-        else if (UPstream::debug)
+        else if (FOAM_UNLIKELY(UPstream::debug))
         {
             Perr<< "UIPstream::read : finished recv from:"
                 << fromProcNo
@@ -196,7 +196,7 @@ static std::streamsize UPstream_mpi_receive
         profilingPstream::addRequestTime();
 
 
-        if (UPstream::debug)
+        if (FOAM_UNLIKELY(UPstream::debug))
         {
             Perr<< "UIPstream::read : started non-blocking recv from:"
                 << fromProcNo
@@ -223,7 +223,7 @@ static std::streamsize UPstream_mpi_receive
 void Foam::UIPstream::bufferIPCrecv()
 {
     // Called by constructor
-    if (UPstream::debug)
+    if (FOAM_UNLIKELY(UPstream::debug))
     {
         Perr<< "UIPstream IPC read buffer :"
             << " from:" << fromProcNo_
@@ -289,7 +289,7 @@ void Foam::UIPstream::bufferIPCrecv()
                 << Foam::abort(FatalError);
         }
 
-        if (UPstream::debug)
+        if (FOAM_UNLIKELY(UPstream::debug))
         {
             Perr<< "UIPstream::UIPstream : probed size:"
                 << label(count) << Foam::endl;

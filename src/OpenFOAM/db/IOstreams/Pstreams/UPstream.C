@@ -58,6 +58,58 @@ Foam::UPstream::commsTypeNames
 });
 
 
+// * * * * * * * * * * * * * Controls Information  * * * * * * * * * * * * * //
+
+void Foam::UPstream::printNodeCommsControl(Ostream& os)
+{
+    if (UPstream::nodeCommsControl_ > 0)
+    {
+        if (UPstream::usingNodeComms(UPstream::worldComm))
+        {
+            os << "on [";
+        }
+        else
+        {
+            os << "off [";
+        }
+        if (UPstream::nodeCommsMin_ > 2)
+        {
+            os  << "min=" << UPstream::nodeCommsMin_ << ",";
+        }
+        os  << "type=";
+
+        //  1: split by hostname [default]
+        //  2: split by shared
+        //  >=4: (debug/manual) split with given number per node
+        if (UPstream::nodeCommsControl_ >= 4)
+        {
+            os  << UPstream::nodeCommsControl_;
+        }
+        else if (UPstream::nodeCommsControl_ == 2)
+        {
+            os  << "shared";
+        }
+        else
+        {
+            os  << "host";
+        }
+        os  << "]";
+    }
+    else
+    {
+        os  << "disabled";
+    }
+    os  << " (" << UPstream::nProcs(UPstream::worldComm) << " ranks, "
+        << UPstream::numNodes() << " nodes)";
+}
+
+
+void Foam::UPstream::printTopoControl(Ostream& os)
+{
+    os  << "none";
+}
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::UPstream::setParRun(const label nProcs, const bool haveThreads)
@@ -186,6 +238,10 @@ Foam::label Foam::UPstream::getAvailableCommIndex(const label parentIndex)
         linearCommunication_.emplace_back(index);
         treeCommunication_.emplace_back(index);
     }
+
+    // Set the communication pattern
+    linearCommunication_[index].linear(true);
+    treeCommunication_[index].linear(false);
 
     return index;
 }
@@ -617,32 +673,50 @@ Foam::label Foam::UPstream::procNo
 
 
 const Foam::UPstream::commsStructList&
-Foam::UPstream::linearCommunication(const label communicator)
+Foam::UPstream::linearCommunication(int communicator)
 {
+    // linear = true
+
     if (linearCommunication_[communicator].empty())
     {
-        linearCommunication_[communicator].init(communicator);
+        linearCommunication_[communicator].init(communicator, true);
     }
+    // Probably not needed
+    // else
+    // {
+    //     linearCommunication_[communicator].linear(true);
+    // }
 
     return linearCommunication_[communicator];
 }
 
 
 const Foam::UPstream::commsStructList&
-Foam::UPstream::treeCommunication(const label communicator)
+Foam::UPstream::treeCommunication(int communicator)
 {
+    // linear = false
+
     if (treeCommunication_[communicator].empty())
     {
-        treeCommunication_[communicator].init(communicator);
+        treeCommunication_[communicator].init(communicator, false);
     }
+    // Probably not needed
+    // else
+    // {
+    //     treeCommunication_[communicator].linear(false);
+    // }
 
     return treeCommunication_[communicator];
 }
 
 
-void Foam::UPstream::printCommTree(int communicator)
+void Foam::UPstream::printCommTree
+(
+    int communicator,
+    bool linear
+)
 {
-    const auto& comms = UPstream::whichCommunication(communicator);
+    const auto& comms = UPstream::whichCommunication(communicator, linear);
 
     if (UPstream::master(communicator))
     {
@@ -788,6 +862,17 @@ registerOptSwitch
     Foam::UPstream::nodeCommsMin_
 );
 
+
+int Foam::UPstream::topologyControl_
+(
+    Foam::debug::optimisationSwitch("topoControl", 0)
+);
+registerOptSwitch
+(
+    "topoControl",
+    int,
+    Foam::UPstream::topologyControl_
+);
 
 bool Foam::UPstream::floatTransfer
 (

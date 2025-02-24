@@ -124,8 +124,8 @@ void Foam::PDRutils::one_d_overlap
     }
 
     // Ensure search is within the (point) bounds
-    xmin = grid.clip(xmin);
-    xmax = grid.clip(xmax);
+    xmin = grid.clamp(xmin);
+    xmax = grid.clamp(xmax);
 
     // The begin/end of the obstacle
     *cmin = grid.findCell(xmin);

@@ -338,6 +338,32 @@ void Foam::UPstream::commsStruct::reset()
 }
 
 
+void Foam::UPstream::commsStruct::reset_linear
+(
+    const int myProci,
+    const int numProcs
+)
+{
+    reset();
+
+    // Linear (flat) communication pattern
+    int above(-1);
+    List<int> below;
+
+    if (myProci == 0)
+    {
+        below.resize(numProcs-1);
+        std::iota(below.begin(), below.end(), 1);
+    }
+    else
+    {
+        above = 0;
+    }
+
+    *this = UPstream::commsStruct(numProcs, myProci, above, below, below);
+}
+
+
 void Foam::UPstream::commsStruct::reset
 (
     const int myProci,
@@ -345,52 +371,28 @@ void Foam::UPstream::commsStruct::reset
     const int communicator
 )
 {
-    reset();
-
-    // Linear (flat) communication pattern
-    if
-    (
-        // Trivially small domains
-        (numProcs <= 2 || numProcs < UPstream::nProcsSimpleSum)
-
-        // local-node: assume that the local communication is low-latency
-     || (
-            UPstream::commLocalNode() == communicator
-         && UPstream::commLocalNode() > UPstream::commConstWorld()
-        )
-        // inter-node: presumably relatively few nodes and/or
-        //     higher latency with larger messages being sent
-     || (
-            UPstream::commInterNode() == communicator
-         && UPstream::commInterNode() > UPstream::commConstWorld()
-        )
-    )
+    // Trivially small domains
+    if (numProcs <= 2)
     {
-        // Linear communication pattern
-        int above(-1);
-        List<int> below;
-
-        if (myProci == 0)
-        {
-            below.resize(numProcs-1);
-            std::iota(below.begin(), below.end(), 1);
-        }
-        else
-        {
-            above = 0;
-        }
-
-        *this = UPstream::commsStruct(numProcs, myProci, above, below, below);
+        reset_linear(myProci, numProcs);
         return;
     }
 
 
+    reset();
 
+    int above(-1);
     DynamicList<int> below;
     DynamicList<int> allBelow;
 
+    if (UPstream::usingNodeComms(communicator))
+    {
+        // Additional treatment...
+    }
+
+
     // Simple tree communication pattern
-    int above = simpleTree
+    above = simpleTree
     (
         myProci,
         numProcs,
@@ -420,6 +422,38 @@ Foam::UPstream::commsStructList::null()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::UPstream::commsStructList::linear(bool on)
+{
+    if (flat_ != on)
+    {
+        // Current size
+        const auto len = tree_.size();
+
+        flat_ = on;
+        tree_.clear();
+        if (len > 0)
+        {
+            tree_.resize(len);
+        }
+    }
+}
+
+
+void Foam::UPstream::commsStructList::reset(int communicator)
+{
+    comm_ = communicator;
+    tree_.clear();
+}
+
+
+void Foam::UPstream::commsStructList::reset(int communicator, bool flat)
+{
+    comm_ = communicator;
+    tree_.clear();
+    flat_ = flat;
+}
+
+
 void Foam::UPstream::commsStructList::init(int communicator)
 {
     comm_ = communicator;
@@ -431,10 +465,10 @@ void Foam::UPstream::commsStructList::init(int communicator)
 }
 
 
-void Foam::UPstream::commsStructList::reset(int communicator)
+void Foam::UPstream::commsStructList::init(int communicator, bool flat)
 {
-    comm_ = communicator;
-    tree_.clear();
+    init(communicator);
+    flat_ = flat;
 }
 
 
@@ -454,8 +488,17 @@ Foam::UPstream::commsStructList::get(int proci) const
     if (entry.nProcs() != numProcs)
     {
         // Create/update
-        const_cast<UPstream::commsStruct&>(entry)
-            .reset(proci, numProcs, comm_);
+
+        if (flat_)
+        {
+            const_cast<UPstream::commsStruct&>(entry)
+                .reset_linear(proci, numProcs);
+        }
+        else
+        {
+            const_cast<UPstream::commsStruct&>(entry)
+                .reset(proci, numProcs, comm_);
+        }
     }
 
     return entry;

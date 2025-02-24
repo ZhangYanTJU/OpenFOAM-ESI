@@ -47,7 +47,7 @@ bool Foam::UPstream::broadcast
 
     //Needed?  PstreamGlobals::checkCommunicator(comm, rootProcNo);
 
-    if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
+    if (FOAM_UNLIKELY(PstreamGlobals::warnCommunicator(comm)))
     {
         Perr<< "UPstream::broadcast : root:" << rootProcNo
             << " comm:" << comm
@@ -56,7 +56,7 @@ bool Foam::UPstream::broadcast
             << Foam::endl;
         error::printStack(Perr);
     }
-    else if (UPstream::debug)
+    else if (FOAM_UNLIKELY(UPstream::debug))
     {
         Perr<< "UPstream::broadcast : root:" << rootProcNo
             << " comm:" << comm

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -429,7 +429,8 @@ cmptAv(const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1)
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const GeometricField<Type, PatchField, GeoMesh>& f1                        \
+    const GeometricField<Type, PatchField, GeoMesh>& f1,                       \
+    const label comm                                                           \
 )                                                                              \
 {                                                                              \
     return dimensioned<ReturnType>                                             \
@@ -443,7 +444,9 @@ dimensioned<ReturnType> Func                                                   \
                 Foam::Func(f1.primitiveField()),                               \
                 Foam::Func(f1.boundaryField())                                 \
             ),                                                                 \
-            BinaryOp<ReturnType>()                                             \
+            BinaryOp<ReturnType>(),                                            \
+            UPstream::msgType(),                                               \
+            comm                                                               \
         )                                                                      \
     );                                                                         \
 }                                                                              \
@@ -451,52 +454,52 @@ dimensioned<ReturnType> Func                                                   \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1                  \
+    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1,                 \
+    const label comm                                                           \
 )                                                                              \
 {                                                                              \
-    dimensioned<ReturnType> res = Func(tf1());                                 \
+    dimensioned<ReturnType> res = Func(tf1(), comm);                           \
     tf1.clear();                                                               \
     return res;                                                                \
 }
 
+
 UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(Type, max, maxOp)
 UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(Type, min, minOp)
-UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(MinMax<Type>, minMax, minMaxOp)
-UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(scalarMinMax, minMaxMag, minMaxMagOp)
+UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(MinMax<Type>, minMax, plusOp)
+UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY(scalarMinMax, minMaxMag, plusOp)
 
 #undef UNARY_REDUCTION_FUNCTION_WITH_BOUNDARY
 
 
-#define UNARY_REDUCTION_FUNCTION(ReturnType, Func, gFunc)                      \
+// Forward to DimensionedField directly (same name)
+#define UNARY_REDUCTION_FUNCTION(ReturnType, Func)                             \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const GeometricField<Type, PatchField, GeoMesh>& f1                        \
+    const GeometricField<Type, PatchField, GeoMesh>& f1,                       \
+    const label comm                                                           \
 )                                                                              \
 {                                                                              \
-    return dimensioned<ReturnType>                                             \
-    (                                                                          \
-        #Func "(" + f1.name() + ')',                                           \
-        f1.dimensions(),                                                       \
-        gFunc(f1.primitiveField())                                             \
-    );                                                                         \
+    return Func(f1.internalField(), comm);                                     \
 }                                                                              \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
 dimensioned<ReturnType> Func                                                   \
 (                                                                              \
-    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1                  \
+    const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1,                 \
+    const label comm                                                           \
 )                                                                              \
 {                                                                              \
-    dimensioned<ReturnType> res = Func(tf1());                                 \
+    auto result = Func(tf1(), comm);                                           \
     tf1.clear();                                                               \
-    return res;                                                                \
+    return result;                                                             \
 }
 
-UNARY_REDUCTION_FUNCTION(Type, sum, gSum)
-UNARY_REDUCTION_FUNCTION(Type, average, gAverage)
-UNARY_REDUCTION_FUNCTION(typename typeOfMag<Type>::type, sumMag, gSumMag)
+UNARY_REDUCTION_FUNCTION(Type, sum)
+UNARY_REDUCTION_FUNCTION(Type, average)
+UNARY_REDUCTION_FUNCTION(typename typeOfMag<Type>::type, sumMag)
 
 #undef UNARY_REDUCTION_FUNCTION
 

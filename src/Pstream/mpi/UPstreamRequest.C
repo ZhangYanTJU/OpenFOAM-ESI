@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,7 +65,7 @@ void Foam::UPstream::Request::reset() noexcept
 //             << PstreamGlobals::outstandingRequests_.size()
 //             << ')' << endl;
 //
-//         return UPstream::Communicator(MPI_REQUEST_NULL);
+//         return UPstream::Request(MPI_REQUEST_NULL);
 //     }
 //
 //     return UPstream::Request(PstreamGlobals::outstandingRequests_[req]);
@@ -97,11 +97,13 @@ void Foam::UPstream::addRequest(UPstream::Request& req)
         return;
     }
 
-    // Transcribe as a MPI_Request
-    PstreamGlobals::outstandingRequests_.push_back
-    (
-        PstreamUtils::Cast::to_mpi(req)
-    );
+    {
+        MPI_Request request = PstreamUtils::Cast::to_mpi(req);
+        if (MPI_REQUEST_NULL != request)
+        {
+            PstreamGlobals::outstandingRequests_.push_back(request);
+        }
+    }
 
     // Invalidate parameter
     req = UPstream::Request(MPI_REQUEST_NULL);
