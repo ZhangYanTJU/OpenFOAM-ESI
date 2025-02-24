@@ -126,6 +126,19 @@ public:
 
     // Gather/scatter : single value
 
+        //- Implementation: gather (reduce) single element data onto
+        //- UPstream::masterNo()
+        template<class T, class BinaryOp, bool InplaceMode>
+        static void gather_algorithm
+        (
+            const UPstream::commsStructList& comms,  //!< Communication order
+            //! [in,out]
+            T& value,
+            const BinaryOp& bop,
+            const int tag,
+            const int communicator
+        );
+
         //- Gather (reduce) data, applying \c bop to combine \c value
         //- from different processors. The basis for Foam::reduce().
         //  A no-op for non-parallel.
@@ -214,6 +227,19 @@ public:
 
     // Gather/combine variants working on entire List
 
+        //- Implementation: gather (reduce) list element data onto
+        //- UPstream::masterNo()
+        template<class T, class BinaryOp, bool InplaceMode>
+        static void listGather_algorithm
+        (
+            const UPstream::commsStructList& comms,  //!< Communication order
+            //! [in,out]
+            UList<T>& values,
+            const BinaryOp& bop,
+            const int tag,
+            const int communicator
+        );
+
         //- Gather (reduce) list elements,
         //- applying \c bop to each list element
         //
@@ -240,27 +266,27 @@ public:
             const label comm = UPstream::worldComm
         );
 
-        //- Gather (reduce) list elements,
-        //- applying \c bop to combine each list element.
+        //- Reduce list elements (list must be equal size on all ranks),
+        //- applying \c bop to each list element.
         //
         //  \tparam InplaceMode indicates that the binary operator
         //      modifies values in-place, not using assignment
         template<class T, class BinaryOp, bool InplaceMode=false>
-        static void listGatherReduce
+        static void listReduce
         (
             //! [in,out] the result is consistent on all ranks
-            List<T>& values,
+            UList<T>& values,
             const BinaryOp& bop,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
         );
 
-        //- Forwards to Pstream::listGatherReduce with an \em in-place \c cop
+        //- Forwards to Pstream::listReduce with an \em in-place \c cop
         template<class T, class CombineOp>
         static void listCombineReduce
         (
             //! [in,out] the result is consistent on all ranks
-            List<T>& values,
+            UList<T>& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
@@ -271,7 +297,7 @@ public:
         static void listCombineAllGather
         (
             //! [in,out] the result is consistent on all ranks
-            List<T>& values,
+            UList<T>& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
@@ -282,6 +308,18 @@ public:
 
 
     // Gather/combine variants working on Map/HashTable containers
+
+        //- Implementation: gather (reduce) Map/HashTable containers onto
+        //- UPstream::masterNo()
+        template<class Container, class BinaryOp, bool InplaceMode>
+        static void mapGather_algorithm
+        (
+            const UPstream::commsStructList& comms,  //!< Communication order
+            Container& values,
+            const BinaryOp& bop,
+            const int tag,
+            const int communicator
+        );
 
         //- Gather (reduce) Map/HashTable containers,
         //- applying \c bop to combine entries from different processors.
@@ -316,7 +354,7 @@ public:
         //
         //  Wraps mapCombineGather/broadcast (may change in the future).
         template<class Container, class BinaryOp, bool InplaceMode=false>
-        static void mapGatherReduce
+        static void mapReduce
         (
             //! [in,out] the result is consistent on all ranks
             Container& values,
@@ -325,7 +363,7 @@ public:
             const label comm = UPstream::worldComm
         );
 
-        //- Forwards to Pstream::mapGatherReduce with an \em in-place \c cop
+        //- Forwards to Pstream::mapReduce with an \em in-place \c cop
         template<class Container, class CombineOp>
         static void mapCombineReduce
         (
@@ -351,36 +389,32 @@ public:
         }
 
 
-private:
-
-    // Private implementations
-
-        //- Gather data, but keep individual values separate.
-        template<class T>
-        static void gatherList_tree_algorithm
-        (
-            //! [in,out]
-            UList<T>& values,
-            const int tag,
-            const label communicator
-        );
-
-        //- Inverse of gatherList_tree_algorithm
-        template<class T>
-        static void scatterList_tree_algorithm
-        (
-            //! [in,out]
-            UList<T>& values,
-            const int tag,
-            const label communicator
-        );
-
-
-public:
-
     // Gather/scatter keeping the individual processor data separate.
     // The values is a List of size UPstream::nProcs() where
     // values[UPstream::myProcNo()] is the data for the current processor.
+
+        //- Implementation: gather data, keeping individual values separate.
+        //- Output is only valid (consistent) on UPstream::masterNo()
+        template<class T>
+        static void gatherList_algorithm
+        (
+            const UPstream::commsStructList& comms,  //!< Communication order
+            //! [in,out]
+            UList<T>& values,
+            const int tag,
+            const int communicator
+        );
+
+        //- Implementation: inverse of gatherList_algorithm
+        template<class T>
+        static void scatterList_algorithm
+        (
+            const UPstream::commsStructList& comms,  //!< Communication order
+            //! [in,out]
+            UList<T>& values,
+            const int tag,
+            const int communicator
+        );
 
         //- Gather data, but keep individual values separate.
         template<class T>

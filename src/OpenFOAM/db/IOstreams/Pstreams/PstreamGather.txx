@@ -49,12 +49,13 @@ Note
 // Single value variants
 
 template<class T, class BinaryOp, bool InplaceMode>
-void Foam::Pstream::gather
+void Foam::Pstream::gather_algorithm
 (
+    const UPstream::commsStructList& comms,  // Communication order
     T& value,
     const BinaryOp& bop,
     const int tag,
-    const label communicator
+    const int communicator
 )
 {
     if (!UPstream::is_parallel(communicator))
@@ -64,11 +65,11 @@ void Foam::Pstream::gather
     }
     else
     {
-        // Communication order
-        const auto& comms = UPstream::whichCommunication(communicator);
         // if (comms.empty()) return;  // extra safety?
-        const auto& myComm = comms[UPstream::myProcNo(communicator)];
+        const label myProci = UPstream::myProcNo(communicator);
+        const auto& myComm = comms[myProci];
         const auto& below = myComm.below();
+
 
         // Receive from my downstairs neighbours
         for (const auto proci : below)
@@ -146,6 +147,37 @@ void Foam::Pstream::gather
 }
 
 
+template<class T, class BinaryOp, bool InplaceMode>
+void Foam::Pstream::gather
+(
+    T& value,
+    const BinaryOp& bop,
+    const int tag,
+    const label communicator
+)
+{
+    if (!UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else
+    {
+        // Communication order
+        const auto& commOrder = UPstream::whichCommunication(communicator);
+
+        Pstream::gather_algorithm<T, BinaryOp, InplaceMode>
+        (
+            commOrder,
+            value,
+            bop,
+            tag,
+            communicator
+        );
+    }
+}
+
+
 template<class T, class CombineOp>
 void Foam::Pstream::combineGather
 (
@@ -183,12 +215,13 @@ void Foam::Pstream::combineReduce
 // List variants
 
 template<class T, class BinaryOp, bool InplaceMode>
-void Foam::Pstream::listGather
+void Foam::Pstream::listGather_algorithm
 (
+    const UPstream::commsStructList& comms,  // Communication order
     UList<T>& values,
     const BinaryOp& bop,
     const int tag,
-    const label communicator
+    const int communicator
 )
 {
     if (!UPstream::is_parallel(communicator) || values.empty())
@@ -198,10 +231,9 @@ void Foam::Pstream::listGather
     }
     else
     {
-        // Communication order
-        const auto& comms = UPstream::whichCommunication(communicator);
         // if (comms.empty()) return;  // extra safety?
-        const auto& myComm = comms[UPstream::myProcNo(communicator)];
+        const label myProci = UPstream::myProcNo(communicator);
+        const auto& myComm = comms[myProci];
         const auto& below = myComm.below();
 
         // Same length on all ranks
@@ -295,17 +327,70 @@ void Foam::Pstream::listGather
 
 
 template<class T, class BinaryOp, bool InplaceMode>
-void Foam::Pstream::listGatherReduce
+void Foam::Pstream::listGather
 (
-    List<T>& values,
+    UList<T>& values,
+    const BinaryOp& bop,
+    const int tag,
+    const label communicator
+)
+{
+    if (!UPstream::is_parallel(communicator) || values.empty())
+    {
+        // Nothing to do
+        return;
+    }
+    else if (values.size() == 1)
+    {
+        // Single value - optimized version
+        Pstream::gather<T, BinaryOp, InplaceMode>
+        (
+            values[0],
+            bop,
+            tag,
+            communicator
+        );
+    }
+    else
+    {
+        // Communication order
+        const auto& commOrder = UPstream::whichCommunication(communicator);
+
+        Pstream::listGather_algorithm<T, BinaryOp, InplaceMode>
+        (
+            commOrder,
+            values,
+            bop,
+            tag,
+            communicator
+        );
+    }
+}
+
+
+template<class T, class BinaryOp, bool InplaceMode>
+void Foam::Pstream::listReduce
+(
+    UList<T>& values,
     const BinaryOp& bop,
     const int tag,
     const label comm
 )
 {
-    Pstream::listGather<T, BinaryOp, InplaceMode>(values, bop, tag, comm);
-    if (!values.empty())
+    if (!UPstream::is_parallel(comm) || values.empty())
     {
+        // Nothing to do
+    }
+    else if (values.size() == 1)
+    {
+        // Single value - optimized version
+        Pstream::gather<T, BinaryOp, InplaceMode>(values[0], bop, tag, comm);
+        Pstream::broadcast(values[0], comm);
+    }
+    else
+    {
+        // Multiple values
+        Pstream::listGather<T, BinaryOp, InplaceMode>(values, bop, tag, comm);
         Pstream::broadcast(values, comm);
     }
 }
@@ -328,14 +413,14 @@ void Foam::Pstream::listCombineGather
 template<class T, class CombineOp>
 void Foam::Pstream::listCombineReduce
 (
-    List<T>& values,
+    UList<T>& values,
     const CombineOp& cop,
     const int tag,
     const label comm
 )
 {
     // In-place binary operation
-    Pstream::listGatherReduce<T, CombineOp, true>(values, cop, tag, comm);
+    Pstream::listReduce<T, CombineOp, true>(values, cop, tag, comm);
 }
 
 
@@ -344,12 +429,13 @@ void Foam::Pstream::listCombineReduce
 // Map variants
 
 template<class Container, class BinaryOp, bool InplaceMode>
-void Foam::Pstream::mapGather
+void Foam::Pstream::mapGather_algorithm
 (
+    const UPstream::commsStructList& comms,  // Communication order
     Container& values,
     const BinaryOp& bop,
     const int tag,
-    const label communicator
+    const int communicator
 )
 {
     if (!UPstream::is_parallel(communicator))
@@ -359,11 +445,11 @@ void Foam::Pstream::mapGather
     }
     else
     {
-        // Communication order
-        const auto& comms = UPstream::whichCommunication(communicator);
         // if (comms.empty()) return;  // extra safety?
-        const auto& myComm = comms[UPstream::myProcNo(communicator)];
+        const label myProci = UPstream::myProcNo(communicator);
+        const auto& myComm = comms[myProci];
         const auto& below = myComm.below();
+
 
         // Receive from my downstairs neighbours
         for (const auto proci : below)
@@ -430,7 +516,38 @@ void Foam::Pstream::mapGather
 
 
 template<class Container, class BinaryOp, bool InplaceMode>
-void Foam::Pstream::mapGatherReduce
+void Foam::Pstream::mapGather
+(
+    Container& values,
+    const BinaryOp& bop,
+    const int tag,
+    const label communicator
+)
+{
+    if (!UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else
+    {
+        // Communication order
+        const auto& commOrder = UPstream::whichCommunication(communicator);
+
+        Pstream::mapGather_algorithm<Container, BinaryOp, InplaceMode>
+        (
+            commOrder,
+            values,
+            bop,
+            tag,
+            communicator
+        );
+    }
+}
+
+
+template<class Container, class BinaryOp, bool InplaceMode>
+void Foam::Pstream::mapReduce
 (
     Container& values,
     const BinaryOp& bop,
@@ -473,7 +590,7 @@ void Foam::Pstream::mapCombineReduce
 )
 {
     // In-place binary operation
-    Pstream::mapGatherReduce<Container, CombineOp, true>
+    Pstream::mapReduce<Container, CombineOp, true>
     (
         values, cop, tag, comm
     );
