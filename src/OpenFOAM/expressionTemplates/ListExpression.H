@@ -63,7 +63,7 @@ public:
         // polymorphism (a.k.a. virtual functions in C++)
         return static_cast<E const&>(*this)[i];
     }
-    label size() const { return static_cast<E const&>(*this).size(); }
+    auto size() const noexcept { return static_cast<E const&>(*this).size(); }
 
     //- Helper: assign to passed in list
     template<class Container>
@@ -137,7 +137,7 @@ public:
         return elems_[i];
     }
 
-    label size() const
+    auto size() const noexcept
     {
         return elems_.size();
     }
@@ -232,7 +232,7 @@ public:
         return elems_[i];
     }
 
-    label size() const
+    auto size() const noexcept
     {
         return elems_.size();
     }
@@ -272,7 +272,7 @@ public:
     {
         return elems_[i];
     }
-    label size() const
+    auto size() const noexcept
     {
         return elems_.size();
     }
@@ -315,7 +315,7 @@ public:
         return elems_()[i];
     }
 
-    label size() const
+    auto size() const noexcept
     {
         return elems_().size();
     }
@@ -343,12 +343,12 @@ public:                                                                        \
         u_(u)                                                                  \
     {}                                                                         \
                                                                                \
-    decltype(auto) operator[](const label i) const                             \
+    auto operator[](const label i) const                                       \
     {                                                                          \
         return BaseFunc(u_[i]);                                                \
     }                                                                          \
                                                                                \
-    label size() const { return u_.size(); }                                   \
+    auto size() const noexcept { return u_.size(); }                           \
 };                                                                             \
 template<typename E1>                                                          \
 OpFunc<E1> Func                                                                \
@@ -378,12 +378,12 @@ public:
         u_(u)
     {}
 
-    decltype(auto) operator[](const label i) const
+    auto operator[](const label i) const
     {
         return -u_[i];
     }
 
-    label size() const { return u_.size(); }
+    auto size() const noexcept { return u_.size(); }
 };
 template<typename E1>
 List_negate<E1> operator-
@@ -421,11 +421,11 @@ public:                                                                        \
     {                                                                          \
         assert(u.size() == v.size());                                          \
     }                                                                          \
-    decltype(auto) operator[](const label i) const                             \
+    auto operator[](const label i) const                                       \
     {                                                                          \
         return BaseFunc(u_[i], v_[i]);                                         \
     }                                                                          \
-    label size() const {return u_.size(); }                                    \
+    auto size() const noexcept {return u_.size(); }                            \
 };                                                                             \
 template<typename E1, typename E2>                                             \
 OpFunc<E1, E2> Func                                                            \
@@ -448,7 +448,6 @@ OpFunc<E1, E2> Func                                                            \
         static_cast<const E2&>(v)                                              \
     );                                                                         \
 }
-
 #define EXPRESSION_OPERATOR(Op, OpFunc)                                        \
 template<typename E1, typename E2>                                             \
 class OpFunc                                                                   \
@@ -475,11 +474,11 @@ public:                                                                        \
     {                                                                          \
         assert(u.size() == v.size());                                          \
     }                                                                          \
-    decltype(auto) operator[](const label i) const                             \
+    auto operator[](const label i) const                                       \
     {                                                                          \
         return u_[i] Op v_[i];                                                 \
     }                                                                          \
-    label size() const { return u_.size(); }                                   \
+    auto size() const noexcept { return u_.size(); }                           \
 };                                                                             \
 template<typename E1, typename E2>                                             \
 OpFunc<E1, E2>                                                                 \
@@ -586,7 +585,7 @@ public:
     {
         return val_;
     }
-    label size() const
+    auto size() const noexcept
     {
         return size_;
     }

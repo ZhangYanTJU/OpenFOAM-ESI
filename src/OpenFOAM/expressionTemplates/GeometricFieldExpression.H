@@ -92,14 +92,14 @@ public:
         // polymorphism (a.k.a. virtual functions in C++)
         return static_cast<E const&>(*this)[i];
     }
-    label size() const { return static_cast<const E&>(*this).size(); }
+    auto size() const noexcept { return static_cast<const E&>(*this).size(); }
 
-    const dimensionSet& dimensions() const
+    const dimensionSet& dimensions() const noexcept
     {
         return dimensions_;
     }
 
-    orientedType oriented() const
+    orientedType oriented() const noexcept
     {
         return oriented_;
     }
@@ -304,7 +304,7 @@ public:
         return elems_[i];
     }
 
-    label size() const
+    auto size() const noexcept
     {
         return elems_.size();
     }
@@ -430,7 +430,7 @@ public:
         return elems_[i];
     }
 
-    label size() const
+    auto size() const noexcept
     {
         return elems_.size();
     }
@@ -523,7 +523,7 @@ public:
         return elems_()[i];
     }
 
-    label size() const
+    auto size() const noexcept
     {
         return elems_().size();
     }
@@ -624,7 +624,7 @@ public:
     {
         return u_[i] + v_[i];
     }
-    label size() const { return u_.size(); }
+    auto size() const noexcept { return u_.size(); }
 
     wrapType internalField() const
     {
@@ -703,7 +703,7 @@ public:                                                                        \
     {                                                                          \
         return BaseFunc(u_[i]);                                                \
     }                                                                          \
-    label size() const { return u_.size(); }                                   \
+    auto size() const noexcept { return u_.size(); }                           \
                                                                                \
     wrapType internalField() const                                             \
     {                                                                          \
@@ -771,7 +771,7 @@ public:
     {
         return -u_[i];
     }
-    label size() const { return u_.size(); }
+    auto size() const noexcept { return u_.size(); }
 
     wrapType internalField() const
     {
@@ -859,7 +859,7 @@ public:                                                                        \
     {                                                                          \
         return u_[i] Op v_[i];                                                 \
     }                                                                          \
-    label size() const { return u_.size(); }                                   \
+    auto size() const noexcept { return u_.size(); }                           \
                                                                                \
     wrapType internalField() const                                             \
     {                                                                          \
@@ -957,7 +957,7 @@ public:                                                                        \
     {                                                                          \
         return BaseFunc(u_[i], v_[i]);                                         \
     }                                                                          \
-    label size() const {return u_.size(); }                                    \
+    auto size() const noexcept {return u_.size(); }                            \
                                                                                \
     wrapType internalField() const                                             \
     {                                                                          \
@@ -1108,7 +1108,7 @@ public:
         return val_;
     }
 
-    label size() const
+    auto size() const noexcept
     {
         return elems_.size();
     }
@@ -1196,7 +1196,7 @@ public:
 //        return val_;
 //    }
 //
-//    label size() const
+//    auto size() const noexcept
 //    {
 //        return nInternal_;
 //    }

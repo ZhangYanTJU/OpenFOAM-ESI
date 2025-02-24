@@ -282,7 +282,8 @@ class fvMatrixRefWrap
         ListRefWrap<typename Matrix::psiFieldType::value_type>, // diag
         ListRefWrap<typename Matrix::psiFieldType::value_type>, // upper
         ListRefWrap<typename Matrix::psiFieldType::value_type>, // lower
-        ListRefWrap<typename Matrix::psiFieldType::value_type>, // faceflux
+        //ListRefWrap<typename Matrix::psiFieldType::value_type>, // faceflux
+        GeometricFieldRefWrap<typename Matrix::faceFluxFieldType>,
         ListRefWrap<typename Matrix::psiFieldType::value_type>  // source
     >
 {
@@ -300,7 +301,11 @@ public:
     typedef ListRefWrap<value_type> DiagExpr;
     typedef ListRefWrap<value_type> UpperExpr;
     typedef ListRefWrap<value_type> LowerExpr;
-    typedef ListRefWrap<value_type> FaceFluxExpr;
+    //typedef ListRefWrap<value_type> FaceFluxExpr;
+    typedef GeometricFieldRefWrap
+    <
+        typename Matrix::faceFluxFieldType
+    > FaceFluxExpr;
     typedef ListRefWrap<value_type> SourceExpr;
 
 
@@ -517,7 +522,7 @@ public:
 
         FaceFluxExpr faceFluxCorrection() const
         {
-            return *elems_.faceFluxCorrectionPtr();
+            return *const_cast<this_type&>(elems_).faceFluxCorrectionPtr();
         }
 
         FaceFluxExpr faceFluxCorrection()
@@ -536,7 +541,8 @@ class fvMatrixConstRefWrap
         ListConstRefWrap<typename Matrix::psiFieldType::value_type>, // diag
         ListConstRefWrap<typename Matrix::psiFieldType::value_type>, // upper
         ListConstRefWrap<typename Matrix::psiFieldType::value_type>, // lower
-        ListConstRefWrap<typename Matrix::psiFieldType::value_type>, // faceflux
+        //ListConstRefWrap<typename Matrix::psiFieldType::value_type>, // faceflux
+        GeometricFieldConstRefWrap<typename Matrix::faceFluxFieldType>,
         ListConstRefWrap<typename Matrix::psiFieldType::value_type>  // source
     >
 {
@@ -554,7 +560,11 @@ public:
     typedef ListConstRefWrap<value_type> DiagExpr;
     typedef ListConstRefWrap<value_type> UpperExpr;
     typedef ListConstRefWrap<value_type> LowerExpr;
-    typedef ListConstRefWrap<value_type> FaceFluxExpr;
+    //typedef ListConstRefWrap<value_type> FaceFluxExpr;
+    typedef GeometricFieldConstRefWrap
+    <
+        typename Matrix::faceFluxFieldType
+    > FaceFluxExpr;
     typedef ListConstRefWrap<value_type> SourceExpr;
 
 
@@ -635,7 +645,7 @@ public:
 
         FaceFluxExpr faceFluxCorrection() const
         {
-            return *elems_.faceFluxCorrectionPtr();
+            return const_cast<this_type&>(elems_).faceFluxCorrectionPtr();
         }
 };
 
@@ -945,7 +955,7 @@ public:
 
         FaceFluxExpr faceFluxCorrection() const
         {
-            return u_.faceFluxCorrection() + v_.faceFluxCorrection();
+            return u_.faceFluxCorrection() - v_.faceFluxCorrection();
         }
 };
 template<typename E1, typename E2>
