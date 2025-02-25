@@ -652,7 +652,7 @@ Type gAverage
 {
     label n = f1.size();
     Type s = sum(f1);
-    sumReduce(s, n, UPstream::msgType(), comm);
+    Foam::sumReduce(s, n, UPstream::msgType(), comm);
 
     if (n > 0)
     {

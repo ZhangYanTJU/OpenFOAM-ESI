@@ -69,7 +69,7 @@ template<class T>
 Foam::List<T> Foam::UPstream::allGatherValues
 (
     const T& localValue,
-    const label comm
+    const int comm
 )
 {
     if constexpr (!is_contiguous_v<T>)
@@ -101,11 +101,13 @@ Foam::List<T> Foam::UPstream::allGatherValues
 }
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 template<class T>
 Foam::List<T> Foam::UPstream::listGatherValues
 (
     const T& localValue,
-    const label comm
+    const int comm
 )
 {
     if constexpr (!is_contiguous_v<T>)
@@ -149,7 +151,7 @@ template<class T>
 T Foam::UPstream::listScatterValues
 (
     const UList<T>& allValues,
-    const label comm
+    const int comm
 )
 {
     if constexpr (!is_contiguous_v<T>)
@@ -194,6 +196,102 @@ T Foam::UPstream::listScatterValues
      }
 
      return localValue;
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+template<class T>
+void Foam::UPstream::mpiReduce
+(
+    T values[],
+    int count,
+    const UPstream::opCodes opCodeId,
+    const int communicator
+)
+{
+    if (!count || !UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else
+    {
+        // Use element or component type (or byte-wise) for data type
+        // Restricted to basic data types
+        UPstream::mpi_reduce
+        (
+            values,     // The data or cmpt pointer
+            UPstream_basic_dataType<T>::size(count),
+            UPstream_basic_dataType<T>::datatype_id,
+            opCodeId,
+            communicator
+        );
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+template<class T>
+void Foam::UPstream::mpiAllReduce
+(
+    T values[],
+    int count,
+    const UPstream::opCodes opCodeId,
+    const int communicator
+)
+{
+    if (!count || !UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else
+    {
+        // Use element or component type (or byte-wise) for data type
+        // Restricted to basic data types
+        UPstream::mpi_allreduce
+        (
+            values,     // The data or cmpt pointer
+            UPstream_basic_dataType<T>::size(count),
+            UPstream_basic_dataType<T>::datatype_id,
+            opCodeId,
+            communicator
+        );
+    }
+}
+
+
+template<class T>
+void Foam::UPstream::mpiAllReduce
+(
+    T values[],
+    int count,
+    const UPstream::opCodes opCodeId,
+    const int communicator,
+    UPstream::Request& req
+)
+{
+    if (!count || !UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else
+    {
+        // Use element or component type (or byte-wise) for data type
+        // Restricted to basic data types
+        UPstream::mpi_allreduce
+        (
+            values,     // The data or cmpt pointer
+            UPstream_basic_dataType<T>::size(count),
+            UPstream_basic_dataType<T>::datatype_id,
+            opCodeId,
+            communicator,
+           &req
+        );
+    }
 }
 
 

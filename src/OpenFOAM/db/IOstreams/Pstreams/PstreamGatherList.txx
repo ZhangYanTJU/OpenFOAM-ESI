@@ -415,7 +415,7 @@ void Foam::Pstream::gatherList
 (
     UList<T>& values,
     [[maybe_unused]] const int tag,
-    const label communicator
+    const int communicator
 )
 {
     if (!UPstream::is_parallel(communicator))
@@ -457,7 +457,7 @@ void Foam::Pstream::scatterList
 (
     UList<T>& values,
     [[maybe_unused]] const int tag,
-    const label communicator
+    const int communicator
 )
 {
     if (!UPstream::is_parallel(communicator))
@@ -491,7 +491,7 @@ void Foam::Pstream::allGatherList
 (
     UList<T>& values,
     [[maybe_unused]] const int tag,
-    const label comm
+    const int comm
 )
 {
     if (!UPstream::is_parallel(comm))

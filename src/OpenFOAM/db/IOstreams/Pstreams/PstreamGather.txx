@@ -53,7 +53,7 @@ void Foam::Pstream::gather_algorithm
 (
     const UPstream::commsStructList& comms,  // Communication order
     T& value,
-    const BinaryOp& bop,
+    BinaryOp bop,
     const int tag,
     const int communicator
 )
@@ -151,15 +151,26 @@ template<class T, class BinaryOp, bool InplaceMode>
 void Foam::Pstream::gather
 (
     T& value,
-    const BinaryOp& bop,
-    const int tag,
-    const label communicator
+    [[maybe_unused]] BinaryOp bop,
+    [[maybe_unused]] const int tag,
+    const int communicator
 )
 {
     if (!UPstream::is_parallel(communicator))
     {
         // Nothing to do
         return;
+    }
+    else if constexpr (!InplaceMode && UPstream_data_opType<BinaryOp, T>::value)
+    {
+        // Valid opcode and (directly/indirectly) uses basic dataType
+        UPstream::mpiReduce
+        (
+            &value,
+            1,
+            UPstream_opType<BinaryOp>::opcode_id,
+            communicator
+        );
     }
     else
     {
@@ -182,9 +193,9 @@ template<class T, class CombineOp>
 void Foam::Pstream::combineGather
 (
     T& value,
-    const CombineOp& cop,
+    CombineOp cop,
     const int tag,
-    const label comm
+    const int comm
 )
 {
     // In-place binary operation
@@ -196,9 +207,9 @@ template<class T, class CombineOp>
 void Foam::Pstream::combineReduce
 (
     T& value,
-    const CombineOp& cop,
+    CombineOp cop,
     const int tag,
-    const label comm
+    const int comm
 )
 {
     if (UPstream::is_parallel(comm))
@@ -219,7 +230,7 @@ void Foam::Pstream::listGather_algorithm
 (
     const UPstream::commsStructList& comms,  // Communication order
     UList<T>& values,
-    const BinaryOp& bop,
+    BinaryOp bop,
     const int tag,
     const int communicator
 )
@@ -330,15 +341,26 @@ template<class T, class BinaryOp, bool InplaceMode>
 void Foam::Pstream::listGather
 (
     UList<T>& values,
-    const BinaryOp& bop,
-    const int tag,
-    const label communicator
+    [[maybe_unused]] BinaryOp bop,
+    [[maybe_unused]] const int tag,
+    const int communicator
 )
 {
     if (!UPstream::is_parallel(communicator) || values.empty())
     {
         // Nothing to do
         return;
+    }
+    else if constexpr (!InplaceMode && UPstream_data_opType<BinaryOp, T>::value)
+    {
+        // Valid opcode and (directly/indirectly) uses basic dataType
+        UPstream::mpiReduce
+        (
+            values.data(),
+            values.size(),  // Same length on all ranks
+            UPstream_opType<BinaryOp>::opcode_id,
+            communicator
+        );
     }
     else if (values.size() == 1)
     {
@@ -372,14 +394,25 @@ template<class T, class BinaryOp, bool InplaceMode>
 void Foam::Pstream::listReduce
 (
     UList<T>& values,
-    const BinaryOp& bop,
-    const int tag,
-    const label comm
+    [[maybe_unused]] BinaryOp bop,
+    [[maybe_unused]] const int tag,
+    const int comm
 )
 {
     if (!UPstream::is_parallel(comm) || values.empty())
     {
         // Nothing to do
+    }
+    else if constexpr (!InplaceMode && UPstream_data_opType<BinaryOp, T>::value)
+    {
+        // Valid opcode and (directly/indirectly) uses basic dataType
+        UPstream::mpiAllReduce
+        (
+            values.data(),
+            values.size(),  // Same length on all ranks
+            UPstream_opType<BinaryOp>::opcode_id,
+            comm
+        );
     }
     else if (values.size() == 1)
     {
@@ -400,9 +433,9 @@ template<class T, class CombineOp>
 void Foam::Pstream::listCombineGather
 (
     UList<T>& values,
-    const CombineOp& cop,
+    CombineOp cop,
     const int tag,
-    const label comm
+    const int comm
 )
 {
     // In-place binary operation
@@ -414,9 +447,9 @@ template<class T, class CombineOp>
 void Foam::Pstream::listCombineReduce
 (
     UList<T>& values,
-    const CombineOp& cop,
+    CombineOp cop,
     const int tag,
-    const label comm
+    const int comm
 )
 {
     // In-place binary operation
@@ -433,7 +466,7 @@ void Foam::Pstream::mapGather_algorithm
 (
     const UPstream::commsStructList& comms,  // Communication order
     Container& values,
-    const BinaryOp& bop,
+    BinaryOp bop,
     const int tag,
     const int communicator
 )
@@ -519,9 +552,9 @@ template<class Container, class BinaryOp, bool InplaceMode>
 void Foam::Pstream::mapGather
 (
     Container& values,
-    const BinaryOp& bop,
+    BinaryOp bop,
     const int tag,
-    const label communicator
+    const int communicator
 )
 {
     if (!UPstream::is_parallel(communicator))
@@ -550,9 +583,9 @@ template<class Container, class BinaryOp, bool InplaceMode>
 void Foam::Pstream::mapReduce
 (
     Container& values,
-    const BinaryOp& bop,
+    BinaryOp bop,
     const int tag,
-    const label comm
+    const int comm
 )
 {
     Pstream::mapGather<Container, BinaryOp, InplaceMode>
@@ -567,9 +600,9 @@ template<class Container, class CombineOp>
 void Foam::Pstream::mapCombineGather
 (
     Container& values,
-    const CombineOp& cop,
+    CombineOp cop,
     const int tag,
-    const label comm
+    const int comm
 )
 {
     // In-place binary operation
@@ -584,9 +617,9 @@ template<class Container, class CombineOp>
 void Foam::Pstream::mapCombineReduce
 (
     Container& values,
-    const CombineOp& cop,
+    CombineOp cop,
     const int tag,
-    const label comm
+    const int comm
 )
 {
     // In-place binary operation
@@ -605,7 +638,7 @@ template<class T>
 Foam::List<T> Foam::Pstream::listGatherValues
 (
     const T& localValue,
-    const label communicator,
+    const int communicator,
     [[maybe_unused]] const int tag
 )
 {
@@ -658,7 +691,7 @@ template<class T>
 T Foam::Pstream::listScatterValues
 (
     const UList<T>& allValues,
-    const label communicator,
+    const int communicator,
     [[maybe_unused]] const int tag
 )
 {

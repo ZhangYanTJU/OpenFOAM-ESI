@@ -1690,7 +1690,7 @@ public:
         static List<T> allGatherValues
         (
             const T& localValue,
-            const label communicator = worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Gather individual values into list locations.
@@ -1702,7 +1702,7 @@ public:
         static List<T> listGatherValues
         (
             const T& localValue,
-            const label communicator = worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Scatter individual values from list locations.
@@ -1714,7 +1714,7 @@ public:
         static T listScatterValues
         (
             const UList<T>& allValues,
-            const label communicator = worldComm
+            const int communicator = UPstream::worldComm
         );
 
 
@@ -1733,6 +1733,43 @@ public:
         );
 
 
+    // Reductions
+
+        //- MPI_Reduce (blocking) for known operators
+        //  For \b non-parallel : do nothing.
+        template<class T>
+        static void mpiReduce
+        (
+            T values[],
+            int count,
+            const UPstream::opCodes opCodeId,
+            const int communicator
+        );
+
+        //- MPI_Allreduce (blocking) for known operators
+        //  For \b non-parallel : do nothing.
+        template<class T>
+        static void mpiAllReduce
+        (
+            T values[],
+            int count,
+            const UPstream::opCodes opCodeId,
+            const int communicator
+        );
+
+        //- MPI_Iallreduce (non-blocking) for known operators
+        //  For \b non-parallel : do nothing.
+        template<class T>
+        static void mpiAllReduce
+        (
+            T values[],
+            int count,
+            const UPstream::opCodes opCodeId,
+            const int communicator,
+            UPstream::Request& req
+        );
+
+
     // Logical reductions
 
         //- Logical (and) reduction (MPI_AllReduce)
@@ -1740,7 +1777,7 @@ public:
         static void reduceAnd
         (
             bool& value,
-            const label communicator = worldComm
+            const int communicator = worldComm
         );
 
         //- Logical (or) reduction (MPI_AllReduce)
@@ -1748,7 +1785,7 @@ public:
         static void reduceOr
         (
             bool& value,
-            const label communicator = worldComm
+            const int communicator = worldComm
         );
 
 
