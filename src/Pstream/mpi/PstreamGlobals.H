@@ -40,6 +40,7 @@ SourceFiles
 #define Foam_PstreamGlobals_H
 
 #include "DynamicList.H"
+#include "FixedList.H"
 #include "UPstream.H"  // For UPstream::Request
 #include "openfoam_mpi.H"
 
@@ -61,6 +62,17 @@ extern DynamicList<MPI_Comm> MPICommunicators_;
 
 //- Outstanding non-blocking operations.
 extern DynamicList<MPI_Request> outstandingRequests_;
+
+typedef Foam::FixedList<MPI_Datatype, 15> DataTypeLookupTable;
+
+//- MPI data types corresponding to some fundamental and OpenFOAM types.
+//- Indexed by UPstream::dataTypes enum
+extern DataTypeLookupTable MPIdataTypes_;
+
+typedef Foam::FixedList<MPI_Op, 13> OpCodesLookupTable;
+
+//- MPI operation types, indexed by UPstream::opCodes enum
+extern OpCodesLookupTable MPIopCodes_;
 
 
 // * * * * * * * * * * * * * * * Communicators * * * * * * * * * * * * * * * //
@@ -89,6 +101,76 @@ inline bool warnCommunicator(int comm) noexcept
 }
 
 
+// * * * * * * * * * * * * * * * * Data Types  * * * * * * * * * * * * * * * //
+
+//- Create mapping into MPIdataTypes_ and define user data types
+void initDataTypes();
+
+//- Free any user data types
+void deinitDataTypes();
+
+//- Debugging only: check if data type mappings are non-null
+bool checkDataTypes();
+
+//- Debugging only: print data type names (all or just user-defined)
+void printDataTypes(bool all = false);
+
+//- Lookup of dataTypes enumeration as an MPI_Datatype
+inline MPI_Datatype getDataType(UPstream::dataTypes id)
+{
+    return MPIdataTypes_[static_cast<int>(id)];
+}
+
+//- Fatal if data type is not valid
+inline void checkDataType(UPstream::dataTypes id)
+{
+    if (id == UPstream::dataTypes::invalid)
+    {
+        FatalErrorInFunction
+            << "Invalid data type"
+            << Foam::abort(FatalError);
+    }
+}
+
+//- Return MPI internal name for specified MPI_Datatype
+std::string dataType_name(MPI_Datatype datatype);
+
+//- Return MPI internal name for dataTypes enumeration
+inline std::string dataType_name(UPstream::dataTypes id)
+{
+    return dataType_name(MPIdataTypes_[static_cast<int>(id)]);
+}
+
+
+// * * * * * * * * * * * * * * * * Op Codes  * * * * * * * * * * * * * * * * //
+
+//- Create mapping into MPIopCodes_
+void initOpCodes();
+
+//- Free any user-defined op codes
+void deinitOpCodes();
+
+//- Debugging only: check if op code mappings are non-null
+bool checkOpCodes();
+
+//- Lookup of opCodes enumeration as an MPI_Op
+inline MPI_Op getOpCode(UPstream::opCodes id)
+{
+    return MPIopCodes_[static_cast<int>(id)];
+}
+
+//- Fatal if opcode is not valid
+inline void checkOpCode(UPstream::opCodes id)
+{
+    if (id == UPstream::opCodes::invalid)
+    {
+        FatalErrorInFunction
+            << "Invalid operation code"
+            << Foam::abort(FatalError);
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Requests  * * * * * * * * * * * * * * * * //
 
 //- Reset UPstream::Request to MPI_REQUEST_NULL
@@ -113,7 +195,7 @@ inline void push_request
         // Transcribe as UPstream::Request
         *req = UPstream::Request(request);
     }
-    else
+    else if (MPI_REQUEST_NULL != request)
     {
         // Push onto list of requests
         PstreamGlobals::outstandingRequests_.push_back(request);

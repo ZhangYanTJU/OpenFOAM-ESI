@@ -90,6 +90,78 @@ public:
         sync            //!< (MPI_Ssend, MPI_Issend)
     };
 
+    //- Mapping of some fundamental and aggregate types to MPI data types
+    enum class dataTypes : int
+    {
+        // NOTE: changes here require adjustment in
+        // PstreamGlobals, UPstreamTraits
+
+        // Builtin Types [8]:
+        DataTypes_begin,    //!< (internal use) begin all data types
+        type_byte = DataTypes_begin,  //!< byte, char, unsigned char, ...
+        type_int32,
+        type_int64,
+        type_uint32,
+        type_uint64,
+        type_float,
+        type_double,
+        type_long_double,
+
+        //! (internal use) end of builtin data types marker
+        BuiltinTypes_end, UserTypes_begin = BuiltinTypes_end,
+        //!< (internal use) begin of user data types marker
+
+        // User Types [6]:
+        type_3float = UserTypes_begin, //!< 3*float (eg, floatVector)
+        type_3double,   //!< 3*double (eg, doubleVector)
+        type_6float,    //!< 6*float (eg, floatSymmTensor, complex vector)
+        type_6double,   //!< 6*double (eg, doubleSymmTensor, complex vector)
+        type_9float,    //!< 9*float (eg, floatTensor)
+        type_9double,   //!< 9*double (eg, doubleTensor)
+
+        // Internal markers
+        invalid,        //!< invalid type (NULL)
+        //! (internal use) end of user data types marker
+        UserTypes_end = invalid, DataTypes_end = invalid
+        //!< (internal use) end of all data types marker
+    };
+
+    //- Mapping of some MPI op codes.
+    //  Currently excluding min/max location until they are needed
+    enum class opCodes : int
+    {
+        // NOTE: changes here require adjustment in
+        // PstreamGlobals, UPstreamTraits
+
+        ReduceOps_begin,  //!< (internal use) begin reduce/window
+
+        // Reduce or window operations [10]
+        op_min = ReduceOps_begin, //!< min(x,y)
+        op_max,         //!< max(x,y)
+        op_sum,         //!< (x + y)
+        op_prod,        //!< (x * y)
+        op_bool_and,    //!< Logical \c and
+        op_bool_or,     //!< Logical \c or
+        op_bool_xor,    //!< Logical \c xor
+        op_bit_and,     //!< Bit-wise \c and for (unsigned) integral types
+        op_bit_or,      //!< Bit-wise \c or for (unsigned) integral types
+        op_bit_xor,     //!< Bit-wise \c xor for (unsigned) integral types
+
+        //! (internal use) end of reduce-ops marker
+        ReduceOps_end, WindowOps_begin = ReduceOps_end,
+        //!< (internal use) begin end of window-ops marker
+
+        // Window-only operations [2]
+        op_replace = WindowOps_begin,  //!< Replace (window only)
+        op_no_op,       //!< No-op (window only)
+
+        // Internal markers
+        invalid,        //!< invalid op (NULL)
+        //! (internal use) end of window-ops marker
+        WindowOps_end = invalid, OpCodes_end = invalid
+        //!< (internal use) end of all ops marker
+    };
+
 
     // Public Classes
 
@@ -777,8 +849,36 @@ public:
         //- Impose a synchronisation barrier (optionally non-blocking)
         static void barrier
         (
-            const label communicator,
+            const int communicator,
             UPstream::Request* req = nullptr
+        );
+
+        //- Impose a point-to-point synchronisation barrier
+        //- by sending a zero-byte \em "done" message to given rank.
+        //  A no-op for non-parallel
+        static void send_done
+        (
+            //! The destination rank
+            const int toProcNo,
+            //! The communicator index (eg, UPstream::worldComm)
+            const int communicator,
+            //! Message tag (must match on receiving side)
+            const int tag = UPstream::msgType()+1970
+        );
+
+        //- Impose a point-to-point synchronisation barrier
+        //- by receiving a zero-byte \em "done" message from given rank
+        //  A no-op for non-parallel
+        //  \returns the source rank (useful for ANY_SOURCE messages)
+        //  or -1 for non-parallel
+        static int wait_done
+        (
+            //! The source rank (negative == ANY_SOURCE)
+            const int fromProcNo,
+            //! The communicator index (eg, UPstream::worldComm)
+            const int communicator,
+            //! Message tag (must match on sending side)
+            const int tag = UPstream::msgType()+1970
         );
 
         //- Probe for an incoming message.
@@ -795,7 +895,7 @@ public:
             const UPstream::commsTypes commsType,
             const int fromProcNo,
             const int tag = UPstream::msgType(),
-            const label communicator = worldComm
+            const int communicator = worldComm
         );
 
 
@@ -824,7 +924,7 @@ public:
 
         //- Transfer the (wrapped) MPI request to the internal global list
         //- and invalidate the parameter (ignores null requests)
-        //  A no-op for non-parallel,
+        //  A no-op for non-parallel
         static void addRequest(UPstream::Request& req);
 
         //- Non-blocking comms: cancel and free outstanding request.

@@ -251,6 +251,17 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
         ourMpi = true;
     }
 
+    // Define data type mappings and user data types. Defined now so that
+    // any OpenFOAM Pstream operations may make immediate use of them.
+    PstreamGlobals::initDataTypes();
+    PstreamGlobals::initOpCodes();
+
+    if (UPstream::debug)
+    {
+        PstreamGlobals::printDataTypes();
+    }
+
+
     // Check argument list for local world
     label worldIndex = -1;
     for (int argi = 1; argi < argc; ++argi)
@@ -591,6 +602,9 @@ void Foam::UPstream::shutdown(int errNo)
         }
     }
 
+    // Free any user data types
+    PstreamGlobals::deinitDataTypes();
+    PstreamGlobals::deinitOpCodes();
 
     MPI_Finalize();
 }
@@ -1050,10 +1064,10 @@ bool Foam::UPstream::setSharedMemoryCommunicators()
 }
 
 
-void Foam::UPstream::barrier(const label communicator, UPstream::Request* req)
+void Foam::UPstream::barrier(const int communicator, UPstream::Request* req)
 {
     // No-op for non-parallel or not on communicator
-    if (!UPstream::parRun() || !UPstream::is_rank(communicator))
+    if (!UPstream::is_parallel(communicator))
     {
         PstreamGlobals::reset_request(req);
         return;
@@ -1099,19 +1113,78 @@ void Foam::UPstream::barrier(const label communicator, UPstream::Request* req)
 }
 
 
+void Foam::UPstream::send_done
+(
+    const int toProcNo,
+    const int communicator,
+    const int tag  // Message tag (must match on receiving side)
+)
+{
+    if (!UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+
+    {
+        MPI_Send
+        (
+            nullptr, 0, MPI_BYTE, toProcNo, tag,
+            PstreamGlobals::MPICommunicators_[communicator]
+        );
+    }
+}
+
+
+int Foam::UPstream::wait_done
+(
+    const int fromProcNo,
+    const int communicator,
+    const int tag  // Message tag (must match on sending side)
+)
+{
+    if (!UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return -1;
+    }
+    else if (fromProcNo < 0)
+    {
+        MPI_Status status;
+        MPI_Recv
+        (
+            nullptr, 0, MPI_BYTE, MPI_ANY_SOURCE, tag,
+            PstreamGlobals::MPICommunicators_[communicator],
+           &status
+        );
+        return status.MPI_SOURCE;
+    }
+    else
+    {
+        MPI_Recv
+        (
+            nullptr, 0, MPI_BYTE, fromProcNo, tag,
+            PstreamGlobals::MPICommunicators_[communicator],
+            MPI_STATUS_IGNORE
+        );
+        return fromProcNo;
+    }
+}
+
+
 std::pair<int,int64_t>
 Foam::UPstream::probeMessage
 (
     const UPstream::commsTypes commsType,
     const int fromProcNo,
     const int tag,
-    const label communicator
+    const int communicator
 )
 {
     std::pair<int,int64_t> result(-1, 0);
 
     // No-op for non-parallel or not on communicator
-    if (!UPstream::parRun() || !UPstream::is_rank(communicator))
+    if (!UPstream::is_parallel(communicator))
     {
         return result;
     }

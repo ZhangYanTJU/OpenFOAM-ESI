@@ -109,8 +109,28 @@ void Foam::UPstream::freeCommunicatorComponents(const label index)
 {}
 
 
-void Foam::UPstream::barrier(const label communicator, UPstream::Request* req)
+void Foam::UPstream::barrier(const int communicator, UPstream::Request* req)
 {}
+
+
+void Foam::UPstream::send_done
+(
+    const int toProc,
+    const int communicator,
+    const int tag
+)
+{}
+
+
+int Foam::UPstream::wait_done
+(
+    const int fromProc,
+    const int communicator,
+    const int tag
+)
+{
+    return -1;
+}
 
 
 std::pair<int,int64_t>
@@ -119,10 +139,10 @@ Foam::UPstream::probeMessage
     const UPstream::commsTypes commsType,
     const int fromProcNo,
     const int tag,
-    const label communicator
+    const int communicator
 )
 {
-    return std::pair<int,int64_t>(-1, 0);
+    return {-1, 0};
 }
 
 

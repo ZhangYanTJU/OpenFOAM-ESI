@@ -34,6 +34,12 @@ Foam::DynamicList<bool> Foam::PstreamGlobals::pendingMPIFree_;
 Foam::DynamicList<MPI_Comm> Foam::PstreamGlobals::MPICommunicators_;
 Foam::DynamicList<MPI_Request> Foam::PstreamGlobals::outstandingRequests_;
 
+Foam::PstreamGlobals::DataTypeLookupTable
+Foam::PstreamGlobals::MPIdataTypes_(MPI_DATATYPE_NULL);
+
+Foam::PstreamGlobals::OpCodesLookupTable
+Foam::PstreamGlobals::MPIopCodes_(MPI_OP_NULL);
+
 
 // * * * * * * * * * * * * * * * Communicators * * * * * * * * * * * * * * * //
 
@@ -57,6 +63,249 @@ void Foam::PstreamGlobals::initCommunicator(const label index)
         pendingMPIFree_[index] = false;
         MPICommunicators_[index] = MPI_COMM_NULL;
     }
+}
+
+
+// * * * * * * * * * * * * * * * * Data Types  * * * * * * * * * * * * * * * //
+
+void Foam::PstreamGlobals::initDataTypes()
+{
+    static_assert
+    (
+        PstreamGlobals::DataTypeLookupTable::max_size()
+     == (int(UPstream::dataTypes::DataTypes_end)+1),
+        "Lookup table size != number of dataTypes enumerations"
+    );
+
+    // From enumeration to MPI datatype
+    #undef  defineType
+    #define defineType(Idx, BaseType) \
+    MPIdataTypes_[int(UPstream::dataTypes::Idx)] = BaseType;
+
+    // Intrinsic Types [8]:
+    defineType(type_byte,   MPI_BYTE);
+    defineType(type_int32,  MPI_INT32_T);
+    defineType(type_int64,  MPI_INT64_T);
+    defineType(type_uint32, MPI_UINT32_T);
+    defineType(type_uint64, MPI_UINT64_T);
+    defineType(type_float,  MPI_FLOAT);
+    defineType(type_double, MPI_DOUBLE);
+    defineType(type_long_double, MPI_LONG_DOUBLE);
+
+    #undef defineType
+
+    // User-define types
+    #undef  defineUserType
+    #define defineUserType(Idx, Count, BaseType, Name)                        \
+    {                                                                         \
+        auto& dt = MPIdataTypes_[int(UPstream::dataTypes::Idx)];              \
+        MPI_Type_contiguous(Count, BaseType, &dt);                            \
+        MPI_Type_set_name(dt, Name);                                          \
+        MPI_Type_commit(&dt);                                                 \
+    }
+
+    // User Types [6]:
+    defineUserType(type_3float,  3, MPI_FLOAT,  "float[3]");
+    defineUserType(type_3double, 3, MPI_DOUBLE, "double[3]");
+    defineUserType(type_6float,  6, MPI_FLOAT,  "float[6]");
+    defineUserType(type_6double, 6, MPI_DOUBLE, "double[6]");
+    defineUserType(type_9float,  9, MPI_FLOAT,  "float[9]");
+    defineUserType(type_9double, 9, MPI_DOUBLE, "double[9]");
+
+    #undef defineUserType
+}
+
+
+void Foam::PstreamGlobals::deinitDataTypes()
+{
+    // User types only
+    auto first =
+    (
+        MPIdataTypes_.begin() + int(UPstream::dataTypes::UserTypes_begin)
+    );
+    const auto last =
+    (
+        MPIdataTypes_.begin() + int(UPstream::dataTypes::UserTypes_end)
+    );
+
+    for (; first != last; ++first)
+    {
+        if (MPI_DATATYPE_NULL != *first)
+        {
+            MPI_Type_free(&(*first));
+        }
+    }
+}
+
+
+// Debugging
+bool Foam::PstreamGlobals::checkDataTypes()
+{
+    // Check all types, not just user types
+    auto first =
+    (
+        MPIdataTypes_.begin()
+    );
+    const auto last =
+    (
+        MPIdataTypes_.begin() + int(UPstream::dataTypes::DataTypes_end)
+    );
+
+    for (; (first != last); ++first)
+    {
+        if (MPI_DATATYPE_NULL == *first)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+// Debugging
+void Foam::PstreamGlobals::printDataTypes(bool all)
+{
+    int rank = -1;
+    if
+    (
+        (MPI_SUCCESS != MPI_Comm_rank(MPI_COMM_WORLD, &rank))
+     || (rank != 0)
+    )
+    {
+        return;
+    }
+
+    const auto print = [&](auto firstIndex, auto lastIndex)
+    {
+        auto first =
+        (
+            PstreamGlobals::MPIdataTypes_.begin() + int(firstIndex)
+        );
+        const auto last =
+        (
+            PstreamGlobals::MPIdataTypes_.begin() + int(lastIndex)
+        );
+
+        for (; (first != last); ++first)
+        {
+            std::cerr
+                << "  name = "
+                << PstreamGlobals::dataType_name(*first) << '\n';
+        }
+    };
+
+    if (all)
+    {
+        std::cerr << "enumerated data types:\n";
+        print
+        (
+            UPstream::dataTypes::DataTypes_begin,
+            UPstream::dataTypes::DataTypes_end
+        );
+    }
+    else
+    {
+        // User types only.
+        std::cerr << "enumerated user-defined data types:\n";
+        print
+        (
+            UPstream::dataTypes::UserTypes_begin,
+            UPstream::dataTypes::UserTypes_end
+        );
+    }
+}
+
+
+std::string Foam::PstreamGlobals::dataType_name(MPI_Datatype datatype)
+{
+    if (MPI_DATATYPE_NULL == datatype)
+    {
+        return std::string("(null)");
+    }
+
+    char buf[MPI_MAX_OBJECT_NAME];
+    int len;
+
+    if (MPI_SUCCESS == MPI_Type_get_name(datatype, buf, &len))
+    {
+        if (len > 0)
+        {
+            return std::string(buf, len);
+        }
+        else
+        {
+            return std::string("(anon)");
+        }
+    }
+
+    return std::string("???");
+}
+
+
+// * * * * * * * * * * * * * * * * Op Codes  * * * * * * * * * * * * * * * * //
+
+void Foam::PstreamGlobals::initOpCodes()
+{
+    static_assert
+    (
+        PstreamGlobals::OpCodesLookupTable::max_size()
+     == (int(UPstream::opCodes::OpCodes_end)+1),
+        "Lookup table size != number of opCodes enumerations"
+    );
+
+    // From enumeration to MPI datatype
+    #undef  defineCode
+    #define defineCode(Idx, CodeType) \
+    MPIopCodes_[int(UPstream::opCodes::Idx)] = CodeType;
+
+    defineCode(op_min,  MPI_MIN);
+    defineCode(op_max,  MPI_MAX);
+    defineCode(op_sum,  MPI_SUM);
+    defineCode(op_prod, MPI_PROD);
+
+    // TBD: still need to sort out if they are MPI_C_BOOL or MPI_CXX_BOOL
+    // ...
+    defineCode(op_bool_and, MPI_LAND);
+    defineCode(op_bool_or,  MPI_LOR);
+    defineCode(op_bool_xor, MPI_LXOR);
+
+    defineCode(op_bit_and,  MPI_BAND);
+    defineCode(op_bit_or,   MPI_BOR);
+    defineCode(op_bit_xor,  MPI_BXOR);
+
+    // Do not include MPI_MINLOC, MPI_MAXLOC since they are tied to
+    // float_int, double_int and larger or other types
+
+    // window-only
+    defineCode(op_replace, MPI_REPLACE);
+    defineCode(op_no_op, MPI_NO_OP);
+
+    #undef defineCode
+}
+
+
+void Foam::PstreamGlobals::deinitOpCodes()
+{}
+
+
+bool Foam::PstreamGlobals::checkOpCodes()
+{
+    auto first = MPIopCodes_.begin();
+    const auto last =
+    (
+        MPIopCodes_.begin() + int(UPstream::opCodes::OpCodes_end)
+    );
+
+    for (; (first != last); ++first)
+    {
+        if (MPI_OP_NULL == *first)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 
