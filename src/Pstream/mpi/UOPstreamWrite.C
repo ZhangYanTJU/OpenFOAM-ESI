@@ -228,33 +228,4 @@ bool Foam::UPstream::mpi_send
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::UOPstream::write
-(
-    const UPstream::commsTypes commsType,
-    const int toProcNo,
-    const char* buf,
-    const std::streamsize bufSize,
-    const int tag,
-    const int communicator,
-    UPstream::Request* req,
-    const UPstream::sendModes sendMode
-)
-{
-    return UPstream::mpi_send
-    (
-        commsType,
-        buf,
-        bufSize,
-        UPstream::dataTypes::type_byte,
-        toProcNo,
-        tag,
-        communicator,
-        req,
-        sendMode
-    );
-}
-
-
 // ************************************************************************* //

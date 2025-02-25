@@ -57,23 +57,4 @@ bool Foam::UPstream::mpi_send
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::UOPstream::write
-(
-    const UPstream::commsTypes commsType,
-    const int toProcNo,
-    const char* buf,
-    const std::streamsize bufSize,
-    const int tag,
-    const int communicator,
-    UPstream::Request* req,
-    const UPstream::sendModes sendMode
-)
-{
-    NotImplemented;
-    return false;
-}
-
-
 // ************************************************************************* //

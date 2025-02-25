@@ -55,22 +55,4 @@ void Foam::UIPstream::bufferIPCrecv()
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-std::streamsize Foam::UIPstream::read
-(
-    const UPstream::commsTypes commsType,
-    const int fromProcNo,
-    char* buf,
-    const std::streamsize bufSize,
-    const int tag,
-    const int communicator,
-    UPstream::Request* req
-)
-{
-    NotImplemented;
-    return 0;
-}
-
-
 // ************************************************************************* //
