@@ -251,6 +251,17 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
         ourMpi = true;
     }
 
+    // Define data type mappings and user data types. Defined now so that
+    // any OpenFOAM Pstream operations may make immediate use of them.
+    PstreamGlobals::initDataTypes();
+    PstreamGlobals::initOpCodes();
+
+    if (UPstream::debug)
+    {
+        PstreamGlobals::printDataTypes();
+    }
+
+
     // Check argument list for local world
     label worldIndex = -1;
     for (int argi = 1; argi < argc; ++argi)
@@ -591,6 +602,9 @@ void Foam::UPstream::shutdown(int errNo)
         }
     }
 
+    // Free any user data types
+    PstreamGlobals::deinitDataTypes();
+    PstreamGlobals::deinitOpCodes();
 
     MPI_Finalize();
 }
