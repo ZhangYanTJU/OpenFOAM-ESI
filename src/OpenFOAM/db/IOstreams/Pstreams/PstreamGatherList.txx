@@ -433,14 +433,8 @@ void Foam::Pstream::gatherList
                 << Foam::abort(FatalError);
         }
 
-        // In-place gather for contiguous types
-        UPstream::mpiGather
-        (
-            nullptr,
-            values.data_bytes(),
-            sizeof(T),
-            communicator
-        );
+        // In-place gather for contiguous types - one element per rank
+        UPstream::mpiGather(nullptr, values.data(), 1, communicator);
     }
     else
     {
@@ -467,14 +461,8 @@ void Foam::Pstream::scatterList
     }
     else if constexpr (is_contiguous_v<T>)
     {
-        // In-place scatter for contiguous types
-        UPstream::mpiScatter
-        (
-            nullptr,
-            values.data_bytes(),
-            sizeof(T),
-            communicator
-        );
+        // In-place scatter for contiguous types - one element per rank
+        UPstream::mpiScatter(nullptr, values.data(), 1, communicator);
     }
     else
     {
@@ -491,33 +479,34 @@ void Foam::Pstream::allGatherList
 (
     UList<T>& values,
     [[maybe_unused]] const int tag,
-    const int comm
+    const int communicator
 )
 {
-    if (!UPstream::is_parallel(comm))
+    if (!UPstream::is_parallel(communicator))
     {
         // Nothing to do
         return;
     }
     else if constexpr (is_contiguous_v<T>)
     {
-        if (FOAM_UNLIKELY(values.size() < UPstream::nProcs(comm)))
+        if (FOAM_UNLIKELY(values.size() < UPstream::nProcs(communicator)))
         {
             FatalErrorInFunction
                 << "List of values is too small:" << values.size()
-                << " vs numProcs:" << UPstream::nProcs(comm) << nl
+                << " vs numProcs:" << UPstream::nProcs(communicator) << nl
                 << Foam::abort(FatalError);
         }
 
-        UPstream::mpiAllGather(values.data_bytes(), sizeof(T), comm);
+        // Allgather for contiguous types - one element per rank
+        UPstream::mpiAllGather(values.data(), 1, communicator);
     }
     else
     {
         // Communication order
-        const auto& commOrder = UPstream::whichCommunication(comm);
+        const auto& commOrder = UPstream::whichCommunication(communicator);
 
-        Pstream::gatherList_algorithm(commOrder, values, tag, comm);
-        Pstream::scatterList_algorithm(commOrder, values, tag, comm);
+        Pstream::gatherList_algorithm(commOrder, values, tag, communicator);
+        Pstream::scatterList_algorithm(commOrder, values, tag, communicator);
     }
 }
 

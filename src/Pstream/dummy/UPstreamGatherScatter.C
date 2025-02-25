@@ -67,6 +67,8 @@ void Foam::UPstream::mpi_allgather
 {}
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 void Foam::UPstream::mpi_gatherv
 (
     const void* sendData,
@@ -100,45 +102,6 @@ void Foam::UPstream::mpi_scatterv
 
 #undef  Pstream_CommonRoutines
 #define Pstream_CommonRoutines(Type)                                          \
-                                                                              \
-void Foam::UPstream::mpiGather                                                \
-(                                                                             \
-    const Type* sendData,                                                     \
-    Type* recvData,                                                           \
-    int count,                                                                \
-    const label comm                                                          \
-)                                                                             \
-{                                                                             \
-    if (sendData && recvData)                                                 \
-    {                                                                         \
-        std::memmove(recvData, sendData, count*sizeof(Type));                 \
-    }                                                                         \
-}                                                                             \
-                                                                              \
-                                                                              \
-void Foam::UPstream::mpiScatter                                               \
-(                                                                             \
-    const Type* sendData,                                                     \
-    Type* recvData,                                                           \
-    int count,                                                                \
-    const label comm                                                          \
-)                                                                             \
-{                                                                             \
-    if (sendData && recvData)                                                 \
-    {                                                                         \
-        std::memmove(recvData, sendData, count*sizeof(Type));                 \
-    }                                                                         \
-}                                                                             \
-                                                                              \
-                                                                              \
-void Foam::UPstream::mpiAllGather                                             \
-(                                                                             \
-    Type* allData,                                                            \
-    int count,                                                                \
-    const label comm                                                          \
-)                                                                             \
-{}                                                                            \
-                                                                              \
                                                                               \
 void Foam::UPstream::mpiGatherv                                               \
 (                                                                             \

@@ -262,52 +262,6 @@ void Foam::UPstream::mpi_scatterv
 #undef  Pstream_CommonRoutines
 #define Pstream_CommonRoutines(Native, TaggedType)                            \
                                                                               \
-void Foam::UPstream::mpiGather                                                \
-(                                                                             \
-    const Native* sendData,                                                   \
-    Native* recvData,                                                         \
-    int count,                                                                \
-    const label comm                                                          \
-)                                                                             \
-{                                                                             \
-    PstreamDetail::gather                                                     \
-    (                                                                         \
-        sendData, recvData, count,                                            \
-        TaggedType, comm                                                      \
-    );                                                                        \
-}                                                                             \
-                                                                              \
-                                                                              \
-void Foam::UPstream::mpiScatter                                               \
-(                                                                             \
-    const Native* sendData,                                                   \
-    Native* recvData,                                                         \
-    int count,                                                                \
-    const label comm                                                          \
-)                                                                             \
-{                                                                             \
-    PstreamDetail::scatter                                                    \
-    (                                                                         \
-        sendData, recvData, count,                                            \
-        TaggedType, comm                                                      \
-    );                                                                        \
-}                                                                             \
-                                                                              \
-                                                                              \
-void Foam::UPstream::mpiAllGather                                             \
-(                                                                             \
-    Native* allData,                                                          \
-    int count,                                                                \
-    const label comm                                                          \
-)                                                                             \
-{                                                                             \
-    PstreamDetail::allGather                                                  \
-    (                                                                         \
-        allData, count,                                                       \
-        TaggedType, comm                                                      \
-    );                                                                        \
-}                                                                             \
-                                                                              \
 void Foam::UPstream::mpiGatherv                                               \
 (                                                                             \
     const Native* sendData,                                                   \

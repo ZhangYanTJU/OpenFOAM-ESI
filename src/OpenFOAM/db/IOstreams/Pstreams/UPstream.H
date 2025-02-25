@@ -1579,45 +1579,49 @@ public:
 
     // Low-level gather/scatter routines
 
+        //- Receive identically-sized (contiguous) data from all ranks
+        template<class Type>
+        static void mpiGather
+        (
+            //! On rank: individual value to send (or nullptr for inplace)
+            const Type* sendData,
+            //! Master: receive buffer with all values
+            //! Or for in-place send/recv when sendData is nullptr
+            Type* recvData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const int communicator = UPstream::worldComm
+        );
+
+        //- Send identically-sized (contiguous) data to all ranks
+        template<class Type>
+        static void mpiScatter
+        (
+            //! On master: send buffer with all values (nullptr for inplace)
+            const Type* sendData,
+            //! On rank: individual value to receive
+            //! Or for in-place send/recv when sendData is nullptr
+            Type* recvData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const int communicator = UPstream::worldComm
+        );
+
+        //- Gather/scatter identically-sized data
+        //  Send data from proc slot, receive into all slots
+        template<class Type>
+        static void mpiAllGather
+        (
+            //! On all ranks: the base of the data locations
+            Type* allData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const int communicator = UPstream::worldComm
+        );
+
+
         #undef  Pstream_CommonRoutines
         #define Pstream_CommonRoutines(Type)                                  \
-                                                                              \
-        /*! \brief Receive identically-sized \c Type data from all ranks */   \
-        static void mpiGather                                                 \
-        (                                                                     \
-            /*! On rank: individual value to send (or nullptr for inplace) */ \
-            const Type* sendData,                                             \
-            /*! Master: receive buffer with all values */                     \
-            /*! Or for in-place send/recv when sendData is nullptr */         \
-            Type* recvData,                                                   \
-            /*! Number of send/recv data per rank. Globally consistent! */    \
-            int count,                                                        \
-            const label communicator = worldComm                              \
-        );                                                                    \
-                                                                              \
-        /*! \brief Send identically-sized \c Type data to all ranks */        \
-        static void mpiScatter                                                \
-        (                                                                     \
-            /*! Master: send buffer with all values (nullptr for inplace) */  \
-            const Type* sendData,                                             \
-            /*! On rank: individual value to receive */                       \
-            /*! Or for in-place send/recv when sendData is nullptr */         \
-            Type* recvData,                                                   \
-            /*! Number of send/recv data per rank. Globally consistent! */    \
-            int count,                                                        \
-            const label communicator = worldComm                              \
-        );                                                                    \
-                                                                              \
-        /*! \brief Gather/scatter identically-sized \c Type data */           \
-        /*! Send data from proc slot, receive into all slots */               \
-        static void mpiAllGather                                              \
-        (                                                                     \
-            /*! On all ranks: the base of the data locations */               \
-            Type* allData,                                                    \
-            /*! Number of send/recv data per rank. Globally consistent! */    \
-            int count,                                                        \
-            const label communicator = worldComm                              \
-        );                                                                    \
                                                                               \
         /*! \brief Receive variable length \c Type data from all ranks */     \
         static void mpiGatherv                                                \

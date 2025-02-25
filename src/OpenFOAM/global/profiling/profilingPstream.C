@@ -228,9 +228,9 @@ void Foam::profilingPstream::report(const int reportLevel)
 
         UPstream::mpiGather
         (
-            procValues.cdata_bytes(),   // Send
-            allTimes.data_bytes(),      // Recv
-            procValues.size_bytes(),    // Num send/recv data per rank
+            procValues.cdata(), // Send
+            allTimes.data(),    // Recv
+            procValues.size(),  // Num send/recv data per rank
             UPstream::commWorld()
         );
     }
@@ -247,9 +247,9 @@ void Foam::profilingPstream::report(const int reportLevel)
 
         UPstream::mpiGather
         (
-            procValues.cdata_bytes(),   // Send
-            allCounts.data_bytes(),     // Recv
-            procValues.size_bytes(),    // Num send/recv data per rank
+            procValues.cdata(), // Send
+            allCounts.data(),   // Recv
+            procValues.size(),  // Num send/recv data per rank
             UPstream::commWorld()
         );
     }

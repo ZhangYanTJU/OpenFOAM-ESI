@@ -65,39 +65,159 @@ bool Foam::UPstream::broadcast
 }
 
 
+template<class Type>
+void Foam::UPstream::mpiGather
+(
+    const Type* sendData,
+    Type* recvData,
+    int count,
+    const int communicator
+)
+{
+    if (!count || !UPstream::is_rank(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else if constexpr (!is_contiguous_v<Type>)
+    {
+        FatalErrorInFunction
+            << "Invalid for non-contiguous data types"
+            << Foam::abort(FatalError);
+    }
+    else if (!UPstream::is_parallel(communicator))
+    {
+        // Perform any fallback copying here, while we still know the Type
+        if (sendData && recvData && (sendData != recvData))
+        {
+            std::memmove(recvData, sendData, count*sizeof(Type));
+        }
+    }
+    else
+    {
+        // Use element or component type (or byte-wise) for data type
+        UPstream::mpi_gather
+        (
+            sendData,   // The data or cmpt pointer
+            recvData,   // The data or cmpt pointer
+            UPstream_dataType<Type>::size(count),
+            UPstream_dataType<Type>::datatype_id,
+            communicator
+        );
+    }
+}
+
+
+template<class Type>
+void Foam::UPstream::mpiScatter
+(
+    const Type* sendData,
+    Type* recvData,
+    int count,
+    const int communicator
+)
+{
+    if (!count || !UPstream::is_rank(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else if constexpr (!is_contiguous_v<Type>)
+    {
+        FatalErrorInFunction
+            << "Invalid for non-contiguous data types"
+            << Foam::abort(FatalError);
+    }
+    else if (!UPstream::is_parallel(communicator))
+    {
+        // Perform any fallback copying here, while we still know the Type
+        if (sendData && recvData && (sendData != recvData))
+        {
+            std::memmove(recvData, sendData, count*sizeof(Type));
+        }
+    }
+    else
+    {
+        // Use element or component type (or byte-wise) for data type
+        UPstream::mpi_scatter
+        (
+            sendData,   // The data or cmpt pointer
+            recvData,   // The data or cmpt pointer
+            UPstream_dataType<Type>::size(count),
+            UPstream_dataType<Type>::datatype_id,
+            communicator
+        );
+    }
+}
+
+
+template<class Type>
+void Foam::UPstream::mpiAllGather
+(
+    Type* allData,
+    int count,
+    const int communicator
+)
+{
+    if (!count || !UPstream::is_parallel(communicator))
+    {
+        // Nothing sensible to do
+        return;
+    }
+    else if constexpr (!is_contiguous_v<Type>)
+    {
+        FatalErrorInFunction
+            << "Invalid for non-contiguous data types"
+            << Foam::abort(FatalError);
+    }
+    else
+    {
+        // Use element or component type (or byte-wise) for data type
+        UPstream::mpi_allgather
+        (
+            allData,    // The data or cmpt pointer
+            UPstream_dataType<Type>::size(count),
+            UPstream_dataType<Type>::datatype_id,
+            communicator
+        );
+    }
+}
+
+
 template<class T>
 Foam::List<T> Foam::UPstream::allGatherValues
 (
     const T& localValue,
-    const int comm
+    const int communicator
 )
 {
-    if constexpr (!is_contiguous_v<T>)
-    {
-        FatalErrorInFunction
-            << "Cannot all-gather values for non-contiguous types"
-               " - consider Pstream variant instead" << endl
-            << Foam::abort(FatalError);
-    }
-
-    List<T> allValues;
-
-    if (UPstream::is_parallel(comm))
-    {
-        allValues.resize(UPstream::nProcs(comm));
-        allValues[UPstream::myProcNo(comm)] = localValue;
-
-        UPstream::mpiAllGather(allValues.data_bytes(), sizeof(T), comm);
-    }
-    else
+    if (!UPstream::is_parallel(communicator))
     {
         // non-parallel: return own value
         // TBD: only when UPstream::is_rank(comm) as well?
-        allValues.resize(1);
+        List<T> allValues(1);
         allValues[0] = localValue;
+        return allValues;
     }
+    else if constexpr (!is_contiguous_v<T>)
+    {
+        FatalErrorInFunction
+            << "Cannot all-gather values for non-contiguous types"
+            << " - consider Pstream variant instead" << endl
+            << Foam::abort(FatalError);
+        return List<T>();
+    }
+    else
+    {
+        // Standard gather with direct MPI communication
+        List<T> allValues;
 
-    return allValues;
+        allValues.resize(UPstream::nProcs(communicator));
+        allValues[UPstream::myProcNo(communicator)] = localValue;
+
+        UPstream::mpiAllGather(allValues.data(), 1, communicator);
+        return allValues;
+    }
 }
 
 
@@ -107,43 +227,38 @@ template<class T>
 Foam::List<T> Foam::UPstream::listGatherValues
 (
     const T& localValue,
-    const int comm
+    const int communicator
 )
 {
-    if constexpr (!is_contiguous_v<T>)
+    if (!UPstream::is_parallel(communicator))
+    {
+        // non-parallel: return own value
+        // TBD: only when UPstream::is_rank(communicator) as well?
+        List<T> allValues(1);
+        allValues[0] = localValue;
+        return allValues;
+    }
+    else if constexpr (!is_contiguous_v<T>)
     {
         FatalErrorInFunction
             << "Cannot gather values for non-contiguous types"
                " - consider Pstream variant instead" << endl
             << Foam::abort(FatalError);
-    }
-
-    List<T> allValues;
-
-    if (UPstream::is_parallel(comm))
-    {
-        if (UPstream::master(comm))
-        {
-            allValues.resize(UPstream::nProcs(comm));
-        }
-
-        UPstream::mpiGather
-        (
-            reinterpret_cast<const char*>(&localValue),
-            allValues.data_bytes(),
-            sizeof(T),  // The send/recv size per rank
-            comm
-        );
+        return List<T>();
     }
     else
     {
-        // non-parallel: return own value
-        // TBD: only when UPstream::is_rank(comm) as well?
-        allValues.resize(1);
-        allValues[0] = localValue;
-    }
+        // Local sizes are identical, can use MPI_Gather
+        List<T> allValues;
 
-    return allValues;
+        if (UPstream::master(communicator))
+        {
+            allValues.resize(UPstream::nProcs(communicator));
+        }
+
+        UPstream::mpiGather(&localValue, allValues.data(), 1, communicator);
+        return allValues;
+    }
 }
 
 
@@ -151,51 +266,55 @@ template<class T>
 T Foam::UPstream::listScatterValues
 (
     const UList<T>& allValues,
-    const int comm
+    const int communicator
 )
 {
-    if constexpr (!is_contiguous_v<T>)
+    if (!UPstream::is_parallel(communicator))
     {
-        FatalErrorInFunction
-            << "Cannot scatter values for non-contiguous types"
-               " - consider Pstream variant instead" << endl
-            << Foam::abort(FatalError);
-    }
-
-    T localValue{};
-
-    if (UPstream::is_parallel(comm))
-    {
-        const label numProc = UPstream::nProcs(comm);
-
-        if (UPstream::master(comm) && allValues.size() < numProc)
-        {
-            FatalErrorInFunction
-                << "Attempting to send " << allValues.size()
-                << " values to " << numProc << " processors" << endl
-                << Foam::abort(FatalError);
-        }
-
-        UPstream::mpiScatter
-        (
-            allValues.cdata_bytes(),
-            reinterpret_cast<char*>(&localValue),
-            sizeof(T),  // The send/recv size per rank
-            comm
-        );
-    }
-    else
-    {
-        // non-parallel: return first value
-        // TBD: only when UPstream::is_rank(comm) as well?
+        // non-parallel: return own value
+        // TBD: only when UPstream::is_rank(communicator) as well?
 
         if (!allValues.empty())
         {
             return allValues[0];
         }
-     }
 
-     return localValue;
+        return T{};  // Fallback value
+    }
+    else if constexpr (!is_contiguous_v<T>)
+    {
+        FatalErrorInFunction
+            << "Cannot scatter non-contiguous values"
+               " - consider Pstream variant instead" << endl
+            << Foam::abort(FatalError);
+
+        return T{};  // Fallback value
+    }
+    else
+    {
+        // Local sizes are identical, can use MPI_Scatter
+
+        const label nProcs = UPstream::nProcs(communicator);
+
+        if
+        (
+            FOAM_UNLIKELY
+            (
+                UPstream::master(communicator)
+             && allValues.size() < nProcs
+            )
+        )
+        {
+            FatalErrorInFunction
+                << "Attempting to send " << allValues.size()
+                << " values to " << nProcs << " processors" << endl
+                << Foam::abort(FatalError);
+        }
+
+        T localValue{};
+        UPstream::mpiScatter(allValues.cdata(), &localValue, 1, communicator);
+        return localValue;
+    }
 }
 
 
