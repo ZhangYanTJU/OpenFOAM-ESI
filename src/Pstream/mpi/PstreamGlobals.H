@@ -113,7 +113,7 @@ inline void push_request
         // Transcribe as UPstream::Request
         *req = UPstream::Request(request);
     }
-    else
+    else if (MPI_REQUEST_NULL != request)
     {
         // Push onto list of requests
         PstreamGlobals::outstandingRequests_.push_back(request);
