@@ -597,7 +597,7 @@ void Foam::MMA::computeNewtonDirection()
     if (globalSum_)
     {
         reduce(lhs, sumOp<scalarSquareMatrix>());
-        Pstream::listCombineAllGather(rhs, plusEqOp<scalar>());
+        Pstream::listReduce(rhs, sumOp<scalar>());
     }
 
     // Add remaining parts from deltaLamdaYTilda and the deltaZ eqn

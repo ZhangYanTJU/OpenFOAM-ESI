@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -84,8 +84,8 @@ void Foam::cloudSet::calcSamples
             minFoundProc[i] = foundProc[i];
         }
     }
-    Pstream::listCombineReduce(minFoundProc, minEqOp<label>());
-    Pstream::listCombineReduce(maxFoundProc, maxEqOp<label>());
+    Pstream::listReduce(minFoundProc, minOp<label>());
+    Pstream::listReduce(maxFoundProc, maxOp<label>());
 
 
     DynamicField<point> missingPoints(sampleCoords_.size());

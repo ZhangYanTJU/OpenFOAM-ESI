@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -420,8 +420,8 @@ void Foam::multiLevelDecomp::decompose
             );
 
             label nPoints = returnReduce(domainPoints.size(), sumOp<label>());
+            Pstream::listReduce(nOutsideConnections, sumOp<label>());
 
-            Pstream::listCombineReduce(nOutsideConnections, plusEqOp<label>());
             label nPatches = 0;
             label nFaces = 0;
             for (const label nConnect : nOutsideConnections)
@@ -528,11 +528,7 @@ void Foam::multiLevelDecomp::decompose
                 }
 
                 reduce(nPoints, sumOp<label>());
-                Pstream::listCombineReduce
-                (
-                    nOutsideConnections,
-                    plusEqOp<label>()
-                );
+                Pstream::listReduce(nOutsideConnections, sumOp<label>());
 
                 label nPatches = 0;
                 label nFaces = 0;

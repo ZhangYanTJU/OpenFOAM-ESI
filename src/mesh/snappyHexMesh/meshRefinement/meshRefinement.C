@@ -2050,7 +2050,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::meshRefinement::balance
             labelList nProcCells(distributor.countCells(distribution));
             Pout<< "Wanted distribution:" << nProcCells << endl;
 
-            Pstream::listCombineReduce(nProcCells, plusEqOp<label>());
+            Pstream::listReduce(nProcCells, sumOp<label>());
 
             Pout<< "Wanted resulting decomposition:" << endl;
             forAll(nProcCells, proci)
@@ -3611,7 +3611,7 @@ const
             nCells[cellLevel[celli]]++;
         }
 
-        Pstream::listCombineGather(nCells, plusEqOp<label>());
+        Pstream::listGather(nCells, sumOp<label>());
 
         /// Pstream::broadcast(nCells);
         if (Pstream::master())

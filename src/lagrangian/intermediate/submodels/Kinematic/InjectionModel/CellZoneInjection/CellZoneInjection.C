@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -121,7 +121,7 @@ void Foam::CellZoneInjection<CloudType>::setPositions
         globalPositions.range(myProci)
     ) = positions;
 
-    Pstream::listCombineReduce(allPositions, minEqOp<point>());
+    Pstream::listReduce(allPositions, minOp<point>());
 
     // Gather local cell tet and tet-point Ids, but leave non-local ids set -1
     SubList<label>

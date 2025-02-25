@@ -379,28 +379,28 @@ void Foam::RecycleInteraction<CloudType>::info()
 
     forAll(npr, i)
     {
-        Pstream::listCombineGather(npr[i], plusEqOp<label>());
+        Pstream::listGather(npr[i], sumOp<label>());
         npr[i] = npr[i] + npr0[i];
     }
 
     scalarListList mpr(massRemoved_);
     forAll(mpr, i)
     {
-        Pstream::listCombineGather(mpr[i], plusEqOp<scalar>());
+        Pstream::listGather(mpr[i], sumOp<scalar>());
         mpr[i] = mpr[i] + mpr0[i];
     }
 
     labelListList npi(nInjected_);
     forAll(npi, i)
     {
-        Pstream::listCombineGather(npi[i], plusEqOp<label>());
+        Pstream::listGather(npi[i], sumOp<label>());
         npi[i] = npi[i] + npi0[i];
     }
 
     scalarListList mpi(massInjected_);
     forAll(mpi, i)
     {
-        Pstream::listCombineGather(mpi[i], plusEqOp<scalar>());
+        Pstream::listGather(mpi[i], sumOp<scalar>());
         mpi[i] = mpi[i] + mpi0[i];
     }
 

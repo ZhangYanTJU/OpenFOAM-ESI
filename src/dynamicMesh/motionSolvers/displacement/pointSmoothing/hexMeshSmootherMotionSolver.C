@@ -464,7 +464,7 @@ Foam::labelList Foam::hexMeshSmootherMotionSolver::countZeroOrPos
         }
     }
 
-    Pstream::listCombineReduce(n, plusEqOp<label>());
+    Pstream::listReduce(n, sumOp<label>());
     return n;
 }
 

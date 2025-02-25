@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -188,7 +188,7 @@ void Foam::setRefCells
             }
         }
 
-        Pstream::listCombineReduce(hasRef, plusEqOp<label>());
+        Pstream::listReduce(hasRef, sumOp<label>());
 
         forAll(hasRef, regionI)
         {

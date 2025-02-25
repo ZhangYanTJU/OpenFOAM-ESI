@@ -365,7 +365,7 @@ void Foam::ParticleZoneInfo<CloudType>::write()
     {
         // Find number of particles per proc
         labelList allMaxIDs(maxIDs_);
-        Pstream::listCombineReduce(allMaxIDs, maxEqOp<label>());
+        Pstream::listReduce(allMaxIDs, maxOp<label>());
 
         // Combine into single list
         label n = returnReduce(data_.size(), sumOp<label>());

@@ -791,7 +791,7 @@ Foam::tmp<Foam::Field<Type>> Foam::functionObjects::propellerInfo::interpolate
         }
     }
 
-    Pstream::listCombineReduce(field, maxEqOp<Type>());
+    Pstream::listReduce(field, maxOp<Type>());
 
     return tfield;
 }

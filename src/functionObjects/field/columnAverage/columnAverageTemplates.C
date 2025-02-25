@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,8 +88,8 @@ bool Foam::functionObjects::columnAverage::columnAverageField
         }
 
         // Global sum
-        Pstream::listCombineReduce(regionField, plusEqOp<Type>());
-        Pstream::listCombineReduce(regionCount, plusEqOp<label>());
+        Pstream::listReduce(regionField, sumOp<Type>());
+        Pstream::listReduce(regionCount, sumOp<label>());
 
         forAll(regionField, regioni)
         {

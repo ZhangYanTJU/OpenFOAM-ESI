@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -3403,9 +3403,9 @@ void Foam::snappyRefineDriver::deleteSmallRegions
         nCellsPerRegion[regioni]++;
         nCellsPerZone[zonei]++;
     }
-    Pstream::listCombineReduce(nCellsPerRegion, plusEqOp<label>());
-    Pstream::listCombineReduce(regionToZone, maxEqOp<label>());
-    Pstream::listCombineReduce(nCellsPerZone, plusEqOp<label>());
+    Pstream::listReduce(nCellsPerRegion, sumOp<label>());
+    Pstream::listReduce(regionToZone, maxOp<label>());
+    Pstream::listReduce(nCellsPerZone, sumOp<label>());
 
 
     // Mark small regions. Note that all processors have the same information

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2020 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -258,7 +258,7 @@ void Foam::planeToFaceZone::combine(faceZoneSet& fzSet, const bool add) const
             {
                 ++ regionNFaces[regioni];
             }
-            Pstream::listCombineReduce(regionNFaces, plusEqOp<label>());
+            Pstream::listReduce(regionNFaces, sumOp<label>());
 
             Info<< "    Found " << nRegions << " contiguous regions with "
                 << regionNFaces << " faces" << endl;
@@ -281,8 +281,8 @@ void Foam::planeToFaceZone::combine(faceZoneSet& fzSet, const bool add) const
                 regionWeights[regioni] += w;
                 regionCentres[regioni] += w*c;
             }
-            Pstream::listCombineGather(regionWeights, plusEqOp<scalar>());
-            Pstream::listCombineGather(regionCentres, plusEqOp<point>());
+            Pstream::listGather(regionWeights, sumOp<scalar>());
+            Pstream::listGather(regionCentres, sumOp<point>());
 
             if (Pstream::master())
             {

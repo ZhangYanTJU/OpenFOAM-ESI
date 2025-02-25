@@ -407,7 +407,7 @@ bool setFaceFieldType
             }
         }
 
-        Pstream::listCombineReduce(nChanged, plusEqOp<label>());
+        Pstream::listReduce(nChanged, sumOp<label>());
 
         auto& fieldBf = field.boundaryFieldRef();
 

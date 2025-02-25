@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -142,8 +142,8 @@ void Foam::distanceSurface::filterKeepLargestRegion
         }
     }
 
-    // Sum totals from all processors
-    Pstream::listCombineGather(nCutsPerRegion, plusEqOp<label>());
+    // Sum totals from all processors (onto the master)
+    Pstream::listGather(nCutsPerRegion, sumOp<label>());
 
 
     // Define which regions to keep
@@ -242,8 +242,8 @@ void Foam::distanceSurface::filterKeepNearestRegions
         }
     }
 
-    // Sum totals from all processors
-    Pstream::listCombineGather(nCutsPerRegion, plusEqOp<label>());
+    // Sum totals from all processors (onto the master)
+    Pstream::listGather(nCutsPerRegion, sumOp<label>());
 
     // Get nearest
     Pstream::listCombineGather(nearest, minFirstEqOp<scalar>());
@@ -355,8 +355,8 @@ void Foam::distanceSurface::filterRegionProximity
         areaRegion[regioni] += (faceArea);
     }
 
-    Pstream::listCombineGather(distRegion, plusEqOp<scalar>());
-    Pstream::listCombineGather(areaRegion, plusEqOp<scalar>());
+    Pstream::listGather(distRegion, sumOp<scalar>());
+    Pstream::listGather(areaRegion, sumOp<scalar>());
 
     if (Pstream::master())
     {

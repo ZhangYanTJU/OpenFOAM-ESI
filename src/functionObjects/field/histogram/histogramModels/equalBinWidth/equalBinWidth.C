@@ -155,8 +155,8 @@ bool Foam::histogramModels::equalBinWidth::write(const bool log)
             dataCount[bini]++;
         }
     }
-    Pstream::listCombineGather(dataNormalised, plusEqOp<scalar>());
-    Pstream::listCombineGather(dataCount, plusEqOp<label>());
+    Pstream::listGather(dataNormalised, sumOp<scalar>());
+    Pstream::listGather(dataCount, sumOp<label>());
 
 
     // Write histogram data

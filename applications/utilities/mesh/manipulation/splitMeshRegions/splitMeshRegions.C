@@ -1081,7 +1081,7 @@ label findCorrespondingRegion
         }
     }
 
-    Pstream::listCombineReduce(cellsInZone, plusEqOp<label>());
+    Pstream::listReduce(cellsInZone, sumOp<label>());
 
     // Pick region with largest overlap of zoneI
     label regionI = findMax(cellsInZone);

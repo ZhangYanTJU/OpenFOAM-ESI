@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -256,7 +256,7 @@ void Foam::isoSurfacePoint::syncUnseparatedPoints
         }
 
         // Globally consistent
-        Pstream::listCombineReduce(sharedPts, minEqOp<point>());
+        Pstream::listReduce(sharedPts, minOp<point>());
 
         // Now we will all have the same information. Merge it back with
         // my local information.

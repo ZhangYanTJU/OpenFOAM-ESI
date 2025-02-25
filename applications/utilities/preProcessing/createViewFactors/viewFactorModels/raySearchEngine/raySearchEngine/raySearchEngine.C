@@ -229,7 +229,7 @@ void Foam::VF::raySearchEngine::createAgglomeration(const IOobject& io)
     Pstream::allGatherList(allSf_);
     Pstream::allGatherList(allAgg_);
 
-    Pstream::listCombineGather(patchAreas_, plusEqOp<scalar>());
+    Pstream::listGather(patchAreas_, sumOp<scalar>());
     Pstream::broadcast(patchAreas_);
 
     globalNumbering_ = globalIndex(nCoarseFace_);
@@ -262,8 +262,11 @@ void Foam::VF::raySearchEngine::createGeometry()
     Pstream::allGatherList(allCf_);
     Pstream::allGatherList(allSf_);
 
-    Pstream::listCombineGather(patchAreas_, plusEqOp<scalar>());
-    Pstream::broadcast(patchAreas_);
+    // Pstream::listCombineGather(patchAreas_, plusEqOp<scalar>());
+    // Pstream::broadcast(patchAreas_);
+
+    // Basic type and op_sum, so can use listReduce (ie, mpiAllReduce)
+    Pstream::listReduce(patchAreas_, sumOp<scalar>());
 
     globalNumbering_ = globalIndex(nFace_);
 }
