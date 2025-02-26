@@ -121,7 +121,7 @@ protected:
             const int toProcNo,
             DynamicList<char>& sendBuf,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             const bool sendAtDestruct = true,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
@@ -325,7 +325,7 @@ public:
             const int toProcNo,
             DynamicList<char>& sendBuf,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             const bool sendAtDestruct = true,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
@@ -367,7 +367,7 @@ public:
             const char* buf,
             const std::streamsize bufSize,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             //! [out] request information (for non-blocking)
             UPstream::Request* req = nullptr,
             const UPstream::sendModes sendMode = UPstream::sendModes::normal
@@ -383,7 +383,7 @@ public:
             const char* buf,
             const std::streamsize bufSize,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             const UPstream::sendModes sendMode = UPstream::sendModes::normal
         )
         {
@@ -394,7 +394,7 @@ public:
                 buf,
                 bufSize,
                 tag,
-                comm,
+                communicator,
                &req,
                 sendMode
             );
@@ -410,7 +410,7 @@ public:
             const int toProcNo,
             const UList<Type>& buffer,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             //! [out] request information (for non-blocking)
             UPstream::Request* req = nullptr,
             const UPstream::sendModes sendMode = UPstream::sendModes::normal
@@ -423,7 +423,7 @@ public:
                 buffer.cdata_bytes(),
                 buffer.size_bytes(),
                 tag,
-                comm,
+                communicator,
                 req,
                 sendMode
             );
@@ -440,7 +440,7 @@ public:
             const int toProcNo,
             const UList<Type>& buffer,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             const UPstream::sendModes sendMode = UPstream::sendModes::normal
         )
         {
@@ -451,7 +451,7 @@ public:
                 buffer.cdata_bytes(),
                 buffer.size_bytes(),
                 tag,
-                comm,
+                communicator,
                &req,
                 sendMode
             );

@@ -146,7 +146,7 @@ Foam::UOPstreamBase::UOPstreamBase
     const int toProcNo,
     DynamicList<char>& sendBuf,
     const int tag,
-    const label comm,
+    const int communicator,
     const bool sendAtDestruct,
     IOstreamOption::streamFormat fmt
 )
@@ -155,7 +155,7 @@ Foam::UOPstreamBase::UOPstreamBase
     Ostream(fmt),
     toProcNo_(toProcNo),
     tag_(tag),
-    comm_(comm),
+    comm_(communicator),
     sendAtDestruct_(sendAtDestruct),
     sendBuf_(sendBuf)
 {

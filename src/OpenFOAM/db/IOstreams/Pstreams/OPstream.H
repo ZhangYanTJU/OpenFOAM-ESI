@@ -61,14 +61,13 @@ public:
     // Constructors
 
         //- Construct for given process index to send to
-        //- and optional buffer size, write format
         OPstream
         (
             const UPstream::commsTypes commsType,
             const int toProcNo,
-            const label bufSize = 0,
+            const int bufferSize = 0,  //!< optional buffer size
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
@@ -81,15 +80,15 @@ public:
         static void send
         (
             const Type& value,
-            //! blocking or scheduled only!
+            //! buffered or scheduled only!
             const UPstream::commsTypes commsType,
             const int toProcNo,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         )
         {
-            OPstream os(commsType, toProcNo, 0, tag, comm, fmt);
+            OPstream os(commsType, toProcNo, 0, tag, communicator, fmt);
             os << value;
         }
 
@@ -101,7 +100,7 @@ public:
             const Type& value,
             const int toProcNo,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         )
         {
@@ -111,7 +110,7 @@ public:
                 UPstream::commsTypes::scheduled,  // ie, MPI_Send()
                 toProcNo,
                 tag,
-                comm,
+                communicator,
                 fmt
             );
         }

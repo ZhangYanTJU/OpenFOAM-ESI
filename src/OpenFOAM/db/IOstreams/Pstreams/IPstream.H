@@ -61,14 +61,13 @@ public:
     // Constructors
 
         //- Construct given process index to read from
-        //- and optional buffer size, read format
         IPstream
         (
             const UPstream::commsTypes commsType,
             const int fromProcNo,
-            const label bufSize = 0,
+            const int bufferSize = 0,  //!< optional buffer size
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
@@ -83,7 +82,7 @@ public:
             Type& value,
             const int fromProcNo,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         )
         {
@@ -91,9 +90,9 @@ public:
             (
                 UPstream::commsTypes::scheduled,  // ie, MPI_Recv()
                 fromProcNo,
-                0,  // bufSize
+                0,  // bufferSize
                 tag,
-                comm,
+                communicator,
                 fmt
             );
             is >> value;

@@ -124,7 +124,7 @@ protected:
             DynamicList<char>& receiveBuf,
             label& receiveBufPosition,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             const bool clearAtEnd = false,   // destroy receiveBuf if at end
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
@@ -252,7 +252,7 @@ public:
             DynamicList<char>& receiveBuf,
             label& receiveBufPosition,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             const bool clearAtEnd = false,   // destroy receiveBuf if at end
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
@@ -292,7 +292,7 @@ public:
             char* buf,
             const std::streamsize bufSize,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             //! [out] request information (for non-blocking)
             UPstream::Request* req = nullptr
         );
@@ -307,7 +307,7 @@ public:
             char* buf,
             const std::streamsize bufSize,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         )
         {
             return UIPstream::read
@@ -317,7 +317,7 @@ public:
                 buf,
                 bufSize,
                 tag,
-                comm,
+                communicator,
                &req
             );
         }
@@ -332,7 +332,7 @@ public:
             const int fromProcNo,
             UList<Type>& buffer,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             //! [out] request information (for non-blocking)
             UPstream::Request* req = nullptr
         )
@@ -344,7 +344,7 @@ public:
                 buffer.data_bytes(),
                 buffer.size_bytes(),
                 tag,
-                comm,
+                communicator,
                 req
             );
         }
@@ -359,7 +359,7 @@ public:
             const int fromProcNo,
             SubList<Type> buffer,  // passed by shallow copy
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             //! [out] request information (for non-blocking)
             UPstream::Request* req = nullptr
         )
@@ -371,7 +371,7 @@ public:
                 buffer.data_bytes(),
                 buffer.size_bytes(),
                 tag,
-                comm,
+                communicator,
                 req
             );
         }
@@ -387,7 +387,7 @@ public:
             const int fromProcNo,
             UList<Type>& buffer,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         )
         {
             return UIPstream::read
@@ -397,7 +397,7 @@ public:
                 buffer.data_bytes(),
                 buffer.size_bytes(),
                 tag,
-                comm,
+                communicator,
                &req
             );
         }
@@ -413,7 +413,7 @@ public:
             const int fromProcNo,
             SubList<Type> buffer,  // passed by shallow copy
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         )
         {
             return UIPstream::read
@@ -423,7 +423,7 @@ public:
                 buffer.data_bytes(),
                 buffer.size_bytes(),
                 tag,
-                comm,
+                communicator,
                &req
             );
         }

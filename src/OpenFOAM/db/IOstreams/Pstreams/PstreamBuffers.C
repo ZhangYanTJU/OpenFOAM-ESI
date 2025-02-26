@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -300,7 +300,7 @@ Foam::PstreamBuffers::PstreamBuffers
 (
     UPstream::commsTypes commsType,
     int tag,
-    label communicator,
+    int communicator,
     IOstreamOption::streamFormat fmt
 )
 :
@@ -313,7 +313,7 @@ Foam::PstreamBuffers::PstreamBuffers
     nProcs_(UPstream::nProcs(comm_)),
     sendBuffers_(nProcs_),
     recvBuffers_(nProcs_),
-    recvPositions_(nProcs_, Zero)
+    recvPositions_(nProcs_, Foam::zero{})
 {
     DebugPoutInFunction
         << "tag:" << tag_

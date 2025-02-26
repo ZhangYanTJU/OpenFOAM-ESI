@@ -389,18 +389,18 @@ private:
         //- Index to the world-communicator as defined at startup
         //- (after any multi-world definitions).
         //- Is unaffected by any later changes to worldComm.
-        static label constWorldComm_;
-
-        //- The number of shared/host nodes in the (const) world communicator.
-        static label numNodes_;
+        static int constWorldComm_;
 
         //- Index to the inter-node communicator (between nodes),
         //- defined based on constWorldComm_
-        static label commInterNode_;
+        static int commInterNode_;
 
         //- Index to the intra-host communicator (within a node),
         //- defined based on constWorldComm_
-        static label commLocalNode_;
+        static int commLocalNode_;
+
+        //- The number of shared/host nodes in the (const) world communicator.
+        static int numNodes_;
 
         //- Names of all worlds
         static wordList allWorlds_;
@@ -433,7 +433,7 @@ private:
     // Private Member Functions
 
         //- Set data for parallel running
-        static void setParRun(const label nProcs, const bool haveThreads);
+        static void setParRun(const int nProcs, const bool haveThreads);
 
         //- Initialise entries for new communicator.
         //
@@ -557,16 +557,16 @@ public:
 
         //- Communicator for all ranks, irrespective of any local worlds.
         //  This value \em never changes during a simulation.
-        static constexpr label commGlobal() noexcept { return 0; }
+        static constexpr int commGlobal() noexcept { return 0; }
 
         //- Communicator within the current rank only
         //  This value \em never changes during a simulation.
-        static constexpr label commSelf() noexcept { return 1; }
+        static constexpr int commSelf() noexcept { return 1; }
 
         //- Communicator for all ranks (respecting any local worlds).
         //  This value \em never changes after startup. Unlike the commWorld()
         //  which can be temporarily overriden.
-        static label commConstWorld() noexcept { return constWorldComm_; }
+        static int commConstWorld() noexcept { return constWorldComm_; }
 
         //- Communicator for all ranks (respecting any local worlds)
         static label commWorld() noexcept { return worldComm; }
@@ -601,13 +601,13 @@ public:
     // Host Communicators
 
         //- Communicator between nodes/hosts (respects any local worlds)
-        static label commInterNode() noexcept
+        static int commInterNode() noexcept
         {
             return (parRun_ ? commInterNode_ : constWorldComm_);
         }
 
         //- Communicator within the node/host (respects any local worlds)
-        static label commLocalNode() noexcept
+        static int commLocalNode() noexcept
         {
             return (parRun_ ? commLocalNode_ : constWorldComm_);
         }
@@ -626,7 +626,7 @@ public:
         //- it is running in parallel, the starting point is the
         //- world-communicator and it is not an odd corner case
         //- (ie, all processes on one node, all processes on different nodes)
-        static bool usingNodeComms(const label communicator = worldComm);
+        static bool usingNodeComms(const int communicator);
 
 
     // Constructors
@@ -1168,19 +1168,16 @@ public:
         }
 
         //- The number of shared/host nodes in the (const) world communicator.
-        static label numNodes() noexcept
-        {
-            return numNodes_;
-        }
+        static int numNodes() noexcept { return numNodes_; }
 
         //- The parent communicator
-        static label parent(const label communicator)
+        static label parent(int communicator)
         {
             return parentComm_(communicator);
         }
 
         //- The list of ranks within a given communicator
-        static List<int>& procID(const label communicator)
+        static List<int>& procID(int communicator)
         {
             return procIDs_[communicator];
         }
@@ -1694,7 +1691,7 @@ public:
         //      UPstream::Communicator::lookup(UPstream::commWorld())
         //  )
         //  \endcode
-        static Communicator lookup(const label comm);
+        static Communicator lookup(const int comm);
 
 
     // Member Functions
@@ -1713,6 +1710,9 @@ public:
 
         //- Reset to default constructed value (MPI_COMM_NULL)
         void reset() noexcept;
+
+        //- The number of ranks associated with the communicator
+        int size() const;
 };
 
 

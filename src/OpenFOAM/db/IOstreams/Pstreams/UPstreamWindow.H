@@ -137,6 +137,11 @@ public:
 
         //- Reset to default constructed value (MPI_WIN_NULL)
         void reset() noexcept;
+
+        //- The number of ranks associated with the window group.
+        //  The same as querying the original communicator, assuming the
+        //  communicator is available within the current code scope.
+        int size() const;
 };
 
 

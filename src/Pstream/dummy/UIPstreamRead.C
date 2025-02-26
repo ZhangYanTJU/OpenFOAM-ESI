@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2021-2024 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,7 +45,7 @@ std::streamsize Foam::UIPstream::read
     char* buf,
     const std::streamsize bufSize,
     const int tag,
-    const label communicator,
+    const int communicator,
     UPstream::Request* req
 )
 {

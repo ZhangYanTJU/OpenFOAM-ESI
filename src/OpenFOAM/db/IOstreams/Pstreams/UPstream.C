@@ -112,7 +112,7 @@ void Foam::UPstream::printTopoControl(Ostream& os)
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::UPstream::setParRun(const label nProcs, const bool haveThreads)
+void Foam::UPstream::setParRun(const int nProcs, const bool haveThreads)
 {
     parRun_ = (nProcs > 0);
     haveThreads_ = haveThreads;
@@ -725,7 +725,7 @@ void Foam::UPstream::printCommTree
 }
 
 
-bool Foam::UPstream::usingNodeComms(const label communicator)
+bool Foam::UPstream::usingNodeComms(const int communicator)
 {
     // Starting point must be "real" world-communicator
     // ("real" means without any local trickery with worldComm)
@@ -849,10 +849,10 @@ Foam::DynamicList<Foam::UPstream::commsStructList>
 Foam::UPstream::treeCommunication_(16);
 
 
-Foam::label Foam::UPstream::constWorldComm_(0);
-Foam::label Foam::UPstream::numNodes_(1);
-Foam::label Foam::UPstream::commInterNode_(-1);
-Foam::label Foam::UPstream::commLocalNode_(-1);
+int Foam::UPstream::constWorldComm_(0);
+int Foam::UPstream::commInterNode_(-1);
+int Foam::UPstream::commLocalNode_(-1);
+int Foam::UPstream::numNodes_(1);
 
 Foam::label Foam::UPstream::worldComm(0);  // Initially same as constWorldComm_
 Foam::label Foam::UPstream::warnComm(-1);
@@ -860,7 +860,7 @@ Foam::label Foam::UPstream::warnComm(-1);
 
 // Predefine world and self communicator slots.
 // These are overwritten in parallel mode (by UPstream::setParRun())
-const Foam::label nPredefinedComm = []()
+const int nPredefinedComm = []()
 {
     // 0: COMM_WORLD : commGlobal(), constWorldComm_, worldComm
     (void) Foam::UPstream::newCommunicator(-1, Foam::labelRange(1), false);
@@ -893,7 +893,6 @@ registerOptSwitch
     int,
     Foam::UPstream::nodeCommsMin_
 );
-
 
 int Foam::UPstream::topologyControl_
 (

@@ -508,7 +508,7 @@ int main(int argc, char *argv[])
 
     #include "setRootCase.H"
 
-    const bool useLocalComms = UPstream::usingNodeComms();
+    const bool useLocalComms = UPstream::usingNodeComms(UPstream::worldComm);
     bool useWindow = args.found("window");
     bool useBuiltin = args.found("builtin");
 

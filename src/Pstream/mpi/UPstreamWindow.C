@@ -50,4 +50,29 @@ void Foam::UPstream::Window::reset() noexcept
 }
 
 
+int Foam::UPstream::Window::size() const
+{
+    int val = 0;
+
+    MPI_Win win = PstreamUtils::Cast::to_mpi(*this);
+    MPI_Group group;
+
+    // Get num of ranks from the group information
+    if
+    (
+        (MPI_WIN_NULL != win)
+     && (MPI_SUCCESS == MPI_Win_get_group(win, &group))
+    )
+    {
+        if (MPI_SUCCESS != MPI_Group_size(group, &val))
+        {
+            val = 0;
+        }
+        MPI_Group_free(&group);
+    }
+
+    return val;
+}
+
+
 // ************************************************************************* //
