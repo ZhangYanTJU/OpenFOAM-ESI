@@ -565,11 +565,11 @@ public:
 
 // Do '+' ourselves - just to show. Others done with macros below.
 template<typename E1, typename E2>
-class GeometricFieldAdd
+class GF_add
 :
     public GeometricFieldExpression
     <
-        GeometricFieldAdd<E1, E2>,
+        GF_add<E1, E2>,
         List_add
         <
             typename E1::wrapType,
@@ -595,11 +595,11 @@ public:
         typename E2::wrapType
     > wrapType;
 
-    GeometricFieldAdd(const E1& u, const E2& v)
+    GF_add(const E1& u, const E2& v)
     :
         GeometricFieldExpression
         <
-            GeometricFieldAdd<E1, E2>,
+            GF_add<E1, E2>,
             wrapType,
             value_type
         >
@@ -637,7 +637,7 @@ public:
     }
 };
 template<typename E1, typename E2>
-GeometricFieldAdd<E1, E2>
+GF_add<E1, E2>
 operator+
 (
     GeometricFieldExpression
@@ -654,7 +654,7 @@ operator+
     > const& v
 )
 {
-    return GeometricFieldAdd<E1, E2>
+    return GF_add<E1, E2>
     (
         static_cast<const E1&>(u),
         static_cast<const E2&>(v)
@@ -1021,13 +1021,9 @@ EXPRESSION_GF_FUNCTION2(max, Foam::max, List_max, GF_max)
 
 #undef EXPRESSION_GF_FUNCTION2
 
-EXPRESSION_GF_OPERATOR(-, List_subtract, subtract)
-EXPRESSION_GF_OPERATOR(*, List_multiply, multiply)
-EXPRESSION_GF_OPERATOR(/, List_divide, divide)
-//EXPRESSION_GF_OPERATOR(+=, List_inplace_add, inplace_add)
-//EXPRESSION_GF_OPERATOR(-=, List_inplace_subtract, inplace_subtract)
-//EXPRESSION_GF_OPERATOR(*=, List_inplace_multiply, inplace_multiply)
-//EXPRESSION_GF_OPERATOR(/=, List_inplace_divide, inplace_divide)
+EXPRESSION_GF_OPERATOR(-, List_subtract, GF_subtract)
+EXPRESSION_GF_OPERATOR(*, List_multiply, GF_multiply)
+EXPRESSION_GF_OPERATOR(/, List_divide, GF_divide)
 
 #undef EXPRESSION_GF_OPERATOR
 

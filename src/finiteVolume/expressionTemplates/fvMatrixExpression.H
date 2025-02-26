@@ -522,12 +522,15 @@ public:
 
         FaceFluxExpr faceFluxCorrection() const
         {
-            return *const_cast<this_type&>(elems_).faceFluxCorrectionPtr();
+            return *const_cast<this_type&>
+            (
+                elems_
+            ).faceFluxCorrectionPtr().get();
         }
 
         FaceFluxExpr faceFluxCorrection()
         {
-            return *elems_.faceFluxCorrectionPtr();
+            return *elems_.faceFluxCorrectionPtr().get();
         }
 };
 
@@ -645,7 +648,10 @@ public:
 
         FaceFluxExpr faceFluxCorrection() const
         {
-            return const_cast<this_type&>(elems_).faceFluxCorrectionPtr();
+            return *const_cast<this_type&>
+            (
+                elems_
+            ).faceFluxCorrectionPtr().get();
         }
 };
 
@@ -675,7 +681,7 @@ class fvm_add
             typename E1::LowerExpr,
             typename E2::LowerExpr
         >,
-        List_add                    // FaceFluxExpr
+        GF_add                    // FaceFluxExpr
         <
             typename E1::FaceFluxExpr,
             typename E2::FaceFluxExpr
@@ -713,7 +719,7 @@ public:
         typename E1::LowerExpr,
         typename E2::LowerExpr
     > LowerExpr;
-    typedef List_add
+    typedef GF_add
     <
         typename E1::FaceFluxExpr,
         typename E2::FaceFluxExpr
@@ -846,7 +852,7 @@ class fvm_subtract
             typename E1::LowerExpr,
             typename E2::LowerExpr
         >,
-        List_subtract                   // faceflux
+        GF_subtract                   // faceflux
         <
             typename E1::FaceFluxExpr,
             typename E2::FaceFluxExpr
@@ -884,7 +890,7 @@ public:
         typename E1::LowerExpr,
         typename E2::LowerExpr
     > LowerExpr;
-    typedef List_subtract
+    typedef GF_subtract
     <
         typename E1::FaceFluxExpr,
         typename E2::FaceFluxExpr
