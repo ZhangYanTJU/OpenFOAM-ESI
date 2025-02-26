@@ -320,6 +320,107 @@ T Foam::UPstream::listScatterValues
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+template<class Type>
+void Foam::UPstream::mpiGatherv
+(
+    const Type* sendData,
+    int sendCount,
+    Type* recvData,
+    const UList<int>& recvCounts,
+    const UList<int>& recvOffsets,
+    const int communicator
+)
+{
+    if (!UPstream::is_parallel(communicator))
+    {
+        if constexpr (is_contiguous_v<Type>)
+        {
+            if (sendData && recvData)
+            {
+                // recvCounts[0] may be invalid - use sendCount instead
+                std::memmove(recvData, sendData, sendCount*sizeof(Type));
+            }
+        }
+        // Nothing further to do
+    }
+    else if constexpr (UPstream_basic_dataType<Type>::value)
+    {
+        // Restrict to basic (or aliased) MPI types to avoid recalculating
+        // the list of counts/offsets.
+
+        UPstream::mpi_gatherv
+        (
+            sendData,
+            sendCount,
+            recvData,
+            recvCounts,
+            recvOffsets,
+
+            UPstream_basic_dataType<Type>::datatype_id,
+            communicator
+        );
+    }
+    else
+    {
+        static_assert
+        (
+            stdFoam::dependent_false_v<Type>, "Only basic MPI data types"
+        );
+    }
+}
+
+
+template<class Type>
+void Foam::UPstream::mpiScatterv
+(
+    const Type* sendData,
+    const UList<int>& sendCounts,
+    const UList<int>& sendOffsets,
+    Type* recvData,
+    int recvCount,
+    const int communicator
+)
+{
+    if (!UPstream::is_parallel(communicator))
+    {
+        if constexpr (is_contiguous_v<Type>)
+        {
+            if (sendData && recvData)
+            {
+                std::memmove(recvData, sendData, recvCount*sizeof(Type));
+            }
+        }
+        // Nothing further to do
+    }
+    else if constexpr (UPstream_basic_dataType<Type>::value)
+    {
+        // Restrict to basic (or aliased) MPI types to avoid recalculating
+        // the list of counts/offsets.
+
+        UPstream::mpi_scatterv
+        (
+            sendData,
+            sendCounts,
+            sendOffsets,
+            recvData,
+            recvCount,
+
+            UPstream_basic_dataType<Type>::datatype_id,
+            communicator
+        );
+    }
+    else
+    {
+        static_assert
+        (
+            stdFoam::dependent_false_v<Type>, "Only basic MPI data types"
+        );
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 template<class T>
 void Foam::UPstream::mpiReduce
 (

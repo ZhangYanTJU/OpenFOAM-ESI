@@ -1619,71 +1619,29 @@ public:
             const int communicator = UPstream::worldComm
         );
 
+        //- Receive variable length data from all ranks
+        template<class Type>
+        static void mpiGatherv
+        (
+            const Type* sendData,
+            int sendCount,  //!< Ignored on master if recvCount[0] == 0
+            Type* recvData,                 //!< Ignored on non-root rank
+            const UList<int>& recvCounts,   //!< Ignored on non-root rank
+            const UList<int>& recvOffsets,  //!< Ignored on non-root rank
+            const int communicator = UPstream::worldComm
+        );
 
-        #undef  Pstream_CommonRoutines
-        #define Pstream_CommonRoutines(Type)                                  \
-                                                                              \
-        /*! \brief Receive variable length \c Type data from all ranks */     \
-        static void mpiGatherv                                                \
-        (                                                                     \
-            const Type* sendData,                                             \
-            int sendCount,  /*!< Ignored on master if recvCount[0] == 0 */    \
-            Type* recvData,                 /*!< Ignored on non-root rank */  \
-            const UList<int>& recvCounts,   /*!< Ignored on non-root rank */  \
-            const UList<int>& recvOffsets,  /*!< Ignored on non-root rank */  \
-            const label communicator = worldComm                              \
-        );                                                                    \
-                                                                              \
-        /*! \brief Send variable length \c Type data to all ranks */          \
-        static void mpiScatterv                                               \
-        (                                                                     \
-            const Type* sendData,           /*!< Ignored on non-root rank */  \
-            const UList<int>& sendCounts,   /*!< Ignored on non-root rank */  \
-            const UList<int>& sendOffsets,  /*!< Ignored on non-root rank */  \
-            Type* recvData,                                                   \
-            int recvCount,                                                    \
-            const label communicator = worldComm                              \
-        );                                                                    \
-                                                                              \
-        /*! \deprecated(2025-02) prefer mpiGatherv */                         \
-        FOAM_DEPRECATED_FOR(2025-02, "mpiGatherv()")                          \
-        inline static void gather                                             \
-        (                                                                     \
-            const Type* send,                                                 \
-            int count,                                                        \
-            Type* recv,                                                       \
-            const UList<int>& counts,                                         \
-            const UList<int>& offsets,                                        \
-            const label comm = worldComm                                      \
-        )                                                                     \
-        {                                                                     \
-            UPstream::mpiGatherv(send, count, recv, counts, offsets, comm);   \
-        }                                                                     \
-                                                                              \
-        /*! \deprecated(2025-02) prefer mpiScatterv */                        \
-        FOAM_DEPRECATED_FOR(2025-02, "mpiScatterv()")                         \
-        inline static void scatter                                            \
-        (                                                                     \
-            const Type* send,                                                 \
-            const UList<int>& counts,                                         \
-            const UList<int>& offsets,                                        \
-            Type* recv,                                                       \
-            int count,                                                        \
-            const label comm = worldComm                                      \
-        )                                                                     \
-        {                                                                     \
-            UPstream::mpiScatterv(send, counts, offsets, recv, count, comm);  \
-        }
-
-        Pstream_CommonRoutines(char);
-        Pstream_CommonRoutines(int32_t);
-        Pstream_CommonRoutines(int64_t);
-        Pstream_CommonRoutines(uint32_t);
-        Pstream_CommonRoutines(uint64_t);
-        Pstream_CommonRoutines(float);
-        Pstream_CommonRoutines(double);
-
-        #undef Pstream_CommonRoutines
+        //- Send variable length data to all ranks
+        template<class Type>
+        static void mpiScatterv
+        (
+            const Type* sendData,           //!< Ignored on non-root rank
+            const UList<int>& sendCounts,   //!< Ignored on non-root rank
+            const UList<int>& sendOffsets,  //!< Ignored on non-root rank
+            Type* recvData,
+            int recvCount,
+            const int communicator = UPstream::worldComm
+        );
 
 
     // Gather single, contiguous value(s)
@@ -1832,6 +1790,38 @@ public:
         //     Should normally be restricted to a particular starting request.
         FOAM_DEPRECATED_FOR(2023-01, "waitRequests(int) method")
         static void waitRequests() { waitRequests(0); }
+
+        //- \deprecated(2025-02) prefer mpiGatherv
+        template<class Type>
+        FOAM_DEPRECATED_FOR(2025-02, "mpiGatherv()")
+        static void gather
+        (
+            const Type* send,
+            int count,
+            Type* recv,
+            const UList<int>& counts,
+            const UList<int>& offsets,
+            const int comm = UPstream::worldComm
+        )
+        {
+            UPstream::mpiGatherv(send, count, recv, counts, offsets, comm);
+        }
+
+        //- \deprecated(2025-02) prefer mpiScatterv
+        template<class Type>
+        FOAM_DEPRECATED_FOR(2025-02, "mpiScatterv()")
+        static void scatter
+        (
+            const Type* send,
+            const UList<int>& counts,
+            const UList<int>& offsets,
+            Type* recv,
+            int count,
+            const int comm = UPstream::worldComm
+        )
+        {
+            UPstream::mpiScatterv(send, counts, offsets, recv, count, comm);
+        }
 };
 
 
