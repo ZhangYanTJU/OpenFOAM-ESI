@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -481,16 +481,12 @@ public:
 
     // Constructors
 
-        //- Construct given process index to write to using the given
-        //- attached send buffer, optional communication characteristics
-        //- and IO format
-        UOPBstream
+        //- Construct with attached send buffer,
+        //- optional communication characteristics and IO format
+        explicit UOPBstream
         (
-            const UPstream::commsTypes,     //!< irrelevant
-            const int toProcNo,             //!< normally UPstream::masterNo()
             DynamicList<char>& sendBuf,
-            const int tag = UPstream::msgType(),  //!< irrelevant
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             const bool sendAtDestruct = true,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
@@ -502,21 +498,9 @@ public:
 
     // Member Functions
 
-        //- Use all write methods from base
-        using UOPstreamBase::write;
-
-
-    // Static Functions
-
-        //- Wrapped version of UPstream::broadcast with const-cast
-        //  \return True on success
-        static bool write
-        (
-            const int rootProcNo,  //!< normally UPstream::masterNo()
-            const char* buf,
-            const std::streamsize bufSize,
-            const label comm = UPstream::worldComm
-        );
+        //- Broadcast a zero value (buffer) size that can be matched
+        //- by the UIPBstream constructor.
+        static void send(Foam::zero, const int communicator);
 };
 
 

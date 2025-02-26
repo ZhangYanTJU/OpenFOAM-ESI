@@ -203,6 +203,25 @@ inline void push_request
 }
 
 
+// * * * * * * * * * * * * * * Convenience Methods * * * * * * * * * * * * * //
+
+//- Broadcast a single int64 value.
+//
+//  Ensures consistent data types. Used within the following:
+//  - UIPBstream::bufferIPCrecv()
+//  - UOPBstream::bufferIPCsend()
+//  - UOPBstream::send(Foam::zero, ...)
+
+inline bool broadcast_int64(int64_t& value, int comm)
+{
+    return
+    (
+        MPI_SUCCESS
+     == MPI_Bcast(&value, 1, MPI_INT64_T, 0, MPICommunicators_[comm])
+    );
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace PstreamGlobals

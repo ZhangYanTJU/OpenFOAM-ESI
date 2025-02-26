@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -164,6 +164,9 @@ public:
         {
             return std::ios_base::fmtflags(0);
         }
+
+        //- The number of characters remaining in the get buffer
+        label remaining() const noexcept;
 
 
     // Read Functions
@@ -447,17 +450,13 @@ public:
 
     // Constructors
 
-        //- Construct given process index to read from using the given
-        //- attached receive buffer, optional communication characteristics
-        //- and IO format
+        //- Construct using the given attached receive buffer,
+        // optional communication characteristics and IO format
         UIPBstream
         (
-            const UPstream::commsTypes,     //!< irrelevant
-            const int rootProcNo,           //!< normally UPstream::masterNo()
             DynamicList<char>& receiveBuf,
             label& receiveBufPosition,
-            const int tag = UPstream::msgType(),  //!< irrelevant
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             const bool clearAtEnd = false,  //!< destroy receiveBuf if at end
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
@@ -465,25 +464,6 @@ public:
 
     //- Destructor
     virtual ~UIPBstream() = default;
-
-
-    // Member Functions
-
-        //- Use all read methods from base
-        using UIPstreamBase::read;
-
-
-    // Static Functions
-
-        //- Wrapped version of UPstream::broadcast
-        //  \return the message size (bytes read). May change in the future
-        static std::streamsize read
-        (
-            const int rootProcNo,  //!< normally UPstream::masterNo()
-            char* buf,
-            const std::streamsize bufSize,
-            const label comm = UPstream::worldComm
-        );
 };
 
 

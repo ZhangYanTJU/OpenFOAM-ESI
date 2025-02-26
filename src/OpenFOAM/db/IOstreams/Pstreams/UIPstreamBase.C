@@ -548,6 +548,18 @@ bool Foam::UIPstreamBase::beginRawRead()
 ///     return recvBufPos_;
 /// }
 
+Foam::label Foam::UIPstreamBase::remaining() const noexcept
+{
+    if (messageSize_ && (recvBufPos_ < recvBuf_.size()))
+    {
+        return (recvBuf_.size() - recvBufPos_);
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 
 void Foam::UIPstreamBase::rewind()
 {

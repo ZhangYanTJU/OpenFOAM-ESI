@@ -104,13 +104,18 @@ public:
         static void broadcast
         (
             Type& value,
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Broadcast multiple items to all communicator ranks.
         //- Does nothing in \b non-parallel.
         template<class Type, class... Args>
-        static void broadcasts(const label comm, Type& arg1, Args&&... args);
+        static void broadcasts
+        (
+            const int communicator,
+            Type& value,
+            Args&&... values
+        );
 
         //- Broadcast list content (contiguous or non-contiguous) to all
         //- communicator ranks. Does nothing in \b non-parallel.
@@ -120,7 +125,7 @@ public:
         static void broadcastList
         (
             ListType& list,
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
 

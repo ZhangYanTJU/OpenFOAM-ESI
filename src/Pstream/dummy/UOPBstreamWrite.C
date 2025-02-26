@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,17 +38,8 @@ bool Foam::UOPBstream::bufferIPCsend()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::UOPBstream::write
-(
-    const int rootProcNo,
-    const char* buf,
-    const std::streamsize bufSize,
-    const label comm
-)
-{
-    NotImplemented;
-    return false;
-}
+void Foam::UOPBstream::send(Foam::zero, const int communicator)
+{}
 
 
 // ************************************************************************* //

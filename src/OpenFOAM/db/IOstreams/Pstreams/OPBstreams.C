@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,22 +33,19 @@ License
 
 Foam::UOPBstream::UOPBstream
 (
-    const UPstream::commsTypes commsType,
-    const int rootProcNo,
     DynamicList<char>& sendBuf,
-    const int tag,
-    const label comm,
+    const int communicator,
     const bool sendAtDestruct,
     IOstreamOption::streamFormat fmt
 )
 :
     UOPstreamBase
     (
-        commsType,              // irrelevant
-        rootProcNo,             // normally UPstream::masterNo()
+        UPstream::commsTypes::scheduled,    // irrelevant
+        UPstream::masterNo(),   // irrelevant
         sendBuf,
-        tag,                    // irrelevant
-        comm,
+        UPstream::msgType(),    // irrelevant
+        communicator,
         sendAtDestruct,
         fmt
     )
@@ -57,60 +54,16 @@ Foam::UOPBstream::UOPBstream
 
 Foam::OPBstream::OPBstream
 (
-    const UPstream::commsTypes commsType,
-    const int rootProcNo,
-    const label bufSize,
-    const int tag,
-    const label comm,
+    const int communicator,
     IOstreamOption::streamFormat fmt
 )
 :
-    Pstream(commsType, bufSize),
+    Pstream(UPstream::commsTypes::scheduled),  // type is irrelevant
     UOPBstream
     (
-        commsType,              // irrelevant
-        rootProcNo,             // normally UPstream::masterNo()
         Pstream::transferBuf_,
-        tag,                    // irrelevant
-        comm,
+        communicator,
         true,  // sendAtDestruct
-        fmt
-    )
-{}
-
-
-Foam::OPBstream::OPBstream
-(
-    const int rootProcNo,
-    const label comm,
-    IOstreamOption::streamFormat fmt
-)
-:
-    OPBstream
-    (
-        UPstream::commsTypes::scheduled,    // irrelevant
-        rootProcNo,
-        label(0),  // bufSize
-        UPstream::msgType(),                // irrelevant
-        comm,
-        fmt
-    )
-{}
-
-
-Foam::OPBstream::OPBstream
-(
-    const label comm,
-    IOstreamOption::streamFormat fmt
-)
-:
-    OPBstream
-    (
-        UPstream::commsTypes::scheduled,    // irrelevant
-        UPstream::masterNo(),  // rootProcNo
-        label(0),  // bufSize
-        UPstream::msgType(),                // irrelevant
-        comm,
         fmt
     )
 {}
@@ -125,8 +78,7 @@ Foam::UOPBstream::~UOPBstream()
         if (!bufferIPCsend())
         {
             FatalErrorInFunction
-                << "Failed broadcast message of size "
-                << sendBuf_.size() << " root: " << toProcNo_
+                << "Failed broadcast message of size " << sendBuf_.size()
                 << Foam::abort(FatalError);
         }
     }

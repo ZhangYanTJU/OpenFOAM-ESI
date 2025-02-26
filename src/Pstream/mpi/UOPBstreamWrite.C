@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,55 +39,35 @@ bool Foam::UOPBstream::bufferIPCsend()
 
     PstreamGlobals::checkCommunicator(comm_, toProcNo_);
 
-    // Same type must be expected in UIPBstream::bufferIPCrecv()
-    std::streamsize bufSize(sendBuf_.size());
-
-    // TODO: some corrective action
-    #if 0
-    if (bufSize > std::streamsize(INT_MAX))
-    {
-        Perr<< "UOPBstream::write() :"
-            << " exceeds INT_MAX bytes" << Foam::endl;
-        error::printStack(Perr);
-    }
-    #endif
-
     // Broadcast #1 - data size
-    if
-    (
-        !UPstream::broadcast
-        (
-            reinterpret_cast<char*>(&bufSize),
-            sizeof(std::streamsize),
-            comm_,
-            toProcNo_  //< is actually rootProcNo
-        )
-    )
+    // Same data type must be used in UIPBstream::bufferIPCrecv()
+
+    int64_t count(sendBuf_.size());
+    if (!PstreamGlobals::broadcast_int64(count, comm_))
     {
         FatalErrorInFunction
-            << "MPI_Bcast failure sending buffer size:" << bufSize << nl
+            << "Broadcast failure sending buffer size:"
+            << label(count) << " comm:" << comm_ << nl
             << Foam::abort(FatalError);
         return false;
     }
-
 
     // Broadcast #2 - data content
     // - skip if there is no data to send
     if
     (
-        (bufSize > 0)
+        (count > 0)  // ie, not empty
      && !UPstream::broadcast
         (
             sendBuf_.data(),
-            sendBuf_.size(),  // same as bufSize
-            comm_,
-            toProcNo_  //< is actually rootProcNo
+            sendBuf_.size(),  // same as count
+            comm_
         )
     )
     {
         FatalErrorInFunction
-            << "MPI_Bcast failure sending buffer data:"
-            << sendBuf_.size() << nl
+            << "Broadcast failure sending buffer data:"
+            << sendBuf_.size() << " comm:" << comm_ << nl
             << Foam::abort(FatalError);
         return false;
     }
@@ -98,26 +78,10 @@ bool Foam::UOPBstream::bufferIPCsend()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::UOPBstream::write
-(
-    const int rootProcNo,
-    const char* buf,
-    const std::streamsize bufSize,
-    const label comm
-)
+void Foam::UOPBstream::send(Foam::zero, const int communicator)
 {
-    if
-    (
-        !UPstream::broadcast(const_cast<char*>(buf), bufSize, comm, rootProcNo)
-    )
-    {
-        FatalErrorInFunction
-            << "MPI_Bcast failure sending buffer data:" << label(bufSize) << nl
-            << Foam::abort(FatalError);
-        return false;
-    }
-
-    return true;
+    int64_t count(0);
+    PstreamGlobals::broadcast_int64(count, communicator);
 }
 
 
