@@ -91,52 +91,54 @@ public:
     };
 
     //- Mapping of some fundamental and aggregate types to MPI data types
-    enum class dataTypes : int
+    enum class dataTypes : char
     {
         // NOTE: changes here require adjustment in
         // PstreamGlobals, UPstreamTraits
 
-        // Builtin Types [8]:
-        DataTypes_begin,    //!< (internal use) begin all data types
-        type_byte = DataTypes_begin,  //!< byte, char, unsigned char, ...
+        // Fundamental Types [10]:
+        Basic_begin,    //!< (internal use) begin marker [basic/all types]
+        type_byte = Basic_begin,  //!< byte, char, unsigned char, ...
+        type_int16,
         type_int32,
         type_int64,
+        type_uint16,
         type_uint32,
         type_uint64,
         type_float,
         type_double,
         type_long_double,
 
-        //! (internal use) end of builtin data types marker
-        BuiltinTypes_end, UserTypes_begin = BuiltinTypes_end,
-        //!< (internal use) begin of user data types marker
+        //! (internal use) end marker [basic types]
+        Basic_end, User_begin = Basic_end,
+        //!< (internal use) begin marker [user types]
 
         // User Types [6]:
-        type_3float = UserTypes_begin, //!< 3*float (eg, floatVector)
+        type_3float = User_begin, //!< 3*float (eg, floatVector)
         type_3double,   //!< 3*double (eg, doubleVector)
         type_6float,    //!< 6*float (eg, floatSymmTensor, complex vector)
         type_6double,   //!< 6*double (eg, doubleSymmTensor, complex vector)
         type_9float,    //!< 9*float (eg, floatTensor)
         type_9double,   //!< 9*double (eg, doubleTensor)
 
-        // Internal markers
+        // Internal markers [1]
         invalid,        //!< invalid type (NULL)
-        //! (internal use) end of user data types marker
-        UserTypes_end = invalid, DataTypes_end = invalid
-        //!< (internal use) end of all data types marker
+        //! (internal use) end marker [user types]
+        User_end = invalid, DataTypes_end = invalid
+        //!< (internal use) end marker [all types]
     };
 
     //- Mapping of some MPI op codes.
     //  Currently excluding min/max location until they are needed
-    enum class opCodes : int
+    enum class opCodes : char
     {
         // NOTE: changes here require adjustment in
         // PstreamGlobals, UPstreamTraits
 
-        ReduceOps_begin,  //!< (internal use) begin reduce/window
+        Basic_begin,  //!< (internal use) begin marker [reduce/window types]
 
         // Reduce or window operations [10]
-        op_min = ReduceOps_begin, //!< min(x,y)
+        op_min = Basic_begin, //!< min(x,y)
         op_max,         //!< max(x,y)
         op_sum,         //!< (x + y)
         op_prod,        //!< (x * y)
@@ -147,19 +149,30 @@ public:
         op_bit_or,      //!< Bit-wise \c or for (unsigned) integral types
         op_bit_xor,     //!< Bit-wise \c xor for (unsigned) integral types
 
-        //! (internal use) end of reduce-ops marker
-        ReduceOps_end, WindowOps_begin = ReduceOps_end,
-        //!< (internal use) begin end of window-ops marker
+        //! (internal use) end marker [reduce types]
+        Basic_end, Extra_begin = Basic_end,
+        //!< (internal use) begin marker [window types]
 
         // Window-only operations [2]
-        op_replace = WindowOps_begin,  //!< Replace (window only)
+        op_replace = Extra_begin,  //!< Replace (window only)
         op_no_op,       //!< No-op (window only)
 
-        // Internal markers
+        // Internal markers [1]
         invalid,        //!< invalid op (NULL)
-        //! (internal use) end of window-ops marker
-        WindowOps_end = invalid, OpCodes_end = invalid
-        //!< (internal use) end of all ops marker
+        //! (internal use) end marker [window types]
+        Extra_end = invalid, OpCodes_end = invalid
+        //!< (internal use) end marker [all types]
+    };
+
+    //- Some bit masks corresponding to topology controls
+    //  These selectively enable topology-aware handling
+    enum class topoControls : int
+    {
+        broadcast = 1,      //!< broadcast [MPI]
+        reduce = 2,         //!< reduce/all-reduce [MPI]
+        gather = 16,        //!< gather (reduction) [manual algorithm]
+        mapGather = 32,     //!< mapGather (reduction) [manual algorithm]
+        gatherList = 64,    //!< gatherList/scatterList [manual algorithm]
     };
 
 
@@ -509,13 +522,14 @@ public:
         //  >= 3 : when there are more than N nodes
         static int nodeCommsMin_;
 
-        //- Selection of topology-aware routines
+        //- Selection of topology-aware routines as a bitmask combination
+        //- of the topoControls enumerations
         static int topologyControl_;
 
-        //- Test for selection of given topology-aware routine (bitmask)
-        static bool usingTopoControl(int routine = 0) noexcept
+        //- Test for selection of given topology-aware routine
+        static bool usingTopoControl(UPstream::topoControls ctrl) noexcept
         {
-            return static_cast<bool>(topologyControl_ & routine);
+            return static_cast<bool>(topologyControl_ & int(ctrl));
         }
 
         //- Should compact transfer be used in which floats replace doubles

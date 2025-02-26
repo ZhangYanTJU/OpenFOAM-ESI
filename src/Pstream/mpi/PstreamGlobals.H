@@ -63,16 +63,26 @@ extern DynamicList<MPI_Comm> MPICommunicators_;
 //- Outstanding non-blocking operations.
 extern DynamicList<MPI_Request> outstandingRequests_;
 
-typedef Foam::FixedList<MPI_Datatype, 15> DataTypeLookupTable;
+// The fundamental count for each UPstream::dataTypes entry
+typedef Foam::FixedList<int, 17> DataTypeCountLookupTable;
 
-//- MPI data types corresponding to some fundamental and OpenFOAM types.
+//- Fundamental count for each valid UPstream::dataTypes entry
+//- Indexed by UPstream::dataTypes enum
+extern DataTypeCountLookupTable dataTypesCount_;
+
+// For UPstream::dataTypes lookup, includes space for last 'invalid' entry
+typedef Foam::FixedList<MPI_Datatype, 17> DataTypeLookupTable;
+
+//- MPI data types corresponding to fundamental and OpenFOAM types.
 //- Indexed by UPstream::dataTypes enum
 extern DataTypeLookupTable MPIdataTypes_;
 
+// For UPstream::opCodes lookup, includes space for last 'invalid' entry
 typedef Foam::FixedList<MPI_Op, 13> OpCodesLookupTable;
 
 //- MPI operation types, indexed by UPstream::opCodes enum
 extern OpCodesLookupTable MPIopCodes_;
+
 
 
 // * * * * * * * * * * * * * * * Communicators * * * * * * * * * * * * * * * //

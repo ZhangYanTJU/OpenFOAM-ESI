@@ -34,6 +34,9 @@ Foam::DynamicList<bool> Foam::PstreamGlobals::pendingMPIFree_;
 Foam::DynamicList<MPI_Comm> Foam::PstreamGlobals::MPICommunicators_;
 Foam::DynamicList<MPI_Request> Foam::PstreamGlobals::outstandingRequests_;
 
+Foam::PstreamGlobals::DataTypeCountLookupTable
+Foam::PstreamGlobals::dataTypesCount_(1);
+
 Foam::PstreamGlobals::DataTypeLookupTable
 Foam::PstreamGlobals::MPIdataTypes_(MPI_DATATYPE_NULL);
 
@@ -72,20 +75,32 @@ void Foam::PstreamGlobals::initDataTypes()
 {
     static_assert
     (
+        PstreamGlobals::DataTypeCountLookupTable::max_size()
+     == (int(UPstream::dataTypes::DataTypes_end)+1),
+        "Data count lookup table size != number of dataTypes enumerations"
+    );
+    static_assert
+    (
         PstreamGlobals::DataTypeLookupTable::max_size()
      == (int(UPstream::dataTypes::DataTypes_end)+1),
         "Lookup table size != number of dataTypes enumerations"
     );
 
-    // From enumeration to MPI datatype
+    // From enumeration to MPI datatype for fundamental types
+    // (count is always 1)
     #undef  defineType
-    #define defineType(Idx, BaseType) \
-    MPIdataTypes_[int(UPstream::dataTypes::Idx)] = BaseType;
+    #define defineType(Idx, BaseType)                                         \
+    {                                                                         \
+        dataTypesCount_[int(UPstream::dataTypes::Idx)] = 1;                   \
+        MPIdataTypes_[int(UPstream::dataTypes::Idx)] = BaseType;              \
+    }
 
-    // Intrinsic Types [8]:
+    // Fundamental Types [10]:
     defineType(type_byte,   MPI_BYTE);
+    defineType(type_int16,  MPI_INT16_T);
     defineType(type_int32,  MPI_INT32_T);
     defineType(type_int64,  MPI_INT64_T);
+    defineType(type_uint16, MPI_UINT16_T);
     defineType(type_uint32, MPI_UINT32_T);
     defineType(type_uint64, MPI_UINT64_T);
     defineType(type_float,  MPI_FLOAT);
@@ -98,6 +113,7 @@ void Foam::PstreamGlobals::initDataTypes()
     #undef  defineUserType
     #define defineUserType(Idx, Count, BaseType, Name)                        \
     {                                                                         \
+        dataTypesCount_[int(UPstream::dataTypes::Idx)] = Count;               \
         auto& dt = MPIdataTypes_[int(UPstream::dataTypes::Idx)];              \
         MPI_Type_contiguous(Count, BaseType, &dt);                            \
         MPI_Type_set_name(dt, Name);                                          \
@@ -121,11 +137,11 @@ void Foam::PstreamGlobals::deinitDataTypes()
     // User types only
     auto first =
     (
-        MPIdataTypes_.begin() + int(UPstream::dataTypes::UserTypes_begin)
+        MPIdataTypes_.begin() + int(UPstream::dataTypes::User_begin)
     );
     const auto last =
     (
-        MPIdataTypes_.begin() + int(UPstream::dataTypes::UserTypes_end)
+        MPIdataTypes_.begin() + int(UPstream::dataTypes::User_end)
     );
 
     for (; first != last; ++first)
@@ -200,20 +216,20 @@ void Foam::PstreamGlobals::printDataTypes(bool all)
         std::cerr << "enumerated data types:\n";
         print
         (
-            UPstream::dataTypes::DataTypes_begin,
-            UPstream::dataTypes::DataTypes_end
+            UPstream::dataTypes::Basic_begin,
+            UPstream::dataTypes::Basic_end
         );
     }
     else
     {
         // User types only.
         std::cerr << "enumerated user-defined data types:\n";
-        print
-        (
-            UPstream::dataTypes::UserTypes_begin,
-            UPstream::dataTypes::UserTypes_end
-        );
     }
+    print
+    (
+        UPstream::dataTypes::User_begin,
+        UPstream::dataTypes::User_end
+    );
 }
 
 
