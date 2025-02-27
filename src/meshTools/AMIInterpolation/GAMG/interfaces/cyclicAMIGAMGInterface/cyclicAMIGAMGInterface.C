@@ -950,7 +950,6 @@ Foam::cyclicAMIGAMGInterface::cyclicAMIGAMGInterface
             {
                 continue;
             }
-            const auto oldWarnComm = UPstream::commWarn(AMI.comm());
 
             const auto& AMI = intf.AMI();
 
