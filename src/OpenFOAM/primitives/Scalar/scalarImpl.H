@@ -116,10 +116,7 @@ public:
     // Constructors
 
         //- Copy construct from primitive
-        explicit pTraits(Scalar val) noexcept
-        :
-            p_(val)
-        {}
+        explicit pTraits(Scalar val) noexcept : p_(val) {}
 
         //- Read construct from Istream
         explicit pTraits(Istream& is);
@@ -128,16 +125,10 @@ public:
     // Member Functions
 
         //- Return the value
-        operator Scalar() const noexcept
-        {
-            return p_;
-        }
+        operator Scalar() const noexcept { return p_; }
 
         //- Access the value
-        operator Scalar&() noexcept
-        {
-            return p_;
-        }
+        operator Scalar&() noexcept { return p_; }
 };
 
 

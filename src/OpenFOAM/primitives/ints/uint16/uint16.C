@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +28,19 @@ License
 #include "uint16.H"
 #include "int32.H"
 #include "IOstreams.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+const char* const Foam::pTraits<uint16_t>::typeName = "uint16";
+const char* const Foam::pTraits<uint16_t>::componentNames[] = { "" };
+
+const uint16_t Foam::pTraits<uint16_t>::zero = 0;
+const uint16_t Foam::pTraits<uint16_t>::one = 1;
+const uint16_t Foam::pTraits<uint16_t>::min = 0;
+const uint16_t Foam::pTraits<uint16_t>::max = UINT16_MAX;
+const uint16_t Foam::pTraits<uint16_t>::rootMin = 0;
+const uint16_t Foam::pTraits<uint16_t>::rootMax = UINT16_MAX;
+
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 

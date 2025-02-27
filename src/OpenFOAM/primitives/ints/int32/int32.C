@@ -36,8 +36,8 @@ const int32_t Foam::pTraits<int32_t>::zero = 0;
 const int32_t Foam::pTraits<int32_t>::one = 1;
 const int32_t Foam::pTraits<int32_t>::min = INT32_MIN;
 const int32_t Foam::pTraits<int32_t>::max = INT32_MAX;
-const int32_t Foam::pTraits<int32_t>::rootMin = pTraits<int32_t>::min;
-const int32_t Foam::pTraits<int32_t>::rootMax = pTraits<int32_t>::max;
+const int32_t Foam::pTraits<int32_t>::rootMin = INT32_MIN;
+const int32_t Foam::pTraits<int32_t>::rootMax = INT32_MAX;
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

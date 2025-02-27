@@ -36,8 +36,8 @@ const int64_t Foam::pTraits<int64_t>::zero = 0;
 const int64_t Foam::pTraits<int64_t>::one = 1;
 const int64_t Foam::pTraits<int64_t>::min = INT64_MIN;
 const int64_t Foam::pTraits<int64_t>::max = INT64_MAX;
-const int64_t Foam::pTraits<int64_t>::rootMin = pTraits<int64_t>::min;
-const int64_t Foam::pTraits<int64_t>::rootMax = pTraits<int64_t>::max;
+const int64_t Foam::pTraits<int64_t>::rootMin = INT64_MIN;
+const int64_t Foam::pTraits<int64_t>::rootMax = INT64_MAX;
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
