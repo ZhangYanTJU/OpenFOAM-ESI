@@ -42,19 +42,4 @@ bool Foam::UPstream::mpi_broadcast
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::UPstream::broadcast
-(
-    char* buf,
-    const std::streamsize bufSize,
-    const label comm,
-    const int rootProcNo
-)
-{
-    // Nothing to do - ignore
-    return true;
-}
-
-
 // ************************************************************************* //

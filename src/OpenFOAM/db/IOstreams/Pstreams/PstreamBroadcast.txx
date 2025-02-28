@@ -43,7 +43,6 @@ void Foam::Pstream::broadcast
     }
     else if constexpr (is_contiguous_v<Type>)
     {
-        // Note: contains parallel guard internally
         UPstream::broadcast
         (
             reinterpret_cast<char*>(&value),
@@ -65,6 +64,37 @@ void Foam::Pstream::broadcast
 }
 
 
+template<class Type, unsigned N>
+void Foam::Pstream::broadcast
+(
+    FixedList<Type, N>& list,
+    const int communicator
+)
+{
+    if (!UPstream::is_parallel(communicator))
+    {
+        return;
+    }
+    else if constexpr (is_contiguous_v<Type>)
+    {
+        // Size is known and identical on all ranks
+        UPstream::broadcast(list.data(), list.size(), communicator);
+    }
+    else
+    {
+        // Non-contiguous content - serialize it
+        if (UPstream::master(communicator))
+        {
+            OPBstream::send(list, communicator);
+        }
+        else
+        {
+            IPBstream::recv(list, communicator);
+        }
+    }
+}
+
+
 template<class Type, class... Args>
 void Foam::Pstream::broadcasts
 (
@@ -77,8 +107,15 @@ void Foam::Pstream::broadcasts
     {
         return;
     }
+    else if constexpr (!sizeof...(values) && is_contiguous_v<Type>)
+    {
+        // A single-value and contiguous
+        UPstream::broadcast(&value, 1, communicator);
+    }
     else
     {
+        // Non-contiguous data, or multiple data - needs serialization
+
         if (UPstream::master(communicator))
         {
             OPBstream::sends
@@ -129,19 +166,10 @@ void Foam::Pstream::broadcastList
             communicator
         );
 
-        if (UPstream::is_subrank(communicator))
-        {
-            list.resize_nocopy(len);
-        }
-
         if (len)
         {
-            UPstream::broadcast
-            (
-                list.data_bytes(),
-                list.size_bytes(),
-                communicator
-            );
+            // Only broadcast non-empty content
+            UPstream::broadcast(list.data(), list.size(), communicator);
         }
     }
     else
@@ -150,13 +178,28 @@ void Foam::Pstream::broadcastList
 
         if (UPstream::master(communicator))
         {
-            OPBstream os(communicator);
-            os << list;
+            if (list.empty())
+            {
+                // Do not serialize if empty.
+                // Just broadcast zero-size in a form that IPBstream can expect
+                OPBstream::send(Foam::zero{}, communicator);
+            }
+            else
+            {
+                OPBstream::send(list, communicator);
+            }
         }
         else
         {
             IPBstream is(communicator);
-            is >> list;
+            if (is.remaining() > 0)  // Received a non-empty buffer
+            {
+                is >> list;
+            }
+            else
+            {
+                list.clear();
+            }
         }
     }
 }

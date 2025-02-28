@@ -1720,16 +1720,16 @@ public:
 
     // Broadcast Functions
 
-        //- Broadcast buffer contents to all processes in given communicator.
-        //- The sizes must match on all processes.
+        //- Broadcast buffer contents (contiguous types), from rank=0
+        //- to all ranks. The sizes must match on all processes.
         //  For \b non-parallel : do nothing.
         //  \return True on success
-        static bool broadcast
+        template<class Type>
+        inline static bool broadcast
         (
-            char* buf,
-            const std::streamsize bufSize,
-            const label communicator,
-            const int rootProcNo = masterNo()
+            Type* buffer,
+            std::streamsize count,
+            const int communicator
         );
 
 

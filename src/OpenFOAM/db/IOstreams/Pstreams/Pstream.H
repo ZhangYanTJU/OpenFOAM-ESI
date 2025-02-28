@@ -109,6 +109,15 @@ public:
             const int communicator = UPstream::worldComm
         );
 
+        //- Broadcast fixed-list content (contiguous or non-contiguous) to all
+        //- communicator ranks. Does nothing in \b non-parallel.
+        template<class Type, unsigned N>
+        static void broadcast
+        (
+            FixedList<Type, N>& list,
+            const int communicator = UPstream::worldComm
+        );
+
         //- Broadcast multiple items to all communicator ranks.
         //- Does nothing in \b non-parallel.
         template<class Type, class... Args>

@@ -27,6 +27,44 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+template<class Type>
+bool Foam::UPstream::broadcast
+(
+    Type* buffer,
+    std::streamsize count,
+    const int communicator
+)
+{
+    // Likely no reason to check for nullptr
+    if (!UPstream::is_parallel(communicator))
+    {
+        // Nothing to do - ignore
+        return true;
+    }
+    else if constexpr (!is_contiguous_v<Type>)
+    {
+        // Also report parameters to silence compiler warnings about unused
+        FatalErrorInFunction
+            << "Invalid for non-contiguous data types."
+            << " buffer:" << (buffer != nullptr)
+            << " count:" << count
+            << Foam::abort(FatalError);
+        return false;
+    }
+    else
+    {
+        // Use element or component type (or byte-wise) for data type
+        return UPstream::mpi_broadcast
+        (
+            buffer,     // The data or cmpt pointer
+            UPstream_dataType<Type>::size(count),
+            UPstream_dataType<Type>::datatype_id,
+            communicator
+        );
+    }
+}
+
+
 template<class T>
 Foam::List<T> Foam::UPstream::allGatherValues
 (

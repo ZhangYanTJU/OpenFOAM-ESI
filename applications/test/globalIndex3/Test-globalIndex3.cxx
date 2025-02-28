@@ -345,8 +345,8 @@ static void reportOffsets(const globalIndex& gi)
 
         UPstream::broadcast
         (
-            allOffsets.data_bytes(),
-            allOffsets.size_bytes(),
+            allOffsets.data(),
+            allOffsets.size(),
             interNodeComm
         );
     }

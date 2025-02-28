@@ -92,24 +92,4 @@ bool Foam::UPstream::mpi_broadcast
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::UPstream::broadcast
-(
-    char* buf,
-    const std::streamsize count,
-    const label communicator,
-    const int rootProcNo
-)
-{
-    return UPstream::mpi_broadcast
-    (
-        buf,
-        count,
-        UPstream::dataTypes::type_byte,
-        communicator
-    );
-}
-
-
 // ************************************************************************* //
