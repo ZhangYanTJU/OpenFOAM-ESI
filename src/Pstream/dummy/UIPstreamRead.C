@@ -28,6 +28,25 @@ License
 
 #include "UIPstream.H"
 
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
+
+std::streamsize Foam::UPstream::mpi_receive
+(
+    const UPstream::commsTypes commsType,
+    void* buf,
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,
+    const int fromProcNo,
+    const int tag,
+    const int communicator,
+    UPstream::Request* req
+)
+{
+    NotImplemented;
+    return 0;
+}
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::UIPstream::bufferIPCrecv()

@@ -121,10 +121,11 @@ void Foam::Pstream::broadcastList
 
         label len(list.size());
 
-        UPstream::broadcast
+        UPstream::mpi_broadcast
         (
             reinterpret_cast<char*>(&len),
             sizeof(label),
+            UPstream::dataTypes::type_byte,
             communicator
         );
 

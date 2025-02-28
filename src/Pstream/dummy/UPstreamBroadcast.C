@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,6 +26,21 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UPstream.H"
+
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
+
+bool Foam::UPstream::mpi_broadcast
+(
+    void* buf,
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,
+    const int communicator
+)
+{
+    // Treat like serial
+    return true;
+}
+
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

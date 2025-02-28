@@ -997,7 +997,7 @@ void Foam::PstreamDetail::gather
 
     const bool immediate = (req);
 
-    if (!UPstream::is_rank(communicator) || !count)
+    if (!count || !UPstream::is_rank(communicator))
     {
         return;
     }
@@ -1115,7 +1115,7 @@ void Foam::PstreamDetail::scatter
 
     const bool immediate = (req);
 
-    if (!UPstream::is_rank(communicator) || !count)
+    if (!count || !UPstream::is_rank(communicator))
     {
         return;
     }
@@ -1243,9 +1243,14 @@ void Foam::PstreamDetail::gatherv
     }
     else if (!UPstream::is_parallel(communicator))
     {
-        // recvCounts[0] may be invalid - use sendCount instead
-        if (sendData && recvData)
+        if constexpr (std::is_void_v<Type>)
         {
+            // Cannot copy data here since we don't know the number of bytes
+            // - must be done by the caller.
+        }
+        else if (sendData && recvData)
+        {
+            // recvCounts[0] may be invalid - use sendCount instead
             std::memmove(recvData, sendData, sendCount*sizeof(Type));
         }
         return;
@@ -1385,7 +1390,15 @@ void Foam::PstreamDetail::scatterv
     }
     else if (!UPstream::is_parallel(communicator))
     {
-        std::memmove(recvData, sendData, recvCount*sizeof(Type));
+        if constexpr (std::is_void_v<Type>)
+        {
+            // Cannot copy data here since we don't know the number of bytes
+            // - must be done by the caller.
+        }
+        else if (sendData && recvData)
+        {
+            std::memmove(recvData, sendData, recvCount*sizeof(Type));
+        }
         return;
     }
 

@@ -502,6 +502,180 @@ private:
         static void freeCommunicatorComponents(const label index);
 
 
+protected:
+
+    // Protected Member Functions
+
+    // Static Functions
+
+        //- Broadcast buffer contents from rank=0 to all ranks.
+        //- The sizes must match on all processes.
+        //  For \b non-parallel : do nothing.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        //  \return True on success
+        static bool mpi_broadcast
+        (
+            void* buf,
+            std::streamsize count,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator
+        );
+
+        //- In-place reduction of \c values with result on rank 0.
+        //  Includes internal parallel guard and checks on data types, opcode.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        static void mpi_reduce
+        (
+            void* values,
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const UPstream::opCodes opCodeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- In-place reduction of \c values with same result on all ranks.
+        //  Includes internal parallel guard and checks on data types, opcode.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        static void mpi_allreduce
+        (
+            void* values,
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const UPstream::opCodes opCodeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Send buffer contents of specified data type to given processor.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        //  \return True on success (or Fatal)
+        static bool mpi_send
+        (
+            const UPstream::commsTypes commsType,
+            const void* buf,
+            std::streamsize count,
+            const UPstream::dataTypes dataTypeId,
+            const int toProcNo,
+            const int tag,              // eg, UPstream::msgType()
+            const int communicator,     // eg, UPstream::worldComm
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr,
+            //! optional send mode (normal | sync)
+            const UPstream::sendModes sendMode = UPstream::sendModes::normal
+        );
+
+        //- Receive buffer contents of specified data type from given processor.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        //  The commsType will be ignored if UPstream::Request is specified.
+        //
+        //  \return number of elements read. May change in the future
+        static std::streamsize mpi_receive
+        (
+            const UPstream::commsTypes commsType,
+            void* buf,
+            std::streamsize count,
+            const UPstream::dataTypes dataTypeId,
+            const int fromProcNo,
+            const int tag,              // eg, UPstream::msgType()
+            const int communicator,     // eg, UPstream::worldComm
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Receive identically-sized (contiguous) data from all ranks
+        //  Includes internal parallel guard.
+        //  For non-parallel, does not copy any data.
+        //  If needed, this must be done by the caller.
+        static void mpi_gather
+        (
+            //! On rank: individual value to send (or nullptr for inplace)
+            const void* sendData,
+            //! Master: receive buffer with all values
+            //! Or for in-place send/recv when sendData is nullptr
+            void* recvData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Send identically-sized (contiguous) data to all ranks
+        //  Includes internal parallel guard.
+        static void mpi_scatter
+        (
+            //! On master: send buffer with all values (nullptr for inplace)
+            const void* sendData,
+            //! On rank: individual value to receive
+            //! Or for in-place send/recv when sendData is nullptr
+            void* recvData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Gather/scatter identically-sized data
+        //  Send data from proc slot, receive into all slots
+        static void mpi_allgather
+        (
+            //! On all ranks: the base of the data locations
+            void* allData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Receive variable length data from all ranks.
+        //- (caution: known to scale poorly)
+        static void mpi_gatherv
+        (
+            const void* sendData,
+            int sendCount,    //!< Ignored on master if recvCount[0] == 0
+            void* recvData,                 //!< Ignored on non-root rank
+            const UList<int>& recvCounts,   //!< Ignored on non-root rank
+            const UList<int>& recvOffsets,  //!< Ignored on non-root rank
+            const UPstream::dataTypes dataTypeId,
+            const int communicator
+        );
+
+        //- Send variable length data to all ranks
+        //- (caution: known to scale poorly)
+        static void mpi_scatterv
+        (
+            const void* sendData,           //!< Ignored on non-root rank
+            const UList<int>& sendCounts,   //!< Ignored on non-root rank
+            const UList<int>& sendOffsets,  //!< Ignored on non-root rank
+            void* recvData,
+            int recvCount,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator
+        );
+
 public:
 
     //- Declare name of the class and its debug switch

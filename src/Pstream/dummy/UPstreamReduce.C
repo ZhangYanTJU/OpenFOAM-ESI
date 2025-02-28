@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,7 @@ License
 #include "Pstream.H"
 #include "PstreamReduceOps.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
 // Special reductions for bool
 
@@ -54,6 +54,32 @@ void Foam::reduce
     const orOp<bool>&,
     const int tag,
     const label comm
+)
+{}
+
+
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
+
+void Foam::UPstream::mpi_reduce
+(
+    void* values,
+    int count,
+    const UPstream::dataTypes dataTypeId,
+    const UPstream::opCodes opCodeId,
+    const int communicator,
+    UPstream::Request* req
+)
+{}
+
+
+void Foam::UPstream::mpi_allreduce
+(
+    void* values,
+    int count,
+    const UPstream::dataTypes dataTypeId,
+    const UPstream::opCodes opCodeId,
+    const int communicator,
+    UPstream::Request* req
 )
 {}
 

@@ -57,10 +57,11 @@ bool Foam::UOPBstream::bufferIPCsend()
     if
     (
         (count > 0)  // ie, not empty
-     && !UPstream::broadcast
+     && !UPstream::mpi_broadcast
         (
             sendBuf_.data(),
             sendBuf_.size(),  // same as count
+            UPstream::dataTypes::type_byte,
             comm_
         )
     )

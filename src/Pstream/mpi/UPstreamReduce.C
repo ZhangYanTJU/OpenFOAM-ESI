@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,7 +31,7 @@ License
 
 #include <cinttypes>
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
 // Special reductions for bool
 
@@ -68,6 +68,181 @@ void Foam::reduce
 )
 {
     PstreamDetail::allReduce(&value, 1, MPI_C_BOOL, MPI_LOR, comm);
+}
+
+
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+static inline bool is_basic_dataType(Foam::UPstream::dataTypes id) noexcept
+{
+    return
+    (
+        int(id) >= int(Foam::UPstream::dataTypes::Basic_begin)
+     && int(id)  < int(Foam::UPstream::dataTypes::Basic_end)
+    );
+}
+
+static inline bool is_reduce_opCode(Foam::UPstream::opCodes id) noexcept
+{
+    return
+    (
+        int(id) >= int(Foam::UPstream::opCodes::Basic_begin)
+     && int(id)  < int(Foam::UPstream::opCodes::Basic_end)
+    );
+}
+
+
+namespace
+{
+
+using namespace Foam;
+
+// Local function to print some error information
+void printErrorMessage
+(
+    const void* values,
+    const UPstream::dataTypes datatype_id,
+    const UPstream::opCodes opcode_id
+)
+{
+    FatalError
+        << "Bad input for reduce(): likely a programming problem\n";
+
+    if (!is_basic_dataType(datatype_id))
+    {
+        FatalError<< "    Non-basic data tyoe (" << int(datatype_id) << ")\n";
+    }
+
+    if (!is_reduce_opCode(opcode_id))
+    {
+        FatalError<< "    Invalid reduce op (" << int(opcode_id) << ")\n";
+    }
+
+    if (values == nullptr)
+    {
+        FatalError<< "    nullptr for values\n";
+    }
+    FatalError<< Foam::endl;
+}
+
+} // End anonymous namespace
+
+
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
+
+void Foam::UPstream::mpi_reduce
+(
+    void* values,                          // Type checking done by caller
+    int count,
+    const UPstream::dataTypes dataTypeId,  // Proper type passed by caller
+    const UPstream::opCodes opCodeId,      // Proper code passed by caller
+    const int communicator,                // Index into MPICommunicators_
+    UPstream::Request* req
+)
+{
+    MPI_Datatype datatype = PstreamGlobals::getDataType(dataTypeId);
+    MPI_Op optype = PstreamGlobals::getOpCode(opCodeId);
+
+    if (!count || !UPstream::is_parallel(communicator))
+    {
+        // Nothing to do - ignore
+        return;
+    }
+    if
+    (
+        FOAM_UNLIKELY
+        (
+            !is_basic_dataType(dataTypeId)
+         || !is_reduce_opCode(opCodeId)
+         || (values == nullptr)
+        )
+    )
+    {
+        FatalErrorInFunction;
+        printErrorMessage(values, dataTypeId, opCodeId);
+        FatalError << Foam::abort(FatalError);
+    }
+
+    if (FOAM_UNLIKELY(UPstream::debug))
+    {
+        Perr<< "[mpi_reduce] : "
+            << " op:" << int(opCodeId)
+            << " type:" << int(dataTypeId) << " count:" << count
+            << " comm:" << communicator
+            << Foam::endl;
+    }
+
+    {
+        // Regular reduce
+
+        PstreamDetail::reduce0
+        (
+            values,
+            count,
+            datatype,
+            optype,
+            communicator,
+            req
+        );
+    }
+}
+
+
+void Foam::UPstream::mpi_allreduce
+(
+    void* values,                          // Type checking done by caller
+    int count,
+    const UPstream::dataTypes dataTypeId,  // Proper type passed by caller
+    const UPstream::opCodes opCodeId,      // Proper code passed by caller
+    const int communicator,                // Index into MPICommunicators_
+    UPstream::Request* req
+)
+{
+    MPI_Datatype datatype = PstreamGlobals::getDataType(dataTypeId);
+    MPI_Op optype = PstreamGlobals::getOpCode(opCodeId);
+
+    if (!count || !UPstream::is_parallel(communicator))
+    {
+        // Nothing to do - ignore
+        return;
+    }
+    if
+    (
+        FOAM_UNLIKELY
+        (
+            !is_basic_dataType(dataTypeId)
+         || !is_reduce_opCode(opCodeId)
+         || (values == nullptr)
+        )
+    )
+    {
+        FatalErrorInFunction;
+        printErrorMessage(values, dataTypeId, opCodeId);
+        FatalError << Foam::abort(FatalError);
+    }
+
+    if (FOAM_UNLIKELY(UPstream::debug))
+    {
+        Perr<< "[mpi_allreduce] : "
+            << " op:" << int(opCodeId)
+            << " type:" << int(dataTypeId) << " count:" << count
+            << " comm:" << communicator
+            << Foam::endl;
+    }
+
+    {
+        // Regular allReduce
+
+        PstreamDetail::allReduce
+        (
+            values,
+            count,
+            datatype,
+            optype,
+            communicator,
+            req
+        );
+    }
 }
 
 

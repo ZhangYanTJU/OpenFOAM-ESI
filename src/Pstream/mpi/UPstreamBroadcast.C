@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,55 +29,86 @@ License
 #include "PstreamGlobals.H"
 #include "profilingPstream.H"
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
 
-bool Foam::UPstream::broadcast
+bool Foam::UPstream::mpi_broadcast
 (
-    char* buf,
-    const std::streamsize bufSize,
-    const label comm,
-    const int rootProcNo
+    void* buf,                      // Type checking done by caller
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,  // Proper type passed by caller
+    const int communicator          // Index into MPICommunicators_
 )
 {
-    if (!UPstream::is_parallel(comm))
+    MPI_Datatype datatype = PstreamGlobals::getDataType(dataTypeId);
+
+    if (!count || !UPstream::is_parallel(communicator))
     {
         // Nothing to do - ignore
         return true;
     }
 
-    //Needed?  PstreamGlobals::checkCommunicator(comm, rootProcNo);
+    //Needed?  PstreamGlobals::checkCommunicator(communicator, 0);
 
-    if (FOAM_UNLIKELY(PstreamGlobals::warnCommunicator(comm)))
+    // Without MPI_Bcast_c()
+    if (FOAM_UNLIKELY(count > std::streamsize(INT_MAX)))
     {
-        Perr<< "UPstream::broadcast : root:" << rootProcNo
-            << " comm:" << comm
-            << " size:" << label(bufSize)
-            << " warnComm:" << UPstream::warnComm
-            << Foam::endl;
-        error::printStack(Perr);
+        FatalErrorInFunction
+            << "Broadcast size " << label(count)
+            << " exceeds INT_MAX bytes" << Foam::endl
+            << Foam::abort(FatalError);
+        return false;
     }
-    else if (FOAM_UNLIKELY(UPstream::debug))
+
+    if (FOAM_UNLIKELY(UPstream::debug))
     {
-        Perr<< "UPstream::broadcast : root:" << rootProcNo
-            << " comm:" << comm
-            << " size:" << label(bufSize)
+        Perr<< "[mpi_broadcast] :"
+            << " type:" << int(dataTypeId)
+            << " count:" << label(count)
+            << " comm:" << communicator
             << Foam::endl;
     }
+
+    int returnCode = MPI_SUCCESS;
 
     profilingPstream::beginTiming();
 
-    const int returnCode = MPI_Bcast
-    (
-        buf,
-        bufSize,
-        MPI_BYTE,
-        rootProcNo,
-        PstreamGlobals::MPICommunicators_[comm]
-    );
+    {
+        // Regular broadcast
+        // OR: PstreamDetail::broadcast0(buf, count, datatype, communicator);
+
+        returnCode = MPI_Bcast
+        (
+            buf,
+            count,
+            datatype,
+            0,  // (root rank) == UPstream::masterNo()
+            PstreamGlobals::MPICommunicators_[communicator]
+        );
+    }
 
     profilingPstream::addBroadcastTime();
 
     return (returnCode == MPI_SUCCESS);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::UPstream::broadcast
+(
+    char* buf,
+    const std::streamsize count,
+    const label communicator,
+    const int rootProcNo
+)
+{
+    return UPstream::mpi_broadcast
+    (
+        buf,
+        count,
+        UPstream::dataTypes::type_byte,
+        communicator
+    );
 }
 
 

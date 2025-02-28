@@ -26,7 +26,75 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UPstream.H"
-#include <cstring>  // memmove
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+void Foam::UPstream::mpi_gather
+(
+    const void* sendData,
+    void* recvData,
+    int count,
+    const UPstream::dataTypes dataTypeId,
+
+    const int communicator,
+    UPstream::Request* req
+)
+{}
+
+
+void Foam::UPstream::mpi_scatter
+(
+    const void* sendData,
+    void* recvData,
+    int count,
+    const UPstream::dataTypes dataTypeId,
+
+    const int communicator,
+    UPstream::Request* req
+)
+{}
+
+
+void Foam::UPstream::mpi_allgather
+(
+    void* allData,
+    int count,
+    const UPstream::dataTypes dataTypeId,
+
+    const int communicator,
+    UPstream::Request* req
+)
+{}
+
+
+void Foam::UPstream::mpi_gatherv
+(
+    const void* sendData,
+    int sendCount,
+    void* recvData,
+    const UList<int>& recvCounts,
+    const UList<int>& recvOffsets,
+
+    const UPstream::dataTypes dataTypeId,
+    const int communicator
+)
+{}
+
+
+void Foam::UPstream::mpi_scatterv
+(
+    const void* sendData,
+    const UList<int>& sendCounts,
+    const UList<int>& sendOffsets,
+
+    void* recvData,
+    int recvCount,
+
+    const UPstream::dataTypes dataTypeId,
+    const int communicator
+)
+{}
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

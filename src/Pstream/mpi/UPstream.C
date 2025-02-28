@@ -1253,14 +1253,14 @@ Foam::UPstream::probeMessage
         MPI_Get_elements_x(&status, MPI_BYTE, &num_recv);
 
         // Errors
-        if (num_recv == MPI_UNDEFINED || int64_t(num_recv) < 0)
+        if (FOAM_UNLIKELY(num_recv == MPI_UNDEFINED || int64_t(num_recv) < 0))
         {
             FatalErrorInFunction
                 << "MPI_Get_elements_x() : "
                    "returned undefined or negative value"
                 << Foam::abort(FatalError);
         }
-        else if (int64_t(num_recv) > int64_t(INT_MAX))
+        else if (FOAM_UNLIKELY(int64_t(num_recv) > int64_t(INT_MAX)))
         {
             FatalErrorInFunction
                 << "MPI_Get_elements_x() : "

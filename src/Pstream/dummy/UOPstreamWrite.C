@@ -37,6 +37,26 @@ bool Foam::UOPstream::bufferIPCsend()
 }
 
 
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
+
+bool Foam::UPstream::mpi_send
+(
+    const UPstream::commsTypes commsType,
+    const void* buf,
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,
+    const int toProcNo,
+    const int tag,
+    const int communicator,
+    UPstream::Request* req,
+    const UPstream::sendModes sendMode
+)
+{
+    NotImplemented;
+    return false;
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::UOPstream::write
