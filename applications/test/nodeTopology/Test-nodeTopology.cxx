@@ -115,6 +115,13 @@ int main(int argc, char *argv[])
     );
 
 
+    if (UPstream::parRun())
+    {
+        const auto& procs = UPstream::localNode_parentProcs();
+        Perr<< "local processors: [" << procs.min()
+            << ".." << procs.max() << ']' << endl;
+    }
+
     // Generate the graph
     if (UPstream::master(UPstream::worldComm))
     {

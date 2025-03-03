@@ -1232,6 +1232,9 @@ public:
         //- Processor offsets corresponding to the inter-node communicator
         static const List<int>& interNode_offsets();
 
+        //- The range (start/size) of the commLocalNode ranks in terms of the
+        //- (const) world communicator processors.
+        static const rangeType& localNode_parentProcs();
 
         //- Linear communication schedule (special case) for given communicator
         static const commsStructList& linearCommunication(int communicator);
@@ -1240,8 +1243,8 @@ public:
         static const commsStructList& treeCommunication(int communicator);
 
         //- Communication schedule for all-to-master (proc 0) as
-        //- linear/tree/none with switching based on UPstream::nProcsSimpleSum
-        //- and the is_parallel() state and the optional \c linear parameter.
+        //- linear/tree/none with switching based on UPstream::nProcsSimpleSum,
+        //- the is_parallel() state and the optional \c linear parameter.
         static const commsStructList& whichCommunication
         (
             const int communicator,

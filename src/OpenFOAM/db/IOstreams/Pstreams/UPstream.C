@@ -791,6 +791,38 @@ const Foam::List<int>& Foam::UPstream::interNode_offsets()
 }
 
 
+const Foam::UPstream::rangeType& Foam::UPstream::localNode_parentProcs()
+{
+    static UPstream::rangeType singleton;
+
+    if (singleton.empty())
+    {
+        // The inter-node offsets [in const world comm] also include a
+        // startup guard
+        const auto& offsets = UPstream::interNode_offsets();
+
+        const auto nodei =
+            Foam::findLower
+            (
+                offsets,
+                // My place within const world comm
+                UPstream::myProcNo(constWorldComm_)+1
+            );
+
+        if (nodei >= 0)
+        {
+            singleton.reset
+            (
+                offsets[nodei],
+                offsets[nodei+1] - offsets[nodei]
+            );
+        }
+    }
+
+    return singleton;
+}
+
+
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 bool Foam::UPstream::parRun_(false);
