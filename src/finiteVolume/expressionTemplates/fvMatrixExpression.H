@@ -1290,7 +1290,7 @@ auto SuSp
 )
 {
     //- Wrap of constant as a list expression
-    typedef Expression::constantListWrap<scalar> constant;
+    typedef Expression::UniformListWrap<scalar> constant;
     //- Wrap of List as an expression
     typedef ListConstRefWrap<typename E1::value_type> expr;
 
@@ -1316,7 +1316,7 @@ auto Sp
 )
 {
     //- Wrap of constant as a list expression
-    typedef Expression::constantListWrap<scalar> constant;
+    typedef Expression::UniformListWrap<scalar> constant;
     //- Wrap of List as an expression
     typedef ListConstRefWrap<typename E1::value_type> expr;
 
@@ -1342,7 +1342,7 @@ auto Su
 )
 {
     //- Wrap of constant as a list expression
-    typedef Expression::constantListWrap<scalar> constant;
+    typedef Expression::UniformListWrap<scalar> constant;
     //- Wrap of List as an expression
     typedef ListConstRefWrap<typename E1::value_type> expr;
 

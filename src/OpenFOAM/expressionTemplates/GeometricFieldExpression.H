@@ -1033,12 +1033,12 @@ EXPRESSION_GF_OPERATOR(/, List_divide, GF_divide)
 // ~~~~~~~~~~~~~~~~~~~~~~~~
 
 template<class GeoField>
-class geometricConstantFieldWrap
+class UniformGeometricFieldWrap
 :
     public GeometricFieldExpression
     <
-        geometricConstantFieldWrap<GeoField>,
-        constantListWrap<typename GeoField::value_type>,
+        UniformGeometricFieldWrap<GeoField>,
+        UniformListWrap<typename GeoField::value_type>,
         typename GeoField::value_type
     >
 {
@@ -1050,7 +1050,7 @@ public:
     typedef typename GeoField::value_type value_type;
 
     //- Type to return for patchField
-    typedef constantListWrap<value_type> wrapType;
+    typedef UniformListWrap<value_type> wrapType;
 
 
 private:
@@ -1062,11 +1062,11 @@ private:
 public:
 
     // Construct from field (sizes only) and value
-    geometricConstantFieldWrap(const GeoField& elems, const value_type val)
+    UniformGeometricFieldWrap(const GeoField& elems, const value_type val)
     :
         GeometricFieldExpression
         <
-            geometricConstantFieldWrap<GeoField>,
+            UniformGeometricFieldWrap<GeoField>,
             wrapType,
             value_type
         >
@@ -1079,7 +1079,7 @@ public:
     {}
 
     // Construct from field (sizes only) and value, dimension
-    geometricConstantFieldWrap
+    UniformGeometricFieldWrap
     (
         const GeoField& elems,
         const dimensioned<value_type> val
@@ -1087,7 +1087,7 @@ public:
     :
         GeometricFieldExpression
         <
-            geometricConstantFieldWrap<GeoField>,
+            UniformGeometricFieldWrap<GeoField>,
             wrapType,
             value_type
         >
@@ -1123,12 +1123,12 @@ public:
 
 //- Fully self-contained constant field wrapper. Not needed?
 //template<class GeoField>
-//class geometricConstantFieldWrap2
+//class UniformGeometricFieldWrap2
 //:
 //    public GeometricFieldExpression
 //    <
-//        geometricConstantFieldWrap2<GeoField>,
-//        constantListWrap<typename GeoField::value_type>,
+//        UniformGeometricFieldWrap2<GeoField>,
+//        UniformListWrap<typename GeoField::value_type>,
 //        typename GeoField::value_type
 //    >
 //{
@@ -1140,7 +1140,7 @@ public:
 //    typedef typename GeoField::value_type value_type;
 //
 //    //- Type to return for patchField
-//    typedef constantListWrap<value_type> wrapType;
+//    typedef UniformListWrap<value_type> wrapType;
 //
 //
 //private:
@@ -1156,7 +1156,7 @@ public:
 //public:
 //
 //    // Construct from field (sizes only) and value
-//    geometricConstantFieldWrap2(const GeoField& elems, const value_type val)
+//    UniformGeometricFieldWrap2(const GeoField& elems, const value_type val)
 //    :
 //        val_(val),
 //        nInternal_(elems.size()),
@@ -1170,7 +1170,7 @@ public:
 //    }
 //
 //    // Construct from field (sizes only) and value, dimension
-//    geometricConstantFieldWrap2
+//    UniformGeometricFieldWrap2
 //    (
 //        const GeoField& elems,
 //        const dimensioned<value_type> val
@@ -1300,7 +1300,7 @@ void SuSp
 )
 {
     //- Wrap of constant as a list expression
-    typedef Expression::constantListWrap<scalar> constant;
+    typedef Expression::UniformListWrap<scalar> constant;
     //- Wrap of List as an expression
     typedef ListConstRefWrap<typename Expr::value_type> expr;
     //- Evaluator of an expression

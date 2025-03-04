@@ -551,9 +551,9 @@ EXPRESSION_OPERATOR(/, List_divide)
 // ~~~~~~~~~~~~~~~~~~~~~~~~
 
 template<class T>
-class constantListWrap
+class UniformListWrap
 :
-    public ListExpression<constantListWrap<T>, T>
+    public ListExpression<UniformListWrap<T>, T>
 {
 private:
 
@@ -568,14 +568,14 @@ public:
     typedef T value_type;
 
     // construct from components
-    constantListWrap(const label size, const T val)
+    UniformListWrap(const label size, const T val)
     :
         size_(size),
         val_(val)
     {}
 
     // construct from components
-    constantListWrap(const label size, const dimensioned<T>& val)
+    UniformListWrap(const label size, const dimensioned<T>& val)
     :
         size_(size),
         val_(val.value())
@@ -597,12 +597,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-//#ifdef NoRepository
-//    #include "ListExpression.C"
-//#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

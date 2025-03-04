@@ -62,8 +62,8 @@ Istream& operator>>(Istream& is, dimensioned<Type>& dt);
 
 namespace Expression
 {
-template<class T> class constantListWrap;
-template<class GeoField> class geometricConstantFieldWrap;
+template<class T> class UniformListWrap;
+template<class GeoField> class UniformGeometricFieldWrap;
 }
 
 /*---------------------------------------------------------------------------*\
@@ -462,7 +462,7 @@ public:
         //- Wrap value as constant-value List expression
         auto expr(const label size) const
         {
-            return Expression::constantListWrap<Type>(size, value_);
+            return Expression::UniformListWrap<Type>(size, value_);
         }
 
         //- Wrap value as constant-value GeometricField expression. Supplied
@@ -471,7 +471,7 @@ public:
         template<class GeoField>
         auto expr(const GeoField& fld) const
         {
-            return Expression::geometricConstantFieldWrap<GeoField>
+            return Expression::UniformGeometricFieldWrap<GeoField>
             (
                 fld,
                 *this
