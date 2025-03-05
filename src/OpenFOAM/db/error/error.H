@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,7 +89,7 @@ protected:
 
         string functionName_;
         string sourceFileName_;
-        label sourceFileLineNumber_;
+        int sourceFileLineNumber_;
         bool throwing_;
         std::unique_ptr<OStringStream> messageStreamPtr_;
 
@@ -143,7 +143,7 @@ public:
         //
         //  \param communicator is the numbered MPI communicator.
         //      By default it uses UPstream::worldComm
-        static bool master(const label communicator = -1);
+        static bool master(const int communicator = -1);
 
         //- Test if an age warning should be emitted.
         //  \param version is the old version (YYMM) for determining the
@@ -180,7 +180,7 @@ public:
         }
 
         //- The currently defined source-file line number for output messages
-        label sourceFileLineNumber() const noexcept
+        int sourceFileLineNumber() const noexcept
         {
             return sourceFileLineNumber_;
         }
@@ -218,29 +218,24 @@ public:
             return this->stream();
         }
 
-        //- Define basic print message
+        //- Define basic print message with originating function name,
+        //- optionally with 'source file, line number'
         //  \return OSstream for further operations
         OSstream& operator()
         (
-            const string& functionName
+            string functionName,
+            const char* sourceFileName = nullptr,
+            const int sourceFileLineNumber = -1
         );
 
-        //- Define basic print message
+        //- Define basic print message with originating function name,
+        //- optionally with 'source file, line number'
         //  \return OSstream for further operations
         OSstream& operator()
         (
             const char* functionName,
-            const char* sourceFileName,
-            const int sourceFileLineNumber = 0
-        );
-
-        //- Define basic print message
-        //  \return OSstream for further operations
-        OSstream& operator()
-        (
-            const string& functionName,
-            const char* sourceFileName,
-            const int sourceFileLineNumber = 0
+            const char* sourceFileName = nullptr,
+            const int sourceFileLineNumber = -1
         );
 
 
@@ -361,7 +356,7 @@ public:
             const char* functionName,
             const char* sourceFileName,
             const int sourceFileLineNumber,
-            const string& ioFileName,
+            string ioFileName,
             const label ioStartLineNumber = -1,
             const label ioEndLineNumber = -1
         );

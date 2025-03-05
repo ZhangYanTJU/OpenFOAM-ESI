@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -130,6 +130,14 @@ public:
 
     // Constructors
 
+        //- Construct untitled with given characteristics
+        explicit messageStream
+        (
+            errorSeverity severity,
+            int maxErrors = 0,
+            bool use_stderr = false
+        );
+
         //- Construct from components
         messageStream
         (
@@ -142,14 +150,11 @@ public:
         //- Construct from components
         messageStream
         (
-            const std::string& title,
+            string title,
             errorSeverity severity,
             int maxErrors = 0,
             bool use_stderr = false
-        )
-        :
-            messageStream(title.c_str(), severity, maxErrors, use_stderr)
-        {}
+        );
 
 
         //- Construct from dictionary as Fatal, extracting 'title'.
@@ -191,7 +196,7 @@ public:
 
         //- Return OSstream for output operations on the master process only,
         //- Snull on other processes.
-        OSstream& masterStream(const label communicator);
+        OSstream& masterStream(const int communicator);
 
         //- Return std::ostream for output operations.
         std::ostream& stdStream();
@@ -220,28 +225,23 @@ public:
             return this->stream();
         }
 
-        //- Report 'From function-name'
-        //  \return OSstream for further operations
-        OSstream& operator()
-        (
-            const std::string& functionName
-        );
-
-        //- Report 'From function-name, source file, line number'
-        //  \return OSstream for further operations
-        OSstream& operator()
-        (
-            const char* functionName,
-            const char* sourceFileName,
-            const int sourceFileLineNumber = 0
-        );
-
-        //- Report 'From function-name, source file, line number'
+        //- Report 'From function-name',
+        //- optionally with 'source file, line number'
         //  \return OSstream for further operations
         OSstream& operator()
         (
             const std::string& functionName,
-            const char* sourceFileName,
+            const char* sourceFileName = nullptr,
+            const int sourceFileLineNumber = 0
+        );
+
+        //- Report 'From function-name',
+        //- optionally with 'source file, line number'
+        //  \return OSstream for further operations
+        OSstream& operator()
+        (
+            const char* functionName,
+            const char* sourceFileName = nullptr,
             const int sourceFileLineNumber = 0
         );
 

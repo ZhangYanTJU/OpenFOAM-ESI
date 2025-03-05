@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,21 +49,15 @@ int Foam::infoDetailLevel(1);
 
 Foam::messageStream::messageStream
 (
-    const char* title,
     errorSeverity severity,
     int maxErrors,
     bool use_stderr
 )
 :
-    title_(),
     severity_(severity),
     maxErrors_(maxErrors),
     errorCount_(0)
 {
-    if (title)
-    {
-        title_ = title;
-    }
     if (use_stderr)
     {
         severity_ |= errorSeverity::USE_STDERR;
@@ -71,12 +65,40 @@ Foam::messageStream::messageStream
 }
 
 
+Foam::messageStream::messageStream
+(
+    const char* title,
+    errorSeverity severity,
+    int maxErrors,
+    bool use_stderr
+)
+:
+    messageStream(severity, maxErrors, use_stderr)
+{
+    if (title)
+    {
+        title_ = title;
+    }
+}
+
+
+Foam::messageStream::messageStream
+(
+    string title,
+    errorSeverity severity,
+    int maxErrors,
+    bool use_stderr
+)
+:
+    messageStream(severity, maxErrors, use_stderr)
+{
+    title_ = std::move(title);
+}
+
+
 Foam::messageStream::messageStream(const dictionary& dict)
 :
-    title_(dict.get<string>("title")),
-    severity_(errorSeverity::FATAL),
-    maxErrors_(0),
-    errorCount_(0)
+    messageStream(dict.get<string>("title"), errorSeverity::FATAL)
 {}
 
 
@@ -153,7 +175,7 @@ Foam::OSstream& Foam::messageStream::stream
 }
 
 
-Foam::OSstream& Foam::messageStream::masterStream(const label communicator)
+Foam::OSstream& Foam::messageStream::masterStream(const int communicator)
 {
     if (UPstream::warnComm >= 0 && communicator != UPstream::warnComm)
     {
@@ -177,23 +199,6 @@ std::ostream& Foam::messageStream::stdStream()
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
-
-Foam::OSstream& Foam::messageStream::operator()
-(
-    const std::string& functionName
-)
-{
-    OSstream& os = this->stream();
-
-    if (!functionName.empty())
-    {
-        os  << nl
-            << "    From " << functionName.c_str() << nl;
-    }
-
-    return os;
-}
-
 
 Foam::OSstream& Foam::messageStream::deprecated
 (
@@ -239,13 +244,48 @@ Foam::OSstream& Foam::messageStream::deprecated
         {
             os  << "    From " << functionName << nl;
         }
-        if (sourceFileName)
+        if (sourceFileName)  // nullptr check
         {
-            os  << "    in file " << sourceFileName
-                << " at line " << sourceFileLineNumber << nl;
+            os  << "    in file " << sourceFileName;
+
+            if (sourceFileLineNumber >= 0)
+            {
+                os  << " at line " << sourceFileLineNumber;
+            }
+            os  << nl;
         }
     }
     os  << "    ";
+
+    return os;
+}
+
+
+Foam::OSstream& Foam::messageStream::operator()
+(
+    const std::string& functionName,
+    const char* sourceFileName,
+    const int sourceFileLineNumber
+)
+{
+    OSstream& os = this->stream();
+
+    if (!functionName.empty())
+    {
+        os  << nl
+            << "    From " << functionName.c_str() << nl;
+    }
+
+    if (sourceFileName)  // nullptr check
+    {
+        os  << "    in file " << sourceFileName;
+
+        if (sourceFileLineNumber >= 0)
+        {
+            os  << " at line " << sourceFileLineNumber;
+        }
+        os  << nl << "    ";
+    }
 
     return os;
 }
@@ -260,29 +300,24 @@ Foam::OSstream& Foam::messageStream::operator()
 {
     OSstream& os = this->stream();
 
-    os  << nl
-        << "    From " << functionName << nl
-        << "    in file " << sourceFileName
-        << " at line " << sourceFileLineNumber << nl
-        << "    ";
+    if (functionName)  // nullptr check
+    {
+        os  << nl
+            << "    From " << functionName << nl;
+    }
+
+    if (sourceFileName)  // nullptr check
+    {
+        os  << "    in file " << sourceFileName;
+
+        if (sourceFileLineNumber >= 0)
+        {
+            os  << " at line " << sourceFileLineNumber;
+        }
+        os  << nl << "    ";
+    }
 
     return os;
-}
-
-
-Foam::OSstream& Foam::messageStream::operator()
-(
-    const std::string& functionName,
-    const char* sourceFileName,
-    const int sourceFileLineNumber
-)
-{
-    return operator()
-    (
-        functionName.c_str(),
-        sourceFileName,
-        sourceFileLineNumber
-    );
 }
 
 
