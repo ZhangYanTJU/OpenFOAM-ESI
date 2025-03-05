@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1003,6 +1003,111 @@ void Foam::fvMatrix<Type>::setValues
 )
 {
     this->setValuesFromList(cellLabels, values);
+}
+
+
+template<class Type>
+void Foam::fvMatrix<Type>::setValues
+(
+    const label setPatchi,
+    const UList<Type>& values
+)
+{
+//    this->setValuesFromList(cellLabels, values);
+    const fvMesh& mesh = psi_.mesh();
+    const auto& cellLabels = mesh.boundaryMesh()[setPatchi].faceCells();
+
+    const cellList& cells = mesh.cells();
+    const labelUList& own = mesh.owner();
+    const labelUList& nei = mesh.neighbour();
+
+    scalarField& Diag = diag();
+    Field<Type>& psi =
+        const_cast
+        <
+            GeometricField<Type, fvPatchField, volMesh>&
+        >(psi_).primitiveFieldRef();
+
+
+    // Following actions:
+    // - adjust local field psi
+    // - set local matrix to be diagonal (so adjust source)
+    //      - cut connections to neighbours
+    // - make (on non-adjusted cells) contribution explicit
+
+    if (symmetric() || asymmetric())
+    {
+        forAll(cellLabels, i)
+        {
+            const label celli = cellLabels[i];
+            const Type& value = values[i];
+
+            for (const label facei : cells[celli])
+            {
+                const label patchi = mesh.boundaryMesh().patchID(facei);
+
+                if (patchi == -1)
+                {
+                    if (symmetric())
+                    {
+                        if (celli == own[facei])
+                        {
+                            source_[nei[facei]] -= upper()[facei]*value;
+                        }
+                        else
+                        {
+                            source_[own[facei]] -= upper()[facei]*value;
+                        }
+
+                        upper()[facei] = 0.0;
+                    }
+                    else
+                    {
+                        if (celli == own[facei])
+                        {
+                            source_[nei[facei]] -= lower()[facei]*value;
+                        }
+                        else
+                        {
+                            source_[own[facei]] -= upper()[facei]*value;
+                        }
+
+                        upper()[facei] = 0.0;
+                        lower()[facei] = 0.0;
+                    }
+                }
+                else if (patchi != setPatchi)
+                {
+                    if (internalCoeffs_[patchi].size())
+                    {
+                        const label patchFacei =
+                            mesh.boundaryMesh()[patchi].whichFace(facei);
+
+                        internalCoeffs_[patchi][patchFacei] = Zero;
+                        boundaryCoeffs_[patchi][patchFacei] = Zero;
+                    }
+                }
+            }
+        }
+
+        // Can explictly zero out contribution from setPatchi
+        if (internalCoeffs_[setPatchi].size())
+        {
+            internalCoeffs_[setPatchi] = Zero;
+            boundaryCoeffs_[setPatchi] = Zero;
+        }
+    }
+
+    // Note: above loop might have affected source terms on adjusted cells
+    // so make sure to adjust them afterwards
+    forAll(cellLabels, i)
+    {
+        const label celli = cellLabels[i];
+        const Type& value = values[i];
+
+        psi[celli] = value;
+        source_[celli] = value*Diag[celli];
+    }
 }
 
 

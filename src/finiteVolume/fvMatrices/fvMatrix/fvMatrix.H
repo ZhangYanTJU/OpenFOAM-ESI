@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -539,6 +539,15 @@ public:
             (
                 const labelUList& cellLabels,
                 const UIndirectList<Type>& values
+            );
+
+            //- Set solution in cells next to the given patch to the specified
+            //- values and eliminate the corresponding equations from the
+            //- matrix.
+            void setValues
+            (
+                const label patchi,
+                const UList<Type>& values
             );
 
             //- Set reference level for solution

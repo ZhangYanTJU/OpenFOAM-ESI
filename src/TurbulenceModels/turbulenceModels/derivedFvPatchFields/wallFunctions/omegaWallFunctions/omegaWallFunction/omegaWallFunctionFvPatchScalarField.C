@@ -603,7 +603,7 @@ void Foam::omegaWallFunctionFvPatchScalarField::manipulateMatrix
         return;
     }
 
-    matrix.setValues(patch().faceCells(), patchInternalField());
+    matrix.setValues(patch().index(), patchInternalField());
 
     fvPatchField<scalar>::manipulateMatrix(matrix);
 }
