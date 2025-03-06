@@ -74,6 +74,7 @@ bool Foam::PstreamDetail::broadcast0
 template<class Type>
 void Foam::PstreamDetail::reduce0
 (
+    const Type* sendData,
     Type* values,
     int count,
     MPI_Datatype datatype,
@@ -92,6 +93,13 @@ void Foam::PstreamDetail::reduce0
         return;
     }
 
+    const void* send_buffer = sendData;
+    if (sendData == nullptr || (sendData == values))
+    {
+        // Appears to be an in-place request
+        send_buffer = MPI_IN_PLACE;
+    }
+
     if (FOAM_UNLIKELY(PstreamGlobals::warnCommunicator(communicator)))
     {
         if (immediate)
@@ -102,22 +110,12 @@ void Foam::PstreamDetail::reduce0
         {
             Perr<< "** MPI_Reduce (blocking):";
         }
-        if constexpr (std::is_void_v<Type>)
+        if (sendData == nullptr || (sendData == values))
         {
-            Perr<< count << " values";
+            Perr<< " [inplace]";
         }
-        else
-        {
-            if (count == 1)
-            {
-                Perr<< (*values);
-            }
-            else
-            {
-                Perr<< UList<Type>(values, count);
-            }
-        }
-        Perr<< " with comm:" << communicator
+        Perr<< " count:" << count
+            << " comm:" << communicator
             << " warnComm:" << UPstream::warnComm << endl;
         error::printStack(Perr);
     }
@@ -135,7 +133,7 @@ void Foam::PstreamDetail::reduce0
         returnCode =
             MPI_Ireduce
             (
-                MPI_IN_PLACE,  // recv is also send
+                send_buffer,
                 values,
                 count,
                 datatype,
@@ -156,7 +154,7 @@ void Foam::PstreamDetail::reduce0
         returnCode =
             MPI_Reduce
             (
-                MPI_IN_PLACE,  // recv is also send
+                send_buffer,
                 values,
                 count,
                 datatype,
@@ -174,24 +172,9 @@ void Foam::PstreamDetail::reduce0
         FatalErrorInFunction<< "MPI Reduce ";
         if (immediate) FatalError<< "(non-blocking) ";
 
-        FatalError<< "failed for ";
-
-        if constexpr (std::is_void_v<Type>)
-        {
-            FatalError<< count << " values";
-        }
-        else
-        {
-            if (count == 1)
-            {
-                FatalError<< (*values);
-            }
-            else
-            {
-                FatalError<< UList<Type>(values, count);
-            }
-        }
-        FatalError<< Foam::abort(FatalError);
+        FatalError
+            << "failed for count:" << count
+            << Foam::abort(FatalError);
     }
 }
 

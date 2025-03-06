@@ -62,6 +62,7 @@ bool broadcast0
 template<class Type>
 void reduce0
 (
+    const Type* sendData,   // Use nullptr for in-place operation
     Type* values,
     int count,
     MPI_Datatype datatype,
@@ -70,7 +71,7 @@ void reduce0
     UPstream::Request* req = nullptr    // Non-null for non-blocking
 );
 
-// MPI_Allreduce or MPI_Iallreduce
+// MPI_Allreduce or MPI_Iallreduce : in-place operation
 template<class Type>
 void allReduce
 (

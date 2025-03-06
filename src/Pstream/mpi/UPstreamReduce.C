@@ -129,6 +129,15 @@ void printErrorMessage
 
 // * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
 
+// The intel-mpi version of MPI_Reduce() does not accept IN_PLACE
+// operations (issue #3331)
+// Assume the same may be true for ms-mpi
+#if defined(I_MPI_VERSION) || defined(MSMPI_VER)
+#define Foam_broken_vendor_INPLACE_REDUCE
+#else
+#undef  Foam_broken_vendor_INPLACE_REDUCE
+#endif
+
 void Foam::UPstream::mpi_reduce
 (
     void* values,                          // Type checking done by caller
@@ -171,11 +180,41 @@ void Foam::UPstream::mpi_reduce
             << Foam::endl;
     }
 
+    // Workaround for broken in-place handling.
+    // Use a local buffer to send the data from.
+
+    #ifdef Foam_broken_vendor_INPLACE_REDUCE
+    static std::unique_ptr<char[]> work;
+    static int work_len(0);
+
+    const int num_bytes = [=](int n)
+    {
+        int size = 1;
+        MPI_Type_size(datatype, &size);
+        return (size * n);
+    }(count);
+
+    if (work_len < num_bytes)
+    {
+        // Min length to avoid many initial re-allocations
+        work_len = std::max(256, num_bytes);
+        work.reset();
+        work = std::make_unique<char[]>(work_len);
+    }
+    void* sendData = work.get();
+
+    std::memcpy(sendData, values, num_bytes);
+    #else
+    void* sendData(nullptr);
+    #endif
+
+
     {
         // Regular reduce
 
         PstreamDetail::reduce0
         (
+            sendData,
             values,
             count,
             datatype,
