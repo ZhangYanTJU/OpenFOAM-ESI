@@ -2670,8 +2670,8 @@ void Foam::snappySnapDriver::doSnap
             surfaceZonesInfo::faceZoneType type;
             if (meshRefiner_.getFaceZoneInfo(fz.name(), mpI, spI, type))
             {
-                bufPatchIDs.appendUniq(mpI);
-                bufPatchIDs.appendUniq(spI);
+                bufPatchIDs.push_uniq(mpI);
+                bufPatchIDs.push_uniq(spI);
             }
         }
     }

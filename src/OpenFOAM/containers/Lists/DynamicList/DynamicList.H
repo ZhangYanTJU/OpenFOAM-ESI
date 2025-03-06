@@ -447,7 +447,7 @@ public:
         }
 
         //- Same as push_uniq()
-        FOAM_DEPRECATED_STRICT(2022-10, "push_uniq()")
+        FOAM_DEPRECATED_FOR(2022-10, "push_uniq()")
         label appendUniq(const T& val) { return this->push_uniq(val); }
 };
 

@@ -486,35 +486,4 @@ void Foam::sortedOrder
 }
 
 
-// * * * * * * * * * * * * * * * Housekeeping  * * * * * * * * * * * * * * * //
-
-#include "SLList.H"
-
-template<class T>
-Foam::List<T>::List(const SLList<T>& list)
-:
-    List<T>(list.begin(), list.end(), list.size())
-{}
-
-
-template<class T>
-void Foam::List<T>::operator=(const SLList<T>& list)
-{
-    const label len = list.size();
-
-    reAlloc(len);
-
-    // Cannot use std::copy algorithm
-    // - SLList doesn't define iterator category
-
-    T* iter = this->begin();
-
-    for (const T& val : list)
-    {
-        *iter = val;
-        ++iter;
-    }
-}
-
-
 // ************************************************************************* //

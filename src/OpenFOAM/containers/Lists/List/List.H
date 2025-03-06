@@ -45,7 +45,6 @@ SourceFiles
 
 #include "autoPtr.H"
 #include "UList.H"
-#include "SLListFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -404,15 +403,8 @@ public:
         }
 
         //- Same as push_uniq()
-        FOAM_DEPRECATED_STRICT(2022-10, "push_uniq()")
+        FOAM_DEPRECATED_FOR(2022-10, "push_uniq()")
         label appendUniq(const T& val) { return this->push_uniq(val); }
-
-
-        //- Copy construct from SLList
-        explicit List(const SLList<T>& list);
-
-        //- Copy assign from SLList in linear time
-        void operator=(const SLList<T>& list);
 };
 
 
