@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -202,6 +202,17 @@ public:
         const bitSet& flipMap = bitSet::null()
     );
 
+    //- Return parallel consistent point normals for patches using mesh points.
+    //  Get all geometry from provided patch local points. (assumed to be
+    //  consistent across coupled patches)
+    template<class FaceList, class PointField>
+    static tmp<pointField> pointNormals
+    (
+        const polyMesh&,
+        const PrimitivePatch<FaceList, PointField>&,
+        const pointField& localPoints,
+        const bitSet& flipMap = bitSet::null()
+    );
 
     //- Return parallel consistent edge normals for patches using mesh points.
     //  Supply with patch matching info from matchEdges.
@@ -210,6 +221,21 @@ public:
     (
         const polyMesh&,
         const PrimitivePatch<FaceList, PointField>&,
+        const labelList& patchEdges,
+        const labelList& coupledEdges,
+        const bitSet& flipMap = bitSet::null()
+    );
+
+    //- Return parallel consistent edge normals for patches using mesh points.
+    //  Get all geometry from provided patch local points. (assumed to be
+    //  consistent across coupled patches)
+    //  Supply with patch matching info from matchEdges.
+    template<class FaceList, class PointField>
+    static tmp<pointField> edgeNormals
+    (
+        const polyMesh&,
+        const PrimitivePatch<FaceList, PointField>&,
+        const pointField& localPoints,
         const labelList& patchEdges,
         const labelList& coupledEdges,
         const bitSet& flipMap = bitSet::null()
