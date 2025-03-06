@@ -1092,10 +1092,6 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::relax(const scalar alpha)
         << "Relaxing" << nl << this->info() << " by " << alpha << endl;
 
     operator==(prevIter() + alpha*(*this - prevIter()));
-
-    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
-    // triggers e.g. cyclic interpolation.
-    this->correctLocalBoundaryConditions();
 }
 
 
@@ -1359,6 +1355,10 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
 
     internalFieldRef() = gf.internalField();
     boundaryFieldRef() = gf.boundaryField();
+
+    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
+    // triggers e.g. cyclic interpolation.
+    this->correctLocalBoundaryConditions();
 }
 
 
@@ -1395,6 +1395,10 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
     boundaryFieldRef() = gf.boundaryField();
 
     tgf.clear();
+
+    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
+    // triggers e.g. cyclic interpolation.
+    this->correctLocalBoundaryConditions();
 }
 
 
@@ -1406,6 +1410,10 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
 {
     internalFieldRef() = dt;
     boundaryFieldRef() = dt.value();
+
+    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
+    // triggers e.g. cyclic interpolation.
+    this->correctLocalBoundaryConditions();
 }
 
 
@@ -1425,6 +1433,10 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
     boundaryFieldRef() == gf.boundaryField();
 
     tgf.clear();
+
+    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
+    // triggers e.g. cyclic interpolation.
+    this->correctLocalBoundaryConditions();
 }
 
 
@@ -1436,6 +1448,10 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
 {
     internalFieldRef() = dt;
     boundaryFieldRef() == dt.value();
+
+    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
+    // triggers e.g. cyclic interpolation.
+    this->correctLocalBoundaryConditions();
 }
 
 
@@ -1451,6 +1467,8 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
                                                                                \
     internalFieldRef() op gf.internalField();                                  \
     boundaryFieldRef() op gf.boundaryField();                                  \
+                                                                               \
+    this->correctLocalBoundaryConditions();                                    \
 }                                                                              \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
@@ -1461,6 +1479,8 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
 {                                                                              \
     operator op(tgf());                                                        \
     tgf.clear();                                                               \
+                                                                               \
+    this->correctLocalBoundaryConditions();                                    \
 }                                                                              \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
@@ -1471,6 +1491,8 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
 {                                                                              \
     internalFieldRef() op dt;                                                  \
     boundaryFieldRef() op dt.value();                                          \
+                                                                               \
+    this->correctLocalBoundaryConditions();                                    \
 }
 
 COMPUTED_ASSIGNMENT(Type, +=)
