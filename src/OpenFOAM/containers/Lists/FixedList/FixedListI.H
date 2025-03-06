@@ -38,7 +38,7 @@ inline Foam::FixedList<T, N>::FixedList(const T& val)
 
 
 template<class T, unsigned N>
-inline Foam::FixedList<T, N>::FixedList(const Foam::zero)
+inline Foam::FixedList<T, N>::FixedList(Foam::zero)
 {
     this->fill(Foam::zero{});
 }
@@ -354,7 +354,7 @@ inline void Foam::FixedList<T, N>::fill(const T& val)
 
 
 template<class T, unsigned N>
-inline void Foam::FixedList<T, N>::fill(const Foam::zero)
+inline void Foam::FixedList<T, N>::fill(Foam::zero)
 {
     // Usually small enough that parallel execution is pointless...
     // Cannot use std::fill (ambiguous conversions for bool, char, etc)
@@ -441,7 +441,7 @@ inline void Foam::FixedList<T, N>::operator=(const T& val)
 
 
 template<class T, unsigned N>
-inline void Foam::FixedList<T, N>::operator=(const Foam::zero)
+inline void Foam::FixedList<T, N>::operator=(Foam::zero)
 {
     this->fill(Foam::zero{});
 }

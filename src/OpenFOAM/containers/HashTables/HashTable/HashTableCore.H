@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,7 +31,6 @@ Description
     Template invariant parts of hash table implementation.
 
 SourceFiles
-    HashTableCoreI.H
     HashTableCore.C
 
 \*---------------------------------------------------------------------------*/
@@ -66,7 +65,7 @@ struct HashTableCore
     ClassName("HashTable");
 
     //- Default construct
-    HashTableCore() noexcept = default;
+    constexpr HashTableCore() noexcept = default;
 
     static_assert
     (
@@ -75,7 +74,9 @@ struct HashTableCore
     );
 
 
-    //- Factory class for creating a begin/end pair for any const iterator.
+    //- Factory class for creating a begin/end pair for any const iterator
+    //- type, normally associated with a HashTable.
+    //  Uses begin iterator and size for bookkeeping.
     template<class IteratorType, class TableType>
     class const_iterator_pair
     {
@@ -85,19 +86,27 @@ struct HashTableCore
     public:
 
         //- Default construct an empty pair
-        inline const_iterator_pair();
+        const_iterator_pair()
+        :
+            size_(0),
+            iter_()
+        {}
 
         //- Construct begin/end pair for table
-        inline const_iterator_pair(const TableType& tbl);
+        const_iterator_pair(const TableType& tbl)
+        :
+            size_(tbl.size()),
+            iter_(tbl.begin())
+        {}
 
         bool empty() const noexcept { return !size_; }
         label size() const noexcept { return size_; }
 
-        inline IteratorType begin() const;
-        inline IteratorType cbegin() const;
+        IteratorType begin() const noexcept { return iter_; }
+        IteratorType cbegin() const noexcept { return iter_; }
 
-        inline IteratorType end() const;
-        inline IteratorType cend() const;
+        IteratorType end() const { return IteratorType(); }
+        IteratorType cend() const { return IteratorType(); }
     };
 };
 
@@ -105,10 +114,6 @@ struct HashTableCore
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "HashTableCoreI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

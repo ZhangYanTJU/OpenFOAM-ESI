@@ -100,7 +100,7 @@ inline Foam::CompactListList<T>::CompactListList
 (
     const label mRows,
     const label nVals,
-    const Foam::zero
+    Foam::zero
 )
 :
     offsets_(mRows+1, Foam::zero{}),
@@ -468,7 +468,7 @@ inline void Foam::CompactListList<T>::operator=(const T& val)
 
 
 template<class T>
-inline void Foam::CompactListList<T>::operator=(const Foam::zero)
+inline void Foam::CompactListList<T>::operator=(Foam::zero)
 {
     values_ = Foam::zero{};
 }

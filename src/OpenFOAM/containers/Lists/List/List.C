@@ -123,7 +123,7 @@ Foam::List<T>::List(const label len, const T& val)
 
 
 template<class T>
-Foam::List<T>::List(const label len, const Foam::zero)
+Foam::List<T>::List(const label len, Foam::zero)
 :
     UList<T>(nullptr, len)
 {
@@ -143,7 +143,7 @@ Foam::List<T>::List(const label len, const Foam::zero)
 
 
 template<class T>
-Foam::List<T>::List(const Foam::one, const T& val)
+Foam::List<T>::List(Foam::one, const T& val)
 :
     UList<T>(new T[1], 1)
 {
@@ -152,7 +152,7 @@ Foam::List<T>::List(const Foam::one, const T& val)
 
 
 template<class T>
-Foam::List<T>::List(const Foam::one, T&& val)
+Foam::List<T>::List(Foam::one, T&& val)
 :
     UList<T>(new T[1], 1)
 {
@@ -161,7 +161,7 @@ Foam::List<T>::List(const Foam::one, T&& val)
 
 
 template<class T>
-Foam::List<T>::List(const Foam::one, const Foam::zero)
+Foam::List<T>::List(Foam::one, Foam::zero)
 :
     UList<T>(new T[1], 1)
 {

@@ -64,7 +64,7 @@ template<class T>
 inline Foam::IndirectList<T>::IndirectList
 (
     const UList<T>& values,
-    const Foam::zero
+    Foam::zero
 )
 :
     IndirectListAddressing<labelList>(labelList()),  // zero-size addressing

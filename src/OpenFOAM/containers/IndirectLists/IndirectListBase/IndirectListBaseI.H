@@ -223,7 +223,7 @@ inline void Foam::IndirectListBase<T, Addr>::operator=(const T& val)
 
 
 template<class T, class Addr>
-inline void Foam::IndirectListBase<T, Addr>::operator=(const Foam::zero)
+inline void Foam::IndirectListBase<T, Addr>::operator=(Foam::zero)
 {
     // Or std::fill(this->begin(), this->end(), Zero);
     for (const label idx : addr_)

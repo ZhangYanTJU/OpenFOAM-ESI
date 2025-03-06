@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,19 +37,12 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable() noexcept
+constexpr Foam::HashTable<T, Key, Hash>::HashTable() noexcept
 :
     HashTableCore(),
     size_(0),
     capacity_(0),
     table_(nullptr)
-{}
-
-
-template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable(const Foam::zero) noexcept
-:
-    HashTable<T, Key, Hash>()
 {}
 
 

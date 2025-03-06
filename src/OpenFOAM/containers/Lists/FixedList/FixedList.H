@@ -157,7 +157,7 @@ public:
         inline explicit FixedList(const T& val);
 
         //- Construct and initialize all entries to zero
-        inline explicit FixedList(const Foam::zero);
+        inline explicit FixedList(Foam::zero);
 
         //- Copy construct
         inline FixedList(const FixedList<T, N>& list);
@@ -330,7 +330,7 @@ public:
         inline void fill(const T& val);
 
         //- Assign all entries to zero
-        inline void fill(const Foam::zero);
+        inline void fill(Foam::zero);
 
         //- Move element to the first position.
         void moveFirst(const label i);
@@ -367,7 +367,7 @@ public:
         inline void operator=(const T& val);
 
         //- Assign all entries to zero. fill()
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 
         //- Copy assignment
         inline void operator=(const FixedList<T, N>& list);

@@ -40,10 +40,10 @@ inline constexpr Foam::UList<T>::UList() noexcept
 
 
 template<class T>
-inline Foam::UList<T>::UList(T* __restrict__ v, const label len) noexcept
+inline Foam::UList<T>::UList(T* __restrict__ ptr, const label len) noexcept
 :
     size_(len),
-    v_(v)
+    v_(ptr)
 {}
 
 
@@ -63,7 +63,7 @@ inline void Foam::UList<T>::fill_uniform(const T& val)
 
 
 template<class T>
-inline void Foam::UList<T>::fill_uniform(const Foam::zero)
+inline void Foam::UList<T>::fill_uniform(Foam::zero)
 {
     // Note: ambiguous conversions for char can still cause compilation
     // issues.

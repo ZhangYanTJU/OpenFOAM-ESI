@@ -124,7 +124,7 @@ public:
         inline DynamicList(const label len, const T& val);
 
         //- Construct with given size initializing all elements to zero
-        inline DynamicList(const label len, const Foam::zero);
+        inline DynamicList(const label len, Foam::zero);
 
         //- Copy construct.
         inline DynamicList(const DynamicList<T, SizeMin>& lst);
@@ -349,7 +349,7 @@ public:
             inline void operator=(const T& val);
 
             //- Assignment of all entries to zero
-            inline void operator=(const Foam::zero);
+            inline void operator=(Foam::zero);
 
             //- Assignment to UList
             inline void operator=(const UList<T>& lst);

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,14 +101,11 @@ public:
 
     // Constructors
 
-        //- Default construct with default table capacity
-        HashPtrTable() = default;
+        //- Default construct: empty without allocation (capacity=0)
+        constexpr HashPtrTable() noexcept = default;
 
-        //- Construct with zero table capacity
-        explicit HashPtrTable(const Foam::zero) noexcept
-        :
-            parent_type(Foam::zero{})
-        {}
+        //- Construct empty without allocation (capacity=0)
+        explicit constexpr HashPtrTable(Foam::zero) noexcept : this_type() {}
 
         //- Construct given initial table capacity
         explicit HashPtrTable(const label initialCapacity)

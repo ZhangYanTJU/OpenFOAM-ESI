@@ -28,11 +28,7 @@ Class
     Foam::SubList
 
 Description
-    A List obtained as a section of another List.
-
-    Since the SubList is itself unallocated, no storage is allocated or
-    de-allocated during its use.  To achieve this behaviour, SubList is
-    derived from UList rather than List.
+    A non-owning sub-view of a List (allocated or unallocated storage).
 
 SourceFiles
     SubListI.H
@@ -178,10 +174,12 @@ public:
         //- Allow cast to a const List\<T\>&
         inline operator const Foam::List<T>&() const;
 
-        //- Copy assign entries from given sub-list. Sizes must match!
+        //- Copy assign entries (deep copy) from given sub-list.
+        //- Sizes must match!
         inline void operator=(const SubList<T>& list);
 
-        //- Copy assign entries from given list. Sizes must match!
+        //- Copy assign entries (deep copy) from given list.
+        //- Sizes must match!
         inline void operator=(const UList<T>& list);
 
         //- Copy assign entries from given indirect list. Sizes must match!
@@ -192,7 +190,7 @@ public:
         inline void operator=(const T& val);
 
         //- Assign all entries to zero
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 };
 
 
@@ -205,6 +203,13 @@ public:
 #include "SubListI.H"
 
 // * * * * * * * * * * * * * * * Implementations * * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::UList<Type>::UList(SubList<Type>&& list) noexcept
+:
+    UList<Type>(list.data(), list.size())
+{}
+
 
 template<class Type>
 Foam::SubList<Type>

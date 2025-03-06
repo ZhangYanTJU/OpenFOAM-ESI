@@ -130,7 +130,7 @@ public:
         inline IndirectList(const UList<T>& values, labelList&& addr);
 
         //- Zero-sized addressing, shallow copy values reference
-        inline IndirectList(const UList<T>& values, const Foam::zero);
+        inline IndirectList(const UList<T>& values, Foam::zero);
 
         //- Copy construct addressing, shallow copy values reference
         inline IndirectList(const IndirectList<T>& list);

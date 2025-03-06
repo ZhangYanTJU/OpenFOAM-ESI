@@ -148,16 +148,16 @@ public:
         List(const label len, const T& val);
 
         //- Construct with given size initializing all elements to zero
-        List(const label len, const Foam::zero);
+        List(const label len, Foam::zero);
 
         //- Construct with length=1, copying the value as the only content
-        List(const Foam::one, const T& val);
+        List(Foam::one, const T& val);
 
         //- Construct with length=1, moving the value as the only content
-        List(const Foam::one, T&& val);
+        List(Foam::one, T&& val);
 
         //- Construct with length=1, initializing content to zero
-        List(const Foam::one, const Foam::zero);
+        List(Foam::one, Foam::zero);
 
         //- Copy construct from list
         List(const List<T>& list);
@@ -316,7 +316,7 @@ public:
         inline void operator=(const T& val);
 
         //- Assignment of all entries to zero
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 
         //- Move assignment. Takes constant time
         void operator=(List<T>&& list);

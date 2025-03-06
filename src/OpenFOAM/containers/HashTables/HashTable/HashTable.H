@@ -235,10 +235,10 @@ public:
     // Constructors
 
         //- Default construct: empty without allocation (capacity=0)
-        HashTable() noexcept;
+        constexpr HashTable() noexcept;
 
         //- Construct empty without allocation (capacity=0)
-        explicit HashTable(const Foam::zero) noexcept;
+        explicit constexpr HashTable(Foam::zero) noexcept : HashTable() {}
 
         //- Construct empty with initial table capacity
         explicit HashTable(const label initialCapacity);

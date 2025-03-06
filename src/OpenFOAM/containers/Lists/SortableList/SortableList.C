@@ -36,7 +36,7 @@ inline Foam::SortableList<T>::SortableList(const label size)
 
 
 template<class T>
-inline Foam::SortableList<T>::SortableList(const label size, const Foam::zero)
+inline Foam::SortableList<T>::SortableList(const label size, Foam::zero)
 :
     List<T>(size, Foam::zero{})
 {}

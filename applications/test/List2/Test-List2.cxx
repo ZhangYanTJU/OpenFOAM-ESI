@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,6 +35,7 @@ Description
 #include "FixedList.H"
 #include "labelList.H"
 #include "vectorList.H"
+#include "SubList.H"
 #include "ListOps.H"
 #include "IFstream.H"
 #include "OFstream.H"
@@ -200,6 +201,7 @@ int main(int argc, char *argv[])
     argList::addBoolOption("order");
     argList::addBoolOption("labelList");
     argList::addBoolOption("vectorList");
+    argList::addBoolOption("ulist");
 
     argList args(argc, argv);
 
@@ -258,6 +260,37 @@ int main(int argc, char *argv[])
         List<label> list(100000000, 1);
 
         runOrderingTest(100, list);
+    }
+
+
+    if (args.found("ulist"))
+    {
+        using span_type = stdFoam::span<vector>;
+        using ulist_type = UList<vector>;
+
+        ulist_type view1, view2;
+        span_type span1, span2;
+
+        List<vector> list(10, vector::one);
+
+        Info<< "List: " << Foam::name(list.data()) << nl;
+        Info<< "view: " << Foam::name(view1.data()) << nl;
+        Info<< "span: " << Foam::name(span1.data()) << nl;
+
+        view1 = list.slice(4);
+        span1 = span_type(list.begin(4), list.size()-4);
+        Info<< "view [4]:" << Foam::name(view1.data()) << nl;
+        Info<< "span [4]:" << Foam::name(span1.data()) << nl;
+
+        view2 = std::move(view1);
+        span2 = std::move(span1);
+        Info<< "view old:" << Foam::name(view1.data()) << nl;
+        Info<< "span old:" << Foam::name(span1.data()) << nl;
+        Info<< "view [4]:" << Foam::name(view2.data()) << nl;
+        Info<< "span [4]:" << Foam::name(span2.data()) << nl;
+
+        view1 = list.slice(7);
+        Info<< "view [7]:" << Foam::name(view1.data()) << nl;
     }
 
 

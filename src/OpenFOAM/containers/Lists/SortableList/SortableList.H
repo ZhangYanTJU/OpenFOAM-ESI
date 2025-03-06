@@ -81,7 +81,7 @@ public:
 
         //- Construct zero-initialized with given size, sort later.
         //  The indices remain empty until the list is sorted
-        inline SortableList(const label size, const Foam::zero);
+        inline SortableList(const label size, Foam::zero);
 
         //- Construct given size and initial value, sorting later.
         //  The indices remain empty until the list is sorted

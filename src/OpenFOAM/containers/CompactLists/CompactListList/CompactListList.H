@@ -187,7 +187,7 @@ public:
         //- initializing all elements to zero
         inline CompactListList
         (
-            const label mRows, const label nVals, const Foam::zero
+            const label mRows, const label nVals, Foam::zero
         );
 
         //- Construct from number of rows, number of values
@@ -422,7 +422,7 @@ public:
         inline void operator=(const T& val);
 
         //- Assignment of all entries to zero
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 
 
     // Row-based access

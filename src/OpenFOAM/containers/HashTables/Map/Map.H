@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,13 +74,10 @@ public:
     // Constructors
 
         //- Default construct: empty without allocation (capacity=0)
-        Map() noexcept = default;
+        constexpr Map() noexcept = default;
 
         //- Construct empty without allocation (capacity=0)
-        explicit Map(const Foam::zero) noexcept
-        :
-            parent_type(Foam::zero{})
-        {}
+        explicit constexpr Map(Foam::zero) noexcept : this_type() {}
 
         //- Construct empty with given initial table capacity
         explicit Map(const label initialCapacity)

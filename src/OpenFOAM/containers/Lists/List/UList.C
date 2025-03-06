@@ -155,7 +155,7 @@ void Foam::UList<T>::deepCopy(const IndirectListBase<T, Addr>& list)
 
 // This is non-inlined to allow template specializations
 template<class T>
-void Foam::UList<T>::operator=(const Foam::zero)
+void Foam::UList<T>::operator=(Foam::zero)
 {
     this->fill_uniform(Foam::zero{});
 }

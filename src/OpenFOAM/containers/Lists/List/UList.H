@@ -124,15 +124,8 @@ protected:
 
         //- Assign all entries to zero
         //  Caution: method name subject to change
-        inline void fill_uniform(const Foam::zero);
+        inline void fill_uniform(Foam::zero);
 
-        //- No copy assignment (default: shallow copy)
-        //
-        //  Assignment may need to be shallow (copy pointer)
-        //  or deep (copy elements) depending on context or type of list.
-        //  Disallow default assignment and provide separate 'shallowCopy' and
-        //  'deepCopy' member functions.
-        UList<T>& operator=(const UList<T>&) = delete;
 
 public:
 
@@ -228,8 +221,22 @@ public:
 
     // Generated Methods
 
-        //- Copy construct
-        UList(const UList<T>&) = default;
+        //- Copy construct, shallow copy
+        UList(const UList<T>&) noexcept = default;
+
+        //- Move construct, shallow copy
+        UList(UList<T>&&) noexcept = default;
+
+        //- No copy assignment (default: shallow copy)
+        //  Assignment may need to be shallow (copy pointer)
+        //  or deep (copy elements) depending on context or type of list.
+        //  Disallow default assignment and provide separate 'shallowCopy' and
+        //  'deepCopy' member functions.
+        UList<T>& operator=(const UList<T>&) = delete;
+
+        //- Move assignment, shallow copy.
+        //  No ambiguity between shallow or deep copying in this form.
+        UList<T>& operator=(UList<T>&&) noexcept = default;
 
 
     // Constructors
@@ -238,7 +245,10 @@ public:
         inline constexpr UList() noexcept;
 
         //- Construct from components
-        inline UList(T* __restrict__ v, const label len) noexcept;
+        inline UList(T* __restrict__ ptr, const label len) noexcept;
+
+        //- Move construct from a SubList, shallow copy
+        UList(SubList<T>&&) noexcept;
 
 
     // Member Functions
@@ -421,7 +431,7 @@ public:
         inline void operator=(const T& val);
 
         //- Assignment of all entries to zero
-        void operator=(const Foam::zero);
+        void operator=(Foam::zero);
 
 
     // Random access iterator (non-const)
@@ -658,7 +668,7 @@ void UList<char>::writeEntry(Ostream& os) const;
 
 //- Character list assign zero - avoids Foam::zero casting ambiguities
 template<>
-void UList<char>::operator=(const Foam::zero);
+void UList<char>::operator=(Foam::zero);
 
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //

@@ -168,7 +168,7 @@ template<class T, int SizeMin>
 inline Foam::DynamicList<T, SizeMin>::DynamicList
 (
     const label len,
-    const Foam::zero
+    Foam::zero
 )
 :
     List<T>(len, Foam::zero{}),
@@ -831,7 +831,7 @@ inline void Foam::DynamicList<T, SizeMin>::operator=
 template<class T, int SizeMin>
 inline void Foam::DynamicList<T, SizeMin>::operator=
 (
-    const Foam::zero
+    Foam::zero
 )
 {
     UList<T>::operator=(Foam::zero{});

@@ -369,7 +369,7 @@ public:
         inline void operator=(const T& val);
 
         //- Assignment of all entries to zero
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 
         //- Deep copy values from a list of the addressed elements
         inline void operator=(const UList<T>& rhs);

@@ -320,7 +320,7 @@ inline void Foam::List<T>::operator=(const T& val)
 
 
 template<class T>
-inline void Foam::List<T>::operator=(const Foam::zero)
+inline void Foam::List<T>::operator=(Foam::zero)
 {
     UList<T>::operator=(Foam::zero{});
 }
