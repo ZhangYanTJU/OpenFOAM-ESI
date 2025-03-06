@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -372,28 +372,28 @@ void Foam::LocalInteraction<CloudType>::info()
     labelListList npe(nEscape_);
     forAll(npe, i)
     {
-        Pstream::listCombineGather(npe[i], plusEqOp<label>());
+        Pstream::listGather(npe[i], sumOp<label>());
         npe[i] = npe[i] + npe0[i];
     }
 
     scalarListList mpe(massEscape_);
     forAll(mpe, i)
     {
-        Pstream::listCombineGather(mpe[i], plusEqOp<scalar>());
+        Pstream::listGather(mpe[i], sumOp<scalar>());
         mpe[i] = mpe[i] + mpe0[i];
     }
 
     labelListList nps(nStick_);
     forAll(nps, i)
     {
-        Pstream::listCombineGather(nps[i], plusEqOp<label>());
+        Pstream::listGather(nps[i], sumOp<label>());
         nps[i] = nps[i] + nps0[i];
     }
 
     scalarListList mps(massStick_);
     forAll(nps, i)
     {
-        Pstream::listCombineGather(mps[i], plusEqOp<scalar>());
+        Pstream::listGather(mps[i], sumOp<scalar>());
         mps[i] = mps[i] + mps0[i];
     }
 

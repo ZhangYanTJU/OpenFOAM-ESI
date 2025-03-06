@@ -69,7 +69,7 @@ Foam::OSstream& Foam::IOerror::operator()
     const char* functionName,
     const char* sourceFileName,
     const int sourceFileLineNumber,
-    const string& ioFileName,
+    string ioFileName,
     const label ioStartLineNumber,
     const label ioEndLineNumber
 )
@@ -81,7 +81,7 @@ Foam::OSstream& Foam::IOerror::operator()
         sourceFileLineNumber
     );
 
-    ioFileName_ = ioFileName;
+    ioFileName_ = std::move(ioFileName);
     ioStartLineNumber_ = ioStartLineNumber;
     ioEndLineNumber_ = ioEndLineNumber;
 
@@ -296,7 +296,7 @@ void Foam::IOerror::write(Ostream& os, const bool withTitle) const
     }
 
 
-    const label lineNo = sourceFileLineNumber();
+    const auto lineNo = sourceFileLineNumber();
 
     if (messageStream::level >= 2 && lineNo && !functionName().empty())
     {

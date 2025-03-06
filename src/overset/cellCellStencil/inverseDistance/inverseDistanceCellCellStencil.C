@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1107,7 +1107,7 @@ void Foam::cellCellStencils::inverseDistance::findHoles
     {
         // Synchronise region status on processors
         // (could instead swap status through processor patches)
-        Pstream::listCombineReduce(regionType, maxEqOp<label>());
+        Pstream::listReduce(regionType, maxOp<label>());
 
         DebugInfo<< FUNCTION_NAME << " : Gathered region type" << endl;
 
@@ -1801,7 +1801,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
     {
         nCellsPerZone[zoneID[cellI]]++;
     }
-    Pstream::listCombineReduce(nCellsPerZone, plusEqOp<label>());
+    Pstream::listReduce(nCellsPerZone, sumOp<label>());
 
     const boundBox& allBb = mesh_.bounds();
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,7 @@ Foam::UPstream::Communicator::Communicator() noexcept
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
 Foam::UPstream::Communicator
-Foam::UPstream::Communicator::lookup(const label comm)
+Foam::UPstream::Communicator::lookup(const int comm)
 {
     return UPstream::Communicator(nullptr);
 }
@@ -54,6 +54,12 @@ bool Foam::UPstream::Communicator::good() const noexcept
 
 void Foam::UPstream::Communicator::reset() noexcept
 {}
+
+
+int Foam::UPstream::Communicator::size() const
+{
+    return 0;
+}
 
 
 // ************************************************************************* //

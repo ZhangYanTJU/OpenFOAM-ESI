@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,6 +71,67 @@ struct nameOp<int16_t>
 
 Istream& operator>>(Istream& is, int16_t& val);
 Ostream& operator<<(Ostream& os, const int16_t val);
+
+
+/*---------------------------------------------------------------------------*\
+                       Specialization pTraits<int16_t>
+\*---------------------------------------------------------------------------*/
+
+//- Template specialization for pTraits<int16_t>
+template<>
+class pTraits<int16_t>
+{
+    int16_t p_;
+
+public:
+
+    // Typedefs
+
+        //- Component type
+        typedef int16_t cmptType;
+
+
+    // Member Constants
+
+        //- Dimensionality of space
+        static constexpr direction dim = 3;
+
+        //- Rank of int16_t is 0
+        static constexpr direction rank = 0;
+
+        //- Number of components in int16_t is 1
+        static constexpr direction nComponents = 1;
+
+
+    // Static Data Members
+
+        static const char* const typeName;
+        static const char* const componentNames[];
+        static const int16_t zero;
+        static const int16_t one;
+        static const int16_t min;
+        static const int16_t max;
+        static const int16_t rootMax;
+        static const int16_t rootMin;
+
+
+    // Constructors
+
+        //- Copy construct from primitive
+        explicit pTraits(int16_t val) noexcept : p_(val) {}
+
+        //- Read construct from Istream
+        explicit pTraits(Istream& is);
+
+
+    // Member Functions
+
+        //- Return the value
+        operator int16_t() const noexcept { return p_; }
+
+        //- Access the value
+        operator int16_t&() noexcept { return p_; }
+};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

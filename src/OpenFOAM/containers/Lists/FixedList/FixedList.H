@@ -384,6 +384,10 @@ public:
         //- Return an iterator to end traversing the FixedList
         inline iterator end() noexcept;
 
+        //- Return iterator at offset i from begin,
+        //- clamped to [0,N] range
+        inline iterator begin(const int i) noexcept;
+
 
     // Random access iterator (const)
 
@@ -398,6 +402,14 @@ public:
 
         //- Return const_iterator to end traversing the constant FixedList
         inline const_iterator end() const noexcept;
+
+        //- Return const_iterator at offset i from begin,
+        //- clamped to [0,N] range
+        inline const_iterator cbegin(const int i) const noexcept;
+
+        //- Return const_iterator at offset i from begin,
+        //- clamped to [0,N] range
+        inline const_iterator begin(const int i) const noexcept;
 
 
     // Reverse iterator (non-const)

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2021-2024 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,14 +61,13 @@ public:
     // Constructors
 
         //- Construct given process index to read from
-        //- and optional buffer size, read format
         IPstream
         (
             const UPstream::commsTypes commsType,
             const int fromProcNo,
-            const label bufSize = 0,
+            const int bufferSize = 0,  //!< optional buffer size
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
@@ -83,7 +82,7 @@ public:
             Type& value,
             const int fromProcNo,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         )
         {
@@ -91,9 +90,9 @@ public:
             (
                 UPstream::commsTypes::scheduled,  // ie, MPI_Recv()
                 fromProcNo,
-                0,  // bufSize
+                0,  // bufferSize
                 tag,
-                comm,
+                communicator,
                 fmt
             );
             is >> value;
@@ -116,31 +115,11 @@ public:
 
     // Constructors
 
-        //- Construct for broadcast root, optional buffer size, read format
-        IPBstream
-        (
-            const UPstream::commsTypes,     //!< ignored
-            const int rootProcNo,           //!< normally UPstream::masterNo()
-            const label bufSize = 0,
-            const int tag = UPstream::msgType(),  //!< ignored
-            const label comm = UPstream::worldComm,
-            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
-        );
-
-        //- Construct for broadcast root and communicator,
-        //- with optional read format
-        IPBstream
-        (
-            const int rootProcNo,           //!< normally UPstream::masterNo()
-            const label comm,
-            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
-        );
-
         //- Construct with optional communicator and read format.
         //- Uses UPstream::masterNo() root
         explicit IPBstream
         (
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
@@ -154,12 +133,33 @@ public:
         static void recv
         (
             Type& value,
-            const label comm = UPstream::worldComm,
-            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+            const int communicator = UPstream::worldComm
         )
         {
-            IPBstream is(comm, fmt);
-            is >> value;
+            IPBstream is(communicator);
+            {
+                is >> value;
+            }
+        }
+
+        //- Receive (from broadcast) a buffer and deserialize
+        //- multiple items.
+        //- Uses \c operator>> for de-serialization
+        template<class Type, class... Args>
+        static void recvs
+        (
+            const int communicator,
+            Type& value,
+            Args&&... values
+        )
+        {
+            IPBstream is(communicator);
+            {
+                Detail::inputLoop(is, value, std::forward<Args>(values)...);
+                // Depending on compiler support:
+                // Unpack via fold expression
+                // (((is >> value) >> std::forward<Args>(values)), ...);
+            }
         }
 };
 

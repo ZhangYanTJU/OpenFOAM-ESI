@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,7 @@ Foam::UIPstream::UIPstream
     DynamicList<char>& receiveBuf,
     label& receiveBufPosition,
     const int tag,
-    const label comm,
+    const int communicator,
     const bool clearAtEnd,
     IOstreamOption::streamFormat fmt
 )
@@ -50,7 +50,7 @@ Foam::UIPstream::UIPstream
         receiveBuf,
         receiveBufPosition,
         tag,
-        comm,
+        communicator,
         clearAtEnd,
         fmt
     )
@@ -105,13 +105,13 @@ Foam::IPstream::IPstream
 (
     const UPstream::commsTypes commsType,
     const int fromProcNo,
-    const label bufSize,
+    const int bufferSize,
     const int tag,
-    const label comm,
+    const int communicator,
     IOstreamOption::streamFormat fmt
 )
 :
-    Pstream(commsType, bufSize),
+    Pstream(commsType, bufferSize),
     UIPstream
     (
         commsType,
@@ -119,7 +119,7 @@ Foam::IPstream::IPstream
         Pstream::transferBuf_,
         UIPstreamBase::storedRecvBufPos_,   // Internal only
         tag,
-        comm,
+        communicator,
         false,  // Do not clear Pstream::transferBuf_ if at end
         fmt
     )

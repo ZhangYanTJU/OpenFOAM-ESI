@@ -26,91 +26,76 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UPstream.H"
-#include <cstring>  // memmove
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#undef  Pstream_CommonRoutines
-#define Pstream_CommonRoutines(Type)                                          \
-                                                                              \
-void Foam::UPstream::mpiGather                                                \
-(                                                                             \
-    const Type* sendData,                                                     \
-    Type* recvData,                                                           \
-    int count,                                                                \
-    const label comm                                                          \
-)                                                                             \
-{                                                                             \
-    if (sendData && recvData)                                                 \
-    {                                                                         \
-        std::memmove(recvData, sendData, count*sizeof(Type));                 \
-    }                                                                         \
-}                                                                             \
-                                                                              \
-                                                                              \
-void Foam::UPstream::mpiScatter                                               \
-(                                                                             \
-    const Type* sendData,                                                     \
-    Type* recvData,                                                           \
-    int count,                                                                \
-    const label comm                                                          \
-)                                                                             \
-{                                                                             \
-    if (sendData && recvData)                                                 \
-    {                                                                         \
-        std::memmove(recvData, sendData, count*sizeof(Type));                 \
-    }                                                                         \
-}                                                                             \
-                                                                              \
-                                                                              \
-void Foam::UPstream::mpiAllGather                                             \
-(                                                                             \
-    Type* allData,                                                            \
-    int count,                                                                \
-    const label comm                                                          \
-)                                                                             \
-{}                                                                            \
-                                                                              \
-                                                                              \
-void Foam::UPstream::mpiGatherv                                               \
-(                                                                             \
-    const Type* sendData,                                                     \
-    int sendCount,                                                            \
-                                                                              \
-    Type* recvData,                                                           \
-    const UList<int>& recvCounts,                                             \
-    const UList<int>& recvOffsets,                                            \
-    const label comm                                                          \
-)                                                                             \
-{                                                                             \
-    /* recvCounts[0] may be invalid - use sendCount instead */                \
-    std::memmove(recvData, sendData, sendCount*sizeof(Type));                 \
-}                                                                             \
-                                                                              \
-void Foam::UPstream::mpiScatterv                                              \
-(                                                                             \
-    const Type* sendData,                                                     \
-    const UList<int>& sendCounts,                                             \
-    const UList<int>& sendOffsets,                                            \
-                                                                              \
-    Type* recvData,                                                           \
-    int recvCount,                                                            \
-    const label comm                                                          \
-)                                                                             \
-{                                                                             \
-    std::memmove(recvData, sendData, recvCount*sizeof(Type));                 \
-}
+void Foam::UPstream::mpi_gather
+(
+    const void* sendData,
+    void* recvData,
+    int count,
+    const UPstream::dataTypes dataTypeId,
+
+    const int communicator,
+    UPstream::Request* req
+)
+{}
 
 
-//TDB: Pstream_CommonRoutines(bool);
-Pstream_CommonRoutines(char);
-Pstream_CommonRoutines(int32_t);
-Pstream_CommonRoutines(int64_t);
-Pstream_CommonRoutines(uint32_t);
-Pstream_CommonRoutines(uint64_t);
-Pstream_CommonRoutines(float);
-Pstream_CommonRoutines(double);
+void Foam::UPstream::mpi_scatter
+(
+    const void* sendData,
+    void* recvData,
+    int count,
+    const UPstream::dataTypes dataTypeId,
 
-#undef Pstream_CommonRoutines
+    const int communicator,
+    UPstream::Request* req
+)
+{}
+
+
+void Foam::UPstream::mpi_allgather
+(
+    void* allData,
+    int count,
+    const UPstream::dataTypes dataTypeId,
+
+    const int communicator,
+    UPstream::Request* req
+)
+{}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+void Foam::UPstream::mpi_gatherv
+(
+    const void* sendData,
+    int sendCount,
+    void* recvData,
+    const UList<int>& recvCounts,
+    const UList<int>& recvOffsets,
+
+    const UPstream::dataTypes dataTypeId,
+    const int communicator
+)
+{}
+
+
+void Foam::UPstream::mpi_scatterv
+(
+    const void* sendData,
+    const UList<int>& sendCounts,
+    const UList<int>& sendOffsets,
+
+    void* recvData,
+    int recvCount,
+
+    const UPstream::dataTypes dataTypeId,
+    const int communicator
+)
+{}
+
 
 // ************************************************************************* //

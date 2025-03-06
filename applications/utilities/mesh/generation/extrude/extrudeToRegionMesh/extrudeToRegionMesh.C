@@ -661,8 +661,8 @@ void countExtrudePatches
     }
     // Synchronise decision. Actual numbers are not important, just make
     // sure that they're > 0 on all processors.
-    Pstream::listCombineReduce(zoneSidePatch, plusEqOp<label>());
-    Pstream::listCombineReduce(zoneZonePatch, plusEqOp<label>());
+    Pstream::listReduce(zoneSidePatch, sumOp<label>());
+    Pstream::listReduce(zoneZonePatch, sumOp<label>());
 }
 
 

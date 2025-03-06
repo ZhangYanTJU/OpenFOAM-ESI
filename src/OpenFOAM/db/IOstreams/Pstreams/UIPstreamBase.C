@@ -167,7 +167,7 @@ Foam::UIPstreamBase::UIPstreamBase
     DynamicList<char>& receiveBuf,
     label& receiveBufPosition,
     const int tag,
-    const label comm,
+    const int communicator,
     const bool clearAtEnd,
     IOstreamOption::streamFormat fmt
 )
@@ -176,7 +176,7 @@ Foam::UIPstreamBase::UIPstreamBase
     Istream(fmt),
     fromProcNo_(fromProcNo),
     tag_(tag),
-    comm_(comm),
+    comm_(communicator),
     messageSize_(0),
     storedRecvBufPos_(0),
     clearAtEnd_(clearAtEnd),
@@ -547,6 +547,18 @@ bool Foam::UIPstreamBase::beginRawRead()
 /// {
 ///     return recvBufPos_;
 /// }
+
+Foam::label Foam::UIPstreamBase::remaining() const noexcept
+{
+    if (messageSize_ && (recvBufPos_ < recvBuf_.size()))
+    {
+        return (recvBuf_.size() - recvBufPos_);
+    }
+    else
+    {
+        return 0;
+    }
+}
 
 
 void Foam::UIPstreamBase::rewind()

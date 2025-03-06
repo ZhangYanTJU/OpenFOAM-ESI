@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -878,7 +878,7 @@ Foam::List<Foam::scalar> Foam::lumpedPointMovement::areas
         }
     }
 
-    Pstream::listCombineReduce(zoneAreas, plusEqOp<scalar>());
+    Pstream::listReduce(zoneAreas, sumOp<scalar>());
 
     return zoneAreas;
 }
@@ -1006,8 +1006,8 @@ bool Foam::lumpedPointMovement::forcesAndMoments
         Info<<"No pressure field" << endl;
     }
 
-    Pstream::listCombineReduce(forces, plusEqOp<vector>());
-    Pstream::listCombineReduce(moments, plusEqOp<vector>());
+    Pstream::listReduce(forces, sumOp<vector>());
+    Pstream::listReduce(moments, sumOp<vector>());
 
     return true;
 }

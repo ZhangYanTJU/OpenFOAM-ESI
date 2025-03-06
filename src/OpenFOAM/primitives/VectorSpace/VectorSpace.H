@@ -158,7 +158,7 @@ public:
     // Constructors
 
         //- Construct initialized to zero
-        inline VectorSpace(const Foam::zero);
+        inline VectorSpace(Foam::zero);
 
         //- Copy construct
         inline VectorSpace(const VectorSpace<Form, Cmpt, Ncmpts>& vs);
@@ -174,10 +174,7 @@ public:
     // Member Functions
 
         //- The number of elements in the VectorSpace = Ncmpts.
-        static constexpr direction size() noexcept
-        {
-            return Ncmpts;
-        }
+        static constexpr direction size() noexcept { return Ncmpts; }
 
         inline const Cmpt& component(const direction) const;
         inline Cmpt& component(const direction);
@@ -186,10 +183,10 @@ public:
         inline void replace(const direction, const Cmpt&);
 
         //- Return const pointer to the first data element
-        inline const Cmpt* cdata() const noexcept;
+        const Cmpt* cdata() const noexcept { return v_; }
 
         //- Return pointer to the first data element
-        inline Cmpt* data() noexcept;
+        Cmpt* data() noexcept { return v_; }
 
         //- Assign all components to given value
         inline void fill(const Cmpt& s);
@@ -210,7 +207,7 @@ public:
         inline void operator+=(const VectorSpace<Form, Cmpt, Ncmpts>&);
         inline void operator-=(const VectorSpace<Form, Cmpt, Ncmpts>&);
 
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
         inline void operator*=(const scalar);
         inline void operator/=(const scalar);
 
@@ -224,28 +221,25 @@ public:
         typedef const Cmpt* const_iterator;
 
 
-    // Random access iterator (non-const)
+    // Random access iterators (const and non-const)
 
-        //- Return an iterator to begin of VectorSpace
-        inline iterator begin() noexcept;
+        //- Return an iterator (pointer) to begin of VectorSpace
+        iterator begin() noexcept { return v_; }
 
-        //- Return an iterator to end of VectorSpace
-        inline iterator end() noexcept;
+        //- Return const_iterator (const pointer) to begin of VectorSpace
+        const_iterator begin() const noexcept { return v_; }
 
+        //- Return const_iterator (const pointer) to begin of VectorSpace
+        const_iterator cbegin() const noexcept { return v_; }
 
-    // Random access iterator (const)
+        //- Return an iterator (pointer) to end of VectorSpace
+        iterator end() noexcept { return (v_ + Ncmpts); }
 
-        //- Return const_iterator to begin of VectorSpace
-        inline const_iterator cbegin() const noexcept;
+        //- Return const_iterator (const pointer) to end of VectorSpace
+        const_iterator end() const noexcept { return (v_ + Ncmpts); }
 
-        //- Return const_iterator to end of VectorSpace
-        inline const_iterator cend() const noexcept;
-
-        //- Return const_iterator to begin of VectorSpace
-        inline const_iterator begin() const noexcept;
-
-        //- Return const_iterator to end of VectorSpace
-        inline const_iterator end() const noexcept;
+        //- Return const_iterator (const pointer) to end of VectorSpace
+        const_iterator cend() const noexcept { return (v_ + Ncmpts); }
 
 
     // IOstream Operators

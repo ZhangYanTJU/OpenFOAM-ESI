@@ -222,7 +222,7 @@ bool Foam::functionObjects::Curle::execute()
 
     pDash /= 4*mathematical::pi;
 
-    Pstream::listCombineReduce(pDash, plusEqOp<scalar>());
+    Pstream::listReduce(pDash, sumOp<scalar>());
 
     if (surfaceWriterPtr_)
     {

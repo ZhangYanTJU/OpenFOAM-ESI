@@ -345,8 +345,8 @@ static void reportOffsets(const globalIndex& gi)
 
         UPstream::broadcast
         (
-            allOffsets.data_bytes(),
-            allOffsets.size_bytes(),
+            allOffsets.data(),
+            allOffsets.size(),
             interNodeComm
         );
     }
@@ -508,7 +508,7 @@ int main(int argc, char *argv[])
 
     #include "setRootCase.H"
 
-    const bool useLocalComms = UPstream::usingNodeComms();
+    const bool useLocalComms = UPstream::usingNodeComms(UPstream::worldComm);
     bool useWindow = args.found("window");
     bool useBuiltin = args.found("builtin");
 

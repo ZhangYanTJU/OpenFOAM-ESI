@@ -501,6 +501,30 @@ Foam::FixedList<T, N>::cbegin() const noexcept
 
 template<class T, unsigned N>
 inline typename Foam::FixedList<T, N>::iterator
+Foam::FixedList<T, N>::begin(const int i) noexcept
+{
+    return (v_ + (i < 0 ? 0 : int(N) < i ? int(N) : i));
+}
+
+
+template<class T, unsigned N>
+inline typename Foam::FixedList<T, N>::const_iterator
+Foam::FixedList<T, N>::begin(const int i) const noexcept
+{
+    return (v_ + (i < 0 ? 0 : int(N) < i ? int(N) : i));
+}
+
+
+template<class T, unsigned N>
+inline typename Foam::FixedList<T, N>::const_iterator
+Foam::FixedList<T, N>::cbegin(const int i) const noexcept
+{
+    return (v_ + (i < 0 ? 0 : int(N) < i ? int(N) : i));
+}
+
+
+template<class T, unsigned N>
+inline typename Foam::FixedList<T, N>::iterator
 Foam::FixedList<T, N>::end() noexcept
 {
     return (v_ + N);

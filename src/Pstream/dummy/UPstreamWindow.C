@@ -47,4 +47,10 @@ void Foam::UPstream::Window::reset() noexcept
 {}
 
 
+int Foam::UPstream::Window::size() const
+{
+    return 0;
+}
+
+
 // ************************************************************************* //

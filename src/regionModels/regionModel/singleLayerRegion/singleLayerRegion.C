@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,7 +144,7 @@ void Foam::regionModels::singleLayerRegion::initialise()
         }
     }
 
-    Pstream::listCombineReduce(passivePatchIDs_, maxEqOp<label>());
+    Pstream::listReduce(passivePatchIDs_, maxOp<label>());
 
     magSf.field() = 0.5*(magSf + passiveMagSf);
     magSf.correctBoundaryConditions();

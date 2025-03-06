@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,6 +38,7 @@ Description
 #include "Pstream.H"
 #include "FixedList.H"
 #include "ops.H"
+#include "VectorSpaceOps.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,29 +47,48 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Single value: mpiAllReduce or manual
+
 //- Reduce inplace (cf. MPI Allreduce)
-//- using linear/tree communication schedule
 template<class T, class BinaryOp>
 void reduce
 (
     T& value,
-    const BinaryOp& bop,
-    const int tag = UPstream::msgType(),
-    const label comm = UPstream::worldComm
+    [[maybe_unused]] BinaryOp bop,
+    [[maybe_unused]] const int tag = UPstream::msgType(),
+    const int communicator = UPstream::worldComm
 )
 {
-    if (UPstream::is_parallel(comm))
+    if (!UPstream::is_parallel(communicator))
     {
-        if (UPstream::warnComm >= 0 && comm != UPstream::warnComm)
+        // Nothing to do
+        return;
+    }
+    else if constexpr (UPstream_data_opType<BinaryOp, T>::value)
+    {
+        // Valid opcode and (directly/indirectly) uses basic dataType
+        UPstream::mpiAllReduce
+        (
+            &value,
+            1,
+            UPstream_opType<BinaryOp>::opcode_id,
+            communicator
+        );
+    }
+    else
+    {
+        if (UPstream::warnComm >= 0 && communicator != UPstream::warnComm)
         {
-            Perr<< "** reducing:" << value << " with comm:" << comm << endl;
+            Perr<< "** reducing:" << value << " comm:" << communicator << endl;
             error::printStack(Perr);
         }
-        Pstream::gather(value, bop, tag, comm);
-        Pstream::broadcast(value, comm);
+        Pstream::gather(value, bop, tag, communicator);
+        Pstream::broadcast(value, communicator);
     }
 }
 
+
+// Multiple values: mpiAllReduce only!
 
 //- Reduce inplace (cf. MPI Allreduce)
 //- multiple values (same size on all ranks!)
@@ -76,44 +96,111 @@ template<class T, class BinaryOp>
 void reduce
 (
     T values[],
-    const int size,
-    const BinaryOp&,
-    const int tag,
-    const label comm
+    const int count,
+    [[maybe_unused]] BinaryOp bop,
+    [[maybe_unused]] const int tag,
+    const int communicator = UPstream::worldComm
 )
 {
-    NotImplemented;
+    if (!UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else if constexpr (UPstream_data_opType<BinaryOp, T>::value)
+    {
+        // Valid opcode and (directly/indirectly) uses basic dataType
+        UPstream::mpiAllReduce
+        (
+            values,
+            count,
+            UPstream_opType<BinaryOp>::opcode_id,
+            communicator
+        );
+    }
+    else
+    {
+        // static_assert(false, "unsupported data type");
+        static_assert
+        (
+            stdFoam::dependent_false_v<T>,
+            "only for specific, contiguous, known data types"
+        );
+    }
 }
+
+
+//- Reduce multiple values
+//  Multiple values: mpiAllReduce only!
+template<class T, unsigned N, class BinaryOp>
+inline void reduce
+(
+    FixedList<T, N>& values,
+    BinaryOp bop,
+    const int tag = UPstream::msgType(),
+    const int communicator = UPstream::worldComm
+)
+{
+    reduce(values.data(), int(values.size()), bop, tag, communicator);
+}
+
+
+//- Non-blocking reduce inplace (cf. MPI Iallreduce)
+//- multiple values. Sets request.
+template<class T, class BinaryOp>
+void reduce
+(
+    T values[],
+    int count,
+    [[maybe_unused]] BinaryOp bop,
+    [[maybe_unused]] const int tag,
+    const int communicator,
+    UPstream::Request& req
+)
+{
+    if (!UPstream::is_parallel(communicator))
+    {
+        // Nothing to do
+        return;
+    }
+    else if constexpr (UPstream_data_opType<BinaryOp, T>::value)
+    {
+        // Valid opcode and (directly/indirectly) uses basic dataType
+        UPstream::mpiAllReduce
+        (
+            values,
+            count,
+            UPstream_opType<BinaryOp>::opcode_id,
+            communicator,
+            req
+        );
+    }
+    else
+    {
+        // static_assert(false, "unsupported data type");
+        static_assert
+        (
+            stdFoam::dependent_false_v<T>,
+            "only for specific, contiguous, known data types"
+        );
+    }
+}
+
 
 //- Non-blocking reduce inplace (cf. MPI Iallreduce)
 //- single value. Sets request.
 template<class T, class BinaryOp>
 void reduce
 (
-    T& Value,
-    const BinaryOp&,
+    T& value,
+    BinaryOp bop,
     const int tag,
-    const label comm,
+    const int communicator,
     UPstream::Request& req
 )
 {
-    NotImplemented;
-}
-
-//- Non-blocking reduce inplace (cf. MPI Iallreduce)
-//- of multiple values (same size on all ranks!). Sets request.
-template<class T, class BinaryOp>
-void reduce
-(
-    T values[],
-    const int size,
-    const BinaryOp&,
-    const int tag,
-    const label comm,
-    UPstream::Request& req
-)
-{
-    NotImplemented;
+    // single value
+    reduce(&value, 1, tag, communicator, req);
 }
 
 
@@ -125,243 +212,95 @@ void reduce
 void reduce
 (
     bool& value,
-    const andOp<bool>&,
-    const int tag = UPstream::msgType(),  /*!< (ignored) */
-    const label comm = UPstream::worldComm
+    Foam::andOp<bool>,
+    [[maybe_unused]] const int tag = UPstream::msgType(),  /*!< (ignored) */
+    const int communicator = UPstream::worldComm
 );
+// UPstream::reduceAnd(value, communicator);
+
 
 //- Logical (or) inplace reduction. Uses UPstream::reduceOr
 void reduce
 (
     bool& value,
-    const orOp<bool>&,
-    const int tag = UPstream::msgType(),  /*!< (ignored) */
-    const label comm = UPstream::worldComm
+    Foam::orOp<bool>,
+    [[maybe_unused]] const int tag = UPstream::msgType(),  /*!< (ignored) */
+    const int communicator = UPstream::worldComm
 );
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-// Common reductions
-
-#undef  Pstream_CommonReductions
-#define Pstream_CommonReductions(Native)                                      \
-                                                                              \
-/*! \brief Reduce (min) multiple Native values (same size on all ranks!) */   \
-void reduce                                                                   \
-(                                                                             \
-    Native values[],                                                          \
-    const int size,                                                           \
-    const minOp<Native>&,                                                     \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-);                                                                            \
-                                                                              \
-/*! \brief Reduce (min) single Native value */                                \
-void reduce                                                                   \
-(                                                                             \
-    Native& value,                                                            \
-    const minOp<Native>&,                                                     \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-);                                                                            \
-                                                                              \
-/*! \brief Reduce (min) multiple Native values */                             \
-template<unsigned N>                                                          \
-inline void reduce                                                            \
-(                                                                             \
-    FixedList<Native, N>& values,                                             \
-    const minOp<Native>&,                                                     \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-)                                                                             \
-{                                                                             \
-    reduce(values.data(), int(values.size()), minOp<Native>(), tag, comm);    \
-}                                                                             \
-                                                                              \
-/*! \brief Reduce (max) multiple Native values (same size on all ranks!) */   \
-void reduce                                                                   \
-(                                                                             \
-    Native values[],                                                          \
-    const int size,                                                           \
-    const maxOp<Native>&,                                                     \
-    const int tag,  /*!< (ignored) */                                         \
-    const label comm                                                          \
-);                                                                            \
-                                                                              \
-/*! \brief Reduce (max) single Native value */                                \
-void reduce                                                                   \
-(                                                                             \
-    Native& value,                                                            \
-    const maxOp<Native>&,                                                     \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-);                                                                            \
-                                                                              \
-/*! \brief Reduce (max) multiple Native values */                             \
-template<unsigned N>                                                          \
-inline void reduce                                                            \
-(                                                                             \
-    FixedList<Native, N>& values,                                             \
-    const maxOp<Native>&,                                                     \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-)                                                                             \
-{                                                                             \
-    reduce(values.data(), int(values.size()), maxOp<Native>(), tag, comm);    \
-}                                                                             \
-                                                                              \
-/*! \brief Reduce (sum) multiple Native values (same size on all ranks!) */   \
-void reduce                                                                   \
-(                                                                             \
-    Native values[],                                                          \
-    const int size,                                                           \
-    const sumOp<Native>&,                                                     \
-    const int tag,  /*!< (ignored) */                                         \
-    const label comm                                                          \
-);                                                                            \
-                                                                              \
-/*! \brief Reduce (sum) single Native value */                                \
-void reduce                                                                   \
-(                                                                             \
-    Native& value,                                                            \
-    const sumOp<Native>&,                                                     \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-);                                                                            \
-                                                                              \
-/*! \brief Reduce (sum) multiple Native values */                             \
-template<unsigned N>                                                          \
-inline void reduce                                                            \
-(                                                                             \
-    FixedList<Native, N>& values,                                             \
-    const sumOp<Native>&,                                                     \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-)                                                                             \
-{                                                                             \
-    reduce(values.data(), int(values.size()), sumOp<Native>(), tag, comm);    \
-}
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-// Floating-point reductions
-
-#undef  Pstream_FloatReductions
-#define Pstream_FloatReductions(Native)                                       \
-                                                                              \
-Pstream_CommonReductions(Native);                                             \
-                                                                              \
-/*! \brief Non-blocking reduce (sum) multiple Native values. Sets request */  \
-void reduce                                                                   \
-(                                                                             \
-    Native values[],                                                          \
-    const int size,                                                           \
-    const sumOp<Native>&,                                                     \
-    const int tag,  /*!< (ignored) */                                         \
-    const label comm,                                                         \
-    UPstream::Request& req  /*!< [out] request information */                 \
-);                                                                            \
-                                                                              \
-/*! \brief Non-blocking reduce (sum) single Native value. Sets request */     \
-void reduce                                                                   \
-(                                                                             \
-    Native& value,                                                            \
-    const sumOp<Native>&,                                                     \
-    const int tag,  /*!< (ignored) */                                         \
-    const label comm,                                                         \
-    UPstream::Request& req  /*!< [out] request information */                 \
-);
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-// Bitwise reductions
-
-#undef  Pstream_BitwiseReductions
-#define Pstream_BitwiseReductions(Native)                                     \
-                                                                              \
-/*! \brief Reduce (bit-or) multiple Native values (same size on all ranks!)*/ \
-void reduce                                                                   \
-(                                                                             \
-    Native values[],                                                          \
-    const int size,                                                           \
-    const bitOrOp<Native>&,                                                   \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-);                                                                            \
-                                                                              \
-/*! \brief Reduce (bit-or) single Native value */                             \
-void reduce                                                                   \
-(                                                                             \
-    Native& value,                                                            \
-    const bitOrOp<Native>&,                                                   \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-);
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-Pstream_CommonReductions(int32_t);
-Pstream_CommonReductions(int64_t);
-Pstream_CommonReductions(uint32_t);
-Pstream_CommonReductions(uint64_t);
-
-Pstream_FloatReductions(float);
-Pstream_FloatReductions(double);
-
-Pstream_BitwiseReductions(unsigned char);
-Pstream_BitwiseReductions(unsigned int);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#undef Pstream_CommonReductions
-#undef Pstream_FloatReductions
-#undef Pstream_BitwiseReductions
+// UPstream::reduceOr(value, communicator);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Reduce inplace (cf. MPI Allreduce)
 //- the sum of both value and count (for averaging)
-template<class T>
+template<class T, class IntType = int>
 void sumReduce
 (
     T& value,
-    label& count,
-    const int tag = UPstream::msgType(),
-    const label comm = UPstream::worldComm
+    IntType& count,
+    [[maybe_unused]] const int tag = UPstream::msgType(),
+    const int communicator = UPstream::worldComm
 )
 {
-    if (UPstream::is_parallel(comm))
+    static_assert(std::is_arithmetic_v<IntType>, "Counter not arithmetic");
+
+    if (!UPstream::is_parallel(communicator))
     {
-        Foam::reduce(value, sumOp<T>(), tag, comm);
-        Foam::reduce(count, sumOp<label>(), tag, comm);
+        // Nothing to do
+        return;
+    }
+    else if constexpr (std::is_floating_point_v<T>)
+    {
+        // Bundle value and count together
+        T work[2];
+        work[0] = value;
+        work[1] = static_cast<T>(count);
+
+        UPstream::mpiAllReduce
+        (
+            work,
+            2,
+            UPstream::opCodes::op_sum,
+            communicator
+        );
+
+        // Unbundle
+        value = work[0];
+        count = static_cast<IntType>(work[1]);
+    }
+    else if constexpr
+    (
+        is_vectorspace_v<T>
+     && std::is_floating_point_v<typename pTraits_cmptType<T>::type>
+    )
+    {
+        constexpr auto nCmpts = pTraits_nComponents<T>::value;
+        using cmpt = typename pTraits_cmptType<T>::type;
+
+        // Bundle all components and count together
+        cmpt work[nCmpts+1];
+        VectorSpaceOps<nCmpts>::copy_n(value.begin(), work);
+        work[nCmpts] = static_cast<cmpt>(count);
+
+        UPstream::mpiAllReduce
+        (
+            work,
+            nCmpts+1,
+            UPstream::opCodes::op_sum,
+            communicator
+        );
+
+        // Unbundle
+        VectorSpaceOps<nCmpts>::copy_n(work, value.begin());
+        count = static_cast<IntType>(work[nCmpts]);
+    }
+    else
+    {
+        Foam::reduce(value, sumOp<T>(), tag, communicator);
+        Foam::reduce(count, sumOp<IntType>(), tag, communicator);
     }
 }
-
-
-// Floating-point sum-reduce
-
-#undef  Pstream_SumReduce
-#define Pstream_SumReduce(Native)                                             \
-                                                                              \
-/*! \brief Sum of both Native value and count (for averaging) */              \
-void sumReduce                                                                \
-(                                                                             \
-    Native& value,                                                            \
-    label& count,                                                             \
-    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
-    const label comm = UPstream::worldComm                                    \
-);
-
-
-Pstream_SumReduce(float);
-Pstream_SumReduce(double);
-
-#undef Pstream_SumReduce
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -374,13 +313,13 @@ template<class T, class BinaryOp>
 T returnReduce
 (
     const T& value,
-    const BinaryOp& bop,
+    BinaryOp bop,
     const int tag = UPstream::msgType(),
-    const label comm = UPstream::worldComm
+    const int communicator = UPstream::worldComm
 )
 {
     T work(value);
-    Foam::reduce(work, bop, tag, comm);
+    Foam::reduce(work, bop, tag, communicator);
     return work;
 }
 
@@ -390,11 +329,11 @@ T returnReduce
 inline bool returnReduceAnd
 (
     const bool value,
-    const label comm = UPstream::worldComm
+    const int communicator = UPstream::worldComm
 )
 {
     bool work(value);
-    UPstream::reduceAnd(work, comm);
+    UPstream::reduceAnd(work, communicator);
     return work;
 }
 
@@ -404,11 +343,11 @@ inline bool returnReduceAnd
 inline bool returnReduceOr
 (
     const bool value,
-    const label comm = UPstream::worldComm
+    const int communicator = UPstream::worldComm
 )
 {
     bool work(value);
-    UPstream::reduceOr(work, comm);
+    UPstream::reduceOr(work, communicator);
     return work;
 }
 

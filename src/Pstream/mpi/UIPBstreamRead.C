@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,8 +26,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UIPstream.H"
-#include "PstreamGlobals.H"
 #include "IOstreams.H"
+#include "PstreamGlobals.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -37,33 +37,32 @@ void Foam::UIPBstream::bufferIPCrecv()
     // 1. for the data size
     // 2. for the data itself
 
-    // Expected message size, similar to MPI_Probe
-    // Same type must be expected in UOPBstream::bufferIPCsend()
-    std::streamsize bufSize(0);
-
     // Broadcast #1 - data size
-    if
-    (
-        !UPstream::broadcast
-        (
-            reinterpret_cast<char*>(&bufSize),
-            sizeof(std::streamsize),
-            comm_,
-            fromProcNo_  //< is actually rootProcNo
-        )
-    )
+    // Same data type must be used in UOPBstream::bufferIPCsend()
+
+    int64_t count(0);
+    if (!PstreamGlobals::broadcast_int64(count, comm_))
     {
         FatalErrorInFunction
-            << "MPI_Bcast failure receiving buffer size" << nl
+            << "Broadcast failure receiving buffer size" << nl
+            << " comm:" << comm_ << nl
             << Foam::abort(FatalError);
     }
 
-    if (UPstream::debug)
+    // This is not actually possible - sender uses List::size()
+    //
+    // if (FOAM_UNLIKELY(count > int64_t(UList<char>::max_size())))
+    // {
+    //     FatalErrorInFunction
+    //         << "Broadcast list size larger than UList<char>::max_size()"
+    //         << Foam::abort(FatalError);
+    // }
+
+    if (FOAM_UNLIKELY(UPstream::debug))
     {
-        Perr<< "UOPBstream IPC read buffer :"
-            << " root:" << fromProcNo_
+        Perr<< "UIPBstream IPC read buffer :"
             << " comm:" << comm_
-            << " probed size:" << label(bufSize)
+            << " probed size:" << label(count)
             << " wanted size:" << recvBuf_.capacity()
             << Foam::endl;
     }
@@ -71,33 +70,33 @@ void Foam::UIPBstream::bufferIPCrecv()
 
     // Set buffer size, avoiding any copying and resize doubling etc.
     recvBuf_.clear();
-    if (recvBuf_.capacity() < label(bufSize))
+    if (recvBuf_.capacity() < label(count))
     {
-        recvBuf_.setCapacity_nocopy(label(bufSize));
+        recvBuf_.setCapacity_nocopy(label(count));
     }
-    recvBuf_.resize_nocopy(label(bufSize));
+    recvBuf_.resize_nocopy(label(count));
 
     // This is the only real information we can trust
-    messageSize_ = label(bufSize);
+    messageSize_ = label(count);
 
 
     // Broadcast #2 - data content
     // - skip if there is no data to receive
     if
     (
-        (bufSize > 0)
-     && !UPstream::broadcast
+        (count > 0)  // ie, not empty
+     && !UPstream::mpi_broadcast
         (
             recvBuf_.data(),
-            recvBuf_.size(),  // same as bufSize
-            comm_,
-            fromProcNo_  //< is actually rootProcNo
+            recvBuf_.size(),  // same as count
+            UPstream::dataTypes::type_byte,
+            comm_
         )
     )
     {
         FatalErrorInFunction
-            << "MPI_Bcast failure receiving buffer data:"
-            << recvBuf_.size() << nl
+            << "Broadcast failure receiving buffer data:"
+            << recvBuf_.size() << " comm:" << comm_ << nl
             << Foam::abort(FatalError);
     }
 
@@ -105,31 +104,6 @@ void Foam::UIPBstream::bufferIPCrecv()
     {
         setEof();
     }
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-std::streamsize Foam::UIPBstream::read
-(
-    const int rootProcNo,
-    char* buf,
-    const std::streamsize bufSize,
-    const label comm
-)
-{
-    if
-    (
-        !UPstream::broadcast(buf, bufSize, comm, rootProcNo)
-    )
-    {
-        FatalErrorInFunction
-            << "MPI_Bcast failure receiving data:" << label(bufSize) << nl
-            << Foam::abort(FatalError);
-        return 0;
-    }
-
-    return bufSize;
 }
 
 

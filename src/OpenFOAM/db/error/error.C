@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,7 +57,7 @@ Foam::error::handlerNames
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-bool Foam::error::master(const label communicator)
+bool Foam::error::master(const int communicator)
 {
     // Trap negative value for comm as 'default'. This avoids direct use
     // of UPstream::worldComm which may have not yet been initialised
@@ -177,12 +177,20 @@ Foam::error::~error() noexcept
 
 Foam::OSstream& Foam::error::operator()
 (
-    const string& functionName
+    string functionName,
+    const char* sourceFileName,
+    const int sourceFileLineNumber
 )
 {
-    functionName_ = functionName;
+    functionName_ = std::move(functionName);
     sourceFileName_.clear();
-    sourceFileLineNumber_ = -1;
+
+    if (sourceFileName)  // nullptr check
+    {
+        sourceFileName_.assign(sourceFileName);
+    }
+
+    sourceFileLineNumber_ = sourceFileLineNumber;
 
     return this->stream();
 }
@@ -198,35 +206,17 @@ Foam::OSstream& Foam::error::operator()
     functionName_.clear();
     sourceFileName_.clear();
 
-    if (functionName)
+    if (functionName)  // nullptr check
     {
-        // With nullptr protection
         functionName_.assign(functionName);
     }
-    if (sourceFileName)
+    if (sourceFileName)  // nullptr check
     {
-        // With nullptr protection
         sourceFileName_.assign(sourceFileName);
     }
     sourceFileLineNumber_ = sourceFileLineNumber;
 
     return this->stream();
-}
-
-
-Foam::OSstream& Foam::error::operator()
-(
-    const string& functionName,
-    const char* sourceFileName,
-    const int sourceFileLineNumber
-)
-{
-    return operator()
-    (
-        functionName.c_str(),
-        sourceFileName,
-        sourceFileLineNumber
-    );
 }
 
 
@@ -401,7 +391,7 @@ void Foam::error::write(Ostream& os, const bool withTitle) const
     os  << message().c_str();
 
 
-    const label lineNo = sourceFileLineNumber();
+    const auto lineNo = sourceFileLineNumber();
 
     if (messageStream::level >= 2 && lineNo && !functionName().empty())
     {

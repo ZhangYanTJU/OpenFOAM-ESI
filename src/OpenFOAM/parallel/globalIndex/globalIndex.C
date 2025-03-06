@@ -319,12 +319,7 @@ bool Foam::globalIndex::splitNodeOffsets
         allOffsets.resize_nocopy(numProc+1);
     }
 
-    UPstream::broadcast
-    (
-        allOffsets.data_bytes(),
-        allOffsets.size_bytes(),
-        interNodeComm
-    );
+    UPstream::broadcast(allOffsets.data(), allOffsets.size(), interNodeComm);
 
 
     if (FOAM_UNLIKELY(allOffsets.empty()))

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -867,7 +867,7 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::createZoneBaffles
 
         if (nTotalBaffles > 0)
         {
-            Pstream::listCombineReduce(nBaffles, plusEqOp<label>());
+            Pstream::listReduce(nBaffles, sumOp<label>());
 
             Info<< nl
                 << setf(ios_base::left)
@@ -2001,7 +2001,7 @@ void Foam::meshRefinement::findCellZoneTopo
     // - region numbers are identical on all processors
     // - keepRegion is identical ,,
     // - cellZones are identical ,,
-    Pstream::listCombineReduce(regionToCellZone, maxEqOp<label>());
+    Pstream::listReduce(regionToCellZone, maxOp<label>());
 
 
     // Find the region containing the keepPoint
@@ -2051,7 +2051,7 @@ void Foam::meshRefinement::findCellZoneTopo
         // - cellZones are identical ,,
         // This done at top of loop to account for geometric matching
         // not being synchronised.
-        Pstream::listCombineReduce(regionToCellZone, maxEqOp<label>());
+        Pstream::listReduce(regionToCellZone, maxOp<label>());
 
 
         bool changed = false;

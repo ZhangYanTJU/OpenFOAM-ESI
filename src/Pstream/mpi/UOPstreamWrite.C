@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,36 +46,47 @@ bool Foam::UOPstream::bufferIPCsend()
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
 
-bool Foam::UOPstream::write
+// General blocking/non-blocking MPI send
+bool Foam::UPstream::mpi_send
 (
     const UPstream::commsTypes commsType,
+    const void* buf,                       // Type checking done by caller
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,  // Proper type passed by caller
     const int toProcNo,
-    const char* buf,
-    const std::streamsize bufSize,
     const int tag,
-    const label communicator,
+    const int communicator,
     UPstream::Request* req,
     const UPstream::sendModes sendMode
 )
 {
+    MPI_Datatype datatype = PstreamGlobals::getDataType(dataTypeId);
+
     PstreamGlobals::reset_request(req);
+
+    // Could check if nonBlocking and request are consistently specified...
+
 
     // TODO: some corrective action, at least when not nonBlocking
     #if 0
-    if (bufSize > std::streamsize(INT_MAX))
+    if (count > std::streamsize(INT_MAX))
     {
-        Perr<< "UOPstream::write() : to rank " << toProcNo
-            << " exceeds INT_MAX bytes" << Foam::endl;
+        Perr<< "[mpi_send] : to rank " << toProcNo
+            << " type:" << int(dataTypeId)
+            << " exceeds INT_MAX values"
+            << Foam::endl;
+
         error::printStack(Perr);
     }
     #endif
 
     if (FOAM_UNLIKELY(PstreamGlobals::warnCommunicator(communicator)))
     {
-        Perr<< "UOPstream::write : starting write to:" << toProcNo
-            << " size:" << label(bufSize)
+        Perr<< "[mpi_send] : starting send to:" << toProcNo
+            << " type:" << int(dataTypeId)
+            << " count:" << label(count)
             << " tag:" << tag << " comm:" << communicator
             << " commType:" << UPstream::commsTypeNames[commsType]
             << " warnComm:" << UPstream::warnComm
@@ -84,8 +95,9 @@ bool Foam::UOPstream::write
     }
     else if (FOAM_UNLIKELY(UPstream::debug))
     {
-        Perr<< "UOPstream::write : starting write to:" << toProcNo
-            << " size:" << label(bufSize)
+        Perr<< "[mpi_send] : starting send to:" << toProcNo
+            << " type:" << int(dataTypeId)
+            << " count:" << label(count)
             << " tag:" << tag << " comm:" << communicator
             << " commType:" << UPstream::commsTypeNames[commsType]
             << Foam::endl;
@@ -101,9 +113,9 @@ bool Foam::UOPstream::write
     {
         returnCode = MPI_Bsend
         (
-            const_cast<char*>(buf),
-            bufSize,
-            MPI_BYTE,
+            buf,
+            count,
+            datatype,
             toProcNo,
             tag,
             PstreamGlobals::MPICommunicators_[communicator]
@@ -114,9 +126,9 @@ bool Foam::UOPstream::write
 
         if (FOAM_UNLIKELY(UPstream::debug))
         {
-            Perr<< "UOPstream::write : finished buffered send to:"
+            Perr<< "[mpi_send] : finished buffered send to:"
                 << toProcNo
-                << " size:" << label(bufSize) << " tag:" << tag
+                << " count:" << label(count) << " tag:" << tag
                 << Foam::endl;
         }
     }
@@ -126,9 +138,9 @@ bool Foam::UOPstream::write
         {
             returnCode = MPI_Ssend
             (
-                const_cast<char*>(buf),
-                bufSize,
-                MPI_BYTE,
+                buf,
+                count,
+                datatype,
                 toProcNo,
                 tag,
                 PstreamGlobals::MPICommunicators_[communicator]
@@ -138,9 +150,9 @@ bool Foam::UOPstream::write
         {
             returnCode = MPI_Send
             (
-                const_cast<char*>(buf),
-                bufSize,
-                MPI_BYTE,
+                buf,
+                count,
+                datatype,
                 toProcNo,
                 tag,
                 PstreamGlobals::MPICommunicators_[communicator]
@@ -152,9 +164,10 @@ bool Foam::UOPstream::write
 
         if (FOAM_UNLIKELY(UPstream::debug))
         {
-            Perr<< "UOPstream::write : finished send to:"
+            Perr<< "[mpi_send] : finished send to:"
                 << toProcNo
-                << " size:" << label(bufSize) << " tag:" << tag
+                << " type:" << int(dataTypeId)
+                << " count:" << label(count) << " tag:" << tag
                 << Foam::endl;
         }
     }
@@ -166,9 +179,9 @@ bool Foam::UOPstream::write
         {
             returnCode = MPI_Issend
             (
-                const_cast<char*>(buf),
-                bufSize,
-                MPI_BYTE,
+                buf,
+                count,
+                datatype,
                 toProcNo,
                 tag,
                 PstreamGlobals::MPICommunicators_[communicator],
@@ -179,9 +192,9 @@ bool Foam::UOPstream::write
         {
             returnCode = MPI_Isend
             (
-                const_cast<char*>(buf),
-                bufSize,
-                MPI_BYTE,
+                buf,
+                count,
+                datatype,
                 toProcNo,
                 tag,
                 PstreamGlobals::MPICommunicators_[communicator],
@@ -191,9 +204,10 @@ bool Foam::UOPstream::write
 
         if (FOAM_UNLIKELY(UPstream::debug))
         {
-            Perr<< "UOPstream::write : started non-blocking send to:"
+            Perr<< "[mpi_send] : started non-blocking send to:"
                 << toProcNo
-                << " size:" << label(bufSize) << " tag:" << tag
+                << " type:" << int(dataTypeId)
+                << " count:" << label(count) << " tag:" << tag
                 << " request:" <<
                 (req ? label(-1) : PstreamGlobals::outstandingRequests_.size())
                 << Foam::endl;
@@ -207,6 +221,7 @@ bool Foam::UOPstream::write
         FatalErrorInFunction
             << "Unsupported communications type " << int(commsType)
             << Foam::abort(FatalError);
+        return false;
     }
 
     return (returnCode == MPI_SUCCESS);

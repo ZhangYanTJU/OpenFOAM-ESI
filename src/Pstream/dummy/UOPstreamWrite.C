@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,16 +37,17 @@ bool Foam::UOPstream::bufferIPCsend()
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
 
-bool Foam::UOPstream::write
+bool Foam::UPstream::mpi_send
 (
     const UPstream::commsTypes commsType,
+    const void* buf,
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,
     const int toProcNo,
-    const char* buf,
-    const std::streamsize bufSize,
     const int tag,
-    const label communicator,
+    const int communicator,
     UPstream::Request* req,
     const UPstream::sendModes sendMode
 )

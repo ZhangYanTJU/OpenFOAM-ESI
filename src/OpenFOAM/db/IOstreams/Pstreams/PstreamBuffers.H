@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -182,10 +182,10 @@ class PstreamBuffers
         const int tag_;
 
         //- Communicator
-        const label comm_;
+        const int comm_;
 
         //- Number of ranks associated with PstreamBuffers (at construction)
-        const label nProcs_;
+        const int nProcs_;
 
 
     // Buffer storage
@@ -266,7 +266,7 @@ public:
         (
             UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             int tag = UPstream::msgType(),
-            label communicator = UPstream::worldComm,
+            int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
@@ -274,7 +274,7 @@ public:
         //- (default: nonBlocking), message tag, IO format (default: binary)
         explicit PstreamBuffers
         (
-            label communicator,
+            int communicator,
             UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             int tag = UPstream::msgType(),
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
@@ -287,7 +287,7 @@ public:
         //- (default: nonBlocking), IO format (default: binary)
         PstreamBuffers
         (
-            label communicator,
+            int communicator,
             int tag,
             UPstream::commsTypes commsType = UPstream::commsTypes::nonBlocking,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
@@ -306,34 +306,19 @@ public:
     // Attributes
 
         //- The associated buffer format (ascii | binary)
-        IOstreamOption::streamFormat format() const noexcept
-        {
-            return format_;
-        }
+        IOstreamOption::streamFormat format() const noexcept { return format_; }
 
         //- The communications type of the stream
-        UPstream::commsTypes commsType() const noexcept
-        {
-            return commsType_;
-        }
+        UPstream::commsTypes commsType() const noexcept { return commsType_; }
 
         //- The transfer message tag
-        int tag() const noexcept
-        {
-            return tag_;
-        }
+        int tag() const noexcept { return tag_; }
 
         //- The communicator index
-        label comm() const noexcept
-        {
-            return comm_;
-        }
+        int comm() const noexcept { return comm_; }
 
         //- Number of ranks associated with PstreamBuffers
-        label nProcs() const noexcept
-        {
-            return nProcs_;
-        }
+        int nProcs() const noexcept { return nProcs_; }
 
 
     // Sizing

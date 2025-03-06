@@ -37,7 +37,7 @@ const uint64_t Foam::pTraits<uint64_t>::one = 1;
 const uint64_t Foam::pTraits<uint64_t>::min = 0;
 const uint64_t Foam::pTraits<uint64_t>::max = UINT64_MAX;
 const uint64_t Foam::pTraits<uint64_t>::rootMin = 0;
-const uint64_t Foam::pTraits<uint64_t>::rootMax = pTraits<uint64_t>::max;
+const uint64_t Foam::pTraits<uint64_t>::rootMax = UINT64_MAX;
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

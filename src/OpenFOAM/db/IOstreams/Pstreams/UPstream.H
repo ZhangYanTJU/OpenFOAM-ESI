@@ -91,52 +91,54 @@ public:
     };
 
     //- Mapping of some fundamental and aggregate types to MPI data types
-    enum class dataTypes : int
+    enum class dataTypes : char
     {
         // NOTE: changes here require adjustment in
         // PstreamGlobals, UPstreamTraits
 
-        // Builtin Types [8]:
-        DataTypes_begin,    //!< (internal use) begin all data types
-        type_byte = DataTypes_begin,  //!< byte, char, unsigned char, ...
+        // Fundamental Types [10]:
+        Basic_begin,    //!< (internal use) begin marker [basic/all types]
+        type_byte = Basic_begin,  //!< byte, char, unsigned char, ...
+        type_int16,
         type_int32,
         type_int64,
+        type_uint16,
         type_uint32,
         type_uint64,
         type_float,
         type_double,
         type_long_double,
 
-        //! (internal use) end of builtin data types marker
-        BuiltinTypes_end, UserTypes_begin = BuiltinTypes_end,
-        //!< (internal use) begin of user data types marker
+        //! (internal use) end marker [basic types]
+        Basic_end, User_begin = Basic_end,
+        //!< (internal use) begin marker [user types]
 
         // User Types [6]:
-        type_3float = UserTypes_begin, //!< 3*float (eg, floatVector)
+        type_3float = User_begin, //!< 3*float (eg, floatVector)
         type_3double,   //!< 3*double (eg, doubleVector)
         type_6float,    //!< 6*float (eg, floatSymmTensor, complex vector)
         type_6double,   //!< 6*double (eg, doubleSymmTensor, complex vector)
         type_9float,    //!< 9*float (eg, floatTensor)
         type_9double,   //!< 9*double (eg, doubleTensor)
 
-        // Internal markers
+        // Internal markers [1]
         invalid,        //!< invalid type (NULL)
-        //! (internal use) end of user data types marker
-        UserTypes_end = invalid, DataTypes_end = invalid
-        //!< (internal use) end of all data types marker
+        //! (internal use) end marker [user types]
+        User_end = invalid, DataTypes_end = invalid
+        //!< (internal use) end marker [all types]
     };
 
     //- Mapping of some MPI op codes.
     //  Currently excluding min/max location until they are needed
-    enum class opCodes : int
+    enum class opCodes : char
     {
         // NOTE: changes here require adjustment in
         // PstreamGlobals, UPstreamTraits
 
-        ReduceOps_begin,  //!< (internal use) begin reduce/window
+        Basic_begin,  //!< (internal use) begin marker [reduce/window types]
 
         // Reduce or window operations [10]
-        op_min = ReduceOps_begin, //!< min(x,y)
+        op_min = Basic_begin, //!< min(x,y)
         op_max,         //!< max(x,y)
         op_sum,         //!< (x + y)
         op_prod,        //!< (x * y)
@@ -147,19 +149,30 @@ public:
         op_bit_or,      //!< Bit-wise \c or for (unsigned) integral types
         op_bit_xor,     //!< Bit-wise \c xor for (unsigned) integral types
 
-        //! (internal use) end of reduce-ops marker
-        ReduceOps_end, WindowOps_begin = ReduceOps_end,
-        //!< (internal use) begin end of window-ops marker
+        //! (internal use) end marker [reduce types]
+        Basic_end, Extra_begin = Basic_end,
+        //!< (internal use) begin marker [window types]
 
         // Window-only operations [2]
-        op_replace = WindowOps_begin,  //!< Replace (window only)
+        op_replace = Extra_begin,  //!< Replace (window only)
         op_no_op,       //!< No-op (window only)
 
-        // Internal markers
+        // Internal markers [1]
         invalid,        //!< invalid op (NULL)
-        //! (internal use) end of window-ops marker
-        WindowOps_end = invalid, OpCodes_end = invalid
-        //!< (internal use) end of all ops marker
+        //! (internal use) end marker [window types]
+        Extra_end = invalid, OpCodes_end = invalid
+        //!< (internal use) end marker [all types]
+    };
+
+    //- Some bit masks corresponding to topology controls
+    //  These selectively enable topology-aware handling
+    enum class topoControls : int
+    {
+        broadcast = 1,      //!< broadcast [MPI]
+        reduce = 2,         //!< reduce/all-reduce [MPI]
+        gather = 16,        //!< gather (reduction) [manual algorithm]
+        mapGather = 32,     //!< mapGather (reduction) [manual algorithm]
+        gatherList = 64,    //!< gatherList/scatterList [manual algorithm]
     };
 
 
@@ -389,18 +402,18 @@ private:
         //- Index to the world-communicator as defined at startup
         //- (after any multi-world definitions).
         //- Is unaffected by any later changes to worldComm.
-        static label constWorldComm_;
-
-        //- The number of shared/host nodes in the (const) world communicator.
-        static label numNodes_;
+        static int constWorldComm_;
 
         //- Index to the inter-node communicator (between nodes),
         //- defined based on constWorldComm_
-        static label commInterNode_;
+        static int commInterNode_;
 
         //- Index to the intra-host communicator (within a node),
         //- defined based on constWorldComm_
-        static label commLocalNode_;
+        static int commLocalNode_;
+
+        //- The number of shared/host nodes in the (const) world communicator.
+        static int numNodes_;
 
         //- Names of all worlds
         static wordList allWorlds_;
@@ -433,7 +446,7 @@ private:
     // Private Member Functions
 
         //- Set data for parallel running
-        static void setParRun(const label nProcs, const bool haveThreads);
+        static void setParRun(const int nProcs, const bool haveThreads);
 
         //- Initialise entries for new communicator.
         //
@@ -489,6 +502,180 @@ private:
         static void freeCommunicatorComponents(const label index);
 
 
+protected:
+
+    // Protected Member Functions
+
+    // Static Functions
+
+        //- Broadcast buffer contents from rank=0 to all ranks.
+        //- The sizes must match on all processes.
+        //  For \b non-parallel : do nothing.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        //  \return True on success
+        static bool mpi_broadcast
+        (
+            void* buf,
+            std::streamsize count,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator
+        );
+
+        //- In-place reduction of \c values with result on rank 0.
+        //  Includes internal parallel guard and checks on data types, opcode.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        static void mpi_reduce
+        (
+            void* values,
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const UPstream::opCodes opCodeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- In-place reduction of \c values with same result on all ranks.
+        //  Includes internal parallel guard and checks on data types, opcode.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        static void mpi_allreduce
+        (
+            void* values,
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const UPstream::opCodes opCodeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Send buffer contents of specified data type to given processor.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        //  \return True on success (or Fatal)
+        static bool mpi_send
+        (
+            const UPstream::commsTypes commsType,
+            const void* buf,
+            std::streamsize count,
+            const UPstream::dataTypes dataTypeId,
+            const int toProcNo,
+            const int tag,              // eg, UPstream::msgType()
+            const int communicator,     // eg, UPstream::worldComm
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr,
+            //! optional send mode (normal | sync)
+            const UPstream::sendModes sendMode = UPstream::sendModes::normal
+        );
+
+        //- Receive buffer contents of specified data type from given processor.
+        //
+        //  \note The method uses a \c void pointer and the required data type
+        //  (as per MPI). This means it should almost never be called directly
+        //  but always via a compile-time checked caller.
+        //  The commsType will be ignored if UPstream::Request is specified.
+        //
+        //  \return number of elements read. May change in the future
+        static std::streamsize mpi_receive
+        (
+            const UPstream::commsTypes commsType,
+            void* buf,
+            std::streamsize count,
+            const UPstream::dataTypes dataTypeId,
+            const int fromProcNo,
+            const int tag,              // eg, UPstream::msgType()
+            const int communicator,     // eg, UPstream::worldComm
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Receive identically-sized (contiguous) data from all ranks
+        //  Includes internal parallel guard.
+        //  For non-parallel, does not copy any data.
+        //  If needed, this must be done by the caller.
+        static void mpi_gather
+        (
+            //! On rank: individual value to send (or nullptr for inplace)
+            const void* sendData,
+            //! Master: receive buffer with all values
+            //! Or for in-place send/recv when sendData is nullptr
+            void* recvData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Send identically-sized (contiguous) data to all ranks
+        //  Includes internal parallel guard.
+        static void mpi_scatter
+        (
+            //! On master: send buffer with all values (nullptr for inplace)
+            const void* sendData,
+            //! On rank: individual value to receive
+            //! Or for in-place send/recv when sendData is nullptr
+            void* recvData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Gather/scatter identically-sized data
+        //  Send data from proc slot, receive into all slots
+        static void mpi_allgather
+        (
+            //! On all ranks: the base of the data locations
+            void* allData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator,
+            //! [out] request information (for non-blocking)
+            UPstream::Request* req = nullptr
+        );
+
+        //- Receive variable length data from all ranks.
+        //- (caution: known to scale poorly)
+        static void mpi_gatherv
+        (
+            const void* sendData,
+            int sendCount,    //!< Ignored on master if recvCount[0] == 0
+            void* recvData,                 //!< Ignored on non-root rank
+            const UList<int>& recvCounts,   //!< Ignored on non-root rank
+            const UList<int>& recvOffsets,  //!< Ignored on non-root rank
+            const UPstream::dataTypes dataTypeId,
+            const int communicator
+        );
+
+        //- Send variable length data to all ranks
+        //- (caution: known to scale poorly)
+        static void mpi_scatterv
+        (
+            const void* sendData,           //!< Ignored on non-root rank
+            const UList<int>& sendCounts,   //!< Ignored on non-root rank
+            const UList<int>& sendOffsets,  //!< Ignored on non-root rank
+            void* recvData,
+            int recvCount,
+            const UPstream::dataTypes dataTypeId,
+            const int communicator
+        );
+
 public:
 
     //- Declare name of the class and its debug switch
@@ -509,13 +696,14 @@ public:
         //  >= 3 : when there are more than N nodes
         static int nodeCommsMin_;
 
-        //- Selection of topology-aware routines
+        //- Selection of topology-aware routines as a bitmask combination
+        //- of the topoControls enumerations
         static int topologyControl_;
 
-        //- Test for selection of given topology-aware routine (bitmask)
-        static bool usingTopoControl(int routine = 0) noexcept
+        //- Test for selection of given topology-aware routine
+        static bool usingTopoControl(UPstream::topoControls ctrl) noexcept
         {
-            return static_cast<bool>(topologyControl_ & routine);
+            return static_cast<bool>(topologyControl_ & int(ctrl));
         }
 
         //- Should compact transfer be used in which floats replace doubles
@@ -557,16 +745,16 @@ public:
 
         //- Communicator for all ranks, irrespective of any local worlds.
         //  This value \em never changes during a simulation.
-        static constexpr label commGlobal() noexcept { return 0; }
+        static constexpr int commGlobal() noexcept { return 0; }
 
         //- Communicator within the current rank only
         //  This value \em never changes during a simulation.
-        static constexpr label commSelf() noexcept { return 1; }
+        static constexpr int commSelf() noexcept { return 1; }
 
         //- Communicator for all ranks (respecting any local worlds).
         //  This value \em never changes after startup. Unlike the commWorld()
         //  which can be temporarily overriden.
-        static label commConstWorld() noexcept { return constWorldComm_; }
+        static int commConstWorld() noexcept { return constWorldComm_; }
 
         //- Communicator for all ranks (respecting any local worlds)
         static label commWorld() noexcept { return worldComm; }
@@ -601,13 +789,13 @@ public:
     // Host Communicators
 
         //- Communicator between nodes/hosts (respects any local worlds)
-        static label commInterNode() noexcept
+        static int commInterNode() noexcept
         {
             return (parRun_ ? commInterNode_ : constWorldComm_);
         }
 
         //- Communicator within the node/host (respects any local worlds)
-        static label commLocalNode() noexcept
+        static int commLocalNode() noexcept
         {
             return (parRun_ ? commLocalNode_ : constWorldComm_);
         }
@@ -626,7 +814,7 @@ public:
         //- it is running in parallel, the starting point is the
         //- world-communicator and it is not an odd corner case
         //- (ie, all processes on one node, all processes on different nodes)
-        static bool usingNodeComms(const label communicator = worldComm);
+        static bool usingNodeComms(const int communicator);
 
 
     // Constructors
@@ -1168,19 +1356,16 @@ public:
         }
 
         //- The number of shared/host nodes in the (const) world communicator.
-        static label numNodes() noexcept
-        {
-            return numNodes_;
-        }
+        static int numNodes() noexcept { return numNodes_; }
 
         //- The parent communicator
-        static label parent(const label communicator)
+        static label parent(int communicator)
         {
             return parentComm_(communicator);
         }
 
         //- The list of ranks within a given communicator
-        static List<int>& procID(const label communicator)
+        static List<int>& procID(int communicator)
         {
             return procIDs_[communicator];
         }
@@ -1232,6 +1417,9 @@ public:
         //- Processor offsets corresponding to the inter-node communicator
         static const List<int>& interNode_offsets();
 
+        //- The range (start/size) of the commLocalNode ranks in terms of the
+        //- (const) world communicator processors.
+        static const rangeType& localNode_parentProcs();
 
         //- Linear communication schedule (special case) for given communicator
         static const commsStructList& linearCommunication(int communicator);
@@ -1240,8 +1428,8 @@ public:
         static const commsStructList& treeCommunication(int communicator);
 
         //- Communication schedule for all-to-master (proc 0) as
-        //- linear/tree/none with switching based on UPstream::nProcsSimpleSum
-        //- and the is_parallel() state and the optional \c linear parameter.
+        //- linear/tree/none with switching based on UPstream::nProcsSimpleSum,
+        //- the is_parallel() state and the optional \c linear parameter.
         static const commsStructList& whichCommunication
         (
             const int communicator,
@@ -1391,107 +1579,69 @@ public:
 
     // Low-level gather/scatter routines
 
-        #undef  Pstream_CommonRoutines
-        #define Pstream_CommonRoutines(Type)                                  \
-                                                                              \
-        /*! \brief Receive identically-sized \c Type data from all ranks */   \
-        static void mpiGather                                                 \
-        (                                                                     \
-            /*! On rank: individual value to send (or nullptr for inplace) */ \
-            const Type* sendData,                                             \
-            /*! Master: receive buffer with all values */                     \
-            /*! Or for in-place send/recv when sendData is nullptr */         \
-            Type* recvData,                                                   \
-            /*! Number of send/recv data per rank. Globally consistent! */    \
-            int count,                                                        \
-            const label communicator = worldComm                              \
-        );                                                                    \
-                                                                              \
-        /*! \brief Send identically-sized \c Type data to all ranks */        \
-        static void mpiScatter                                                \
-        (                                                                     \
-            /*! Master: send buffer with all values (nullptr for inplace) */  \
-            const Type* sendData,                                             \
-            /*! On rank: individual value to receive */                       \
-            /*! Or for in-place send/recv when sendData is nullptr */         \
-            Type* recvData,                                                   \
-            /*! Number of send/recv data per rank. Globally consistent! */    \
-            int count,                                                        \
-            const label communicator = worldComm                              \
-        );                                                                    \
-                                                                              \
-        /*! \brief Gather/scatter identically-sized \c Type data */           \
-        /*! Send data from proc slot, receive into all slots */               \
-        static void mpiAllGather                                              \
-        (                                                                     \
-            /*! On all ranks: the base of the data locations */               \
-            Type* allData,                                                    \
-            /*! Number of send/recv data per rank. Globally consistent! */    \
-            int count,                                                        \
-            const label communicator = worldComm                              \
-        );                                                                    \
-                                                                              \
-        /*! \brief Receive variable length \c Type data from all ranks */     \
-        static void mpiGatherv                                                \
-        (                                                                     \
-            const Type* sendData,                                             \
-            int sendCount,  /*!< Ignored on master if recvCount[0] == 0 */    \
-            Type* recvData,                 /*!< Ignored on non-root rank */  \
-            const UList<int>& recvCounts,   /*!< Ignored on non-root rank */  \
-            const UList<int>& recvOffsets,  /*!< Ignored on non-root rank */  \
-            const label communicator = worldComm                              \
-        );                                                                    \
-                                                                              \
-        /*! \brief Send variable length \c Type data to all ranks */          \
-        static void mpiScatterv                                               \
-        (                                                                     \
-            const Type* sendData,           /*!< Ignored on non-root rank */  \
-            const UList<int>& sendCounts,   /*!< Ignored on non-root rank */  \
-            const UList<int>& sendOffsets,  /*!< Ignored on non-root rank */  \
-            Type* recvData,                                                   \
-            int recvCount,                                                    \
-            const label communicator = worldComm                              \
-        );                                                                    \
-                                                                              \
-        /*! \deprecated(2025-02) prefer mpiGatherv */                         \
-        FOAM_DEPRECATED_FOR(2025-02, "mpiGatherv()")                          \
-        inline static void gather                                             \
-        (                                                                     \
-            const Type* send,                                                 \
-            int count,                                                        \
-            Type* recv,                                                       \
-            const UList<int>& counts,                                         \
-            const UList<int>& offsets,                                        \
-            const label comm = worldComm                                      \
-        )                                                                     \
-        {                                                                     \
-            UPstream::mpiGatherv(send, count, recv, counts, offsets, comm);   \
-        }                                                                     \
-                                                                              \
-        /*! \deprecated(2025-02) prefer mpiScatterv */                        \
-        FOAM_DEPRECATED_FOR(2025-02, "mpiScatterv()")                         \
-        inline static void scatter                                            \
-        (                                                                     \
-            const Type* send,                                                 \
-            const UList<int>& counts,                                         \
-            const UList<int>& offsets,                                        \
-            Type* recv,                                                       \
-            int count,                                                        \
-            const label comm = worldComm                                      \
-        )                                                                     \
-        {                                                                     \
-            UPstream::mpiScatterv(send, counts, offsets, recv, count, comm);  \
-        }
+        //- Receive identically-sized (contiguous) data from all ranks
+        template<class Type>
+        static void mpiGather
+        (
+            //! On rank: individual value to send (or nullptr for inplace)
+            const Type* sendData,
+            //! Master: receive buffer with all values
+            //! Or for in-place send/recv when sendData is nullptr
+            Type* recvData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const int communicator = UPstream::worldComm
+        );
 
-        Pstream_CommonRoutines(char);
-        Pstream_CommonRoutines(int32_t);
-        Pstream_CommonRoutines(int64_t);
-        Pstream_CommonRoutines(uint32_t);
-        Pstream_CommonRoutines(uint64_t);
-        Pstream_CommonRoutines(float);
-        Pstream_CommonRoutines(double);
+        //- Send identically-sized (contiguous) data to all ranks
+        template<class Type>
+        static void mpiScatter
+        (
+            //! On master: send buffer with all values (nullptr for inplace)
+            const Type* sendData,
+            //! On rank: individual value to receive
+            //! Or for in-place send/recv when sendData is nullptr
+            Type* recvData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const int communicator = UPstream::worldComm
+        );
 
-        #undef Pstream_CommonRoutines
+        //- Gather/scatter identically-sized data
+        //  Send data from proc slot, receive into all slots
+        template<class Type>
+        static void mpiAllGather
+        (
+            //! On all ranks: the base of the data locations
+            Type* allData,
+            //! Number of send/recv data per rank. Globally consistent!
+            int count,
+            const int communicator = UPstream::worldComm
+        );
+
+        //- Receive variable length data from all ranks
+        template<class Type>
+        static void mpiGatherv
+        (
+            const Type* sendData,
+            int sendCount,  //!< Ignored on master if recvCount[0] == 0
+            Type* recvData,                 //!< Ignored on non-root rank
+            const UList<int>& recvCounts,   //!< Ignored on non-root rank
+            const UList<int>& recvOffsets,  //!< Ignored on non-root rank
+            const int communicator = UPstream::worldComm
+        );
+
+        //- Send variable length data to all ranks
+        template<class Type>
+        static void mpiScatterv
+        (
+            const Type* sendData,           //!< Ignored on non-root rank
+            const UList<int>& sendCounts,   //!< Ignored on non-root rank
+            const UList<int>& sendOffsets,  //!< Ignored on non-root rank
+            Type* recvData,
+            int recvCount,
+            const int communicator = UPstream::worldComm
+        );
 
 
     // Gather single, contiguous value(s)
@@ -1502,7 +1652,7 @@ public:
         static List<T> allGatherValues
         (
             const T& localValue,
-            const label communicator = worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Gather individual values into list locations.
@@ -1514,7 +1664,7 @@ public:
         static List<T> listGatherValues
         (
             const T& localValue,
-            const label communicator = worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Scatter individual values from list locations.
@@ -1526,22 +1676,59 @@ public:
         static T listScatterValues
         (
             const UList<T>& allValues,
-            const label communicator = worldComm
+            const int communicator = UPstream::worldComm
         );
 
 
     // Broadcast Functions
 
-        //- Broadcast buffer contents to all processes in given communicator.
-        //- The sizes must match on all processes.
+        //- Broadcast buffer contents (contiguous types), from rank=0
+        //- to all ranks. The sizes must match on all processes.
         //  For \b non-parallel : do nothing.
         //  \return True on success
-        static bool broadcast
+        template<class Type>
+        inline static bool broadcast
         (
-            char* buf,
-            const std::streamsize bufSize,
-            const label communicator,
-            const int rootProcNo = masterNo()
+            Type* buffer,
+            std::streamsize count,
+            const int communicator
+        );
+
+
+    // Reductions
+
+        //- MPI_Reduce (blocking) for known operators
+        //  For \b non-parallel : do nothing.
+        template<class T>
+        static void mpiReduce
+        (
+            T values[],
+            int count,
+            const UPstream::opCodes opCodeId,
+            const int communicator
+        );
+
+        //- MPI_Allreduce (blocking) for known operators
+        //  For \b non-parallel : do nothing.
+        template<class T>
+        static void mpiAllReduce
+        (
+            T values[],
+            int count,
+            const UPstream::opCodes opCodeId,
+            const int communicator
+        );
+
+        //- MPI_Iallreduce (non-blocking) for known operators
+        //  For \b non-parallel : do nothing.
+        template<class T>
+        static void mpiAllReduce
+        (
+            T values[],
+            int count,
+            const UPstream::opCodes opCodeId,
+            const int communicator,
+            UPstream::Request& req
         );
 
 
@@ -1552,7 +1739,7 @@ public:
         static void reduceAnd
         (
             bool& value,
-            const label communicator = worldComm
+            const int communicator = worldComm
         );
 
         //- Logical (or) reduction (MPI_AllReduce)
@@ -1560,7 +1747,7 @@ public:
         static void reduceOr
         (
             bool& value,
-            const label communicator = worldComm
+            const int communicator = worldComm
         );
 
 
@@ -1603,6 +1790,38 @@ public:
         //     Should normally be restricted to a particular starting request.
         FOAM_DEPRECATED_FOR(2023-01, "waitRequests(int) method")
         static void waitRequests() { waitRequests(0); }
+
+        //- \deprecated(2025-02) prefer mpiGatherv
+        template<class Type>
+        FOAM_DEPRECATED_FOR(2025-02, "mpiGatherv()")
+        static void gather
+        (
+            const Type* send,
+            int count,
+            Type* recv,
+            const UList<int>& counts,
+            const UList<int>& offsets,
+            const int comm = UPstream::worldComm
+        )
+        {
+            UPstream::mpiGatherv(send, count, recv, counts, offsets, comm);
+        }
+
+        //- \deprecated(2025-02) prefer mpiScatterv
+        template<class Type>
+        FOAM_DEPRECATED_FOR(2025-02, "mpiScatterv()")
+        static void scatter
+        (
+            const Type* send,
+            const UList<int>& counts,
+            const UList<int>& offsets,
+            Type* recv,
+            int count,
+            const int comm = UPstream::worldComm
+        )
+        {
+            UPstream::mpiScatterv(send, counts, offsets, recv, count, comm);
+        }
 };
 
 
@@ -1691,7 +1910,7 @@ public:
         //      UPstream::Communicator::lookup(UPstream::commWorld())
         //  )
         //  \endcode
-        static Communicator lookup(const label comm);
+        static Communicator lookup(const int comm);
 
 
     // Member Functions
@@ -1710,6 +1929,9 @@ public:
 
         //- Reset to default constructed value (MPI_COMM_NULL)
         void reset() noexcept;
+
+        //- The number of ranks associated with the communicator
+        int size() const;
 };
 
 

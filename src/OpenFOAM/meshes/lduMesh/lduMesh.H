@@ -91,11 +91,10 @@ public:
 
             //- Helper: reduce with current communicator
             template<class T, class BinaryOp>
-            void reduce
-            (
-                T& Value,
-                const BinaryOp& bop
-            ) const;
+            void reduce(T& val, BinaryOp bop) const
+            {
+                Foam::reduce(val, bop, UPstream::msgType(), comm());
+            }
 
 
     // Info
@@ -116,10 +115,6 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "lduMeshTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

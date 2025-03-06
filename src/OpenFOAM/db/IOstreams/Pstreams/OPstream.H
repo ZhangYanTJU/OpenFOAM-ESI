@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2021-2024 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,14 +61,13 @@ public:
     // Constructors
 
         //- Construct for given process index to send to
-        //- and optional buffer size, write format
         OPstream
         (
             const UPstream::commsTypes commsType,
             const int toProcNo,
-            const label bufSize = 0,
+            const int bufferSize = 0,  //!< optional buffer size
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
@@ -81,15 +80,15 @@ public:
         static void send
         (
             const Type& value,
-            //! blocking or scheduled only!
+            //! buffered or scheduled only!
             const UPstream::commsTypes commsType,
             const int toProcNo,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         )
         {
-            OPstream os(commsType, toProcNo, 0, tag, comm, fmt);
+            OPstream os(commsType, toProcNo, 0, tag, communicator, fmt);
             os << value;
         }
 
@@ -101,7 +100,7 @@ public:
             const Type& value,
             const int toProcNo,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         )
         {
@@ -111,7 +110,7 @@ public:
                 UPstream::commsTypes::scheduled,  // ie, MPI_Send()
                 toProcNo,
                 tag,
-                comm,
+                communicator,
                 fmt
             );
         }
@@ -133,36 +132,18 @@ public:
 
     // Constructors
 
-        //- Construct for broadcast root, optional buffer size, write format
-        OPBstream
-        (
-            const UPstream::commsTypes,     //!< ignored
-            const int rootProcNo,           //!< normally UPstream::masterNo()
-            const label bufSize = 0,
-            const int tag = UPstream::msgType(),  //!< ignored
-            const label comm = UPstream::worldComm,
-            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
-        );
-
-        //- Construct for broadcast root and communicator,
-        //- with optional write format
-        OPBstream
-        (
-            const int rootProcNo,           //!< normally UPstream::masterNo()
-            const label comm,
-            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
-        );
-
         //- Construct with optional communicator and write format.
-        //- Uses UPstream::masterNo() root
         explicit OPBstream
         (
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
 
     // Static Functions
+
+        //- Use all send methods from base
+        using UOPBstream::send;
 
         //- Serialize a value and broadcast (root == UPstream::masterNo()).
         //- Uses \c operator<< for serialization
@@ -170,12 +151,32 @@ public:
         static void send
         (
             const Type& value,
-            const label comm = UPstream::worldComm,
-            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+            const int communicator = UPstream::worldComm
         )
         {
-            OPBstream os(comm, fmt);
-            os << value;
+            OPBstream os(communicator);
+            {
+                os << value;
+            }
+        }
+
+        //- Serialize multiple items and broadcast the buffer
+        //- Uses \c operator<< for serialization
+        template<class Type, class... Args>
+        static void sends
+        (
+            const int communicator,
+            Type& value,
+            Args&&... values
+        )
+        {
+            OPBstream os(communicator);
+            {
+                Detail::outputLoop(os, value, std::forward<Args>(values)...);
+                // Depending on compiler support:
+                // Pack via fold expression
+                // (((os << value) << std::forward<Args>(values)), ...);
+            }
         }
 };
 

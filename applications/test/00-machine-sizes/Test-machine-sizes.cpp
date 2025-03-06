@@ -51,17 +51,20 @@ Description
 //- Mapping of some fundamental and aggregate types to MPI data types
 enum class dataTypes : int
 {
-    // Builtin Types [8]:
-    DataTypes_begin,    //!< Begin builtin types (internal use)
-    type_byte = DataTypes_begin,  // also for char, unsigned char
+    // Fundamental Types [10]:
+    Basic_begin,
+    type_byte = Basic_begin,
+    type_int16,
     type_int32,
     type_int64,
+    type_uint16,
     type_uint32,
     type_uint64,
     type_float,
     type_double,
     type_long_double,
-    invalid
+    invalid,
+    Basic_end = invalid
 };
 
 
@@ -69,20 +72,19 @@ enum class dataTypes : int
 
 // Partial copy from UPstreamTraits.H
 
-//- A supported UPstream data type (intrinsic or user-defined)
+//- UPstream data type corresponding to an intrinsic (MPI) type
 template<class T>
-struct UPstream_base_dataType : std::false_type
+struct UPstream_mpi_dataType : std::false_type
 {
     static constexpr auto datatype_id = dataTypes::invalid;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Specializations of the above,
-// each to match the elements of UPstream::dataTypes
 
+// Specializations to match elements of UPstream::dataTypes
 #undef  defineUPstreamDataTraits
 #define defineUPstreamDataTraits(TypeId, Type)                                \
-    template<> struct UPstream_base_dataType<Type> : std::true_type           \
+    template<> struct UPstream_mpi_dataType<Type> : std::true_type            \
     {                                                                         \
         static constexpr auto datatype_id = dataTypes::TypeId;                \
     };
@@ -90,8 +92,10 @@ struct UPstream_base_dataType : std::false_type
 
 defineUPstreamDataTraits(type_byte,   char);
 defineUPstreamDataTraits(type_byte,   unsigned char);
+defineUPstreamDataTraits(type_int16,  int16_t);
 defineUPstreamDataTraits(type_int32,  int32_t);
 defineUPstreamDataTraits(type_int64,  int64_t);
+defineUPstreamDataTraits(type_uint16, uint16_t);
 defineUPstreamDataTraits(type_uint32, uint32_t);
 defineUPstreamDataTraits(type_uint64, uint64_t);
 defineUPstreamDataTraits(type_float,  float);
@@ -109,8 +113,8 @@ struct UPstream_alias_dataType
 :
     std::bool_constant
     <
-        // Base type (no alias needed)
-        UPstream_base_dataType<std::remove_cv_t<T>>::value ||
+        // Basic MPI type
+        UPstream_mpi_dataType<std::remove_cv_t<T>>::value ||
         (
             // Or some int 32/64 type to re-map
             std::is_integral_v<T>
@@ -118,15 +122,11 @@ struct UPstream_alias_dataType
         )
     >
 {
-    // Is it using the base type? (no alias needed)
-    static constexpr bool is_base =
-        UPstream_base_dataType<std::remove_cv_t<T>>::value;
-
     using base = std::conditional_t
     <
-        UPstream_base_dataType<std::remove_cv_t<T>>::value,  // is_base
-        std::remove_cv_t<T>,
-        std::conditional_t
+        UPstream_mpi_dataType<std::remove_cv_t<T>>::value,
+        std::remove_cv_t<T>,  // <- using mpi type (no alias)
+        std::conditional_t    // <- using alias
         <
             (
                 std::is_integral_v<T>
@@ -138,12 +138,32 @@ struct UPstream_alias_dataType
                 std::conditional_t<std::is_signed_v<T>, int32_t, uint32_t>,
                 std::conditional_t<std::is_signed_v<T>, int64_t, uint64_t>
             >,
-            char  // Fallback value (assuming it is contiguous)
+            char  // Fallback is a byte (eg, arbitrary contiguous data)
         >
     >;
 
     static constexpr auto datatype_id =
-        UPstream_base_dataType<base>::datatype_id;
+        UPstream_mpi_dataType<base>::datatype_id;
+};
+
+
+// Handle int8_t/uint8_t as aliases since 'signed char' etc may be
+// ambiguous
+
+//- Map \c int8_t to UPstream::dataTypes::type_byte
+template<>
+struct UPstream_alias_dataType<int8_t> : std::true_type
+{
+    using base = char;
+    static constexpr auto datatype_id = dataTypes::type_byte;
+};
+
+//- Map \c uint8_t to UPstream::dataTypes::type_byte
+template<>
+struct UPstream_alias_dataType<uint8_t> : std::true_type
+{
+    using base = unsigned char;
+    static constexpr auto datatype_id = dataTypes::type_byte;
 };
 
 
@@ -172,25 +192,30 @@ void print(const char* name, bool showLimits = true)
     }
 
     // A declared or deduced MPI type, or aliased
-    std::cout
-        << " is_mpi=" << UPstream_base_dataType<T>::value
-        << " (" << int(UPstream_base_dataType<T>::datatype_id) << ")";
-
-    if (UPstream_alias_dataType<T>::value)
+    if constexpr (UPstream_mpi_dataType<T>::value)
     {
-        if (UPstream_alias_dataType<T>::is_base)
-        {
-            std::cout<< " is_base";
-        }
-        else
-        {
-            std::cout<< " is_alias ("
-                << int(UPstream_alias_dataType<T>::datatype_id) << ")";
-        }
+        std::cout
+            << " is_mpi=("
+            << int(UPstream_mpi_dataType<T>::datatype_id) << ')';
     }
     else
     {
-        std::cout<< " no_alias";
+        std::cout << " is_mpi=(null)";
+    }
+
+    // Any aliases?
+    if constexpr (UPstream_alias_dataType<T>::value)
+    {
+        if constexpr (UPstream_mpi_dataType<T>::value)
+        {
+            std::cout << " alias=base";
+        }
+        else
+        {
+            std::cout
+                << " alias=("
+                << int(UPstream_alias_dataType<T>::datatype_id) << ')';
+        }
     }
 
     std::cout<< '\n';
@@ -217,6 +242,7 @@ int main(int argc, char *argv[])
 
     std::cout << '\n';
     print<char>("char");
+    print<signed char>("signed char");
     print<unsigned char>("unsigned char");
     print<short>("short");
     print<int>("int");

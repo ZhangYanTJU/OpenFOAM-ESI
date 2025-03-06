@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,7 +39,7 @@ Foam::UPstream::Communicator::Communicator() noexcept
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
 Foam::UPstream::Communicator
-Foam::UPstream::Communicator::lookup(const label comm)
+Foam::UPstream::Communicator::lookup(const int comm)
 {
     if (comm < 0 || comm >= PstreamGlobals::MPICommunicators_.size())
     {
@@ -67,6 +67,29 @@ bool Foam::UPstream::Communicator::good() const noexcept
 void Foam::UPstream::Communicator::reset() noexcept
 {
     *this = UPstream::Communicator(MPI_COMM_NULL);
+}
+
+
+int Foam::UPstream::Communicator::size() const
+{
+    int val = 0;
+
+    MPI_Comm comm = PstreamUtils::Cast::to_mpi(*this);
+
+    if (MPI_COMM_SELF == comm)
+    {
+        return 1;
+    }
+    else if
+    (
+        (MPI_COMM_NULL == comm)
+     || (MPI_SUCCESS != MPI_Comm_size(comm, &val))
+    )
+    {
+        val = 0;
+    }
+
+    return val;
 }
 
 

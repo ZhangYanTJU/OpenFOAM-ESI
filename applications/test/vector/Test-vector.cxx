@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,10 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "vectorField.H"
+#include "boolVector.H"
+#include "labelVector.H"
 #include "IOstreams.H"
+#include "FixedList.H"
 #include "Random.H"
 #include <algorithm>
 #include <random>
@@ -122,6 +125,42 @@ void testNormalise(Field<Type>& fld)
         << "  orig: " << fld << nl;
     fld.normalise();
     Info<< "  norm: " << fld << nl;
+}
+
+
+// Transcribe vectorspace information into a FixedList
+template<class Type>
+void testTranscribe(Type& input)
+{
+    if constexpr
+    (
+        is_vectorspace_v<Type>
+     && std::is_floating_point_v<typename pTraits_cmptType<Type>::type>
+    )
+    {
+        constexpr auto nCmpts = pTraits_nComponents<Type>::value;
+        using cmpt = typename pTraits_cmptType<Type>::type;
+
+        FixedList<cmpt, nCmpts+1> values;
+        values.back() = 100;  // some additional data
+
+        VectorSpaceOps<nCmpts>::copy_n(input.cdata(), values.data());
+
+        Info<< "Transcribed " << input << " => " << values << nl;
+
+        for (auto& val : values)
+        {
+            val *= -1;
+        }
+
+        VectorSpaceOps<nCmpts>::copy_n(values.cdata(), input.data());
+        Info<< "  copied back (-1) as " << input
+            << " from " << values << nl;
+    }
+    else
+    {
+        Info<< "Did not transcribe " << input << nl;
+    }
 }
 
 
@@ -238,6 +277,16 @@ int main(int argc, char *argv[])
         });
 
         testNormalise(vfld2);
+    }
+
+    Info<< nl
+        << "Test transcribing components" << nl;
+    {
+        vector vec1(1.1, 2.2, 3.3);
+        testTranscribe(vec1);
+
+        labelVector vec2(10, 20, 30);
+        testTranscribe(vec2);
     }
 
     Info<< "\nEnd\n" << nl;

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,21 +32,6 @@ License
 void Foam::UIPBstream::bufferIPCrecv()
 {
     NotImplemented;
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-std::streamsize Foam::UIPBstream::read
-(
-    const int rootProcNo,
-    char* buf,
-    const std::streamsize bufSize,
-    const label comm
-)
-{
-    NotImplemented;
-    return 0;
 }
 
 

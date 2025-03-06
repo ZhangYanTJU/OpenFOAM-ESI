@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2021-2024 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,29 +28,30 @@ License
 
 #include "UIPstream.H"
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
 
-void Foam::UIPstream::bufferIPCrecv()
-{
-    NotImplemented;
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-std::streamsize Foam::UIPstream::read
+std::streamsize Foam::UPstream::mpi_receive
 (
     const UPstream::commsTypes commsType,
+    void* buf,
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,
     const int fromProcNo,
-    char* buf,
-    const std::streamsize bufSize,
     const int tag,
-    const label communicator,
+    const int communicator,
     UPstream::Request* req
 )
 {
     NotImplemented;
     return 0;
+}
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::UIPstream::bufferIPCrecv()
+{
+    NotImplemented;
 }
 
 

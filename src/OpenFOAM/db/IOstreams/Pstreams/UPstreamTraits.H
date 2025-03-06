@@ -26,28 +26,50 @@ License
 Description
     A set of traits associated with UPstream communication
 
-    - UPstream_dataType trait:
-      This wrapper is unwinds the type to check against base/alias, but also
-      checks if it is a component aggregate of a supported UPstream data type.
-      This will be that main entry point for usage.
+    \par Front-facing traits
 
-    - UPstream_opType trait:
-      Provides a mapping of OpenFOAM ops to their MPI equivalent.
+    - \c UPstream_basic_dataType trait :<br>
+      The main entry point for reduction operations
+      (requires fundamental types).<br>
+      Checks against fundamental/aliased (excludes user-defined),
+      or is a component-wise aggregate of the same.
+
+    - \c UPstream_dataType trait :<br>
+      The main entry point for transmission (broadcast, send/recv, ...).<br>
+      Checks against fundamental/aliased/user-defined,
+      or is a component-wise aggregate of the same.
+
+    - \c UPstream_opType trait :<br>
+      Mapping of OpenFOAM ops to their MPI equivalent.
       The \c opcode_id is the corresponding internal representation.
 
-Note
-    Additional helper traits:
+    - \c UPstream_data_opType trait :<br>
+      Combination of UPstream_opType and UPstream_basic_dataType.
+    .
 
-    - UPstream_base_dataType trait:
-      Tests true/false if the specified data type has an internal
-      MPI equivalent.  The \c datatype_id is the corresponding
-      internal enumeration. Even if this tests as false, it will
-      always return \c type_byte as the fallback for general contiguous data
+    \par Additional helper traits (not normally used directly):
 
-    - UPstream_alias_dataType trait:
-      Provides mapping for <int/long/long long,...> to the fundamental
+    - \c UPstream_mpi_dataType trait :<br>
+      Tests true and provides valid \c datatype_id for MPI fundamental
+      data types. This trait will should not normally be used directly:
+      use UPstream_alias_dataType for 'low-level' purposes (see below).
+
+    - \c UPstream_user_dataType trait :<br>
+      Tests true and provides valid \c datatype_id for user-defined
+      data types.
+
+    - \c UPstream_alias_dataType trait :<br>
+      Use this in preference to UPstream_mpi_dataType.<br>
+      A pass-through to UPstream_mpi_dataType, but provides additional
+      mappings for <int/long/long long,...> to the fundamental
       32/64 bit integrals, since <int/long/long long,...> may not otherwise
-      directly map on all systems.
+      map directly on all systems.
+
+    - \c UPstream_any_dataType trait :<br>
+      Used as a building block for uniform aggregate types.<br>
+      Combines UPstream_user_dataType and UPstream_alias_dataType into a
+      single trait.
+    .
 
 \*---------------------------------------------------------------------------*/
 
@@ -88,26 +110,35 @@ template<class T> class Tensor;
 // template<class T> struct bitXorOp;
 
 //! \cond
+template<class T> struct UPstream_basic_dataType;
 template<class T> struct UPstream_dataType;
-template<class T> struct UPstream_opType;
 //! \endcond
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Base traits
-
-//- A supported UPstream (MPI) reduce/window operation type
+//- UPstream data type corresponding to a fundamental (MPI) type
 template<class T>
-struct UPstream_opType : std::false_type
+struct UPstream_mpi_dataType : std::false_type
 {
-    static constexpr auto opcode_id = UPstream::opCodes::invalid;
+    static constexpr auto datatype_id = UPstream::dataTypes::invalid;
 };
 
+//- Disallow \c void
+template<> struct UPstream_mpi_dataType<void> : std::false_type
+{
+    static constexpr auto datatype_id = UPstream::dataTypes::invalid;
+};
 
-//- A supported UPstream data type (intrinsic or user-defined)
+//- UPstream data type corresponding to user-defined type
 template<class T>
-struct UPstream_base_dataType : std::false_type
+struct UPstream_user_dataType : std::false_type
+{
+    static constexpr auto datatype_id = UPstream::dataTypes::invalid;
+};
+
+//- Disallow \c void
+template<> struct UPstream_user_dataType<void> : std::false_type
 {
     static constexpr auto datatype_id = UPstream::dataTypes::invalid;
 };
@@ -115,7 +146,305 @@ struct UPstream_base_dataType : std::false_type
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Trait specializations (op-codes)
+// Trait specializations (data types)
+
+// Specializations to match elements of UPstream::dataTypes.
+
+#undef  defineUPstreamDataTraits
+#define defineUPstreamDataTraits(TypeId, Type)                                \
+                                                                              \
+    /*! \brief Map \c Type to UPstream::dataTypes::TypeId */                  \
+    template<> struct UPstream_mpi_dataType<Type> : std::true_type            \
+    {                                                                         \
+        static constexpr auto datatype_id = UPstream::dataTypes::TypeId;      \
+    };                                                                        \
+    /*! \brief Map \c const \c Type to \c UPstream::dataTypes::TypeId */      \
+    template<> struct UPstream_mpi_dataType<const Type> : std::true_type      \
+    {                                                                         \
+        static constexpr auto datatype_id = UPstream::dataTypes::TypeId;      \
+    };
+
+// Fundamental Types [10]:
+// Note: uses 'int32_t,int64_t,...' instead of 'int,long,...' to minimize
+// the possibility of duplicate types. However, 'int8_t,uint8_t' are treated
+// as aliases (char,unsigned char) to avoid possible compilation issues.
+//
+// OpenFOAM defines Foam::label as either int32_t,int64_t (not int,long) too.
+defineUPstreamDataTraits(type_byte,   char);
+defineUPstreamDataTraits(type_byte,   unsigned char);
+defineUPstreamDataTraits(type_int16,  int16_t);
+defineUPstreamDataTraits(type_int32,  int32_t);
+defineUPstreamDataTraits(type_int64,  int64_t);
+defineUPstreamDataTraits(type_uint16, uint16_t);
+defineUPstreamDataTraits(type_uint32, uint32_t);
+defineUPstreamDataTraits(type_uint64, uint64_t);
+defineUPstreamDataTraits(type_float,  float);
+defineUPstreamDataTraits(type_double, double);
+defineUPstreamDataTraits(type_long_double, long double);
+
+#undef defineUPstreamDataTraits
+
+// ------------------------------------------------------------------------- //
+
+#undef  defineUPstreamDataTraits
+#define defineUPstreamDataTraits(TypeId, Type)                                \
+                                                                              \
+    /*! \brief Map \c Type to UPstream::dataTypes::TypeId */                  \
+    template<> struct UPstream_user_dataType<Type> : std::true_type           \
+    {                                                                         \
+        static constexpr auto datatype_id = UPstream::dataTypes::TypeId;      \
+    };                                                                        \
+    /*! \brief Map \c const \c Type to \c UPstream::dataTypes::TypeId */      \
+    template<> struct UPstream_user_dataType<const Type> : std::true_type     \
+    {                                                                         \
+        static constexpr auto datatype_id = UPstream::dataTypes::TypeId;      \
+    };
+
+
+// User Types [6]:
+defineUPstreamDataTraits(type_3float,  Vector<float>);
+defineUPstreamDataTraits(type_3double, Vector<double>);
+defineUPstreamDataTraits(type_6float,  SymmTensor<float>);
+defineUPstreamDataTraits(type_6double, SymmTensor<double>);
+defineUPstreamDataTraits(type_9float,  Tensor<float>);
+defineUPstreamDataTraits(type_9double, Tensor<double>);
+
+#undef defineUPstreamDataTraits
+
+
+// ------------------------------------------------------------------------- //
+
+//- Explicit handling of data type aliases. This is necessary since
+//- different systems map things like 'unsigned long' differently but we
+//- restrict ourselves to int32/int64 types.
+//
+//  Note that this trait serves as the single pass-through point when needing
+//  to reference UPstream_mpi_dataType elsewhere
+template<class T>
+struct UPstream_alias_dataType
+:
+    std::bool_constant
+    <
+        // Basic MPI type
+        UPstream_mpi_dataType<std::remove_cv_t<T>>::value ||
+        (
+            // Or some int 32/64 type to re-map
+            std::is_integral_v<T>
+         && (sizeof(T) == sizeof(int32_t) || sizeof(T) == sizeof(int64_t))
+        )
+    >
+{
+    using base = std::conditional_t
+    <
+        UPstream_mpi_dataType<std::remove_cv_t<T>>::value,
+        std::remove_cv_t<T>,  // <- using mpi type (no alias)
+        std::conditional_t    // <- using alias
+        <
+            (
+                std::is_integral_v<T>
+             && (sizeof(T) == sizeof(int32_t) || sizeof(T) == sizeof(int64_t))
+            ),
+            std::conditional_t
+            <
+                (sizeof(T) == sizeof(int32_t)),
+                std::conditional_t<std::is_signed_v<T>, int32_t, uint32_t>,
+                std::conditional_t<std::is_signed_v<T>, int64_t, uint64_t>
+            >,
+            char  // Fallback is a byte (eg, arbitrary contiguous data)
+        >
+    >;
+
+    static constexpr auto datatype_id =
+        UPstream_mpi_dataType<base>::datatype_id;
+};
+
+
+// Handle int8_t/uint8_t as aliases since 'signed char' etc may be
+// ambiguous
+
+//- Map \c int8_t to UPstream::dataTypes::type_byte
+template<>
+struct UPstream_alias_dataType<int8_t> : std::true_type
+{
+    using base = char;
+    static constexpr auto datatype_id = UPstream::dataTypes::type_byte;
+};
+
+//- Map \c uint8_t to UPstream::dataTypes::type_byte
+template<>
+struct UPstream_alias_dataType<uint8_t> : std::true_type
+{
+    using base = unsigned char;
+    static constexpr auto datatype_id = UPstream::dataTypes::type_byte;
+};
+
+// ------------------------------------------------------------------------- //
+
+//- UPstream data type (fundamental or user-defined),
+//- after resolving any aliases
+template<class T>
+struct UPstream_any_dataType
+:
+    std::bool_constant
+    <
+        UPstream_user_dataType<std::remove_cv_t<T>>::value
+     || UPstream_alias_dataType<T>::value
+    >
+{
+    using base = std::conditional_t
+    <
+        UPstream_user_dataType<std::remove_cv_t<T>>::value,
+        std::remove_cv_t<T>,
+        typename UPstream_alias_dataType<T>::base
+    >;
+
+    //- The corresponding UPstream::dataTypes enumeration
+    static constexpr auto datatype_id = []() constexpr noexcept
+    {
+        if constexpr (UPstream_user_dataType<std::remove_cv_t<T>>::value)
+        {
+            // A user-defined type
+            return UPstream_user_dataType<std::remove_cv_t<T>>::datatype_id;
+        }
+        else if constexpr (UPstream_alias_dataType<T>::value)
+        {
+            // Fundamental type or alias to a fundamental type
+            return UPstream_alias_dataType<T>::datatype_id;
+        }
+        else
+        {
+            return UPstream::dataTypes::invalid;
+        }
+    }();
+};
+
+
+// ------------------------------------------------------------------------- //
+
+//- UPstream fundamental/aliased (excludes user-defined) data type
+//- or a component aggregate of the same.
+//
+// True for the following conditions:
+// - The \c Type is directly supported
+// - The \c cmptType (eg, from VectorSpace) exists and is directly supported
+// - Fallback to byte-wise representation (ie, for contiguous)
+// .
+template<class T>
+struct UPstream_basic_dataType
+:
+    std::bool_constant
+    <
+        // non-aggregate type
+        UPstream_alias_dataType<T>::value
+        // aggregate type
+     || UPstream_alias_dataType<typename pTraits_cmptType<T>::type>::value
+    >
+{
+    //- The underlying data type (if supported) or byte
+    using base = std::conditional_t
+    <
+        UPstream_alias_dataType<T>::value,
+        typename UPstream_alias_dataType<T>::base,  // <- non-aggregate
+        typename UPstream_alias_dataType
+        <typename pTraits_cmptType<T>::type>::base  // <- aggregate
+    >;
+
+    //- The corresponding UPstream::dataTypes enumeration
+    static constexpr auto datatype_id =
+        UPstream_alias_dataType<base>::datatype_id;
+
+    //- The size in terms of the number of underlying data elements
+    static std::streamsize size(std::streamsize n) noexcept
+    {
+        if constexpr (UPstream_alias_dataType<T>::value)
+        {
+            // non-aggregate: no multiplier
+            return n;
+        }
+        else
+        {
+            // aggregate: with multiplier
+            return n*(sizeof(T)/sizeof(base));
+        }
+    }
+};
+
+//- Disallow \c void
+template<> struct UPstream_basic_dataType<void> : UPstream_mpi_dataType<void>
+{
+    using base = void;
+    static std::streamsize size(std::streamsize n) noexcept { return n; }
+};
+
+
+// ------------------------------------------------------------------------- //
+
+//- UPstream fundamental/aliased/user-defined data type
+//- or a component aggregate of the same.
+//
+// True for the following conditions:
+// - The \c Type is directly supported
+// - The \c cmptType (eg, from VectorSpace) exists and is directly supported
+// - Fallback to byte-wise representation (ie, for contiguous)
+// .
+template<class T>
+struct UPstream_dataType
+:
+    std::bool_constant
+    <
+        UPstream_any_dataType<T>::value
+     || UPstream_any_dataType<typename pTraits_cmptType<T>::type>::value
+    >
+{
+    //- The underlying data type (if supported) or byte
+    using base = std::conditional_t
+    <
+        UPstream_any_dataType<T>::value,
+        typename UPstream_any_dataType<T>::base,   // <- non-aggregate
+        typename UPstream_any_dataType
+        <typename pTraits_cmptType<T>::type>::base  // <- aggregate
+    >;
+
+    //- The corresponding UPstream::dataTypes enumeration
+    static constexpr auto datatype_id =
+        UPstream_any_dataType<base>::datatype_id;
+
+    //- The size in terms of the number of base data elements
+    static std::streamsize size(std::streamsize n) noexcept
+    {
+        if constexpr (UPstream_any_dataType<T>::value)
+        {
+            // non-aggregate: no multiplier
+            return n;
+        }
+        else
+        {
+            // aggregate: with multiplier
+            return n*(sizeof(T)/sizeof(base));
+        }
+    }
+};
+
+//- Disallow \c void
+template<> struct UPstream_dataType<void> : UPstream_basic_dataType<void> {};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Reduction op-codes
+
+//- A supported UPstream (MPI) reduce/window operation type
+template<class BinaryOp>
+struct UPstream_opType : std::false_type
+{
+    static constexpr auto opcode_id = UPstream::opCodes::invalid;
+};
+
+//- Disallow \c void
+template<> struct UPstream_opType<void> : std::false_type
+{
+    static constexpr auto opcode_id = UPstream::opCodes::invalid;
+};
 
 //- Map minOp\<T\> to \c UPstream::opCodes::op_min
 template<class T>
@@ -138,8 +467,7 @@ struct UPstream_opType<Foam::sumOp<T>> : std::true_type
     static constexpr auto opcode_id = UPstream::opCodes::op_sum;
 };
 
-//- Map plusOp\<T\> to \c UPstream::opCodes::op_sum
-//- as a recognized alternative to sumOp\<T\>
+//- Map plusOp\<T\> (same as sumOp\<T\>) to \c UPstream::opCodes::op_sum
 template<class T>
 struct UPstream_opType<Foam::plusOp<T>> : std::true_type
 {
@@ -164,16 +492,15 @@ struct UPstream_opType<Foam::multiplyOp<T>> : std::true_type
 // Be extra restrictive for now
 
 //- Map bitAndOp\<T\> to \c UPstream::opCodes::op_bit_and
-//- (for unsigned integrals)
+//- for integrals (signed or unsigned), but also allow void as "generic"
 template<class T>
 struct UPstream_opType<Foam::bitAndOp<T>>
 :
-    // ie, std::unsigned_integral<T> concept
-    std::bool_constant<std::is_integral_v<T> && !std::is_signed_v<T>>
+    std::bool_constant<std::is_integral_v<T> || std::is_void_v<T>>
 {
     static constexpr auto opcode_id = []() constexpr noexcept
     {
-        if constexpr (std::is_integral_v<T> && !std::is_signed_v<T>)
+        if constexpr (std::is_integral_v<T> || std::is_void_v<T>)
             return UPstream::opCodes::op_bit_and;
         else
             return UPstream::opCodes::invalid;
@@ -181,16 +508,15 @@ struct UPstream_opType<Foam::bitAndOp<T>>
 };
 
 //- Map bitOrOp\<T\> to \c UPstream::opCodes::op_bit_or
-//- (for unsigned integrals)
+//- for integrals (signed or unsigned), but also allow void as "generic"
 template<class T>
 struct UPstream_opType<Foam::bitOrOp<T>>
 :
-    // ie, std::unsigned_integral<T> concept
-    std::bool_constant<std::is_integral_v<T> && !std::is_signed_v<T>>
+    std::bool_constant<std::is_integral_v<T> || std::is_void_v<T>>
 {
     static constexpr auto opcode_id = []() constexpr noexcept
     {
-        if constexpr (std::is_integral_v<T> && !std::is_signed_v<T>)
+        if constexpr (std::is_integral_v<T> || std::is_void_v<T>)
             return UPstream::opCodes::op_bit_or;
         else
             return UPstream::opCodes::invalid;
@@ -198,17 +524,41 @@ struct UPstream_opType<Foam::bitOrOp<T>>
 };
 
 //- Map bitXorOp\<T\> to \c UPstream::opCodes::op_bit_xor
-//- (for unsigned integrals)
+//- for integrals (signed or unsigned), but also allow void as "generic"
 template<class T>
 struct UPstream_opType<Foam::bitXorOp<T>>
 :
-    // ie, std::unsigned_integral<T> concept
-    std::bool_constant<std::is_integral_v<T> && !std::is_signed_v<T>>
+    std::bool_constant<std::is_integral_v<T> || std::is_void_v<T>>
 {
     static constexpr auto opcode_id = []() constexpr noexcept
     {
-        if constexpr (std::is_integral_v<T> && !std::is_signed_v<T>)
+        if constexpr (std::is_integral_v<T> || std::is_void_v<T>)
             return UPstream::opCodes::op_bit_xor;
+        else
+            return UPstream::opCodes::invalid;
+    }();
+};
+
+
+//- Combined query of opType and the underlying basic data type
+//  This handling may be simplified in the future...
+template<class BinaryOp, class T>
+struct UPstream_data_opType
+:
+    std::bool_constant
+    <
+        UPstream_opType<BinaryOp>::value
+     && UPstream_basic_dataType<T>::value
+    >
+{
+    static constexpr auto opcode_id = []() constexpr noexcept
+    {
+        if constexpr
+        (
+            UPstream_opType<BinaryOp>::value
+         && UPstream_basic_dataType<T>::value
+        )
+            return UPstream_opType<BinaryOp>::opcode_id;
         else
             return UPstream::opCodes::invalid;
     }();
@@ -217,153 +567,30 @@ struct UPstream_opType<Foam::bitXorOp<T>>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Trait specializations (data types)
+// Convenience Functions (FUTURE?)
 
-// Specializations to match elements of UPstream::dataTypes
-#undef  defineUPstreamDataTraits
-#define defineUPstreamDataTraits(TypeId, Type)                                \
-                                                                              \
-    /*! \brief Map \c Type to UPstream::dataTypes::TypeId */                  \
-    template<> struct UPstream_base_dataType<Type> : std::true_type           \
-    {                                                                         \
-        static constexpr auto datatype_id = UPstream::dataTypes::TypeId;      \
-    };                                                                        \
-    /*! \brief Map \c const \c Type to \c UPstream::dataTypes::TypeId */      \
-    template<> struct UPstream_base_dataType<const Type> : std::true_type     \
-    {                                                                         \
-        static constexpr auto datatype_id = UPstream::dataTypes::TypeId;      \
-    };
-
-
-// Intrinsic Types [8]:
-// Note: uses 'int32_t,int64_t,...' instead of 'int,long,...' to minimize
-// the possibility of duplicates types.
-// OpenFOAM defines Foam::label as either int32_t,int64_t (not int,long) too.
-defineUPstreamDataTraits(type_byte,   char);
-defineUPstreamDataTraits(type_byte,   unsigned char);
-defineUPstreamDataTraits(type_int32,  int32_t);
-defineUPstreamDataTraits(type_int64,  int64_t);
-defineUPstreamDataTraits(type_uint32, uint32_t);
-defineUPstreamDataTraits(type_uint64, uint64_t);
-defineUPstreamDataTraits(type_float,  float);
-defineUPstreamDataTraits(type_double, double);
-defineUPstreamDataTraits(type_long_double, long double);
-
-// User Types [6]:
-defineUPstreamDataTraits(type_3float,  Vector<float>);
-defineUPstreamDataTraits(type_3double, Vector<double>);
-defineUPstreamDataTraits(type_6float,  SymmTensor<float>);
-defineUPstreamDataTraits(type_6double, SymmTensor<double>);
-defineUPstreamDataTraits(type_9float,  Tensor<float>);
-defineUPstreamDataTraits(type_9double, Tensor<double>);
-
-#undef defineUPstreamDataTraits
-
-
-// ------------------------------------------------------------------------- //
-
-//- Explicit handling of data type aliases. This is necessary since
-//- different systems map things like 'unsigned long' differently but we
-//- restrict ourselves to int32/int64 types
-template<class T>
-struct UPstream_alias_dataType
-:
-    std::bool_constant
-    <
-        // Base type (no alias needed)
-        UPstream_base_dataType<std::remove_cv_t<T>>::value ||
-        (
-            // Or some int 32/64 type to re-map
-            std::is_integral_v<T>
-         && (sizeof(T) == sizeof(int32_t) || sizeof(T) == sizeof(int64_t))
-        )
-    >
-{
-    // Is it using the base type? (no alias needed)
-    static constexpr bool is_base =
-        UPstream_base_dataType<std::remove_cv_t<T>>::value;
-
-    using base = std::conditional_t
-    <
-        UPstream_base_dataType<std::remove_cv_t<T>>::value,
-        std::remove_cv_t<T>,  // <- using base
-        std::conditional_t    // <- using alias
-        <
-            (
-                std::is_integral_v<T>
-             && (sizeof(T) == sizeof(int32_t) || sizeof(T) == sizeof(int64_t))
-            ),
-            std::conditional_t
-            <
-                (sizeof(T) == sizeof(int32_t)),
-                std::conditional_t<std::is_signed_v<T>, int32_t, uint32_t>,
-                std::conditional_t<std::is_signed_v<T>, int64_t, uint64_t>
-            >,
-            char  // Fallback is a byte (eg, arbitrary contiguous data)
-        >
-    >;
-
-    static constexpr auto datatype_id =
-        UPstream_base_dataType<base>::datatype_id;
-};
-
-
-// ------------------------------------------------------------------------- //
-
-//- A supported UPstream data type (fundamental or user-defined)
-//- or a component aggregate of a supported UPstream data type.
+// inline bool is_UPstream_mpi_dataTypeCode(UPstream::dataTypes id) noexcept
+// {
+//     return
+//     (
+//         int(id) >= int(UPstream::opCodes::Basic_begin)
+//      && int(id)  < int(UPstream::opCodes::Basic_end)
+//     );
+// }
 //
-// Is true for the following conditions:
-// - The \c Type is directly supported
-// - The \c cmptType (eg, from VectorSpace) exists and is directly supported
-// - Fallback to byte-wise representation (ie, for contiguous)
-// .
-template<class T>
-struct UPstream_dataType
-:
-    std::bool_constant
-    <
-        UPstream_alias_dataType<T>::value
-     || UPstream_alias_dataType<typename pTraits_cmptType<T>::type>::value
-    >
-{
-    // Is it using the base type? (ie, not using components)
-    static constexpr bool is_base = UPstream_alias_dataType<T>::value;
-
-    //- The underlying data type (if supported) or byte
-    using base = std::conditional_t
-    <
-        UPstream_alias_dataType<T>::value,
-        typename UPstream_alias_dataType<T>::base,  // <- using base
-        typename UPstream_alias_dataType
-        <typename pTraits_cmptType<T>::type>::base  // <- using components
-    >;
-
-    //- The corresponding UPstream::dataTypes enumeration
-    static constexpr auto datatype_id =
-        UPstream_base_dataType<base>::datatype_id;
-
-    //- The size in terms of the number of underlying data elements
-    static std::streamsize size(std::streamsize count) noexcept
-    {
-        if constexpr (UPstream_alias_dataType<T>::value)
-        {
-            // using base: no multiplier
-            return count;
-        }
-        else
-        {
-            // using components: with multiplier
-            return count*(sizeof(T)/sizeof(base));
-        }
-    }
-};
+// inline bool is_UPstream_reduceOpCode(UPstream::opCodes id) noexcept
+// {
+//     return
+//     (
+//         int(id) >= int(UPstream::opCodes::Basic_begin)
+//      && int(id)  < int(UPstream::opCodes::Basic_end)
+//     );
+// }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

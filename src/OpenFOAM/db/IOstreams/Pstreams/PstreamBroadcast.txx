@@ -25,110 +25,181 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "OPstream.H"
 #include "IPstream.H"
-#include "contiguous.H"
+#include "OPstream.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::Pstream::broadcast(Type& value, const label comm)
+void Foam::Pstream::broadcast
+(
+    Type& value,
+    const int communicator
+)
 {
-    if constexpr (is_contiguous_v<Type>)
+    if (!UPstream::is_parallel(communicator))
     {
-        // Note: contains parallel guard internally
+        return;
+    }
+    else if constexpr (is_contiguous_v<Type>)
+    {
         UPstream::broadcast
         (
             reinterpret_cast<char*>(&value),
             sizeof(Type),
-            comm
+            communicator
         );
     }
-    else if (UPstream::is_parallel(comm))
+    else
     {
-        if (UPstream::master(comm))
+        if (UPstream::master(communicator))
         {
-            OPBstream os(comm);
-            os << value;
+            OPBstream::send(value, communicator);
         }
-        else  // UPstream::is_subrank(comm)
+        else
         {
-            IPBstream is(comm);
-            is >> value;
+            IPBstream::recv(value, communicator);
+        }
+    }
+}
+
+
+template<class Type, unsigned N>
+void Foam::Pstream::broadcast
+(
+    FixedList<Type, N>& list,
+    const int communicator
+)
+{
+    if (!UPstream::is_parallel(communicator))
+    {
+        return;
+    }
+    else if constexpr (is_contiguous_v<Type>)
+    {
+        // Size is known and identical on all ranks
+        UPstream::broadcast(list.data(), list.size(), communicator);
+    }
+    else
+    {
+        // Non-contiguous content - serialize it
+        if (UPstream::master(communicator))
+        {
+            OPBstream::send(list, communicator);
+        }
+        else
+        {
+            IPBstream::recv(list, communicator);
         }
     }
 }
 
 
 template<class Type, class... Args>
-void Foam::Pstream::broadcasts(const label comm, Type& arg1, Args&&... args)
+void Foam::Pstream::broadcasts
+(
+    const int communicator,
+    Type& value,
+    Args&&... values
+)
 {
-    if (UPstream::is_parallel(comm))
+    if (!UPstream::is_parallel(communicator))
     {
-        if (UPstream::master(comm))
+        return;
+    }
+    else if constexpr (!sizeof...(values) && is_contiguous_v<Type>)
+    {
+        // A single-value and contiguous
+        UPstream::broadcast(&value, 1, communicator);
+    }
+    else
+    {
+        // Non-contiguous data, or multiple data - needs serialization
+
+        if (UPstream::master(communicator))
         {
-            OPBstream os(comm);
-            Detail::outputLoop(os, arg1, std::forward<Args>(args)...);
+            OPBstream::sends
+            (
+                communicator,
+                value,
+                std::forward<Args>(values)...
+            );
         }
-        else  // UPstream::is_subrank(comm)
+        else
         {
-            IPBstream is(comm);
-            Detail::inputLoop(is, arg1, std::forward<Args>(args)...);
+            IPBstream::recvs
+            (
+                communicator,
+                value,
+                std::forward<Args>(values)...
+            );
         }
     }
 }
 
 
 template<class ListType>
-void Foam::Pstream::broadcastList(ListType& list, const label comm)
+void Foam::Pstream::broadcastList
+(
+    ListType& list,
+    const int communicator
+)
 {
-    if constexpr (is_contiguous_v<typename ListType::value_type>)
+    if (!UPstream::is_parallel(communicator))
+    {
+        return;
+    }
+    else if constexpr (is_contiguous_v<typename ListType::value_type>)
     {
         // List data are contiguous
         // 1. broadcast the size
         // 2. resize for receiver list
         // 3. broadcast contiguous contents
 
-        if (UPstream::is_parallel(comm))
+        label len(list.size());
+
+        UPstream::mpi_broadcast
+        (
+            reinterpret_cast<char*>(&len),
+            sizeof(label),
+            UPstream::dataTypes::type_byte,
+            communicator
+        );
+
+        if (len)
         {
-            label len(list.size());
-
-            UPstream::broadcast
-            (
-                reinterpret_cast<char*>(&len),
-                sizeof(label),
-                comm
-            );
-
-            if (UPstream::is_subrank(comm))
-            {
-                list.resize_nocopy(len);
-            }
-
-            if (len)
-            {
-                UPstream::broadcast
-                (
-                    list.data_bytes(),
-                    list.size_bytes(),
-                    comm
-                );
-            }
+            // Only broadcast non-empty content
+            UPstream::broadcast(list.data(), list.size(), communicator);
         }
     }
-    else if (UPstream::is_parallel(comm))
+    else
     {
         // List data are non-contiguous - serialize/de-serialize
 
-        if (UPstream::master(comm))
+        if (UPstream::master(communicator))
         {
-            OPBstream os(comm);
-            os << list;
+            if (list.empty())
+            {
+                // Do not serialize if empty.
+                // Just broadcast zero-size in a form that IPBstream can expect
+                OPBstream::send(Foam::zero{}, communicator);
+            }
+            else
+            {
+                OPBstream::send(list, communicator);
+            }
         }
-        else  // UPstream::is_subrank(comm)
+        else
         {
-            IPBstream is(comm);
-            is >> list;
+            IPBstream is(communicator);
+            if (is.remaining() > 0)  // Received a non-empty buffer
+            {
+                is >> list;
+            }
+            else
+            {
+                list.clear();
+            }
         }
     }
 }
@@ -148,11 +219,11 @@ template<class Type>
 Type returnBroadcast
 (
     const Type& value,
-    const label comm = UPstream::worldComm
+    const int communicator = UPstream::worldComm
 )
 {
     Type work(value);
-    Pstream::broadcast(work, comm);
+    Pstream::broadcast(work, communicator);
     return work;
 }
 

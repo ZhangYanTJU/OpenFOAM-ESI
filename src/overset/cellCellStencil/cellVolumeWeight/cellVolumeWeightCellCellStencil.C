@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2014-2023 OpenCFD Ltd.
+    Copyright (C) 2014-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -227,7 +227,7 @@ void Foam::cellCellStencils::cellVolumeWeight::findHoles
     {
         // Synchronise region status on processors
         // (could instead swap status through processor patches)
-        Pstream::listCombineReduce(regionType, maxEqOp<label>());
+        Pstream::listReduce(regionType, maxOp<label>());
 
         // Communicate region status through interpolative cells
         labelList cellRegionType(labelUIndList(regionType, cellRegion));
@@ -602,7 +602,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
     {
         nCellsPerZone[zoneID[cellI]]++;
     }
-    Pstream::listCombineReduce(nCellsPerZone, plusEqOp<label>());
+    Pstream::listReduce(nCellsPerZone, sumOp<label>());
 
     Info<< typeName << " : detected " << nZones
         << " mesh regions" << nl << endl;

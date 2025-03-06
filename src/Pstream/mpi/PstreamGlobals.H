@@ -63,16 +63,26 @@ extern DynamicList<MPI_Comm> MPICommunicators_;
 //- Outstanding non-blocking operations.
 extern DynamicList<MPI_Request> outstandingRequests_;
 
-typedef Foam::FixedList<MPI_Datatype, 15> DataTypeLookupTable;
+// The fundamental count for each UPstream::dataTypes entry
+typedef Foam::FixedList<int, 17> DataTypeCountLookupTable;
 
-//- MPI data types corresponding to some fundamental and OpenFOAM types.
+//- Fundamental count for each valid UPstream::dataTypes entry
+//- Indexed by UPstream::dataTypes enum
+extern DataTypeCountLookupTable dataTypesCount_;
+
+// For UPstream::dataTypes lookup, includes space for last 'invalid' entry
+typedef Foam::FixedList<MPI_Datatype, 17> DataTypeLookupTable;
+
+//- MPI data types corresponding to fundamental and OpenFOAM types.
 //- Indexed by UPstream::dataTypes enum
 extern DataTypeLookupTable MPIdataTypes_;
 
+// For UPstream::opCodes lookup, includes space for last 'invalid' entry
 typedef Foam::FixedList<MPI_Op, 13> OpCodesLookupTable;
 
 //- MPI operation types, indexed by UPstream::opCodes enum
 extern OpCodesLookupTable MPIopCodes_;
+
 
 
 // * * * * * * * * * * * * * * * Communicators * * * * * * * * * * * * * * * //
@@ -200,6 +210,25 @@ inline void push_request
         // Push onto list of requests
         PstreamGlobals::outstandingRequests_.push_back(request);
     }
+}
+
+
+// * * * * * * * * * * * * * * Convenience Methods * * * * * * * * * * * * * //
+
+//- Broadcast a single int64 value.
+//
+//  Ensures consistent data types. Used within the following:
+//  - UIPBstream::bufferIPCrecv()
+//  - UOPBstream::bufferIPCsend()
+//  - UOPBstream::send(Foam::zero, ...)
+
+inline bool broadcast_int64(int64_t& value, int comm)
+{
+    return
+    (
+        MPI_SUCCESS
+     == MPI_Bcast(&value, 1, MPI_INT64_T, 0, MPICommunicators_[comm])
+    );
 }
 
 

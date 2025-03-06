@@ -75,18 +75,20 @@ public:
 
     // Constructors
 
-        //- Construct for given communication type, with optional buffer size
-        explicit Pstream
-        (
-            const UPstream::commsTypes commsType,
-            const label bufSize = 0
-        )
+        //- Construct for communication type with empty buffer
+        explicit Pstream(const UPstream::commsTypes commsType) noexcept
+        :
+            UPstream(commsType)
+        {}
+
+        //- Construct for communication type with given buffer size
+        Pstream(const UPstream::commsTypes commsType, int bufferSize)
         :
             UPstream(commsType)
         {
-            if (bufSize > 0)
+            if (bufferSize > 0)
             {
-                transferBuf_.setCapacity(bufSize + 2*sizeof(scalar) + 1);
+                transferBuf_.setCapacity(bufferSize + 2*sizeof(scalar) + 1);
             }
         }
 
@@ -104,13 +106,27 @@ public:
         static void broadcast
         (
             Type& value,
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
+        );
+
+        //- Broadcast fixed-list content (contiguous or non-contiguous) to all
+        //- communicator ranks. Does nothing in \b non-parallel.
+        template<class Type, unsigned N>
+        static void broadcast
+        (
+            FixedList<Type, N>& list,
+            const int communicator = UPstream::worldComm
         );
 
         //- Broadcast multiple items to all communicator ranks.
         //- Does nothing in \b non-parallel.
         template<class Type, class... Args>
-        static void broadcasts(const label comm, Type& arg1, Args&&... args);
+        static void broadcasts
+        (
+            const int communicator,
+            Type& value,
+            Args&&... values
+        );
 
         //- Broadcast list content (contiguous or non-contiguous) to all
         //- communicator ranks. Does nothing in \b non-parallel.
@@ -120,7 +136,7 @@ public:
         static void broadcastList
         (
             ListType& list,
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
 
@@ -134,7 +150,7 @@ public:
             const UPstream::commsStructList& comms,  //!< Communication order
             //! [in,out]
             T& value,
-            const BinaryOp& bop,
+            BinaryOp bop,
             const int tag,
             const int communicator
         );
@@ -150,9 +166,9 @@ public:
         (
             //! [in,out] the result is only reliable on rank=0
             T& value,
-            const BinaryOp& bop,
+            BinaryOp bop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Gather individual values into list locations.
@@ -164,7 +180,7 @@ public:
         static List<T> listGatherValues
         (
             const T& localValue,
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             //! Only used for non-contiguous types
             const int tag = UPstream::msgType()
         );
@@ -178,7 +194,7 @@ public:
         static T listScatterValues
         (
             const UList<T>& allValues,
-            const label comm = UPstream::worldComm,
+            const int communicator = UPstream::worldComm,
             //! Only used for non-contiguous types
             const int tag = UPstream::msgType()
         );
@@ -192,9 +208,9 @@ public:
         (
             //! [in,out] the result is only reliable on rank=0
             T& value,
-            const CombineOp& cop,
+            CombineOp cop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Reduce inplace (cf. MPI Allreduce)
@@ -205,9 +221,9 @@ public:
         (
             //! [in,out] the result is consistent on all ranks
             T& value,
-            const CombineOp& cop,
+            CombineOp cop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Same as Pstream::combineReduce
@@ -216,12 +232,12 @@ public:
         (
             //! [in,out] the result is consistent on all ranks
             T& value,
-            const CombineOp& cop,
+            CombineOp cop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         )
         {
-            Pstream::combineReduce(value, cop, tag, comm);
+            Pstream::combineReduce(value, cop, tag, communicator);
         }
 
 
@@ -235,7 +251,7 @@ public:
             const UPstream::commsStructList& comms,  //!< Communication order
             //! [in,out]
             UList<T>& values,
-            const BinaryOp& bop,
+            BinaryOp bop,
             const int tag,
             const int communicator
         );
@@ -250,9 +266,9 @@ public:
         (
             //! [in,out] the result is only reliable on rank=0
             UList<T>& values,
-            const BinaryOp& bop,
+            BinaryOp bop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Forwards to Pstream::listGather with an \em in-place \c cop
@@ -261,9 +277,9 @@ public:
         (
             //! [in,out] the result is only reliable on rank=0
             UList<T>& values,
-            const CombineOp& cop,
+            CombineOp cop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Reduce list elements (list must be equal size on all ranks),
@@ -276,9 +292,9 @@ public:
         (
             //! [in,out] the result is consistent on all ranks
             UList<T>& values,
-            const BinaryOp& bop,
+            BinaryOp bop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Forwards to Pstream::listReduce with an \em in-place \c cop
@@ -287,9 +303,9 @@ public:
         (
             //! [in,out] the result is consistent on all ranks
             UList<T>& values,
-            const CombineOp& cop,
+            CombineOp cop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Same as Pstream::listCombineReduce
@@ -298,12 +314,12 @@ public:
         (
             //! [in,out] the result is consistent on all ranks
             UList<T>& values,
-            const CombineOp& cop,
+            CombineOp cop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         )
         {
-            Pstream::listCombineReduce(values, cop, tag, comm);
+            Pstream::listCombineReduce(values, cop, tag, communicator);
         }
 
 
@@ -316,7 +332,7 @@ public:
         (
             const UPstream::commsStructList& comms,  //!< Communication order
             Container& values,
-            const BinaryOp& bop,
+            BinaryOp bop,
             const int tag,
             const int communicator
         );
@@ -331,9 +347,9 @@ public:
         (
             //! [in,out] the result is only reliable on rank=0
             Container& values,
-            const BinaryOp& bop,
+            BinaryOp bop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Forwards to Pstream::mapGather with an \em in-place \c cop
@@ -342,9 +358,9 @@ public:
         (
             //! [in,out] the result is only reliable on rank=0
             Container& values,
-            const CombineOp& cop,
+            CombineOp cop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Reduce inplace (cf. MPI Allreduce)
@@ -358,9 +374,9 @@ public:
         (
             //! [in,out] the result is consistent on all ranks
             Container& values,
-            const BinaryOp& bop,
+            BinaryOp bop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Forwards to Pstream::mapReduce with an \em in-place \c cop
@@ -369,9 +385,9 @@ public:
         (
             //! [in,out] the result is consistent on all ranks
             Container& values,
-            const CombineOp& cop,
+            CombineOp cop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Same as Pstream::mapCombineReduce
@@ -380,12 +396,12 @@ public:
         (
             //! [in,out] the result is consistent on all ranks
             Container& values,
-            const CombineOp& cop,
+            CombineOp cop,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         )
         {
-            Pstream::mapCombineReduce(values, cop, tag, comm);
+            Pstream::mapCombineReduce(values, cop, tag, communicator);
         }
 
 
@@ -423,7 +439,7 @@ public:
             //! [in,out]
             UList<T>& values,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
         //- Gather data, but keep individual values separate.
@@ -436,7 +452,7 @@ public:
             //! [in,out]
             UList<T>& values,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
 
@@ -449,7 +465,7 @@ public:
             //! [in,out]
             UList<T>& values,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int communicator = UPstream::worldComm
         );
 
 
@@ -640,7 +656,7 @@ public:
         (
             T& value,
             const int tag = UPstream::msgType(),  //!< ignored
-            const label comm = UPstream::worldComm
+            const int comm = UPstream::worldComm
         )
         {
             Pstream::broadcast(value, comm);
@@ -653,7 +669,7 @@ public:
         (
             T& value,
             const int tag = UPstream::msgType(),  //!< ignored
-            const label comm = UPstream::worldComm
+            const int comm = UPstream::worldComm
         )
         {
             Pstream::broadcast(value, comm);
@@ -666,7 +682,7 @@ public:
         (
             List<T>& value,
             const int tag = UPstream::msgType(),  //!< ignored
-            const label comm = UPstream::worldComm
+            const int comm = UPstream::worldComm
         )
         {
             Pstream::broadcast(value, comm);
@@ -679,7 +695,7 @@ public:
         (
             Container& values,
             const int tag = UPstream::msgType(),  //!< ignored
-            const label comm = UPstream::worldComm
+            const int comm = UPstream::worldComm
         )
         {
             Pstream::broadcast(values, comm);
