@@ -131,12 +131,13 @@ void printErrorMessage
 
 // The intel-mpi version of MPI_Reduce() does not accept IN_PLACE
 // operations (issue #3331)
-// Assume the same may be true for ms-mpi
-#if defined(I_MPI_VERSION) || defined(MSMPI_VER)
-#define Foam_broken_vendor_INPLACE_REDUCE
-#else
-#undef  Foam_broken_vendor_INPLACE_REDUCE
-#endif
+//
+// The open-mpi version (tested up to 4.1) accepts IN_PLACE but fails
+// with an MPI_ARG_ERR message.
+//
+// Do not assume that anyone actually supports this!
+
+#undef Foam_vendor_supports_INPLACE_REDUCE
 
 void Foam::UPstream::mpi_reduce
 (
@@ -178,12 +179,13 @@ void Foam::UPstream::mpi_reduce
             << " type:" << int(dataTypeId) << " count:" << count
             << " comm:" << communicator
             << Foam::endl;
+        // error::printStack(Perr);
     }
 
-    // Workaround for broken in-place handling.
+    // Workaround for missing/broken in-place handling.
     // Use a local buffer to send the data from.
 
-    #ifdef Foam_broken_vendor_INPLACE_REDUCE
+    #ifndef Foam_vendor_supports_INPLACE_REDUCE
     static std::unique_ptr<char[]> work;
     static int work_len(0);
 
@@ -201,11 +203,11 @@ void Foam::UPstream::mpi_reduce
         work.reset();
         work = std::make_unique<char[]>(work_len);
     }
-    void* sendData = work.get();
+    void* send_buffer = work.get();
 
-    std::memcpy(sendData, values, num_bytes);
+    std::memcpy(send_buffer, values, num_bytes);
     #else
-    void* sendData(nullptr);
+    void* send_buffer(nullptr);  // ie, in-place
     #endif
 
 
@@ -214,7 +216,7 @@ void Foam::UPstream::mpi_reduce
 
         PstreamDetail::reduce0
         (
-            sendData,
+            send_buffer,
             values,
             count,
             datatype,

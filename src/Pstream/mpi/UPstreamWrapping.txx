@@ -212,7 +212,7 @@ void Foam::PstreamDetail::allReduce
         }
         if constexpr (std::is_void_v<Type>)
         {
-            Perr<< count << " values";
+            Perr<< " count:" << count;
         }
         else
         {
@@ -280,23 +280,8 @@ void Foam::PstreamDetail::allReduce
         FatalErrorInFunction<< "MPI Allreduce ";
         if (immediate) FatalError<< "(non-blocking) ";
 
-        FatalError<< "failed for ";
-        if constexpr (std::is_void_v<Type>)
-        {
-            FatalError<< count << " values";
-        }
-        else
-        {
-            if (count == 1)
-            {
-                FatalError<< (*values);
-            }
-            else
-            {
-                FatalError<< UList<Type>(values, count);
-            }
-        }
-        FatalError<< Foam::abort(FatalError);
+        FatalError<< "failed for count:" << count
+            << Foam::abort(FatalError);
     }
 }
 
