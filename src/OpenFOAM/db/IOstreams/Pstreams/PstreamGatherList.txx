@@ -251,6 +251,125 @@ void Foam::Pstream::gatherList_algorithm
 
 
 template<class T>
+bool Foam::Pstream::gatherList_topo_algorithm
+(
+    UList<T>& values,
+    const int tag,
+    const int communicator
+)
+{
+    const bool withTopo =
+    (
+        UPstream::is_parallel(communicator)
+     && UPstream::usingTopoControl(UPstream::topoControls::gatherList)
+     && UPstream::usingNodeComms(communicator)
+    );
+
+    if (withTopo)
+    {
+        // Topological gathering
+
+        if (FOAM_UNLIKELY(values.size() < UPstream::nProcs(communicator)))
+        {
+            FatalErrorInFunction
+                << "List of values:" << values.size()
+                << " < numProcs:" << UPstream::nProcs(communicator) << nl
+                << Foam::abort(FatalError);
+        }
+
+        // Stage 1: gather within a node
+        // - ensure that ranks correspond to the correct section of the list
+
+        if (UPstream::is_parallel(UPstream::commLocalNode()))
+        {
+            const auto& procs = UPstream::localNode_parentProcs();
+            const auto subComm = UPstream::commLocalNode();
+
+            // The per-node sub-section of values:
+            auto slot = values.slice(procs.start(), procs.size());
+
+            Pstream::gatherList_algorithm<T>
+            (
+                // Use linear on the assumption that communication is fast
+                UPstream::whichCommunication(subComm, true),
+                slot,
+                tag,
+                subComm
+            );
+        }
+
+        // Stage 2: gather between node leaders
+        // - this unfortunately corresponds to a gatherv process
+        //   (number of cores per node is not identical)
+        // - code strongly resembles globalIndex::gather
+
+        if (UPstream::is_parallel(UPstream::commInterNode()))
+        {
+            const auto subComm = UPstream::commInterNode();
+
+            if (UPstream::master(subComm))
+            {
+                // Overall node-wise offsets
+                const auto& off = UPstream::interNode_offsets();
+
+                for (const int i : UPstream::subProcs(subComm))
+                {
+                    auto slot = values.slice(off[i], off[i+1]-off[i]);
+
+                    if constexpr (is_contiguous_v<T>)
+                    {
+                        UIPstream::read
+                        (
+                            UPstream::commsTypes::scheduled,
+                            i,
+                            slot,
+                            tag,
+                            subComm
+                        );
+                    }
+                    else
+                    {
+                        IPstream::recv(slot, i, tag, subComm);
+                    }
+                }
+            }
+            else
+            {
+                // The per-node sub-section of values:
+                const auto& procs = UPstream::localNode_parentProcs();
+                auto slot = values.slice(procs.start(), procs.size());
+
+                if constexpr (is_contiguous_v<T>)
+                {
+                    UOPstream::write
+                    (
+                        UPstream::commsTypes::scheduled,
+                        UPstream::masterNo(),
+                        slot,
+                        tag,
+                        subComm
+                    );
+                }
+                else
+                {
+                    OPstream::send
+                    (
+                        slot,
+                        UPstream::commsTypes::scheduled,
+                        UPstream::masterNo(),
+                        tag,
+                        subComm
+                    );
+                }
+            }
+        }
+    }
+
+    return withTopo;
+}
+
+
+template<class T>
 void Foam::Pstream::scatterList_algorithm
 (
     const UPstream::commsStructList& comms,  // Communication order
@@ -411,6 +530,129 @@ void Foam::Pstream::scatterList_algorithm
 
 
 template<class T>
+bool Foam::Pstream::scatterList_topo_algorithm
+(
+    UList<T>& values,
+    const int tag,
+    const int communicator
+)
+{
+    const bool withTopo =
+    (
+        UPstream::is_parallel(communicator)
+     && UPstream::usingTopoControl(UPstream::topoControls::gatherList)
+     && UPstream::usingNodeComms(communicator)
+    );
+
+    if (withTopo)
+    {
+        // Topological gathering
+
+        if (FOAM_UNLIKELY(values.size() < UPstream::nProcs(communicator)))
+        {
+            FatalErrorInFunction
+                << "List of values:" << values.size()
+                << " < numProcs:" << UPstream::nProcs(communicator) << nl
+                << Foam::abort(FatalError);
+        }
+
+        // Stage 1: scatter between node leaders
+        // - this unfortunately corresponds to a scatterv process
+        //   (number of cores per node is not identical)
+        // - code strongly resembles globalIndex::scatter
+
+        if (UPstream::is_parallel(UPstream::commInterNode()))
+        {
+            const auto subComm = UPstream::commInterNode();
+
+            if (UPstream::master(subComm))
+            {
+                const auto& off = UPstream::interNode_offsets();
+
+                for (const int i : UPstream::subProcs(subComm))
+                {
+                    const auto slot = values.slice(off[i], off[i+1]-off[i]);
+
+                    if constexpr (is_contiguous_v<T>)
+                    {
+                        UOPstream::write
+                        (
+                            UPstream::commsTypes::scheduled,
+                            i,
+                            slot,
+                            tag,
+                            subComm
+                        );
+                    }
+                    else
+                    {
+                        OPstream::send
+                        (
+                            slot,
+                            UPstream::commsTypes::scheduled,
+                            i,
+                            tag,
+                            subComm
+                        );
+                    }
+                }
+            }
+            else
+            {
+                // The per-node sub-section of values:
+                const auto& procs = UPstream::localNode_parentProcs();
+                auto slot = values.slice(procs.start(), procs.size());
+
+                if constexpr (is_contiguous_v<T>)
+                {
+                    UIPstream::read
+                    (
+                        UPstream::commsTypes::scheduled,
+                        UPstream::masterNo(),
+                        slot,
+                        tag,
+                        subComm
+                    );
+                }
+                else
+                {
+                    IPstream::recv
+                    (
+                        slot,
+                        UPstream::masterNo(),
+                        tag,
+                        subComm
+                    );
+                }
+            }
+        }
+
+        // Stage 2: send section within a node
+        // - ensure that ranks correspond to the correct section of the list
+        if (UPstream::is_parallel(UPstream::commLocalNode()))
+        {
+            const auto& procs = UPstream::localNode_parentProcs();
+            const auto subComm = UPstream::commInterNode();
+
+            // The per-node sub-section of values:
+            auto slot = values.slice(procs.start(), procs.size());
+
+            Pstream::scatterList_algorithm
+            (
+                // Use linear on the assumption that communication is fast
+                UPstream::whichCommunication(subComm, true),
+                slot,
+                tag,
+                subComm
+            );
+        }
+    }
+
+    return withTopo;
+}
+
+
+template<class T>
 void Foam::Pstream::gatherList
 (
     UList<T>& values,
@@ -436,12 +678,26 @@ void Foam::Pstream::gatherList
         // In-place gather for contiguous types - one element per rank
         UPstream::mpiGather(nullptr, values.data(), 1, communicator);
     }
-    else
+    else if
+    (
+        !Pstream::gatherList_topo_algorithm
+        (
+            values,
+            tag,
+            communicator
+        )
+    )
     {
         // Communication order
         const auto& commOrder = UPstream::whichCommunication(communicator);
 
-        Pstream::gatherList_algorithm(commOrder, values, tag, communicator);
+        Pstream::gatherList_algorithm
+        (
+            commOrder,
+            values,
+            tag,
+            communicator
+        );
     }
 }
 
@@ -464,12 +720,26 @@ void Foam::Pstream::scatterList
         // In-place scatter for contiguous types - one element per rank
         UPstream::mpiScatter(nullptr, values.data(), 1, communicator);
     }
-    else
+    else if
+    (
+        !Pstream::scatterList_topo_algorithm
+        (
+            values,
+            tag,
+            communicator
+        )
+    )
     {
         // Communication order
         const auto& commOrder = UPstream::whichCommunication(communicator);
 
-        Pstream::scatterList_algorithm(commOrder, values, tag, communicator);
+        Pstream::scatterList_algorithm
+        (
+            commOrder,
+            values,
+            tag,
+            communicator
+        );
     }
 }
 
@@ -502,11 +772,8 @@ void Foam::Pstream::allGatherList
     }
     else
     {
-        // Communication order
-        const auto& commOrder = UPstream::whichCommunication(communicator);
-
-        Pstream::gatherList_algorithm(commOrder, values, tag, communicator);
-        Pstream::scatterList_algorithm(commOrder, values, tag, communicator);
+        Pstream::gatherList(values, tag, communicator);
+        Pstream::scatterList(values, tag, communicator);
     }
 }
 

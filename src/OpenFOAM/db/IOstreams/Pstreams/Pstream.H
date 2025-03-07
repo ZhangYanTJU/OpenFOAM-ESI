@@ -459,11 +459,33 @@ public:
             const int communicator
         );
 
+        //- Gather data, keeping individual values separate.
+        //  \returns True if topo algorithm was applied
+        template<class T>
+        static bool gatherList_topo_algorithm
+        (
+            //! [in,out]
+            UList<T>& values,
+            const int tag,
+            const int communicator
+        );
+
         //- Implementation: inverse of gatherList_algorithm
         template<class T>
         static void scatterList_algorithm
         (
             const UPstream::commsStructList& comms,  //!< Communication order
+            //! [in,out]
+            UList<T>& values,
+            const int tag,
+            const int communicator
+        );
+
+        //- Implementation: inverse of gatherList_topo_algorithm
+        //  \returns True if topo algorithm was applied
+        template<class T>
+        static bool scatterList_topo_algorithm
+        (
             //! [in,out]
             UList<T>& values,
             const int tag,
