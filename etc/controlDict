@@ -147,6 +147,15 @@ OptimisationSwitches
     //  >= 3 : when there are more than N nodes
     nodeComms.min   0;
 
+    // Selection of topology-aware routines (bitmask)
+    //  0: disabled [default]
+    //  1: broadcast [MPI]
+    //  2: reduce/all-reduce [MPI]
+    // 16: gather (reduction) [manual algorithm]
+    // 32: mapGather (reduction) [manual algorithm]
+    // 64: gatherList/scatterList [manual algorithm]
+    topoControl     0;
+
     // Transfer double as float for processor boundaries. Mostly defunct.
     floatTransfer   0;
 
