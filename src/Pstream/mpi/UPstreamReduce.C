@@ -172,13 +172,20 @@ void Foam::UPstream::mpi_reduce
         FatalError << Foam::abort(FatalError);
     }
 
+    const bool withTopo =
+    (
+        (req == nullptr)
+     && UPstream::usingTopoControl(UPstream::topoControls::reduce)
+     && UPstream::usingNodeComms(communicator)
+    );
+
     if (FOAM_UNLIKELY(UPstream::debug))
     {
         Perr<< "[mpi_reduce] : "
             << " op:" << int(opCodeId)
             << " type:" << int(dataTypeId) << " count:" << count
             << " comm:" << communicator
-            << Foam::endl;
+            << " topo:" << withTopo << Foam::endl;
         // error::printStack(Perr);
     }
 
@@ -210,7 +217,44 @@ void Foam::UPstream::mpi_reduce
     void* send_buffer(nullptr);  // ie, in-place
     #endif
 
+    if (withTopo)
+    {
+        // Topological reduce
 
+        // Stage 1: local reduction within a node -> onto the node leader
+        if (UPstream::is_parallel(UPstream::commLocalNode_))
+        {
+            PstreamDetail::reduce0
+            (
+                send_buffer,
+                values,
+                count,
+                datatype,
+                optype,
+                UPstream::commLocalNode_
+            );
+        }
+
+        // Stage 2: reduce between node leaders -> world leader
+        if (UPstream::is_parallel(UPstream::commInterNode_))
+        {
+            // Transcribe the previous results as input for this stage
+            #ifndef Foam_vendor_supports_INPLACE_REDUCE
+            std::memcpy(send_buffer, values, num_bytes);
+            #endif
+
+            PstreamDetail::reduce0
+            (
+                send_buffer,
+                values,
+                count,
+                datatype,
+                optype,
+                UPstream::commInterNode_
+            );
+        }
+    }
+    else
     {
         // Regular reduce
 
@@ -261,15 +305,78 @@ void Foam::UPstream::mpi_allreduce
         FatalError << Foam::abort(FatalError);
     }
 
+    const bool withTopo =
+    (
+        (req == nullptr)
+     && UPstream::usingTopoControl(UPstream::topoControls::reduce)
+     && UPstream::usingNodeComms(communicator)
+    );
+
     if (FOAM_UNLIKELY(UPstream::debug))
     {
         Perr<< "[mpi_allreduce] : "
             << " op:" << int(opCodeId)
             << " type:" << int(dataTypeId) << " count:" << count
             << " comm:" << communicator
-            << Foam::endl;
+            << " topo:" << withTopo << Foam::endl;
     }
 
+    if (withTopo)
+    {
+        // Topological allReduce
+
+        // Stage 1: local reduction within a node -> onto the node leader
+        if (UPstream::is_parallel(UPstream::commLocalNode_))
+        {
+            #ifndef Foam_vendor_supports_INPLACE_REDUCE
+            UPstream::mpi_reduce
+            (
+                values,
+                count,
+                dataTypeId,
+                opCodeId,
+                UPstream::commLocalNode_
+            );
+            #else
+            void* send_buffer(nullptr);
+            PstreamDetail::reduce0
+            (
+                send_buffer,
+                values,
+                count,
+                datatype,
+                optype,
+                UPstream::commLocalNode_
+            );
+            #endif
+        }
+
+        // Stage 2: all-reduce between node leaders
+        if (UPstream::is_parallel(UPstream::commInterNode_))
+        {
+            PstreamDetail::allReduce
+            (
+                values,
+                count,
+                datatype,
+                optype,
+                UPstream::commInterNode_
+            );
+        }
+
+        // Finally, broadcast the information from each local node leader
+        if (UPstream::is_parallel(UPstream::commLocalNode_))
+        {
+            PstreamDetail::broadcast0
+            (
+                values,
+                count,
+                datatype,
+                UPstream::commLocalNode_
+            );
+        }
+    }
+    else
     {
         // Regular allReduce
 
