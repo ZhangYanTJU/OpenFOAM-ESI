@@ -53,4 +53,179 @@ int Foam::UPstream::Window::size() const
 }
 
 
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+std::pair<void*,int64_t>
+Foam::UPstream::Window::mpi_win_allocate
+(
+    std::streamsize num_elements,
+    int disp_unit,
+    UPstream::Communicator communicator,
+    const bool shared
+)
+{
+    NotImplemented;
+    return {nullptr, 0};
+}
+
+
+std::pair<void*,int64_t>
+Foam::UPstream::Window::mpi_win_allocate
+(
+    std::streamsize num_elements,
+    int disp_unit,
+    int communicator,
+    const bool shared
+)
+{
+    NotImplemented;
+    return {nullptr, 0};
+}
+
+
+bool Foam::UPstream::Window::mpi_win_create
+(
+    void *baseptr,
+    std::streamsize num_elements,
+    int disp_unit,
+    UPstream::Communicator communicator
+)
+{
+    NotImplemented;
+    return false;
+}
+
+
+bool Foam::UPstream::Window::mpi_win_create
+(
+    void *baseptr,
+    std::streamsize num_elements,
+    int disp_unit,
+    int communicator
+)
+{
+    NotImplemented;
+    return false;
+}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+void Foam::UPstream::Window::close()
+{}
+
+
+// * * * * * * * * * * * * * * * Synchronization * * * * * * * * * * * * * * //
+
+void Foam::UPstream::Window::mpi_win_flushing(int rank, bool local)
+{}
+
+
+void Foam::UPstream::Window::sync()
+{}
+
+
+void Foam::UPstream::Window::mpi_win_locking(int rank, bool exclusive)
+{}
+
+
+void Foam::UPstream::Window::mpi_win_unlocking(int rank)
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::UPstream::Window::get_data
+(
+    void* origin,
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,
+    int target_rank,
+    int target_disp
+) const
+{
+    NotImplemented;
+    return false;
+}
+
+
+bool Foam::UPstream::Window::put_data
+(
+    const void* origin,
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,
+    int target_rank,
+    int target_disp
+) const
+{
+    NotImplemented;
+    return false;
+}
+
+
+bool Foam::UPstream::Window::put_data
+(
+    const UPstream::opCodes opCodeId,
+    const void* origin,
+    std::streamsize count,
+    const UPstream::dataTypes dataTypeId,
+    int target_rank,
+    int target_disp
+) const
+{
+    NotImplemented;
+    return false;
+}
+
+
+bool Foam::UPstream::Window::mpi_fetch_and_op
+(
+    const UPstream::opCodes opCodeId,
+    const void* origin,
+    void* result,
+    const UPstream::dataTypes dataTypeId,
+    int target_rank,
+    int target_disp
+) const
+{
+    NotImplemented;
+    return false;
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::UPstream::Window::is_shared(const bool failNonShared) const
+{
+    return false;
+}
+
+
+std::pair<void*,int64_t>
+Foam::UPstream::Window::mpi_win_query
+(
+    UPstream::Window window,
+    const int expected_disp_unit
+)
+{
+    // No window to query
+    NotImplemented;
+    return {nullptr, 0};
+}
+
+
+std::pair<void*,int64_t>
+Foam::UPstream::Window::mpi_win_query_shared
+(
+    UPstream::Window window,
+    int target_rank,
+    const int expected_disp_unit
+)
+{
+    // No window to query
+    NotImplemented;
+    return {nullptr, 0};
+}
+
+
 // ************************************************************************* //
