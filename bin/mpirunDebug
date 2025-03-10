@@ -43,6 +43,8 @@ options:
   -local        Same as -spawn=1
   -remote       Same as -spawn=2
   -clean        Remove log and startup files
+  -no-core      Restrict core dump to 0 size
+  -quick        Valgrind with 'summary' (not 'full') and use -no-core
   -decompose-dict=<file>   Specific decomposeParDict name
   -help         Print the usage
 
@@ -108,8 +110,9 @@ Linux)
 esac
 
 unset appName appArgs nProcs
-unset method spawn optClean optValue
+unset method spawn optClean optValue opt_nocore
 optConfirm=true
+opt_leakcheck=full
 
 decompDict="system/decomposeParDict"
 
@@ -151,6 +154,15 @@ do
             method="log-xterm"
             unset optConfirm
             : "${spawn:=local}"
+            ;;
+
+        -quick)
+            opt_leakcheck="summary"
+            opt_nocore=true
+            ;;
+
+        -no-core)
+            opt_nocore=true
             ;;
 
         -valgr*)
@@ -338,11 +350,15 @@ fi
 
 case "$sourceFoam" in
 */bashrc)
-    sourceFoam=". $sourceFoam $FOAM_SETTINGS"
+    sourceFoam=". $sourceFoam $FOAM_SETTINGS || true"
     ;;
 esac
 
 echo "**sourceFoam: $sourceFoam" 1>&2
+
+# remove old files
+rm -rf ./mpirun.files
+rm -rf ./mpirun.log
 
 mkdir -p ./mpirun.files
 mkdir -p ./mpirun.log
@@ -375,6 +391,12 @@ $sourceFoam
 cd "${PWD}" || exit
 COMMANDS
 
+    if [ "$opt_nocore" = true ]
+    then
+        echo "# no coredump" >> "$procCmdFile"
+        echo "ulimit -c 0 2>/dev/null" >> "$procCmdFile"
+    fi
+
     # Add to the mpirun.schema
     case "$method" in
     (*xterm*) echo "${node}${xterm} -e ${procCmdFile}" >> "$schema_file" ;;
@@ -400,10 +422,16 @@ COMMANDS
         echo "read input"
         ;;
     (valgrind | valgrind-log)
-        echo "valgrind --leak-check=full --show-reachable=yes $exec $appArgs > $procLog 2>&1"
+        echo "# valgrind does not work nicely with RMA (libfabric)"
+        echo "export FI_PROVIDER=tcp"
+        echo
+        echo "valgrind --leak-check=$opt_leakcheck --show-reachable=yes $exec $appArgs > $procLog 2>&1"
         ;;
     (valgrind-xterm)
-        echo "valgrind --leak-check=full --show-reachable=yes $exec $appArgs 2>&1 | tee $procLog"
+        echo "# valgrind does not work nicely with RMA (libfabric)"
+        echo "export FI_PROVIDER=tcp"
+        echo
+        echo "valgrind --leak-check=$opt_leakcheck --show-reachable=yes $exec $appArgs 2>&1 | tee $procLog"
         echo "read input"
         ;;
     (gperf)
