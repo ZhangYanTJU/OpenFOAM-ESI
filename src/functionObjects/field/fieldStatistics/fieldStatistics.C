@@ -153,6 +153,8 @@ bool Foam::functionObjects::fieldStatistics::read(const dictionary& dict)
         return false;
     }
 
+    internal_ = dict.getOrDefault("internal", false);
+
     mode_ = modeTypeNames_.getOrDefault("mode", dict, modeType::mdMag);
 
     // Reset and reprepare the input field names
