@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -122,7 +122,7 @@ public:
         //- Construct empty, optionally with given name
         explicit ITstream
         (
-            const Foam::zero,
+            Foam::zero,
             const string& name = "input",
             IOstreamOption streamOpt = IOstreamOption()
         );
@@ -152,15 +152,6 @@ public:
             const string& name = "input"
         );
 
-        //- Construct token list by parsing the input string
-        //  Uses static parse function internally.
-        explicit ITstream
-        (
-            const std::string& input,
-            IOstreamOption streamOpt = IOstreamOption(),
-            const string& name = "input"
-        );
-
         //- Construct token list by parsing the input character sequence
         //  Uses static parse function internally.
         explicit ITstream
@@ -170,20 +161,23 @@ public:
             const string& name = "input"
         );
 
-        #if __cplusplus >= 201703L
         //- Construct token list by parsing the input character sequence
         //  Uses static parse function internally.
         explicit ITstream
         (
+            #if __cplusplus >= 201703L
             std::string_view s,
-            IOstreamOption streamOpt = IOstreamOption()
+            #else
+            const std::string& s,
+            #endif
+            IOstreamOption streamOpt = IOstreamOption(),
+            const string& name = "input"
         )
         :
-            ITstream(streamOpt)
+            ITstream(streamOpt, name)
         {
             reset(s.data(), s.size());
         }
-        #endif
 
         //- Construct token list by parsing the input character sequence
         //  Uses static parse function internally.

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -202,12 +202,27 @@ public:
             stream_type::clear();  // Clear old errors
         }
 
+        //- Reset the get buffer area to use the nul-terminated buffer
+        void reset(const char* s)
+        {
+            reset(s, (s ? std::char_traits<char>::length(s) : 0));
+        }
+
         //- Reset the get buffer area to use the data from a string
         void reset(const std::string& s)
         {
-            buffer_type::resetg(const_cast<char*>(&s[0]), s.size());
+            buffer_type::resetg(const_cast<char*>(s.data()), s.size());
             stream_type::clear();  // Clear old errors
         }
+
+        #if __cplusplus >= 201703L
+        //- Reset the get buffer area to use the data from a string_view
+        void reset(std::string_view s)
+        {
+            buffer_type::resetg(const_cast<char*>(s.data()), s.size());
+            stream_type::clear();  // Clear old errors
+        }
+        #endif
 
         //- Some information about the input buffer position/capacity
         void debug_info(Ostream& os) const
@@ -257,17 +272,37 @@ public:
             reset(buffer, nbytes);
         }
 
+        //- Construct using specified nul-terminated buffer
+        explicit ISpanStream(const char* buffer)
+        :
+            ISpanStream
+            (
+                buffer,
+                (buffer ? std::char_traits<char>::length(buffer) : 0)
+            )
+        {}
+
         //- Use data area from string content
         explicit ISpanStream
         (
-            const std::string& buffer,
+            const std::string& s,
             IOstreamOption streamOpt = IOstreamOption()
         )
         :
-            ISpanStream(streamOpt)
-        {
-            reset(buffer);
-        }
+            ISpanStream(s.data(), s.size(), streamOpt)
+        {}
+
+        #if __cplusplus >= 201703L
+        //- Use data area from string_view content
+        explicit ISpanStream
+        (
+            std::string_view s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ISpanStream(s.data(), s.size(), streamOpt)
+        {}
+        #endif
 
         //- Construct using data area from a List and its inherent storage size
         //  Uses addressed size, thus no special treatment for a DynamicList
@@ -279,18 +314,6 @@ public:
         :
             ISpanStream(buffer.cdata(), buffer.size(), streamOpt)
         {}
-
-        #if __cplusplus >= 201703L
-        //- Construct (shallow copy) from std::string_view content
-        explicit ISpanStream
-        (
-            std::string_view s,
-            IOstreamOption streamOpt = IOstreamOption()
-        )
-        :
-            ISpanStream(s.data(), s.size(), streamOpt)
-        {}
-        #endif
 
         //- Construct (shallow copy) from span character content
         explicit ISpanStream
@@ -357,7 +380,7 @@ public:
         //- Reset input area to use data from a string
         void reset(const std::string& s)
         {
-            stream_.reset(s);
+            stream_.reset(s.data(), s.size());
             syncState();
         }
 

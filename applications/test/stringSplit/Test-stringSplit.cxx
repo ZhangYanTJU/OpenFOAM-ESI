@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,11 +50,12 @@ void printSubStrings
         << split.size() << " elements {" << split.length() << " chars}"
         << nl;
 
-    unsigned i = 0;
-    for (const auto s : split)
+    for (unsigned i = 0; i < split.size(); ++i)
     {
-        Info<< "[" << i++ << "] {" << s.length() << " chars} = "
-            << s.str() << nl;
+        const auto& s = split[i];
+        Info<< "[" << i << "] {" << s.length() << " chars} = "
+            << split.view(i) << " == " << s.str()
+            << nl;
     }
 }
 

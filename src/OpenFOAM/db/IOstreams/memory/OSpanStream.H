@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -197,7 +197,7 @@ public:
         void reset(std::string& s)
         {
             s.resize(s.capacity());
-            buffer_type::resetp(&s[0], s.size());
+            buffer_type::resetp(s.data(), s.size());
             stream_type::clear();  // Clear any old errors
         }
 

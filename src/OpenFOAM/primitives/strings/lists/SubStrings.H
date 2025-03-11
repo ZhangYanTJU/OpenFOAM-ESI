@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,7 +35,8 @@ Description
 #ifndef Foam_SubStrings_H
 #define Foam_SubStrings_H
 
-#include <regex>  // For std::sub_match
+#include <regex>    // For std::sub_match
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -82,11 +83,39 @@ public:
             return len;
         }
 
+        //- Return length of element at pos
+        std::string::size_type length(size_t pos) const
+        {
+            return (*this)[pos].length();
+        }
+
         //- Retrieve element at pos, converted to a string type.
         StringType str(size_t pos) const
         {
             return (*this)[pos].str();
         }
+
+        #if __cplusplus >= 201703L
+        //- Return element at pos as a string_view
+        std::string_view view(size_t pos) const
+        {
+            #if __cplusplus >= 202002L
+            return std::string_view
+            (
+                (*this)[pos].first,
+                (*this)[pos].second
+            );
+            #else
+            // No string_view construct from iterator pairs before c++20
+            const auto& s = (*this)[pos];
+            return std::string_view
+            (
+                std::pointer_traits<const char*>::pointer_to(*(s.first)),
+                (s.second - s.first)
+            );
+            #endif
+        }
+        #endif  /* __cplusplus >= 201703L */
 
         //- Append sub-string defined by begin/end iterators
         void append
@@ -135,16 +164,6 @@ public:
                 this->resize(this->size() - n);
             }
         }
-
-
-    // FUTURE?
-    //  #if __cplusplus >= 201703L
-    //  std::string_view view(size_t pos) const
-    //  {}
-    //  #else
-    //  stdFoam::span<const char> view(size_t pos) const
-    //  {}
-    //  #endif
 };
 
 
