@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,9 +31,9 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Cmpt>
-inline Foam::SymmTensor<Cmpt>::SymmTensor(const Foam::zero)
+inline Foam::SymmTensor<Cmpt>::SymmTensor(Foam::zero)
 :
-    SymmTensor::vsType(Zero)
+    SymmTensor::vsType(Foam::zero{})
 {}
 
 
@@ -234,6 +234,21 @@ inline Foam::scalar Foam::SymmTensor<Cmpt>::diagSqr() const
         Foam::magSqr(this->xx())
       + Foam::magSqr(this->yy())
       + Foam::magSqr(this->zz())
+    );
+}
+
+
+template<class Cmpt>
+inline bool Foam::SymmTensor<Cmpt>::is_identity(const scalar tol) const
+{
+    return
+    (
+        Foam::mag(xx() - pTraits<Cmpt>::one) < tol
+     && Foam::mag(yy() - pTraits<Cmpt>::one) < tol
+     && Foam::mag(zz() - pTraits<Cmpt>::one) < tol
+     && Foam::mag(xy()) < tol
+     && Foam::mag(xz()) < tol
+     && Foam::mag(yz()) < tol
     );
 }
 

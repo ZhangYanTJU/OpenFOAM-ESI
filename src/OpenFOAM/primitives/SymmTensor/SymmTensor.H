@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -94,7 +94,7 @@ public:
     // Constructors
 
         //- Construct initialized to zero
-        inline SymmTensor(const Foam::zero);
+        inline SymmTensor(Foam::zero);
 
         //- Construct given VectorSpace of the same rank
         template<class Cmpt2>
@@ -232,6 +232,12 @@ public:
 
         //- The L2-norm squared of the diagonal
         inline scalar diagSqr() const;
+
+
+    // Characteristics
+
+        //- Is identity tensor?
+        inline bool is_identity(const scalar tol = ROOTVSMALL) const;
 
 
     // Tensor Operations

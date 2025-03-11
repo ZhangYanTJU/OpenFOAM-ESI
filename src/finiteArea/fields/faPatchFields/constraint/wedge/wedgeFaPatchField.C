@@ -29,7 +29,6 @@ License
 #include "wedgeFaPatchField.H"
 #include "transformField.H"
 #include "symmTransform.H"
-#include "diagTensor.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -138,10 +137,9 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::wedgeFaPatchField<Type>::snGradTransformDiag() const
 {
-    const diagTensor diagT =
-        0.5*diag(I - refCast<const wedgeFaPatch>(this->patch()).faceT());
+    const auto& rot = refCast<const wedgeFaPatch>(this->patch()).faceT();
 
-    const vector diagV(diagT.xx(), diagT.yy(), diagT.zz());
+    const vector diagV = 0.5*(I - rot).diag();
 
     return tmp<Field<Type>>::New
     (

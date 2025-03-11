@@ -155,9 +155,7 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::symmetryPlaneFvPatchField<Type>::snGradTransformDiag() const
 {
-    vector nHat(symmetryPlanePatch_.n());
-
-    const vector diag(mag(nHat.x()), mag(nHat.y()), mag(nHat.z()));
+    const vector diag(cmptMag(symmetryPlanePatch_.n()));
 
     return tmp<Field<Type>>::New
     (

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,9 +32,9 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Cmpt>
-inline Foam::DiagTensor<Cmpt>::DiagTensor(const Foam::zero)
+inline Foam::DiagTensor<Cmpt>::DiagTensor(Foam::zero)
 :
-    VectorSpace<DiagTensor<Cmpt>, Cmpt, 3>(Zero)
+    VectorSpace<DiagTensor<Cmpt>, Cmpt, 3>(Foam::zero{})
 {}
 
 
@@ -80,6 +80,13 @@ inline Foam::DiagTensor<Cmpt>::DiagTensor(Istream& is)
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Cmpt>
+inline Foam::Vector<Cmpt> Foam::DiagTensor<Cmpt>::diag() const
+{
+    return Vector<Cmpt>(this->xx(), this->yy(), this->zz());
+}
+
 
 template<class Cmpt>
 inline Foam::scalar Foam::DiagTensor<Cmpt>::diagSqr() const

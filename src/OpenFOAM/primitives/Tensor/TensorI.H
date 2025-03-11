@@ -410,12 +410,12 @@ inline bool Foam::Tensor<Cmpt>::is_identity(const scalar tol) const
 {
     return
     (
-        mag(xx() - pTraits<Cmpt>::one) < tol
-     && mag(yy() - pTraits<Cmpt>::one) < tol
-     && mag(zz() - pTraits<Cmpt>::one) < tol
-     && mag(xy()) < tol && mag(xz()) < tol
-     && mag(yx()) < tol && mag(yz()) < tol
-     && mag(zx()) < tol && mag(zy()) < tol
+        Foam::mag(xx() - pTraits<Cmpt>::one) < tol
+     && Foam::mag(yy() - pTraits<Cmpt>::one) < tol
+     && Foam::mag(zz() - pTraits<Cmpt>::one) < tol
+     && Foam::mag(xy()) < tol && Foam::mag(xz()) < tol
+     && Foam::mag(yx()) < tol && Foam::mag(yz()) < tol
+     && Foam::mag(zx()) < tol && Foam::mag(zy()) < tol
     );
 }
 

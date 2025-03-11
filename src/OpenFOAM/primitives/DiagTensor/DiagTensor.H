@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,7 +92,7 @@ public:
     // Constructors
 
         //- Construct initialized to zero
-        inline DiagTensor(const Foam::zero);
+        inline DiagTensor(Foam::zero);
 
         //- Construct given VectorSpace
         template<class Cmpt2>
@@ -122,6 +122,9 @@ public:
 
 
     // Diagonal access and manipulation
+
+        //- Extract the diagonal as a vector
+        inline Vector<Cmpt> diag() const;
 
         //- The L2-norm squared of the diagonal
         inline scalar diagSqr() const;
