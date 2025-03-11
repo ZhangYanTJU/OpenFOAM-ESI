@@ -53,6 +53,7 @@ Usage
         // Optional entries
         mode             <word>;
         internal         <bool>;
+        mean             <word>;
 
         // Inherited entries
         ...
@@ -69,6 +70,7 @@ Usage
       mode   | Output format of the statistical results | word | no | magnitude
       internal | Flag to use internal fields only in computing statistics <!--
                -->                                      | bool | no | false
+      mean     | Type of the mean operation             | word | no | arithmetic
     \endtable
 
     Available statistics of the operand field through the \c statistics entry:
@@ -83,6 +85,12 @@ Usage
     \verbatim
       magnitude  | Output statistics magnitude-wise
       component  | Output statistics separately for each component
+    \endverbatim
+
+    Options for the \c meanType entry:
+    \verbatim
+      arithmetic  | Arithmetic mean (average)
+      volumetric  | Volume-weighted arithmetic mean
     \endverbatim
 
     The inherited entries are elaborated in:
@@ -133,6 +141,17 @@ class fieldStatistics
         static const Enum<modeType> modeTypeNames_;
 
 
+        //- Options for the mean type of the specified fields
+        enum meanType : char
+        {
+            ARITHMETIC = 0,  //!< "Arithmetic mean (average)"
+            VOLUMETRIC       //!< "Volume-weighted arithmetic mean"
+        };
+
+        //- Names for meanType
+        static const Enum<meanType> meanTypeNames_;
+
+
     // Private Classes
 
         //- Type-safe union for input field types
@@ -171,6 +190,9 @@ class fieldStatistics
 
         //- Output-format mode - only applicable for tensor ranks > 0
         modeType mode_;
+
+        //- Type of the mean of the specified fields
+        meanType mean_;
 
         //- Operand fields on which statistics are computed
         volFieldSelection fieldSet_;
