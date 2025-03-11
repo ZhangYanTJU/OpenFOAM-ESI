@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,7 +49,7 @@ Description
 #include <cstdio>
 
 #include "scalar.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 
 #include "argList.H"
 #include "Time.H"
@@ -57,25 +57,23 @@ Description
 #include "emptyPolyPatch.H"
 #include "preservePatchTypes.H"
 #include "cellShape.H"
-#include "SLList.H"
-#include "SLPtrList.H"
 
 // Flex may use register, which is deprecated and incompatible with C++17
 #pragma clang diagnostic ignored "-Wdeprecated-register"
 
 using namespace Foam;
 
-SLList<point> slPoints;
-SLList<label> slPointMap;
+DynamicList<point> dynPoints;
+DynamicList<label> dynPointMap;
 label maxNodei = 0;
 
-SLPtrList<labelList> slCellLabels;
-SLList<label> slCellMap;
-SLList<label> slCellType;
+DynamicList<labelList> dynCellLabels;
+DynamicList<label> dynCellMap;
+DynamicList<label> dynCellType;
 label maxCelli = 0;
 
-PtrList<SLList<label>> slPatchCells;
-PtrList<SLList<label>> slPatchCellFaces;
+// Per patch index, the cell/face pairs
+PtrList<DynamicList<labelPair>> patchCellFaces;
 
 // Cell types
 Map<word> cellTypes;
@@ -126,22 +124,18 @@ elementType           ^{space}"TYPE"{cspace}
 
 %%
 
-%{
-    labelList labels(8);
-%}
-
-
  /* ------------------------------------------------------------------------- *\
                             ------ Start Lexing ------
  \* ------------------------------------------------------------------------- */
 
 {node}{label}{cspace}{x}{cspace}{y}{cspace}{z}{space}\n {
-        IStringStream nodeStream(YYText());
+        ISpanStream is(YYText());
         char tag, c;
         label nodei;
-        point node;
-        nodeStream
-            >> tag
+        point& node = dynPoints.emplace_back();
+
+        is
+            >> tag                  // skip 'N'
             >> c >> nodei
             >> c >> node.x()
             >> c >> node.y()
@@ -149,17 +143,18 @@ elementType           ^{space}"TYPE"{cspace}
 
         if (nodei > maxNodei) maxNodei = nodei;
 
-        slPointMap.append(nodei);
-        slPoints.append(node);
+        dynPointMap.push_back(nodei);
     }
 
 
 {element}{label}{cspace}{label}{cspace}{label}{cspace}{label}{cspace}{label}{cspace}{label}{cspace}{label}{cspace}{label}{cspace}{label}{space}\n {
-        IStringStream elementStream(YYText());
+        ISpanStream is(YYText());
         char tag, c;
         label celli;
-        elementStream
-            >> tag >> tag
+        labelList& labels = dynCellLabels.emplace_back(8);
+
+        is
+            >> tag >> tag           // skip 'EN'
             >> c >> celli
             >> c >> labels[0]
             >> c >> labels[1]
@@ -172,66 +167,50 @@ elementType           ^{space}"TYPE"{cspace}
 
         if (celli > maxCelli) maxCelli = celli;
 
-        slCellMap.append(celli);
-        slCellLabels.append(new labelList(labels));
-        slCellType.append(currentTypei);
+        dynCellMap.push_back(celli);
+        dynCellType.push_back(currentTypei);
     }
 
 
 {bface}{label}{cspace}{label}{cspace}{identifier}{cspace}{integer}{cspace}{value}{space}\n {
-        IStringStream bfaceStream(YYText());
+        ISpanStream is(YYText());
         char tag, c;
-        label elementi;
-        label facei;
+        label elementi, facei;
         scalar indexValue, unknown;
-        bfaceStream
-            >> tag >> tag >> tag
+
+        is
+            >> tag >> tag >> tag    // skip 'SFE'
             >> c >> elementi
             >> c >> facei
             >> c >> tag >> tag >> tag >> tag
             >> c >> unknown
             >> c >> indexValue;
 
-        label patchi = label(indexValue);
+        const label patchi = label(indexValue);
 
-        if (patchi > slPatchCells.size())
+        if (patchCellFaces.size() < patchi)
         {
-            slPatchCells.setSize(patchi);
+            label i = patchCellFaces.size();
 
-            forAll(slPatchCells, i)
+            patchCellFaces.resize(patchi);
+
+            for (; i < patchi; ++i)
             {
-                if (!slPatchCells.set(i))
-                {
-                    slPatchCells.set(i, new SLList<label>);
-                }
+                patchCellFaces.try_emplace(i);
             }
         }
 
-        if (patchi > slPatchCellFaces.size())
-        {
-            slPatchCellFaces.setSize(patchi);
-
-            forAll(slPatchCells, i)
-            {
-                if (!slPatchCellFaces.set(i))
-                {
-                    slPatchCellFaces.set(i, new SLList<label>);
-                }
-            }
-        }
-
-        slPatchCells[patchi-1].append(elementi);
-        slPatchCellFaces[patchi-1].append(facei);
+        patchCellFaces[patchi-1].emplace_back(elementi, facei);
     }
 
 
 {elementTypeName}{label}{cspace}{identifier}{space}\n {
-
-        IStringStream elementStream(YYText());
+        ISpanStream is(YYText());
         char tag,c;
         label cellTypei;
         word cellTypeName;
-        elementStream
+
+        is
             >> tag >> tag           // skip 'ET'
             >> c >> cellTypei
             >> c >> cellTypeName;
@@ -244,10 +223,11 @@ elementType           ^{space}"TYPE"{cspace}
 
 
 {elementType}{label}{space}\n {
-        IStringStream elementStream(YYText());
+        ISpanStream is(YYText());
         char tag,c;
         label cellTypei;
-        elementStream
+
+        is
             >> tag >> tag >> tag >> tag     // skip 'TYPE'
             >> c >> cellTypei;
 
@@ -281,10 +261,8 @@ label findFace(const polyMesh& mesh, const face& f)
 {
     const labelList& pFaces = mesh.pointFaces()[f[0]];
 
-    forAll(pFaces, i)
+    for (const label facei : pFaces)
     {
-        label facei = pFaces[i];
-
         if (mesh.faces()[facei] == f)
         {
             return facei;
@@ -323,7 +301,8 @@ int main(int argc, char *argv[])
         FatalError.exit();
     }
 
-    const scalar scaleFactor = args.getOrDefault<scalar>("scale", 1);
+    // Actually uses default=0 to skip unnecessary scaling by factor 1.
+    const scalar scaleFactor = args.getOrDefault<scalar>("scale", 0);
 
     #include "createTime.H"
 
@@ -344,32 +323,32 @@ int main(int argc, char *argv[])
 
     Info<< "Creating points" << endl;
 
-    pointField points(slPoints.size());
+    pointField points(std::move(dynPoints));
 
-    label i = 0;
-    for (const point& pt : slPoints)
+    // Scale points by the given scale factor
+    if (scaleFactor > 0)
     {
-        // Scale points for the given scale factor
-        points[i++] = scaleFactor * pt;
+        points *= scaleFactor;
     }
 
-
     labelList pointMap(maxNodei+1);
-
-    i = 0;
-    for (const label pointi : slPointMap)
     {
-        pointMap[pointi] = i++;
+        label i = 0;
+        for (const label pointi : dynPointMap)
+        {
+            pointMap[pointi] = i++;
+        }
     }
 
     Info<< "Creating cells" << endl;
 
     labelList cellMap(maxCelli+1);
-
-    i = 0;
-    for (const label celli : slCellMap)
     {
-        cellMap[celli] = i++;
+        label i = 0;
+        for (const label celli : dynCellMap)
+        {
+            cellMap[celli] = i++;
+        }
     }
 
 
@@ -378,15 +357,15 @@ int main(int argc, char *argv[])
     const cellModel& pyr = cellModel::ref(cellModel::PYR);
     const cellModel& tet = cellModel::ref(cellModel::TET);
 
-    labelList labelsHex(8);
-    labelList labelsPrism(6);
-    labelList labelsPyramid(5);
-    labelList labelsTet(4);
+    FixedList<label, 8> labelsHex;
+    FixedList<label, 6> labelsPrism;
+    FixedList<label, 5> labelsPyramid;
+    FixedList<label, 4> labelsTet;
 
-    cellShapeList cellShapes(slCellLabels.size());
+    cellShapeList cellShapes(dynCellLabels.size());
     label nCells = 0;
 
-    for (const labelList& labels : slCellLabels)
+    for (const labelList& labels : dynCellLabels)
     {
         if      // Tetrahedron
         (
@@ -490,37 +469,29 @@ int main(int argc, char *argv[])
 
     Info<< "Creating boundary patches" << endl;
 
-    faceListList boundary(slPatchCells.size());
-    wordList patchNames(slPatchCells.size());
+    faceListList boundary(patchCellFaces.size());
+    wordList patchNames(patchCellFaces.size());
 
-    forAll(slPatchCells, patchi)
+    forAll(patchCellFaces, patchi)
     {
-        SLList<face> patchFaces;
+        DynamicList<face> patchFaces;
 
-        auto cellIter = slPatchCells[patchi].cbegin();
-        auto faceIter = slPatchCellFaces[patchi].cbegin();
+        patchFaces.reserve(patchCellFaces[patchi].size());
 
-        for
-        (
-            ;
-            cellIter.good() && faceIter.good();
-            ++cellIter, ++faceIter
-        )
+        for (const auto& tup : patchCellFaces[patchi])
         {
-            const cellShape& shape = cellShapes[cellMap[cellIter()]];
+            const label celli = tup.first();
+            const label facei = tup.second();
 
-            patchFaces.append
+            const cellShape& shape = cellShapes[cellMap[celli]];
+
+            patchFaces.push_back
             (
-                shape.faces()
-                [
-                    faceIndex
-                        [shape.nFaces()]
-                        [faceIter()-1]
-                ]
+                shape.faces()[faceIndex[shape.nFaces()][facei-1]]
             );
         }
 
-        boundary[patchi] = patchFaces;
+        boundary[patchi] = std::move(patchFaces);
         patchNames[patchi] = polyPatch::defaultName(patchi + 1);
     }
 
@@ -543,8 +514,8 @@ int main(int argc, char *argv[])
 
     // Now split the boundary faces into external and internal faces. All
     // faces go into faceZones and external faces go into patches.
-    List<faceList> patchFaces(slPatchCells.size());
-    labelList patchNFaces(slPatchCells.size(), Zero);
+    List<faceList> patchFaces(patchCellFaces.size());
+    labelList patchNFaces(patchCellFaces.size(), Zero);
     forAll(boundary, patchi)
     {
         const faceList& bFaces = boundary[patchi];
@@ -644,7 +615,7 @@ int main(int argc, char *argv[])
                 Info<< "Creating faceZone " <<  patchNames[patchi]
                     << " with " << bFaceLabels.size() << " faces" << endl;
 
-                fz.append
+                fz.push_back
                 (
                     new faceZone
                     (
@@ -660,29 +631,20 @@ int main(int argc, char *argv[])
 
 
         // CellZones
-        labelList types = cellTypes.sortedToc();
-
-        forAll(types, typei)
+        for (const label cellType : cellTypes.sortedToc())
         {
-            const label cellType = types[typei];
-
             // Pick up cells in zone
             DynamicList<label> addr;
 
-            auto cellMapIter = slCellMap.cbegin();
-            auto typeIter = slCellType.cbegin();
+            auto cellMapIter = dynCellMap.cbegin();
 
-            for
-            (
-                ;
-                typeIter.good();
-                ++typeIter, ++cellMapIter
-            )
+            for (const auto& ctype : dynCellType)
             {
-                if (typeIter() == cellType)
+                if (ctype == cellType)
                 {
-                    addr.append(cellMap[cellMapIter()]);
+                    addr.push_back(cellMap[*cellMapIter]);
                 }
+                ++cellMapIter;
             }
 
             Info<< "Creating cellZone " << cellTypes[cellType]
@@ -694,7 +656,7 @@ int main(int argc, char *argv[])
                 (
                     cellTypes[cellType],
                     addr,
-                    typei,
+                    cz.size(),
                     pShapeMesh.cellZones()
                 )
             );

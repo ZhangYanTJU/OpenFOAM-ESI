@@ -181,7 +181,7 @@ forAll(cellShapes, celli)
 
 label bcIDs[11] = {-1, 0, 2, 4, -1, 5, -1, 6, 7, 8, 9};
 
-const label nBCs = 12;
+constexpr label nBCs = 12;
 
 const word* kivaPatchTypes[nBCs] =
 {
@@ -232,7 +232,7 @@ const char* kivaPatchNames[nBCs] =
 };
 
 
-List<SLList<face>> pFaces[nBCs];
+List<DynamicList<face>> pFaces[nBCs];
 
 face quadFace(4);
 face triFace(3);
@@ -337,23 +337,23 @@ if
 
     minz += SMALL;
 
-    SLList<face> newLinerFaces;
+    DynamicList<face> newLinerFaces;
 
     for (const face& pf : pFaces[LINER][0])
     {
         scalar minfz = GREAT;
-        forAll(pf, pfi)
+        for (const label pointi : pf)
         {
-            minfz = min(minfz, points[pf[pfi]].z());
+            minfz = Foam::min(minfz, points[pointi].z());
         }
 
         if (minfz > minz)
         {
-            pFaces[CYLINDERHEAD][0].append(pf);
+            pFaces[CYLINDERHEAD][0].push_back(pf);
         }
         else
         {
-            newLinerFaces.append(pf);
+            newLinerFaces.push_back(pf);
         }
     }
 
@@ -361,33 +361,33 @@ if
     {
         Info<< "Transferred " << pFaces[LINER][0].size() - newLinerFaces.size()
             << " faces from liner region to cylinder head" << endl;
-        pFaces[LINER][0] = newLinerFaces;
+        pFaces[LINER][0] = std::move(newLinerFaces);
     }
 
-    SLList<face> newCylinderHeadFaces;
+    DynamicList<face> newCylinderHeadFaces;
 
     for (const face& pf : pFaces[CYLINDERHEAD][0])
     {
         scalar minfz = GREAT;
-        forAll(pf, pfi)
+        for (const label pointi : pf)
         {
-            minfz = min(minfz, points[pf[pfi]].z());
+            minfz = Foam::min(minfz, points[pointi].z());
         }
 
         if (minfz < zHeadMin)
         {
-            pFaces[LINER][0].append(pf);
+            pFaces[LINER][0].push_back(pf);
         }
         else
         {
-            newCylinderHeadFaces.append(pf);
+            newCylinderHeadFaces.push_back(pf);
         }
     }
 
     if (pFaces[CYLINDERHEAD][0].size() != newCylinderHeadFaces.size())
     {
         Info<< "Transferred faces from cylinder-head region to linder" << endl;
-        pFaces[CYLINDERHEAD][0] = newCylinderHeadFaces;
+        pFaces[CYLINDERHEAD][0] = std::move(newCylinderHeadFaces);
     }
 }
 
@@ -396,9 +396,9 @@ if
 label nPatches = 0;
 for (int bci=0; bci<nBCs; bci++)
 {
-    forAll(pFaces[bci], rgi)
+    for (const auto& faces : pFaces[bci])
     {
-        if (pFaces[bci][rgi].size())
+        if (faces.size())
         {
             nPatches++;
         }
@@ -415,31 +415,34 @@ if (pFaces[WEDGE].size() && pFaces[WEDGE][0].size())
 
         const scalar tanTheta = Foam::tan(degToRad(2.5));
 
-        auto iterf = pFaces[WEDGE][0].begin();
-        auto iterb = pFaces[WEDGE][1].begin();
+        auto iterf = pFaces[WEDGE][0].cbegin();
+        auto iterb = pFaces[WEDGE][1].cbegin();
+
+        const auto end_iterf = pFaces[WEDGE][0].cend();
+        const auto end_iterb = pFaces[WEDGE][1].cend();
 
         for
         (
             ;
-            iterf.good() && iterb.good();
+            (iterf != end_iterf) && (iterb != end_iterb);
             ++iterf, ++iterb
         )
         {
+            const auto& facef = *iterf;
+            const auto& faceb = *iterb;
+
             for (direction d=0; d<4; d++)
             {
-                points[iterf()[d]].y() = -tanTheta*points[iterf()[d]].x();
-                points[iterb()[d]].y() =  tanTheta*points[iterb()[d]].x();
+                points[facef[d]].y() = -tanTheta*points[facef[d]].x();
+                points[faceb[d]].y() =  tanTheta*points[faceb[d]].x();
             }
         }
     }
     else
     {
-        pFaces[CYCLIC].setSize(1);
+        pFaces[CYCLIC].resize(1);
         pFaces[CYCLIC][0] = pFaces[WEDGE][0];
-        for (const face& pf : pFaces[WEDGE][1])
-        {
-            pFaces[CYCLIC][0].append(pf);
-        }
+        pFaces[CYCLIC][0].push_back(pFaces[WEDGE][1]);
 
         pFaces[WEDGE].clear();
         nPatches--;

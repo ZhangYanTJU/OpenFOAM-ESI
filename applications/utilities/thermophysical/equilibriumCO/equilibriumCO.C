@@ -47,7 +47,7 @@ Description
 #include "janafThermo.H"
 #include "absoluteEnthalpy.H"
 
-#include "SLPtrList.H"
+#include "PtrDynList.H"
 #include "IOdictionary.H"
 
 using namespace Foam;
@@ -104,27 +104,12 @@ int main(int argc, char *argv[])
     thermo H2O(thermoData.subDict("H2O")); H2O *= H2O.W();
     thermo CO(thermoData.subDict("CO")); CO *= CO.W();
 
-    SLPtrList<thermo> EQreactions;
+    PtrDynList<thermo> EQreactions(4);
 
-    EQreactions.append
-    (
-        new thermo(CO2 == CO + 0.5*O2)
-    );
-
-    EQreactions.append
-    (
-        new thermo(O2 == 2*O)
-    );
-
-    EQreactions.append
-    (
-        new thermo(H2O == H2 + 0.5*O2)
-    );
-
-    EQreactions.append
-    (
-        new thermo(H2O == H + OH)
-    );
+    EQreactions.emplace_back((CO2 == CO + 0.5*O2));
+    EQreactions.emplace_back((O2 == 2*O));
+    EQreactions.emplace_back((H2O == H2 + 0.5*O2));
+    EQreactions.emplace_back((H2O == H + OH));
 
 
     for (const thermo& react : EQreactions)
