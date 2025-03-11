@@ -98,6 +98,7 @@ functions
     #include "FOs/FOyPlus"
     #include "FOs/FOzeroGradient"
     #include "FOs/FOnorm"
+    #include "FOs/FOfieldStatistics"
 
     // utility function objects
     #include "FOs/FOsolverInfo"
