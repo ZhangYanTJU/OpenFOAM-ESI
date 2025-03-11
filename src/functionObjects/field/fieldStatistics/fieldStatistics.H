@@ -52,6 +52,7 @@ Usage
 
         // Optional entries
         mode             <word>;
+        internal         <bool>;
 
         // Inherited entries
         ...
@@ -66,6 +67,8 @@ Usage
       fields       | List of operand fields             | wordList | yes | -
       statistics   | List of operand statistics         | wordList | yes | -
       mode   | Output format of the statistical results | word | no | magnitude
+      internal | Flag to use internal fields only in computing statistics <!--
+               -->                                      | bool | no | false
     \endtable
 
     Available statistics of the operand field through the \c statistics entry:
@@ -135,10 +138,10 @@ class fieldStatistics
         //- Type-safe union for input field types
         using variantInput = std::variant
         <
-            volScalarField,
-            volVectorField,
-            volSymmTensorField,
-            volTensorField
+            scalarField,
+            vectorField,
+            symmTensorField,
+            tensorField
         >;
 
         //- Type-safe union for output data types
@@ -162,6 +165,9 @@ class fieldStatistics
 
 
     // Private Data
+
+        //- Flag to use internal fields only in computing statistics
+        bool internal_;
 
         //- Output-format mode - only applicable for tensor ranks > 0
         modeType mode_;
@@ -193,7 +199,7 @@ class fieldStatistics
 
         //- Return the arithmetic mean of the given input field
         template<class T>
-        T calcMean(const VolumeField<T>& field);
+        T calcMean(const Field<T>& field);
 
 
         // Dispersion statistics
@@ -201,17 +207,23 @@ class fieldStatistics
         //- Return the minimum value of the given input field
         //  Store the processor index, cell index and location of the minimum
         template<class T>
-        T calcMin(const VolumeField<T>& field);
+        T calcMin(const Field<T>& field);
 
         //- Return the maximum value of the given input field
         //  Store the processor index, cell index and location of the maximum
         template<class T>
-        T calcMax(const VolumeField<T>& field);
+        T calcMax(const Field<T>& field);
 
         //- Return the sample variance of the given input field
         template<class T>
-        T calcVariance(const VolumeField<T>& field);
+        T calcVariance(const Field<T>& field);
 
+        //-
+        template<class GeoField>
+        tmp<Field<typename GeoField::value_type>> flatten
+        (
+            const GeoField& field
+        );
 
         //- Output the file header information
         void writeFileHeader(Ostream& os, const word& fieldName);

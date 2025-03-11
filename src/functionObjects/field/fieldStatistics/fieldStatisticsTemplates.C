@@ -30,6 +30,51 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+template<class GeoField>
+Foam::tmp<Foam::Field<typename GeoField::value_type>>
+Foam::functionObjects::fieldStatistics::flatten(const GeoField& fld)
+{
+    typedef typename GeoField::value_type value_type;
+    typedef Field<value_type> FieldType;
+
+
+    label n = fld.size();
+
+    if (!internal_)
+    {
+        for (const auto& pfld : fld.boundaryField())
+        {
+            if (!pfld.coupled())
+            {
+                n += pfld.size();
+            }
+        }
+    }
+
+    auto tflatFld = tmp<FieldType>::New(n);
+    auto& flatFld = tflatFld.ref();
+
+    // Insert internal values
+    SubList<value_type>(flatFld, fld.size(), 0) = fld.primitiveField();
+
+    if (!internal_)
+    {
+        // Insert boundary values
+        n = fld.size();
+        for (const auto& pfld : fld.boundaryField())
+        {
+            if (!pfld.coupled())
+            {
+                SubList<value_type>(flatFld, pfld.size(), n) = pfld;
+                n += pfld.size();
+            }
+        }
+    }
+
+    return tflatFld;
+}
+
+
 template<class Type>
 bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
 {
@@ -42,13 +87,16 @@ bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
 
     const VolFieldType& field = lookupObject<VolFieldType>(fieldName);
 
+    tmp<Field<Type>> tfld = flatten(field);
+    const Field<Type> fld = tfld.cref();
+
     HashTable<variantOutput> result;
     for (const auto& iter : statistics_.csorted())
     {
         const statistic& stat = iter.val();
 
         // Assign a new entry, overwriting existing entries
-        result.set(stat.name_, stat.calc(field));
+        result.set(stat.name_, stat.calc(fld));
     }
 
     results_.set(fieldName, result);
@@ -58,14 +106,14 @@ bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
 
 
 template<class T>
-T Foam::functionObjects::fieldStatistics::calcMean(const VolumeField<T>& field)
+T Foam::functionObjects::fieldStatistics::calcMean(const Field<T>& field)
 {
     return gAverage(field);
 }
 
 
 template<class T>
-T Foam::functionObjects::fieldStatistics::calcMin(const VolumeField<T>& field)
+T Foam::functionObjects::fieldStatistics::calcMin(const Field<T>& field)
 {
     const label proci = Pstream::myProcNo();
 
@@ -81,24 +129,6 @@ T Foam::functionObjects::fieldStatistics::calcMin(const VolumeField<T>& field)
         minVs[proci] = field[minId];
     }
 
-    // Find min boundary field info
-    const auto& fieldBoundary = field.boundaryField();
-
-    forAll(fieldBoundary, patchi)
-    {
-        const Field<T>& fp = fieldBoundary[patchi];
-        if (fp.size())
-        {
-            minMaxIds = findMinMax(fp);
-
-            minId = minMaxIds.first();
-            if (minVs[proci] > fp[minId])
-            {
-                minVs[proci] = fp[minId];
-            }
-        }
-    }
-
     // Collect info from all processors and output
     Pstream::allGatherList(minVs);
 
@@ -109,7 +139,7 @@ T Foam::functionObjects::fieldStatistics::calcMin(const VolumeField<T>& field)
 
 
 template<class T>
-T Foam::functionObjects::fieldStatistics::calcMax(const VolumeField<T>& field)
+T Foam::functionObjects::fieldStatistics::calcMax(const Field<T>& field)
 {
     const label proci = Pstream::myProcNo();
 
@@ -125,25 +155,6 @@ T Foam::functionObjects::fieldStatistics::calcMax(const VolumeField<T>& field)
         maxVs[proci] = field[maxId];
     }
 
-
-    // Find max boundary field info
-    const auto& fieldBoundary = field.boundaryField();
-
-    forAll(fieldBoundary, patchi)
-    {
-        const Field<T>& fp = fieldBoundary[patchi];
-        if (fp.size())
-        {
-            minMaxIds = findMinMax(fp);
-
-            maxId = minMaxIds.second();
-            if (maxVs[proci] < fp[maxId])
-            {
-                maxVs[proci] = fp[maxId];
-            }
-        }
-    }
-
     // Collect info from all processors and output
     Pstream::allGatherList(maxVs);
 
@@ -156,7 +167,7 @@ T Foam::functionObjects::fieldStatistics::calcMax(const VolumeField<T>& field)
 template<class T>
 T Foam::functionObjects::fieldStatistics::calcVariance
 (
-    const VolumeField<T>& field
+    const Field<T>& field
 )
 {
     label n = field.size();
