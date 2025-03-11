@@ -108,6 +108,12 @@ bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
 template<class T>
 T Foam::functionObjects::fieldStatistics::calcMean(const Field<T>& field)
 {
+    if (internal_ && (mean_ == VOLUMETRIC))
+    {
+        const auto& V = mesh_.V();
+        return (gSum(V*field)/gSum(V));
+    }
+
     return gAverage(field);
 }
 

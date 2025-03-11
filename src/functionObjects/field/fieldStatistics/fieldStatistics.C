@@ -50,6 +50,16 @@ Foam::functionObjects::fieldStatistics::modeTypeNames_
     { modeType::mdCmpt, "component" },
 });
 
+const Foam::Enum
+<
+    Foam::functionObjects::fieldStatistics::meanType
+>
+Foam::functionObjects::fieldStatistics::meanTypeNames_
+({
+    { meanType::ARITHMETIC, "arithmetic" },
+    { meanType::VOLUMETRIC, "volumetric" },
+});
+
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -156,6 +166,7 @@ bool Foam::functionObjects::fieldStatistics::read(const dictionary& dict)
     internal_ = dict.getOrDefault("internal", false);
 
     mode_ = modeTypeNames_.getOrDefault("mode", dict, modeType::mdMag);
+    mean_ = meanTypeNames_.getOrDefault("mean", dict, meanType::ARITHMETIC);
 
     // Reset and reprepare the input field names
     fieldSet_.clear();
