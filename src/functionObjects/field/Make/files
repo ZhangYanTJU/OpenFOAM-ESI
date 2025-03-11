@@ -154,4 +154,6 @@ resolutionIndex/resolutionIndexModels/CelikEtaIndex/CelikEtaIndex.C
 age/age.C
 comfort/comfort.C
 
+fieldStatistics/fieldStatistics.C
+
 LIB = $(FOAM_LIBBIN)/libfieldFunctionObjects
