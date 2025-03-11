@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "symmetryPlaneFvPatchField.H"
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -120,13 +120,25 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::symmetryPlaneFvPatchField<Type>::snGrad() const
 {
-    vector nHat(symmetryPlanePatch_.n());
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type: treat like zero-gradient
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        const symmTensor rot(I - 2.0*sqr(symmetryPlanePatch_.n()));
 
-    const Field<Type> iF(this->patchInternalField());
+        const Field<Type> pif(this->patchInternalField());
 
-    return
-        (transform(I - 2.0*sqr(nHat), iF) - iF)
-       *(this->patch().deltaCoeffs()/2.0);
+        const auto& dc = this->patch().deltaCoeffs();
+
+        return
+        (
+            (0.5*dc)
+          * (transform(rot, pif) - pif)
+        );
+    }
 }
 
 
@@ -138,14 +150,19 @@ void Foam::symmetryPlaneFvPatchField<Type>::evaluate(const Pstream::commsTypes)
         this->updateCoeffs();
     }
 
-    vector nHat(symmetryPlanePatch_.n());
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type: treat like zero-gradient
+        this->extrapolateInternal();
+    }
+    else
+    {
+        const symmTensor rot(I - 2.0*sqr(symmetryPlanePatch_.n()));
 
-    const Field<Type> iF(this->patchInternalField());
+        const Field<Type> pif(this->patchInternalField());
 
-    Field<Type>::operator=
-    (
-        (iF + transform(I - 2.0*sqr(nHat), iF))/2.0
-    );
+        Field<Type>::operator=(0.5*(pif + transform(rot, pif)));
+    }
 
     transformFvPatchField<Type>::evaluate();
 }

@@ -104,13 +104,25 @@ Foam::wedgeFaPatchField<Type>::wedgeFaPatchField
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::wedgeFaPatchField<Type>::snGrad() const
 {
-    const Field<Type> pif (this->patchInternalField());
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type: treat like zero-gradient
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        const auto& rot = refCast<const wedgeFaPatch>(this->patch()).faceT();
 
-    return
-    (
-        transform(refCast<const wedgeFaPatch>(this->patch()).faceT(), pif)
-      - pif
-    )*(0.5*this->patch().deltaCoeffs());
+        const Field<Type> pif(this->patchInternalField());
+
+        const auto& dc = this->patch().deltaCoeffs();
+
+        return
+        (
+            (0.5*dc)
+          * (transform(rot, pif) - pif)
+        );
+    }
 }
 
 
@@ -122,14 +134,20 @@ void Foam::wedgeFaPatchField<Type>::evaluate(const Pstream::commsTypes)
         this->updateCoeffs();
     }
 
-    faPatchField<Type>::operator==
-    (
-        transform
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type: treat like zero-gradient
+        this->extrapolateInternal();
+    }
+    else
+    {
+        const auto& rot = refCast<const wedgeFaPatch>(this->patch()).edgeT();
+
+        faPatchField<Type>::operator==
         (
-            refCast<const wedgeFaPatch>(this->patch()).edgeT(),
-            this->patchInternalField()
-        )
-    );
+            transform(rot, this->patchInternalField())
+        );
+    }
 }
 
 

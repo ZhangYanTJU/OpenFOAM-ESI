@@ -93,16 +93,12 @@ Foam::wedgeFaPatch::wedgeFaPatch
             << this->name() << exit(FatalError);
     }
 
-    const auto* wedgePtr = isA<wedgePolyPatch>
+    wedgePolyPatchPtr_ = isA<wedgePolyPatch>
     (
         bm.mesh().mesh().boundaryMesh()[ngbPolyPatchIndex()]
     );
 
-    if (wedgePtr)
-    {
-        wedgePolyPatchPtr_ = wedgePtr;
-    }
-    else
+    if (!wedgePolyPatchPtr_)
     {
         FatalErrorInFunction
             << "Neighbour polyPatch is not of type "

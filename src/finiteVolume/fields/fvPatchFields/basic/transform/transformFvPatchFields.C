@@ -37,25 +37,4 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * Specialisations * * * * * * * * * * * * * * //
-
-template<>
-Foam::tmp<Foam::scalarField>
-Foam::transformFvPatchField<Foam::scalar>::valueInternalCoeffs
-(
-    const tmp<scalarField>&
-) const
-{
-    return tmp<scalarField>::New(size(), 1.0);
-}
-
-
-template<>
-Foam::tmp<Foam::scalarField>
-Foam::transformFvPatchField<Foam::scalar>::gradientInternalCoeffs() const
-{
-    return tmp<scalarField>::New(size(), Zero);
-}
-
-
 // ************************************************************************* //

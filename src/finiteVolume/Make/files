@@ -128,7 +128,6 @@ $(fvPatchFields)/fvPatchField/fvPatchFieldBase.C
 $(fvPatchFields)/fvPatchField/fvPatchFields.C
 
 basicFvPatchFields = $(fvPatchFields)/basic
-$(basicFvPatchFields)/basicSymmetry/basicSymmetryFvPatchFields.C
 $(basicFvPatchFields)/calculated/calculatedFvPatchFields.C
 $(basicFvPatchFields)/extrapolatedCalculated/extrapolatedCalculatedFvPatchFields.C
 $(basicFvPatchFields)/coupled/coupledFvPatchFields.C

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -119,12 +119,25 @@ Foam::wedgeFvPatchField<Type>::wedgeFvPatchField
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::wedgeFvPatchField<Type>::snGrad() const
 {
-    const Field<Type> pif(this->patchInternalField());
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : treat like zero-gradient
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        const auto& rot = refCast<const wedgeFvPatch>(this->patch()).cellT();
 
-    return
-    (
-        transform(refCast<const wedgeFvPatch>(this->patch()).cellT(), pif) - pif
-    )*(0.5*this->patch().deltaCoeffs());
+        const Field<Type> pif(this->patchInternalField());
+
+        const auto& dc = this->patch().deltaCoeffs();
+
+        return
+        (
+            (0.5*dc)
+          * (transform(rot, pif) - pif)
+        );
+    }
 }
 
 
@@ -136,14 +149,20 @@ void Foam::wedgeFvPatchField<Type>::evaluate(const Pstream::commsTypes)
         this->updateCoeffs();
     }
 
-    fvPatchField<Type>::operator==
-    (
-        transform
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : treat like zero-gradient
+        this->extrapolateInternal();
+    }
+    else
+    {
+        const auto& rot = refCast<const wedgeFvPatch>(this->patch()).faceT();
+
+        fvPatchField<Type>::operator==
         (
-            refCast<const wedgeFvPatch>(this->patch()).faceT(),
-            this->patchInternalField()
-        )
-    );
+            transform(rot, this->patchInternalField())
+        );
+     }
 }
 
 

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,13 +86,25 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::basicSymmetryFvPatchField<Type>::snGrad() const
 {
-    tmp<vectorField> nHat = this->patch().nf();
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : treat like zero-gradient
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        tmp<vectorField> nHat = this->patch().nf();
 
-    const Field<Type> iF(this->patchInternalField());
+        const auto& dc = this->patch().deltaCoeffs();
 
-    return
-        (transform(I - 2.0*sqr(nHat), iF) - iF)
-       *(this->patch().deltaCoeffs()/2.0);
+        const Field<Type> pif(this->patchInternalField());
+
+        return
+        (
+            (0.5*dc)
+          * (transform(I - 2.0*sqr(nHat), pif) - pif)
+        );
+    }
 }
 
 
@@ -103,14 +116,22 @@ void Foam::basicSymmetryFvPatchField<Type>::evaluate(const Pstream::commsTypes)
         this->updateCoeffs();
     }
 
-    tmp<vectorField> nHat = this->patch().nf();
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : treat like zero-gradient
+        this->extrapolateInternal();
+    }
+    else
+    {
+        tmp<vectorField> nHat = this->patch().nf();
 
-    const Field<Type> iF(this->patchInternalField());
+        const Field<Type> pif(this->patchInternalField());
 
-    Field<Type>::operator=
-    (
-        (iF + transform(I - 2.0*sqr(nHat), iF))/2.0
-    );
+        Field<Type>::operator=
+        (
+            0.5*(pif + transform(I - 2.0*sqr(nHat), pif))
+        );
+    }
 
     transformFvPatchField<Type>::evaluate();
 }

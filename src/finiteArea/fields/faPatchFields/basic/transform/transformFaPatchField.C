@@ -37,7 +37,7 @@ Foam::transformFaPatchField<Type>::transformFaPatchField
     const DimensionedField<Type, areaMesh>& iF
 )
 :
-   faPatchField<Type>(p, iF)
+    faPatchField<Type>(p, iF)
 {}
 
 

@@ -77,7 +77,9 @@ public:
     //- Runtime type information
     TypeName("wedge");
 
-    //- Construct from dictionary
+    //- Construct from dictionary.
+    //  Fatal if ngbPolyPatchIndex is not defined
+    //  or does not correspond to a wedgePolyPatch
     wedgeFaPatch
     (
         const word& name,
@@ -97,25 +99,25 @@ public:
         // Access
 
             //- Return axis of the wedge
-            const vector& axis() const
+            const vector& axis() const noexcept
             {
                 return wedgePolyPatchPtr_->axis();
             }
 
             //- Return plane normal between the wedge boundaries
-            const vector& centreNormal() const
+            const vector& centreNormal() const noexcept
             {
                 return wedgePolyPatchPtr_->centreNormal();
             }
 
             //- Return face transformation tensor
-            const tensor& edgeT() const
+            const tensor& edgeT() const noexcept
             {
                 return wedgePolyPatchPtr_->faceT();
             }
 
             //- Return neighbour-cell transformation tensor
-            const tensor& faceT() const
+            const tensor& faceT() const noexcept
             {
                 return wedgePolyPatchPtr_->cellT();
             }

@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wedgePolyPatch_H
-#define wedgePolyPatch_H
+#ifndef Foam_wedgePolyPatch_H
+#define Foam_wedgePolyPatch_H
 
 #include "polyPatch.H"
 
@@ -52,7 +52,7 @@ class wedgePolyPatch
 :
     public polyPatch
 {
-    // Private data
+    // Private Data
 
         //- Axis of the wedge
         vector axis_;
@@ -173,45 +173,27 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
-        // Access
+    // Access
 
-            //- Return axis of the wedge
-            const vector& axis() const
-            {
-                return axis_;
-            }
+        //- Return axis of the wedge
+        const vector& axis() const noexcept { return axis_; }
 
-            //- Return plane normal between the wedge boundaries
-            const vector& centreNormal() const
-            {
-                return centreNormal_;
-            }
+        //- Return plane normal between the wedge boundaries
+        const vector& centreNormal() const noexcept { return centreNormal_; }
 
-            //- Return the normal to the patch
-            const vector& n() const
-            {
-                return n_;
-            }
+        //- Return the normal to the patch
+        const vector& n() const noexcept { return n_; }
 
-            //- Return the cosine of the wedge angle
-            scalar cosAngle() const
-            {
-                return cosAngle_;
-            }
+        //- Return the cosine of the wedge angle
+        scalar cosAngle() const noexcept { return cosAngle_; }
 
-            //- Return face transformation tensor
-            const tensor& faceT() const
-            {
-                return faceT_;
-            }
+        //- Return face transformation tensor
+        const tensor& faceT() const noexcept { return faceT_; }
 
-            //- Return neighbour-cell transformation tensor
-            const tensor& cellT() const
-            {
-                return cellT_;
-            }
+        //- Return neighbour-cell transformation tensor
+        const tensor& cellT() const noexcept { return cellT_; }
 };
 
 

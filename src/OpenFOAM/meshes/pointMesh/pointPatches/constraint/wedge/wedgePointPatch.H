@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wedgePointPatch_H
-#define wedgePointPatch_H
+#ifndef Foam_wedgePointPatch_H
+#define Foam_wedgePointPatch_H
 
 #include "facePointPatch.H"
 #include "wedgePolyPatch.H"
@@ -53,9 +53,9 @@ class wedgePointPatch
 :
     public facePointPatch
 {
-    // Private data
+    // Private Data
 
-        //- Local reference cast into the symmetryPlane patch
+        //- Local reference cast into the wedgePolyPatch patch
         const wedgePolyPatch& wedgePolyPatch_;
 
 
@@ -120,8 +120,8 @@ public:
             pointConstraint&
         ) const;
 
-        //- Return symmetry plane normal
-        const vector& n() const
+        //- Return the normal to the patch
+        const vector& n() const noexcept
         {
             return wedgePolyPatch_.n();
         }
