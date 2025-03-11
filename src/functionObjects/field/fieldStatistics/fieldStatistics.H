@@ -1,0 +1,277 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2025 OpenCFD Ltd.
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Class
+    Foam::functionObjects::fieldStatistics
+
+Group
+    grpFieldFunctionObjects
+
+Description
+
+    Operands:
+    \table
+      Operand        | Type | Location
+      input          | -    | -
+      output file    | dat  | \<case\>/postProcessing/\<FO\>/\<time\>/\<file\>
+      output field   | -    | -
+    \endtable
+
+Usage
+    Minimal example by using \c system/controlDict.functions:
+    \verbatim
+    fieldStatistics1
+    {
+        // Mandatory entries
+        type             fieldStatistics;
+        libs             (fieldFunctionObjects);
+        fields           (<wordList>);
+        statistics       (<wordList>);
+
+        // Optional entries
+        mode             <word>;
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property     | Description                        | Type | Reqd  | Deflt
+      type         | Type name: fieldStatistics         | word | yes   | -
+      libs         | Library name: fieldFunctionObjects | word | yes   | -
+      fields       | List of operand fields             | wordList | yes | -
+      statistics   | List of operand statistics         | wordList | yes | -
+      mode   | Output format of the statistical results | word | no | magnitude
+    \endtable
+
+    Available statistics of the operand field through the \c statistics entry:
+    \verbatim
+      min        | Minimum value
+      max        | Maximum value
+      mean       | Arithmetic mean value
+      variance   | Sample variance value (unbiased)
+    \endverbatim
+
+    Options for the \c mode entry:
+    \verbatim
+      magnitude  | Output statistics magnitude-wise
+      component  | Output statistics separately for each component
+    \endverbatim
+
+    The inherited entries are elaborated in:
+      - \link functionObject.H \endlink
+      - \link writeFile.H \endlink
+
+SourceFiles
+    fieldStatistics.C
+    fieldStatisticsTemplates.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef functionObjects_fieldStatistics_H
+#define functionObjects_fieldStatistics_H
+
+#include "fvMeshFunctionObject.H"
+#include "writeFile.H"
+#include "volFieldSelection.H"
+#include <functional>
+#include <variant>
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace functionObjects
+{
+
+/*---------------------------------------------------------------------------*\
+                         Class fieldStatistics Declaration
+\*---------------------------------------------------------------------------*/
+
+class fieldStatistics
+:
+    public fvMeshFunctionObject,
+    public writeFile
+{
+    // Private Enumerations
+
+        //- Options for the output format of the statistical results
+        enum modeType : char
+        {
+            mdMag = 0,  //!< "Output statistics magnitude-wise"
+            mdCmpt      //!< "Output statistics separately for each component"
+        };
+
+        //- Names for modeType
+        static const Enum<modeType> modeTypeNames_;
+
+
+    // Private Classes
+
+        //- Type-safe union for input field types
+        using variantInput = std::variant
+        <
+            volScalarField,
+            volVectorField,
+            volSymmTensorField,
+            volTensorField
+        >;
+
+        //- Type-safe union for output data types
+        using variantOutput = std::variant
+        <
+            scalar,
+            vector,
+            symmTensor,
+            tensor
+        >;
+
+        //- Class to encapsulate information about specified statistic
+        struct statistic
+        {
+            //- Name of the statistic
+            word name_;
+
+            //- Calculate the value of the specified statistic
+            std::function<variantOutput(variantInput)> calc;
+        };
+
+
+    // Private Data
+
+        //- Output-format mode - only applicable for tensor ranks > 0
+        modeType mode_;
+
+        //- Operand fields on which statistics are computed
+        volFieldSelection fieldSet_;
+
+        //- List of file pointers; one file per field
+        HashPtrTable<OFstream> filePtrs_;
+
+        //- Hash table containing all specified statistics
+        HashTable<statistic> statistics_;
+
+        //- Hash table containing all statistical results per field
+        HashTable<HashTable<variantOutput>> results_;
+
+
+    // Private Member Functions
+
+        //- Return the statistic container
+        statistic createStatistic(const word& statName, const modeType& mode);
+
+        //- Compute the specified statistics of a given field
+        template<class T>
+        bool calcStat(const word& fieldName);
+
+
+        // Central tendency statistics
+
+        //- Return the arithmetic mean of the given input field
+        template<class T>
+        T calcMean(const VolumeField<T>& field);
+
+
+        // Dispersion statistics
+
+        //- Return the minimum value of the given input field
+        //  Store the processor index, cell index and location of the minimum
+        template<class T>
+        T calcMin(const VolumeField<T>& field);
+
+        //- Return the maximum value of the given input field
+        //  Store the processor index, cell index and location of the maximum
+        template<class T>
+        T calcMax(const VolumeField<T>& field);
+
+        //- Return the sample variance of the given input field
+        template<class T>
+        T calcVariance(const VolumeField<T>& field);
+
+
+        //- Output the file header information
+        void writeFileHeader(Ostream& os, const word& fieldName);
+
+public:
+
+    //- Runtime type information
+    TypeName("fieldStatistics");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        fieldStatistics(const fieldStatistics&) = delete;
+
+        //- No copy assignment
+        void operator=(const fieldStatistics&) = delete;
+
+
+    // Constructors
+
+        //- Construct from name, Time and dictionary
+        fieldStatistics
+        (
+            const word& name,
+            const Time& runTime,
+            const dictionary& dict
+        );
+
+
+    //- Destructor
+    virtual ~fieldStatistics() = default;
+
+
+    // Member Functions
+
+        //- Read function object settings
+        virtual bool read(const dictionary&);
+
+        //- Execute function object
+        virtual bool execute();
+
+        //- Write function object results
+        virtual bool write();
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace functionObjects
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "fieldStatisticsTemplates.C"
+#endif
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //
