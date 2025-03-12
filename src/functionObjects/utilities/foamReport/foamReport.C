@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +32,7 @@ License
 #include "cloud.H"
 #include "foamVersion.H"
 #include "fvMesh.H"
+#include "globalMeshData.H"
 #include "IFstream.H"
 #include "stringOps.H"
 #include "substitutionModel.H"
@@ -56,7 +57,7 @@ void Foam::functionObjects::foamReport::setStaticBuiltins()
     substitutionModel::addBuiltinStr
     (
         "OF_PROC_ZERO_DIR",
-        Pstream::parRun() ? "processor0" : ""
+        UPstream::parRun() ? "processor0" : ""
     );
 
     substitutionModel::addBuiltin("OF_API", foamVersion::api);
@@ -72,26 +73,45 @@ void Foam::functionObjects::foamReport::setStaticBuiltins()
     substitutionModel::addBuiltinStr("OF_CASE_PATH", argList::envGlobalPath());
     substitutionModel::addBuiltinStr("OF_CASE_NAME", time().globalCaseName());
 
-    substitutionModel::addBuiltin("OF_NPROCS", Pstream::nProcs());
+    substitutionModel::addBuiltin("OF_NPROCS", UPstream::nProcs());
 
     // Set mesh builtins when there is only 1 mesh
-    const auto meshes = time_.lookupClass<fvMesh>();
+    const auto meshes = time_.csorted<fvMesh>();
+
     if (meshes.size() == 1)
     {
-        const auto& mesh = *(meshes.begin().val());
-        substitutionModel::addBuiltin("OF_MESH_NCELLS", mesh.nCells());
-        substitutionModel::addBuiltin("OF_MESH_NFACES", mesh.nFaces());
-        substitutionModel::addBuiltin("OF_MESH_NEDGES", mesh.nEdges());
-        substitutionModel::addBuiltin("OF_MESH_NPOINTS", mesh.nPoints());
+        const auto& mesh = meshes[0];
+
+        substitutionModel::addBuiltin
+        (
+            "OF_MESH_NCELLS",
+            mesh.globalData().nTotalCells()
+        );
+        substitutionModel::addBuiltin
+        (
+            "OF_MESH_NFACES",
+            mesh.globalData().nTotalFaces()
+        );
+        substitutionModel::addBuiltin
+        (
+            "OF_MESH_NEDGES",
+            returnReduce(mesh.nEdges(), sumOp<label>())
+        );
+        substitutionModel::addBuiltin
+        (
+            "OF_MESH_NPOINTS",
+            mesh.globalData().nTotalPoints()
+        );
         substitutionModel::addBuiltin
         (
             "OF_MESH_NINTERNALFACES",
-            mesh.nInternalFaces()
+            returnReduce(mesh.nInternalFaces(), sumOp<label>())
         );
         substitutionModel::addBuiltin
         (
             "OF_MESH_NBOUNDARYFACES",
-            mesh.nBoundaryFaces()
+            // TBD: use mesh.boundaryMesh().nNonProcessorFaces() ?
+            returnReduce(mesh.nBoundaryFaces(), sumOp<label>())
         );
         substitutionModel::addBuiltin
         (
@@ -123,8 +143,8 @@ void Foam::functionObjects::foamReport::setDynamicBuiltins()
     substitutionModel::setBuiltinStr("OF_DATE_NOW", clock::date());
     substitutionModel::setBuiltinStr("OF_CLOCK_NOW", clock::clockTime());
 
-    substitutionModel::setBuiltin("OF_NREGIONS", time().names<fvMesh>().size());
-    substitutionModel::setBuiltin("OF_NCLOUDS", time().names<cloud>().size());
+    substitutionModel::setBuiltin("OF_NREGIONS", time().count<fvMesh>());
+    substitutionModel::setBuiltin("OF_NCLOUDS", time().count<cloud>());
 }
 
 
