@@ -50,60 +50,51 @@ namespace Foam
 {
 
 #if 0
-// General way to add tokens for VectorSpace types
+// General way to add tokens for fundamental and VectorSpace types
 // (caller excludes none/invalid)
 template<class Type>
 static void addTokens(tokenList& toks, const Type& val)
 {
-    const direction nCmpt = pTraits<Type>::nComponents;
-    const direction nParen = 2*(pTraits<Type>::rank || (nCmpt > 1) ? 1 : 0);
-
-    const label nOld = toks.size();
-    toks.resize(nOld + label(nCmpt + nParen));
-
-    auto iter = toks.begin(nOld);
-
-    if (nParen)
+    if constexpr (std::is_same_v<bool, Type>)
     {
-        *iter = token::BEGIN_LIST;
-        ++iter;
+        // For bool
+        toks.emplace_back() = token::boolean(val);
     }
-
-    for (direction cmpt = 0; cmpt < nCmpt; ++cmpt)
+    else if constexpr (std::is_arithmetic_v<Type>)
     {
-        *iter = component(val, cmpt);
-        ++iter;
+        // For label, float, double, ...
+        toks.emplace_back() = val;
     }
-
-    if (nParen)
+    else
     {
-        *iter = token::END_LIST;
-        ++iter;
+        constexpr direction nCmpt = pTraits_nComponents<Type>::value;
+
+        constexpr direction nParen =
+            2*(is_vectorspace_v<Type> || (nCmpt > 1) ? 1 : 0);
+
+        const label nOld = toks.size();
+        toks.resize(nOld + label(nCmpt + nParen));
+
+        auto iter = toks.begin(nOld);
+
+        if (nParen)
+        {
+            *iter = token::BEGIN_LIST;
+            ++iter;
+        }
+
+        for (direction cmpt = 0; cmpt < nCmpt; ++cmpt)
+        {
+            *iter = component(val, cmpt);
+            ++iter;
+        }
+
+        if (nParen)
+        {
+            *iter = token::END_LIST;
+            ++iter;
+        }
     }
-}
-
-
-//- Specialized for bool
-template<>
-void addTokens<bool>(tokenList& toks, const bool& val)
-{
-    toks.emplace_back() = token::boolean(val);
-}
-
-
-//- Specialized for label
-template<>
-void addTokens<label>(tokenList& toks, const label& val)
-{
-    toks.emplace_back() = val;
-}
-
-
-//- Specialized for scalar
-template<>
-void addTokens<scalar>(tokenList& toks, const scalar& val)
-{
-    toks.emplace_back() = val;
 }
 
 #endif

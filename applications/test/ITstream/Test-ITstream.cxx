@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,15 +74,11 @@ Ostream& toString(Ostream& os, const List<char>& list)
 void printTokens(Istream& is)
 {
     label count = 0;
-    token t;
-    while (is.good())
+
+    Info<< "stream tokens:" << endl;
+    for (token tok; tok.read(is); ++count)
     {
-        is >> t;
-        if (t.good())
-        {
-            ++count;
-            Info<< "token: " << t << endl;
-        }
+        Info<< "  : " << tok << endl;
     }
 
     Info<< count << " tokens" << endl;
@@ -454,6 +450,12 @@ int main(int argc, char *argv[])
         const char* charInput =
             "( const char input \"string\" to tokenize )\n"
             "List<label> 5(0 1 2 3 4);";
+
+        // printTokens
+        {
+            ISpanStream is(charInput);
+            printTokens(is);
+        }
 
         string stringInput("( string     ;    input \"string\" to tokenize )");
 

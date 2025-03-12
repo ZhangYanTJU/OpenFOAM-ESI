@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -141,6 +141,19 @@ Foam::token::token(Istream& is)
     token()
 {
     is.read(*this);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::token::read(Istream& is)
+{
+    reset();
+    if (is.good())
+    {
+        is.read(*this);
+    }
+    return good();
 }
 
 

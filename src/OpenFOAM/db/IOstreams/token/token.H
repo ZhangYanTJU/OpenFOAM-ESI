@@ -807,6 +807,10 @@ public:
         //- Swap token contents: type, data, line-number
         inline void swap(token& tok) noexcept;
 
+        //- Read a token from Istream, calls reset() first.
+        //  \returns token state as good() or not.
+        bool read(Istream& is);
+
 
     // Info
 
@@ -922,6 +926,7 @@ public:
 
 // IOstream Operators
 
+//- Read token from Istream. Same as token::read() but returns stream state
 Istream& operator>>(Istream& is, token& tok);
 Ostream& operator<<(Ostream& os, const token::punctuationToken& pt);
 ostream& operator<<(ostream& os, const token::punctuationToken& pt);
