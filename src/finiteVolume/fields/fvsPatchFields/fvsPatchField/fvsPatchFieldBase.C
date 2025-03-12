@@ -45,7 +45,8 @@ int Foam::fvsPatchFieldBase::disallowGenericPatchField
 
 Foam::fvsPatchFieldBase::fvsPatchFieldBase(const fvPatch& p)
 :
-    patch_(p)
+    patch_(p),
+    patchType_(word::null)
 {}
 
 
@@ -55,7 +56,8 @@ Foam::fvsPatchFieldBase::fvsPatchFieldBase
     const dictionary& dict
 )
 :
-    patch_(p)
+    patch_(p),
+    patchType_(word::null)      // TBD.
 {}
 
 
@@ -65,13 +67,15 @@ Foam::fvsPatchFieldBase::fvsPatchFieldBase
     const fvPatch& p
 )
 :
-    patch_(p)
+    patch_(p),
+    patchType_(rhs.patchType_)
 {}
 
 
 Foam::fvsPatchFieldBase::fvsPatchFieldBase(const fvsPatchFieldBase& rhs)
 :
-    patch_(rhs.patch_)
+    patch_(rhs.patch_),
+    patchType_(rhs.patchType_)
 {}
 
 

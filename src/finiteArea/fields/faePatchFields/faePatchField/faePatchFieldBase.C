@@ -47,7 +47,8 @@ int Foam::faePatchFieldBase::disallowGenericPatchField
 
 Foam::faePatchFieldBase::faePatchFieldBase(const faPatch& p)
 :
-    patch_(p)
+    patch_(p),
+    patchType_(word::null)
 {}
 
 
@@ -57,7 +58,8 @@ Foam::faePatchFieldBase::faePatchFieldBase
     const word& patchType
 )
 :
-    faePatchFieldBase(p)
+    patch_(p),
+    patchType_(patchType)
 {}
 
 
@@ -79,20 +81,24 @@ Foam::faePatchFieldBase::faePatchFieldBase
     const faPatch& p
 )
 :
-    patch_(p)
+    patch_(p),
+    patchType_(rhs.patchType_)
 {}
 
 
 Foam::faePatchFieldBase::faePatchFieldBase(const faePatchFieldBase& rhs)
 :
-    patch_(rhs.patch_)
+    patch_(rhs.patch_),
+    patchType_(rhs.patchType_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::faePatchFieldBase::readDict(const dictionary& dict)
-{}
+{
+    // TBD. read patchType_
+}
 
 
 const Foam::objectRegistry& Foam::faePatchFieldBase::db() const

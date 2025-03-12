@@ -1356,9 +1356,16 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
     internalFieldRef() = gf.internalField();
     boundaryFieldRef() = gf.boundaryField();
 
-    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
-    // triggers e.g. cyclic interpolation.
-    this->correctLocalBoundaryConditions();
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            const auto& pType = pfld.patchType();
+            return !pType.empty() && pType != pfld.type();
+        },
+        UPstream::defaultCommsType
+    );
 }
 
 
@@ -1396,9 +1403,16 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
 
     tgf.clear();
 
-    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
-    // triggers e.g. cyclic interpolation.
-    this->correctLocalBoundaryConditions();
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            const auto& pType = pfld.patchType();
+            return !pType.empty() && pType != pfld.type();
+        },
+        UPstream::defaultCommsType
+    );
 }
 
 
@@ -1411,9 +1425,16 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
     internalFieldRef() = dt;
     boundaryFieldRef() = dt.value();
 
-    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
-    // triggers e.g. cyclic interpolation.
-    this->correctLocalBoundaryConditions();
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            const auto& pType = pfld.patchType();
+            return !pType.empty() && pType != pfld.type();
+        },
+        UPstream::defaultCommsType
+    );
 }
 
 
@@ -1434,9 +1455,16 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
 
     tgf.clear();
 
-    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
-    // triggers e.g. cyclic interpolation.
-    this->correctLocalBoundaryConditions();
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            const auto& pType = pfld.patchType();
+            return !pType.empty() && pType != pfld.type();
+        },
+        UPstream::defaultCommsType
+    );
 }
 
 
@@ -1449,9 +1477,16 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
     internalFieldRef() = dt;
     boundaryFieldRef() == dt.value();
 
-    // Make sure any e.g. jump-cyclic are updated. Note: unfortunately also
-    // triggers e.g. cyclic interpolation.
-    this->correctLocalBoundaryConditions();
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            const auto& pType = pfld.patchType();
+            return !pType.empty() && pType != pfld.type();
+        },
+        UPstream::defaultCommsType
+    );
 }
 
 
@@ -1468,7 +1503,15 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
     internalFieldRef() op gf.internalField();                                  \
     boundaryFieldRef() op gf.boundaryField();                                  \
                                                                                \
-    this->correctLocalBoundaryConditions();                                    \
+    boundaryFieldRef().evaluate_if                                             \
+    (                                                                          \
+        [](const auto& pfld) -> bool                                           \
+        {                                                                      \
+            const auto& pType = pfld.patchType();                              \
+            return !pType.empty() && pType != pfld.type();                     \
+        },                                                                     \
+        UPstream::defaultCommsType                                             \
+    );                                                                         \
 }                                                                              \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
@@ -1480,7 +1523,15 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
     operator op(tgf());                                                        \
     tgf.clear();                                                               \
                                                                                \
-    this->correctLocalBoundaryConditions();                                    \
+    boundaryFieldRef().evaluate_if                                             \
+    (                                                                          \
+        [](const auto& pfld) -> bool                                           \
+        {                                                                      \
+            const auto& pType = pfld.patchType();                              \
+            return !pType.empty() && pType != pfld.type();                     \
+        },                                                                     \
+        UPstream::defaultCommsType                                             \
+    );                                                                         \
 }                                                                              \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
@@ -1492,7 +1543,15 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
     internalFieldRef() op dt;                                                  \
     boundaryFieldRef() op dt.value();                                          \
                                                                                \
-    this->correctLocalBoundaryConditions();                                    \
+    boundaryFieldRef().evaluate_if                                             \
+    (                                                                          \
+        [](const auto& pfld) -> bool                                           \
+        {                                                                      \
+            const auto& pType = pfld.patchType();                              \
+            return !pType.empty() && pType != pfld.type();                     \
+        },                                                                     \
+        UPstream::defaultCommsType                                             \
+    );                                                                         \
 }
 
 COMPUTED_ASSIGNMENT(Type, +=)
