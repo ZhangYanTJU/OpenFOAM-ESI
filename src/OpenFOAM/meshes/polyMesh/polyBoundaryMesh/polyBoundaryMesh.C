@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -650,6 +650,26 @@ Foam::label Foam::polyBoundaryMesh::nProcessorPatches() const
         {
             ++count;
         }
+    }
+
+    return count;
+}
+
+
+Foam::label Foam::polyBoundaryMesh::nNonProcessorFaces() const
+{
+    const polyPatchList& patches = *this;
+
+    label count = 0;
+
+    for (const polyPatch& p : patches)
+    {
+        if (isA<processorPolyPatch>(p))
+        {
+            break;
+        }
+
+        count += p.nFaces();
     }
 
     return count;

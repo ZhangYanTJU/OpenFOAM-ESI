@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,7 +33,7 @@ Description
 
 SourceFiles
     polyBoundaryMesh.C
-    polyBoundaryMeshTemplates.C
+    polyBoundaryMesh.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -211,6 +211,9 @@ public:
 
         //- The number of processorPolyPatch patches
         label nProcessorPatches() const;
+
+        //- The number of boundary faces before the first processor patch.
+        label nNonProcessorFaces() const;
 
         //- Return a list of patch names
         wordList names() const;
@@ -427,7 +430,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "polyBoundaryMeshTemplates.C"
+    #include "polyBoundaryMesh.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

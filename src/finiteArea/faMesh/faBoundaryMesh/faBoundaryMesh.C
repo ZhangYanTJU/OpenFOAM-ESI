@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -416,6 +416,26 @@ Foam::label Foam::faBoundaryMesh::nProcessorPatches() const
         {
             ++count;
         }
+    }
+
+    return count;
+}
+
+
+Foam::label Foam::faBoundaryMesh::nNonProcessorEdges() const
+{
+    const faPatchList& patches = *this;
+
+    label count = 0;
+
+    for (const faPatch& p : patches)
+    {
+        if (isA<processorFaPatch>(p))
+        {
+            break;
+        }
+
+        count += p.nEdges();
     }
 
     return count;
