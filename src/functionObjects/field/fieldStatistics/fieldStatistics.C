@@ -303,7 +303,7 @@ bool Foam::functionObjects::fieldStatistics::write()
         {
             const auto& results = results_(fieldName);
 
-            Info<< '    Field' << tab << fieldName << nl;
+            Info<< nl << "    Field " << fieldName << nl;
 
             for (const auto& iter : results.csorted())
             {
@@ -319,20 +319,20 @@ bool Foam::functionObjects::fieldStatistics::write()
                             is_vectorspace_v<std::decay_t<decltype(v)>>
                         )
                         {
-                            Info<< '    ' << name << tab;
-                            for (const auto& val : v) Info<< val << tab;
+                            Info<< "    " << name << " ";
+                            for (const auto& val : v) Info<< val << " ";
                             Info<< nl;
                         }
                         else
                         {
-                            Info<< tab << name << tab << v << nl;
+                            Info<< "    " << name << " " << v << nl;
                         }
                     },
                     value
                 );
             }
-            Info<< endl;
         }
+        Info<< endl;
     }
 
     return true;
