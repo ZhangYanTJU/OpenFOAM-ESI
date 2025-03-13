@@ -93,7 +93,7 @@ bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
     const auto& field = *fieldp;
 
     tmp<Field<Type>> tfld = flatten(field);
-    const Field<Type> fld = tfld.cref();
+    const auto& fld = tfld.cref();
 
     HashTable<variantOutput> result;
     for (const auto& iter : statistics_.csorted())
