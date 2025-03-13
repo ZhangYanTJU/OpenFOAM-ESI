@@ -126,52 +126,14 @@ T Foam::functionObjects::fieldStatistics::calcMean(const Field<T>& field)
 template<class T>
 T Foam::functionObjects::fieldStatistics::calcMin(const Field<T>& field)
 {
-    const label proci = Pstream::myProcNo();
-
-    // Find min internal field value info
-
-    List<T> minVs(Pstream::nProcs(), pTraits<T>::max);
-
-    labelPair minMaxIds = findMinMax(field);
-
-    label minId = minMaxIds.first();
-    if (minId != -1)
-    {
-        minVs[proci] = field[minId];
-    }
-
-    // Collect info from all processors and output
-    Pstream::allGatherList(minVs);
-
-    minId = findMin(minVs);
-
-    return minVs[minId];  // minValue
+    return gMin(field);
 }
 
 
 template<class T>
 T Foam::functionObjects::fieldStatistics::calcMax(const Field<T>& field)
 {
-    const label proci = Pstream::myProcNo();
-
-    // Find max internal field value info
-
-    List<T> maxVs(Pstream::nProcs(), pTraits<T>::min);
-
-    labelPair minMaxIds = findMinMax(field);
-
-    label maxId = minMaxIds.second();
-    if (maxId != -1)
-    {
-        maxVs[proci] = field[maxId];
-    }
-
-    // Collect info from all processors and output
-    Pstream::allGatherList(maxVs);
-
-    maxId = findMax(maxVs);
-
-    return maxVs[maxId];  // maxValue
+    return gMax(field);
 }
 
 
