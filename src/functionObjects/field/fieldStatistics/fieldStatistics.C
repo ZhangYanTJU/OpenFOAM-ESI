@@ -61,6 +61,12 @@ Foam::functionObjects::fieldStatistics::meanTypeNames_
 });
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Implementation
+#include "fieldStatisticsImpl.cxx"
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 Foam::functionObjects::fieldStatistics::statistic
