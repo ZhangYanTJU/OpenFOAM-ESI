@@ -243,6 +243,8 @@ bool Foam::functionObjects::fieldStatistics::execute()
 
 bool Foam::functionObjects::fieldStatistics::write()
 {
+    Log << type() << " " << name() << " write:" << endl;
+
     // Create an output file per field
     if (writeToFile() && !writtenHeader_)
     {
@@ -298,6 +300,8 @@ bool Foam::functionObjects::fieldStatistics::write()
         {
             const auto& results = results_(fieldName);
 
+            Info<< tab << "Field" << tab << fieldName << nl;
+
             for (const auto& iter : results.csorted())
             {
                 const word& name = iter.key();
@@ -309,18 +313,19 @@ bool Foam::functionObjects::fieldStatistics::write()
                     {
                         if constexpr (std::is_same_v<std::decay_t<decltype(v)>, scalar>)
                         {
-                            Info<< name << " " << v;
+                            Info<< tab << name << tab << v << nl;
                         }
                         else
                         {
-                            Info<< name << " ";
-                            for (const auto& val : v) Info<< val << " ";
+                            Info<< tab << name << tab;
+                            for (const auto& val : v) Info<< val << tab;
+                            Info<< nl;
                         }
-                        Info<< nl;
                     },
                     value
                 );
             }
+            Info<< endl;
         }
     }
 
