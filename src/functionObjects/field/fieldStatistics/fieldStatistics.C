@@ -143,6 +143,87 @@ void Foam::functionObjects::fieldStatistics::writeFileHeader
 }
 
 
+void Foam::functionObjects::fieldStatistics::writeStatData()
+{
+    for (const word& fieldName : fieldSet_.selectionNames())
+    {
+        const auto& results = results_(fieldName);
+
+        if (!results.size()) break;
+
+        OFstream& file = *filePtrs_(fieldName);
+
+        writeCurrentTime(file);
+
+        for (const auto& iter : results.csorted())
+        {
+            const variantOutput& value = iter.val();
+
+            std::visit
+            (
+                [&file](const auto& v)
+                {
+                    if constexpr
+                    (
+                        is_vectorspace_v<std::decay_t<decltype(v)>>
+                    )
+                    {
+                        for (const auto& val : v) file<< token::TAB << val;
+                    }
+                    else
+                    {
+                        file<< token::TAB << v;
+                    }
+                },
+                value
+            );
+        }
+        file<< nl;
+    }
+}
+
+
+void Foam::functionObjects::fieldStatistics::logStatData()
+{
+    for (const word& fieldName : fieldSet_.selectionNames())
+    {
+        const auto& results = results_(fieldName);
+
+        if (!results.size()) break;
+
+        Info<< nl << "    Field " << fieldName << nl;
+
+        for (const auto& iter : results.csorted())
+        {
+            const word& name = iter.key();
+            const variantOutput& value = iter.val();
+
+            std::visit
+            (
+                [name](const auto& v)
+                {
+                    if constexpr
+                    (
+                        is_vectorspace_v<std::decay_t<decltype(v)>>
+                    )
+                    {
+                        Info<< "    " << name << " ";
+                        for (const auto& val : v) Info<< val << " ";
+                        Info<< nl;
+                    }
+                    else
+                    {
+                        Info<< "    " << name << " " << v << nl;
+                    }
+                },
+                value
+            );
+        }
+    }
+    Info<< endl;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::functionObjects::fieldStatistics::fieldStatistics
@@ -261,78 +342,13 @@ bool Foam::functionObjects::fieldStatistics::write()
     // Write the statistical results to the output file if requested
     if (writeToFile())
     {
-        for (const word& fieldName : fieldSet_.selectionNames())
-        {
-            const auto& results = results_(fieldName);
-
-            OFstream& file = *filePtrs_(fieldName);
-
-            writeCurrentTime(file);
-
-            for (const auto& iter : results.csorted())
-            {
-                const variantOutput& value = iter.val();
-
-                std::visit
-                (
-                    [&file](const auto& v)
-                    {
-                        if constexpr
-                        (
-                            is_vectorspace_v<std::decay_t<decltype(v)>>
-                        )
-                        {
-                            for (const auto& val : v) file<< token::TAB << val;
-                        }
-                        else
-                        {
-                            file<< token::TAB << v;
-                        }
-                    },
-                    value
-                );
-            }
-            file<< nl;
-        }
+        writeStatData();
     }
 
     // Print the statistical results to the standard stream if requested
     if (log)
     {
-        for (const word& fieldName : fieldSet_.selectionNames())
-        {
-            const auto& results = results_(fieldName);
-
-            Info<< nl << "    Field " << fieldName << nl;
-
-            for (const auto& iter : results.csorted())
-            {
-                const word& name = iter.key();
-                const variantOutput& value = iter.val();
-
-                std::visit
-                (
-                    [name](const auto& v)
-                    {
-                        if constexpr
-                        (
-                            is_vectorspace_v<std::decay_t<decltype(v)>>
-                        )
-                        {
-                            Info<< "    " << name << " ";
-                            for (const auto& val : v) Info<< val << " ";
-                            Info<< nl;
-                        }
-                        else
-                        {
-                            Info<< "    " << name << " " << v << nl;
-                        }
-                    },
-                    value
-                );
-            }
-        }
-        Info<< endl;
+        logStatData();
     }
 
     return true;
