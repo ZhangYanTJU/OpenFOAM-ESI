@@ -277,13 +277,16 @@ bool Foam::functionObjects::fieldStatistics::write()
                 (
                     [&file](const auto& v)
                     {
-                        if constexpr (std::is_same_v<std::decay_t<decltype(v)>, scalar>)
+                        if constexpr
+                        (
+                            is_vectorspace_v<std::decay_t<decltype(v)>>
+                        )
                         {
-                            file<< token::TAB << v;
+                            for (const auto& val : v) file<< token::TAB << val;
                         }
                         else
                         {
-                            for (const auto& val : v) file<< token::TAB << val;
+                            file<< token::TAB << v;
                         }
                     },
                     value
@@ -311,15 +314,18 @@ bool Foam::functionObjects::fieldStatistics::write()
                 (
                     [name](const auto& v)
                     {
-                        if constexpr (std::is_same_v<std::decay_t<decltype(v)>, scalar>)
-                        {
-                            Info<< '    ' << name << tab << v << nl;
-                        }
-                        else
+                        if constexpr
+                        (
+                            is_vectorspace_v<std::decay_t<decltype(v)>>
+                        )
                         {
                             Info<< '    ' << name << tab;
                             for (const auto& val : v) Info<< val << tab;
                             Info<< nl;
+                        }
+                        else
+                        {
+                            Info<< tab << name << tab << v << nl;
                         }
                     },
                     value
