@@ -85,7 +85,12 @@ bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
         return false;
     }
 
-    const VolFieldType& field = lookupObject<VolFieldType>(fieldName);
+    const auto* fieldp = obr_.cfindObject<VolFieldType>(fieldName);
+    if (!fieldp)
+    {
+        return false;
+    }
+    const auto& field = *fieldp;
 
     tmp<Field<Type>> tfld = flatten(field);
     const Field<Type> fld = tfld.cref();
