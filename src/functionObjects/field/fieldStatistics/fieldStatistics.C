@@ -132,7 +132,7 @@ void Foam::functionObjects::fieldStatistics::writeFileHeader
     // Therefore, the output file columns are based on output statistics.
     const auto& result = results_(fieldName);
 
-    forAllConstIters(result, iter)
+    for (const auto& iter : result.csorted())
     {
         const word& name = iter.key();
         writeTabbed(os, name);
@@ -219,7 +219,7 @@ bool Foam::functionObjects::fieldStatistics::execute()
     {
         const auto& results = results_(fieldName);
 
-        forAllConstIters(results, iter)
+        for (const auto& iter : results.csorted())
         {
             const word& name = iter.key();
             const variantOutput& value = iter.val();
@@ -267,7 +267,7 @@ bool Foam::functionObjects::fieldStatistics::write()
 
             writeCurrentTime(file);
 
-            forAllConstIters(results, iter)
+            for (const auto& iter : results.csorted())
             {
                 const variantOutput& value = iter.val();
 
@@ -298,7 +298,7 @@ bool Foam::functionObjects::fieldStatistics::write()
         {
             const auto& results = results_(fieldName);
 
-            forAllConstIters(results, iter)
+            for (const auto& iter : results.csorted())
             {
                 const word& name = iter.key();
                 const variantOutput& value = iter.val();
