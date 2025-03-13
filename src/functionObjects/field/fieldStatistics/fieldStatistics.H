@@ -99,7 +99,6 @@ Usage
 
 SourceFiles
     fieldStatistics.C
-    fieldStatisticsTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
