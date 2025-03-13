@@ -280,10 +280,10 @@ class fieldStatistics
         //- Output the file header information
         void writeFileHeader(Ostream& os, const word& fieldName);
 
-        //-
+        //- Write the statistical data to the specified file
         void writeStatData();
 
-        //-
+        //- Write the statistical data to the standard stream
         void logStatData();
 
         //- Output the extrema-data file header information

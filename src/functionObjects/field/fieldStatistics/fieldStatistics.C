@@ -196,26 +196,26 @@ void Foam::functionObjects::fieldStatistics::logStatData()
             const word& name = iter.key();
             const variantOutput& value = iter.val();
 
+            Info<< "    " << name << " ";
             std::visit
             (
-                [name](const auto& v)
+                [](const auto& v)
                 {
                     if constexpr
                     (
                         is_vectorspace_v<std::decay_t<decltype(v)>>
                     )
                     {
-                        Info<< "    " << name << " ";
                         for (const auto& val : v) Info<< val << " ";
-                        Info<< nl;
                     }
                     else
                     {
-                        Info<< "    " << name << " " << v << nl;
+                        Info<< v;
                     }
                 },
                 value
             );
+            Info<< nl;
         }
     }
     Info<< endl;
