@@ -249,6 +249,12 @@ class fieldStatistics
         //- Output the file header information
         void writeFileHeader(Ostream& os, const word& fieldName);
 
+        //-
+        void writeStatData();
+
+        //-
+        void logStatData();
+
 public:
 
     //- Runtime type information
