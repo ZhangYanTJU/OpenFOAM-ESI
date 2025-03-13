@@ -115,7 +115,7 @@ T Foam::functionObjects::fieldStatistics::calcMean(const Field<T>& field)
 {
     if (internal_ && (mean_ == VOLUMETRIC))
     {
-        const auto& V = mesh_.V();
+        const Field<scalar>& V = mesh_.V();
         return (gSum(V*field)/gSum(V));
     }
 
