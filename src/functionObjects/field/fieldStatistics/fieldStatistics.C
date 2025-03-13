@@ -300,7 +300,7 @@ bool Foam::functionObjects::fieldStatistics::write()
         {
             const auto& results = results_(fieldName);
 
-            Info<< tab << "Field" << tab << fieldName << nl;
+            Info<< '    Field' << tab << fieldName << nl;
 
             for (const auto& iter : results.csorted())
             {
@@ -313,11 +313,11 @@ bool Foam::functionObjects::fieldStatistics::write()
                     {
                         if constexpr (std::is_same_v<std::decay_t<decltype(v)>, scalar>)
                         {
-                            Info<< tab << name << tab << v << nl;
+                            Info<< '    ' << name << tab << v << nl;
                         }
                         else
                         {
-                            Info<< tab << name << tab;
+                            Info<< '    ' << name << tab;
                             for (const auto& val : v) Info<< val << tab;
                             Info<< nl;
                         }
