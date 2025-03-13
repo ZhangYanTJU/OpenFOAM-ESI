@@ -176,9 +176,6 @@ T Foam::functionObjects::fieldStatistics::calcVariance
     const Field<T>& field
 )
 {
-    label n = field.size();
-    reduce(n, sumOp<label>());
-
     const T average(calcMean(field));
 
     T var = Zero;
@@ -186,7 +183,10 @@ T Foam::functionObjects::fieldStatistics::calcVariance
     {
         var += (elem - average);
     }
-    reduce(var, sumOp<T>());
+
+    label n = field.size();
+
+    sumReduce(var, n);
 
     if (n <= 1)
     {
