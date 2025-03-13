@@ -210,7 +210,7 @@ class fieldStatistics
     // Private Member Functions
 
         //- Return the statistic container
-        statistic createStatistic(const word& statName, const modeType& mode);
+        statistic createStatistic(const word& statName, const modeType mode);
 
         //- Compute the specified statistics of a given field
         template<class T>

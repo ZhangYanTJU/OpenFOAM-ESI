@@ -73,7 +73,7 @@ Foam::functionObjects::fieldStatistics::statistic
 Foam::functionObjects::fieldStatistics::createStatistic
 (
     const word& statName,
-    const modeType& mode
+    const modeType mode
 )
 {
     statistic m;
