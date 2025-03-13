@@ -54,6 +54,7 @@ Usage
         mode             <word>;
         internal         <bool>;
         mean             <word>;
+        extrema          <bool>;
 
         // Inherited entries
         ...
@@ -71,6 +72,7 @@ Usage
       internal | Flag to use internal fields only in computing statistics <!--
                -->                                      | bool | no | false
       mean     | Type of the mean operation             | word | no | arithmetic
+      extrema | Flag to enable extrema metadata calculations | bool | no | false
     \endtable
 
     Available statistics of the operand field through the \c statistics entry:
@@ -181,11 +183,30 @@ class fieldStatistics
             std::function<variantOutput(variantInput)> calc;
         };
 
+        //- Class to encapsulate metadata about minima and maxima
+        struct extremaMetaData
+        {
+            //- Value of the extremum
+            variantOutput value_;
+
+            //- Processor index of the extremum
+            label procID_;
+
+            //- Cell index of the extremum
+            label cellID_;
+
+            //- Position vector of the extremum
+            vector position_;
+        };
+
 
     // Private Data
 
         //- Flag to use internal fields only in computing statistics
         bool internal_;
+
+        //- Flag to enable extrema metadata calculations
+        bool extrema_;
 
         //- Output-format mode - only applicable for tensor ranks > 0
         modeType mode_;
@@ -199,11 +220,17 @@ class fieldStatistics
         //- List of file pointers; one file per field
         HashPtrTable<OFstream> filePtrs_;
 
+        //- List of file pointers for extrema data; one file per field
+        HashPtrTable<OFstream> extremaFilePtrs_;
+
         //- Hash table containing all specified statistics
         HashTable<statistic> statistics_;
 
         //- Hash table containing all statistical results per field
         HashTable<HashTable<variantOutput>> results_;
+
+        //- Hash table containing the metadata of the extrema per field
+        HashTable<Pair<extremaMetaData>> extremaMetaData_;
 
 
     // Private Member Functions
@@ -246,6 +273,10 @@ class fieldStatistics
             const GeoField& field
         );
 
+        //- Return the extrema metadata of the specified field
+        template<class GeoField>
+        Pair<extremaMetaData> calcExtremaMetaData(const GeoField& field);
+
         //- Output the file header information
         void writeFileHeader(Ostream& os, const word& fieldName);
 
@@ -254,6 +285,16 @@ class fieldStatistics
 
         //-
         void logStatData();
+
+        //- Output the extrema-data file header information
+        void writeExtremaFileHeader(Ostream& os, const word& fieldName);
+
+        //- Write extrema data to the specified file
+        void writeExtremaData();
+
+        //- Write extrema data to the standard stream
+        void logExtremaData();
+
 
 public:
 
