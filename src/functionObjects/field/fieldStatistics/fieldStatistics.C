@@ -138,8 +138,6 @@ void Foam::functionObjects::fieldStatistics::writeFileHeader
         writeTabbed(os, name);
     }
     os  << endl;
-
-    writtenHeader_ = true;
 }
 
 
@@ -224,6 +222,97 @@ void Foam::functionObjects::fieldStatistics::logStatData()
 }
 
 
+void Foam::functionObjects::fieldStatistics::writeExtremaFileHeader
+(
+    Ostream& os,
+    const word& fieldName
+)
+{
+    writeHeader(os, word("Field Extrema Data: " + fieldName));
+    writeCommented(os, "Time");
+    writeTabbed(os, "min");
+    writeTabbed(os, "min_procID");
+    writeTabbed(os, "min_cellID");
+    writeTabbed(os, "min_position");
+    writeTabbed(os, "max");
+    writeTabbed(os, "max_procID");
+    writeTabbed(os, "max_cellID");
+    writeTabbed(os, "max_position");
+    os  << endl;
+}
+
+
+void Foam::functionObjects::fieldStatistics::writeExtremaData()
+{
+    for (const word& fieldName : fieldSet_.selectionNames())
+    {
+        const auto& min = extremaMetaData_(fieldName).first();
+        const auto& max = extremaMetaData_(fieldName).second();
+
+        OFstream& efile = *extremaFilePtrs_(fieldName);
+
+        writeCurrentTime(efile);
+
+        efile<< token::TAB;
+
+        std::visit([&efile](const auto& v){ efile<< v; }, min.value_);
+
+        efile<< token::TAB
+            << min.procID_ << token::TAB
+            << min.cellID_ << token::TAB
+            << min.position_ << token::TAB;
+
+        std::visit([&efile](const auto& v){ efile<< v; }, max.value_);
+
+        efile<< token::TAB
+            << max.procID_ << token::TAB
+            << max.cellID_ << token::TAB
+            << max.position_ << nl;
+    }
+}
+
+
+void Foam::functionObjects::fieldStatistics::logExtremaData()
+{
+    for (const word& fieldName : fieldSet_.selectionNames())
+    {
+        const auto& min = extremaMetaData_(fieldName).first();
+        const auto& max = extremaMetaData_(fieldName).second();
+
+        const word outputName =
+            (mode_ == mdMag)
+        ? word("mag(" + fieldName + ")")
+        : fieldName;
+
+        std::visit
+        (
+            [outputName](const auto& v)
+            {
+                Info<< "    min(" << outputName << ") = " << v;
+            },
+            min.value_
+        );
+
+        Info<< " in cell " << min.cellID_
+            << " at location " << min.position_
+            << " on processor " << min.procID_;
+
+        std::visit
+        (
+            [outputName](const auto& v)
+            {
+                Info<< nl << "    max(" << outputName << ") = " << v;
+            },
+            max.value_
+        );
+
+        Info<< " in cell " << max.cellID_
+            << " at location " << max.position_
+            << " on processor " << max.procID_ << endl;
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::functionObjects::fieldStatistics::fieldStatistics
@@ -251,6 +340,7 @@ bool Foam::functionObjects::fieldStatistics::read(const dictionary& dict)
     }
 
     internal_ = dict.getOrDefault("internal", false);
+    extrema_ = dict.getOrDefault("extrema", false);
 
     mode_ = modeTypeNames_.getOrDefault("mode", dict, modeType::mdMag);
     mean_ = meanTypeNames_.getOrDefault("mean", dict, meanType::ARITHMETIC);
@@ -270,6 +360,9 @@ bool Foam::functionObjects::fieldStatistics::read(const dictionary& dict)
 
     // Reset and reprepare the output statistics
     results_.clear();
+
+    // Reset and reprepare the output statistics
+    extremaMetaData_.clear();
 
     return true;
 }
@@ -316,6 +409,35 @@ bool Foam::functionObjects::fieldStatistics::execute()
                 value
             );
         }
+
+        if (extrema_)
+        {
+            const auto& min = extremaMetaData_(fieldName).first();
+            std::visit
+            (
+                [this, fieldName](const auto& v)
+                {
+                    this->setResult(word(fieldName + "_min"), v);
+                },
+                min.value_
+            );
+            this->setResult(word(fieldName + "_min_procID"), min.procID_);
+            this->setResult(word(fieldName + "_min_cellID"), min.cellID_);
+            this->setResult(word(fieldName + "_min_position"), min.position_);
+
+            const auto& max = extremaMetaData_(fieldName).second();
+            std::visit
+            (
+                [this, fieldName](const auto& v)
+                {
+                    this->setResult(word(fieldName + "_max"), v);
+                },
+                max.value_
+            );
+            this->setResult(word(fieldName + "_max_procID"), max.procID_);
+            this->setResult(word(fieldName + "_max_cellID"), max.cellID_);
+            this->setResult(word(fieldName + "_max_position"), max.position_);
+        }
     }
 
     return true;
@@ -337,17 +459,38 @@ bool Foam::functionObjects::fieldStatistics::write()
 
             writeFileHeader(file, fieldName);
         }
+
+        if (extrema_)
+        {
+            for (const word& fieldName : fieldSet_.selectionNames())
+            {
+                extremaFilePtrs_.set
+                (
+                    fieldName,
+                    newFileAtStartTime(word("fieldMinMax_" + fieldName))
+                );
+
+                OFstream& file = *extremaFilePtrs_(fieldName);
+                writeExtremaFileHeader(file, fieldName);
+            }
+        }
+
+        writtenHeader_ = true;
     }
 
     // Write the statistical results to the output file if requested
     if (writeToFile())
     {
+        if (extrema_) writeExtremaData();
+
         writeStatData();
     }
 
     // Print the statistical results to the standard stream if requested
     if (log)
     {
+        if (extrema_) logExtremaData();
+
         logStatData();
     }
 

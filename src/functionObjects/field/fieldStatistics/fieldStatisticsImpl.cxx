@@ -106,6 +106,8 @@ bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
 
     results_.set(fieldName, result);
 
+    if (extrema_) extremaMetaData_.set(fieldName, calcExtremaMetaData(field));
+
     return true;
 }
 
@@ -161,6 +163,109 @@ T Foam::functionObjects::fieldStatistics::calcVariance
     }
 
     return 1/(n-1)*var;
+}
+
+
+template<class GeoField>
+Foam::Pair<Foam::functionObjects::fieldStatistics::extremaMetaData>
+Foam::functionObjects::fieldStatistics::calcExtremaMetaData
+(
+    const GeoField& field
+)
+{
+    typedef typename GeoField::value_type value_type;
+
+    const label proci = Pstream::myProcNo();
+
+    // Find the extrema metadata of the specified internal field
+
+    List<value_type> minVs(Pstream::nProcs(), pTraits<value_type>::max);
+    List<label> minCells(Pstream::nProcs(), Zero);
+    List<vector> minCs(Pstream::nProcs(), Zero);
+
+    List<value_type> maxVs(Pstream::nProcs(), pTraits<value_type>::min);
+    List<label> maxCells(Pstream::nProcs(), Zero);
+    List<vector> maxCs(Pstream::nProcs(), Zero);
+
+    labelPair minMaxIds = findMinMax(field);
+
+    label minId = minMaxIds.first();
+    if (minId != -1)
+    {
+        minVs[proci] = field[minId];
+        minCells[proci] = minId;
+        minCs[proci] = mesh_.C()[minId];
+    }
+
+    label maxId = minMaxIds.second();
+    if (maxId != -1)
+    {
+        maxVs[proci] = field[maxId];
+        maxCells[proci] = maxId;
+        maxCs[proci] = mesh_.C()[maxId];
+    }
+
+    if (!internal_)
+    {
+        // Find the extrema metadata of the specified boundary fields
+        const auto& fieldBoundary = field.boundaryField();
+        const auto& CfBoundary = mesh_.C().boundaryField();
+
+        forAll(fieldBoundary, patchi)
+        {
+            const Field<value_type>& fp = fieldBoundary[patchi];
+            if (fp.size())
+            {
+                const vectorField& Cfp = CfBoundary[patchi];
+
+                const labelList& faceCells =
+                    fieldBoundary[patchi].patch().faceCells();
+
+                minMaxIds = findMinMax(fp);
+
+                minId = minMaxIds.first();
+                if (minVs[proci] > fp[minId])
+                {
+                    minVs[proci] = fp[minId];
+                    minCells[proci] = faceCells[minId];
+                    minCs[proci] = Cfp[minId];
+                }
+
+                maxId = minMaxIds.second();
+                if (maxVs[proci] < fp[maxId])
+                {
+                    maxVs[proci] = fp[maxId];
+                    maxCells[proci] = faceCells[maxId];
+                    maxCs[proci] = Cfp[maxId];
+                }
+            }
+        }
+    }
+
+    // Collect info from all processors and output
+    Pstream::allGatherList(minVs);
+    Pstream::allGatherList(minCells);
+    Pstream::allGatherList(minCs);
+
+    Pstream::allGatherList(maxVs);
+    Pstream::allGatherList(maxCells);
+    Pstream::allGatherList(maxCs);
+
+    extremaMetaData min;
+    minId = findMin(minVs);
+    min.value_ = minVs[minId];
+    min.procID_ = minId;
+    min.cellID_ = minCells[minId];
+    min.position_ = minCs[minId];
+
+    extremaMetaData max;
+    maxId = findMax(maxVs);
+    max.value_ = maxVs[maxId];
+    max.procID_ = maxId;
+    max.cellID_ = maxCells[maxId];
+    max.position_ = maxCs[maxId];
+
+    return Pair<extremaMetaData>(min, max);
 }
 
 
