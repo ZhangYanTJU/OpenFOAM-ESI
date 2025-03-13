@@ -55,7 +55,7 @@ Foam::functionObjects::fieldStatistics::flatten(const GeoField& fld)
     auto& flatFld = tflatFld.ref();
 
     // Insert internal values
-    SubList<value_type>(flatFld, fld.size(), 0) = fld.primitiveField();
+    flatFld.slice(0, fld.size()) = fld.primitiveField();
 
     if (!internal_)
     {
@@ -65,7 +65,7 @@ Foam::functionObjects::fieldStatistics::flatten(const GeoField& fld)
         {
             if (!pfld.coupled())
             {
-                SubList<value_type>(flatFld, pfld.size(), n) = pfld;
+                flatFld.slice(n, pfld.size()) = pfld;
                 n += pfld.size();
             }
         }
