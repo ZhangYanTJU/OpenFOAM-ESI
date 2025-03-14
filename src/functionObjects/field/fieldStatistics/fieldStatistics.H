@@ -233,8 +233,8 @@ class fieldStatistics
         //- Hash table containing all statistical results per field
         HashTable<HashTable<variantOutput>> results_;
 
-        //- Hash table containing the data of the extrema per field
-        HashTable<Pair<extremaData>> extremaData_;
+        //- Hash table containing the results of the extrema per field
+        HashTable<Pair<extremaData>> extremaResults_;
 
 
     // Private Member Functions

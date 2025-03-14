@@ -107,7 +107,16 @@ bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
 
     results_.set(fieldName, result);
 
-    if (extrema_) extremaData_.set(fieldName, calcExtremaData(field));
+    if (extrema_)
+    {
+        extremaResults_.set
+        (
+            fieldName,
+            (mode_ == mdMag)
+          ? calcExtremaData(mag(field)())
+          : calcExtremaData(field)
+        );
+    }
 
     return true;
 }
