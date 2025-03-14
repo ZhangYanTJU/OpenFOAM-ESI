@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2025 OpenCFD Ltd.
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,7 +40,7 @@ Description
       output field | -                             | -
     \endtable
 
-    where \c \<Type\>=Scalar/Vector/SymmTensor/Tensor.
+    where \c \<Type\>=Scalar/Vector/SphericalTensor/SymmTensor/Tensor.
 
 Usage
     Minimal example by using \c system/controlDict.functions:
@@ -164,6 +163,7 @@ class fieldStatistics
         <
             scalarField,
             vectorField,
+            sphericalTensorField,
             symmTensorField,
             tensorField
         >;
@@ -173,6 +173,7 @@ class fieldStatistics
         <
             scalar,
             vector,
+            sphericalTensor,
             symmTensor,
             tensor
         >;

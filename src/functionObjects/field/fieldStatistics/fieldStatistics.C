@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2025 OpenCFD Ltd.
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -381,6 +380,7 @@ bool Foam::functionObjects::fieldStatistics::execute()
         (
             calcStat<scalar>(fieldName)
          || calcStat<vector>(fieldName)
+         || calcStat<sphericalTensor>(fieldName)
          || calcStat<symmTensor>(fieldName)
          || calcStat<tensor>(fieldName)
         );
