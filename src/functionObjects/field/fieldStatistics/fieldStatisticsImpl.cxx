@@ -163,7 +163,7 @@ T Foam::functionObjects::fieldStatistics::calcVariance
         return T{};
     }
 
-    return 1/(n-1)*var;
+    return 1.0/(n - 1.0)*var;
 }
 
 

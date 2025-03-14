@@ -91,22 +91,23 @@ Foam::functionObjects::fieldStatistics::createStatistic
 
                 if (statName == "min")
                 {
-                    if (mode == mdMag) return mag(calcMin<BaseType>(arg));
+                    // if (mode == mdMag) return mag(calcMin<BaseType>(arg));
+                    if (mode == mdMag) return calcMin<scalar>(mag(arg));
                     else return calcMin<BaseType>(arg);
                 }
                 else if (statName == "max")
                 {
-                    if (mode == mdMag) return mag(calcMax<BaseType>(arg));
+                    if (mode == mdMag) return calcMax<scalar>(mag(arg));
                     else return calcMax<BaseType>(arg);
                 }
                 else if (statName == "mean")
                 {
-                    if (mode == mdMag) return mag(calcMean<BaseType>(arg));
+                    if (mode == mdMag) return calcMean<scalar>(mag(arg));
                     else return calcMean<BaseType>(arg);
                 }
                 else if (statName == "variance")
                 {
-                    if (mode == mdMag) return mag(calcVariance<BaseType>(arg));
+                    if (mode == mdMag) return calcVariance<scalar>(mag(arg));
                     else return calcVariance<BaseType>(arg);
                 }
                 else return scalar{};  // Default case (for compiler)
@@ -190,7 +191,10 @@ void Foam::functionObjects::fieldStatistics::logStatData()
 
         if (!results.size()) break;
 
-        Info<< nl << "    Field " << fieldName << nl;
+        const word outputName =
+            (mode_ == mdMag) ? word("mag(" + fieldName + ")") : fieldName;
+
+        Info<< nl << "    Field " << outputName << nl;
 
         for (const auto& iter : results.csorted())
         {
@@ -349,7 +353,6 @@ bool Foam::functionObjects::fieldStatistics::read(const dictionary& dict)
     // Reset and reprepare the input field names
     fieldSet_.clear();
     fieldSet_.read(dict);
-    fieldSet_.updateSelection();
 
     // Reset and reprepare the input statistics
     statistics_.clear();
@@ -371,6 +374,8 @@ bool Foam::functionObjects::fieldStatistics::read(const dictionary& dict)
 
 bool Foam::functionObjects::fieldStatistics::execute()
 {
+    fieldSet_.updateSelection();
+
     // Calculate the specified statistics for the specified fields
     for (const word& fieldName : fieldSet_.selectionNames())
     {
