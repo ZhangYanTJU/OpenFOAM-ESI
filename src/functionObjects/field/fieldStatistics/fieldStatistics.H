@@ -187,8 +187,8 @@ class fieldStatistics
             std::function<variantOutput(variantInput)> calc;
         };
 
-        //- Class to encapsulate metadata about minima and maxima
-        struct extremaMetaData
+        //- Class to encapsulate the data about minima and maxima
+        struct extremaData
         {
             //- Value of the extremum
             variantOutput value_;
@@ -209,7 +209,7 @@ class fieldStatistics
         //- Flag to use internal fields only in computing statistics
         bool internal_;
 
-        //- Flag to enable extrema metadata calculations
+        //- Flag to enable extrema data calculations
         bool extrema_;
 
         //- Output-format mode - only applicable for tensor ranks > 0
@@ -233,8 +233,8 @@ class fieldStatistics
         //- Hash table containing all statistical results per field
         HashTable<HashTable<variantOutput>> results_;
 
-        //- Hash table containing the metadata of the extrema per field
-        HashTable<Pair<extremaMetaData>> extremaMetaData_;
+        //- Hash table containing the data of the extrema per field
+        HashTable<Pair<extremaData>> extremaData_;
 
 
     // Private Member Functions
@@ -277,9 +277,9 @@ class fieldStatistics
             const GeoField& field
         );
 
-        //- Return the extrema metadata of the specified field
+        //- Return the extrema data of the specified field
         template<class GeoField>
-        Pair<extremaMetaData> calcExtremaMetaData(const GeoField& field);
+        Pair<extremaData> calcExtremaData(const GeoField& field);
 
         //- Output the file header information
         void writeFileHeader(Ostream& os, const word& fieldName);

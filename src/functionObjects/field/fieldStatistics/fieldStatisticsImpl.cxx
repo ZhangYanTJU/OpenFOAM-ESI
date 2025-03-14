@@ -107,7 +107,7 @@ bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
 
     results_.set(fieldName, result);
 
-    if (extrema_) extremaMetaData_.set(fieldName, calcExtremaMetaData(field));
+    if (extrema_) extremaData_.set(fieldName, calcExtremaData(field));
 
     return true;
 }
@@ -168,8 +168,8 @@ T Foam::functionObjects::fieldStatistics::calcVariance
 
 
 template<class GeoField>
-Foam::Pair<Foam::functionObjects::fieldStatistics::extremaMetaData>
-Foam::functionObjects::fieldStatistics::calcExtremaMetaData
+Foam::Pair<Foam::functionObjects::fieldStatistics::extremaData>
+Foam::functionObjects::fieldStatistics::calcExtremaData
 (
     const GeoField& field
 )
@@ -178,7 +178,7 @@ Foam::functionObjects::fieldStatistics::calcExtremaMetaData
 
     const label proci = Pstream::myProcNo();
 
-    // Find the extrema metadata of the specified internal field
+    // Find the extrema data of the specified internal field
 
     List<value_type> minVs(Pstream::nProcs(), pTraits<value_type>::max);
     List<label> minCells(Pstream::nProcs(), Zero);
@@ -208,7 +208,7 @@ Foam::functionObjects::fieldStatistics::calcExtremaMetaData
 
     if (!internal_)
     {
-        // Find the extrema metadata of the specified boundary fields
+        // Find the extrema data of the specified boundary fields
         const auto& fieldBoundary = field.boundaryField();
         const auto& CfBoundary = mesh_.C().boundaryField();
 
@@ -252,21 +252,21 @@ Foam::functionObjects::fieldStatistics::calcExtremaMetaData
     Pstream::allGatherList(maxCells);
     Pstream::allGatherList(maxCs);
 
-    extremaMetaData min;
+    extremaData min;
     minId = findMin(minVs);
     min.value_ = minVs[minId];
     min.procID_ = minId;
     min.cellID_ = minCells[minId];
     min.position_ = minCs[minId];
 
-    extremaMetaData max;
+    extremaData max;
     maxId = findMax(maxVs);
     max.value_ = maxVs[maxId];
     max.procID_ = maxId;
     max.cellID_ = maxCells[maxId];
     max.position_ = maxCs[maxId];
 
-    return Pair<extremaMetaData>(min, max);
+    return Pair<extremaData>(min, max);
 }
 
 
