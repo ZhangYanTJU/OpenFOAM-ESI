@@ -247,25 +247,25 @@ void Foam::functionObjects::fieldStatistics::writeExtremaData()
 {
     for (const word& fieldName : fieldSet_.selectionNames())
     {
-        const auto& min = extremaMetaData_(fieldName).first();
-        const auto& max = extremaMetaData_(fieldName).second();
+        const auto& min = extremaData_(fieldName).first();
+        const auto& max = extremaData_(fieldName).second();
 
-        OFstream& efile = *extremaFilePtrs_(fieldName);
+        OFstream& file = *extremaFilePtrs_(fieldName);
 
-        writeCurrentTime(efile);
+        writeCurrentTime(file);
 
-        efile<< token::TAB;
+        file<< token::TAB;
 
-        std::visit([&efile](const auto& v){ efile<< v; }, min.value_);
+        std::visit([&file](const auto& v){ file<< v; }, min.value_);
 
-        efile<< token::TAB
+        file<< token::TAB
             << min.procID_ << token::TAB
             << min.cellID_ << token::TAB
             << min.position_ << token::TAB;
 
-        std::visit([&efile](const auto& v){ efile<< v; }, max.value_);
+        std::visit([&file](const auto& v){ file<< v; }, max.value_);
 
-        efile<< token::TAB
+        file<< token::TAB
             << max.procID_ << token::TAB
             << max.cellID_ << token::TAB
             << max.position_ << nl;
@@ -277,8 +277,8 @@ void Foam::functionObjects::fieldStatistics::logExtremaData()
 {
     for (const word& fieldName : fieldSet_.selectionNames())
     {
-        const auto& min = extremaMetaData_(fieldName).first();
-        const auto& max = extremaMetaData_(fieldName).second();
+        const auto& min = extremaData_(fieldName).first();
+        const auto& max = extremaData_(fieldName).second();
 
         const word outputName =
             (mode_ == mdMag)
@@ -362,8 +362,8 @@ bool Foam::functionObjects::fieldStatistics::read(const dictionary& dict)
     // Reset the output-statistics container
     results_.clear();
 
-    // Reset and reprepare the output statistics
-    extremaMetaData_.clear();
+    // Reset the extrema-data container
+    extremaData_.clear();
 
     return true;
 }
@@ -413,7 +413,7 @@ bool Foam::functionObjects::fieldStatistics::execute()
 
         if (extrema_)
         {
-            const auto& min = extremaMetaData_(fieldName).first();
+            const auto& min = extremaData_(fieldName).first();
             std::visit
             (
                 [this, fieldName](const auto& v)
@@ -426,7 +426,7 @@ bool Foam::functionObjects::fieldStatistics::execute()
             this->setResult(word(fieldName + "_min_cellID"), min.cellID_);
             this->setResult(word(fieldName + "_min_position"), min.position_);
 
-            const auto& max = extremaMetaData_(fieldName).second();
+            const auto& max = extremaData_(fieldName).second();
             std::visit
             (
                 [this, fieldName](const auto& v)
