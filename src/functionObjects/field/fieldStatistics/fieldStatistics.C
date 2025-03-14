@@ -128,9 +128,9 @@ void Foam::functionObjects::fieldStatistics::writeFileHeader
     writeHeader(os, word("Field Statistics: " + fieldName));
     writeCommented(os, "Time");
 
-    // Number of input statistics (i.e., statistics_) could be lesser than that
-    // of output statistics (i.e., results_; e.g., cell index of min value).
-    // Therefore, the output file columns are based on output statistics.
+    // Number of input statistics (i.e., statistics_) should be the same with
+    // that of output statistics (i.e., results_). However, for consistency,
+    // the output file columns are based on output statistics.
     const auto& result = results_(fieldName);
 
     for (const auto& iter : result.csorted())
@@ -359,7 +359,7 @@ bool Foam::functionObjects::fieldStatistics::read(const dictionary& dict)
         statistics_.insert(m, createStatistic(m, mode_));
     }
 
-    // Reset and reprepare the output statistics
+    // Reset the output-statistics container
     results_.clear();
 
     // Reset and reprepare the output statistics
