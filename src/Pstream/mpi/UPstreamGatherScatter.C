@@ -78,8 +78,19 @@ void Foam::UPstream::mpi_gather
 
     if (FOAM_UNLIKELY(UPstream::debug))
     {
-        Perr<< "[mpi_gather] : "
-            << " type:" << int(dataTypeId) << " count:" << count
+        Perr<< "[mpi_gather] :";
+
+        // Appears to be an in-place request
+        if
+        (
+            UPstream::master(communicator)
+         && (!sendData || (sendData == recvData))
+        )
+        {
+            Perr<< " (inplace)";
+        }
+
+        Perr<< " type:" << int(dataTypeId) << " count:" << count
             << " comm:" << communicator
             << Foam::endl;
     }
@@ -117,8 +128,19 @@ void Foam::UPstream::mpi_scatter
 
     if (FOAM_UNLIKELY(UPstream::debug))
     {
-        Perr<< "[mpi_scatter] : "
-            << " type:" << int(dataTypeId) << " count:" << count
+        Perr<< "[mpi_scatter] :";
+
+        // Appears to be an in-place request
+        if
+        (
+            UPstream::master(communicator)
+         && (!recvData || (sendData == recvData))
+        )
+        {
+            Perr<< " (inplace)";
+        }
+
+        Perr<< " type:" << int(dataTypeId) << " count:" << count
             << " comm:" << communicator
             << Foam::endl;
     }
@@ -155,7 +177,7 @@ void Foam::UPstream::mpi_allgather
 
     if (FOAM_UNLIKELY(UPstream::debug))
     {
-        Perr<< "[mpi_allgather] : "
+        Perr<< "[mpi_allgather] :"
             << " type:" << int(dataTypeId) << " count:" << count
             << " comm:" << communicator
             << Foam::endl;

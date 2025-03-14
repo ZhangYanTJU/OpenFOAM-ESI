@@ -456,19 +456,6 @@ public:
         );
 
 
-    // Scatter
-
-        //- Inverse of gatherList.
-        template<class T>
-        static void scatterList
-        (
-            //! [in,out]
-            UList<T>& values,
-            const int tag = UPstream::msgType(),
-            const int communicator = UPstream::worldComm
-        );
-
-
     // Exchange
 
         //- Helper: exchange sizes of sendBufs for specified send/recv ranks
@@ -699,6 +686,31 @@ public:
         )
         {
             Pstream::broadcast(values, comm);
+        }
+
+        //- The inverse of gatherList, but when combined with gatherList
+        //- it effectively acts like a partial broadcast...
+        //  \deprecated(2025-03) Normally prefer broadcast
+        template<class T>
+        FOAM_DEPRECATED_FOR(2025-03, "broadcast() or broadcastList()")
+        static void scatterList
+        (
+            //! [in,out]
+            UList<T>& values,
+            const int tag = UPstream::msgType(),
+            const int communicator = UPstream::worldComm
+        )
+        {
+            if (UPstream::is_parallel(communicator))
+            {
+                Pstream::scatterList_algorithm
+                (
+                    UPstream::whichCommunication(communicator),
+                    values,
+                    tag,
+                    communicator
+                );
+            }
         }
 };
 

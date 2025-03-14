@@ -74,7 +74,7 @@ bool Foam::UPstream::mpi_broadcast
 
     {
         // Regular broadcast
-        // OR: PstreamDetail::broadcast0(buf, count, datatype, communicator);
+        // OR: PstreamDetail::broadcast(buf, count, datatype, communicator);
 
         returnCode = MPI_Bcast
         (

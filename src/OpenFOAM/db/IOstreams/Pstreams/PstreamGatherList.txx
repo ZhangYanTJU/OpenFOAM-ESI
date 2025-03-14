@@ -109,7 +109,8 @@ void Foam::Pstream::gatherList_algorithm
                     (
                         UPstream::commsTypes::scheduled,
                         belowID,
-                        values[belowID],
+                       &(values[belowID]),
+                        1,
                         tag,
                         communicator
                     );
@@ -194,7 +195,8 @@ void Foam::Pstream::gatherList_algorithm
                     (
                         UPstream::commsTypes::scheduled,
                         myComm.above(),
-                        values[myProci],
+                       &(values[myProci]),
+                        1,
                         tag,
                         communicator
                     );
@@ -434,7 +436,17 @@ void Foam::Pstream::gatherList
         }
 
         // In-place gather for contiguous types - one element per rank
-        UPstream::mpiGather(nullptr, values.data(), 1, communicator);
+        // - all ranks:
+        //   * send pointer is source location from within the list
+        // - on master:
+        //   * recv pointer is the full list (same address as first location)
+        // - on rank:
+        //   * recv pointer is irrelevant
+        //
+        // So can simply use identical pointers for send/recv
+
+        auto* ptr = values.data() + UPstream::myProcNo(communicator);
+        UPstream::mpiGather(ptr, ptr, 1, communicator);
     }
     else
     {
@@ -442,34 +454,6 @@ void Foam::Pstream::gatherList
         const auto& commOrder = UPstream::whichCommunication(communicator);
 
         Pstream::gatherList_algorithm(commOrder, values, tag, communicator);
-    }
-}
-
-
-template<class T>
-void Foam::Pstream::scatterList
-(
-    UList<T>& values,
-    [[maybe_unused]] const int tag,
-    const int communicator
-)
-{
-    if (!UPstream::is_parallel(communicator))
-    {
-        // Nothing to do
-        return;
-    }
-    else if constexpr (is_contiguous_v<T>)
-    {
-        // In-place scatter for contiguous types - one element per rank
-        UPstream::mpiScatter(nullptr, values.data(), 1, communicator);
-    }
-    else
-    {
-        // Communication order
-        const auto& commOrder = UPstream::whichCommunication(communicator);
-
-        Pstream::scatterList_algorithm(commOrder, values, tag, communicator);
     }
 }
 

@@ -174,7 +174,7 @@ void Foam::UPstream::mpi_reduce
 
     if (FOAM_UNLIKELY(UPstream::debug))
     {
-        Perr<< "[mpi_reduce] : "
+        Perr<< "[mpi_reduce] : (inplace)"
             << " op:" << int(opCodeId)
             << " type:" << int(dataTypeId) << " count:" << count
             << " comm:" << communicator
@@ -214,7 +214,7 @@ void Foam::UPstream::mpi_reduce
     {
         // Regular reduce
 
-        PstreamDetail::reduce0
+        PstreamDetail::reduce
         (
             send_buffer,
             values,
@@ -263,7 +263,7 @@ void Foam::UPstream::mpi_allreduce
 
     if (FOAM_UNLIKELY(UPstream::debug))
     {
-        Perr<< "[mpi_allreduce] : "
+        Perr<< "[mpi_allreduce] :"
             << " op:" << int(opCodeId)
             << " type:" << int(dataTypeId) << " count:" << count
             << " comm:" << communicator

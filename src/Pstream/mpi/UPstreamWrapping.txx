@@ -35,7 +35,7 @@ License
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-bool Foam::PstreamDetail::broadcast0
+bool Foam::PstreamDetail::broadcast
 (
     Type* values,
     int count,
@@ -72,7 +72,7 @@ bool Foam::PstreamDetail::broadcast0
 
 
 template<class Type>
-void Foam::PstreamDetail::reduce0
+void Foam::PstreamDetail::reduce
 (
     const Type* sendData,
     Type* values,
@@ -94,9 +94,14 @@ void Foam::PstreamDetail::reduce0
     }
 
     const void* send_buffer = sendData;
-    if (sendData == nullptr || (sendData == values))
+    if
+    (
+        UPstream::master(communicator)
+     && (!sendData || (sendData == values))
+    )
     {
-        // Appears to be an in-place request
+        // Appears to be an in-place request.
+        // - this setting only relevant (or usable) on the root rank
         send_buffer = MPI_IN_PLACE;
     }
 
@@ -110,7 +115,7 @@ void Foam::PstreamDetail::reduce0
         {
             Perr<< "** MPI_Reduce (blocking):";
         }
-        if (sendData == nullptr || (sendData == values))
+        if (UPstream::master(communicator) && (send_buffer == MPI_IN_PLACE))
         {
             Perr<< " [inplace]";
         }
@@ -976,11 +981,23 @@ void Foam::PstreamDetail::gather
             // Cannot copy data here since we don't know the number of bytes
             // - must be done by the caller.
         }
-        else if (sendData && recvData)
+        else if (sendData && recvData && (sendData != recvData))
         {
             std::memmove(recvData, sendData, count*sizeof(Type));
         }
         return;
+    }
+
+    const void* send_buffer = sendData;
+    if
+    (
+        UPstream::master(communicator)
+     && (!sendData || (sendData == recvData))
+    )
+    {
+        // Appears to be an in-place request.
+        // - this setting only relevant (or usable) on the root rank
+        send_buffer = MPI_IN_PLACE;
     }
 
     if (FOAM_UNLIKELY(PstreamGlobals::warnCommunicator(communicator)))
@@ -993,7 +1010,7 @@ void Foam::PstreamDetail::gather
         {
             Perr<< "** MPI_Gather (blocking):";
         }
-        if (sendData == nullptr || (sendData == recvData))
+        if (UPstream::master(communicator) && (send_buffer == MPI_IN_PLACE))
         {
             Perr<< " [inplace]";
         }
@@ -1004,14 +1021,6 @@ void Foam::PstreamDetail::gather
             << endl;
         error::printStack(Perr);
     }
-
-    const void* send_buffer = sendData;
-    if (sendData == nullptr || (sendData == recvData))
-    {
-        // Appears to be an in-place request
-        send_buffer = MPI_IN_PLACE;
-    }
-
 
     int returnCode(MPI_ERR_UNKNOWN);
 
@@ -1094,11 +1103,23 @@ void Foam::PstreamDetail::scatter
             // Cannot copy data here since we don't know the number of bytes
             // - must be done by the caller.
         }
-        else if (sendData && recvData)
+        else if (sendData && recvData && (sendData != recvData))
         {
             std::memmove(recvData, sendData, count*sizeof(Type));
         }
         return;
+    }
+
+    void* recv_buffer = recvData;
+
+    if
+    (
+        UPstream::master(communicator)
+     && (!recvData || (sendData == recvData)))
+    {
+        // Appears to be an in-place request.
+        // - this setting only relevant (or usable) on the root rank
+        recv_buffer = MPI_IN_PLACE;
     }
 
     if (FOAM_UNLIKELY(PstreamGlobals::warnCommunicator(communicator)))
@@ -1111,7 +1132,7 @@ void Foam::PstreamDetail::scatter
         {
             Perr<< "** MPI_Scatter (blocking):";
         }
-        if (sendData == nullptr || (sendData == recvData))
+        if (UPstream::master(communicator) && (recv_buffer == MPI_IN_PLACE))
         {
             Perr<< " [inplace]";
         }
@@ -1122,16 +1143,6 @@ void Foam::PstreamDetail::scatter
             << endl;
         error::printStack(Perr);
     }
-
-
-    const void* send_buffer = sendData;
-    if (sendData == nullptr || (sendData == recvData))
-    {
-        // Appears to be an in-place request
-        send_buffer = MPI_IN_PLACE;
-    }
-
-
     int returnCode(MPI_ERR_UNKNOWN);
 
 #if defined(MPI_VERSION) && (MPI_VERSION >= 3)
@@ -1144,8 +1155,8 @@ void Foam::PstreamDetail::scatter
         returnCode =
             MPI_Iscatter
             (
-                send_buffer, count, datatype,
-                recvData, count, datatype,
+                sendData, count, datatype,
+                recv_buffer, count, datatype,
                 0,  // root: UPstream::masterNo()
                 PstreamGlobals::MPICommunicators_[communicator],
                &request
@@ -1162,8 +1173,8 @@ void Foam::PstreamDetail::scatter
         returnCode =
             MPI_Scatter
             (
-                send_buffer, count, datatype,
-                recvData, count, datatype,
+                sendData, count, datatype,
+                recv_buffer, count, datatype,
                 0,  // root: UPstream::masterNo()
                 PstreamGlobals::MPICommunicators_[communicator]
             );

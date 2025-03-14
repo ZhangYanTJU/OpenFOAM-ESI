@@ -1,0 +1,3 @@
+Test-gather-scatter1.cxx
+
+EXE = $(FOAM_USER_APPBIN)/Test-gather-scatter1

@@ -335,7 +335,7 @@ void Foam::UPstream::mpiGatherv
     {
         if constexpr (is_contiguous_v<Type>)
         {
-            if (sendData && recvData)
+            if (sendData && recvData && (sendData != recvData))
             {
                 // recvCounts[0] may be invalid - use sendCount instead
                 std::memmove(recvData, sendData, sendCount*sizeof(Type));
@@ -385,7 +385,7 @@ void Foam::UPstream::mpiScatterv
     {
         if constexpr (is_contiguous_v<Type>)
         {
-            if (sendData && recvData)
+            if (sendData && recvData && (sendData != recvData))
             {
                 std::memmove(recvData, sendData, recvCount*sizeof(Type));
             }

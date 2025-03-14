@@ -50,7 +50,7 @@ namespace PstreamDetail
 // MPI_Bcast, using root=0
 // No fail/abort handling
 template<class Type>
-bool broadcast0
+bool broadcast
 (
     Type* values,
     int count,
@@ -60,7 +60,7 @@ bool broadcast0
 
 // MPI_Reduce, using root=0
 template<class Type>
-void reduce0
+void reduce
 (
     const Type* sendData,   // Use nullptr for in-place operation
     Type* values,

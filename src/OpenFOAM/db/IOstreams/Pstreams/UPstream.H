@@ -170,9 +170,10 @@ public:
     {
         broadcast = 1,      //!< broadcast [MPI]
         reduce = 2,         //!< reduce/all-reduce [MPI]
-        gather = 16,        //!< gather (reduction) [manual algorithm]
+        gather = 4,         //!< gather/all-gather [MPI]
+        combine = 16,       //!< combine/gather (reduction) [manual algorithm]
         mapGather = 32,     //!< mapGather (reduction) [manual algorithm]
-        gatherList = 64,    //!< gatherList/scatterList [manual algorithm]
+        gatherList = 64,    //!< gatherList [manual algorithm]
     };
 
 
@@ -600,16 +601,17 @@ protected:
             UPstream::Request* req = nullptr
         );
 
-        //- Receive identically-sized (contiguous) data from all ranks
+        //- Receive identically-sized (contiguous) data from all ranks,
+        //- placing the result on rank 0.
         //  Includes internal parallel guard.
         //  For non-parallel, does not copy any data.
         //  If needed, this must be done by the caller.
         static void mpi_gather
         (
-            //! On rank: individual value to send (or nullptr for inplace)
+            //! All ranks: location of individual value to send
             const void* sendData,
-            //! Master: receive buffer with all values
-            //! Or for in-place send/recv when sendData is nullptr
+            //! Master: receive buffer with all values.
+            //! Other ranks: ignored
             void* recvData,
             //! Number of send/recv data per rank. Globally consistent!
             int count,
@@ -619,14 +621,15 @@ protected:
             UPstream::Request* req = nullptr
         );
 
-        //- Send identically-sized (contiguous) data to all ranks
+        //- Send identically-sized (contiguous) data from rank 0
+        //- to all other ranks.
         //  Includes internal parallel guard.
         static void mpi_scatter
         (
-            //! On master: send buffer with all values (nullptr for inplace)
+            //! Master: send buffer with all values.
+            //! Other ranks: ignored
             const void* sendData,
-            //! On rank: individual value to receive
-            //! Or for in-place send/recv when sendData is nullptr
+            //! All ranks: location to receive individual value
             void* recvData,
             //! Number of send/recv data per rank. Globally consistent!
             int count,
@@ -640,7 +643,7 @@ protected:
         //  Send data from proc slot, receive into all slots
         static void mpi_allgather
         (
-            //! On all ranks: the base of the data locations
+            //! All ranks: the base of the data locations
             void* allData,
             //! Number of send/recv data per rank. Globally consistent!
             int count,
@@ -650,7 +653,8 @@ protected:
             UPstream::Request* req = nullptr
         );
 
-        //- Receive variable length data from all ranks.
+        //- Receive variable length data from all ranks,
+        //- placing the result on rank 0.
         //- (caution: known to scale poorly)
         static void mpi_gatherv
         (
@@ -663,7 +667,7 @@ protected:
             const int communicator
         );
 
-        //- Send variable length data to all ranks
+        //- Send variable length data from rank 0 to all ranks.
         //- (caution: known to scale poorly)
         static void mpi_scatterv
         (
@@ -1583,10 +1587,10 @@ public:
         template<class Type>
         static void mpiGather
         (
-            //! On rank: individual value to send (or nullptr for inplace)
+            //! All ranks: location of individual value to send
             const Type* sendData,
-            //! Master: receive buffer with all values
-            //! Or for in-place send/recv when sendData is nullptr
+            //! Master: receive buffer with all values.
+            //! Other ranks: ignored
             Type* recvData,
             //! Number of send/recv data per rank. Globally consistent!
             int count,
@@ -1597,10 +1601,10 @@ public:
         template<class Type>
         static void mpiScatter
         (
-            //! On master: send buffer with all values (nullptr for inplace)
+            //! Master: send buffer with all values.
+            //! Other ranks: ignored
             const Type* sendData,
-            //! On rank: individual value to receive
-            //! Or for in-place send/recv when sendData is nullptr
+            //! All ranks: location to receive individual value
             Type* recvData,
             //! Number of send/recv data per rank. Globally consistent!
             int count,
@@ -1612,7 +1616,7 @@ public:
         template<class Type>
         static void mpiAllGather
         (
-            //! On all ranks: the base of the data locations
+            //! All ranks: the base of the data locations
             Type* allData,
             //! Number of send/recv data per rank. Globally consistent!
             int count,
