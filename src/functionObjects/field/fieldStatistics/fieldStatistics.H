@@ -31,14 +31,17 @@ Group
     grpFieldFunctionObjects
 
 Description
+    Calculates various statistics of the specified fields.
 
     Operands:
     \table
-      Operand        | Type | Location
-      input          | -    | -
-      output file    | dat  | \<case\>/postProcessing/\<FO\>/\<time\>/\<file\>
-      output field   | -    | -
+      Operand      | Type                          | Location
+      input        | vol\<Type\>Field(s)           | Registry
+      output file  | dat | \<case\>/postProcessing/\<FO\>/\<time\>/\<file\>
+      output field | -                             | -
     \endtable
+
+    where \c \<Type\>=Scalar/Vector/SymmTensor/Tensor.
 
 Usage
     Minimal example by using \c system/controlDict.functions:
@@ -53,9 +56,9 @@ Usage
 
         // Optional entries
         mode             <word>;
-        internal         <bool>;
         mean             <word>;
         extrema          <bool>;
+        internal         <bool>;
 
         // Inherited entries
         ...
@@ -70,10 +73,10 @@ Usage
       fields       | List of operand fields             | wordList | yes | -
       statistics   | List of operand statistics         | wordList | yes | -
       mode   | Output format of the statistical results | word | no | magnitude
+      mean     | Type of the mean operation             | word | no | arithmetic
       internal | Flag to use internal fields only in computing statistics <!--
                -->                                      | bool | no | false
-      mean     | Type of the mean operation             | word | no | arithmetic
-      extrema | Flag to enable extrema metadata calculations | bool | no | false
+      extrema | Flag to enable extrema data calculations | bool | no | false
     \endtable
 
     Available statistics of the operand field through the \c statistics entry:
@@ -180,7 +183,7 @@ class fieldStatistics
             //- Name of the statistic
             word name_;
 
-            //- Calculate the value of the specified statistic
+            //- Return the value of the specified statistic
             std::function<variantOutput(variantInput)> calc;
         };
 
