@@ -251,8 +251,8 @@ void Foam::functionObjects::fieldStatistics::writeExtremaData()
 {
     for (const word& fieldName : fieldSet_.selectionNames())
     {
-        const auto& min = extremaData_(fieldName).first();
-        const auto& max = extremaData_(fieldName).second();
+        const auto& min = extremaResults_(fieldName).first();
+        const auto& max = extremaResults_(fieldName).second();
 
         OFstream& file = *extremaFilePtrs_(fieldName);
 
@@ -281,13 +281,11 @@ void Foam::functionObjects::fieldStatistics::logExtremaData()
 {
     for (const word& fieldName : fieldSet_.selectionNames())
     {
-        const auto& min = extremaData_(fieldName).first();
-        const auto& max = extremaData_(fieldName).second();
+        const auto& min = extremaResults_(fieldName).first();
+        const auto& max = extremaResults_(fieldName).second();
 
         const word outputName =
-            (mode_ == mdMag)
-        ? word("mag(" + fieldName + ")")
-        : fieldName;
+            (mode_ == mdMag) ? word("mag(" + fieldName + ")") : fieldName;
 
         std::visit
         (
@@ -366,7 +364,7 @@ bool Foam::functionObjects::fieldStatistics::read(const dictionary& dict)
     results_.clear();
 
     // Reset the extrema-data container
-    extremaData_.clear();
+    extremaResults_.clear();
 
     return true;
 }
@@ -418,7 +416,7 @@ bool Foam::functionObjects::fieldStatistics::execute()
 
         if (extrema_)
         {
-            const auto& min = extremaData_(fieldName).first();
+            const auto& min = extremaResults_(fieldName).first();
             std::visit
             (
                 [this, fieldName](const auto& v)
@@ -431,7 +429,7 @@ bool Foam::functionObjects::fieldStatistics::execute()
             this->setResult(word(fieldName + "_min_cellID"), min.cellID_);
             this->setResult(word(fieldName + "_min_position"), min.position_);
 
-            const auto& max = extremaData_(fieldName).second();
+            const auto& max = extremaResults_(fieldName).second();
             std::visit
             (
                 [this, fieldName](const auto& v)
