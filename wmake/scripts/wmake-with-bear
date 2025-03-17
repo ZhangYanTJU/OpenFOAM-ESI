@@ -125,7 +125,7 @@ setOutput()
 
     mkdir -p "$outputDir"
     outputFile="$outputDir/compile_commands.json"
-    echo "Output = $outputFile" 1>&2
+    echo "Output = '$outputFile'" 1>&2
 }
 
 

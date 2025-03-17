@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2014-2017 OpenFOAM Foundation
-#     Copyright (C) 2019-2023 OpenCFD Ltd.
+#     Copyright (C) 2019-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -43,7 +43,7 @@
 #     -prefix=...   same as -module-prefix=...
 #
 # Trapped options
-#     -with-bear
+#     -with-bear, -bear-output-dir
 #
 #------------------------------------------------------------------------------
 # Check environment
@@ -88,7 +88,7 @@ USAGE
 #
 #------------------------------------------------------------------------------
 
-unset wmakeOpt_frontend wmakeOpt_nonRecursive
+unset wmakeOpt_frontend wmakeOpt_frontend_arg wmakeOpt_nonRecursive
 unset wmakeOpt_debug wmakeOpt_log wmakeOpt_openmp wmakeOpt_strict wmakeOpt_queue
 
 for arg in "$@"
@@ -97,6 +97,8 @@ do
     shift
 
     case "$arg" in
+    ('') continue ;;   # Empty argument, ignore it
+
     -h | -help*)
         usage
         ;;
@@ -104,6 +106,14 @@ do
     -with-bear)
         # Use 'bear' as frontend wrapper to wmake
         wmakeOpt_frontend="-with-bear"
+        continue    # Argument handled, remove it
+        ;;
+
+    -bear-output-dir=*)
+        # Implies '-with-bear' as frontend wrapper,
+        # so ensure that that is indeed also set
+        : "${wmakeOpt_frontend:=-with-bear}"
+        wmakeOpt_frontend_arg="$arg"
         continue    # Argument handled, remove it
         ;;
 
@@ -214,13 +224,13 @@ if [ -z "$wmakeOpt_nonRecursive" ]
 then
     if [ -z "$wmakeOpt_log" ]
     then
-        exec wmake $wmakeOpt_frontend -all \
+        exec wmake $wmakeOpt_frontend "$wmakeOpt_frontend_arg" -all \
             $wmakeOpt_debug $wmakeOpt_strict $wmakeOpt_queue $wmakeOpt_openmp $*
         exit $? # Unneeded, but just in case something went wrong
     else
         echo "Logging wmake -all output to '$wmakeOpt_log'" 1>&2
         echo 1>&2
-        exec wmake $wmakeOpt_frontend -all \
+        exec wmake $wmakeOpt_frontend "$wmakeOpt_frontend_arg" -all \
             $wmakeOpt_debug $wmakeOpt_strict $wmakeOpt_queue $wmakeOpt_openmp $* 2>&1 | \
             /usr/bin/tee $wmakeOpt_log
         # Need to cleanup after the tee
@@ -245,7 +255,7 @@ fi
 # Cleanup local variables and functions
 #------------------------------------------------------------------------------
 
-unset wmakeOpt_frontend wmakeOpt_nonRecursive
+unset wmakeOpt_frontend wmakeOpt_frontend_arg wmakeOpt_nonRecursive
 unset wmakeOpt_debug wmakeOpt_log wmakeOpt_openmp wmakeOpt_strict wmakeOpt_queue
 unset -f usage
 
