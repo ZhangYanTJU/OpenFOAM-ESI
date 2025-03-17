@@ -137,7 +137,7 @@ public:
             virtual void evaluate(const Pstream::commsTypes commsType);
 
             //- Initialise interface functionality
-            void initInterfaceMatrixUpdate
+            virtual void initInterfaceMatrixUpdate
             (
                 solveScalarField& result,
                 const bool add,

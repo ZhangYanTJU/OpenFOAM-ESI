@@ -1355,6 +1355,15 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
 
     internalFieldRef() = gf.internalField();
     boundaryFieldRef() = gf.boundaryField();
+
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            return pfld.constraintOverride();
+        }
+    );
 }
 
 
@@ -1391,6 +1400,15 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
     boundaryFieldRef() = gf.boundaryField();
 
     tgf.clear();
+
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            return pfld.constraintOverride();
+        }
+    );
 }
 
 
@@ -1402,6 +1420,15 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
 {
     internalFieldRef() = dt;
     boundaryFieldRef() = dt.value();
+
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            return pfld.constraintOverride();
+        }
+    );
 }
 
 
@@ -1421,6 +1448,15 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
     boundaryFieldRef() == gf.boundaryField();
 
     tgf.clear();
+
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            return pfld.constraintOverride();
+        }
+    );
 }
 
 
@@ -1432,6 +1468,15 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
 {
     internalFieldRef() = dt;
     boundaryFieldRef() == dt.value();
+
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) -> bool
+        {
+            return pfld.constraintOverride();
+        }
+    );
 }
 
 
@@ -1447,6 +1492,14 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
                                                                                \
     internalFieldRef() op gf.internalField();                                  \
     boundaryFieldRef() op gf.boundaryField();                                  \
+                                                                               \
+    boundaryFieldRef().evaluate_if                                             \
+    (                                                                          \
+        [](const auto& pfld) -> bool                                           \
+        {                                                                      \
+            return pfld.constraintOverride();                                  \
+        }                                                                      \
+    );                                                                         \
 }                                                                              \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
@@ -1457,6 +1510,14 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
 {                                                                              \
     operator op(tgf());                                                        \
     tgf.clear();                                                               \
+                                                                               \
+    boundaryFieldRef().evaluate_if                                             \
+    (                                                                          \
+        [](const auto& pfld) -> bool                                           \
+        {                                                                      \
+            return pfld.constraintOverride();                                  \
+        }                                                                      \
+    );                                                                         \
 }                                                                              \
                                                                                \
 template<class Type, template<class> class PatchField, class GeoMesh>          \
@@ -1467,6 +1528,14 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
 {                                                                              \
     internalFieldRef() op dt;                                                  \
     boundaryFieldRef() op dt.value();                                          \
+                                                                               \
+    boundaryFieldRef().evaluate_if                                             \
+    (                                                                          \
+        [](const auto& pfld) -> bool                                           \
+        {                                                                      \
+            return pfld.constraintOverride();                                  \
+        }                                                                     \
+    );                                                                         \
 }
 
 COMPUTED_ASSIGNMENT(Type, +=)

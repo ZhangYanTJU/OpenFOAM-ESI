@@ -81,6 +81,13 @@ class fvsPatchFieldBase
         //- Reference to patch
         const fvPatch& patch_;
 
+        //- Optional patch type
+        //  Used to allow specified boundary conditions to be applied
+        //  to constraint patches by providing the constraint
+        //  patch type as 'patchType'
+        word patchType_;
+
+
 protected:
 
     // Protected Member Functions
@@ -175,6 +182,24 @@ public:
         const fvPatch& patch() const noexcept
         {
             return patch_;
+        }
+
+        //- The optional patch type
+        const word& patchType() const noexcept
+        {
+            return patchType_;
+        }
+
+        //- The optional patch type
+        word& patchType() noexcept
+        {
+            return patchType_;
+        }
+
+        //- True if the type does not correspond to the constraint type
+        virtual bool constraintOverride() const
+        {
+            return !patchType_.empty() && patchType_ != type();
         }
 
 
