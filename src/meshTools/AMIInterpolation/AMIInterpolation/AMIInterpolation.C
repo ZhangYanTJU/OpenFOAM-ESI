@@ -938,7 +938,7 @@ bool Foam::AMIInterpolation::calculate
             srcCentroids_.resize_nocopy(srcPatch.size());
         }
 
-        if (tgtPatch.size())
+        if (tgtMagSf_.size())
         {
             tgtMagSf_.resize_nocopy(tgtPatch.size());
         }
