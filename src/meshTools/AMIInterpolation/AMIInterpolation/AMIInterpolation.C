@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -923,6 +923,36 @@ bool Foam::AMIInterpolation::calculate
 
     addProfiling(ami, "AMIInterpolation::calculate");
 
+
+    // Clear storage (only needed if src/tgt become zero size)
+    {
+        if (srcMagSf_.size())
+        {
+            srcMagSf_.resize_nocopy(srcPatch.size());
+        }
+        srcAddress_.resize_nocopy(srcPatch.size());
+        srcWeights_.resize_nocopy(srcPatch.size());
+        srcWeightsSum_.resize_nocopy(srcPatch.size());
+        if (srcCentroids_.size())
+        {
+            srcCentroids_.resize_nocopy(srcPatch.size());
+        }
+
+        if (tgtPatch.size())
+        {
+            tgtMagSf_.resize_nocopy(tgtPatch.size());
+        }
+        tgtAddress_.resize_nocopy(tgtPatch.size());
+        tgtWeights_.resize_nocopy(tgtPatch.size());
+        tgtWeightsSum_.resize_nocopy(tgtPatch.size());
+
+        if (tgtCentroids_.size())
+        {
+            tgtCentroids_.resize_nocopy(tgtPatch.size());
+        }
+    }
+
+
     if (surfPtr)
     {
         srcPatchPts_ = srcPatch.points();
@@ -948,16 +978,9 @@ bool Foam::AMIInterpolation::calculate
     }
 
     // Note: use original communicator for statistics
-    label srcTotalSize = returnReduce
+    const label srcTotalSize = returnReduce
     (
         srcPatch.size(),
-        sumOp<label>(),
-        UPstream::msgType(),
-        comm_
-    );
-    label tgtTotalSize = returnReduce
-    (
-        tgtPatch.size(),
         sumOp<label>(),
         UPstream::msgType(),
         comm_
@@ -973,6 +996,14 @@ bool Foam::AMIInterpolation::calculate
 
         return false;
     }
+
+    const label tgtTotalSize = returnReduce
+    (
+        tgtPatch.size(),
+        sumOp<label>(),
+        UPstream::msgType(),
+        comm_
+    );
 
     // Calculate:
     // - which processors have faces
