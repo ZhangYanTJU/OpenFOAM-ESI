@@ -128,7 +128,7 @@ public:
         // Evaluation functions
 
             //- Return neighbour coupled given internal cell data
-            tmp<Field<Type>> patchNeighbourField() const;
+            virtual tmp<Field<Type>> patchNeighbourField() const;
 
             //- Update result field based on interface functionality
             virtual void updateInterfaceMatrix

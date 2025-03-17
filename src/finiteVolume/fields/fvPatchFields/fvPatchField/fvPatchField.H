@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -231,6 +231,12 @@ public:
         word& patchType() noexcept
         {
             return patchType_;
+        }
+
+        //- True if the type does not correspond to the constraint type
+        virtual bool constraintOverride() const
+        {
+            return !patchType_.empty() && patchType_ != type();
         }
 
 
