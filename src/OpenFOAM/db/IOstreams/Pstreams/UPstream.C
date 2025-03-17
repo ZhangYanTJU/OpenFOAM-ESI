@@ -106,7 +106,35 @@ void Foam::UPstream::printNodeCommsControl(Ostream& os)
 
 void Foam::UPstream::printTopoControl(Ostream& os)
 {
-    os  << "none";
+    unsigned count = 0;
+
+    if (UPstream::topologyControl_ > 0)
+    {
+        #undef  PrintControl
+        #define PrintControl(Ctrl, Name)                      \
+        if (UPstream::usingTopoControl(topoControls::Ctrl))   \
+        {                                                     \
+            os << (count++ ? ' ' : '(') << Name;              \
+        }
+
+        PrintControl(broadcast, "broadcast");
+        PrintControl(reduce, "reduce");
+        PrintControl(gather, "gather");
+        PrintControl(combine, "combine");
+        PrintControl(mapGather, "mapGather");
+        PrintControl(gatherList, "gatherList");
+
+        #undef PrintControl
+    }
+
+    if (count)
+    {
+        os << ')';  // End the list
+    }
+    else
+    {
+        os << "none";
+    }
 }
 
 
