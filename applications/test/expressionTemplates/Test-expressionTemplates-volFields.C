@@ -37,10 +37,15 @@ using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+tmp<volScalarField> someFunction(const volScalarField& fld)
+{
+    return fld*1.0001;
+}
+
+
 int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
-
     #include "createTime.H"
     #include "createMesh.H"
 
@@ -57,6 +62,27 @@ int main(int argc, char *argv[])
         ),
         mesh
     );
+
+    // Expresions of volFields
+    {
+        volScalarField result
+        (
+            IOobject
+            (
+                "result",
+                runTime.timeName(),
+                mesh.thisDb(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            mesh,
+            dimensionedScalar(p.dimensions(), 0)
+        );
+        auto expression = someFunction(p).expr() + someFunction(p).expr();
+        result = expression;
+        DebugVar(result);
+    }
 
     // Expresions of volFields
     {

@@ -1097,7 +1097,9 @@ public:
             const Expression::GeometricFieldExpression
             <
                 E,
-                typename E::wrapType,
+                typename E::IntExpr,
+                typename E::UncoupledPatchExpr,
+                typename E::CoupledPatchExpr,
                 typename E::value_type
             >& expr
         );
@@ -1111,7 +1113,9 @@ public:
             const Expression::GeometricFieldExpression
             <
                 E,
-                typename E::wrapType,
+                typename E::IntExpr,
+                typename E::UncoupledPatchExpr,
+                typename E::CoupledPatchExpr,
                 typename E::value_type
             >& expr
         );
@@ -1129,7 +1133,9 @@ public:
             const Expression::GeometricFieldExpression
             <
                 E,
-                typename E::wrapType,
+                typename E::IntExpr,
+                typename E::UncoupledPatchExpr,
+                typename E::CoupledPatchExpr,
                 typename E::value_type
             >& expr
         );
@@ -1141,7 +1147,9 @@ public:
             const Expression::GeometricFieldExpression
             <
                 E,
-                typename E::wrapType,
+                typename E::IntExpr,
+                typename E::UncoupledPatchExpr,
+                typename E::CoupledPatchExpr,
                 typename E::value_type
             >& expr
         );

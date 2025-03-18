@@ -38,7 +38,11 @@ SourceFiles
 #define Foam_GeometricFieldExpression_H
 
 #include "ListExpression.H"
-#include "fixedValuePointPatchField.H"  // no assignable yet. tbd.
+#include "pointMesh.H"
+//#include "fixedValuePointPatchField.H"  // no assignable yet. tbd.
+//#include <boost/core/demangle.hpp>
+//#include <typeinfo>
+//#include <iostream>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,7 +59,14 @@ namespace Expression
 // Expression of GeometricField
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-template<typename E, typename WrapType, typename Type>
+template
+<
+    typename E,
+    typename IntExpr,
+    typename UncoupledPatchExpr,
+    typename CoupledPatchExpr,
+    typename Type
+>
 class GeometricFieldExpression
 {
 protected:
@@ -79,13 +90,15 @@ public:
         //    << "    E          : "
         //    << boost::core::demangle(typeid(E).name())
         //    << nl
-        //    << "    WrapType   : "
-        //    << boost::core::demangle(typeid(WrapType).name()) << nl
+        //    << "    IntExpr   : "
+        //    << boost::core::demangle(typeid(IntExpr).name()) << nl
         //    << "    dimensions : " << dimensions_ << nl
         //    << "    oriented   : " << oriented_ << nl
         //    << endl;
     }
 
+    // TBD. Do we still need this? Is faster than always going through
+    // internalField() though.
     Type operator[](const label i) const
     {
         // Delegation to the actual expression type. This avoids dynamic
@@ -104,24 +117,40 @@ public:
         return oriented_;
     }
 
-    WrapType internalField() const
+    IntExpr internalField() const
     {
         return static_cast<const E&>(*this).internalField();
     }
 
-    WrapType internalField()
+    IntExpr internalField()
     {
         return static_cast<E&>(*this).internalField();
     }
 
-    WrapType patchField(const label i)
+    UncoupledPatchExpr patchField(const label i)
     {
         return static_cast<E&>(*this).patchField(i);
     }
 
-    WrapType patchField(const label i) const
+    UncoupledPatchExpr patchField(const label i) const
     {
         return static_cast<const E&>(*this).patchField(i);
+    }
+
+    CoupledPatchExpr coupledPatchField(const label i)
+    {
+        return static_cast<E&>(*this).coupledPatchField(i);
+    }
+
+    CoupledPatchExpr coupledPatchField(const label i) const
+    {
+        return static_cast<const E&>(*this).coupledPatchField(i);
+    }
+
+    template<class Op>
+    auto access(const Op& cop, const label i) const
+    {
+        return static_cast<const E&>(*this).access(cop, i);
     }
 
     //- Helper to evaluate a GeometricField
@@ -143,26 +172,34 @@ public:
             auto& pfld = bfld[i];
             if (force || pfld.assignable())
             {
-                // Get patch expression
-                const auto patchExpr = this->patchField(i);
-
-                // Note: check can be removed once assignable also on
-                //       pointPatchFields. TBD.
-                if constexpr
-                (
-                    std::is_same_v<pointMesh,
-                    typename GeoField::Mesh>
-                )
+                if (pfld.coupled())
                 {
-                    const auto* vp = isA<Field<Type>>(pfld);
-                    if (vp)
-                    {
-                        patchExpr.evaluate(const_cast<Field<Type>&>(*vp));
-                    }
+                    // Get patch expression
+                    const auto patchExpr = this->coupledPatchField(i);
+                    patchExpr.evaluate(pfld);
                 }
                 else
                 {
-                    patchExpr.evaluate(pfld);
+                    // Get patch expression
+                    const auto patchExpr = this->patchField(i);
+
+                    // Note: check can be removed once assignable also on
+                    //       pointPatchFields. TBD.
+                    if constexpr
+                    (
+                        std::is_same_v<pointMesh, typename GeoField::Mesh>
+                    )
+                    {
+                        const auto* vp = isA<Field<Type>>(pfld);
+                        if (vp)
+                        {
+                            patchExpr.evaluate(const_cast<Field<Type>&>(*vp));
+                        }
+                    }
+                    else
+                    {
+                        patchExpr.evaluate(pfld);
+                    }
                 }
             }
         }
@@ -179,6 +216,8 @@ class GeometricFieldRefWrap
     <
         GeometricFieldRefWrap<GeoField>,
         ListRefWrap<typename GeoField::value_type>,
+        ListRefWrap<typename GeoField::value_type>,
+        ListTmpWrap<Field<typename GeoField::value_type>>,
         typename GeoField::value_type
     >
 {
@@ -193,7 +232,9 @@ public:
     typedef typename GeoField::value_type value_type;
 
     //- Type to return for patchField
-    typedef ListRefWrap<value_type> wrapType;
+    typedef ListRefWrap<value_type> IntExpr;
+    typedef ListRefWrap<value_type> UncoupledPatchExpr;
+    typedef ListTmpWrap<Field<value_type>> CoupledPatchExpr;
 
 
 private:
@@ -209,7 +250,9 @@ public:
         GeometricFieldExpression
         <
             GeometricFieldRefWrap<GeoField>,
-            wrapType,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
             value_type
         >
         (
@@ -225,7 +268,9 @@ public:
         GeometricFieldExpression
         <
             GeometricFieldRefWrap<GeoField>,
-            ListRefWrap<value_type>,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
             value_type
         >
         (
@@ -243,7 +288,9 @@ public:
         const GeometricFieldExpression
         <
             E,
-            typename E::wrapType,
+            typename E::IntExpr,
+            typename E::UncoupledPatchExpr,
+            typename E::CoupledPatchExpr,
             typename E::value_type
         >& expr
     )
@@ -251,7 +298,9 @@ public:
         GeometricFieldExpression
         <
             GeometricFieldRefWrap<GeoField>,
-            ListRefWrap<value_type>,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
             value_type
         >
         (
@@ -270,7 +319,9 @@ public:
         const GeometricFieldExpression
         <
             E,
-            typename E::wrapType,
+            typename E::IntExpr,
+            typename E::UncoupledPatchExpr,
+            typename E::CoupledPatchExpr,
             typename E::value_type
         >& expr
     )
@@ -286,7 +337,9 @@ public:
         const GeometricFieldExpression
         <
             E,
-            typename E::wrapType,
+            typename E::IntExpr,
+            typename E::UncoupledPatchExpr,
+            typename E::CoupledPatchExpr,
             typename E::value_type
         >& expr
     )
@@ -309,19 +362,19 @@ public:
         return elems_.size();
     }
 
-    wrapType internalField()
+    IntExpr internalField()
     {
         auto& fld = elems_.internalFieldRef();
-        return wrapType(fld.size(), fld);
+        return IntExpr(fld.size(), fld);
     }
 
-    wrapType internalField() const
+    IntExpr internalField() const
     {
         auto& fld = elems_.internalField();
-        return wrapType(fld.size(), fld);
+        return IntExpr(fld.size(), fld);
     }
 
-    wrapType patchField(const label i)
+    UncoupledPatchExpr patchField(const label i)
     {
         auto& fld = elems_.boundaryFieldRef()[i];
         if constexpr
@@ -333,20 +386,24 @@ public:
             if (vp)
             {
                 auto& v = *vp;
-                return wrapType(v.size(), const_cast<Field<value_type>&>(v));
+                return UncoupledPatchExpr
+                (
+                    v.size(),
+                    const_cast<Field<value_type>&>(v)
+                );
             }
             else
             {
-                return wrapType(0, List<value_type>::null());
+                return UncoupledPatchExpr(0, List<value_type>::null());
             }
         }
         else
         {
-            return wrapType(fld.size(), fld);
+            return UncoupledPatchExpr(fld.size(), fld);
         }
     }
 
-    wrapType patchField(const label i) const
+    UncoupledPatchExpr patchField(const label i) const
     {
         const auto& fld = elems_.boundaryField()[i];
         if constexpr
@@ -357,17 +414,81 @@ public:
             const auto* vp = isA<Field<value_type>>(fld);
             if (vp)
             {
-                return wrapType(vp->size(), *vp);
+                return UncoupledPatchExpr(vp->size(), *vp);
             }
             else
             {
-                return wrapType(0, List<value_type>::null());
+                return UncoupledPatchExpr(0, List<value_type>::null());
             }
         }
         else
         {
-            return wrapType(fld.size(), fld);
+            return UncoupledPatchExpr(fld.size(), fld);
         }
+    }
+
+    CoupledPatchExpr coupledPatchField(const label i)
+    {
+        auto& fld = elems_.boundaryFieldRef()[i];
+        if constexpr
+        (
+            std::is_same_v<pointMesh, typename GeoField::Mesh>
+        )
+        {
+            const auto* vp = isA<Field<value_type>>(fld);
+            if (vp)
+            {
+                auto& v = *vp;
+                return CoupledPatchExpr
+                (
+                    //v.size(),
+                    const_cast<Field<value_type>&>(v)
+                );
+            }
+            else
+            {
+                //return CoupledPatchExpr(0, List<value_type>::null());
+                return CoupledPatchExpr(List<value_type>::null());
+            }
+        }
+        else
+        {
+            //return CoupledPatchExpr(fld.size(), fld);
+            return CoupledPatchExpr(fld);
+        }
+    }
+
+    CoupledPatchExpr coupledPatchField(const label i) const
+    {
+        const auto& fld = elems_.boundaryField()[i];
+        if constexpr
+        (
+            std::is_same_v<pointMesh, typename GeoField::Mesh>
+        )
+        {
+            const auto* vp = isA<Field<value_type>>(fld);
+            if (vp)
+            {
+                //return CoupledPatchExpr(vp->size(), *vp);
+                return CoupledPatchExpr(*vp);
+            }
+            else
+            {
+                //return CoupledPatchExpr(0, List<value_type>::null());
+                return CoupledPatchExpr(List<value_type>::null());
+            }
+        }
+        else
+        {
+            //return UncoupledPatchExpr(fld.size(), fld);
+            return CoupledPatchExpr(fld);
+        }
+    }
+
+    template<class AccessOp>
+    auto access(const AccessOp& cop, const label i) const
+    {
+        return cop(elems_, i);
     }
 };
 
@@ -379,6 +500,8 @@ class GeometricFieldConstRefWrap
     <
         GeometricFieldConstRefWrap<GeoField>,
         ListConstRefWrap<typename GeoField::value_type>,
+        ListConstRefWrap<typename GeoField::value_type>,
+        ListConstTmpWrap<Field<typename GeoField::value_type>>,
         typename GeoField::value_type
     >
 {
@@ -393,7 +516,9 @@ public:
     typedef typename GeoField::value_type value_type;
 
     //- Type to return for patchField
-    typedef ListConstRefWrap<value_type> wrapType;
+    typedef ListConstRefWrap<value_type> IntExpr;
+    typedef ListConstRefWrap<value_type> UncoupledPatchExpr;
+    typedef ListConstTmpWrap<Field<value_type>> CoupledPatchExpr;
 
 
 private:
@@ -409,7 +534,9 @@ public:
         GeometricFieldExpression
         <
             GeometricFieldConstRefWrap<GeoField>,
-            wrapType,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
             value_type
         >
         (
@@ -435,12 +562,12 @@ public:
         return elems_.size();
     }
 
-    wrapType internalField() const
+    IntExpr internalField() const
     {
         return elems_.internalField();
     }
 
-    wrapType patchField(const label i) const
+    UncoupledPatchExpr patchField(const label i) const
     {
         //return elems_.boundaryField()[i];
         const auto& fld = elems_.boundaryField()[i];
@@ -452,18 +579,47 @@ public:
             const auto* vp = isA<Field<value_type>>(fld);
             if (vp)
             {
-                return wrapType(*vp);
+                return UncoupledPatchExpr(*vp);
             }
             else
             {
-                return wrapType(List<value_type>::null());
+                return UncoupledPatchExpr(List<value_type>::null());
             }
         }
         else
         {
-            return wrapType(fld);
+            return UncoupledPatchExpr(fld);
         }
+    }
 
+    CoupledPatchExpr coupledPatchField(const label i) const
+    {
+        const auto& fld = elems_.boundaryField()[i];
+        if constexpr
+        (
+            std::is_same_v<pointMesh, typename GeoField::Mesh>
+        )
+        {
+            const auto* vp = isA<Field<value_type>>(fld);
+            if (vp)
+            {
+                return CoupledPatchExpr(*vp);
+            }
+            else
+            {
+                return CoupledPatchExpr(List<value_type>::null());
+            }
+        }
+        else
+        {
+            return CoupledPatchExpr(fld);
+        }
+    }
+
+    template<class AccessOp>
+    auto access(const AccessOp& cop, const label i) const
+    {
+        return cop(elems_, i);
     }
 };
 
@@ -475,14 +631,15 @@ class GeometricFieldConstTmpWrap
     <
         GeometricFieldConstTmpWrap<GeoField>,
         ListConstRefWrap<typename GeoField::value_type>,
+        ListConstRefWrap<typename GeoField::value_type>,
+        ListConstTmpWrap<Field<typename GeoField::value_type>>,
         typename GeoField::value_type
     >
 {
 public:
 
-    //- Have expressions refer to this to avoid too many tmp's referring
-    //  to the same object.
-    static constexpr bool is_leaf = true;
+    //- Have expressions use copy to maintain tmp refCount
+    static constexpr bool is_leaf = false;
 
     //- The GeometricField type
     typedef GeoField this_type;
@@ -491,7 +648,9 @@ public:
     typedef typename GeoField::value_type value_type;
 
     //- Type to return for patchField
-    typedef ListConstRefWrap<value_type> wrapType;
+    typedef ListConstRefWrap<value_type> IntExpr;
+    typedef ListConstRefWrap<value_type> UncoupledPatchExpr;
+    typedef ListConstTmpWrap<Field<value_type>> CoupledPatchExpr;
 
 
 private:
@@ -507,15 +666,69 @@ public:
         GeometricFieldExpression
         <
             GeometricFieldConstTmpWrap<GeoField>,
-            wrapType,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
             value_type
         >
         (
             elems().dimensions(),
             elems().oriented()
         ),
-        elems_(elems)
-    {}
+        elems_(elems, true)
+    {
+        //Pout<< "GeometricFieldConstTmpWrap :" << nl
+        //    << "    this_type  : "
+        //    << boost::core::demangle(typeid(this_type).name())
+        //    << nl
+        //    << "    PatchExpr  : "
+        //    << boost::core::demangle(typeid(IntExpr).name()) << nl
+        //    << endl;
+    }
+
+    GeometricFieldConstTmpWrap
+    (
+        const GeometricFieldConstTmpWrap<GeoField>& w
+    )
+    :
+        GeometricFieldExpression
+        <
+            GeometricFieldConstTmpWrap<GeoField>,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
+            value_type
+        >
+        (
+            w.dimensions(),
+            w.oriented()
+        ),
+        //elems_(std::move(w.elems_))
+        elems_(w.elems_)
+    {
+        //Pout<< "GeometricFieldConstTmpWrap copy :" << nl
+        //    << "    this_type  : "
+        //    << boost::core::demangle(typeid(this_type).name())
+        //    << nl
+        //    << "    PatchExpr  : "
+        //    << boost::core::demangle(typeid(IntExpr).name()) << nl
+        //    << endl;
+    }
+
+    ~GeometricFieldConstTmpWrap()
+    {
+        //Pout<< "~GeometricFieldConstTmpWrap destructor :" << nl
+        //    << "    this_type  : "
+        //    << boost::core::demangle(typeid(this_type).name())
+        //    << nl
+        //    << endl;
+    }
+
+    // return the underlying data
+    const auto& data() const
+    {
+        return elems_();
+    }
 
     value_type operator[](const label i) const
     {
@@ -528,12 +741,12 @@ public:
         return elems_().size();
     }
 
-    wrapType internalField() const
+    IntExpr internalField() const
     {
         return elems_().internalField();
     }
 
-    wrapType patchField(const label i) const
+    UncoupledPatchExpr patchField(const label i) const
     {
         const auto& fld = elems_().boundaryField()[i];
         if constexpr
@@ -544,18 +757,48 @@ public:
             const auto* vp = isA<Field<value_type>>(fld);
             if (vp)
             {
-                return wrapType(*vp);
+                return UncoupledPatchExpr(*vp);
             }
             else
             {
-                return wrapType(List<value_type>::null());
+                return UncoupledPatchExpr(List<value_type>::null());
             }
         }
         else
         {
-            return wrapType(fld);
+            return UncoupledPatchExpr(fld);
         }
 
+    }
+
+    CoupledPatchExpr coupledPatchField(const label i) const
+    {
+        const auto& fld = elems_().boundaryField()[i];
+        if constexpr
+        (
+            std::is_same_v<pointMesh, typename GeoField::Mesh>
+        )
+        {
+            const auto* vp = isA<Field<value_type>>(fld);
+            if (vp)
+            {
+                return CoupledPatchExpr(*vp);
+            }
+            else
+            {
+                return CoupledPatchExpr(List<value_type>::null());
+            }
+        }
+        else
+        {
+            return CoupledPatchExpr(fld);
+        }
+    }
+
+    template<class AccessOp>
+    auto access(const AccessOp& cop, const label i) const
+    {
+        return cop(elems_(), i);
     }
 };
 
@@ -572,8 +815,18 @@ class GF_add
         GF_add<E1, E2>,
         List_add
         <
-            typename E1::wrapType,
-            typename E2::wrapType
+            typename E1::IntExpr,
+            typename E2::IntExpr
+        >,
+        List_add
+        <
+            typename E1::UncoupledPatchExpr,
+            typename E2::UncoupledPatchExpr
+        >,
+        List_add
+        <
+            typename E1::CoupledPatchExpr,
+            typename E2::CoupledPatchExpr
         >,
         typename E1::value_type
     >
@@ -591,16 +844,28 @@ public:
     //- Type to return for patchField
     typedef List_add
     <
-        typename E1::wrapType,
-        typename E2::wrapType
-    > wrapType;
+        typename E1::IntExpr,
+        typename E2::IntExpr
+    > IntExpr;
+    typedef List_add
+    <
+        typename E1::UncoupledPatchExpr,
+        typename E2::UncoupledPatchExpr
+    > UncoupledPatchExpr;
+    typedef List_add
+    <
+        typename E1::CoupledPatchExpr,
+        typename E2::CoupledPatchExpr
+    > CoupledPatchExpr;
 
     GF_add(const E1& u, const E2& v)
     :
         GeometricFieldExpression
         <
             GF_add<E1, E2>,
-            wrapType,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
             value_type
         >
         (
@@ -620,20 +885,35 @@ public:
             > == true
         );
     }
-    decltype(auto) operator[](const label i) const
+    auto operator[](const label i) const
     {
         return u_[i] + v_[i];
     }
     auto size() const noexcept { return u_.size(); }
 
-    wrapType internalField() const
+    IntExpr internalField() const
     {
-        return wrapType(u_.internalField(), v_.internalField());
+        return IntExpr(u_.internalField(), v_.internalField());
     }
 
-    wrapType patchField(const label i) const
+    UncoupledPatchExpr patchField(const label i) const
     {
-        return wrapType(u_.patchField(i), v_.patchField(i));
+        return UncoupledPatchExpr(u_.patchField(i), v_.patchField(i));
+    }
+
+    CoupledPatchExpr coupledPatchField(const label i) const
+    {
+        return CoupledPatchExpr
+        (
+            u_.coupledPatchField(i),
+            v_.coupledPatchField(i)
+        );
+    }
+
+    template<class AccessOp>
+    auto access(const AccessOp& cop, const label i) const
+    {
+        return UncoupledPatchExpr(u_.access(cop, i), v_.access(cop, i));
     }
 };
 template<typename E1, typename E2>
@@ -643,13 +923,17 @@ operator+
     GeometricFieldExpression
     <
         E1,
-        typename E1::wrapType,
+        typename E1::IntExpr,
+        typename E1::UncoupledPatchExpr,
+        typename E1::CoupledPatchExpr,
         typename E1::value_type
     > const& u,
     GeometricFieldExpression
     <
         E2,
-        typename E2::wrapType,
+        typename E2::IntExpr,
+        typename E2::UncoupledPatchExpr,
+        typename E2::CoupledPatchExpr,
         typename E2::value_type
     > const& v
 )
@@ -669,7 +953,9 @@ class OpFunc                                                                   \
     public GeometricFieldExpression                                            \
     <                                                                          \
         OpFunc<E1>,                                                            \
-        WrapType<typename E1::wrapType>,                                       \
+        WrapType<typename E1::IntExpr>,                                        \
+        WrapType<typename E1::UncoupledPatchExpr>,                             \
+        WrapType<typename E1::CoupledPatchExpr>,                               \
         typename E1::value_type                                                \
     >                                                                          \
 {                                                                              \
@@ -683,36 +969,51 @@ public:                                                                        \
     typedef typename E1::value_type value_type;                                \
                                                                                \
     /* Type to return for patchField */                                        \
-    typedef WrapType<typename E1::wrapType> wrapType;                          \
+    typedef WrapType<typename E1::IntExpr> IntExpr;                            \
+    typedef WrapType<typename E1::UncoupledPatchExpr> UncoupledPatchExpr;      \
+    typedef WrapType<typename E1::CoupledPatchExpr> CoupledPatchExpr;          \
                                                                                \
     OpFunc(const E1& u)                                                        \
     :                                                                          \
         GeometricFieldExpression                                               \
         <                                                                      \
             OpFunc<E1>,                                                        \
-            wrapType,                                                          \
+            IntExpr,                                                           \
+            UncoupledPatchExpr,                                                \
+            CoupledPatchExpr,                                                  \
             value_type                                                         \
         >                                                                      \
         (                                                                      \
-            BaseFunc(u.dimensions()),                                          \
+            u.dimensions(),                                                    \
             u.oriented()                                                       \
         ),                                                                     \
         u_(u)                                                                  \
     {}                                                                         \
-    decltype(auto) operator[](const label i) const                             \
+    auto operator[](const label i) const                                       \
     {                                                                          \
         return BaseFunc(u_[i]);                                                \
     }                                                                          \
     auto size() const noexcept { return u_.size(); }                           \
                                                                                \
-    wrapType internalField() const                                             \
+    IntExpr internalField() const                                              \
     {                                                                          \
-        return wrapType(u_.internalField());                                   \
+        return IntExpr(u_.internalField());                                    \
     }                                                                          \
                                                                                \
-    wrapType patchField(const label i) const                                   \
+    UncoupledPatchExpr patchField(const label i) const                         \
     {                                                                          \
-        return wrapType(u_.patchField(i));                                     \
+        return UncoupledPatchExpr(u_.patchField(i));                           \
+    }                                                                          \
+                                                                               \
+    CoupledPatchExpr coupledPatchField(const label i) const                    \
+    {                                                                          \
+        return CoupledPatchExpr(u_.coupledPatchField(i));                      \
+    }                                                                          \
+                                                                               \
+    template<class AccessOpOp>                                                 \
+    auto access(const AccessOpOp& cop, const label i) const                    \
+    {                                                                          \
+        return UncoupledPatchExpr(u_.access(cop, i));                          \
     }                                                                          \
 };                                                                             \
 template<typename E1>                                                          \
@@ -721,7 +1022,9 @@ OpFunc<E1> Func                                                                \
     GeometricFieldExpression                                                   \
     <                                                                          \
         E1,                                                                    \
-        typename E1::wrapType,                                                 \
+        typename E1::IntExpr,                                                  \
+        typename E1::UncoupledPatchExpr,                                       \
+        typename E1::CoupledPatchExpr,                                         \
         typename E1::value_type                                                \
     > const& u                                                                 \
 )                                                                              \
@@ -730,73 +1033,80 @@ OpFunc<E1> Func                                                                \
 }
 
 
-// Do negation separately - problem with macro expansion. Tbd.
-template<typename E1>
-class GeometricFieldNegate
-:
-    public GeometricFieldExpression
-    <
-        GeometricFieldNegate<E1>,
-        List_negate<typename E1::wrapType>,
-        typename E1::value_type
-    >
-{
-    /* cref if leaf, copy otherwise */ 
-    typename std::conditional<E1::is_leaf, const E1&, const E1>::type u_;
-
-public:
-    static constexpr bool is_leaf = false;
-
-    /* Type to return for internal field */
-    typedef typename E1::value_type value_type;
-
-    /* Type to return for patchField */
-    typedef List_negate<typename E1::wrapType> wrapType;
-
-    GeometricFieldNegate(const E1& u)
-    :
-        GeometricFieldExpression
-        <
-            GeometricFieldNegate<E1>,
-            wrapType,
-            value_type
-        >
-        (
-            u.dimensions(),
-            u.oriented()
-        ),
-        u_(u)
-    {}
-    decltype(auto) operator[](const label i) const
-    {
-        return -u_[i];
-    }
-    auto size() const noexcept { return u_.size(); }
-
-    wrapType internalField() const
-    {
-        return wrapType(u_.internalField());
-    }
-
-    wrapType patchField(const label i) const
-    {
-        return wrapType(u_.patchField(i));
-    }
-};
-template<typename E1>
-GeometricFieldNegate<E1> operator-
-(
-    GeometricFieldExpression
-    <
-        E1,
-        typename E1::wrapType,
-        typename E1::value_type
-    > const& u
-)
-{
-    return GeometricFieldNegate<E1>(static_cast<const E1&>(u));
-}
-
+//// Do negation separately - problem with macro expansion. Tbd.
+//template<typename E1>
+//class GeometricFieldNegate
+//:
+//    public GeometricFieldExpression
+//    <
+//        GeometricFieldNegate<E1>,
+//        List_negate<typename E1::IntExpr>,
+//        List_negate<typename E1::UncoupledPatchExpr>,
+//        List_negate<typename E1::CoupledPatchExpr>,
+//        typename E1::value_type
+//    >
+//{
+//    /* cref if leaf, copy otherwise */ 
+//    typename std::conditional<E1::is_leaf, const E1&, const E1>::type u_;
+//
+//public:
+//    static constexpr bool is_leaf = false;
+//
+//    /* Type to return for internal field */
+//    typedef typename E1::value_type value_type;
+//
+//    /* Type to return for patchField */
+//    typedef List_negate<typename E1::IntExpr> IntExpr;
+//    typedef List_negate<typename E1::UncoupledPatchExpr> UncoupledPatchExpr;
+//    typedef List_negate<typename E1::CoupledPatchExpr> CoupledPatchExpr;
+//
+//    GeometricFieldNegate(const E1& u)
+//    :
+//        GeometricFieldExpression
+//        <
+//            GeometricFieldNegate<E1>,
+//            IntExpr,
+//            UncoupledPatchExpr,
+//            CoupledPatchExpr,
+//            value_type
+//        >
+//        (
+//            u.dimensions(),
+//            u.oriented()
+//        ),
+//        u_(u)
+//    {}
+//    auto operator[](const label i) const
+//    {
+//        return -u_[i];
+//    }
+//    label size() const { return u_.size(); }
+//
+//    IntExpr internalField() const
+//    {
+//        return PatchExpr(u_.internalField());
+//    }
+//
+//    UncoupledPatchExpr patchField(const label i) const
+//    {
+//        return UncoupledPatchExpr(u_.patchField(i));
+//    }
+//};
+//template<typename E1>
+//GeometricFieldNegate<E1> operator-
+//(
+//    GeometricFieldExpression
+//    <
+//        E1,
+//        typename E1::IntExpr,
+//        typename E1::UncoupledPatchExpr,
+//        typename E1::CoupledPatchExpr,
+//        typename E1::value_type
+//    > const& u
+//)
+//{
+//    return GeometricFieldNegate<E1>(static_cast<const E1&>(u));
+//}
 
 #define EXPRESSION_GF_OPERATOR(Op, WrapType, OpFunc)                           \
 template<typename E1, typename E2>                                             \
@@ -807,8 +1117,18 @@ class OpFunc                                                                   \
         OpFunc<E1, E2>,                                                        \
         WrapType                                                               \
         <                                                                      \
-            typename E1::wrapType,                                             \
-            typename E2::wrapType                                              \
+            typename E1::IntExpr,                                              \
+            typename E2::IntExpr                                               \
+        >,                                                                     \
+        WrapType                                                               \
+        <                                                                      \
+            typename E1::UncoupledPatchExpr,                                   \
+            typename E2::UncoupledPatchExpr                                    \
+        >,                                                                     \
+        WrapType                                                               \
+        <                                                                      \
+            typename E1::CoupledPatchExpr,                                     \
+            typename E2::CoupledPatchExpr                                      \
         >,                                                                     \
         typename E1::value_type                                                \
     >                                                                          \
@@ -826,16 +1146,28 @@ public:                                                                        \
     /* Type to return for patchField */                                        \
     typedef WrapType                                                           \
     <                                                                          \
-        typename E1::wrapType,                                                 \
-        typename E2::wrapType                                                  \
-    > wrapType;                                                                \
+        typename E1::IntExpr,                                                  \
+        typename E2::IntExpr                                                   \
+    > IntExpr;                                                                 \
+    typedef WrapType                                                           \
+    <                                                                          \
+        typename E1::UncoupledPatchExpr,                                       \
+        typename E2::UncoupledPatchExpr                                        \
+    > UncoupledPatchExpr;                                                      \
+    typedef WrapType                                                           \
+    <                                                                          \
+        typename E1::CoupledPatchExpr,                                         \
+        typename E2::CoupledPatchExpr                                          \
+    > CoupledPatchExpr;                                                        \
                                                                                \
     OpFunc(const E1& u, const E2& v)                                           \
     :                                                                          \
         GeometricFieldExpression                                               \
         <                                                                      \
             OpFunc<E1, E2>,                                                    \
-            wrapType,                                                          \
+            IntExpr,                                                           \
+            UncoupledPatchExpr,                                                \
+            CoupledPatchExpr,                                                  \
             typename E1::value_type                                            \
         >                                                                      \
         (                                                                      \
@@ -845,30 +1177,49 @@ public:                                                                        \
         u_(u),                                                                 \
         v_(v)                                                                  \
     {                                                                          \
-        static_assert                                                          \
+      /*static_assert                                                          \
         (                                                                      \
             std::is_same_v                                                     \
             <                                                                  \
                 typename E1::value_type,                                       \
                 typename E2::value_type                                        \
             > == true                                                          \
-        );                                                                     \
+        );*/                                                                   \
         assert(u.size() == v.size());                                          \
     }                                                                          \
-    decltype(auto) operator[](const label i) const                             \
+    auto operator[](const label i) const                                       \
     {                                                                          \
         return u_[i] Op v_[i];                                                 \
     }                                                                          \
     auto size() const noexcept { return u_.size(); }                           \
                                                                                \
-    wrapType internalField() const                                             \
+    IntExpr internalField() const                                              \
     {                                                                          \
-        return wrapType(u_.internalField(), v_.internalField());               \
+        return IntExpr(u_.internalField(), v_.internalField());                \
     }                                                                          \
                                                                                \
-    wrapType patchField(const label i) const                                   \
+    UncoupledPatchExpr patchField(const label i) const                         \
     {                                                                          \
-        return wrapType(u_.patchField(i), v_.patchField(i));                   \
+        return UncoupledPatchExpr(u_.patchField(i), v_.patchField(i));         \
+    }                                                                          \
+                                                                               \
+    CoupledPatchExpr coupledPatchField(const label i) const                    \
+    {                                                                          \
+        return CoupledPatchExpr                                                \
+        (                                                                      \
+            u_.coupledPatchField(i),                                           \
+            v_.coupledPatchField(i)                                            \
+        );                                                                     \
+    }                                                                          \
+                                                                               \
+    template<class AccessOp>                                                   \
+    auto access(const AccessOp& cop, const label i) const                      \
+    {                                                                          \
+        return UncoupledPatchExpr                                              \
+        (                                                                      \
+            u_.access(cop, i),                                                 \
+            v_.access(cop, i)                                                  \
+        );                                                                     \
     }                                                                          \
 };                                                                             \
 template<typename E1, typename E2>                                             \
@@ -878,13 +1229,17 @@ operator Op                                                                    \
     GeometricFieldExpression                                                   \
     <                                                                          \
         E1,                                                                    \
-        typename E1::wrapType,                                                 \
+        typename E1::IntExpr,                                                  \
+        typename E1::UncoupledPatchExpr,                                       \
+        typename E1::CoupledPatchExpr,                                         \
         typename E1::value_type                                                \
     > const& u,                                                                \
     GeometricFieldExpression                                                   \
     <                                                                          \
         E2,                                                                    \
-        typename E2::wrapType,                                                 \
+        typename E2::IntExpr,                                                  \
+        typename E2::UncoupledPatchExpr,                                       \
+        typename E2::CoupledPatchExpr,                                         \
         typename E2::value_type                                                \
     > const& v                                                                 \
 )                                                                              \
@@ -895,7 +1250,6 @@ operator Op                                                                    \
         static_cast<const E2&>(v)                                              \
     );                                                                         \
 }
-
 
 #define EXPRESSION_GF_FUNCTION2(Func, BaseFunc, WrapType, OpFunc)              \
 template<typename E1, typename E2>                                             \
@@ -906,8 +1260,18 @@ class OpFunc                                                                   \
         OpFunc<E1, E2>,                                                        \
         WrapType                                                               \
         <                                                                      \
-            typename E1::wrapType,                                             \
-            typename E2::wrapType                                              \
+            typename E1::IntExpr,                                              \
+            typename E2::IntExpr                                               \
+        >,                                                                     \
+        WrapType                                                               \
+        <                                                                      \
+            typename E1::UncoupledPatchExpr,                                   \
+            typename E2::UncoupledPatchExpr                                    \
+        >,                                                                     \
+        WrapType                                                               \
+        <                                                                      \
+            typename E1::CoupledPatchExpr,                                     \
+            typename E2::CoupledPatchExpr                                      \
         >,                                                                     \
         typename E1::value_type                                                \
     >                                                                          \
@@ -925,16 +1289,28 @@ public:                                                                        \
     /* Type to return for patchField */                                        \
     typedef WrapType                                                           \
     <                                                                          \
-        typename E1::wrapType,                                                 \
-        typename E2::wrapType                                                  \
-    > wrapType;                                                                \
+        typename E1::IntExpr,                                                  \
+        typename E2::IntExpr                                                   \
+    > IntExpr;                                                                 \
+    typedef WrapType                                                           \
+    <                                                                          \
+        typename E1::UncoupledPatchExpr,                                       \
+        typename E2::UncoupledPatchExpr                                        \
+    > UncoupledPatchExpr;                                                      \
+    typedef WrapType                                                           \
+    <                                                                          \
+        typename E1::CoupledPatchExpr,                                         \
+        typename E2::CoupledPatchExpr                                          \
+    > CoupledPatchExpr;                                                        \
                                                                                \
     OpFunc(const E1& u, const E2& v)                                           \
     :                                                                          \
         GeometricFieldExpression                                               \
         <                                                                      \
             OpFunc<E1, E2>,                                                    \
-            wrapType,                                                          \
+            IntExpr,                                                           \
+            UncoupledPatchExpr,                                                \
+            CoupledPatchExpr,                                                  \
             value_type                                                         \
         >                                                                      \
         (                                                                      \
@@ -944,29 +1320,48 @@ public:                                                                        \
         u_(u),                                                                 \
         v_(v)                                                                  \
     {                                                                          \
-        static_assert                                                          \
+        /*static_assert                                                        \
         (                                                                      \
             std::is_same_v                                                     \
             <                                                                  \
                 typename E1::value_type,                                       \
                 typename E2::value_type                                        \
             > == true                                                          \
-        );                                                                     \
+        );*/                                                                   \
     }                                                                          \
-    decltype(auto) operator[](const label i) const                             \
+    auto operator[](const label i) const                                       \
     {                                                                          \
         return BaseFunc(u_[i], v_[i]);                                         \
     }                                                                          \
     auto size() const noexcept {return u_.size(); }                            \
                                                                                \
-    wrapType internalField() const                                             \
+    IntExpr internalField() const                                              \
     {                                                                          \
-        return wrapType(u_.internalField(), v_.internalField());               \
+        return IntExpr(u_.internalField(), v_.internalField());                \
     }                                                                          \
                                                                                \
-    wrapType patchField(const label i) const                                   \
+    UncoupledPatchExpr patchField(const label i) const                         \
     {                                                                          \
-        return wrapType(u_.patchField(i), v_.patchField(i));                   \
+        return UncoupledPatchExpr(u_.patchField(i), v_.patchField(i));         \
+    }                                                                          \
+                                                                               \
+    CoupledPatchExpr coupledPatchField(const label i) const                    \
+    {                                                                          \
+        return CoupledPatchExpr                                                \
+        (                                                                      \
+            u_.coupledPatchField(i),                                           \
+            v_.coupledPatchField(i)                                            \
+        );                                                                     \
+    }                                                                          \
+                                                                               \
+    template<class AccessOp>                                                   \
+    auto access(const AccessOp& cop, const label i) const                      \
+    {                                                                          \
+        return UncoupledPatchExpr                                              \
+        (                                                                      \
+            u_.access(cop, i),                                                 \
+            v_.access(cop, i)                                                  \
+        );                                                                     \
     }                                                                          \
 };                                                                             \
 template<typename E1, typename E2>                                             \
@@ -975,13 +1370,17 @@ OpFunc<E1, E2> Func                                                            \
     GeometricFieldExpression                                                   \
     <                                                                          \
         E1,                                                                    \
-        typename E1::wrapType,                                                 \
+        typename E1::IntExpr,                                                  \
+        typename E1::UncoupledPatchExpr,                                       \
+        typename E1::CoupledPatchExpr,                                         \
         typename E1::value_type                                                \
     > const& u,                                                                \
     GeometricFieldExpression                                                   \
     <                                                                          \
         E2,                                                                    \
-        typename E2::wrapType,                                                 \
+        typename E2::IntExpr,                                                  \
+        typename E2::UncoupledPatchExpr,                                       \
+        typename E2::CoupledPatchExpr,                                         \
         typename E2::value_type                                                \
     > const& v                                                                 \
 )                                                                              \
@@ -992,6 +1391,7 @@ OpFunc<E1, E2> Func                                                            \
         static_cast<const E2&>(v)                                              \
     );                                                                         \
 }
+
 
 //- GeometricField expressions.
 
@@ -1024,6 +1424,7 @@ EXPRESSION_GF_FUNCTION2(max, Foam::max, List_max, GF_max)
 EXPRESSION_GF_OPERATOR(-, List_subtract, GF_subtract)
 EXPRESSION_GF_OPERATOR(*, List_multiply, GF_multiply)
 EXPRESSION_GF_OPERATOR(/, List_divide, GF_divide)
+EXPRESSION_GF_OPERATOR(&, List_dot, GF_dot)
 
 #undef EXPRESSION_GF_OPERATOR
 
@@ -1039,6 +1440,8 @@ class UniformGeometricFieldWrap
     <
         UniformGeometricFieldWrap<GeoField>,
         UniformListWrap<typename GeoField::value_type>,
+        UniformListWrap<typename GeoField::value_type>,
+        UniformListWrap<typename GeoField::value_type>,
         typename GeoField::value_type
     >
 {
@@ -1050,7 +1453,9 @@ public:
     typedef typename GeoField::value_type value_type;
 
     //- Type to return for patchField
-    typedef UniformListWrap<value_type> wrapType;
+    typedef UniformListWrap<value_type> IntExpr;
+    typedef UniformListWrap<value_type> UncoupledPatchExpr;
+    typedef UniformListWrap<value_type> CoupledPatchExpr;
 
 
 private:
@@ -1067,7 +1472,9 @@ public:
         GeometricFieldExpression
         <
             UniformGeometricFieldWrap<GeoField>,
-            wrapType,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
             value_type
         >
         (
@@ -1088,7 +1495,9 @@ public:
         GeometricFieldExpression
         <
             UniformGeometricFieldWrap<GeoField>,
-            wrapType,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
             value_type
         >
         (
@@ -1109,14 +1518,26 @@ public:
         return elems_.size();
     }
 
-    wrapType internalField() const
+    IntExpr internalField() const
     {
-        return wrapType(elems_.internalField().size(), val_);
+        return IntExpr(elems_.internalField().size(), val_);
     }
 
-    wrapType patchField(const label i) const
+    UncoupledPatchExpr patchField(const label i) const
     {
-        return wrapType(elems_.boundaryField()[i].size(), val_);
+        return UncoupledPatchExpr(elems_.boundaryField()[i].size(), val_);
+    }
+
+    CoupledPatchExpr coupledPatchField(const label i) const
+    {
+        return CoupledPatchExpr(elems_.boundaryField()[i].size(), val_);
+    }
+
+    template<class AccessOp>
+    auto access(const AccessOp& cop, const label i) const
+    {
+        // Size+value only
+        return patchField(i);
     }
 };
 
@@ -1140,7 +1561,7 @@ public:
 //    typedef typename GeoField::value_type value_type;
 //
 //    //- Type to return for patchField
-//    typedef UniformListWrap<value_type> wrapType;
+//    typedef UniformListWrap<value_type> PatchExpr;
 //
 //
 //private:
@@ -1197,14 +1618,14 @@ public:
 //        return nInternal_;
 //    }
 //
-//    wrapType internalField() const
+//    PatchExpr internalField() const
 //    {
-//        return wrapType(nInternal_, val_);
+//        return PatchExpr(nInternal_, val_);
 //    }
 //
-//    wrapType patchField(const label i) const
+//    PatchExpr patchField(const label i) const
 //    {
-//        return wrapType(patchSizes_[i], val_);
+//        return PatchExpr(patchSizes_[i], val_);
 //    }
 //};
 
@@ -1335,6 +1756,7 @@ void SuSp
     );
 }
 */
+
 
 } // End namespace Expression
 

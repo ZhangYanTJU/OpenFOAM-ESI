@@ -1361,6 +1361,248 @@ auto Su
 }
 
 
+
+// Some discretisation using expressions
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+template<typename E1, typename E2>
+class lerp
+:
+    public GeometricFieldExpression
+    <
+        lerp<E1, E2>,
+
+        //- Type to return for internal field
+        List_lerp
+        <
+            IndirectConstWrap<typename E1::IntExpr>,
+            IndirectConstWrap<typename E1::IntExpr>,
+            typename E2::IntExpr
+        >,
+
+        //- Type to return for uncoupled patch field
+        typename E1::UncoupledPatchExpr,
+
+        //- Type to return for coupled patch field
+        List_lerp
+        <
+            IndirectConstWrap<typename E1::IntExpr>,
+            typename E1::CoupledPatchExpr,
+            typename E2::CoupledPatchExpr
+        >,
+
+        //- Type of actual values
+        typename E1::value_type
+    >
+{
+    //- Internal values
+    typename std::conditional
+    <
+        E1::is_leaf,
+        const E1&,
+        const E1
+    >::type cellVals_;
+
+    //- Interpolation weights
+    typename std::conditional
+    <
+        E2::is_leaf,
+        const E2&,
+        const E2
+    >::type faceWeights_;
+
+    //- Addressing container
+    const fvMesh& mesh_;
+
+public:
+
+    static constexpr bool is_leaf = false;
+
+    //- Type to return for internal field
+    typedef List_lerp
+    <
+        IndirectConstWrap<typename E1::IntExpr>,
+        IndirectConstWrap<typename E1::IntExpr>,
+        typename E2::IntExpr
+    > IntExpr;
+
+    //- Type to return for uncoupled patch field
+    typedef typename E1::UncoupledPatchExpr UncoupledPatchExpr;
+
+    //- Type to return for coupled patch field
+    typedef List_lerp
+    <
+        IndirectConstWrap<typename E1::IntExpr>,
+        typename E1::CoupledPatchExpr,
+        typename E2::CoupledPatchExpr
+    > CoupledPatchExpr;
+
+    //- Type of actual values
+    typedef typename E1::value_type value_type;
+
+
+    // Construct from components
+    lerp
+    (
+        const E1& cellVals,
+        const E2& faceWeights,
+        const fvMesh& mesh
+    )
+    :
+        GeometricFieldExpression
+        <
+            lerp<E1, E2>,
+            IntExpr,
+            UncoupledPatchExpr,
+            CoupledPatchExpr,
+            value_type
+        >
+        (
+            cellVals.dimensions()*faceWeights.dimensions(),
+            faceWeights.oriented()
+        ),
+        cellVals_(cellVals),
+        faceWeights_(faceWeights),
+        mesh_(mesh)
+    {}
+
+    value_type operator[](const label i) const
+    {
+        const auto ownVal = cellVals_[mesh_.owner()[i]];
+        const auto neiVal = cellVals_[mesh_.neighbour()[i]];
+        return faceWeights_[i]*(ownVal-neiVal) + neiVal;
+    }
+
+    label size() const
+    {
+        return faceWeights_.size(); // number of internal faces
+    }
+
+    IntExpr internalField() const
+    {
+        return IntExpr
+        (
+            IndirectConstWrap<typename E1::IntExpr>
+            (
+                cellVals_.internalField(),
+                mesh_.owner()
+            ),
+            IndirectConstWrap<typename E1::IntExpr>
+            (
+                cellVals_.internalField(),
+                mesh_.neighbour()
+            ),
+            faceWeights_.internalField()
+        );
+    }
+
+    UncoupledPatchExpr patchField(const label i) const
+    {
+        return UncoupledPatchExpr(cellVals_.patchField(i));
+    }
+
+    CoupledPatchExpr coupledPatchField(const label i) const
+    {
+        return CoupledPatchExpr
+        (
+            IndirectConstWrap<typename E1::IntExpr>
+            (
+                cellVals_.internalField(),
+                mesh_.boundaryMesh()[i].faceCells()
+            ),
+            cellVals_.access
+            (
+                [&](const auto& fld, const label i)
+                {
+                    return ListConstTmpWrap<Field<value_type>>
+                    (
+                        fld.boundaryField()[i].patchNeighbourField()
+                    );
+                },
+                i
+            ),
+            faceWeights_.coupledPatchField(i)
+        );
+    }
+};
+
+
+template<class Type, class E1, class E2>
+void fvmLaplacianUncorrected
+(
+    fvMatrix<Type>& fvm,
+    const E1& gammaMagSf,
+    const E2& deltaCoeffs
+)
+{
+    typedef Expression::ListConstRefWrap<Type> expr;
+    typedef Expression::ListRefWrap<Type> evaluator;
+
+    const auto& vf = fvm.psi();
+
+    // Set dimensions. Or should we just check?
+    const_cast<dimensionSet&>(fvm.dimensions()).reset
+    (
+        deltaCoeffs.dimensions()
+      * gammaMagSf.dimensions()
+      * vf.dimensions()
+    );
+
+    evaluator
+    (
+        fvm.upper(),
+        deltaCoeffs.internalField()*gammaMagSf.internalField()
+    );
+    fvm.negSumDiag();
+
+    forAll(vf.boundaryField(), patchi)
+    {
+        const auto& pvf = vf.boundaryField()[patchi];
+        auto& intCoeffs = fvm.internalCoeffs()[patchi];
+        auto& bouCoeffs = fvm.boundaryCoeffs()[patchi];
+
+        if (pvf.coupled())
+        {
+            // Evaluate deltaCoeffs
+            scalarField pDeltaCoeffs;
+            ListRefWrap<scalar>(pDeltaCoeffs, deltaCoeffs.patchField(patchi));
+
+            //intCoeffs = pGamma*pvf.gradientInternalCoeffs(pDeltaCoeffs);
+            evaluator
+            (
+                intCoeffs,
+                gammaMagSf.patchField(patchi)
+               *expr(pvf.gradientInternalCoeffs(pDeltaCoeffs)())
+            );
+            //bouCoeffs = -pGamma*pvf.gradientBoundaryCoeffs(pDeltaCoeffs);
+            evaluator
+            (
+                bouCoeffs,
+               -gammaMagSf.patchField(patchi)
+               *expr(pvf.gradientBoundaryCoeffs(pDeltaCoeffs)())
+            );
+        }
+        else
+        {
+            //intCoeffs = pGamma*pvf.gradientInternalCoeffs();
+            evaluator
+            (
+                intCoeffs,
+                gammaMagSf.patchField(patchi)
+               *expr(pvf.gradientInternalCoeffs()())
+            );
+            //bouCoeffs = -pGamma*pvf.gradientBoundaryCoeffs();
+            evaluator
+            (
+                bouCoeffs,
+               -gammaMagSf.patchField(patchi)
+               *expr(pvf.gradientBoundaryCoeffs()())
+            );
+        }
+    }
+}
+
+
 } // End namespace Expression
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

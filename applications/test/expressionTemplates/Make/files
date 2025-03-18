@@ -1,4 +1,4 @@
-/* Test-expressionTemplates-volFields.C */
-Test-expressionTemplates-pointFields.C
+Test-expressionTemplates-volFields.C
+/* Test-expressionTemplates-pointFields.C */
 
 EXE = $(FOAM_USER_APPBIN)/Test-expressionTemplates

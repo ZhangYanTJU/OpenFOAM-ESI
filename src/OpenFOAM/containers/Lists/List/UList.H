@@ -672,6 +672,9 @@ public:
 
     // Expression templates
 
+        //- Have unique tag
+        using is_List = void;
+
         //- Wrap value as expression
         auto expr() const
         {

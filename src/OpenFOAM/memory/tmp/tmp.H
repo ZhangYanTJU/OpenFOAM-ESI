@@ -371,14 +371,17 @@ public:
             // Add 'using is_GeometricField = void' to GeometricField
             // Add 'using is_List = void' to List
 
-            //if constexpr (std::is_void_v<decltype(typename T::is_GeometricField)>)
+            if constexpr
+            (
+                std::is_void_v<typename T::is_GeometricField>
+            )
             {
                 return Expression::GeometricFieldConstTmpWrap<T>(*this);
             }
-            //else if constexpr (std::is_void_v(decltype(T::is_List)))
-            //{
-            //    return Expression::ListConstTmpWrap<T>(*this);
-            //}
+            else //if constexpr (std::is_void_v<T::is_List>)
+            {
+                return Expression::ListConstTmpWrap<T>(*this);
+            }
             //else
             //{
             //    //static_assert("XXX",YYY);

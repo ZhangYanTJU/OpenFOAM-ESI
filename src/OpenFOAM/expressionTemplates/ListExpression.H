@@ -65,15 +65,22 @@ public:
     }
     auto size() const noexcept { return static_cast<E const&>(*this).size(); }
 
+    //- Helper: assign to passed in data
+    template<class T>
+    void evaluate(const label size, T* ptr) const
+    {
+        for (label i = 0; i < size; ++i)
+        {
+            ptr[i] = operator[](i);
+        }
+    }
+
     //- Helper: assign to passed in list
     template<class Container>
     Container& evaluate(Container& lst) const
     {
         lst.resize_nocopy(this->size());
-        for (label i = 0; i < lst.size(); ++i)
-        {
-            lst[i] = operator[](i);
-        }
+        evaluate(lst.size(), lst.data());
         return lst;
     }
 };
@@ -89,30 +96,56 @@ class ListWrap
 {
     List<T> elems_;
 
+    //- Cached size and pointer. TBD: UList?
+    label size_;
+    T* __restrict__ v_;
+
+
 public:
     static constexpr bool is_leaf = true;
 
     typedef T value_type;
 
     //- Copy construct
-    ListWrap(const ListWrap<T>&) = default;
+    ListWrap(const ListWrap<T>& elems)
+    :
+        elems_(elems),
+        size_(elems_.size()),
+        v_(elems_.data())
+    {}
 
     //- Move construct
-    ListWrap(ListWrap<T>&&) = default;
+    ListWrap(ListWrap<T>&& elems)
+    :
+        elems_(std::move(elems)),
+        size_(elems_.size()),
+        v_(elems_.data())
+    {}
 
     // Construct from initializer list 
-    ListWrap(std::initializer_list<T> init)
+    ListWrap(std::initializer_list<T> elems)
     :
-        elems_(init)
+        elems_(elems),
+        size_(elems_.size()),
+        v_(elems_.data())
+    {}
+
+    ListWrap(const UList<T>& elems)
+    :
+        elems_(elems),
+        size_(elems_.size()),
+        v_(elems_.data())
     {}
 
     // Construct from ListExpression, forcing its evaluation.
     template<typename E>
     ListWrap(const ListExpression<E, typename E::value_type>& expr)
     :
-        elems_(expr.size())
+        elems_(expr.size()),
+        size_(elems_.size()),
+        v_(elems_.data())
     {
-        expr.evaluate(elems_);
+        expr.evaluate(size_, v_);
     }
 
     // Access underlying data
@@ -129,17 +162,17 @@ public:
 
     value_type operator[](const label i) const
     {
-        return elems_[i];
+        return v_[i];
     }
 
     value_type& operator[](const label i)
     {
-        return elems_[i];
+        return v_[i];
     }
 
     auto size() const noexcept
     {
-        return elems_.size();
+        return size_;
     }
 };
 
@@ -154,6 +187,11 @@ class ListRefWrap
 {
     List<T>& elems_;
 
+    //- Cached size and pointer. TBD: UList?
+    label size_;
+    T* __restrict__ v_;
+
+
 public:
     static constexpr bool is_leaf = false;  //true;
 
@@ -162,13 +200,17 @@ public:
     //- Copy construct
     ListRefWrap(ListRefWrap<T>& w)
     :
-        elems_(w.elems_)
+        elems_(w.elems_),
+        size_(elems_.size()),
+        v_(elems_.data())
     {}
 
     //- Move construct
     ListRefWrap(ListRefWrap<T>&& elems)
     :
-        elems_(elems)
+        elems_(elems),
+        size_(elems_.size()),
+        v_(elems_.data())
     {}
 
     //- Construct from List and expected size. This is to enforce that
@@ -179,6 +221,8 @@ public:
         elems_(elems)
     {
         elems_.resize_nocopy(size);
+        size_ = elems_.size();
+        v_ = elems_.data();
     }
 
     // Construct from ListExpression, forcing its evaluation.
@@ -189,17 +233,26 @@ public:
         const ListExpression<E, typename E::value_type>& expr
     )
     :
-        elems_(elems)
+        elems_(elems),
+        size_(elems_.size()),
+        v_(elems_.data())
     {
-        expr.evaluate(elems_);
-
+        // Do our own resizing so we can update cached pointer&size
+        elems_.resize_nocopy(expr.size());
+        size_ = elems_.size();
+        v_ = elems_.data();
+        expr.evaluate(size_, v_);
     }
 
     //- Assignment
     template<typename E>
     void operator=(const ListExpression<E, typename E::value_type>& expr)
     {
-        expr.evaluate(elems_);
+        // Do our own resizing so we can update cached pointer&size
+        elems_.resize_nocopy(expr.size());
+        size_ = elems_.size();
+        v_ = elems_.data();
+        expr.evaluate(size_, v_);
     }
 
     //- Evaluate and return as GeoField. Rename to evaluate to make it clear
@@ -207,7 +260,12 @@ public:
     template<typename E>
     List<T>& evaluate(const ListExpression<E, typename E::value_type>& expr)
     {
-        return expr.evaluate(elems_);
+        // Do our own resizing so we can update cached pointer&size
+        elems_.resize_nocopy(expr.size());
+        size_ = elems_.size();
+        v_ = elems_.data();
+        expr.evaluate(size_, v_);
+        return elems_;
     }
 
     // Access underlying data
@@ -224,17 +282,17 @@ public:
 
     value_type operator[](const label i) const
     {
-        return elems_[i];
+        return v_[i];
     }
 
     value_type& operator[](const label i)
     {
-        return elems_[i];
+        return v_[i];
     }
 
     auto size() const noexcept
     {
-        return elems_.size();
+        return size_;
     }
 };
 
@@ -249,6 +307,11 @@ class ListConstRefWrap
 {
     const List<T>& elems_;
 
+    //- Cached size and pointer. TBD: UList?
+    const label size_;
+    const T* __restrict__ v_;
+
+
 public:
 
     // ! Store as copy (since holds reference)
@@ -259,22 +322,25 @@ public:
     // construct from components
     ListConstRefWrap(const List<T>& elems)
     :
-        elems_(elems)
+        elems_(elems),
+        size_(elems_.size()),
+        v_(elems_.cdata())
     {}
 
     // returns the underlying data
-    const List<T>& data() const
+    const auto& data() const
     { 
         return elems_; 
     }
 
     value_type operator[](const label i) const
     {
-        return elems_[i];
+        return v_[i];
     }
+
     auto size() const noexcept
     {
-        return elems_.size();
+        return size_;
     }
 };
 
@@ -283,24 +349,125 @@ public:
 // ~~~~~~~~~~~~~~~~~~~
 
 template<class T>
+class ListTmpWrap
+:
+    public ListExpression<ListTmpWrap<T>, typename T::value_type>
+{
+    tmp<T> elems_;
+
+    //- Cached size and pointer. TBD: UList?
+    label size_;
+    typename T::value_type* __restrict__ v_;
+
+
+public:
+
+    //- Have expressions use copy to maintain tmp refCount
+    static constexpr bool is_leaf = false;
+
+    typedef typename T::value_type value_type;
+
+    // Construct from components
+    ListTmpWrap(const tmp<T>& elems)
+    :
+        elems_(elems),
+        size_(elems_.ref().size()),
+        v_(elems_.ref().data())
+    {}
+
+    // Construct from components
+    ListTmpWrap(tmp<T>& elems)
+    :
+        elems_(elems),
+        size_(elems_.ref().size()),
+        v_(elems_.ref().data())
+    {}
+
+    // Construct from ListExpression, forcing its evaluation.
+    template<typename E>
+    ListTmpWrap
+    (
+        tmp<T>& elems,
+        const ListExpression<E, typename E::value_type>& expr
+    )
+    :
+        elems_(elems),
+        size_(elems_.ref().size()),
+        v_(elems_.ref().data())
+    {
+        // Do our own resizing so we can update cached pointer&size
+        elems_.ref().resize_nocopy(expr.size());
+        size_ = elems_.ref().size;
+        v_ = elems_.ref().data();
+        expr.evaluate(size_, v_);
+    }
+
+    //- Assignment
+    template<typename E>
+    void operator=(const ListExpression<E, typename E::value_type>& expr)
+    {
+        // Do our own resizing so we can update cached pointer&size
+        elems_.ref().resize_nocopy(expr.size());
+        size_ = elems_.ref().size();
+        v_ = elems_.ref().data();
+        expr.evaluate(size_, v_);
+    }
+
+    //- Evaluate and return as GeoField. Rename to evaluate to make it clear
+    //- it takes time? Or leave as indexing for convenience?
+    template<typename E>
+    List<T>& evaluate(const ListExpression<E, typename E::value_type>& expr)
+    {
+        // Do our own resizing so we can update cached pointer&size
+        elems_.ref().resize_nocopy(expr.size());
+        size_ = elems_.ref().size();
+        v_ = elems_.ref().data();
+        return expr.evaluate(size_, v_);
+    }
+
+    // returns the underlying data
+    const T& data() const
+    {
+        return elems_();
+    }
+
+    value_type operator[](const label i) const
+    {
+        return v_[i];
+    }
+
+    auto size() const noexcept
+    {
+        return size_;
+    }
+};
+
+
+template<class T>
 class ListConstTmpWrap
 :
     public ListExpression<ListConstTmpWrap<T>, typename T::value_type>
 {
     const tmp<T> elems_;
 
+    //- Cached size and pointer. TBD: UList?
+    const label size_;
+    const typename T::value_type* __restrict__ v_;
+
+
 public:
 
-    //- Have expressions refer to this to avoid too many tmp's referring
-    //  to the same object.
-    static constexpr bool is_leaf = true;
+    //- Have expressions use copy to maintain tmp refCount
+    static constexpr bool is_leaf = false;
 
     typedef typename T::value_type value_type;
 
     // Construct from components
     ListConstTmpWrap(const tmp<T>& elems)
     :
-        elems_(elems)
+        elems_(elems),
+        size_(elems_().size()),
+        v_(elems_().cdata())
     {}
 
     // returns the underlying data
@@ -311,13 +478,64 @@ public:
 
     value_type operator[](const label i) const
     {
-        // Redirection for every access. Slow?
-        return elems_()[i];
+        return v_[i];
     }
 
     auto size() const noexcept
     {
-        return elems_().size();
+        return size_;
+    }
+};
+
+
+// Wrap of indirection
+// ~~~~~~~~~~~~~~~~~~~
+
+// E1 : expression to get value of element i
+template<typename E1>
+class IndirectConstWrap
+:
+    public ListExpression
+    <
+        IndirectConstWrap<E1>,
+        typename E1::value_type
+    >
+{
+    //- Expression for cell values
+    typename std::conditional
+    <
+        E1::is_leaf,
+        const E1&,
+        const E1
+    >::type values_;
+
+    const labelUList& addr_;
+
+public:
+
+    // ! Store as copy (since holds reference)
+    static constexpr bool is_leaf = false;
+
+    typedef typename E1::value_type value_type;
+
+    // construct from components
+    IndirectConstWrap
+    (
+        const E1& values,
+        const labelUList& addr
+    )
+    :
+        values_(values),
+        addr_(addr)
+    {}
+
+    value_type operator[](const label i) const
+    {
+        return values_[addr_[i]];
+    }
+    label size() const
+    {
+        return addr_.size();
     }
 };
 
@@ -536,6 +754,7 @@ EXPRESSION_OPERATOR(+, List_add)
 EXPRESSION_OPERATOR(-, List_subtract)
 EXPRESSION_OPERATOR(*, List_multiply)
 EXPRESSION_OPERATOR(/, List_divide)
+EXPRESSION_OPERATOR(&, List_dot)
 
 #undef EXPRESSION_OPERATOR
 
@@ -544,7 +763,59 @@ EXPRESSION_OPERATOR(/, List_divide)
 //EXPRESSION_LIST_OPERATOR(-=, List_inplace_subtract)
 //EXPRESSION_LIST_OPERATOR(*=, List_inplace_multiply)
 //EXPRESSION_LIST_OPERATOR(/=, List_inplace_divide)
-//#undef EXPRESSION_LIST_OPERATOR
+
+
+// Interpolation
+// ~~~~~~~~~~~~~
+
+// E1 : expression to get value of element i
+// E2 : expression to get value of element i
+// E3 : expression to get interpolation weight
+template<typename E1, typename E2, typename E3>
+class List_lerp
+:
+    public ListExpression
+    <
+        List_lerp<E1, E2, E3>,
+        typename E1::value_type
+    >
+{
+    //- Expression for cell values1
+    typename std::conditional<E1::is_leaf, const E1&, const E1>::type u_;
+
+    //- Expression for cell values2
+    typename std::conditional<E2::is_leaf, const E2&, const E2>::type v_;
+
+    //- Expression for interpolation weight
+    typename std::conditional<E3::is_leaf, const E3&, const E3>::type weight_;
+
+
+public:
+
+    // ! Store as copy (since holds reference)
+    static constexpr bool is_leaf = false;
+
+    typedef typename E1::value_type value_type;
+
+    // construct from components
+    List_lerp(const E1& u, const E2& v, const E3& weight)
+    :
+        u_(u),
+        v_(v),
+        weight_(weight)
+    {}
+
+    value_type operator[](const label i) const
+    {
+        const auto ownVal = u_[i];
+        const auto neiVal = v_[i];
+        return weight_[i]*(ownVal-neiVal) + neiVal;
+    }
+    label size() const
+    {
+        return weight_.size();
+    }
+};
 
 
 // Expressions on constants
@@ -560,6 +831,7 @@ private:
     const label size_;
 
     const T val_;
+
 
 public:
 
