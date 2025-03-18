@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2019 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,12 +89,15 @@ Foam::dimensionedScalar Foam::functionObjects::comfort::Trad() const
 
             if (isType<wallFvPatch>(pTBf))
             {
-                areaIntegral += gSum(pSf);
-                TareaIntegral += gSum(pSf*pT);
+                areaIntegral += sum(pSf);
+                TareaIntegral += weightedSum(pSf, pT);
             }
         }
 
-        Trad.value() = TareaIntegral/areaIntegral;
+        reduce(TareaIntegral, sumOp<scalar>());
+        reduce(areaIntegral, sumOp<scalar>());
+
+        Trad.value() = TareaIntegral/(areaIntegral + VSMALL);
     }
 
     // Bounds based on EN ISO 7730

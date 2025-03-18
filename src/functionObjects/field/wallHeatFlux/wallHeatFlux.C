@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -272,7 +272,7 @@ bool Foam::functionObjects::wallHeatFlux::execute()
         const scalarField& hfp = wallHeatFlux.boundaryField()[patchi];
 
         const MinMax<scalar> limits = gMinMax(hfp);
-        const scalar integralHfp = gSum(magSf[patchi]*hfp);
+        const scalar integralHfp = gWeightedSum(magSf[patchi], hfp);
 
         if (Pstream::master())
         {

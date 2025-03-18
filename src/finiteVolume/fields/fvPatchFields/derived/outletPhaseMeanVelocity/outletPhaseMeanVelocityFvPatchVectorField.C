@@ -130,8 +130,8 @@ void Foam::outletPhaseMeanVelocityFvPatchVectorField::updateCoeffs()
         patch().lookupPatchField<volScalarField>(alphaName_)
     );
 
-    alphap = max(alphap, scalar(0));
-    alphap = min(alphap, scalar(1));
+    // Clamp to 0-1 range
+    alphap.clamp_range(Foam::zero_one{});
 
     // Get the patchInternalField (zero-gradient field)
     vectorField Uzg(patchInternalField());

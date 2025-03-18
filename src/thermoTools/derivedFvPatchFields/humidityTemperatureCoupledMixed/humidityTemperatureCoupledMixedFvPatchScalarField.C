@@ -733,10 +733,12 @@ void Foam::humidityTemperatureCoupledMixedFvPatchScalarField::updateCoeffs()
 
     if (debug && fluid_)
     {
-        scalar Qdm = gSum(dm*magSf);
+        scalar Qdm = gWeightedSum(magSf, dm);
         scalar QMass = gSum(mass_);
         scalar Qt = gSum(myKDelta_*(Tp - Tin)*magSf);
         scalar QtSolid = gSum(KDeltaNbr*(Tp - nbrIntFld)*magSf);
+
+        MinMax<scalar> limits = gMinMax(*this);
 
         Info<< mesh.name() << ':'
             << patch().name() << ':'
@@ -751,8 +753,8 @@ void Foam::humidityTemperatureCoupledMixedFvPatchScalarField::updateCoeffs()
             << "     Total heat (>0 leaving the wall to the solid) [W] : "
             << QtSolid << nl
             << "     wall temperature "
-            << " min:" << gMin(*this)
-            << " max:" << gMax(*this)
+            << " min:" << limits.min()
+            << " max:" << limits.max()
             << " avg:" << gAverage(*this)
             << endl;
     }

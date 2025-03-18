@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -337,7 +337,7 @@ void Foam::fv::directionalPressureGradientExplicitSource::correct
                     );
                 const scalarField rho(turbModel.rho(),cells_);
                 const scalarField cv(mesh_.V(), cells_);
-                scalar rhoAve = gSumProd(rho, cv)/gSum(cv);
+                scalar rhoAve = gWeightedAverage(cv, rho);
                 volFlowRate = mag(totalphi)/rhoAve;
             }
 

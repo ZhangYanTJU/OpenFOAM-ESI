@@ -41,7 +41,7 @@ rotatingWallVelocityFvPatchVectorField
 )
 :
     fixedValueFvPatchField<vector>(p, iF),
-    origin_(),
+    origin_(Zero),
     axis_(Zero),
     omega_(nullptr)
 {}
@@ -56,8 +56,8 @@ rotatingWallVelocityFvPatchVectorField
 )
 :
     fixedValueFvPatchField<vector>(p, iF, dict, IOobjectOption::NO_READ),
-    origin_(dict.lookup("origin")),
-    axis_(dict.lookup("axis")),
+    origin_(dict.get<vector>("origin")),
+    axis_(dict.get<vector>("axis")),
     omega_(Function1<scalar>::New("omega", dict, &db()))
 {
     if (!this->readValueEntry(dict))

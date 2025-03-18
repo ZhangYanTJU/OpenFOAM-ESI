@@ -2687,7 +2687,7 @@ Foam::label Foam::snappyRefineDriver::directionalSmooth
 
                     const vectorField residual(baseNewPoints - baseMeshPoints);
                     {
-                        scalar res(gSum(mag(residual)));
+                        scalar res(gSumMag(residual));
 
                         if (iter == 0)
                         {

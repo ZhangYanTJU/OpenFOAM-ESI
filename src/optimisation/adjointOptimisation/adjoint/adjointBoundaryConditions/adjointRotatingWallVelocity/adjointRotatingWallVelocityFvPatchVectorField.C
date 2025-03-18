@@ -39,7 +39,7 @@ adjointRotatingWallVelocityFvPatchVectorField
 )
 :
     adjointWallVelocityFvPatchVectorField(p, iF),
-    origin_(),
+    origin_(Zero),
     axis_(Zero),
     omega_(nullptr)
 {}

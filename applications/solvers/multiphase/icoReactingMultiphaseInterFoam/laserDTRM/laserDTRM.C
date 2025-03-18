@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -679,7 +679,7 @@ void Foam::radiation::laserDTRM::calculate()
             }
         }
 
-        scalar totalQ = gSum(Q_.primitiveFieldRef()*mesh_.V());
+        scalar totalQ = gWeightedSum(mesh_.V(), Q_.primitiveField());
         Info << "Total energy absorbed [W]: " << totalQ << endl;
 
         if (mesh_.time().writeTime())

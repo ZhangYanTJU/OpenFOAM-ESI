@@ -513,7 +513,7 @@ void alphatWallBoilingWallFunctionFvPatchScalarField::updateCoeffs()
                  Info<< "  qEffVap: " << gMin(qEff) << " - "
                      << gMax(qEff) << endl;
 
-                scalar Qeff = gSum(qEff*patch().magSf());
+                scalar Qeff = gWeightedSum(patch().magSf(), qEff);
                 Info<< " Effective heat transfer rate to vapor:" << Qeff
                     << nl << endl;
             }
@@ -1111,7 +1111,7 @@ void alphatWallBoilingWallFunctionFvPatchScalarField::updateCoeffs()
                 Info<< "  alphatlEff: " << gMin(liquidw*(*this + alphaw))
                     << " - " << gMax(liquidw*(*this + alphaw)) << endl;
 
-                scalar Qeff = gSum(qEff*patch().magSf());
+                scalar Qeff = gWeightedSum(patch().magSf(), qEff);
                 Info<< " Effective heat transfer rate to liquid: " << Qeff
                     << endl << nl;
 
@@ -1166,7 +1166,7 @@ void alphatWallBoilingWallFunctionFvPatchScalarField::updateCoeffs()
                         *hew.snGrad()
                     );
 
-                    scalar Qc = gSum(qc*patch().magSf());
+                    scalar Qc = gWeightedSum(patch().magSf(), qc);
                     Info<< " Convective heat transfer: " << Qc << endl;
 
                     const scalarField qFilm
@@ -1174,7 +1174,7 @@ void alphatWallBoilingWallFunctionFvPatchScalarField::updateCoeffs()
                         relax*fLiquid*nFilms*htcFilmBoiling*(Tw - Tsatw)
                     );
 
-                    scalar QFilm = gSum(qFilm*patch().magSf());
+                    scalar QFilm = gWeightedSum(patch().magSf(), qFilm);
                     Info<< " Film boiling heat transfer: " << QFilm << endl;
 
                     Info<< " Htc Film Boiling coeff: "
@@ -1199,7 +1199,7 @@ void alphatWallBoilingWallFunctionFvPatchScalarField::updateCoeffs()
                         )
                     );
 
-                    scalar QsubCool = gSum(qSubCool*patch().magSf());
+                    scalar QsubCool = gWeightedSum(patch().magSf(), qSubCool);
 
                     Info<< " Sub Cool boiling heat transfer: " << QsubCool
                         << endl;

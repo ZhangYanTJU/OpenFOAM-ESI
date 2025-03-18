@@ -895,8 +895,7 @@ void Foam::turbulentDFSEMInletFvPatchVectorField::updateCoeffs()
         // (PCR:p. 522)
         const vector UBulk
         (
-            gSum(UMean()*patch().magSf())
-           /(gSum(patch().magSf()) + ROOTVSMALL)
+            gWeightedAverage(patch().magSf(), UMean())
         );
 
         // Move eddies using bulk velocity

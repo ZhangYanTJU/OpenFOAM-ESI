@@ -140,15 +140,17 @@ updateCoeffs()
 
     if (debug)
     {
-        scalar Q = gSum((*this)*patch().magSf());
+        scalar Q = gWeightedSum(patch().magSf(), *this);
+
+        MinMax<scalar> limits = gMinMax(*this);
 
         Info<< patch().boundaryMesh().mesh().name() << ':'
             << patch().name() << ':'
             << this->internalField().name() << " <- "
             << " heat transfer rate:" << Q
             << " wall radiative heat flux "
-            << " min:" << gMin(*this)
-            << " max:" << gMax(*this)
+            << " min:" << limits.min()
+            << " max:" << limits.max()
             << " avg:" << gAverage(*this)
             << endl;
     }

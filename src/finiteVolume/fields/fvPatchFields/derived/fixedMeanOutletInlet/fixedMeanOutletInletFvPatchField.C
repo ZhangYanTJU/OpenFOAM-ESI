@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2018 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -117,9 +117,7 @@ void Foam::fixedMeanOutletInletFvPatchField<Type>::updateCoeffs()
 
     Field<Type> newValues(this->patchInternalField());
 
-    Type meanValuePsi =
-        gSum(this->patch().magSf()*newValues)
-       /gSum(this->patch().magSf());
+    Type meanValuePsi = gWeightedAverage(this->patch().magSf(), newValues);
 
     if (mag(meanValue) > SMALL && mag(meanValuePsi) > 0.5*mag(meanValue))
     {

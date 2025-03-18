@@ -211,7 +211,7 @@ void Foam::plenumPressureFvPatchScalarField::updateCoeffs()
     {
         if (hasRho_)
         {
-            massFlowRate = - gSum(rho_*phi);
+            massFlowRate = - rho_*gSum(phi);
         }
         else
         {

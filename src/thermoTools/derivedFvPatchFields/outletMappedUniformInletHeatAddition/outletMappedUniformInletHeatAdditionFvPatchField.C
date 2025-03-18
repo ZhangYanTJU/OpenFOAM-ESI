@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -153,7 +153,7 @@ void Foam::outletMappedUniformInletHeatAdditionFvPatchField::updateCoeffs()
         db().lookupObject<surfaceScalarField>(phiName_);
 
     const scalarField& outletPatchPhi = phi.boundaryField()[outletPatchID];
-    scalar sumOutletPatchPhi = gSum(outletPatchPhi);
+    const scalar sumOutletPatchPhi = gSum(outletPatchPhi);
 
     if (sumOutletPatchPhi > SMALL)
     {
@@ -164,22 +164,21 @@ void Foam::outletMappedUniformInletHeatAdditionFvPatchField::updateCoeffs()
         const scalarField& pT = thermo.T().boundaryField()[outletPatchID];
 
         scalar averageOutletField =
-            gSum(outletPatchPhi*outletPatchField)/sumOutletPatchPhi;
+            gWeightedSum(outletPatchPhi, outletPatchField)/sumOutletPatchPhi;
 
         // Calculate Q as a function of average outlet temperature
         const scalar Q = Qptr_->value(averageOutletField);
 
         const scalarField Cpf(thermo.Cp(pp, pT, outletPatchID));
 
-        scalar totalPhiCp = gSum(outletPatchPhi)*gAverage(Cpf);
+        scalar totalPhiCp = sumOutletPatchPhi*gAverage(Cpf);
 
         operator==(clamp(averageOutletField + Q/totalPhiCp, TMin_, TMax_));
     }
     else
     {
         scalar averageOutletField =
-            gSum(outletPatch.magSf()*outletPatchField)
-           /gSum(outletPatch.magSf());
+            gWeightedAverage(outletPatch.magSf(), outletPatchField);
 
         operator==(averageOutletField);
     }

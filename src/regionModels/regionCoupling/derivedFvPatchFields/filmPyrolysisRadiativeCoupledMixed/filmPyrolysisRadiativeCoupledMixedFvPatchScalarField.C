@@ -402,9 +402,11 @@ void filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::updateCoeffs()
 
     if (debug)
     {
-        scalar Qc = gSum(qConv*patch().magSf());
-        scalar qr = gSum(qRad*patch().magSf());
+        scalar Qc = gWeightedSum(patch().magSf(), qConv);
+        scalar qr = gWeightedSum(patch().magSf(), qRad);
         scalar Qt = gSum((qConv + qRad)*patch().magSf());
+
+        MinMax<scalar> limits = gMinMax(*this);
 
         Info<< mesh.name() << ':'
             << patch().name() << ':'
@@ -416,8 +418,8 @@ void filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::updateCoeffs()
             << "     radiative heat [W] : " << qr << nl
             << "     total heat     [W] : " << Qt << nl
             << "     wall temperature "
-            << " min:" << gMin(*this)
-            << " max:" << gMax(*this)
+            << " min:" << limits.min()
+            << " max:" << limits.max()
             << " avg:" << gAverage(*this)
             << endl;
     }

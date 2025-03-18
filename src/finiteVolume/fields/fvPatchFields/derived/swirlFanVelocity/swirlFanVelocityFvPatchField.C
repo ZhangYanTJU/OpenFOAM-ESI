@@ -57,8 +57,7 @@ void Foam::swirlFanVelocityFvPatchField::calcFanJump()
             deltaP /= patch().lookupPatchField<volScalarField>(rhoName_);
         }
 
-        const vector axisHat =
-            gSum(patch().nf()*patch().magSf())/gSum(patch().magSf());
+        const vector axisHat = gSum(patch().Sf())/gSum(patch().magSf());
 
         vectorField tanDir
         (
@@ -131,7 +130,7 @@ Foam::swirlFanVelocityFvPatchField::swirlFanVelocityFvPatchField
     phiName_("phi"),
     pName_("p"),
     rhoName_("rho"),
-    origin_(),
+    origin_(Zero),
     rpm_(nullptr),
     fanEff_(1),
     rEff_(0),
@@ -158,7 +157,7 @@ Foam::swirlFanVelocityFvPatchField::swirlFanVelocityFvPatchField
         (
             "origin",
             returnReduceOr(patch().size())
-          ? gSum(patch().Cf()*patch().magSf())/gSum(patch().magSf())
+          ? gWeightedAverage(patch().magSf(), patch().Cf())
           : Zero
         )
     ),

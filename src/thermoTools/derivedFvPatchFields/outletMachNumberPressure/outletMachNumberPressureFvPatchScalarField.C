@@ -212,7 +212,7 @@ void Foam::outletMachNumberPressureFvPatchScalarField::updateCoeffs()
         }
 
         const scalarField r(pBack_/ptot);
-        const scalar area = gSum(mag(patch().Sf()));
+        const scalar area = gSum(patch().magSf());
         M =
             A1_/(c1_*area)
            *sqrt(2/(gamma-1)*(pow(r, 2/gamma) - pow(r, (gamma+1)/gamma)));

@@ -168,7 +168,7 @@ void Foam::lumpedMassWallTemperatureFvPatchScalarField::updateCoeffs()
     const scalarField q(tkappa.ref()*snGrad());
 
     // Total heat in or out of the wall
-    const scalar Q = gSum(q*magSf);
+    const scalar Q = gWeightedSum(magSf, q);
 
     Tp += -(Q/mass_/Cp_)*deltaT;
 

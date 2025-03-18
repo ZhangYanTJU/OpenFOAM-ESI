@@ -71,17 +71,17 @@ objectiveTopOVolume::objectiveTopOVolume
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
 scalar objectiveTopOVolume::J()
 {
     J_ = Zero;
-    if (mesh_.foundObject<volScalarField>("beta"))
+
+    if (const auto* betap = mesh_.cfindObject<volScalarField>("beta"))
     {
-        const volScalarField& beta = mesh_.lookupObject<volScalarField>("beta");
-        const DimensionedField<scalar, volMesh>& V = mesh_.V();
+        const auto& beta = *betap;
         const scalar time = mesh_.time().timeOutputValue();
+
         J_ =
-            scalar(1) - gSum(beta.primitiveField()*V)/gSum(V)
+            scalar(1) - gWeightedAverage(mesh_.V(), beta.primitiveField())
           - targetPercentage_->value(time);
         if (percentInDenom_)
         {
@@ -101,6 +101,7 @@ scalar objectiveTopOVolume::J()
 void objectiveTopOVolume::update_dJdb()
 {
     const scalar time = mesh_.time().timeOutputValue();
+
     dJdbPtr_().primitiveFieldRef() = -scalar(1)/gSum(mesh_.V());
     if (percentInDenom_)
     {

@@ -1118,7 +1118,7 @@ void Foam::radiation::viewFactor::calculate()
         {
             const scalarField& qrp = qrBf[patchID];
             const scalarField& magSf = mesh_.magSf().boundaryField()[patchID];
-            const scalar heatFlux = gSum(qrp*magSf);
+            const scalar heatFlux = gWeightedSum(magSf, qrp);
 
             Info<< "Total heat transfer rate at patch: "
                 << patchID << " "

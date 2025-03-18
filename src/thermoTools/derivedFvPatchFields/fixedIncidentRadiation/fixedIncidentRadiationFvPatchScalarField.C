@@ -170,14 +170,16 @@ void Foam::radiation::fixedIncidentRadiationFvPatchScalarField::updateCoeffs()
 
     if (debug)
     {
+        MinMax<scalar> limits = gMinMax(*this);
+
         scalar qr = gSum(kappa(*this)*gradient()*patch().magSf());
         Info<< patch().boundaryMesh().mesh().name() << ':'
             << patch().name() << ':'
             << this->internalField().name() << " -> "
             << " radiativeFlux:" << qr
             << " walltemperature "
-            << " min:" << gMin(*this)
-            << " max:" << gMax(*this)
+            << " min:" << limits.min()
+            << " max:" << limits.max()
             << " avg:" << gAverage(*this)
             << endl;
     }

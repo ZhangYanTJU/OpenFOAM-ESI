@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,7 +45,7 @@ swirlFlowRateInletVelocityFvPatchVectorField
     fixedValueFvPatchField<vector>(p, iF),
     phiName_("phi"),
     rhoName_("rho"),
-    origin_(),
+    origin_(Zero),
     axis_(Zero),
     flowRate_(),
     rpm_()
@@ -69,7 +69,7 @@ swirlFlowRateInletVelocityFvPatchVectorField
         (
             "origin",
             returnReduceOr(patch().size())
-          ? gSum(patch().Cf()*patch().magSf())/gSum(patch().magSf())
+          ? gWeightedAverage(patch().magSf(), patch().Cf())
           : Zero
         )
     ),

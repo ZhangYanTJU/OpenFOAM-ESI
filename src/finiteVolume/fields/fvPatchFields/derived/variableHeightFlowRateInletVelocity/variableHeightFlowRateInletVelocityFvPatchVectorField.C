@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -125,14 +125,14 @@ void Foam::variableHeightFlowRateInletVelocityFvPatchVectorField::updateCoeffs()
 
     scalarField alphap(alpha.boundaryField()[patch().index()]);
 
-    alphap = max(alphap, scalar(0));
-    alphap = min(alphap, scalar(1));
+    // Clamp to 0-1 range
+    alphap.clamp_range(Foam::zero_one{});
 
     const scalar t = db().time().timeOutputValue();
     scalar flowRate = flowRate_->value(t);
 
     // a simpler way of doing this would be nice
-    scalar avgU = -flowRate/gSum(patch().magSf()*alphap);
+    const scalar avgU = -flowRate/gWeightedSum(patch().magSf(), alphap);
 
     vectorField n(patch().nf());
 

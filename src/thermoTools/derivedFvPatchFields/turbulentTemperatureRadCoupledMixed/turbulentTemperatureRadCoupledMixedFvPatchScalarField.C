@@ -690,7 +690,7 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
                 htc[i] = qField[i]/deltaT[i];
             }
         }
-        const scalar aveHtc = gSum(htc*patch().magSf())/max(magSf, SMALL);
+        const scalar aveHtc = gWeightedAverage(patch().magSf(), htc);
 
 
         // Calculate heat-transfer coeff based on the second definition
@@ -704,8 +704,7 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
                 htcPatch[i] = qField[i]/deltaTPatch[i];
             }
         }
-        const scalar aveHtcPatch =
-            gSum(htcPatch*patch().magSf())/max(magSf, SMALL);
+        const scalar aveHtcPatch = gWeightedAverage(patch().magSf(), htcPatch);
 
         // Calculate various averages of temperature
         const scalarMinMax TpMinMax = gMinMax(Tp);

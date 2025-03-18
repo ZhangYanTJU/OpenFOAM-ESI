@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -700,8 +700,7 @@ Foam::PatchFunction1Types::MappedFile<Type>::value
 
         if (this->faceValues())
         {
-            const scalarField magSf(mag(this->patch_.faceAreas()));
-            averagePsi = gSum(magSf*fld)/gSum(magSf);
+            averagePsi = gWeightedAverage(this->patch_.magFaceAreas(), fld);
         }
         else
         {

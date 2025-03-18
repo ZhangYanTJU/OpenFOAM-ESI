@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1048,15 +1048,20 @@ void kinematicSingleLayer::info()
     outputProperties().readIfPresent("addedMassTotal", addedMassTotal);
     addedMassTotal += returnReduce(addedMassTotal_, sumOp<scalar>());
 
+    MinMax<scalar> limits_U = gMinMaxMag(Uinternal);
+    MinMax<scalar> limits_delta = gMinMax(deltaInternal);
+
     Info<< indent << "added mass         = " << addedMassTotal << nl
         << indent << "current mass       = "
-        << gSum((deltaRho_*magSf())()) << nl
-        << indent << "min/max(mag(U))    = " << gMin(mag(Uinternal)) << ", "
-        << gMax(mag(Uinternal)) << nl
-        << indent << "min/max(delta)     = " << gMin(deltaInternal) << ", "
-        << gMax(deltaInternal) << nl
+        << gWeightedSum(magSf(), deltaRho_) << nl
+        << indent << "min/max(mag(U))    = "
+        << limits_U.min() << ", "
+        << limits_U.max() << nl
+        << indent << "min/max(delta)     = "
+        << limits_delta.min() << ", "
+        << limits_delta.max() << nl
         << indent << "coverage           = "
-        << gSum(alpha_.primitiveField()*magSf())/gSum(magSf()) <<  nl;
+        << gWeightedAverage(magSf(), alpha_.primitiveField()) <<  nl;
 
     injection_.info(Info);
     transfer_.info(Info);

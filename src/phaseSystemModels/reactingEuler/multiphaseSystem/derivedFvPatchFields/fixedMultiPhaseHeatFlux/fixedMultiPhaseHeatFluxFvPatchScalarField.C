@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2020 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -157,9 +157,11 @@ void Foam::fixedMultiPhaseHeatFluxFvPatchScalarField::updateCoeffs()
 
     if (debug)
     {
+        MinMax<scalar> limits = gMinMax(Q);
+
         Info<< patch().name() << " " << ": overall heat flux "
-            << gMin(Q) << " - " << gMax(Q) << " W/m2, power: "
-            << gSum(patch().magSf()*Q) << " W" << endl;
+            << limits.min() << " - " << limits.max() << " W/m2, power: "
+            << gWeightedSum(patch().magSf(), Q) << " W" << endl;
     }
 
     operator==((scalar(1) - relax_)*Tp + relax_*max(Tmin_,(q_ + A)/(B)));

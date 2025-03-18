@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -285,7 +285,7 @@ Foam::PatchFunction1Types::Sampled<Type>::value
             (
                 mag(this->mappedPatchBase::patch_.faceAreas())
             );
-            averagePsi = gSum(magSf*newValues)/gSum(magSf);
+            averagePsi = gWeightedAverage(magSf, newValues);
         }
         else
         {

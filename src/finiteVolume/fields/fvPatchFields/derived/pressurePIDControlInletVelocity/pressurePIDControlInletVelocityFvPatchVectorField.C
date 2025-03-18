@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -243,7 +243,7 @@ void Foam::pressurePIDControlInletVelocityFvPatchVectorField::updateCoeffs()
     {
         const auto& rhop = patch().lookupPatchField<volScalarField>(rhoName_);
 
-        rho = gSum(rhop*patch().magSf())/gSum(patch().magSf());
+        rho = gWeightedAverage(patch().magSf(), rhop);
     }
     else
     {

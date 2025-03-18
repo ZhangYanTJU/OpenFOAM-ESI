@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -174,11 +174,7 @@ void Foam::turbulentDigitalFilterInletFvPatchField<Type>::mapMean
     const vectorField& mean = tmean.cref();
 
     // Calculate flow-rate correction factor for vector fields (KCX:Eq. 8)
-    const vector bulk
-    (
-        gSum(mean*this->patch().magSf())
-       /(gSum(this->patch().magSf()) + ROOTVSMALL)
-    );
+    const vector bulk = gWeightedAverage(this->patch().magSf(), mean);
 
     const scalar correct
     (

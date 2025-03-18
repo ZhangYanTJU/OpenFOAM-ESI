@@ -64,8 +64,8 @@ angularOscillatingDisplacementPointPatchVectorField
 )
 :
     fixedValuePointPatchField<vector>(p, iF, dict),
-    axis_(dict.lookup("axis")),
-    origin_(dict.lookup("origin")),
+    axis_(dict.get<vector>("axis")),
+    origin_(dict.get<vector>("origin")),
     angle0_(dict.get<scalar>("angle0")),
     amplitude_(dict.get<scalar>("amplitude")),
     omega_(dict.get<scalar>("omega"))

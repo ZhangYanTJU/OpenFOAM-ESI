@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -110,23 +110,18 @@ bool Foam::functionObjects::DESModelRegions::execute()
 {
     Log << type() << " " << name() <<  " execute:" << nl;
 
-    volScalarField& DESModelRegions =
-        lookupObjectRef<volScalarField>(resultName_);
+    auto& regions = lookupObjectRef<volScalarField>(resultName_);
 
-
-    if (foundObject<DESModelBase>(turbulenceModel::propertiesName))
+    if
+    (
+        const auto* modelp
+      = cfindObject<DESModelBase>(turbulenceModel::propertiesName)
+    )
     {
-        const DESModelBase& model =
-            lookupObject<DESModelBase>
-            (
-                turbulenceModel::propertiesName
-            );
-
-        DESModelRegions == model.LESRegion();
+        regions == (*modelp).LESRegion();
 
         const scalar prc =
-            gSum(DESModelRegions.primitiveField()*mesh_.V())
-           /gSum(mesh_.V())*100.0;
+            gWeightedAverage(mesh_.V(), regions.primitiveField())*100.0;
 
         file() << time_.value()
             << token::TAB << prc
@@ -149,14 +144,13 @@ bool Foam::functionObjects::DESModelRegions::execute()
 
 bool Foam::functionObjects::DESModelRegions::write()
 {
-    const volScalarField& DESModelRegions =
-        lookupObject<volScalarField>(resultName_);
+    const auto& regions = lookupObject<volScalarField>(resultName_);
 
     Log << type() << " " << name() <<  " output:" << nl
-        << "    writing field " << DESModelRegions.name() << nl
+        << "    writing field " << regions.name() << nl
         << endl;
 
-    DESModelRegions.write();
+    regions.write();
 
     return true;
 }

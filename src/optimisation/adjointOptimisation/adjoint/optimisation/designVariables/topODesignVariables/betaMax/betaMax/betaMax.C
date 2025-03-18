@@ -62,8 +62,9 @@ Foam::scalar Foam::betaMax::computeLength(const dictionary& dict) const
             for (const label pI : inletPatches)
             {
                 const fvPatch& patch = mesh_.boundary()[pI];
-                length += gSum(patch.magSf());
+                length += sum(patch.magSf());
             }
+            reduce(length, sumOp<scalar>());
 
             // Divide with the span in the empty direction
             const Vector<label>& geometricD = mesh_.geometricD();
