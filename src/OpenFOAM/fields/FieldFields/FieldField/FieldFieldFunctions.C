@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -505,20 +505,24 @@ TMP_UNARY_FUNCTION(typename typeOfMag<Type>::type, sumMag)
 template<template<class> class Field, class Type>
 Type average(const FieldField<Field, Type>& f)
 {
-    label n = 0;
+    label count(0);
+    Type result = Zero;
 
     const label loopLen = (f).size();
 
     for (label i = 0; i < loopLen; ++i)
     {
-        n += f[i].size();
+        const label n = f[i].size();
+        if (n)
+        {
+            count += n;
+            result += sum(f[i]);
+        }
     }
 
-    if (n)
+    if (count > 0)
     {
-        Type avrg = sum(f)/n;
-
-        return avrg;
+        return result/count;
     }
 
     WarningInFunction
@@ -589,24 +593,36 @@ G_UNARY_FUNCTION(typename typeOfMag<Type>::type, gSumMag, sumMag, sum)
 
 
 template<template<class> class Field, class Type>
-Type gAverage(const FieldField<Field, Type>& f)
+Type gAverage
+(
+    const FieldField<Field, Type>& f,
+    const label comm
+)
 {
-    label n = 0;
+    label count(0);
+    Type result = Zero;
 
     const label loopLen = (f).size();
 
     for (label i = 0; i < loopLen; ++i)
     {
-        n += f[i].size();
+        const label n = f[i].size();
+        if (n)
+        {
+            count += n;
+            result += sum(f[i]);
+        }
     }
 
-    reduce(n, sumOp<label>());
-
-    if (n)
+    // Communicator is not disabled
+    if (comm >= 0)
     {
-        Type avrg = gSum(f)/n;
+        Foam::sumReduce(result, count, UPstream::msgType(), comm);
+    }
 
-        return avrg;
+    if (count > 0)
+    {
+        return result/count;
     }
 
     WarningInFunction

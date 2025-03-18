@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -275,14 +275,14 @@ public:
         template<class Type>
         Type areaAverage(const Field<Type>& fld) const
         {
-            return weightedAverage(patch_.magSf(), fld);
+            return gWeightedAverage(patch_.magSf(), fld);
         }
 
         //- The area-weighted sum of a field
         template<class Type>
         Type areaSum(const Field<Type>& fld) const
         {
-            return weightedSum(patch_.magSf(), fld);
+            return gWeightedSum(patch_.magSf(), fld);
         }
 
         //- The face area magnitudes [magSf] - (swak = area)

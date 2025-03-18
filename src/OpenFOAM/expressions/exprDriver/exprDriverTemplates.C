@@ -31,62 +31,6 @@ License
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class Type>
-Type Foam::expressions::exprDriver::exprDriver::weightedAverage
-(
-    const scalarField& wfield,
-    const Field<Type>& fld
-)
-{
-    if (isNull(wfield))
-    {
-        const label n = returnReduce(fld.size(), sumOp<label>());
-
-        // stabilize
-        if (!n)
-        {
-            return Zero;
-        }
-
-        return gSum(fld) / scalar(n);
-    }
-
-    // #ifdef FULLDEBUG
-    // checkSize(wfield, fld);
-    // #endif
-
-    const scalar s = gSum(wfield);
-
-    // stabilize
-    if (mag(s) < ROOTVSMALL)
-    {
-        return Zero;
-    }
-
-    return gSum(wfield*fld) / s;
-}
-
-
-template<class Type>
-Type Foam::expressions::exprDriver::exprDriver::weightedSum
-(
-    const scalarField& wfield,
-    const Field<Type>& fld
-)
-{
-    if (isNull(wfield))
-    {
-        return gSum(fld);
-    }
-
-    // #ifdef FULLDEBUG
-    // checkSize(wfield, fld);
-    // #endif
-
-    return gSum(wfield*fld);
-}
-
-
-template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::expressions::exprDriver::getResult(bool wantPointData)
 {

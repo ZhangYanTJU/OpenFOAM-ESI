@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -232,6 +232,7 @@ typename typeOfMag<Type>::type sumMag(const FieldField<Field, Type>& f);
 TMP_UNARY_FUNCTION(typename typeOfMag<Type>::type, sumMag)
 
 
+//- The local arithmetic average of a FieldField
 template<template<class> class Field, class Type>
 Type average(const FieldField<Field, Type>& f);
 
@@ -269,8 +270,14 @@ G_UNARY_FUNCTION(typename typeOfMag<Type>::type, gSumMag, sumMag, sum)
 #undef G_UNARY_FUNCTION
 
 
+//- The global arithmetic average of a FieldField
 template<template<class> class Field, class Type>
-Type gAverage(const FieldField<Field, Type>& f);
+Type gAverage
+(
+    const FieldField<Field, Type>& f,
+    //! The communicator to use. A negative value disables the reduction
+    const label comm = UPstream::worldComm
+);
 
 TMP_UNARY_FUNCTION(Type, gAverage)
 

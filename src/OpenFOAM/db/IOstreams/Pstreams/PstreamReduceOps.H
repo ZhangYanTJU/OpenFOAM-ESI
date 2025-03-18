@@ -233,17 +233,21 @@ void reduce
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Reduce inplace (cf. MPI Allreduce)
-//- the sum of both value and count (for averaging)
-template<class T, class IntType = int>
+//- the sum of value and counter (eg, for averaging)
+//  \note the summed counter value may lose some precision if components
+//  of the main value are narrower. This is usually not the case.
+template<class T, class CountType = int>
 void sumReduce
 (
+    //! The value to sum
     T& value,
-    IntType& count,
+    //! The integer count or floating-point weight etc
+    CountType& count,
     [[maybe_unused]] const int tag = UPstream::msgType(),
     const int communicator = UPstream::worldComm
 )
 {
-    static_assert(std::is_arithmetic_v<IntType>, "Counter not arithmetic");
+    static_assert(std::is_arithmetic_v<CountType>, "Counter not arithmetic");
 
     if (!UPstream::is_parallel(communicator))
     {
@@ -267,7 +271,7 @@ void sumReduce
 
         // Unbundle
         value = work[0];
-        count = static_cast<IntType>(work[1]);
+        count = static_cast<CountType>(work[1]);
     }
     else if constexpr
     (
@@ -293,12 +297,12 @@ void sumReduce
 
         // Unbundle
         VectorSpaceOps<nCmpts>::copy_n(work, value.begin());
-        count = static_cast<IntType>(work[nCmpts]);
+        count = static_cast<CountType>(work[nCmpts]);
     }
     else
     {
         Foam::reduce(value, sumOp<T>(), tag, communicator);
-        Foam::reduce(count, sumOp<IntType>(), tag, communicator);
+        Foam::reduce(count, sumOp<CountType>(), tag, communicator);
     }
 }
 

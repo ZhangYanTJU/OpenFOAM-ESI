@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -394,21 +394,21 @@ public:
         template<class Type>
         Type volAverage(VolumeField<Type>& fld) const
         {
-            return weightedAverage(fld.mesh().V(), fld.primitiveField());
+            return gWeightedAverage(fld.mesh().V(), fld.primitiveField());
         }
 
         //- The volume-weighted sum of a field
         template<class Type>
         Type volSum(VolumeField<Type>& fld) const
         {
-            return weightedSum(fld.mesh().V(), fld.primitiveField());
+            return gWeightedSum(fld.mesh().V(), fld.primitiveField());
         }
 
         //- The area-weighted average of a field
         template<class Type>
         Type areaAverage(SurfaceField<Type>& fld) const
         {
-            return weightedAverage
+            return gWeightedAverage
             (
                 fld.mesh().magSf().primitiveField(),
                 fld.primitiveField()
@@ -419,7 +419,7 @@ public:
         template<class Type>
         Type areaSum(SurfaceField<Type>& fld) const
         {
-            return weightedSum
+            return gWeightedSum
             (
                 fld.mesh().magSf().primitiveField(),
                 fld.primitiveField()

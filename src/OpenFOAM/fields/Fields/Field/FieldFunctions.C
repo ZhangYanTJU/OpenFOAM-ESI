@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -594,7 +594,7 @@ template<class Type>                                                           \
 ReturnType gFunc(const UList<Type>& f, const label comm)                       \
 {                                                                              \
     ReturnType res = Func(f);                                                  \
-    reduce(res, rFunc##Op<ReturnType>(), UPstream::msgType(), comm);           \
+    Foam::reduce(res, rFunc##Op<ReturnType>(), UPstream::msgType(), comm);     \
     return res;                                                                \
 }                                                                              \
 TMP_UNARY_FUNCTION(ReturnType, gFunc)
@@ -626,7 +626,7 @@ typename scalarProduct<Type, Type>::type gSumProd
     typedef typename scalarProduct<Type, Type>::type resultType;
 
     resultType result = sumProd(f1, f2);
-    reduce(result, sumOp<resultType>(), UPstream::msgType(), comm);
+    Foam::reduce(result, sumOp<resultType>(), UPstream::msgType(), comm);
     return result;
 }
 
@@ -639,7 +639,7 @@ Type gSumCmptProd
 )
 {
     Type result = sumCmptProd(f1, f2);
-    reduce(result, sumOp<Type>(), UPstream::msgType(), comm);
+    Foam::reduce(result, sumOp<Type>(), UPstream::msgType(), comm);
     return result;
 }
 
@@ -650,15 +650,18 @@ Type gAverage
     const label comm
 )
 {
-    label n = f1.size();
-    Type s = sum(f1);
-    Foam::sumReduce(s, n, UPstream::msgType(), comm);
+    label count = f1.size();
+    Type result = sum(f1);
 
-    if (n > 0)
+    // Communicator is not disabled
+    if (comm >= 0)
     {
-        Type result = s/n;
+        Foam::sumReduce(result, count, UPstream::msgType(), comm);
+    }
 
-        return result;
+    if (count > 0)
+    {
+        return result/count;
     }
 
     WarningInFunction
@@ -668,6 +671,74 @@ Type gAverage
 }
 
 TMP_UNARY_FUNCTION(Type, gAverage)
+
+
+template<class Type>
+Type gWeightedAverage
+(
+    const UList<scalar>& weights,
+    const UList<Type>& fld,
+    const label comm
+)
+{
+    scalar weight(0);
+    Type result = Zero;
+
+    const label loopLen = fld.size();
+
+    /* pragmas... */
+    for (label i = 0; i < loopLen; ++i)
+    {
+        const scalar w = Foam::mag(weights[i]);
+        weight += w;
+        result += w*fld[i];
+    }
+
+    // Communicator is not disabled
+    if (comm >= 0)
+    {
+        Foam::sumReduce(result, weight, UPstream::msgType(), comm);
+    }
+
+    if (weight > ROOTVSMALL)
+    {
+        // With minimal rounding to protect against aggressive optimization
+        return result/(weight + ROOTVSMALL);
+    }
+    else
+    {
+        return Zero;
+    }
+}
+
+
+template<class Type>
+Type gWeightedSum
+(
+    const UList<scalar>& weights,
+    const UList<Type>& fld,
+    const label comm
+)
+{
+    Type result = Zero;
+
+    const label loopLen = fld.size();
+
+    /* pragmas... */
+    for (label i = 0; i < loopLen; ++i)
+    {
+        result += Foam::mag(weights[i])*fld[i];
+    }
+
+    // Communicator is not disabled
+    if (comm >= 0)
+    {
+        Foam::reduce(result, sumOp<Type>(), UPstream::msgType(), comm);
+    }
+
+    return result;
+}
+
 
 #undef TMP_UNARY_FUNCTION
 
@@ -738,8 +809,6 @@ BINARY_TYPE_FUNCTION(Type, Type, Type, max)
 BINARY_TYPE_FUNCTION(Type, Type, Type, min)
 BINARY_TYPE_FUNCTION(Type, Type, Type, cmptMultiply)
 BINARY_TYPE_FUNCTION(Type, Type, Type, cmptDivide)
-
-BINARY_TYPE_FUNCTION_FS(Type, Type, MinMax<Type>, clip)  // Same as clamp
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 

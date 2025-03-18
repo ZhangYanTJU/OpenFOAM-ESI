@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -561,19 +561,21 @@ public:
         //- Return the field transpose (only defined for second rank tensors)
         tmp<DimensionedField<Type, GeoMesh>> T() const;
 
-        //- Calculate and return arithmetic average
-        dimensioned<Type> average() const;
+        //- Return the global arithmetic average
+        dimensioned<Type> average(const label comm = UPstream::worldComm) const;
 
-        //- Calculate and return weighted average
+        //- Return the global weighted average
         dimensioned<Type> weightedAverage
         (
-            const DimensionedField<scalar, GeoMesh>& weightField
+            const DimensionedField<scalar, GeoMesh>& weights,
+            const label comm = UPstream::worldComm
         ) const;
 
-        //- Calculate and return weighted average
+        //- Return the global weighted average
         dimensioned<Type> weightedAverage
         (
-            const tmp<DimensionedField<scalar, GeoMesh>>& tweightField
+            const tmp<DimensionedField<scalar, GeoMesh>>& tweights,
+            const label comm = UPstream::worldComm
         ) const;
 
 

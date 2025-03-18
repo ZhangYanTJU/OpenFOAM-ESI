@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -464,14 +464,17 @@ Foam::DimensionedField<Type, GeoMesh>::T() const
 
 
 template<class Type, class GeoMesh>
-Foam::dimensioned<Type> Foam::DimensionedField<Type, GeoMesh>::average() const
+Foam::dimensioned<Type> Foam::DimensionedField<Type, GeoMesh>::average
+(
+    const label comm
+) const
 {
     return
         dimensioned<Type>
         (
             this->name() + ".average()",
             this->dimensions(),
-            gAverage(field())
+            gAverage(this->field(), comm)
         );
 }
 
@@ -479,7 +482,8 @@ Foam::dimensioned<Type> Foam::DimensionedField<Type, GeoMesh>::average() const
 template<class Type, class GeoMesh>
 Foam::dimensioned<Type> Foam::DimensionedField<Type, GeoMesh>::weightedAverage
 (
-    const DimensionedField<scalar, GeoMesh>& weightField
+    const DimensionedField<scalar, GeoMesh>& weights,
+    const label comm
 ) const
 {
     return
@@ -487,7 +491,7 @@ Foam::dimensioned<Type> Foam::DimensionedField<Type, GeoMesh>::weightedAverage
         (
             this->name() + ".weightedAverage(weights)",
             this->dimensions(),
-            gSum(weightField*field())/gSum(weightField)
+            gWeightedAverage(weights.field(), this->field(), comm)
         );
 }
 
@@ -495,11 +499,12 @@ Foam::dimensioned<Type> Foam::DimensionedField<Type, GeoMesh>::weightedAverage
 template<class Type, class GeoMesh>
 Foam::dimensioned<Type> Foam::DimensionedField<Type, GeoMesh>::weightedAverage
 (
-    const tmp<DimensionedField<scalar, GeoMesh>>& tweightField
+    const tmp<DimensionedField<scalar, GeoMesh>>& tweights,
+    const label comm
 ) const
 {
-    dimensioned<Type> result = weightedAverage(tweightField());
-    tweightField.clear();
+    dimensioned<Type> result = this->weightedAverage(tweights(), comm);
+    tweights.clear();
     return result;
 }
 

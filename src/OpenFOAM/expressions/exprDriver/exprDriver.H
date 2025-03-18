@@ -231,22 +231,6 @@ protected:
             const bool gaussian = false
         ) const;
 
-        //- The (global) weighted average of a field, with stabilisation
-        template<class Type>
-        static Type weightedAverage
-        (
-            const scalarField& weights,
-            const Field<Type>& fld
-        );
-
-        //- The (global) weighted sum (integral) of a field
-        template<class Type>
-        static Type weightedSum
-        (
-            const scalarField& weights,
-            const Field<Type>& fld
-        );
-
         //- Return the location of the min value
         static point getPositionOfMinimum
         (
