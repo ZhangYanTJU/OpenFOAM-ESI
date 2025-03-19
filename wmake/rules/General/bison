@@ -1,17 +1,21 @@
+#------------------------------------------------------------------------------
 SUFFIXES += .Y .y .yy .yy-m4
 
+# Bison, compile with C
 ytoo = $E $(call QUIET_MESSAGE,bison,$(<F)) \
     bison -v -d -y $< && \
     mv y.tab.c $(@D)/$(<F).c && \
     mv y.tab.h $(@D)/$(<F).h && \
     $(WM_SCHEDULER) $(cc) $(cFLAGS) -c $(@D)/$(<F).c -o $@
 
+# Bison, compile with C++
 Ytoo = $E $(call QUIET_MESSAGE,bison,$(<F)) \
     bison -v -d -y $< && \
-    mv y.tab.c $(@D)/$(<F).C && \
+    mv y.tab.c $(@D)/$(<F).cc && \
     mv y.tab.h $(@D)/$(<F).H && \
-    $(WM_SCHEDULER) $(CC) $(c++FLAGS) -c $(@D)/$(<F).C -o $@
+    $(WM_SCHEDULER) $(CC) $(c++FLAGS) -c $(@D)/$(<F).cc -o $@
 
+# Bison via wrapper, compile with C++
 yytoo = $E $(call QUIET_MESSAGE,bison,$(<F)) \
     $(WM_SCRIPTS)/wrap-bison -output=$(@D)/$(*F).tab.cc -v -d $< && \
     $(WM_SCHEDULER) $(CC) $(c++FLAGS) -c $(@D)/$(*F).tab.cc -o $@

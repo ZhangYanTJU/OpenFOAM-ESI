@@ -1,5 +1,22 @@
-SUFFIXES += .l
+#------------------------------------------------------------------------------
+SUFFIXES += .L .l .ll
 
+# Regular flex, compile with C
 ltoo = $E $(call QUIET_MESSAGE,flex,$(<F)) \
     flex -f -o $(@D)/$(<F).c $< && \
     $(WM_SCHEDULER) $(cc) $(cFLAGS) -c $(@D)/$(<F).c -o $@
+
+## # Regular flex, compile with C++
+## ll-cctoo = $E $(call QUIET_MESSAGE,flex,$(<F)) \
+##     flex -f -o $(@D)/$(<F).cc $< && \
+##     $(WM_SCHEDULER) $(CC) $(c++FLAGS) $(c++LESSWARN) -c $(@D)/$(<F).cc -o $@
+
+# C++-aware flex, compile with C++
+lltoo = $E $(call QUIET_MESSAGE,flex++,$(<F)) \
+    flex -+ -f -o $(@D)/$(<F).cc $< && \
+    $(WM_SCHEDULER) $(CC) $(c++FLAGS) $(c++LESSWARN) -c $(@D)/$(<F).cc -o $@
+
+# C++-aware flex, compile with C++
+Ltoo  = $(lltoo)
+
+#------------------------------------------------------------------------------
