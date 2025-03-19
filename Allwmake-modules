@@ -1,13 +1,15 @@
 #!/bin/sh
+cd "${0%/*}" || exit            # Run from this directory
+set -- -no-recursion "$@"       # Parse arguments only
+
 # Run from OPENFOAM top-level directory only
-cd "${0%/*}" || exit
 wmake -check-dir "$WM_PROJECT_DIR" 2>/dev/null || {
     echo "Error (${0##*/}) : not located in \$WM_PROJECT_DIR"
     echo "    Check your OpenFOAM environment and installation"
     exit 1
 }
 if [ -f "$WM_PROJECT_DIR"/wmake/scripts/AllwmakeParseArguments ]
-then  . "$WM_PROJECT_DIR"/wmake/scripts/AllwmakeParseArguments -no-recursion "$@" || \
+then  . "$WM_PROJECT_DIR"/wmake/scripts/AllwmakeParseArguments || \
     echo "Argument parse error"
 else
     echo "Error (${0##*/}) : WM_PROJECT_DIR appears to be incorrect"
