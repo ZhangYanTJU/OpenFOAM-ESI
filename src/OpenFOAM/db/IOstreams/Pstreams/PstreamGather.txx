@@ -148,6 +148,59 @@ void Foam::Pstream::gather_algorithm
 
 
 template<class T, class BinaryOp, bool InplaceMode>
+bool Foam::Pstream::gather_topo_algorithm
+(
+    T& value,
+    BinaryOp bop,
+    const int tag,
+    const int communicator
+)
+{
+    const bool withTopo =
+    (
+        UPstream::is_parallel(communicator)
+     && UPstream::usingTopoControl(UPstream::topoControls::combine)
+     && UPstream::usingNodeComms(communicator)
+    );
+
+    if (withTopo)
+    {
+        // Topological reduce
+        // - linear for local-node (assume communication is fast)
+        // - tree for inter-node (no assumption about speed)
+
+        using control = std::pair<int, bool>;
+
+        for
+        (
+            auto [subComm, linear] :
+            {
+                // 1: within node
+                control{ UPstream::commLocalNode(), true },
+                // 2: between nodes
+                control{ UPstream::commInterNode(), false }
+            }
+        )
+        {
+            if (UPstream::is_parallel(subComm))
+            {
+                Pstream::gather_algorithm<T, BinaryOp, InplaceMode>
+                (
+                    UPstream::whichCommunication(subComm, linear),
+                    value,
+                    bop,
+                    tag,
+                    subComm
+                );
+            }
+        }
+    }
+
+    return withTopo;
+}
+
+
+template<class T, class BinaryOp, bool InplaceMode>
 void Foam::Pstream::gather
 (
     T& value,
@@ -172,7 +225,16 @@ void Foam::Pstream::gather
             communicator
         );
     }
-    else
+    else if
+    (
+        !Pstream::gather_topo_algorithm<T, BinaryOp, InplaceMode>
+        (
+            value,
+            bop,
+            tag,
+            communicator
+        )
+    )
     {
         // Communication order
         const auto& commOrder = UPstream::whichCommunication(communicator);
@@ -338,6 +400,59 @@ void Foam::Pstream::listGather_algorithm
 
 
 template<class T, class BinaryOp, bool InplaceMode>
+bool Foam::Pstream::listGather_topo_algorithm
+(
+    UList<T>& values,
+    BinaryOp bop,
+    const int tag,
+    const label communicator
+)
+{
+    const bool withTopo =
+    (
+        UPstream::is_parallel(communicator) && !values.empty()
+     && UPstream::usingTopoControl(UPstream::topoControls::combine)
+     && UPstream::usingNodeComms(communicator)
+    );
+
+    if (withTopo)
+    {
+        // Topological reduce
+        // - linear for local-node (assume communication is fast)
+        // - tree for inter-node (no assumption about speed)
+
+        using control = std::pair<int, bool>;
+
+        for
+        (
+            auto [subComm, linear] :
+            {
+                // 1: within node
+                control{ UPstream::commLocalNode(), true },
+                // 2: between nodes
+                control{ UPstream::commInterNode(), false }
+            }
+        )
+        {
+            if (UPstream::is_parallel(subComm))
+            {
+                Pstream::listGather_algorithm<T, BinaryOp, InplaceMode>
+                (
+                    UPstream::whichCommunication(subComm, linear),
+                    values,
+                    bop,
+                    tag,
+                    subComm
+                );
+            }
+        }
+    }
+
+    return withTopo;
+}
+
+
+template<class T, class BinaryOp, bool InplaceMode>
 void Foam::Pstream::listGather
 (
     UList<T>& values,
@@ -373,7 +488,16 @@ void Foam::Pstream::listGather
             communicator
         );
     }
-    else
+    else if
+    (
+        !Pstream::listGather_topo_algorithm<T, BinaryOp, InplaceMode>
+        (
+            values,
+            bop,
+            tag,
+            communicator
+        )
+    )
     {
         // Communication order
         const auto& commOrder = UPstream::whichCommunication(communicator);
@@ -549,6 +673,59 @@ void Foam::Pstream::mapGather_algorithm
 
 
 template<class Container, class BinaryOp, bool InplaceMode>
+bool Foam::Pstream::mapGather_topo_algorithm
+(
+    Container& values,
+    BinaryOp bop,
+    const int tag,
+    const int communicator
+)
+{
+    const bool withTopo =
+    (
+        UPstream::is_parallel(communicator)
+     && UPstream::usingTopoControl(UPstream::topoControls::mapGather)
+     && UPstream::usingNodeComms(communicator)
+    );
+
+    if (withTopo)
+    {
+        // Topological reduce
+        // - linear for local-node (assume communication is fast)
+        // - tree for inter-node (no assumption about speed)
+
+        using control = std::pair<int, bool>;
+
+        for
+        (
+            auto [subComm, linear] :
+            {
+                // 1: within node
+                control{ UPstream::commLocalNode(), true },
+                // 2: between nodes
+                control{ UPstream::commInterNode(), false }
+            }
+        )
+        {
+            if (UPstream::is_parallel(subComm))
+            {
+                Pstream::mapGather_algorithm<Container, BinaryOp, InplaceMode>
+                (
+                    UPstream::whichCommunication(subComm, linear),
+                    values,
+                    bop,
+                    tag,
+                    subComm
+                );
+            }
+        }
+    }
+
+    return withTopo;
+}
+
+
+template<class Container, class BinaryOp, bool InplaceMode>
 void Foam::Pstream::mapGather
 (
     Container& values,
@@ -562,7 +739,16 @@ void Foam::Pstream::mapGather
         // Nothing to do
         return;
     }
-    else
+    else if
+    (
+        !Pstream::mapGather_topo_algorithm<Container, BinaryOp, InplaceMode>
+        (
+            values,
+            bop,
+            tag,
+            communicator
+        )
+    )
     {
         // Communication order
         const auto& commOrder = UPstream::whichCommunication(communicator);

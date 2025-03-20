@@ -155,6 +155,19 @@ public:
             const int communicator
         );
 
+        //- Implementation: gather (reduce) single element data onto
+        //- UPstream::masterNo() using a topo algorithm.
+        //  \returns True if topo algorithm was applied
+        template<class T, class BinaryOp, bool InplaceMode>
+        static bool gather_topo_algorithm
+        (
+            //! [in,out]
+            T& value,
+            BinaryOp bop,
+            const int tag,
+            const int communicator
+        );
+
         //- Gather (reduce) data, applying \c bop to combine \c value
         //- from different processors. The basis for Foam::reduce().
         //  A no-op for non-parallel.
@@ -256,6 +269,19 @@ public:
             const int communicator
         );
 
+        //- Implementation: gather (reduce) list element data onto
+        //- UPstream::masterNo() using a topo algorithm.
+        //  \returns True if topo algorithm was applied
+        template<class T, class BinaryOp, bool InplaceMode>
+        static bool listGather_topo_algorithm
+        (
+            //! [in,out]
+            UList<T>& values,
+            BinaryOp bop,
+            const int tag,
+            const int communicator
+        );
+
         //- Gather (reduce) list elements,
         //- applying \c bop to each list element
         //
@@ -331,6 +357,18 @@ public:
         static void mapGather_algorithm
         (
             const UPstream::commsStructList& comms,  //!< Communication order
+            Container& values,
+            BinaryOp bop,
+            const int tag,
+            const int communicator
+        );
+
+        //- Implementation: gather (reduce) Map/HashTable containers onto
+        //- UPstream::masterNo() using a topo algorithm.
+        //  \returns True if topo algorithm was applied
+        template<class Container, class BinaryOp, bool InplaceMode>
+        static bool mapGather_topo_algorithm
+        (
             Container& values,
             BinaryOp bop,
             const int tag,
@@ -415,6 +453,17 @@ public:
         static void gatherList_algorithm
         (
             const UPstream::commsStructList& comms,  //!< Communication order
+            //! [in,out]
+            UList<T>& values,
+            const int tag,
+            const int communicator
+        );
+
+        //- Gather data, keeping individual values separate.
+        //  \returns True if topo algorithm was applied
+        template<class T>
+        static bool gatherList_topo_algorithm
+        (
             //! [in,out]
             UList<T>& values,
             const int tag,
