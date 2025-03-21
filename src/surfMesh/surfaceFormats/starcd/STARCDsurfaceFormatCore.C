@@ -30,7 +30,6 @@ License
 #include "clock.H"
 #include "regExp.H"
 #include "IFstream.H"
-#include "SubStrings.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 

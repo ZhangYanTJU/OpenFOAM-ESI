@@ -12,7 +12,6 @@ signals/sigStopAtWriteNow.C
 signals/sigWriteNow.C
 signals/timer.C
 
-regExp/regExpPosix.C
 fileStat/fileStat.C
 
 /*
