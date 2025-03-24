@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2018 Alexey Matveichev
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,12 +34,11 @@ Description
 
 #include <getopt.h>
 #include <cstdlib>
+#include <regex>
 #include <string>
 #include <vector>
 #include <iostream>
 
-#include "regExp.H"
-#include "SubStrings.H"
 
 static void usage();
 static void version();
@@ -53,7 +53,6 @@ int main(int argc, char *argv[])
     int optHelp = 0, optFunctions = 0, optVersion = 0;
     int ch;
     std::string filename = "a.out";
-    std::vector<std::string> addresses;
 
     static struct option opts[] =
     {
@@ -100,15 +99,9 @@ int main(int argc, char *argv[])
     argc -= optind;
     argv += optind;
 
-    while (argc > 0)
+    for (std::string addr; argc > 0; --argc, ++argv)
     {
-        addresses.push_back(std::string(*argv));
-        ++argv;
-        --argc;
-    }
-
-    for (const auto& addr : addresses)
-    {
+        addr.assign(*argv);
         std::cout<< '\n' << getLine(filename, addr).c_str() << '\n';
     }
 
@@ -190,10 +183,10 @@ std::string getLine(const std::string& filename, const std::string& addr)
         );
 
 
-    Foam::regExp re(".+LineEntry: .+: (.+):([0-9]+):[0-9]+");
+    static std::regex re(".+LineEntry: .+: (.+):([0-9]+):[0-9]+");
+    std::smatch groups;
 
-    Foam::regExp::results_type groups;
-    if (!re.match(line, groups))
+    if (!std::regex_match(line, groups, re))
     {
         line = "??:0";
     }

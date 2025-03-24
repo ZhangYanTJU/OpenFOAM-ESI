@@ -35,11 +35,8 @@ Description
 #include "Switch.H"
 
 #include "stringOps.H"
-#include "SubStrings.H"
+#include "regExp.H"
 #include "regExpCxx.H"
-#ifndef _WIN32
-#include "regExpPosix.H"
-#endif
 
 using namespace Foam;
 
@@ -87,20 +84,6 @@ static Ostream& operator<<(Ostream& os, const regExpCxx::results_type& sm)
 
     return os;
 }
-
-
-// Simple output of match groups
-#ifndef _WIN32
-static Ostream& operator<<(Ostream& os, const regExpPosix::results_type& sm)
-{
-    for (std::smatch::size_type i = 1; i < sm.size(); ++i)
-    {
-        os << " " << sm.str(i);
-    }
-
-    return os;
-}
-#endif
 
 
 template<class RegexType>
@@ -299,10 +282,6 @@ int main(int argc, char *argv[])
     argList::noFunctionObjects();
     argList::noParallel();
 
-    argList::addBoolOption("cxx", "Test C++11 regular expressions");
-    #ifndef _WIN32
-    argList::addBoolOption("posix", "Test POSIX regular expressions");
-    #endif
     argList::addOption
     (
         "regex",
@@ -321,33 +300,15 @@ int main(int argc, char *argv[])
     #ifdef _GLIBCXX_RELEASE
     Info<< "_GLIBCXX_RELEASE = " << (_GLIBCXX_RELEASE) << nl;
     #endif
-
-    if constexpr (std::is_same_v<regExp, regExpCxx>)
-    {
-        Info<< "Foam::regExp uses C++11 regex" << nl;
-    }
-    #ifndef _WIN32
-    if constexpr (std::is_same_v<regExp, regExpPosix>)
-    {
-        Info<< "Foam::regExp uses POSIX regex" << nl;
-    }
+    #ifdef __clang_major__
+    Info<< "__clang_major__ = " << (__clang_major__) << nl;
     #endif
 
     Info<< "sizeof std::regex:  " << sizeof(std::regex) << nl;
-    Info<< "sizeof regex C++11: " << sizeof(regExpCxx) << nl;
-    #ifndef _WIN32
-    Info<< "sizeof regex POSIX: " << sizeof(regExpPosix) << nl;
-    #endif
+    Info<< "sizeof regExp: " << sizeof(Foam::regExp) << nl;
     Info<< "sizeof word: " << sizeof(Foam::word) << nl;
     Info<< "sizeof wordRe: " << sizeof(Foam::wordRe) << nl;
     Info<< "sizeof keyType: " << sizeof(Foam::keyType) << nl;
-
-    if (!args.count({"cxx", "posix"}))
-    {
-        args.setOption("cxx");
-        Info<< "Assuming -cxx as default" << nl;
-    }
-    Info<< nl;
 
     if (args.found("regex"))
     {
@@ -359,31 +320,15 @@ int main(int argc, char *argv[])
             << "quotemeta: "
             << stringOps::quotemeta(expr, regExpCxx::meta()) << nl
             << nl;
-
-        #ifndef _WIN32
-        Info<< "(posix):" << nl
-            << "meta : " << Switch(regExpPosix::is_meta(expr)) << nl
-            << "quotemeta: "
-            << stringOps::quotemeta(expr, regExpPosix::meta()) << nl
-            << nl;
-        #endif
         Info<< nl;
     }
     else if (args.size() < 2)
     {
         Info<< "No test files specified .. restrict to general tests" << nl;
 
-        if (args.found("cxx"))
         {
             generalTests<regExpCxx>();
         }
-
-        #ifndef _WIN32
-        if (args.found("posix"))
-        {
-            generalTests<regExpPosix>();
-        }
-        #endif
     }
 
     for (label argi = 1; argi < args.size(); ++argi)
@@ -394,17 +339,9 @@ int main(int argc, char *argv[])
         Info<< "Test expressions:" << tests << endl;
         IOobject::writeDivider(Info) << endl;
 
-        if (args.found("cxx"))
         {
             testExpressions<regExpCxx>(tests);
         }
-
-        #ifndef _WIN32
-        if (args.found("posix"))
-        {
-            testExpressions<regExpPosix>(tests);
-        }
-        #endif
     }
 
     Info<< "\nDone" << nl << endl;
