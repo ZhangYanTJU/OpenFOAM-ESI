@@ -67,7 +67,7 @@ void exchangeConsensus
     UList<Container>& recvBufs,
     labelUList& recvSizes,
     const int tag,
-    const label comm
+    const int comm
 )
 {
     static_assert(is_contiguous_v<Type>, "Contiguous data only!");
@@ -249,7 +249,7 @@ void exchangeConsensus
     const Map<Container>& sendBufs,
     Map<Container>& recvBufs,
     const int tag,
-    const label comm
+    const int comm
 )
 {
     static_assert(is_contiguous_v<Type>, "Contiguous data only!");
@@ -415,7 +415,7 @@ void Foam::Pstream::exchangeConsensus
     const UList<Container>& sendBufs,
     List<Container>& recvBufs,
     const int tag,
-    const label comm,
+    const int comm,
     const bool /* wait (ignored) */
 )
 {
@@ -450,7 +450,7 @@ void Foam::Pstream::exchangeConsensus
     const Map<Container>& sendBufs,
     Map<Container>& recvBufs,
     const int tag,
-    const label comm,
+    const int comm,
     const bool  /* wait (ignored) */
 )
 {
@@ -472,7 +472,7 @@ Foam::Pstream::exchangeConsensus
 (
     const Map<Container>& sendBufs,
     const int tag,
-    const label comm,
+    const int comm,
     const bool  /* wait (ignored) */
 )
 {

@@ -39,7 +39,7 @@ void Foam::UPstream::allToAll                                                 \
 (                                                                             \
     const UList<Type>& sendData,                                              \
     UList<Type>& recvData,                                                    \
-    const label comm                                                          \
+    const int communicator                                                    \
 )                                                                             \
 {                                                                             \
     recvData.deepCopy(sendData);                                              \
@@ -61,7 +61,7 @@ void Foam::UPstream::allToAllConsensus                                        \
     const UList<Type>& sendData,                                              \
     UList<Type>& recvData,                                                    \
     const int tag,                                                            \
-    const label comm                                                          \
+    const int communicator                                                    \
 )                                                                             \
 {                                                                             \
     recvData.deepCopy(sendData);                                              \
@@ -71,7 +71,7 @@ void Foam::UPstream::allToAllConsensus                                        \
     const Map<Type>& sendData,                                                \
     Map<Type>& recvData,                                                      \
     const int tag,                                                            \
-    const label comm                                                          \
+    const int communicator                                                    \
 )                                                                             \
 {                                                                             \
     recvData = sendData;                                                      \
@@ -96,7 +96,7 @@ void Foam::UPstream::allToAllv                                                \
     Type* recvData,                                                           \
     const UList<int>& recvCounts,                                             \
     const UList<int>& recvOffsets,                                            \
-    const label comm                                                          \
+    const int communicator                                                    \
 )                                                                             \
 {                                                                             \
     if (recvCounts[0] != sendCounts[0])                                       \

@@ -701,7 +701,7 @@ void Foam::PstreamDetail::allToAllConsensus
         if (flag)
         {
             // Message found, receive into dest buffer location
-            const label proci = status.MPI_SOURCE;
+            const int proci = status.MPI_SOURCE;
 
             // Only send/recv a single (fundamental) data type
             int count(0);
@@ -886,7 +886,7 @@ void Foam::PstreamDetail::allToAllConsensus
         if (flag)
         {
             // Message found, receive into dest buffer location
-            const label proci = status.MPI_SOURCE;
+            const int proci = status.MPI_SOURCE;
 
             // Only send/recv a single (fundamental) data type
             int count(0);

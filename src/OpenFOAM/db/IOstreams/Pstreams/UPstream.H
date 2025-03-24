@@ -1521,7 +1521,7 @@ public:
             const UList<Type>& sendData,                                      \
             /*! [out] The data received from the other ranks */               \
             UList<Type>& recvData,                                            \
-            const label communicator = worldComm                              \
+            const int communicator = UPstream::worldComm                      \
         );                                                                    \
                                                                               \
         /*!\brief Exchange \em non-zero \c Type data between ranks [NBX]   */ \
@@ -1540,7 +1540,7 @@ public:
             UList<Type>& recvData,                                            \
             /*! Message tag for the communication */                          \
             const int tag,                                                    \
-            const label communicator = worldComm                              \
+            const int communicator = UPstream::worldComm                      \
         );                                                                    \
                                                                               \
         /*!\brief Exchange \c Type data between ranks [NBX]                */ \
@@ -1556,7 +1556,7 @@ public:
             Map<Type>& recvData,                                              \
             /*! Message tag for the communication */                          \
             const int tag,                                                    \
-            const label communicator = worldComm                              \
+            const int communicator = UPstream::worldComm                      \
         );                                                                    \
                                                                               \
         /*!\brief Exchange \c Type data between ranks [NBX]                */ \
@@ -1567,7 +1567,7 @@ public:
             const Map<Type>& sendData,                                        \
             /*! Message tag for the communication */                          \
             const int tag,                                                    \
-            const label communicator = worldComm                              \
+            const int communicator = UPstream::worldComm                      \
         )                                                                     \
         {                                                                     \
             Map<Type> recvData;                                               \

@@ -99,7 +99,7 @@ void exchangeBuffers
     const UList<std::pair<int, stdFoam::span<const Type>>>& sends,
     const UList<std::pair<int, stdFoam::span<Type>>>& recvs,
     const int tag,
-    const label comm,
+    const int comm,
     const int64_t maxComms_bytes = UPstream::maxCommsSize
 )
 {
@@ -289,7 +289,7 @@ void exchangeContainer
     const UList<Container>& sendBufs,
     UList<Container>& recvBufs,
     const int tag,
-    const label comm,
+    const int comm,
     const bool wait,        //!< Wait for requests to complete
     const int64_t maxComms_bytes = UPstream::maxCommsSize
 )
@@ -501,7 +501,7 @@ void exchangeContainer
     const Map<Container>& sendBufs,
     Map<Container>& recvBufs,
     const int tag,
-    const label comm,
+    const int comm,
     const bool wait,        //!< Wait for requests to complete
     const int64_t maxComms_bytes = UPstream::maxCommsSize
 )
@@ -627,7 +627,7 @@ void Foam::Pstream::exchange
     const labelUList& recvSizes,
     List<Container>& recvBufs,
     const int tag,
-    const label comm,
+    const int comm,
     const bool wait
 )
 {
@@ -691,7 +691,7 @@ void Foam::Pstream::exchange
     const Map<label>& recvSizes,
     Map<Container>& recvBufs,
     const int tag,
-    const label comm,
+    const int comm,
     const bool wait
 )
 {
@@ -768,8 +768,8 @@ void Foam::Pstream::exchangeSizes
     const labelUList& recvProcs,
     const Container& sendBufs,
     labelList& recvSizes,
-    const label tag,
-    const label comm
+    const int tag,
+    const int comm
 )
 {
     if (!UPstream::is_rank(comm))
@@ -845,8 +845,8 @@ void Foam::Pstream::exchangeSizes
     const labelUList& neighProcs,
     const Container& sendBufs,
     labelList& recvSizes,
-    const label tag,
-    const label comm
+    const int tag,
+    const int comm
 )
 {
     if (!UPstream::is_rank(comm))
@@ -873,8 +873,8 @@ void Foam::Pstream::exchangeSizes
 (
     const Map<Container>& sendBufs,
     Map<label>& recvSizes,
-    const label tag,
-    const label comm
+    const int tag,
+    const int comm
 )
 {
     recvSizes.clear();  // Done in allToAllConsensus too, but be explicit here
@@ -913,7 +913,7 @@ void Foam::Pstream::exchangeSizes
 (
     const Container& sendBufs,
     labelList& recvSizes,
-    const label comm
+    const int comm
 )
 {
     if (!UPstream::is_rank(comm))
@@ -967,7 +967,7 @@ void Foam::Pstream::exchange
     const UList<Container>& sendBufs,
     List<Container>& recvBufs,
     const int tag,
-    const label comm,
+    const int comm,
     const bool wait
 )
 {
@@ -998,7 +998,7 @@ void Foam::Pstream::exchange
     const Map<Container>& sendBufs,
     Map<Container>& recvBufs,
     const int tag,
-    const label comm,
+    const int comm,
     const bool wait
 )
 {

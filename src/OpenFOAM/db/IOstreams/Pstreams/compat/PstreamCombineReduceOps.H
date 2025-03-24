@@ -40,7 +40,7 @@ void combineReduce
     T& value,
     const CombineOp& cop,
     const int tag = UPstream::msgType(),
-    const label comm = UPstream::worldComm
+    const int comm = UPstream::worldComm
 )
 {
     Pstream::combineReduce(value, cop, tag, comm);

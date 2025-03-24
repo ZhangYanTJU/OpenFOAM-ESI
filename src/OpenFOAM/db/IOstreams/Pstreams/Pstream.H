@@ -515,8 +515,8 @@ public:
             const labelUList& recvProcs,
             const Container& sendBufs,
             labelList& sizes,
-            const label tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int tag = UPstream::msgType(),
+            const int comm = UPstream::worldComm
         );
 
         //- Helper: exchange sizes of sendBufs for specified neighbour ranks
@@ -526,8 +526,8 @@ public:
             const labelUList& neighProcs,
             const Container& sendBufs,
             labelList& sizes,
-            const label tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int tag = UPstream::msgType(),
+            const int comm = UPstream::worldComm
         );
 
         //- Helper: exchange sizes of sendBufs.
@@ -540,7 +540,7 @@ public:
         (
             const Container& sendBufs,
             labelList& recvSizes,
-            const label comm = UPstream::worldComm
+            const int comm = UPstream::worldComm
         );
 
         //- Exchange the \b non-zero sizes of sendBufs entries (sparse map)
@@ -560,8 +560,8 @@ public:
         (
             const Map<Container>& sendBufs,
             Map<label>& recvSizes,
-            const label tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm
+            const int tag = UPstream::msgType(),
+            const int comm = UPstream::worldComm
         );
 
         //- Helper: exchange \em contiguous data.
@@ -575,7 +575,7 @@ public:
             const labelUList& recvSizes,
             List<Container>& recvBufs,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int comm = UPstream::worldComm,
             const bool wait = true  //!< Wait for requests to complete
         );
 
@@ -591,7 +591,7 @@ public:
             const Map<label>& recvSizes,  //!< Num of recv elements (not bytes)
             Map<Container>& recvBufs,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int comm = UPstream::worldComm,
             const bool wait = true  //!< Wait for requests to complete
         );
 
@@ -605,7 +605,7 @@ public:
             const UList<Container>& sendBufs,
             List<Container>& recvBufs,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int comm = UPstream::worldComm,
             const bool wait = true  //!< Wait for requests to complete
         );
 
@@ -619,7 +619,7 @@ public:
             const Map<Container>& sendBufs,
             Map<Container>& recvBufs,
             const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
+            const int comm = UPstream::worldComm,
             const bool wait = true  //!< Wait for requests to complete
         );
 
@@ -640,7 +640,7 @@ public:
             const UList<Container>& sendBufs,
             List<Container>& recvBufs,
             const int tag,
-            const label comm,
+            const int comm,
             const bool wait = true  //!< (ignored)
         );
 
@@ -662,7 +662,7 @@ public:
             const Map<Container>& sendBufs,
             Map<Container>& recvBufs,
             const int tag,
-            const label comm,
+            const int comm,
             const bool wait = true  //!< (ignored)
         );
 
@@ -678,7 +678,7 @@ public:
         (
             const Map<Container>& sendBufs,
             const int tag,
-            const label comm,
+            const int comm,
             const bool wait = true  //!< (ignored)
         );
 

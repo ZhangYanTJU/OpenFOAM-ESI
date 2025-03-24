@@ -405,7 +405,7 @@ bool Foam::Pstream::listGather_topo_algorithm
     UList<T>& values,
     BinaryOp bop,
     const int tag,
-    const label communicator
+    const int communicator
 )
 {
     const bool withTopo =
