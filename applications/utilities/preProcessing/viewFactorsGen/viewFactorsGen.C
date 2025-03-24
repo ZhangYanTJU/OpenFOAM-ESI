@@ -105,8 +105,13 @@ Description
 #include <vector>
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/AABB_tree.h>
+#if defined(CGAL_VERSION_NR) && (CGAL_VERSION_NR < 1060011000)
 #include <CGAL/AABB_traits.h>
 #include <CGAL/AABB_triangle_primitive.h>
+#else
+#include <CGAL/AABB_traits_3.h>
+#include <CGAL/AABB_triangle_primitive_3.h>
+#endif
 #include <CGAL/Surface_mesh.h>
 
 typedef CGAL::Simple_cartesian<double> K;
@@ -116,8 +121,13 @@ typedef K::Triangle_3 Triangle;
 typedef K::Segment_3 Segment;
 
 typedef std::vector<Triangle>::iterator Iterator;
+#if defined(CGAL_VERSION_NR) && (CGAL_VERSION_NR < 1060011000)
 typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
 typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
+#else
+typedef CGAL::AABB_triangle_primitive_3<K, Iterator> Primitive;
+typedef CGAL::AABB_traits_3<K, Primitive> AABB_triangle_traits;
+#endif
 typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
 
 // Used boost::optional prior to CGAL-6.0
