@@ -126,7 +126,7 @@ Ostream& operator<<(Ostream& os, const int64_t val);
 // On Darwin:
 // long is not unambiguously (int32_t | int64_t)
 // - explicitly resolve for input and output
-#if defined(__APPLE__)
+#ifdef __APPLE__
     Istream& operator>>(Istream& is, long& val);
     Ostream& operator<<(Ostream& os, const long val);
 #endif
@@ -195,6 +195,11 @@ public:
         operator int64_t&() noexcept { return p_; }
 };
 
+
+#ifdef __APPLE__
+//- On Darwin: long is not unambiguously (int64_t)
+template<> class pTraits<long> : pTraits<int64_t> {};
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

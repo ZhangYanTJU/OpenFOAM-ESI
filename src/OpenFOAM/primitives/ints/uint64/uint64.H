@@ -186,6 +186,11 @@ public:
 };
 
 
+#ifdef __APPLE__
+//- On Darwin: unsigned long is not unambiguously (uint64_t)
+template<> class pTraits<unsigned long> : pTraits<uint64_t> {};
+#endif
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

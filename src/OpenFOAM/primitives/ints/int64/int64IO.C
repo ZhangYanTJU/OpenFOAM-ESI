@@ -182,7 +182,7 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const int64_t val)
 }
 
 
-#if defined(__APPLE__)
+#ifdef __APPLE__
 Foam::Istream& Foam::operator>>(Istream& is, long& val)
 {
     return operator>>(is, reinterpret_cast<int64_t&>(val));
