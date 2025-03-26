@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2016-2021 OpenCFD Ltd.
+#     Copyright (C) 2016-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -103,6 +103,7 @@ Components versions (ThirdParty)
   -fftw VER           specify 'fffw_version'
   -kahip VER          specify 'KAHIP_VERSION'
   -metis VER          specify 'METIS_VERSION'
+  -petsc VER          specify 'petsc_version'
   -scotch VER         specify 'SCOTCH_VERSION' (eg, scotch_6.0.4)
 
 HELP_HEAD
@@ -118,7 +119,22 @@ Components specified by absolute path
   -fftw-path DIR      Path for 'FFTW_ARCH_PATH'   (overrides -fftw)
   -kahip-path DIR     Path for 'KAHIP_ARCH_PATH'  (overrides -kahip)
   -metis-path DIR     Path for 'METIS_ARCH_PATH'  (overrides -metis)
+  -petsc-path DIR     Path for 'PETSC_ARCH_PATH'  (overrides -petsc)
   -scotch-path DIR    Path for 'SCOTCH_ARCH_PATH' (overrides -scotch)
+
+  -gmp-path DIR       Path for 'GMP_ARCH_PATH'    (in cgal config)
+  -mpfr-path DIR      Path for 'MPFR_ARCH_PATH'   (in cgal config)
+
+Components specified by homebrew (treat like system locations)
+Sets version as system, path from brew --prefix
+  -adios-brew, -adios2-brew, -boost-brew, -cgal-brew,
+  -fftw-brew, -kahip-brew, -metis-brew, -scotch-brew
+
+  -with-homebrew      Shortcut for selecting all the above
+
+  -gmp-brew           Homebrew for 'GMP_ARCH_PATH'    (in cgal config)
+  -mpfr-brew          Homebrew for 'MPFR_ARCH_PATH'   (in cgal config)
+  -petsc-brew         Homebrew for petsc
 
 Graphics
   -paraview VER       specify 'ParaView_VERSION' (eg, 5.9.0 or system)
@@ -237,8 +253,8 @@ replace()
 
     while [ "$#" -ge 2 ]
     do
-        key=$1
-        val=$2
+        key="$1"
+        val="$2"
         shift 2
 
         _inlineSed \
@@ -262,16 +278,81 @@ replaceCsh()
 
     while [ "$#" -ge 2 ]
     do
-        key=$1
-        val=$2
+        key="$1"
+        val="$2"
         shift 2
 
         _inlineSed \
             "$file"  \
-            "setenv [ ]*$key [^ #]*" \
+            "setenv [ ]*$key .*" \
             "setenv $key $val" \
             "Replaced $key by '$val'"
     done
+}
+
+# Remove leading '#config#' marker from '#config export VAR=...'
+removeConfigMarker()
+{
+    local file="$1"
+    shift
+    local var cmd
+
+    while [ "$#" -ge 1 ]
+    do
+        var="$1"
+        shift
+        cmd='/^#config# *export [ ]*'"$var"'=/s@^#config# *@@'
+
+        if grep -q '^#config#' "$file" 2> /dev/null
+        then
+            sed -i -e "$cmd" "$file"
+        else
+            break
+        fi
+    done
+}
+
+# Remove leading '#config#' marker from '#config setenv VAR ...'
+removeConfigMarkerCsh()
+{
+    local file="$1"
+    shift
+    local var cmd
+
+    while [ "$#" -ge 1 ]
+    do
+        var="$1"
+        shift
+        cmd='/^#config# *setenv [ ]*'"$var"'/s@^#config# *@@'
+
+        if grep -q '^#config#' "$file" 2> /dev/null
+        then
+            sed -i -e "$cmd" "$file"
+        else
+            break
+        fi
+    done
+}
+
+
+# Remove leading '#config#' marker from '#config export VAR=...'
+removeEtcConfigMarker()
+{
+    local file="$1"
+    shift
+
+    file="$(_foamEtc "$file")"
+    removeConfigMarker "$file" "$@"
+}
+
+# Remove leading '#config#' marker from '#config setenv VAR ...'
+removeEtcConfigMarkerCsh()
+{
+    local file="$1"
+    shift
+
+    file="$(_foamEtc "$file")"
+    removeConfigMarkerCsh "$file" "$@"
 }
 
 # Locate file with foamEtcFile -mode=o and forward to replace()
@@ -293,6 +374,30 @@ replaceEtcCsh()
 
     file="$(_foamEtc "$file")"
     replaceCsh "$file" "$@"
+}
+
+
+# Locate file with foamEtcFile -mode=o and forward to replace()
+replaceBrewEtc()
+{
+    local file="$1"
+    local var="$2"
+    local pkg="$3"
+
+    file="$(_foamEtc "$file")"
+    replace "$file" "$var" '"$(brew --prefix '"$pkg"' 2>/dev/null)"'
+}
+
+
+# Locate file with foamEtcFile -mode=o and forward to replaceCsh()
+replaceBrewEtcCsh()
+{
+    local file="$1"
+    local var="$2"
+    local pkg="$3"
+
+    file="$(_foamEtc "$file")"
+    replaceCsh "$file" "$var" '`brew --prefix '"$pkg"'`'
 }
 
 
@@ -380,22 +485,45 @@ removeCshMagic()
 
 #------------------------------------------------------------------------------
 
-unset adjusted
+unset adjusted optHomebrew
+
+# Pre-scan options
+case "$@" in (*-with-homebrew*) optHomebrew=true;; esac
+
+# Preload with some options
+if [ "$optHomebrew" = true ]
+then
+    set -- \
+        -adios2-brew \
+        -boost-brew \
+        -cgal-brew \
+        -fftw-brew \
+        -kahip-brew \
+        -metis-brew \
+        -scotch-brew \
+        "$@"
+fi
+
 # Parse options
 while [ "$#" -gt 0 ]
 do
+    unset brewName optValue
+
     case "$1" in
     -help-c*)   # Compat help
         printHelp -compat
         ;;
-    -help-f*)   # Full help
+    -help-f* | --help-f*)   # Full help
         printHelp -full
         ;;
-    -h | -help*) # Short help
+    -h | -help* | --help) # Short help
         printHelp
         ;;
     '')
         # Discard empty arguments
+        ;;
+    -with-homebrew)
+        # Already handled (above)
         ;;
 
     -debug-list)
@@ -437,8 +565,7 @@ CONFIG_CSH
 
    -project-path=* | -project-path)
         # Replace WM_PROJECT_DIR=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -455,8 +582,7 @@ CONFIG_CSH
 
    -version=* | -version | -foamVersion | --projectVersion)
         # Replace WM_PROJECT_VERSION=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -502,8 +628,7 @@ CONFIG_CSH
 
     -clang=* | -clang)
         # Replace default_clang_version=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -517,8 +642,7 @@ CONFIG_CSH
 
     -gcc=* | -gcc)
         # Replace default_gcc_version=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -532,8 +656,7 @@ CONFIG_CSH
 
     -system-compiler | -system)
         # Replace WM_COMPILER_TYPE=... and WM_COMPILER=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -551,8 +674,7 @@ CONFIG_CSH
 
     -third-compiler | -third | -ThirdParty)
         # Replace WM_COMPILER_TYPE=... and WM_COMPILER=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -597,8 +719,7 @@ CONFIG_CSH
 
     -mpi=* | -mpi)
         # Explicitly set WM_MPLIB=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -661,8 +782,7 @@ CONFIG_CSH
 
     -adios | -adios2)
         # Replace adios2_version=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -676,8 +796,7 @@ CONFIG_CSH
 
     -adios-path | -adios2-path)
         # Replace ADIOS2_ARCH_PATH=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -689,10 +808,22 @@ CONFIG_CSH
         fi
         ;;
 
+    -adios-brew | -adios2-brew)
+        brewName=adios2; optValue="${brewName}-system"
+
+        # Replace adios2_version=...
+        replaceEtc  config.sh/adios2   adios2_version "$optValue"
+        replaceEtc  config.csh/adios2  adios2_version "$optValue"
+
+        # Replace ADIOS2_ARCH_PATH=...
+        replaceBrewEtc     config.sh/adios2   ADIOS2_ARCH_PATH "$brewName"
+        replaceBrewEtcCsh  config.csh/adios2  ADIOS2_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
+
     -boost)
         # Replace boost_version=...  (config is cgal or CGAL)
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
         if [ -n "$optValue" ]
@@ -707,24 +838,38 @@ CONFIG_CSH
 
     -boost-path)
         # Replace BOOST_ARCH_PATH=...  (config is cgal or CGAL)
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
         if [ -n "$optValue" ]
         then
-            replaceEtc  config.sh/"$cfgName"   BOOST_ARCH_PATH "\"$optValue\""
-            replaceEtc  config.csh/"$cfgName"  BOOST_ARCH_PATH "\"$optValue\""
+            replaceEtc     config.sh/"$cfgName"   BOOST_ARCH_PATH "\"$optValue\""
+            replaceEtcCsh  config.csh/"$cfgName"  BOOST_ARCH_PATH "\"$optValue\""
             adjusted=true
         else
             : "${adjusted:=empty}"
         fi
         ;;
 
+    -boost-brew)
+        brewName=boost; optValue="${brewName}-system"
+
+        # (config is cgal or CGAL)
+        cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
+
+        # Replace boost_version=...
+        replaceEtc  config.sh/"$cfgName"   boost_version "$optValue"
+        replaceEtc  config.csh/"$cfgName"  boost_version "$optValue"
+
+        # Replace BOOST_ARCH_PATH=...
+        replaceBrewEtc     config.sh/"$cfgName"   BOOST_ARCH_PATH "$brewName"
+        replaceBrewEtcCsh  config.csh/"$cfgName"  BOOST_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
+
     -cgal)
         # Replace cgal_version=...  (config is cgal or CGAL)
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
         if [ -n "$optValue" ]
@@ -739,8 +884,7 @@ CONFIG_CSH
 
     -cgal-path)
         # Replace CGAL_ARCH_PATH=...  (config is cgal or CGAL)
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
         if [ -n "$optValue" ]
@@ -753,10 +897,96 @@ CONFIG_CSH
         fi
         ;;
 
+    -cgal-brew)
+        brewName=cgal; optValue="${brewName}-system"
+
+        # (config is cgal or CGAL)
+        cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
+
+        # Replace cgal_version=...
+        replaceEtc  config.sh/"$cfgName"   cgal_version "$optValue"
+        replaceEtc  config.csh/"$cfgName"  cgal_version "$optValue"
+
+        # Replace CGAL_ARCH_PATH=...  (config is cgal or CGAL)
+        replaceBrewEtc     config.sh/"$cfgName"   CGAL_ARCH_PATH "$brewName"
+        replaceBrewEtcCsh  config.csh/"$cfgName"  CGAL_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
+
+    -gmp-path)
+        # Replace GMP_ARCH_PATH=...  (config is cgal or CGAL)
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
+
+        cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
+        if [ -n "$optValue" ]
+        then
+            # Remove leading '#config#' marker
+            removeEtcConfigMarker     config.sh/"$cfgName"   GMP_ARCH_PATH
+            removeEtcConfigMarkerCsh  config.csh/"$cfgName"  GMP_ARCH_PATH
+
+            replaceEtc     config.sh/"$cfgName"   GMP_ARCH_PATH "\"$optValue\""
+            replaceEtcCsh  config.csh/"$cfgName"  GMP_ARCH_PATH "\"$optValue\""
+            adjusted=true
+        else
+            : "${adjusted:=empty}"
+        fi
+        ;;
+
+    -gmp-brew)
+        brewName=gmp; optValue="${brewName}-system"
+
+        # (config is cgal or CGAL)
+        cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
+
+        # Remove leading '#config#' marker
+        removeEtcConfigMarker     config.sh/"$cfgName"   GMP_ARCH_PATH
+        removeEtcConfigMarkerCsh  config.csh/"$cfgName"  GMP_ARCH_PATH
+
+        # Replace GMP_ARCH_PATH=...  (config is cgal or CGAL)
+        replaceBrewEtc     config.sh/"$cfgName"   GMP_ARCH_PATH "$brewName"
+        replaceBrewEtcCsh  config.csh/"$cfgName"  GMP_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
+
+    -mpfr-path)
+        # Replace MPFR_ARCH_PATH=...  (config is cgal or CGAL)
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
+
+        cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
+        if [ -n "$optValue" ]
+        then
+            # Remove leading '#config#' marker
+            removeEtcConfigMarker     config.sh/"$cfgName"   MPFR_ARCH_PATH
+            removeEtcConfigMarkerCsh  config.csh/"$cfgName"  MPFR_ARCH_PATH
+
+            replaceEtc     config.sh/"$cfgName"   MPFR_ARCH_PATH "\"$optValue\""
+            replaceEtcCsh  config.csh/"$cfgName"  MPFR_ARCH_PATH "\"$optValue\""
+            adjusted=true
+        else
+            : "${adjusted:=empty}"
+        fi
+        ;;
+
+    -mpfr-brew)
+        brewName=mpfr; optValue="${brewName}-system"
+
+        # (config is cgal or CGAL)
+        cfgName=cgal; _foamEtc -q config.sh/"$cfgName" || cfgName=CGAL
+
+        # Remove leading '#config#' marker
+        removeEtcConfigMarker     config.sh/"$cfgName"   MPFR_ARCH_PATH
+        removeEtcConfigMarkerCsh  config.csh/"$cfgName"  MPFR_ARCH_PATH
+
+        # Replace MPFR_ARCH_PATH=...  (config is cgal or CGAL)
+        replaceBrewEtc     config.sh/"$cfgName"   MPFR_ARCH_PATH "$brewName"
+        replaceBrewEtcCsh  config.csh/"$cfgName"  MPFR_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
+
+
     -fftw)
         # Replace fftw_version=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         # config.sh/fftw or config.sh/FFTW
         cfgName=fftw; _foamEtc -q config.sh/"$cfgName" || cfgName=FFTW
@@ -772,8 +1002,7 @@ CONFIG_CSH
 
     -fftw-path)
         # Replace FFTW_ARCH_PATH=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         # config.sh/fftw or config.sh/FFTW
         cfgName=fftw; _foamEtc -q config.sh/"$cfgName" || cfgName=FFTW
@@ -787,10 +1016,25 @@ CONFIG_CSH
         fi
         ;;
 
+    -fftw-brew)
+        brewName=fftw; optValue="${brewName}-system"
+
+        # (config is fftw or FFTW)
+        cfgName=fftw; _foamEtc -q config.sh/"$cfgName" || cfgName=FFTW
+
+        # Replace fftw_version=...
+        replaceEtc  config.sh/"$cfgName"   fftw_version "$optValue"
+        replaceEtc  config.csh/"$cfgName"  fftw_version "$optValue"
+
+        # Replace FFTW_ARCH_PATH=...
+        replaceBrewEtc     config.sh/"$cfgName"  FFTW_ARCH_PATH "$brewName"
+        replaceBrewEtcCsh  config.csh/"$cfgName" FFTW_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
+
     -cmake)
         # Replace cmake_version=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -803,8 +1047,7 @@ CONFIG_CSH
 
     -cmake-path)
         # Replace CMAKE_ARCH_PATH=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -817,8 +1060,7 @@ CONFIG_CSH
 
     -kahip)
         # Replace KAHIP_VERSION=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -831,8 +1073,7 @@ CONFIG_CSH
 
     -kahip-path)
         # Replace KAHIP_ARCH_PATH=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -843,10 +1084,20 @@ CONFIG_CSH
         fi
         ;;
 
+    -kahip-brew)
+        brewName=kahip; optValue="${brewName}-system"
+
+        # Replace KAHIP_VERSION=...
+        replaceEtc  config.sh/kahip  KAHIP_VERSION "$optValue"
+
+        # Replace KAHIP_ARCH_PATH=...
+        replaceBrewEtc  config.sh/kahip  KAHIP_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
+
     -metis)
         # Replace METIS_VERSION=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -859,8 +1110,7 @@ CONFIG_CSH
 
     -metis-path)
         # Replace METIS_ARCH_PATH=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -871,10 +1121,62 @@ CONFIG_CSH
         fi
         ;;
 
+    -metis-brew)
+        brewName=metis; optValue="${brewName}-system"
+
+        # Replace METIS_VERSION=...
+        replaceEtc  config.sh/metis  METIS_VERSION "$optValue"
+        adjusted=true
+
+        # Replace METIS_ARCH_PATH=...
+        replaceBrewEtc  config.sh/metis  METIS_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
+
+    -petsc)
+        # Replace petsc_version=...
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
+
+        if [ -n "$optValue" ]
+        then
+            replaceEtc  config.sh/petsc   petsc_version "$optValue"
+            replaceEtc  config.csh/petsc  petsc_version "$optValue"
+            adjusted=true
+        else
+            : "${adjusted:=empty}"
+        fi
+        ;;
+
+    -petsc-path)
+        # Replace PETSC_ARCH_PATH=...
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
+
+        if [ -n "$optValue" ]
+        then
+            replaceEtc     config.sh/petsc   PETSC_ARCH_PATH "\"$optValue\""
+            replaceEtcCsh  config.csh/petsc  PETSC_ARCH_PATH "\"$optValue\""
+            adjusted=true
+        else
+            : "${adjusted:=empty}"
+        fi
+        ;;
+
+    -petsc-brew)
+        brewName=petsc; optValue="${brewName}-system"
+
+        # Replace petsc_version=...
+        replaceEtc  config.sh/petsc   petsc_version "$optValue"
+        replaceEtc  config.csh/petsc  petsc_version "$optValue"
+
+        # Replace PETSC_ARCH_PATH=...
+        replaceBrewEtc     config.sh/petsc   PETSC_ARCH_PATH "$brewName"
+        replaceBrewEtcCsh  config.csh/petsc  PETSC_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
+
     -scotch | -scotchVersion | --scotchVersion)
         # Replace SCOTCH_VERSION=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -887,8 +1189,7 @@ CONFIG_CSH
 
     -scotch-path | -scotchArchPath | --scotchArchPath)
         # Replace SCOTCH_ARCH_PATH=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -899,6 +1200,16 @@ CONFIG_CSH
         fi
         ;;
 
+    -scotch-brew)
+        brewName=scotch; optValue="${brewName}-system"
+
+        # Replace SCOTCH_VERSION=...
+        replaceEtc  config.sh/scotch  SCOTCH_VERSION "$optValue"
+
+        # Replace SCOTCH_ARCH_PATH=...
+        replaceBrewEtc  config.sh/scotch  SCOTCH_ARCH_PATH "$brewName"
+        adjusted=true
+        ;;
 
 ## Graphics ##
 
@@ -923,8 +1234,7 @@ CONFIG_CSH
 
     -paraview-qt)
         # Replace ParaView_QT=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -938,8 +1248,7 @@ CONFIG_CSH
 
     -paraview-path | -paraviewInstall | --paraviewInstall)
         # Replace ParaView_DIR=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -953,8 +1262,7 @@ CONFIG_CSH
 
     -llvm)
         # Replace mesa_llvm=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -968,8 +1276,7 @@ CONFIG_CSH
 
     -mesa)
         # Replace mesa_version=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -983,8 +1290,7 @@ CONFIG_CSH
 
     -vtk)
         # Replace vtk_version=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -998,8 +1304,7 @@ CONFIG_CSH
 
     -llvm-path)
         # Replace LLVM_ARCH_PATH=...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -1013,8 +1318,7 @@ CONFIG_CSH
 
     -mesa-path)
         # Replace MESA_ARCH_PATH...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -1028,8 +1332,7 @@ CONFIG_CSH
 
     -vtk-path)
         # Replace VTK_DIR...
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
 
         if [ -n "$optValue" ]
         then
@@ -1053,8 +1356,7 @@ CONFIG_CSH
     -archOption | --archOption | \
     -foamInstall | --foamInstall | -projectName | --projectName)
         echo "Ignoring obsolete option: $1" 1>&2
-        getOptionValue "$@"
-        shift "${nOptArgs:-0}"
+        getOptionValue "$@"; shift "${nOptArgs:-0}"
         ;;
 
     *)

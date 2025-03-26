@@ -5,7 +5,7 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
-#     Copyright (C) 2024 OpenCFD Ltd.
+#     Copyright (C) 2024-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -41,7 +41,7 @@ if command -v _foamAddLibAuto >/dev/null
 then
     # Normal sourcing (not makeHDF5)
 
-    _foamAddLibAuto $HDF5_ARCH_PATH
+    _foamAddLibAuto "$HDF5_ARCH_PATH"
 
     unset hdf5_version
 

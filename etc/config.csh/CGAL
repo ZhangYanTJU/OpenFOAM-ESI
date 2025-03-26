@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2014-2016 OpenFOAM Foundation
-#     Copyright (C) 2016-2021 OpenCFD Ltd.
+#     Copyright (C) 2016-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -39,6 +39,9 @@
 #
 #     Can also disable by renaming/removing this file or by creating an empty
 #     file with the same name at a user or site location.
+#
+#     The leading '#config#' marker provides an edit point for
+#     foamConfigurePaths
 #------------------------------------------------------------------------------
 # USER EDITABLE PART: Changes made here may be lost with the next upgrade
 
@@ -48,8 +51,8 @@ set cgal_version=CGAL-4.14.3
 setenv BOOST_ARCH_PATH "$WM_THIRD_PARTY_DIR/platforms/$WM_ARCH$WM_COMPILER/$boost_version"
 setenv CGAL_ARCH_PATH "$WM_THIRD_PARTY_DIR/platforms/$WM_ARCH$WM_COMPILER/$cgal_version"
 
-# setenv GMP_ARCH_PATH ...
-# setenv MPFR_ARCH_PATH ...
+#config# setenv GMP_ARCH_PATH ...
+#config# setenv MPFR_ARCH_PATH ...
 
 # END OF (NORMAL) USER EDITABLE PART
 #------------------------------------------------------------------------------

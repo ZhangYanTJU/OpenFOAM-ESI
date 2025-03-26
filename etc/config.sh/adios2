@@ -5,7 +5,7 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
-#     Copyright (C) 2017-2024 OpenCFD Ltd.
+#     Copyright (C) 2017-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -36,9 +36,9 @@ then
     # Normal sourcing (not makeAdios2)
     # Only add to PATH if the directory really exists
 
-    if _foamAddLibAuto $ADIOS2_ARCH_PATH
+    if _foamAddLibAuto "$ADIOS2_ARCH_PATH"
     then
-        _foamAddPath $ADIOS2_ARCH_PATH/bin
+        _foamAddPath "$ADIOS2_ARCH_PATH"/bin
     fi
 
     unset adios2_version
