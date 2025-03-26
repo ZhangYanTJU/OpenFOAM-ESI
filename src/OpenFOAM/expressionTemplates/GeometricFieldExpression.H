@@ -464,13 +464,11 @@ public:
             }
             else
             {
-                //return CoupledPatchExpr(0, List<value_type>::null());
                 return CoupledPatchExpr(List<value_type>::null());
             }
         }
         else
         {
-            //return CoupledPatchExpr(fld.size(), fld);
             return CoupledPatchExpr(fld);
         }
     }
@@ -624,7 +622,7 @@ public:
             }
             else
             {
-                return CoupledPatchExpr(List<value_type>::null());
+                return CoupledPatchExpr(tmp<Field<value_type>>(nullptr));
             }
         }
         else
@@ -1001,8 +999,8 @@ public:                                                                        \
             value_type                                                         \
         >                                                                      \
         (                                                                      \
-            u.dimensions(),                                                    \
-            u.oriented()                                                       \
+            BaseFunc(u.dimensions()),                                          \
+            BaseFunc(u.oriented())                                             \
         ),                                                                     \
         u_(u)                                                                  \
     {}                                                                         \
@@ -1088,8 +1086,8 @@ OpFunc<E1> Func                                                                \
 //            value_type
 //        >
 //        (
-//            u.dimensions(),
-//            u.oriented()
+//            -u.dimensions(),
+//            -u.oriented()
 //        ),
 //        u_(u)
 //    {}
@@ -1189,7 +1187,7 @@ public:                                                                        \
         >                                                                      \
         (                                                                      \
             u.dimensions() Op v.dimensions(),                                  \
-            u.oriented()                                                       \
+            u.oriented() Op v.oriented()                                       \
         ),                                                                     \
         u_(u),                                                                 \
         v_(v)                                                                  \
@@ -1332,7 +1330,7 @@ public:                                                                        \
         >                                                                      \
         (                                                                      \
             BaseFunc(u.dimensions(), v.dimensions()),                          \
-            u.oriented()                                                       \
+            BaseFunc(u.oriented(), v.oriented())                               \
         ),                                                                     \
         u_(u),                                                                 \
         v_(v)                                                                  \

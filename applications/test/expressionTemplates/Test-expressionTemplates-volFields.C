@@ -95,16 +95,6 @@ int main(int argc, char *argv[])
         DebugVar(result);
     }
     {
-        typedef Expression::GeometricFieldConstRefWrap
-        <
-            volScalarField
-        > volExpr;
-
-        typedef Expression::GeometricFieldConstRefWrap
-        <
-            surfaceScalarField
-        > surfaceExpr;
-
         // Fill p with some values
         forAll(p, celli)
         {
@@ -117,7 +107,7 @@ int main(int argc, char *argv[])
         (
             "result",
             mesh,
-            Expression::lerp<volExpr, surfaceExpr>
+            Expression::lerp    //<volExpr, surfaceExpr>
             (
                 p.expr(),
                 mesh.surfaceInterpolation::weights().expr(),
