@@ -271,7 +271,7 @@ void Foam::multiply
             << abort(FatalError);
     }
 
-    ans = scalarRectangularMatrix(A.m(), C.n(), Zero);
+    ans = scalarRectangularMatrix(A.m(), C.n(), Foam::zero{});
 
     for (label i = 0; i < A.m(); ++i)
     {
@@ -312,7 +312,7 @@ void Foam::multiply
 
     const label size = A.m();
 
-    ans = scalarSquareMatrix(size, Zero);
+    ans = scalarSquareMatrix(size, Foam::zero{});
 
     for (label i = 0; i < size; ++i)
     {
@@ -334,8 +334,7 @@ Foam::scalarRectangularMatrix Foam::SVDinv
     scalar minCondition
 )
 {
-    SVD svd(A, minCondition);
-    return svd.VSinvUt();
+    return SVD::pinv(A, minCondition);
 }
 
 

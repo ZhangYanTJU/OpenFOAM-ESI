@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,27 +31,86 @@ License
 #include "scalarMatrices.H"
 #include "ListOps.H"
 
-// * * * * * * * * * * * * * * * * Constructor  * * * * * * * * * * * * * * //
+#include "tensor.H"
+#include "diagTensor.H"
 
-Foam::SVD::SVD(const scalarRectangularMatrix& A, const scalar minCondition)
-:
-    U_(A),
-    V_(A.n(), A.n()),
-    S_(A.n()),
-    converged_(true),
-    nZeros_(0)
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
 {
+
+// Same as implementation in scalarMatrices, but for tensor/diagTensor/tensor
+static tensor do_multiply
+(
+    const tensor& A,
+    const diagTensor& B,
+    const tensor& C
+)
+{
+    constexpr direction size = 3;
+
+    tensor ans(Foam::zero{});
+
+    for (direction i = 0; i < size; ++i)
+    {
+        for (direction g = 0; g < size; ++g)
+        {
+            for (direction l = 0; l < size; ++l)
+            {
+                ans(i, g) += C(l, g)*A(i, l)*B[l];
+            }
+        }
+    }
+
+    return ans;
+}
+
+
+template<class MatrixType, class DiagMatrixType, class WorkArrayType>
+static std::pair<label, bool> SVDcomp
+(
+    // input
+    const MatrixType& A,
+
+    // input
+    const scalar minCondition,
+
+    // output
+    MatrixType& U_,
+
+    // output
+    MatrixType& V_,
+
+    // output
+    DiagMatrixType& S_,
+
+    // scratch space
+    WorkArrayType& rv1
+)
+{
+    label nZeros_(0);
+    bool converged_(true);
+
     // SVDcomp to find U_, V_ and S_ - the singular values
+
+    U_ = A;
 
     const label Un = U_.n();
     const label Um = U_.m();
 
-    scalarList rv1(Un);
     scalar g = 0;
     scalar scale = 0;
     scalar s = 0;
     scalar anorm = 0;
     label l = 0;
+
+
+    const auto sign = [](scalar a, scalar b) -> scalar
+    {
+        //return b >= 0 ? (a >= 0 ? a : -a) : (a >= 0 ? -a : a);
+        return b >= 0 ? a : -a;
+    };
+
 
     for (label i=0; i<Un; i++)
     {
@@ -87,7 +147,7 @@ Foam::SVD::SVD(const scalarRectangularMatrix& A, const scalar minCondition)
                     }
 
                     f = s/h;
-                    for (label k=i; k<A.m(); k++)
+                    for (label k=i; k<Um; k++)
                     {
                         U_(k, j) += f*U_(k, i);
                     }
@@ -373,22 +433,90 @@ Foam::SVD::SVD(const scalarRectangularMatrix& A, const scalar minCondition)
 
     // Zero singular values that are less than minCondition*maxS
     const scalar minS = minCondition*S_[findMax(S_)];
-    forAll(S_, i)
+    for (auto& val : S_)
     {
-        if (S_[i] <= minS)
+        if (val <= minS)
         {
-            S_[i] = 0;
-            nZeros_++;
+            val = 0;
+            ++nZeros_;
         }
     }
+
+    return { nZeros_, converged_ };
+}
+
+} // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * Constructor  * * * * * * * * * * * * * * //
+
+Foam::SVD::SVD(const scalarRectangularMatrix& A, const scalar minCondition)
+:
+    U_(),
+    V_(A.n(), A.n()),
+    S_(A.n()),
+    converged_(true),
+    nZeros_(0)
+{
+    scalarList rv1(A.n());
+
+    // SVDcomp to find U_, V_ and S_ - the singular values
+
+    auto status = SVDcomp(A, minCondition, U_, V_, S_, rv1);
+
+    nZeros_ = status.first;
+    converged_ = status.second;
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::scalar Foam::SVD::minNonZeroS() const
+{
+    scalar minS = S_[0];
+    for (label i=1; i<S_.size(); i++)
+    {
+        scalar s = S_[i];
+        if (s > VSMALL && s < minS) minS = s;
+    }
+    return minS;
 }
 
 
 Foam::scalarRectangularMatrix Foam::SVD::VSinvUt() const
 {
     scalarRectangularMatrix VSinvUt;
-    multiply(VSinvUt, V_, inv(S_), U_.T());
+    multiply(VSinvUt, V_, Foam::inv(S_), U_.T());
     return VSinvUt;
+}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::scalarRectangularMatrix Foam::SVD::pinv
+(
+    const scalarRectangularMatrix& A,
+    const scalar minCondition
+)
+{
+    SVD svd(A, minCondition);
+    return svd.VSinvUt();
+}
+
+
+Foam::Tensor<Foam::scalar>
+Foam::SVD::pinv(const Tensor<scalar>& A, const scalar minCondition)
+{
+    // SVDcomp to find U_, V_ and S_ - the singular values
+
+    tensor U_;
+    tensor V_;
+    diagTensor S_;
+    FixedList<scalar, 3> rv1;
+
+    SVDcomp(A, minCondition, U_, V_, S_, rv1);
+
+    return do_multiply(V_, Foam::inv(S_), U_.T());
 }
 
 
