@@ -38,6 +38,7 @@ SourceFiles
 #define Foam_ListExpression_H
 
 #include <cassert>
+#include <execution>
 #include "List.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -65,22 +66,18 @@ public:
     }
     auto size() const noexcept { return static_cast<E const&>(*this).size(); }
 
-    //- Helper: assign to passed in data
-    template<class T>
-    void evaluate(const label size, T* ptr) const
-    {
-        for (label i = 0; i < size; ++i)
-        {
-            ptr[i] = operator[](i);
-        }
-    }
-
     //- Helper: assign to passed in list
     template<class Container>
     Container& evaluate(Container& lst) const
     {
         lst.resize_nocopy(this->size());
-        evaluate(lst.size(), lst.data());
+        std::copy
+        (
+            std::execution::par_unseq,
+            static_cast<E const&>(*this).cbegin(),
+            static_cast<E const&>(*this).cend(),
+            lst.begin()
+        );
         return lst;
     }
 };
@@ -96,11 +93,6 @@ class ListWrap
 {
     List<T> elems_;
 
-    //- Cached size and pointer. TBD: UList?
-    label size_;
-    T* __restrict__ v_;
-
-
 public:
     static constexpr bool is_leaf = true;
 
@@ -109,43 +101,33 @@ public:
     //- Copy construct
     ListWrap(const ListWrap<T>& elems)
     :
-        elems_(elems),
-        size_(elems_.size()),
-        v_(elems_.data())
+        elems_(elems.data())
     {}
 
     //- Move construct
     ListWrap(ListWrap<T>&& elems)
     :
-        elems_(std::move(elems)),
-        size_(elems_.size()),
-        v_(elems_.data())
+        elems_(std::move(elems.data()))
     {}
 
     // Construct from initializer list 
     ListWrap(std::initializer_list<T> elems)
     :
-        elems_(elems),
-        size_(elems_.size()),
-        v_(elems_.data())
+        elems_(elems)
     {}
 
     ListWrap(const UList<T>& elems)
     :
-        elems_(elems),
-        size_(elems_.size()),
-        v_(elems_.data())
+        elems_(elems)
     {}
 
     // Construct from ListExpression, forcing its evaluation.
     template<typename E>
     ListWrap(const ListExpression<E, typename E::value_type>& expr)
     :
-        elems_(expr.size()),
-        size_(elems_.size()),
-        v_(elems_.data())
+        elems_(expr.size())
     {
-        expr.evaluate(size_, v_);
+        expr.evaluate(elems_);
     }
 
     // Access underlying data
@@ -162,17 +144,26 @@ public:
 
     value_type operator[](const label i) const
     {
-        return v_[i];
+        return elems_[i];
     }
 
     value_type& operator[](const label i)
     {
-        return v_[i];
+        return elems_[i];
     }
 
     auto size() const noexcept
     {
-        return size_;
+        return elems_.size();
+    }
+
+    auto cbegin() const
+    {
+        return elems_.cbegin();
+    }
+    auto cend() const
+    {
+        return elems_.cbegin();
     }
 };
 
@@ -187,11 +178,6 @@ class ListRefWrap
 {
     List<T>& elems_;
 
-    //- Cached size and pointer. TBD: UList?
-    label size_;
-    T* __restrict__ v_;
-
-
 public:
     static constexpr bool is_leaf = false;  //true;
 
@@ -200,17 +186,13 @@ public:
     //- Copy construct
     ListRefWrap(ListRefWrap<T>& w)
     :
-        elems_(w.elems_),
-        size_(elems_.size()),
-        v_(elems_.data())
+        elems_(w.elems_)
     {}
 
     //- Move construct
     ListRefWrap(ListRefWrap<T>&& elems)
     :
-        elems_(elems),
-        size_(elems_.size()),
-        v_(elems_.data())
+        elems_(elems)
     {}
 
     //- Construct from List and expected size. This is to enforce that
@@ -221,8 +203,6 @@ public:
         elems_(elems)
     {
         elems_.resize_nocopy(size);
-        size_ = elems_.size();
-        v_ = elems_.data();
     }
 
     // Construct from ListExpression, forcing its evaluation.
@@ -233,39 +213,16 @@ public:
         const ListExpression<E, typename E::value_type>& expr
     )
     :
-        elems_(elems),
-        size_(elems_.size()),
-        v_(elems_.data())
+        elems_(elems)
     {
-        // Do our own resizing so we can update cached pointer&size
-        elems_.resize_nocopy(expr.size());
-        size_ = elems_.size();
-        v_ = elems_.data();
-        expr.evaluate(size_, v_);
+        expr.evaluate(elems_);
     }
 
     //- Assignment
     template<typename E>
     void operator=(const ListExpression<E, typename E::value_type>& expr)
     {
-        // Do our own resizing so we can update cached pointer&size
-        elems_.resize_nocopy(expr.size());
-        size_ = elems_.size();
-        v_ = elems_.data();
-        expr.evaluate(size_, v_);
-    }
-
-    //- Evaluate and return as GeoField. Rename to evaluate to make it clear
-    //- it takes time? Or leave as indexing for convenience?
-    template<typename E>
-    List<T>& evaluate(const ListExpression<E, typename E::value_type>& expr)
-    {
-        // Do our own resizing so we can update cached pointer&size
-        elems_.resize_nocopy(expr.size());
-        size_ = elems_.size();
-        v_ = elems_.data();
-        expr.evaluate(size_, v_);
-        return elems_;
+        expr.evaluate(elems_);
     }
 
     // Access underlying data
@@ -282,17 +239,26 @@ public:
 
     value_type operator[](const label i) const
     {
-        return v_[i];
+        return elems_[i];
     }
 
     value_type& operator[](const label i)
     {
-        return v_[i];
+        return elems_[i];
     }
 
     auto size() const noexcept
     {
-        return size_;
+        return elems_.size();
+    }
+
+    auto cbegin() const
+    {
+        return elems_.cbegin();
+    }
+    auto cend() const
+    {
+        return elems_.cend();
     }
 };
 
@@ -307,11 +273,6 @@ class ListConstRefWrap
 {
     const List<T>& elems_;
 
-    //- Cached size and pointer. TBD: UList?
-    const label size_;
-    const T* __restrict__ v_;
-
-
 public:
 
     // ! Store as copy (since holds reference)
@@ -322,9 +283,7 @@ public:
     // construct from components
     ListConstRefWrap(const List<T>& elems)
     :
-        elems_(elems),
-        size_(elems_.size()),
-        v_(elems_.cdata())
+        elems_(elems)
     {}
 
     // returns the underlying data
@@ -335,12 +294,62 @@ public:
 
     value_type operator[](const label i) const
     {
-        return v_[i];
+        return elems_[i];
     }
 
     auto size() const noexcept
     {
-        return size_;
+        return elems_.size();
+    }
+
+    //typedef typename List<T>::const_iterator const_iterator;
+    struct const_iterator
+    {
+        // Minimalistic const_iter implementation
+        typedef typename List<T>::const_iterator ConstIter;
+        typedef typename std::iterator_traits<ConstIter> ConstIterTraits;
+        using difference_type = typename ConstIterTraits::difference_type;
+        using value_type = typename ConstIterTraits::value_type;
+        using pointer = typename ConstIterTraits::pointer;
+        using reference = typename ConstIterTraits::reference;
+        using iterator_category = typename ConstIterTraits::iterator_category;
+
+        ConstIter base_;
+
+        const_iterator(ConstIter it) : base_(it) {}
+        value_type operator*() const
+        {
+            return *base_;
+        }
+        const_iterator& operator++()
+        {
+            ++base_;
+            return *this;
+        }
+        difference_type operator-(const const_iterator& it) const
+        {
+            return (base_ - it.base_);
+        }
+        const_iterator operator+(const label i) const
+        {
+            return const_iterator(&base_[i]);
+        }
+        bool operator==(const const_iterator& it) const
+        {
+            return (base_ == it.base_);
+        }
+        bool operator!=(const const_iterator& it) const
+        {
+            return (base_ != it.base_);
+        }
+    };
+    auto cbegin() const
+    {
+        return const_iterator(elems_.cbegin());
+    }
+    auto cend() const
+    {
+        return const_iterator(elems_.cend());
     }
 };
 
@@ -355,11 +364,6 @@ class ListTmpWrap
 {
     tmp<T> elems_;
 
-    //- Cached size and pointer. TBD: UList?
-    label size_;
-    typename T::value_type* __restrict__ v_;
-
-
 public:
 
     //- Have expressions use copy to maintain tmp refCount
@@ -370,17 +374,13 @@ public:
     // Construct from components
     ListTmpWrap(const tmp<T>& elems)
     :
-        elems_(elems),
-        size_(elems_.ref().size()),
-        v_(elems_.ref().data())
+        elems_(elems)
     {}
 
     // Construct from components
     ListTmpWrap(tmp<T>& elems)
     :
-        elems_(elems),
-        size_(elems_.ref().size()),
-        v_(elems_.ref().data())
+        elems_(elems)
     {}
 
     // Construct from ListExpression, forcing its evaluation.
@@ -391,38 +391,16 @@ public:
         const ListExpression<E, typename E::value_type>& expr
     )
     :
-        elems_(elems),
-        size_(elems_.ref().size()),
-        v_(elems_.ref().data())
+        elems_(elems)
     {
-        // Do our own resizing so we can update cached pointer&size
-        elems_.ref().resize_nocopy(expr.size());
-        size_ = elems_.ref().size;
-        v_ = elems_.ref().data();
-        expr.evaluate(size_, v_);
+        expr.evaluate(elems_.ref());
     }
 
     //- Assignment
     template<typename E>
     void operator=(const ListExpression<E, typename E::value_type>& expr)
     {
-        // Do our own resizing so we can update cached pointer&size
-        elems_.ref().resize_nocopy(expr.size());
-        size_ = elems_.ref().size();
-        v_ = elems_.ref().data();
-        expr.evaluate(size_, v_);
-    }
-
-    //- Evaluate and return as GeoField. Rename to evaluate to make it clear
-    //- it takes time? Or leave as indexing for convenience?
-    template<typename E>
-    List<T>& evaluate(const ListExpression<E, typename E::value_type>& expr)
-    {
-        // Do our own resizing so we can update cached pointer&size
-        elems_.ref().resize_nocopy(expr.size());
-        size_ = elems_.ref().size();
-        v_ = elems_.ref().data();
-        return expr.evaluate(size_, v_);
+        expr.evaluate(elems_.ref());
     }
 
     // returns the underlying data
@@ -433,12 +411,21 @@ public:
 
     value_type operator[](const label i) const
     {
-        return v_[i];
+        return elems_()[i];
     }
 
     auto size() const noexcept
     {
-        return size_;
+        return elems_().size();
+    }
+
+    auto cbegin() const
+    {
+        return elems_().cbegin();
+    }
+    auto cend() const
+    {
+        return elems_().cend();
     }
 };
 
@@ -450,11 +437,6 @@ class ListConstTmpWrap
 {
     const tmp<T> elems_;
 
-    //- Cached size and pointer. TBD: UList?
-    const label size_;
-    const typename T::value_type* __restrict__ v_;
-
-
 public:
 
     //- Have expressions use copy to maintain tmp refCount
@@ -465,9 +447,7 @@ public:
     // Construct from components
     ListConstTmpWrap(const tmp<T>& elems)
     :
-        elems_(elems),
-        size_(elems_().size()),
-        v_(elems_().cdata())
+        elems_(elems)
     {}
 
     // returns the underlying data
@@ -478,12 +458,64 @@ public:
 
     value_type operator[](const label i) const
     {
-        return v_[i];
+        return elems_()[i];
     }
 
     auto size() const noexcept
     {
-        return size_;
+        return elems_().size();
+    }
+
+    //- Define our own iterator so we can refer to it. 'normal', e.g. double*
+    //  iterator will not work we'd have to use the iterator traits to get
+    //  at its e.g. difference_type from other classes. TBD.
+    struct const_iterator
+    {
+        // Minimalistic const_iter implementation
+        typedef typename T::const_iterator ConstIter;
+        typedef typename std::iterator_traits<ConstIter> ConstIterTraits;
+        using difference_type = typename ConstIterTraits::difference_type;
+        using value_type = typename ConstIterTraits::value_type;
+        using pointer = typename ConstIterTraits::pointer;
+        using reference = typename ConstIterTraits::reference;
+        using iterator_category = typename ConstIterTraits::iterator_category;
+
+        ConstIter base_;
+
+        const_iterator(ConstIter it) : base_(it) {}
+        value_type operator*() const
+        {
+            return *base_;
+        }
+        const_iterator& operator++()
+        {
+            ++base_;
+            return *this;
+        }
+        difference_type operator-(const const_iterator& it) const
+        {
+            return (base_ - it.base_);
+        }
+        const_iterator operator+(const label i) const
+        {
+            return const_iterator(base_ + i);
+        }
+        bool operator==(const const_iterator& it) const
+        {
+            return (base_ == it.base_);
+        }
+        bool operator!=(const const_iterator& it) const
+        {
+            return (base_ != it.base_);
+        }
+    };
+    auto cbegin() const
+    {
+        return const_iterator(elems_().cbegin());
+    }
+    auto cend() const
+    {
+        return const_iterator(elems_().cend());
     }
 };
 
@@ -537,6 +569,67 @@ public:
     {
         return addr_.size();
     }
+
+    struct const_iterator
+    {
+        // See IndirectListBase::const_iterator
+
+        //- Step type for addressing
+        using difference_type = label;
+
+        //- Iterator definition for E1
+        typedef typename E1::const_iterator ConstIter;
+        using value_type = typename ConstIter::value_type;
+        using pointer = typename ConstIter::pointer;
+        using reference = typename ConstIter::reference;
+        using iterator_category = std::forward_iterator_tag;
+
+        ConstIter begin_;
+        typename labelUList::const_iterator iter_;
+
+        const_iterator
+        (
+            ConstIter begin,
+            typename labelUList::const_iterator addrIter
+        )
+        :
+            begin_(begin),
+            iter_(addrIter)
+        {}
+        auto operator*() const
+        {
+            return *(begin_ + *iter_);
+        }
+        const_iterator& operator++()
+        {
+            ++iter_;
+            return *this;
+        }
+        difference_type operator-(const const_iterator& it) const
+        {
+            return (iter_ - it.iter_);
+        }
+        const_iterator operator+(const label i) const
+        {
+            return const_iterator(begin_, iter_+i);
+        }
+        bool operator==(const const_iterator& it) const
+        {
+            return iter_ == it.iter_;
+        }
+        bool operator!=(const const_iterator& it) const
+        {
+            return iter_ != it.iter_;
+        }
+    };
+    auto cbegin() const
+    {
+        return const_iterator(values_.cbegin(), addr_.cbegin());
+    }
+    auto cend() const
+    {
+        return const_iterator(values_.cbegin(), addr_.cend());
+    }
 };
 
 
@@ -567,6 +660,53 @@ public:                                                                        \
     }                                                                          \
                                                                                \
     auto size() const noexcept { return u_.size(); }                           \
+                                                                               \
+    struct const_iterator                                                      \
+    {                                                                          \
+        typedef typename E1::const_iterator ConstIter;                         \
+        using difference_type = typename ConstIter::difference_type;           \
+        using value_type = typename ConstIter::value_type;                     \
+        using pointer = typename ConstIter::pointer;                           \
+        using reference = typename ConstIter::reference;                       \
+        using iterator_category = typename ConstIter::iterator_category;       \
+                                                                               \
+        ConstIter base_;                                                       \
+                                                                               \
+        const_iterator(ConstIter it) : base_(it) {}                            \
+        value_type operator*() const                                           \
+        {                                                                      \
+            return BaseFunc(*base_);                                           \
+        }                                                                      \
+        const_iterator& operator++()                                           \
+        {                                                                      \
+            ++base_;                                                           \
+            return *this;                                                      \
+        }                                                                      \
+        difference_type operator-(const const_iterator& it) const              \
+        {                                                                      \
+            return (base_ - it.base_);                                         \
+        }                                                                      \
+        const_iterator operator+(const label i) const                          \
+        {                                                                      \
+            return const_iterator(base_ + i);                                  \
+        }                                                                      \
+        bool operator==(const const_iterator& it) const                        \
+        {                                                                      \
+            return base_ == it.base_;                                          \
+        }                                                                      \
+        bool operator!=(const const_iterator& it) const                        \
+        {                                                                      \
+            return base_ != it.base_;                                          \
+        }                                                                      \
+    };                                                                         \
+    const_iterator cbegin() const                                              \
+    {                                                                          \
+        return const_iterator(u_.cbegin());                                    \
+    }                                                                          \
+    const_iterator cend() const                                                \
+    {                                                                          \
+        return const_iterator(u_.cend());                                      \
+    }                                                                          \
 };                                                                             \
 template<typename E1>                                                          \
 OpFunc<E1> Func                                                                \
@@ -602,6 +742,55 @@ public:
     }
 
     auto size() const noexcept { return u_.size(); }
+
+    struct const_iterator
+    {
+        // Minimalistic const_iter implementation
+
+        typedef typename E1::const_iterator ConstIter;
+        using difference_type = typename ConstIter::difference_type;
+        using value_type = typename ConstIter::value_type;
+        using pointer = typename ConstIter::pointer;
+        using reference = typename ConstIter::reference;
+        using iterator_category = typename ConstIter::iterator_category;
+
+        ConstIter base_;
+
+        const_iterator(ConstIter it) : base_(it) {}
+        value_type operator*() const
+        {
+            return -(*base_);
+        }
+        const_iterator& operator++()
+        {
+            ++base_;
+            return *this;
+        }
+        difference_type operator-(const const_iterator& it) const
+        {
+            return (base_ - it.base_);
+        }
+        const_iterator operator+(const label i) const
+        {
+            return const_iterator(base_ + i);
+        }
+        bool operator==(const const_iterator& it) const
+        {
+            return base_ == it.base_;
+        }
+        bool operator!=(const const_iterator& it) const
+        {
+            return base_ != it.base_;
+        }
+    };
+    const_iterator cbegin() const
+    {
+        return const_iterator(u_.cbegin());
+    }
+    const_iterator cend() const
+    {
+        return const_iterator(u_.cend());
+    }
 };
 template<typename E1>
 List_negate<E1> operator-
@@ -644,6 +833,60 @@ public:                                                                        \
         return BaseFunc(u_[i], v_[i]);                                         \
     }                                                                          \
     auto size() const noexcept {return u_.size(); }                            \
+                                                                               \
+    struct const_iterator                                                      \
+    {                                                                          \
+        typedef typename E1::const_iterator E1Iter;                            \
+        typedef typename E2::const_iterator E2Iter;                            \
+        using difference_type = typename E1Iter::difference_type;              \
+        using value_type = typename E1Iter::value_type;                        \
+        using pointer = typename E1Iter::pointer;                              \
+        using reference = typename E1Iter::reference;                          \
+        using iterator_category = typename E1Iter::iterator_category;          \
+                                                                               \
+        E1Iter uIter_;                                                         \
+        E2Iter vIter_;                                                         \
+                                                                               \
+        const_iterator(E1Iter uIter, E2Iter vIter)                             \
+        :                                                                      \
+            uIter_(uIter),                                                     \
+            vIter_(vIter)                                                      \
+        {}                                                                     \
+        value_type operator*() const                                           \
+        {                                                                      \
+            return BaseFunc(*uIter_, *vIter_);                                 \
+        }                                                                      \
+        const_iterator& operator++()                                           \
+        {                                                                      \
+            ++uIter_;                                                          \
+            ++vIter_;                                                          \
+            return *this;                                                      \
+        }                                                                      \
+        difference_type operator-(const const_iterator& it) const              \
+        {                                                                      \
+            return (uIter_ - it.uIter_);                                       \
+        }                                                                      \
+        const_iterator operator+(const label i) const                          \
+        {                                                                      \
+            return const_iterator(uIter_+i, vIter_+i);                         \
+        }                                                                      \
+        bool operator==(const const_iterator& it) const                        \
+        {                                                                      \
+            return uIter_ == it.uIter_ && vIter_ == it.vIter_;                 \
+        }                                                                      \
+        bool operator!=(const const_iterator& it) const                        \
+        {                                                                      \
+            return !operator==(it);                                            \
+        }                                                                      \
+    };                                                                         \
+    const_iterator cbegin() const                                              \
+    {                                                                          \
+        return const_iterator(u_.cbegin(), v_.cbegin());                       \
+    }                                                                          \
+    const_iterator cend() const                                                \
+    {                                                                          \
+        return const_iterator(u_.cend(), v_.cend());                           \
+    }                                                                          \
 };                                                                             \
 template<typename E1, typename E2>                                             \
 OpFunc<E1, E2> Func                                                            \
@@ -697,6 +940,60 @@ public:                                                                        \
         return u_[i] Op v_[i];                                                 \
     }                                                                          \
     auto size() const noexcept { return u_.size(); }                           \
+                                                                               \
+    struct const_iterator                                                      \
+    {                                                                          \
+        typedef typename E1::const_iterator E1Iter;                            \
+        typedef typename E2::const_iterator E2Iter;                            \
+        using difference_type = typename E1Iter::difference_type;              \
+        using value_type = typename E1Iter::value_type;                        \
+        using pointer = typename E1Iter::pointer;                              \
+        using reference = typename E1Iter::reference;                          \
+        using iterator_category = typename E1Iter::iterator_category;          \
+                                                                               \
+        E1Iter uIter_;                                                         \
+        E2Iter vIter_;                                                         \
+                                                                               \
+        const_iterator(E1Iter uIter, E2Iter vIter)                             \
+        :                                                                      \
+            uIter_(uIter),                                                     \
+            vIter_(vIter)                                                      \
+        {}                                                                     \
+        value_type operator*() const                                           \
+        {                                                                      \
+            return *uIter_ Op *vIter_;                                         \
+        }                                                                      \
+        const_iterator& operator++()                                           \
+        {                                                                      \
+            ++uIter_;                                                          \
+            ++vIter_;                                                          \
+            return *this;                                                      \
+        }                                                                      \
+        difference_type operator-(const const_iterator& it) const              \
+        {                                                                      \
+            return (uIter_ - it.uIter_);                                       \
+        }                                                                      \
+        const_iterator operator+(const label i) const                          \
+        {                                                                      \
+            return const_iterator(uIter_+i, vIter_+i);                         \
+        }                                                                      \
+        bool operator==(const const_iterator& it) const                        \
+        {                                                                      \
+            return uIter_ == it.uIter_ && vIter_ == it.vIter_;                 \
+        }                                                                      \
+        bool operator!=(const const_iterator& it) const                        \
+        {                                                                      \
+            return !operator==(it);                                            \
+        }                                                                      \
+    };                                                                         \
+    const_iterator cbegin() const                                              \
+    {                                                                          \
+        return const_iterator(u_.cbegin(), v_.cbegin());                       \
+    }                                                                          \
+    const_iterator cend() const                                                \
+    {                                                                          \
+        return const_iterator(u_.cend(), v_.cend());                           \
+    }                                                                          \
 };                                                                             \
 template<typename E1, typename E2>                                             \
 OpFunc<E1, E2>                                                                 \
@@ -815,6 +1112,68 @@ public:
     {
         return weight_.size();
     }
+
+    struct const_iterator
+    {
+        typedef typename E1::const_iterator E1Iter;
+        typedef typename E2::const_iterator E2Iter;
+        typedef typename E3::const_iterator E3Iter;
+        using difference_type = typename E3Iter::difference_type;
+        using value_type = typename E1Iter::value_type;
+        using pointer = typename E1Iter::pointer;
+        using reference = typename E1Iter::reference;
+        using iterator_category = typename E3Iter::iterator_category;
+        E1Iter uIter_;
+        E2Iter vIter_;
+        E3Iter weightIter_;
+
+        const_iterator(E1Iter uIter, E2Iter vIter, E3Iter weightIter)
+        :
+            uIter_(uIter),
+            vIter_(vIter),
+            weightIter_(weightIter)
+        {}
+        value_type operator*() const
+        {
+            const auto ownVal = *uIter_;
+            const auto neiVal = *vIter_;
+            return *weightIter_*(ownVal-neiVal) + neiVal;
+        }
+        const_iterator& operator++()
+        {
+            ++uIter_;
+            ++vIter_;
+            ++weightIter_;
+            return *this;
+        }
+        difference_type operator-(const const_iterator& it) const
+        {
+            return (uIter_ - it.uIter_);
+        }
+        const_iterator operator+(const label i) const
+        {
+            return const_iterator(uIter_+i, vIter_+i, weightIter_+i);
+        }
+        bool operator==(const const_iterator& it) const
+        {
+            return
+                uIter_ == it.uIter_
+             && vIter_ == it.vIter_
+             && weightIter_ == it.weightIter_;
+        }
+        bool operator!=(const const_iterator& it) const
+        {
+            return !operator==(it);
+        }
+    };
+    const_iterator cbegin() const
+    {
+        return const_iterator(u_.cbegin(), v_.cbegin(), weight_.cbegin());
+    }
+    const_iterator cend() const
+    {
+        return const_iterator(u_.cend(), v_.cend(), weight_.cend());
+    }
 };
 
 
@@ -860,6 +1219,59 @@ public:
     auto size() const noexcept
     {
         return size_;
+    }
+
+    struct const_iterator
+    {
+        // Minimalistic const_iter implementation
+        using difference_type = label;
+        using value_type = const T;
+        using pointer = const T*;
+        using reference = const T&;
+        using iterator_category = std::random_access_iterator_tag;
+
+        label count_;
+
+        const T val_;
+
+        const_iterator(const label count, const T val)
+        :
+            count_(count),
+            val_(val)
+        {}
+        reference operator*() const
+        {
+            return val_;
+        }
+        const_iterator& operator++()
+        {
+            count_;
+            return *this;
+        }
+        difference_type operator-(const const_iterator& it) const
+        {
+            return (count_ - it.count_);
+        }
+        const_iterator operator+(const label i) const
+        {
+            return const_iterator(count_+i, val_);
+        }
+        bool operator==(const const_iterator& it) const
+        {
+            return val_ == it.val_ && count_ == it.count_;
+        }
+        bool operator!=(const const_iterator& it) const
+        {
+            return !operator==(it);
+        }
+    };
+    auto cbegin() const
+    {
+        return const_iterator(0, val_);
+    }
+    auto cend() const
+    {
+        return const_iterator(size_, val_);
     }
 };
 

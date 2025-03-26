@@ -88,15 +88,6 @@ int main(int argc, char *argv[])
     {
         volScalarField result
         (
-            //IOobject
-            //(
-            //    "result",
-            //    runTime.timeName(),
-            //    mesh.thisDb(),
-            //    IOobject::NO_READ,
-            //    IOobject::NO_WRITE,
-            //    IOobject::NO_REGISTER
-            //),
             "result",
             mesh,
             p.expr() + Expression::sqr(p.expr())
@@ -121,6 +112,7 @@ int main(int argc, char *argv[])
         }
         p.correctBoundaryConditions();
 
+        // Interpolate to surface field
         surfaceScalarField result
         (
             "result",

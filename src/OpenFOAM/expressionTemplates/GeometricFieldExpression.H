@@ -176,7 +176,24 @@ public:
                 {
                     // Get patch expression
                     const auto patchExpr = this->coupledPatchField(i);
-                    patchExpr.evaluate(pfld);
+
+                    // Note: check can be removed once assignable also on
+                    //       pointPatchFields. TBD.
+                    if constexpr
+                    (
+                        std::is_same_v<pointMesh, typename GeoField::Mesh>
+                    )
+                    {
+                        const auto* vp = isA<Field<Type>>(pfld);
+                        if (vp)
+                        {
+                            patchExpr.evaluate(const_cast<Field<Type>&>(*vp));
+                        }
+                    }
+                    else
+                    {
+                        patchExpr.evaluate(pfld);
+                    }
                 }
                 else
                 {
@@ -548,8 +565,8 @@ public:
 
     // return the underlying data
     const auto& data() const
-    { 
-        return elems_; 
+    {
+        return elems_;
     }
 
     value_type operator[](const label i) const
@@ -1721,7 +1738,7 @@ void SuSp
 )
 {
     //- Wrap of constant as a list expression
-    typedef Expression::UniformListWrap<scalar> constant;
+    typedef UniformListWrap<scalar> constant;
     //- Wrap of List as an expression
     typedef ListConstRefWrap<typename Expr::value_type> expr;
     //- Evaluator of an expression
