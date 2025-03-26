@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,13 +31,12 @@ Description
     Singular value decomposition of a rectangular matrix.
 
 SourceFiles
-    SVDI.H
     SVD.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef SVD_H
-#define SVD_H
+#ifndef Foam_SVD_H
+#define Foam_SVD_H
 
 #include "scalarMatrices.H"
 
@@ -45,7 +45,8 @@ SourceFiles
 namespace Foam
 {
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Forward Declarations
+template<class Cmpt> class Tensor;
 
 /*---------------------------------------------------------------------------*\
                       Class SVD Declaration
@@ -53,7 +54,7 @@ namespace Foam
 
 class SVD
 {
-    // Private data
+    // Private Data
 
         //- Rectangular matrix with the same dimensions as the input
         scalarRectangularMatrix U_;
@@ -71,7 +72,9 @@ class SVD
         label nZeros_;
 
 
-    // Private Member Functions
+public:
+
+    // Generated Methods
 
         //- No copy construct
         SVD(const SVD&) = delete;
@@ -79,50 +82,65 @@ class SVD
         //- No copy assignment
         void operator=(const SVD&) = delete;
 
-        template<class T>
-        inline const T sign(const T& a, const T& b);
-
-
-public:
 
     // Constructors
 
         //- Construct from a rectangular Matrix
-        SVD(const scalarRectangularMatrix& A, const scalar minCondition = 0);
+        explicit SVD
+        (
+            const scalarRectangularMatrix& A,
+            const scalar minCondition = 0
+        );
 
 
-    // Access functions
+    // Access Functions
 
         //- Return U
-        inline const scalarRectangularMatrix& U() const;
+        const scalarRectangularMatrix& U() const noexcept { return U_; }
 
         //- Return the square matrix V
-        inline const scalarRectangularMatrix& V() const;
+        const scalarRectangularMatrix& V() const noexcept { return V_; }
 
         //- Return the singular values
-        inline const scalarDiagonalMatrix& S() const;
+        const scalarDiagonalMatrix& S() const noexcept { return S_; }
 
         //- Return the minimum non-zero singular value
-        inline bool converged() const;
+        bool converged() const noexcept { return converged_; }
 
         //- Return the number of zero singular values
-        inline label nZeros() const;
+        label nZeros() const noexcept { return nZeros_; }
 
         //- Return the minimum non-zero singular value
-        inline scalar minNonZeroS() const;
+        scalar minNonZeroS() const;
+
+
+    // Member Functions
 
         //- Return the matrix product V S^(-1) U^T (the pseudo inverse)
         scalarRectangularMatrix VSinvUt() const;
+
+
+    // Static Member Functions
+
+        //- Return the pseudo inverse of the given matrix
+        static scalarRectangularMatrix pinv
+        (
+            const scalarRectangularMatrix& A,
+            const scalar minCondition = 0
+        );
+
+        //- Return the pseudo inverse of the given tensor
+        static Tensor<scalar> pinv
+        (
+            const Tensor<scalar>& A,
+            const scalar minCondition = 0
+        );
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "SVDI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

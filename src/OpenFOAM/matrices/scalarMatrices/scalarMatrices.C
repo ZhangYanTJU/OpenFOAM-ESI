@@ -334,8 +334,7 @@ Foam::scalarRectangularMatrix Foam::SVDinv
     scalar minCondition
 )
 {
-    SVD svd(A, minCondition);
-    return svd.VSinvUt();
+    return SVD::pinv(A, minCondition);
 }
 
 
