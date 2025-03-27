@@ -38,7 +38,7 @@ Foam::SymmetricSquareMatrix<Type> Foam::invDecomposed
 {
     const label n = matrix.n();
 
-    SymmetricSquareMatrix<Type> inv(n, Zero);
+    SymmetricSquareMatrix<Type> inv(n, Foam::zero{});
 
     for (label i = 0; i < n; ++i)
     {
@@ -57,7 +57,7 @@ Foam::SymmetricSquareMatrix<Type> Foam::invDecomposed
         }
     }
 
-    SymmetricSquareMatrix<Type> result(n, Zero);
+    SymmetricSquareMatrix<Type> result(n, Foam::zero{});
 
     for (label k = 0; k < n; ++k)
     {

@@ -62,7 +62,7 @@ inline Foam::Matrix<Form, Type>::Matrix(const labelPair& dims)
 
 
 template<class Form, class Type>
-inline Foam::Matrix<Form, Type>::Matrix(const labelPair& dims, const Foam::zero)
+inline Foam::Matrix<Form, Type>::Matrix(const labelPair& dims, Foam::zero)
 :
     Matrix<Form, Type>(dims.first(), dims.second(), Foam::zero{})
 {}
@@ -88,12 +88,12 @@ Foam::Matrix<Form, Type>::clone() const
 template<class Form, class Type>
 inline Foam::label Foam::Matrix<Form, Type>::size() const noexcept
 {
-    return mRows_ * nCols_;
+    return (mRows_ * nCols_);
 }
 
 
 template<class Form, class Type>
-inline Foam::labelPair Foam::Matrix<Form, Type>::sizes() const
+inline Foam::labelPair Foam::Matrix<Form, Type>::sizes() const noexcept
 {
     return labelPair(mRows_, nCols_);
 }

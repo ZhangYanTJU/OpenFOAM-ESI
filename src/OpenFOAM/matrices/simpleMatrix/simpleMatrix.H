@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef simpleMatrix_H
-#define simpleMatrix_H
+#ifndef Foam_simpleMatrix_H
+#define Foam_simpleMatrix_H
 
 #include "scalarMatrices.H"
 
@@ -44,18 +45,9 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of friend functions and operators
-
-template<class Type>
-class simpleMatrix;
-
-template<class Type>
-Ostream& operator<<
-(
-    Ostream&,
-    const simpleMatrix<Type>&
-);
-
+// Forward Declarations
+template<class Type> class simpleMatrix;
+template<class Type> Ostream& operator<<(Ostream&, const simpleMatrix<Type>&);
 
 /*---------------------------------------------------------------------------*\
                            Class simpleMatrix Declaration
@@ -66,10 +58,9 @@ class simpleMatrix
 :
     public scalarSquareMatrix
 {
-    // Private data
+    // Private Data
 
         Field<Type> source_;
-
 
 public:
 
@@ -77,49 +68,45 @@ public:
 
         //- Construct given size
         //  Note: this does not initialise the coefficients or the source.
-        simpleMatrix(const label);
+        explicit simpleMatrix(const label n);
 
         //- Construct given size and initial values for coefficients and source
-        simpleMatrix(const label, const scalar, const Type&);
+        simpleMatrix(const label n, const scalar, const Type&);
+
+        //- Construct given size, zero values for coefficients and source
+        simpleMatrix(const label n, Foam::zero);
 
         //- Construct from components
         simpleMatrix(const scalarSquareMatrix&, const Field<Type>&);
 
-        //- Construct from Istream
-        simpleMatrix(Istream&);
+        //- Copy construct
+        simpleMatrix(const simpleMatrix<Type>&) = default;
 
-        //- Construct as copy
-        simpleMatrix(const simpleMatrix<Type>&);
+        //- Construct from Istream
+        explicit simpleMatrix(Istream&);
 
 
     // Member Functions
 
-        // Access
+        //- Return access to the source
+        Field<Type>& source() noexcept { return source_; }
 
-            //- Return access to the source
-            Field<Type>& source()
-            {
-                return source_;
-            }
-
-            //- Return const-access to the source
-            const Field<Type>& source() const
-            {
-                return source_;
-            }
+        //- Return const-access to the source
+        const Field<Type>& source() const noexcept { return source_; }
 
 
         //- Solve the matrix using Gaussian elimination with pivoting
-        //  and return the solution
+        //- and return the solution
         Field<Type> solve() const;
 
         //- Solve the matrix using LU decomposition with pivoting
-        //  and return the solution
+        //- and return the solution
         Field<Type> LUsolve() const;
 
 
     // Member Operators
 
+        //- Copy assignment
         void operator=(const simpleMatrix<Type>&);
 
 
@@ -133,7 +120,9 @@ public:
 };
 
 
-// Global operators
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Global Operators
 
 template<class Type>
 simpleMatrix<Type> operator+

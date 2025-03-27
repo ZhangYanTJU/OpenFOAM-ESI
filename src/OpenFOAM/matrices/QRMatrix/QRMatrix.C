@@ -42,7 +42,7 @@ Foam::label Foam::QRMatrix<MatrixType>::calcShapeFactor
     }
     else if (mode_ == modes::ECONOMY)
     {
-        return min(A.m(), A.n());
+        return Foam::min(A.m(), A.n());
     }
 
     return 0;
@@ -127,7 +127,7 @@ void Foam::QRMatrix<MatrixType>::decompose
 {
     const label n = AT.m();
     const label m = AT.n();
-    const label sz = min(m,n);
+    const label sz = Foam::min(m, n);
 
     // Initialise permutation vector, and column norm vector
     p_ = identity(n);

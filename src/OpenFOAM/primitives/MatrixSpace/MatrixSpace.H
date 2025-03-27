@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,16 +77,10 @@ public:
     // Static Member Functions
 
         //- The number of rows
-        static direction m() noexcept
-        {
-            return Mrows;
-        }
+        static direction m() noexcept { return Mrows; }
 
         //- The number of columns
-        static direction n() noexcept
-        {
-            return Ncols;
-        }
+        static direction n() noexcept { return Ncols; }
 
         //- An identity matrix for square matrix-spaces
         inline static msType identity();
@@ -107,16 +101,10 @@ public:
             static const direction nCols = SubTensor::nCols;
 
             //- Return the number of rows in the block
-            static direction m()
-            {
-                return mRows;
-            }
+            static direction m() noexcept { return mRows; }
 
             //- Return the number of columns in the block
-            static direction n()
-            {
-                return nCols;
-            }
+            static direction n() noexcept { return nCols; }
 
             //- Construct for the given matrix
             inline ConstBlock(const msType& matrix);
@@ -151,16 +139,10 @@ public:
             static const direction nCols = SubTensor::nCols;
 
             //- The number of rows in the block
-            static direction m()
-            {
-                return mRows;
-            }
+            static direction m() noexcept { return mRows; }
 
             //- The number of columns in the block
-            static direction n()
-            {
-                return nCols;
-            }
+            static direction n() noexcept { return nCols; }
 
             //- Construct for the given matrix
             inline Block(msType& matrix);
@@ -209,7 +191,7 @@ public:
     // Constructors
 
         //- Construct initialized to zero
-        inline MatrixSpace(const Foam::zero);
+        inline MatrixSpace(Foam::zero);
 
         //- Construct as copy of a VectorSpace with the same size
         template<class Form2, class Cmpt2>
@@ -289,18 +271,18 @@ public:
         //- (i, j) const element access operator
         inline const Cmpt& operator()
         (
-            const direction& i,
-            const direction& j
+            const direction i,
+            const direction j
         ) const;
 
         //- (i, j) element access operator
-        inline Cmpt& operator()(const direction& i, const direction& j);
+        inline Cmpt& operator()(const direction i, const direction j);
 
 
     // Member Operators
 
         //- Assignment to zero
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 
         //- Assignment to a block of another matrix space
         template

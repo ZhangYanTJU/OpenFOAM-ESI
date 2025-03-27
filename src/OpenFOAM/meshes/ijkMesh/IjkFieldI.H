@@ -132,35 +132,7 @@ inline Foam::IjkField<Type>::IjkField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-inline const Foam::ijkAddressing& Foam::IjkField<Type>::ijk() const
-{
-    return ijk_;
-}
-
-
-template<class Type>
-inline Foam::ijkAddressing& Foam::IjkField<Type>::ijk()
-{
-    return ijk_;
-}
-
-
-template<class Type>
-inline const Foam::labelVector& Foam::IjkField<Type>::sizes() const
-{
-    return ijk_.sizes();
-}
-
-
-template<class Type>
-inline Foam::labelVector& Foam::IjkField<Type>::sizes()
-{
-    return ijk_.sizes();
-}
-
-
-template<class Type>
-inline const Foam::label& Foam::IjkField<Type>::size
+inline Foam::label Foam::IjkField<Type>::size
 (
     const vector::components cmpt
 ) const
@@ -245,7 +217,7 @@ inline void Foam::IjkField<Type>::operator=(const Type& val)
 
 
 template<class Type>
-inline void Foam::IjkField<Type>::operator=(const Foam::zero)
+inline void Foam::IjkField<Type>::operator=(Foam::zero)
 {
     Field<Type>::operator=(Foam::zero{});
 }

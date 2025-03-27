@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,19 +76,19 @@ public:
     // Access
 
         //- Addressing is considered empty if any component is zero
-        inline bool empty() const;
+        inline bool empty() const noexcept;
 
         //- The (i,j,k) addressing dimensions
-        inline const labelVector& sizes() const;
+        const labelVector& sizes() const noexcept { return sizes_; }
 
         //- Return the (i,j,k) dimensions for modification
-        inline labelVector& sizes();
+        labelVector& sizes() noexcept { return sizes_; }
 
         //- Return the total i*j*k size
-        inline label size() const;
+        inline label size() const noexcept;
 
         //- The addressing dimension in the given direction
-        inline const label& size(const vector::components cmpt) const;
+        inline label size(const vector::components cmpt) const;
 
         //- Reset to (0,0,0) sizing
         inline void clear();

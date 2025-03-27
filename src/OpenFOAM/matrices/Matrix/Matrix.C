@@ -51,7 +51,7 @@ Foam::tmp<Foam::Field<Type>> Foam::Matrix<Form, Type>::AmulImpl
     }
     #endif
 
-    auto tresult = tmp<Field<Type>>::New(mat.m(), Zero);
+    auto tresult = tmp<Field<Type>>::New(mat.m(), Foam::zero{});
     auto& result = tresult.ref();
 
     for (label i = 0; i < mat.m(); ++i)
@@ -86,7 +86,7 @@ Foam::tmp<Foam::Field<Type>> Foam::Matrix<Form, Type>::TmulImpl
     }
     #endif
 
-    auto tresult = tmp<Field<Type>>::New(mat.n(), Zero);
+    auto tresult = tmp<Field<Type>>::New(mat.n(), Foam::zero{});
     auto& result = tresult.ref();
 
     for (label i = 0; i < mat.m(); ++i)
@@ -118,7 +118,7 @@ Foam::Matrix<Form, Type>::Matrix(const label m, const label n)
 
 
 template<class Form, class Type>
-Foam::Matrix<Form, Type>::Matrix(const label m, const label n, const Foam::zero)
+Foam::Matrix<Form, Type>::Matrix(const label m, const label n, Foam::zero)
 :
     mRows_(m),
     nCols_(n),
@@ -326,10 +326,10 @@ void Foam::Matrix<Form, Type>::resize(const label m, const label n)
         return;
     }
 
-    Matrix<Form, Type> newMatrix(m, n, Zero);
+    Matrix<Form, Type> newMatrix(m, n, Foam::zero{});
 
-    const label mrow = min(m, mRows_);
-    const label ncol = min(n, nCols_);
+    const label mrow = Foam::min(m, mRows_);
+    const label ncol = Foam::min(n, nCols_);
 
     for (label i = 0; i < mrow; ++i)
     {
@@ -480,7 +480,7 @@ Foam::scalar Foam::Matrix<Form, Type>::columnNorm
     const bool noSqrt
 ) const
 {
-    scalar result = Zero;
+    scalar result(0);
 
     for (label i=0; i < mRows_; ++i)
     {
@@ -494,7 +494,7 @@ Foam::scalar Foam::Matrix<Form, Type>::columnNorm
 template<class Form, class Type>
 Foam::scalar Foam::Matrix<Form, Type>::norm(const bool noSqrt) const
 {
-    scalar result = Zero;
+    scalar result(0);
 
     for (const Type& val : *this)
     {
@@ -596,7 +596,7 @@ void Foam::Matrix<Form, Type>::operator=(const Type& val)
 
 
 template<class Form, class Type>
-void Foam::Matrix<Form, Type>::operator=(const Foam::zero)
+void Foam::Matrix<Form, Type>::operator=(Foam::zero)
 {
     std::fill_n(begin(), size(), Zero);
 }

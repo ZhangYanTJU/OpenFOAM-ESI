@@ -92,6 +92,9 @@ public:
     //- Magnitude type
     typedef Cmpt magType;
 
+    //- The type to represent the size of a VectorSpace
+    typedef direction size_type;
+
 
     // Static Constants
 

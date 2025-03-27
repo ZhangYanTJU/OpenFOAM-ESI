@@ -154,6 +154,9 @@ class QRMatrix
 public:
 
     typedef typename MatrixType::cmptType cmptType;
+    typedef typename MatrixType::size_type size_type;
+    typedef typename MatrixType::value_type value_type;
+
     typedef SquareMatrix<cmptType> SMatrix;
     typedef RectangularMatrix<cmptType> RMatrix;
 
@@ -241,6 +244,13 @@ private:
         ) const;
 
 
+public:
+
+    // Generated Methods
+
+        //- No default construct
+        QRMatrix() = delete;
+
         //- No copy construct
         QRMatrix(const QRMatrix&) = delete;
 
@@ -248,12 +258,7 @@ private:
         QRMatrix& operator=(const QRMatrix&) = delete;
 
 
-public:
-
     // Constructors
-
-        //- No default construct
-        QRMatrix() = delete;
 
         //- Construct with a matrix and perform QR decomposition
         explicit QRMatrix
@@ -359,6 +364,9 @@ public:
         //- Return the inverse of (Q*R), solving x = (Q*R).inv()*source
         SMatrix inv() const;
 };
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace MatrixTools
 {

@@ -83,7 +83,17 @@ class ConstMatrixBlock
 
 public:
 
-    typedef typename MatrixType::cmptType cmptType;
+    // Typedefs
+
+        //- The value type the Matrix contains
+        typedef typename MatrixType::cmptType cmptType;
+
+        //- The value type the Matrix contains
+        typedef typename MatrixType::value_type value_type;
+
+        //- The type to represent the size of a Matrix
+        typedef typename MatrixType::size_type size_type;
+
 
     // Constructors
 
@@ -101,13 +111,16 @@ public:
     // Member Functions
 
         //- Return the number of rows in the block
-        inline label m() const;
+        label m() const noexcept { return mRows_; }
 
         //- Return the number of columns in the block
-        inline label n() const;
+        label n() const noexcept { return nCols_; }
 
-        //- Return row/column sizes
-        inline labelPair sizes() const;
+        //- The number of elements in the block (m*n)
+        inline label size() const noexcept;
+
+        //- Return row/column sizes of the block
+        inline labelPair sizes() const noexcept;
 
         //- (i, j) const element access operator
         inline const cmptType& operator()
@@ -153,7 +166,16 @@ class MatrixBlock
 
 public:
 
-    typedef typename MatrixType::cmptType cmptType;
+    // Typedefs
+
+        //- The value type the Matrix contains
+        typedef typename MatrixType::cmptType cmptType;
+
+        //- The value type the Matrix contains
+        typedef typename MatrixType::value_type value_type;
+
+        //- The type to represent the size of a Matrix
+        typedef typename MatrixType::size_type size_type;
 
 
     // Generated Methods
@@ -178,13 +200,16 @@ public:
     // Member Functions
 
         //- Return the number of rows in the block
-        inline label m() const;
+        label m() const noexcept { return mRows_; }
 
         //- Return the number of columns in the block
-        inline label n() const;
+        label n() const noexcept { return nCols_; }
 
-        //- Return row/column sizes
-        inline labelPair sizes() const;
+        //- The number of elements in the block (m*n)
+        inline label size() const noexcept;
+
+        //- Return row/column sizes of the block
+        inline labelPair sizes() const noexcept;
 
         //- (i, j) const element access operator
         inline const cmptType& operator()

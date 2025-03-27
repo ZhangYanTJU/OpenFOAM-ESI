@@ -173,8 +173,8 @@ void Foam::DMDModels::STDMD::compress()
         DiagonalMatrix<scalar> EVals(EM.EValsRe());
 
         // Sort eigenvalues in descending order, and track indices
-        const auto descend = [&](scalar a, scalar b){ return a > b; };
-        const List<label> permutation(EVals.sortPermutation(descend));
+        const auto descend = [](scalar a, scalar b){ return a > b; };
+        const labelList permutation(EVals.sortPermutation(descend));
         EVals.applyPermutation(permutation);
         EVals.resize(EVals.size() - 1);
 

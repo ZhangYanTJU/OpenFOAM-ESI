@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -105,11 +105,25 @@ class Matrix
 
 public:
 
-    //- Matrix type
-    typedef Matrix<Form, Type> mType;
+    // Typedefs
 
-    //- Component type
-    typedef Type cmptType;
+        //- Matrix type
+        typedef Matrix<Form, Type> mType;
+
+        //- The value type the Matrix contains
+        typedef Type cmptType;
+
+        //- The value type the Matrix contains
+        typedef Type value_type;
+
+        //- The type to represent the size of a Matrix
+        typedef label size_type;
+
+        //- Random access iterator for traversing a Matrix
+        typedef Type* iterator;
+
+        //- Random access iterator for traversing a Matrix
+        typedef const Type* const_iterator;
 
 
     // Static Member Functions
@@ -122,15 +136,6 @@ public:
         }
 
 
-    // Iterators
-
-        //- Random access iterator for traversing a Matrix
-        typedef Type* iterator;
-
-        //- Random access iterator for traversing a Matrix
-        typedef const Type* const_iterator;
-
-
     // Constructors
 
         //- Default construct (empty matrix)
@@ -141,7 +146,7 @@ public:
 
         //- Construct with given number of rows/columns
         //- initializing all elements to zero
-        Matrix(const label m, const label n, const Foam::zero);
+        Matrix(const label m, const label n, Foam::zero);
 
         //- Construct with given number of rows/columns
         //- initializing all elements to the given value
@@ -152,7 +157,7 @@ public:
 
         //- Construct given number of rows/columns
         //- initializing all elements to zero
-        inline Matrix(const labelPair& dims, const Foam::zero);
+        inline Matrix(const labelPair& dims, Foam::zero);
 
         //- Construct with given number of rows/columns
         //- initializing all elements to the given value
@@ -213,7 +218,7 @@ public:
         inline label size() const noexcept;
 
         //- Return row/column sizes
-        inline labelPair sizes() const;
+        inline labelPair sizes() const noexcept;
 
         //- Return const pointer to the first data element, which can also
         //- be used to address into Matrix contents
@@ -462,7 +467,7 @@ public:
         void operator=(const MatrixBlock<MatrixType>& Mb);
 
         //- Assignment of all elements to zero
-        void operator=(const Foam::zero);
+        void operator=(Foam::zero);
 
         //- Assignment of all elements to the given value
         void operator=(const Type& val);

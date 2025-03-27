@@ -48,7 +48,7 @@ template<class Type>
 inline Foam::SymmetricSquareMatrix<Type>::SymmetricSquareMatrix
 (
     const label n,
-    const Foam::zero
+    Foam::zero
 )
 :
     Matrix<SymmetricSquareMatrix<Type>, Type>(n, n, Foam::zero{})
@@ -103,7 +103,7 @@ Foam::SymmetricSquareMatrix<Type>::clone() const
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Type>
-inline void Foam::SymmetricSquareMatrix<Type>::operator=(const Foam::zero)
+inline void Foam::SymmetricSquareMatrix<Type>::operator=(Foam::zero)
 {
     Matrix<SymmetricSquareMatrix<Type>, Type>::operator=(Foam::zero{});
 }

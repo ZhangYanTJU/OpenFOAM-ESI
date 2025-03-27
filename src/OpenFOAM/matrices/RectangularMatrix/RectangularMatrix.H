@@ -87,7 +87,7 @@ public:
         (
             const label m,
             const label n,
-            const Foam::zero
+            Foam::zero
         );
 
         //- Construct given number of rows/columns
@@ -108,7 +108,7 @@ public:
 
         //- Construct given number of rows/columns by using a label pair
         //- and initializing all elements to zero
-        inline RectangularMatrix(const labelPair& dims, const Foam::zero);
+        inline RectangularMatrix(const labelPair& dims, Foam::zero);
 
         //- Construct given number of rows/columns by using a label pair
         //- and initializing all elements to the given value
@@ -138,7 +138,7 @@ public:
         inline void operator=(RectangularMatrix<Type>&& mat);
 
         //- Assign all elements to zero
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 
         //- Assign all elements to value
         inline void operator=(const Type& val);

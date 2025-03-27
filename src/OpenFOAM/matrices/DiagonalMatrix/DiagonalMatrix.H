@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,7 +82,7 @@ public:
         explicit DiagonalMatrix(const label n);
 
         //- Construct from size and initialise all elems to zero
-        DiagonalMatrix(const label n, const Foam::zero);
+        DiagonalMatrix(const label n, Foam::zero);
 
         //- Construct from size and initialise all elems to value
         DiagonalMatrix(const label n, const Type& val);
@@ -100,11 +100,11 @@ public:
         //- Return a sort permutation labelList according to
         //- a given comparison on the diagonal entries
         template<class CompOp>
-        List<label> sortPermutation(CompOp& compare) const;
+        labelList sortPermutation(const CompOp& compare) const;
 
         //- Column-reorder this Matrix according to
         //- a given permutation labelList
-        void applyPermutation(const List<label>& p);
+        void applyPermutation(const labelUList& p);
 };
 
 

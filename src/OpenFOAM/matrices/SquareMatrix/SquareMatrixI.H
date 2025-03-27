@@ -48,7 +48,7 @@ template<class Type>
 inline Foam::SquareMatrix<Type>::SquareMatrix
 (
     const label n,
-    const Foam::zero
+    Foam::zero
 )
 :
     Matrix<SquareMatrix<Type>, Type>(n, n, Foam::zero{})
@@ -118,7 +118,7 @@ template<class Type>
 inline Foam::SquareMatrix<Type>::SquareMatrix
 (
     const labelPair& dims,
-    const Foam::zero
+    Foam::zero
 )
 :
     Matrix<SquareMatrix<Type>, Type>(dims, Foam::zero{})
@@ -145,7 +145,7 @@ inline Foam::SquareMatrix<Type>::SquareMatrix
 (
     const label m,
     const label n,
-    const Foam::zero
+    Foam::zero
 )
 :
     Matrix<SquareMatrix<Type>, Type>(m, n, Foam::zero{})
@@ -305,7 +305,7 @@ inline void Foam::SquareMatrix<Type>::operator=(SquareMatrix<Type>&& mat)
 
 
 template<class Type>
-inline void Foam::SquareMatrix<Type>::operator=(const Foam::zero)
+inline void Foam::SquareMatrix<Type>::operator=(Foam::zero)
 {
     Matrix<SquareMatrix<Type>, Type>::operator=(Foam::zero{});
 }

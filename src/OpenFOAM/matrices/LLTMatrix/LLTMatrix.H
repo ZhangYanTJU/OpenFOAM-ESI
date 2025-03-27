@@ -77,8 +77,8 @@ public:
 
     // Constructors
 
-        //- Construct null
-        LLTMatrix();
+        //- Default construct
+        LLTMatrix() = default;
 
         //- Construct and perform the decomposition on input square matrix
         LLTMatrix(const SquareMatrix<Type>& mat);

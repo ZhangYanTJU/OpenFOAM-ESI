@@ -32,10 +32,10 @@ License
 template<class Form, class Cmpt, Foam::direction Mrows, Foam::direction Ncols>
 inline Foam::MatrixSpace<Form, Cmpt, Mrows, Ncols>::MatrixSpace
 (
-    const Foam::zero
+    Foam::zero
 )
 :
-    MatrixSpace::vsType(Zero)
+    MatrixSpace::vsType(Foam::zero{})
 {}
 
 
@@ -213,8 +213,8 @@ Foam::MatrixSpace<Form, Cmpt, Mrows, Ncols>::block()
 template<class Form, class Cmpt, Foam::direction Mrows, Foam::direction Ncols>
 inline const Cmpt& Foam::MatrixSpace<Form, Cmpt, Mrows, Ncols>::operator()
 (
-    const direction& i,
-    const direction& j
+    const direction i,
+    const direction j
 ) const
 {
     #ifdef FULLDEBUG
@@ -233,8 +233,8 @@ inline const Cmpt& Foam::MatrixSpace<Form, Cmpt, Mrows, Ncols>::operator()
 template<class Form, class Cmpt, Foam::direction Mrows, Foam::direction Ncols>
 inline Cmpt& Foam::MatrixSpace<Form, Cmpt, Mrows, Ncols>::operator()
 (
-    const direction& i,
-    const direction& j
+    const direction i,
+    const direction j
 )
 {
     #ifdef FULLDEBUG
@@ -318,10 +318,10 @@ operator()(const direction i, const direction j)
 template<class Form, class Cmpt, Foam::direction Mrows, Foam::direction Ncols>
 inline void Foam::MatrixSpace<Form, Cmpt, Mrows, Ncols>::operator=
 (
-    const Foam::zero
+    Foam::zero
 )
 {
-    MatrixSpace::vsType::operator=(Zero);
+    MatrixSpace::vsType::operator=(Foam::zero{});
 }
 
 

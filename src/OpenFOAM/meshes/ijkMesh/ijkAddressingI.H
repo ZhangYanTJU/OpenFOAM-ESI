@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,32 +60,20 @@ inline Foam::ijkAddressing::ijkAddressing
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline bool Foam::ijkAddressing::empty() const
+inline bool Foam::ijkAddressing::empty() const noexcept
 {
     return (!sizes_.x() || !sizes_.y() || !sizes_.z());
 }
 
 
-inline const Foam::labelVector& Foam::ijkAddressing::sizes() const
-{
-    return sizes_;
-}
-
-
-inline Foam::labelVector& Foam::ijkAddressing::sizes()
-{
-    return sizes_;
-}
-
-
-inline Foam::label Foam::ijkAddressing::size() const
+inline Foam::label Foam::ijkAddressing::size() const noexcept
 {
     // Could also use cmptProduct(sizes_);
     return (sizes_.x() * sizes_.y() * sizes_.z());
 }
 
 
-inline const Foam::label& Foam::ijkAddressing::size
+inline Foam::label Foam::ijkAddressing::size
 (
     const vector::components cmpt
 ) const
@@ -96,7 +84,7 @@ inline const Foam::label& Foam::ijkAddressing::size
 
 inline void Foam::ijkAddressing::clear()
 {
-    sizes_ = Zero;
+    sizes_ = Foam::zero{};
 }
 
 

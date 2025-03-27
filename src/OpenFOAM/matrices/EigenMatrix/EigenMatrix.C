@@ -204,7 +204,7 @@ void Foam::EigenMatrix<cmptType>::symmTridiagonalQL()
     for (label l = 0; l < n_; l++)
     {
         // Find SMALL subdiagonal element
-        tst1 = max(tst1, mag(EValsRe_[l]) + mag(EValsIm_[l]));
+        tst1 = Foam::max(tst1, mag(EValsRe_[l]) + mag(EValsIm_[l]));
         label m = l;
 
         // Original while-loop from Java code
@@ -462,7 +462,7 @@ void Foam::EigenMatrix<cmptType>::realSchur()
             EValsIm_[i] = Zero;
         }
 
-        for (label j = max(i - 1, 0); j < nn; ++j)
+        for (label j = Foam::max(i - 1, 0); j < nn; ++j)
         {
             norm += mag(H_[i][j]);
         }
@@ -745,7 +745,7 @@ void Foam::EigenMatrix<cmptType>::realSchur()
                     }
 
                     // Column modification
-                    for (label i = 0; i <= min(n, k + 3); ++i)
+                    for (label i = 0; i <= Foam::min(n, k + 3); ++i)
                     {
                         p = x*H_[i][k] + y*H_[i][k + 1];
 
@@ -952,7 +952,7 @@ void Foam::EigenMatrix<cmptType>::realSchur()
                     }
 
                     // Overflow control
-                    t = max(mag(H_[i][n - 1]), mag(H_[i][n]));
+                    t = Foam::max(mag(H_[i][n - 1]), mag(H_[i][n]));
 
                     if ((eps*t)*t > 1)
                     {
@@ -986,7 +986,7 @@ void Foam::EigenMatrix<cmptType>::realSchur()
         {
             z = Zero;
 
-            for (label k = low; k <= min(j, high); ++k)
+            for (label k = low; k <= Foam::min(j, high); ++k)
             {
                 z = z + EVecs_[i][k]*H_[k][j];
             }
@@ -998,37 +998,6 @@ void Foam::EigenMatrix<cmptType>::realSchur()
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-template<class cmptType>
-Foam::EigenMatrix<cmptType>::EigenMatrix(const SquareMatrix<cmptType>& A)
-:
-    n_(A.n()),
-    EValsRe_(n_, Zero),
-    EValsIm_(n_, Zero),
-    EVecs_(n_, Zero),
-    H_()
-{
-    if (n_ <= 0)
-    {
-        FatalErrorInFunction
-            << "Input matrix has zero size."
-            << abort(FatalError);
-    }
-
-    if (A.symmetric())
-    {
-        EVecs_ = A;
-        tridiagonaliseSymmMatrix();
-        symmTridiagonalQL();
-    }
-    else
-    {
-        H_ = A;
-        Hessenberg();
-        realSchur();
-    }
-}
-
 
 template<class cmptType>
 Foam::EigenMatrix<cmptType>::EigenMatrix
@@ -1063,6 +1032,13 @@ Foam::EigenMatrix<cmptType>::EigenMatrix
         realSchur();
     }
 }
+
+
+template<class cmptType>
+Foam::EigenMatrix<cmptType>::EigenMatrix(const SquareMatrix<cmptType>& A)
+:
+    EigenMatrix<cmptType>(A, A.symmetric())
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

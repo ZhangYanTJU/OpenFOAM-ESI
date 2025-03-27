@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,7 @@ Foam::DiagonalMatrix<Type>::DiagonalMatrix(const label n)
 
 
 template<class Type>
-Foam::DiagonalMatrix<Type>::DiagonalMatrix(const label n, const Foam::zero)
+Foam::DiagonalMatrix<Type>::DiagonalMatrix(const label n, Foam::zero)
 :
     List<Type>(n, Foam::zero{})
 {}
@@ -55,7 +55,7 @@ template<class Type>
 template<class Form>
 Foam::DiagonalMatrix<Type>::DiagonalMatrix(const Matrix<Form, Type>& mat)
 :
-    List<Type>(min(mat.m(), mat.n()))
+    List<Type>(Foam::min(mat.m(), mat.n()))
 {
     label i = 0;
 
@@ -86,9 +86,9 @@ void Foam::DiagonalMatrix<Type>::invert()
 
 template<class Type>
 template<class CompOp>
-Foam::List<Foam::label> Foam::DiagonalMatrix<Type>::sortPermutation
+Foam::labelList Foam::DiagonalMatrix<Type>::sortPermutation
 (
-    CompOp& compare
+    const CompOp& compare
 ) const
 {
     List<label> p(this->size());
@@ -105,7 +105,7 @@ Foam::List<Foam::label> Foam::DiagonalMatrix<Type>::sortPermutation
 
 
 template<class Type>
-void Foam::DiagonalMatrix<Type>::applyPermutation(const List<label>& p)
+void Foam::DiagonalMatrix<Type>::applyPermutation(const labelUList& p)
 {
     #ifdef FULLDEBUG
     if (this->size() != p.size())
@@ -153,7 +153,7 @@ DiagonalMatrix<Type> inv(const DiagonalMatrix<Type>& mat)
 {
     // Construct with fall-back value conditional calculation
     // of invert to avoid over-eager compiler optimisation
-    DiagonalMatrix<Type> Ainv(mat.size(), Zero);
+    DiagonalMatrix<Type> Ainv(mat.size(), Foam::zero{});
 
     Type* iter = Ainv.begin();
 
@@ -177,7 +177,7 @@ template<class Type>
 DiagonalMatrix<Type> applyPermutation
 (
     const DiagonalMatrix<Type>& mat,
-    const List<label>& p
+    const labelUList& p
 )
 {
     #ifdef FULLDEBUG

@@ -87,42 +87,30 @@ Foam::MatrixBlock<MatrixType>::MatrixBlock
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class MatrixType>
-inline Foam::label Foam::ConstMatrixBlock<MatrixType>::m() const
+inline Foam::label Foam::ConstMatrixBlock<MatrixType>::size() const noexcept
 {
-    return mRows_;
+    return (mRows_ * nCols_);
 }
 
 
 template<class MatrixType>
-inline Foam::label Foam::ConstMatrixBlock<MatrixType>::n() const
+inline Foam::label Foam::MatrixBlock<MatrixType>::size() const noexcept
 {
-    return nCols_;
+    return (mRows_ * nCols_);
 }
 
 
 template<class MatrixType>
-inline Foam::label Foam::MatrixBlock<MatrixType>::m() const
-{
-    return mRows_;
-}
-
-
-template<class MatrixType>
-inline Foam::label Foam::MatrixBlock<MatrixType>::n() const
-{
-    return nCols_;
-}
-
-
-template<class MatrixType>
-inline Foam::labelPair Foam::ConstMatrixBlock<MatrixType>::sizes() const
+inline Foam::labelPair
+Foam::ConstMatrixBlock<MatrixType>::sizes() const noexcept
 {
     return labelPair(mRows_, nCols_);
 }
 
 
 template<class MatrixType>
-inline Foam::labelPair Foam::MatrixBlock<MatrixType>::sizes() const
+inline Foam::labelPair
+Foam::MatrixBlock<MatrixType>::sizes() const noexcept
 {
     return labelPair(mRows_, nCols_);
 }

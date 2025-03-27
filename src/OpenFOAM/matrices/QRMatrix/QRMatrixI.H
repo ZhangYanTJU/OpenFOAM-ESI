@@ -32,7 +32,7 @@ template<class MatrixType>
 inline Foam::SquareMatrix<typename MatrixType::cmptType>
 Foam::QRMatrix<MatrixType>::P() const
 {
-    SquareMatrix<cmptType> P(p_.size(), Zero);
+    SquareMatrix<cmptType> P(p_.size(), Foam::zero{});
 
     forAll(p_, jcol)
     {

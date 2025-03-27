@@ -200,6 +200,12 @@ class EigenMatrix
 
 public:
 
+    // Typedefs
+
+        //- The value type the Matrix contains
+        typedef cmptType value_type;
+
+
     // Generated Methods
 
         //- No default construct
