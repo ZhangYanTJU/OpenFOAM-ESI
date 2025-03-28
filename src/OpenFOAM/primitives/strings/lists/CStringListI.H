@@ -86,16 +86,7 @@ inline Foam::CStringList::CStringList(const UList<StringType>& input)
 :
     CStringList()
 {
-    reset(input);
-}
-
-
-template<class StringType>
-inline Foam::CStringList::CStringList(const SubStrings<StringType>& input)
-:
-    CStringList()
-{
-    reset(input);
+    resetContent(input);
 }
 
 
@@ -127,55 +118,9 @@ inline void Foam::CStringList::clear()
 }
 
 
-inline bool Foam::CStringList::empty() const noexcept
-{
-    return !argc_;
-}
-
-
-inline int Foam::CStringList::size() const noexcept
-{
-    return argc_;
-}
-
-
-inline char** Foam::CStringList::strings() const noexcept
-{
-    return argv_;
-}
-
-
 inline char** Foam::CStringList::strings(int start) const
 {
     return &(argv_[start]);
-}
-
-
-template<class StringType>
-inline int Foam::CStringList::reset(const UList<StringType>& input)
-{
-    return resetContent(input);
-}
-
-
-template<class StringType>
-inline int Foam::CStringList::reset(const SubStrings<StringType>& input)
-{
-    return resetContent(input);
-}
-
-
-// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
-
-inline const char* Foam::CStringList::get(int i) const
-{
-    return argv_[i];
-}
-
-
-inline const char* Foam::CStringList::operator[](int i) const
-{
-    return argv_[i];
 }
 
 

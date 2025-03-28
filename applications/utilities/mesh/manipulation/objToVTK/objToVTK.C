@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,7 +37,7 @@ Description
 
 #include "argList.H"
 #include "OFstream.H"
-#include "StringStream.H"
+#include "stringOps.H"
 #include "point.H"
 #include "DynamicList.H"
 
@@ -58,58 +58,49 @@ string getLine(std::ifstream& is)
 }
 
 
-// Read space-separated vertices (with optional '/' arguments)
-labelList parseVertices(const string& line)
+// Token list with one of the following:
+//     f v1 v2 v3 ...
+//     f v1/vt1 v2/vt2 v3/vt3 ...
+//     l v1 v2 v3 ...
+//     l v1/vt1 v2/vt2 v3/vt3 ...
+static label readObjVertices
+(
+    const SubStrings& tokens,
+    DynamicList<label>& verts
+)
 {
-    DynamicList<label> verts;
+    verts.clear();
 
-    // Assume 'l' is followed by space.
-    string::size_type endNum = 1;
-
-    do
+    bool first = true;
+    for (const auto& tok : tokens)
     {
-        string::size_type startNum = line.find_first_not_of(' ', endNum);
-
-        if (startNum == string::npos)
+        if (first)
         {
-            break;
+            // skip initial "f" or "l"
+            first = false;
+            continue;
         }
 
-        endNum = line.find(' ', startNum);
+        std::string vrtSpec(tok.str());
 
-        string vertexSpec;
-        if (endNum != string::npos)
+        if
+        (
+            const auto slash = vrtSpec.find('/');
+            slash != std::string::npos
+        )
         {
-            vertexSpec = line.substr(startNum, endNum-startNum);
-        }
-        else
-        {
-            vertexSpec = line.substr(startNum, line.size() - startNum);
+            vrtSpec.erase(slash);
         }
 
-        string::size_type slashPos = vertexSpec.find('/');
+        label vertId = readLabel(vrtSpec);
 
-        label vertI = 0;
-        if (slashPos != string::npos)
-        {
-            IStringStream intStream(vertexSpec.substr(0, slashPos));
-
-            intStream >> vertI;
-        }
-        else
-        {
-            IStringStream intStream(vertexSpec);
-
-            intStream >> vertI;
-        }
-        verts.append(vertI - 1);
+        verts.push_back(vertId - 1);
     }
-    while (true);
 
-    return verts.shrink();
+    return verts.size();
 }
 
-
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
@@ -142,6 +133,8 @@ int main(int argc, char *argv[])
     DynamicList<labelList> polyLines;
     DynamicList<labelList> polygons;
 
+    DynamicList<label> dynVerts;
+
     bool hasWarned = false;
 
     label lineNo = 0;
@@ -152,33 +145,58 @@ int main(int argc, char *argv[])
 
         if (line.empty()) continue;
 
-        // Read first word
-        IStringStream lineStream(line);
-        word cmd(lineStream);
+        const auto tokens = stringOps::splitSpace(line);
+
+        // Require command and some arguments
+        if (tokens.size() < 2)
+        {
+            continue;
+        }
+
+        const word cmd = word::validate(tokens[0]);
 
         if (cmd == "v")
         {
-            scalar x, y, z;
+            // Vertex
+            // v x y z
 
-            lineStream >> x >> y >> z;
-
-            points.append(point(x, y, z));
+            points.emplace_back
+            (
+                readScalar(tokens[1]),
+                readScalar(tokens[2]),
+                readScalar(tokens[3])
+            );
         }
         else if (cmd == "vn")
         {
-            scalar x, y, z;
+            // Vertex normals
+            // vn x y z
 
-            lineStream >> x >> y >> z;
-
-            pointNormals.append(vector(x, y, z));
+            pointNormals.emplace_back
+            (
+                readScalar(tokens[1]),
+                readScalar(tokens[2]),
+                readScalar(tokens[3])
+            );
         }
         else if (cmd == "l")
         {
-            polyLines.append(parseVertices(line));
+            // Line
+            // l v1 v2 v3 ...
+            // OR
+            // l v1/vt1 v2/vt2 v3/vt3 ...
+
+            readObjVertices(tokens, dynVerts);
+            polyLines.emplace_back() = dynVerts;
         }
         else if (cmd == "f")
         {
-            polygons.append(parseVertices(line));
+            // f v1 v2 v3 ...
+            // OR
+            // f v1/vt1 v2/vt2 v3/vt3 ...
+
+            readObjVertices(tokens, dynVerts);
+            polygons.emplace_back() = dynVerts;
         }
         else if (cmd != "")
         {
@@ -188,7 +206,7 @@ int main(int argc, char *argv[])
 
                 WarningInFunction
                     << "Unrecognized OBJ command " << cmd << nl
-                    << "In line " << lineStream.str()
+                    << "In line " << line
                     << " at linenumber " << lineNo << nl
                     << "Only recognized commands are 'v' and 'l'.\n"
                     << "If this is a surface command use surfaceConvert instead"
@@ -230,46 +248,42 @@ int main(int argc, char *argv[])
     }
 
     label nItems = 0;
-    forAll(polyLines, polyI)
+    for (const labelList& line : polyLines)
     {
-        nItems += polyLines[polyI].size() + 1;
+        nItems += line.size() + 1;
     }
 
     outFile
         << "LINES " << polyLines.size() << ' ' << nItems << nl;
 
-    forAll(polyLines, polyI)
+    for (const labelList& line : polyLines)
     {
-        const labelList& line = polyLines[polyI];
-
         outFile << line.size();
 
-        forAll(line, i)
+        for (const label vrt : line)
         {
-            outFile << ' ' << line[i];
+            outFile << ' ' << vrt;
         }
         outFile << nl;
     }
 
 
     nItems = 0;
-    forAll(polygons, polyI)
+    for (const labelList& line : polygons)
     {
-        nItems += polygons[polyI].size() + 1;
+        nItems += line.size() + 1;
     }
 
     outFile
         << "POLYGONS " << polygons.size() << ' ' << nItems << nl;
 
-    forAll(polygons, polyI)
+    for (const labelList& line : polygons)
     {
-        const labelList& line = polygons[polyI];
-
         outFile << line.size();
 
-        forAll(line, i)
+        for (const label vrt : line)
         {
-            outFile << ' ' << line[i];
+            outFile << ' ' << vrt;
         }
         outFile << nl;
     }

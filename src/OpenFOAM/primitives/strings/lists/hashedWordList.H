@@ -32,8 +32,8 @@ Description
     situations than using the normal list find/found methods.
 
 SourceFiles
+    hashedWordList.cxx
     hashedWordListI.H
-    hashedWordList.C
 
 \*---------------------------------------------------------------------------*/
 

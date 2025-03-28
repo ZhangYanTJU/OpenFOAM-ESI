@@ -158,14 +158,15 @@ $(strings)/keyType/keyType.C
 $(strings)/regex/regExpCxx.C
 $(strings)/wordRe/wordRe.C
 $(strings)/wordRes/wordRes.C
-$(strings)/lists/CStringList.C
-$(strings)/lists/hashedWordList.C
+$(strings)/lists/CStringList.cxx
+$(strings)/lists/hashedWordList.cxx
 $(strings)/parsing/parsing.C
 $(strings)/parsing/genericRagelLemonDriver.C
-$(strings)/stringOps/stringOps.C
-$(strings)/stringOps/stringOpsEvaluate.C
-$(strings)/stringOps/stringOpsSort.C
-$(strings)/stringOps/stringOpsSplit.C
+$(strings)/stringOps/stringOps.cxx
+$(strings)/stringOps/stringOpsEvaluate.cxx
+$(strings)/stringOps/stringOpsSort.cxx
+$(strings)/stringOps/stringOpsSplit.cxx
+$(strings)/stringOps/stringOpsSubstr.cxx
 
 expr = expressions
 $(expr)/exprEntry/expressionEntry.C

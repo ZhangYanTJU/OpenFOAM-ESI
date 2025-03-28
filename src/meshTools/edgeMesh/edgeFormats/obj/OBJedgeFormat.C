@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,7 +44,7 @@ namespace Foam
 //     l v1/vt1 v2/vt2 v3/vt3 ...
 static label readObjVertices
 (
-    const SubStrings<string>& tokens,
+    const SubStrings& tokens,
     DynamicList<label>& verts
 )
 {
@@ -60,17 +60,20 @@ static label readObjVertices
             continue;
         }
 
-        const string vrtSpec(tok);
-        const auto slash = vrtSpec.find('/');
+        std::string vrtSpec(tok.str());
 
-        const label vertId =
+        if
         (
-            slash != string::npos
-          ? readLabel(vrtSpec.substr(0, slash))
-          : readLabel(vrtSpec)
-        );
+            const auto slash = vrtSpec.find('/');
+            slash != std::string::npos
+        )
+        {
+            vrtSpec.erase(slash);
+        }
 
-        verts.append(vertId - 1);
+        label vertId = readLabel(vrtSpec);
+
+        verts.push_back(vertId - 1);
     }
 
     return verts.size();

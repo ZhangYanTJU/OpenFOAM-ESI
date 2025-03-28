@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,10 +58,9 @@ namespace Foam
 //
 // thus call extractTimeset with minElements == 2
 //
-template<class StringType>
 static inline labelPair extractTimeset
 (
-    const SubStrings<StringType>& split,
+    const SubStrings& split,
     const std::size_t minElements
 )
 {
@@ -239,7 +238,7 @@ void Foam::ensightSurfaceReader::readCase(ISstream& is)
     }
 
     string buffer;
-    SubStrings<string> split;
+    SubStrings split;
 
     ParseSection parseState = ParseSection::UNKNOWN;
 

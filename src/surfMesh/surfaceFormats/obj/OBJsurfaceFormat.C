@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -168,17 +168,20 @@ bool Foam::fileFormats::OBJsurfaceFormat<Face>::read
                     continue;
                 }
 
-                const string vrtSpec(tok);
-                const auto slash = vrtSpec.find('/');
+                std::string vrtSpec(tok.str());
 
-                const label vertId =
+                if
                 (
-                    slash != string::npos
-                  ? readLabel(vrtSpec.substr(0, slash))
-                  : readLabel(vrtSpec)
-                );
+                    const auto slash = vrtSpec.find('/');
+                    slash != std::string::npos
+                )
+                {
+                    vrtSpec.erase(slash);
+                }
 
-                dynVerts.append(vertId - 1);
+                label vertId = readLabel(vrtSpec);
+
+                dynVerts.push_back(vertId - 1);
             }
 
             const labelUList& f = dynVerts;

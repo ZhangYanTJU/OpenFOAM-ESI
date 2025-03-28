@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,12 +25,26 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "SubStrings.H"
+#include "CStringList.H"
+#include "Ostream.H"
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class ListType>
-int Foam::CStringList::resetContent(const ListType& input)
+Foam::CStringList::CStringList(const SubStrings& input)
+:
+    CStringList()
+{
+    resetContent(input);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+// Largely identical to resetContent() except with 'c-string'
+int Foam::CStringList::reset
+(
+    std::initializer_list<const char* const> input
+)
 {
     clear();
 
@@ -43,9 +57,10 @@ int Foam::CStringList::resetContent(const ListType& input)
     }
 
     // Count overall required string length, including each trailing nul char
-    for (const auto& s : input)
+    for (const char* const s : input)
     {
-        nbytes_ += s.length() + 1;
+        // nbytes_ += Foam::string::length(s) + 1
+        nbytes_ += (s ? strlen(s) : 0) + 1;
     }
     --nbytes_;  // Do not include final nul char in overall count
 
@@ -54,7 +69,7 @@ int Foam::CStringList::resetContent(const ListType& input)
 
     argv_[0] = data_;   // Starts here
 
-    for (const auto& s : input)
+    for (const char* const s : input)
     {
         char *next = stringCopy(argv_[argc_], s);
         argv_[++argc_] = next;  // The start of next string
@@ -66,28 +81,29 @@ int Foam::CStringList::resetContent(const ListType& input)
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class StringType>
-Foam::List<StringType>
-Foam::CStringList::asList(int argc, const char * const argv[])
+// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
+
+Foam::Ostream& Foam::operator<<(Ostream& os, const CStringList& list)
 {
-    List<StringType> list(argc);
+    const int n = list.size();
 
-    for (int i=0; i < argc; ++i)
+    bool separator = false;
+
+    for (int i = 0; i < n; ++i)
     {
-        if (argv[i]) list[i] = argv[i];
+        const char* p = list.get(i);
+
+        if (p && *p)
+        {
+            if (separator) os << ' ';
+            os << p;
+
+            separator = true;
+        }
     }
 
-    return list;
-}
-
-
-template<class StringType>
-Foam::List<StringType>
-Foam::CStringList::asList(const char * const argv[])
-{
-    return asList<StringType>(count(argv), argv);
+    return os;
 }
 
 

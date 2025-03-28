@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,15 +25,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "CStringList.H"
-#include "Ostream.H"
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-int Foam::CStringList::reset
-(
-    std::initializer_list<const char* const> input
-)
+template<class ListType>
+int Foam::CStringList::resetContent(const ListType& input)
 {
     clear();
 
@@ -46,10 +41,10 @@ int Foam::CStringList::reset
     }
 
     // Count overall required string length, including each trailing nul char
-    for (const char* const s : input)
+    for (const auto& s : input)
     {
-        // nbytes_ += Foam::string::length(s) + 1
-        nbytes_ += (s ? strlen(s) : 0) + 1;
+        // NB: use length() instead of size() to support std::sub_match
+        nbytes_ += s.length() + 1;
     }
     --nbytes_;  // Do not include final nul char in overall count
 
@@ -58,7 +53,7 @@ int Foam::CStringList::reset
 
     argv_[0] = data_;   // Starts here
 
-    for (const char* const s : input)
+    for (const auto& s : input)
     {
         char *next = stringCopy(argv_[argc_], s);
         argv_[++argc_] = next;  // The start of next string
@@ -70,29 +65,28 @@ int Foam::CStringList::reset
 }
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
-
-Foam::Ostream& Foam::operator<<(Ostream& os, const CStringList& list)
+template<class StringType>
+Foam::List<StringType>
+Foam::CStringList::asList(int argc, const char * const argv[])
 {
-    const int n = list.size();
+    List<StringType> list(argc);
 
-    bool separator = false;
-
-    for (int i = 0; i < n; ++i)
+    for (int i=0; i < argc; ++i)
     {
-        const char* p = list.get(i);
-
-        if (p && *p)
-        {
-            if (separator) os << ' ';
-            os << p;
-
-            separator = true;
-        }
+        if (argv[i]) list[i] = argv[i];
     }
 
-    return os;
+    return list;
+}
+
+
+template<class StringType>
+Foam::List<StringType>
+Foam::CStringList::asList(const char * const argv[])
+{
+    return asList<StringType>(count(argv), argv);
 }
 
 

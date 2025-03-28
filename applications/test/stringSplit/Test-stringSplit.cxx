@@ -43,7 +43,7 @@ template<class StringType>
 void printSubStrings
 (
     const StringType& str,
-    const SubStrings<StringType>& split
+    const SubStrings& split
 )
 {
     Info<< "string {" << str.size() << " chars} = " << str << nl

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,7 +59,7 @@ static List<expressions::exprString> expandExprStrings
     for (const string& input : inputs)
     {
         // Allow inline list of semicolon-separated variables
-        const auto varExpressions = stringOps::split<string>(input, ';');
+        const auto varExpressions = stringOps::split(input, ';');
 
         for (const auto& subMatch : varExpressions)
         {

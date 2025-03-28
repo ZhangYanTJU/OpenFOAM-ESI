@@ -30,12 +30,12 @@ Description
     Specialized string sorting.
 
 SourceFiles
-    stringOpsSort.C
+    stringOpsSort.cxx
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef stringOpsSort_H
-#define stringOpsSort_H
+#ifndef Foam_stringOpsSort_H
+#define Foam_stringOpsSort_H
 
 #include "stringOps.H"
 

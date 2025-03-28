@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -192,8 +192,7 @@ Foam::dictionary::const_searcher Foam::dictionary::csearchSlashScoped
         }
     }
 
-    // Split on '/'
-    auto cmpts = stringOps::split<std::string>(keyword, '/');
+    auto cmpts = stringOps::split(keyword, '/');
     auto remaining = cmpts.size();
 
     for (const auto& cmpt : cmpts)
@@ -397,7 +396,7 @@ const Foam::dictionary* Foam::dictionary::cfindScopedDict
 
     fileName path(dictPath); // Work on copy
     path.clean();  // Remove unneeded ".."
-    auto dictCmpts = stringOps::split(path, '/');  // Split on '/'
+    auto dictCmpts = stringOps::split(path, '/');
 
     for (const auto& cmpt : dictCmpts)
     {
@@ -502,7 +501,7 @@ Foam::dictionary* Foam::dictionary::makeScopedDict(const fileName& dictPath)
 
     std::string path(dictPath); // Work on a copy
     fileName::clean(path);  // Remove unneeded ".."
-    auto dictCmpts = stringOps::split(path, '/'); // Split on '/'
+    auto dictCmpts = stringOps::split(path, '/');
 
     for (const auto& cmpt : dictCmpts)
     {

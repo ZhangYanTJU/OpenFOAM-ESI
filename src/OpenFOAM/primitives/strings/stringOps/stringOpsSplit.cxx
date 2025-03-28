@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,7 +99,7 @@ Foam::label Foam::stringOps::splitFunctionArgs
     // The depth of the argument parsing
     int argLevel = 0;
 
-    const auto strLen = str.length();
+    const auto strLen = str.size();
 
     // Pass 1: parsing begin/end parse positions.
 
@@ -136,11 +136,11 @@ Foam::label Foam::stringOps::splitFunctionArgs
                 if (isNamed)
                 {
                     named.push_back(argName);
-                    named.push_back(rangeType(beg, pos));
+                    named.emplace_back(beg, pos);
                 }
                 else
                 {
-                    unnamed.push_back(rangeType(beg, pos));
+                    unnamed.emplace_back(beg, pos);
                 }
                 isNamed = false;
                 beg = pos + 1;

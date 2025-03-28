@@ -645,7 +645,7 @@ bool Foam::fileFormats::ensightMeshReader::readGeometry
 
 
     // Parse all
-    SubStrings<string> split;
+    SubStrings split;
 
     while (is.good())
     {

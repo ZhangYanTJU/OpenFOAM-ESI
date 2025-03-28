@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2010-2018 Bernhard Gschaider
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -387,8 +387,7 @@ void Foam::expressions::exprDriver::addVariables
     }
 
     // Allow inline list of semicolon-separated variables
-    const auto varExpressions =
-        stringOps::split<expressions::exprString>(expr, ';');
+    const auto varExpressions = stringOps::split(expr, ';');
 
     for (const auto& subMatch : varExpressions)
     {

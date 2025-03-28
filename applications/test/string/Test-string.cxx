@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
         inputType in1("move-construct-from");
 
-        Info<<"move construct from " << in1.length() << nl;
+        Info<<"move construct from " << in1.size() << nl;
 
         outputType out1(std::move(in1));
 
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
         out1 = "some-text-rubbish";
         out1.resize(10);
 
-        Info<<"move assign from " << in1.length() << nl;
+        Info<<"move assign from " << in1.size() << nl;
 
         out1 = std::move(in1);
 
@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
 
     string s2(s.expand());
 
-    cout<< "output string with " << s2.length() << " characters\n";
+    cout<< "output string with " << s2.size() << " characters\n";
     cout<< "ostream<<  >" << s2 << "<\n";
     Info<< "Ostream<<  >" << s2 << "<\n";
     Info<< "hash:" << hex << string::hasher()(s2) << dec << endl;

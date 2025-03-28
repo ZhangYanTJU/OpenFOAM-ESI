@@ -590,7 +590,7 @@ Foam::wordList Foam::basicThermo::splitThermoName
     // Splits things like
     // "hePsiThermo<pureMixture<const<hConst<perfectGas<specie>>,enthalpy>>>"
 
-    const auto parsed = stringOps::splitAny<std::string>(thermoName, " ,<>");
+    const auto parsed = stringOps::splitAny(thermoName, " ,<>");
     const int nParsed(parsed.size());
 
     wordList cmpts;

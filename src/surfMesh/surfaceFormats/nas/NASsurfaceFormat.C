@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -191,8 +191,7 @@ bool Foam::fileFormats::NASsurfaceFormat<Face>::read
         if (line.starts_with("$ANSA_NAME"))
         {
             // Keep empty elements when splitting
-            const auto args =
-                stringOps::split<std::string>(line, ';', 0, true);
+            const auto args = stringOps::split(line, ';', 0, true);
 
             if (args.size() > 4 && line.starts_with("$ANSA_NAME_COMMENT"))
             {

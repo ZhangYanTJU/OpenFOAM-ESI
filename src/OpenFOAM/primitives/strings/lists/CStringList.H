@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -54,6 +54,7 @@ Description
 #include "fileNameList.H"
 #include "stringList.H"
 #include "wordList.H"
+#include "SubStrings.H"
 
 #include <algorithm>  // std::copy
 #include <utility>    // std::initializer_list
@@ -62,9 +63,6 @@ Description
 
 namespace Foam
 {
-
-// Forward Declarations
-template<class StringType> class SubStrings;
 
 /*---------------------------------------------------------------------------*\
                          Class CStringList Declaration
@@ -137,8 +135,7 @@ public:
 
         //- Copy construct from a list of sub-string references
         //  Copies the input characters.
-        template<class StringType>
-        inline explicit CStringList(const SubStrings<StringType>& input);
+        explicit CStringList(const SubStrings& input);
 
 
     //- Destructor. Invokes clear() to free memory.
@@ -155,10 +152,10 @@ public:
     // Access
 
         //- True if the size (ie, argc) is zero.
-        inline bool empty() const noexcept;
+        bool empty() const noexcept { return !argc_; }
 
         //- Return the number of C-strings (ie, argc)
-        inline int size() const noexcept;
+        int size() const noexcept { return argc_; }
 
         //- The flattened character content, with interspersed nul-chars
         const char* cdata_bytes() const noexcept { return data_; }
@@ -174,11 +171,11 @@ public:
         size_t length() const noexcept { return nbytes_; }
 
         //- Return string element at the given index. No bounds checking.
-        const char* get(int i) const;
+        const char* get(int i) const { return argv_[i]; }
 
         //- Return the list of C-strings (ie, argv)
         //  The position at argc is a nullptr
-        inline char** strings() const noexcept;
+        char** strings() const noexcept { return argv_; }
 
         //- Return the sublist of C-strings (ie, argv) starting at the
         //- specified offset.
@@ -198,31 +195,36 @@ public:
         //- Copy the input list of strings.
         //  \return number of arguments (argc)
         template<class StringType>
-        inline int reset(const UList<StringType>& input);
+        int reset(const UList<StringType>& input)
+        {
+            return resetContent(input);
+        }
 
         //- Copy the input list of strings.
         //  \return number of arguments (argc)
-        template<class StringType>
-        inline int reset(const SubStrings<StringType>& input);
+        int reset(const SubStrings& input)
+        {
+            return resetContent(input);
+        }
 
 
     // Other
 
         //- Create a list from argc/argv parameters.
         //  A null pointer for argv is permissible when argc is zero.
-        template<class StringType>
+        template<class StringType = std::string>
         static List<StringType> asList(int argc, const char * const argv[]);
 
         //- Create a list from a nullptr-terminated list of argv parameters.
         //  Using a nullptr for argv is permissible.
-        template<class StringType>
+        template<class StringType = std::string>
         static inline List<StringType> asList(const char * const argv[]);
 
 
     // Member Operators
 
         //- Return element at the given index. No bounds checking.
-        inline const char* operator[](int i) const;
+        const char* operator[](int i) const { return argv_[i]; }
 };
 
 
@@ -241,7 +243,7 @@ Ostream& operator<<(Ostream& os, const CStringList& list);
 #include "CStringListI.H"
 
 #ifdef NoRepository
-#   include "CStringListTemplates.C"
+#   include "CStringList.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

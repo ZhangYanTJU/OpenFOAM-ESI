@@ -177,7 +177,7 @@ static void expandLeadingTilde(std::string& s)
     }
     else
     {
-        s = home(user)/file;
+        s = Foam::home(user)/file;
     }
 }
 
@@ -1033,7 +1033,7 @@ Foam::stringOps::findTrim
         ++pos;
     }
 
-    return std::pair<std::size_t, std::size_t>(pos, end);
+    return {pos, end};
 }
 
 

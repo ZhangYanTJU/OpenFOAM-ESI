@@ -119,6 +119,8 @@ static inline void* loadLibrary(const Foam::fileName& libName)
     constexpr int ldflags = (RTLD_LAZY|RTLD_GLOBAL);
 
 #ifdef __APPLE__
+    using namespace Foam;
+
     const char* normal = nullptr;
     const char* shadow = nullptr;
 
@@ -132,8 +134,8 @@ static inline void* loadLibrary(const Foam::fileName& libName)
         // SIP appears to have cleared DYLD_LIBRARY_PATH but the
         // shadow parameter is available
 
-        const Foam::string ldPaths(shadow);
-        const auto paths = Foam::stringOps::split<Foam::string>(ldPaths, ':');
+        const std::string ldPaths(shadow);
+        const auto paths = Foam::stringOps::split(ldPaths, ':');
 
         for (const auto& p : paths)
         {

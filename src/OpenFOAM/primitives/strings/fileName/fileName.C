@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -538,7 +538,7 @@ Foam::fileName Foam::fileName::relative
 
 Foam::wordList Foam::fileName::components(const char delim) const
 {
-    const auto parsed = stringOps::split<string>(*this, delim);
+    const auto parsed = stringOps::split(*this, delim);
 
     wordList words(parsed.size());
 
@@ -561,7 +561,7 @@ Foam::word Foam::fileName::component
     const char delim
 ) const
 {
-    const auto parsed = stringOps::split<string>(*this, delim);
+    const auto parsed = stringOps::split(*this, delim);
 
     if (parsed.size())
     {

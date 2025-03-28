@@ -37,7 +37,7 @@ Description
     Various utility functions to work on lists of strings.
 
 SourceFiles
-    stringListOpsTemplates.C
+    stringListOps.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -486,7 +486,7 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "stringListOpsTemplates.C"
+    #include "stringListOps.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

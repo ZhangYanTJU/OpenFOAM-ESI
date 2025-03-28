@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,84 +25,19 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "stringOps.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-template<class StringType, class UnaryPredicate>
-StringType Foam::stringOps::quotemeta
-(
-    const StringType& str,
-    const UnaryPredicate& meta,
-    const char quote
-)
-{
-    if (str.empty() || !quote)
-    {
-        return str;
-    }
-
-    StringType result;
-    result.reserve(1.5*str.size());  // Moderately pessimistic
-
-    bool escaped = false;
-    for (const char c : str)
-    {
-        if (c == quote)
-        {
-            escaped = !escaped;  // toggle state
-        }
-        else if (escaped)
-        {
-            escaped = false;
-        }
-        else if (meta(c))
-        {
-            result += quote;
-        }
-        result += c;
-    }
-
-    result.shrink_to_fit();
-    return result;
-}
-
-
-template<class StringType, class UnaryPredicate>
-StringType Foam::stringOps::validate
+Foam::SubStrings Foam::stringOps::split
 (
     const std::string& str,
-    const UnaryPredicate& accept,
-    const bool invert
-)
-{
-    StringType out;
-    out.resize(str.length());
-
-    std::string::size_type len = 0;
-
-    for (std::string::size_type i = 0; i < str.length(); ++i)
-    {
-        const char c = str[i];
-        if (accept(c) ? !invert : invert)
-        {
-            out[len++] += c;
-        }
-    }
-
-    out.erase(len);
-    return out;
-}
-
-
-template<class StringType>
-Foam::SubStrings<StringType> Foam::stringOps::split
-(
-    const StringType& str,
     const char delim,
     std::string::size_type pos,
     const bool keepEmpty
 )
 {
-    Foam::SubStrings<StringType> list;
+    Foam::SubStrings list;
 
     if
     (
@@ -135,16 +70,15 @@ Foam::SubStrings<StringType> Foam::stringOps::split
 }
 
 
-template<class StringType>
-Foam::SubStrings<StringType> Foam::stringOps::split
+Foam::SubStrings Foam::stringOps::split
 (
-    const StringType& str,
+    const std::string& str,
     const std::string& delim,
     std::string::size_type pos,
     const bool keepEmpty
 )
 {
-    Foam::SubStrings<StringType> list;
+    Foam::SubStrings list;
 
     if
     (
@@ -177,15 +111,14 @@ Foam::SubStrings<StringType> Foam::stringOps::split
 }
 
 
-template<class StringType>
-Foam::SubStrings<StringType> Foam::stringOps::splitAny
+Foam::SubStrings Foam::stringOps::splitAny
 (
-    const StringType& str,
+    const std::string& str,
     const std::string& delim,
     std::string::size_type pos
 )
 {
-    Foam::SubStrings<StringType> list;
+    Foam::SubStrings list;
 
     if
     (
@@ -219,15 +152,14 @@ Foam::SubStrings<StringType> Foam::stringOps::splitAny
 }
 
 
-template<class StringType>
-Foam::SubStrings<StringType> Foam::stringOps::splitFixed
+Foam::SubStrings Foam::stringOps::splitFixed
 (
-    const StringType& str,
+    const std::string& str,
     const std::string::size_type width,
     std::string::size_type pos
 )
 {
-    Foam::SubStrings<StringType> list;
+    Foam::SubStrings list;
 
     if
     (
@@ -263,10 +195,9 @@ Foam::SubStrings<StringType> Foam::stringOps::splitFixed
 }
 
 
-template<class StringType>
-Foam::SubStrings<StringType> Foam::stringOps::splitSpace
+Foam::SubStrings Foam::stringOps::splitSpace
 (
-    const StringType& str,
+    const std::string& str,
     std::string::size_type pos
 )
 {

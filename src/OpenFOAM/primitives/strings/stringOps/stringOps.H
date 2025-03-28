@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,8 +31,10 @@ Description
     Collection of static functions for various string-related operations
 
 SourceFiles
-    stringOps.C
-    stringOpsTemplates.C
+    stringOps.cxx
+    stringOps.txx
+    stringOpsSplit.cxx
+    stringOpsSubstr.cxx
 
 \*---------------------------------------------------------------------------*/
 
@@ -40,9 +42,9 @@ SourceFiles
 #define Foam_stringOps_H
 
 #include "scalar.H"
-#include "SubStrings.H"
 #include "dictionary.H"
 #include "HashTable.H"
+#include "SubStrings.H"
 #include "stringOpsSort.H"
 #include "stringOpsEvaluate.H"
 #include "word.H"
@@ -369,11 +371,10 @@ namespace stringOps
     //- Split string into sub-strings at the delimiter character.
     //  Empty sub-strings are normally suppressed.
     //  Behaviour is ill-defined if delim is a NUL character.
-    template<class StringType>
-    Foam::SubStrings<StringType> split
+    Foam::SubStrings split
     (
         //! The string to split
-        const StringType& str,
+        const std::string& str,
         //! The delimiter for splitting. Ill-defined if NUL character
         const char delim,
         //! Offset within string to start splitting
@@ -384,11 +385,10 @@ namespace stringOps
 
     //- Split string into sub-strings using delimiter string.
     //  Empty sub-strings are normally suppressed.
-    template<class StringType>
-    Foam::SubStrings<StringType> split
+    Foam::SubStrings split
     (
         //! The string to split
-        const StringType& str,
+        const std::string& str,
         //! The delimiters for splitting. Ill-defined if empty
         const std::string& delim,
         //! Offset within string to start splitting
@@ -400,11 +400,10 @@ namespace stringOps
     //- Split string into sub-strings using any characters in delimiter.
     //  Empty sub-strings are normally suppressed.
     //  Behaviour is ill-defined if delim is an empty string.
-    template<class StringType>
-    Foam::SubStrings<StringType> splitAny
+    Foam::SubStrings splitAny
     (
         //! The string to split
-        const StringType& str,
+        const std::string& str,
         //! The delimiters for splitting. Ill-defined if empty!
         const std::string& delim,
         //! Offset within string to start splitting
@@ -413,11 +412,10 @@ namespace stringOps
 
     //- Split string into sub-strings using a fixed field width.
     //  Behaviour is ill-defined if width is zero.
-    template<class StringType>
-    Foam::SubStrings<StringType> splitFixed
+    Foam::SubStrings splitFixed
     (
         //! The string to split
-        const StringType& str,
+        const std::string& str,
         //! Fixed field width for each sub-string
         const std::string::size_type width,
         //! Offset within string to start splitting
@@ -426,11 +424,10 @@ namespace stringOps
 
     //- Split string into sub-strings at whitespace (TAB, NL, VT, FF, CR, SPC)
     //  Empty sub-strings are suppressed.
-    template<class StringType>
-    Foam::SubStrings<StringType> splitSpace
+    Foam::SubStrings splitSpace
     (
         //! The string to split
-        const StringType& str,
+        const std::string& str,
         //! Offset within string to start splitting
         std::string::size_type pos = 0
     );
@@ -460,7 +457,7 @@ namespace stringOps
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "stringOpsTemplates.C"
+    #include "stringOps.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
