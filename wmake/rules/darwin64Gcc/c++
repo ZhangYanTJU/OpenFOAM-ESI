@@ -1,9 +1,9 @@
 #------------------------------------------------------------------------------
-include $(GENERAL_RULES)/Clang/c++
+include $(GENERAL_RULES)/Gcc/c++
 
-ifneq (,$(findstring +xcrun,$(WM_COMPILE_CONTROL)))
-CC         := xcrun c++ -std=c++17
-endif
+## ifneq (,$(findstring +xcrun,$(WM_COMPILE_CONTROL)))
+## CC         := xcrun c++ -std=c++17
+## endif
 
 c++ARCH    := -m64 -pthread -ftrapping-math
 

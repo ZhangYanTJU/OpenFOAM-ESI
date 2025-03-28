@@ -4,12 +4,58 @@ targetType=libo                                     # Preferred library type
 . ${WM_PROJECT_DIR:?}/wmake/scripts/AllwmakeParseArguments $*
 
 #------------------------------------------------------------------------------
+# Hack for MacOS (with Gcc).
+# The gcc compiler include path has something like this:
+#     /Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include
+#
+# but xcode flex installs under this:
+#     /Applications/Xcode.app/Contents/Developer/
+#      Toolchains/XcodeDefault.xctoolchain/usr/include
+
+case "${WM_ARCH}/${WM_COMPILER}" in
+(darwin*/Gcc*)
+    if [ ! -f FlexLexer.h ]
+    then
+        # Remove stale link(s)
+        rm -f FlexLexer.h lnInclude/FlexLexer.h
+
+        for include in \
+            /usr/include \
+            /Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include \
+            /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include \
+        ;
+        do
+            if [ -f "$include"/FlexLexer.h ]
+            then
+                echo "Adding FlexLexer.h link to ${PWD##*/} (darwin/gcc)" 1>&2
+                ln -sf "$include"/FlexLexer.h FlexLexer.h
+
+                if [ -d lnInclude ]
+                then
+                    (cd lnInclude && ln -sf ../FlexLexer.h .)
+                fi
+                break
+            fi
+        done
+    fi
+    ;;
+(*)
+    if [ -f FlexLexer.h ]
+    then
+        echo "Removing old FlexLexer.h link from ${PWD##*/}" 1>&2
+        rm -f FlexLexer.h lnInclude/FlexLexer.h
+    fi
+    ;;
+esac
+
+#------------------------------------------------------------------------------
+
 unset COMP_FLAGS LINK_FLAGS
 
 # If <sys/inotify.h> is available (Linux)
 if [ -f /usr/include/sys/inotify.h ]
 then
-    echo "    found <sys/inotify.h>  --  enabling inotify for file monitoring."
+    echo "    found <sys/inotify.h> -- using inotify for file monitoring" 1>&2
     export COMP_FLAGS="-DFOAM_USE_INOTIFY"
 fi
 

@@ -1,0 +1,30 @@
+#----------------------------------*-sh-*--------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | www.openfoam.com
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+#     Copyright (C) 2025 OpenCFD Ltd.
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
+#
+# File
+#     etc/config.sh/umpire
+#     [experimental]
+#
+# Description
+#     Setup for UMPIRE include/libraries (usually ThirdParty installation).
+#
+# Note
+#     No csh version. This file is only used by wmake.
+#
+#------------------------------------------------------------------------------
+# USER EDITABLE PART: Changes made here may be lost with the next upgrade
+
+umpire_version=umpire-2025.03.0
+export UMPIRE_ARCH_PATH="$WM_THIRD_PARTY_DIR/platforms/$WM_ARCH$WM_COMPILER/$umpire_version"
+
+# END OF (NORMAL) USER EDITABLE PART
+#------------------------------------------------------------------------------

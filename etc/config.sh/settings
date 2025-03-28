@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2016-2022 OpenCFD Ltd.
+#     Copyright (C) 2016-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -70,13 +70,21 @@ Linux)
     ;;
 
 # arm64 or x86_64 architectures
+# Note: /usr/bin/{gcc,g++} normally just symlinks to clang/clang++
+# which may not behave as expected.
 Darwin)
     WM_ARCH=darwin64
-    # Defult to clang (not gcc) as system compiler
     if [ "$WM_COMPILER" = Gcc ]
     then
-        WM_COMPILER=Clang
-        echo "openfoam (darwin): using clang instead of gcc" 1>&2
+        # Honour use of gcc, when version=... is specifed in WM_COMPILE_CONTROL
+        # (eg, gcc installed via homebrew)
+        case "$WM_COMPILE_CONTROL" in
+        (*version=*) ;;
+        (*)
+            WM_COMPILER=Clang
+            echo "openfoam (darwin): using clang instead of gcc" 1>&2
+            ;;
+        esac
     fi
     ;;
 
@@ -217,8 +225,8 @@ _foamEtc -config compiler
 # ThirdParty base for compilers
 archDir="$WM_THIRD_PARTY_DIR/platforms/$WM_ARCH$WM_COMPILER_ARCH"
 
-case "$WM_COMPILER_TYPE-$WM_COMPILER" in
-ThirdParty-Gcc*)
+case "${WM_COMPILER_TYPE}/${WM_COMPILER}" in
+(ThirdParty/Gcc*)
     gccDir="$archDir/$gcc_version"
     gmpDir="$archDir/${gmp_version:-gmp-system}"
     mpfrDir="$archDir/${mpfr_version:-mpfr-system}"
@@ -259,7 +267,7 @@ GCC_NOT_FOUND
     fi
     ;;
 
-ThirdParty-Clang*)
+(ThirdParty/Clang*)
     clangDir="$archDir/$clang_version"
 
     # Check that the compiler directory can be found
@@ -285,11 +293,11 @@ CLANG_NOT_FOUND
     fi
     ;;
 
--* | system-* | ThirdParty-*)
+(/* | system/* | ThirdParty/*)
     # Using empty (system), system compiler or other ThirdParty compiler
     ;;
 
-*)
+(*)
     /bin/cat << UNKNOWN_TYPE 1>&2
 ===============================================================================
 Unknown WM_COMPILER_TYPE="$WM_COMPILER_TYPE" - treating as 'system'

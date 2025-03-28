@@ -1,0 +1,169 @@
+#----------------------------------*-sh-*--------------------------------------
+# =========                 |
+# \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+#  \\    /   O peration     |
+#   \\  /    A nd           | www.openfoam.com
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+#     Copyright (C) 2025 OpenCFD Ltd.
+#------------------------------------------------------------------------------
+# License
+#     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
+#
+# Script
+#     have_umpire
+#
+# Description
+#     Detection/setup of UMPIRE
+#
+# Requires
+#     UMPIRE_ARCH_PATH
+#
+# Functions provided
+#     have_umpire, no_umpire, echo_umpire, query_umpire, search_umpire
+#
+# Variables set on success
+#     HAVE_UMPIRE
+#     UMPIRE_ARCH_PATH
+#     UMPIRE_INC_DIR
+#     UMPIRE_LIB_DIR
+#
+#------------------------------------------------------------------------------
+. ${WM_PROJECT_DIR:?}/wmake/scripts/sysFunctions    # General system functions
+
+#------------------------------------------------------------------------------
+
+# Reset
+no_umpire()
+{
+    unset HAVE_UMPIRE UMPIRE_INC_DIR UMPIRE_LIB_DIR
+}
+
+
+# Report
+echo_umpire()
+{
+    echo "umpire=${HAVE_UMPIRE:-false}"
+    echo "root=\"$UMPIRE_ARCH_PATH\""
+    echo "include=\"$UMPIRE_INC_DIR\""
+    echo "library=\"$UMPIRE_LIB_DIR\""
+}
+
+
+# Search
+# $1 : prefix (*_ARCH_PATH, system, ...)
+#
+# On success, return 0 and export variables
+# -> HAVE_UMPIRE, UMPIRE_INC_DIR, UMPIRE_LIB_DIR
+search_umpire()
+{
+    local warn # warn="==> skip umpire"
+    local incName="Umpire.hpp"
+    local libName="libumpire"
+
+    local prefix="${1:-system}"
+    local header library
+
+    # ----------------------------------
+    if isNone "$prefix"
+    then
+        [ -n "$warn" ] && echo "$warn (disabled)"
+        return 1
+    elif hasAbsdir "$prefix"
+    then
+        header=$(findFirstFile "$prefix/include/umpire/$incName")
+        library=$(findExtLib "$libName")
+    elif isSystem "$prefix"
+    then
+        header=$(findFirstFile \
+            "/usr/local/include/umpire/$incName" \
+            "/usr/include/umpire/$incName" \
+        )
+        prefix=$(sysPrefix "$header")
+    else
+        unset prefix
+    fi
+    # ----------------------------------
+
+    # Header
+    [ -n "$header" ] || {
+        [ -n "$warn" ] && echo "$warn (no header)"
+        return 2
+    }
+
+    # Library
+    [ -n "$library" ] \
+    || library=$(findLibrary -prefix="$prefix" -name="$libName") \
+    || {
+        [ -n "$warn" ] && echo "$warn (no library)"
+        return 2
+    }
+
+    # ----------------------------------
+
+    # OK
+    export HAVE_UMPIRE=true
+    export UMPIRE_ARCH_PATH="$prefix"
+    export UMPIRE_INC_DIR="${header%/*}"     # Basename
+    export UMPIRE_LIB_DIR="${library%/*}"    # Basename
+
+    # Expect path/include/umpire -> path/include
+    UMPIRE_INC_DIR="${UMPIRE_INC_DIR%/umpire}"
+}
+
+
+# Output as per search_* function
+have_umpire()
+{
+    local warn # warn="==> skip umpire"
+    local config="config.sh/umpire"
+    local file
+
+    if file="$("$WM_PROJECT_DIR"/bin/foamEtcFile "$config")"
+    then
+        . "$file"
+    else
+        [ -n "$warn" ] && echo "$warn (no $config)"
+        return 2
+    fi
+
+    search_umpire "$UMPIRE_ARCH_PATH"
+}
+
+
+# Query settings
+query_umpire()
+{
+    local config="config.sh/umpire"
+    local file
+
+    if file="$("$WM_PROJECT_DIR"/bin/foamEtcFile -mode=o "$config")"
+    then
+        . "$file"
+        _process_query umpire "$UMPIRE_ARCH_PATH"
+    else
+        echo "(no $config)" 1>&2
+        echo "umpire=unknown"
+    fi
+}
+
+
+#------------------------------------------------------------------------------
+
+# Reset
+no_umpire
+
+# Test/query
+case "$1" in
+-test | -debug-test)
+    [ "$1" = "-debug-test" ] && set -x
+    have_umpire
+    [ "$1" = "-debug-test" ] && set +x
+    echo_umpire
+    ;;
+-query)
+    query_umpire
+    ;;
+esac
+
+#------------------------------------------------------------------------------

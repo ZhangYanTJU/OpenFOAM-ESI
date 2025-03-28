@@ -1,0 +1,11 @@
+#------------------------------------------------------------------------------
+# Linking on MacOS - without rpath components
+#------------------------------------------------------------------------------
+
+LINK_LIBS   = $(cDBUG)
+
+LINKLIBSO   = $(cc) $(cARCH) -Wl,-dylib,-undefined,dynamic_lookup
+
+LINKEXE     = $(cc) $(cARCH) -Wl,-execute,-undefined,dynamic_lookup
+
+#------------------------------------------------------------------------------

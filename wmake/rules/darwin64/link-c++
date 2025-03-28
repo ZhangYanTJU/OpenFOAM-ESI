@@ -1,0 +1,13 @@
+#------------------------------------------------------------------------------
+# Linking on MacOS
+# with or without rpath components
+# - current default is with rpath unless explicitly disabled
+#------------------------------------------------------------------------------
+
+ifneq (,$(findstring ~rpath,$(WM_COMPILE_CONTROL)))
+    include $(ARCHITECTURE_RULES)/link-no-c++
+else
+    include $(ARCHITECTURE_RULES)/link-rpath-c++
+endif
+
+#------------------------------------------------------------------------------
