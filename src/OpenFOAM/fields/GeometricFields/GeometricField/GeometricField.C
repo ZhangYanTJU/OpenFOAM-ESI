@@ -182,7 +182,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     const word& patchFieldType
 )
 :
-    Internal(io, mesh, dims, false),
+    Internal(io, mesh, dims, false, FieldBase::unifiedGeometricField),
     timeIndex_(this->time().timeIndex()),
     boundaryField_(mesh.boundary(), *this, patchFieldType)
 {
@@ -203,7 +203,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     const wordList& actualPatchTypes
 )
 :
-    Internal(io, mesh, dims, false),
+    Internal(io, mesh, dims, false, FieldBase::unifiedGeometricField),
     timeIndex_(this->time().timeIndex()),
     boundaryField_(mesh.boundary(), *this, patchFieldTypes, actualPatchTypes)
 {
@@ -224,7 +224,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     const word& patchFieldType
 )
 :
-    Internal(io, mesh, value, dims, false),
+    Internal(io, mesh, value, dims, false, FieldBase::unifiedGeometricField),
     timeIndex_(this->time().timeIndex()),
     boundaryField_(mesh.boundary(), *this, patchFieldType)
 {
@@ -248,7 +248,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     const wordList& actualPatchTypes
 )
 :
-    Internal(io, mesh, value, dims, false),
+    Internal(io, mesh, value, dims, false, FieldBase::unifiedGeometricField),
     timeIndex_(this->time().timeIndex()),
     boundaryField_(mesh.boundary(), *this, patchFieldTypes, actualPatchTypes)
 {
@@ -530,7 +530,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     const bool readOldTime
 )
 :
-    Internal(io, mesh, dimless, false),
+    Internal(io, mesh, dimless, false, FieldBase::unifiedGeometricField),
     timeIndex_(this->time().timeIndex()),
     boundaryField_(mesh.boundary())
 {
@@ -567,7 +567,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     const dictionary& dict
 )
 :
-    Internal(io, mesh, dimless, false),
+    Internal(io, mesh, dimless, false, FieldBase::unifiedGeometricField),
     timeIndex_(this->time().timeIndex()),
     boundaryField_(mesh.boundary())
 {
@@ -1084,6 +1084,46 @@ correctLocalBoundaryConditions()
         storeOldTimes();
     }
     boundaryField_.evaluateLocal();
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<class Cop>
+Foam::label Foam::GeometricField<Type, PatchField, GeoMesh>::
+boundaryEvaluate(const Cop& cop)
+{
+    const label meshSize = GeoMesh::size(this->mesh());
+    const label totalSize = GeoMesh::boundary_size(this->mesh()) + meshSize;
+
+    if (FOAM_UNLIKELY(meshSize != this->size() && totalSize != this->size()))
+    {
+        FatalErrorInFunction
+            << "Problem : field:" << this->name()
+            << " size:" << this->size()
+            << " capacity:" << this->capacity()
+            << " is not mesh size:" << meshSize
+            << " or total size:" << totalSize
+            << exit(FatalError);
+    }
+
+    auto& fld = static_cast<DynamicField<Type>&>(*this);
+
+    // Resize primitive field to allow for internal+boundary fields
+    // - avoid size doubling
+    // - only copying the internal field without boundaries
+
+    fld.reserve_exact(totalSize);
+    fld.resize_copy(meshSize, totalSize);
+
+    // Populate the extra space with the flattened boundary values:
+    for (const auto& pfld : this->boundaryField())
+    {
+        const label start = (meshSize + pfld.patch().offset());
+        SubList<Type> slice(fld, pfld.size(), start);
+        cop(pfld, slice);
+    }
+
+    return meshSize;
 }
 
 
