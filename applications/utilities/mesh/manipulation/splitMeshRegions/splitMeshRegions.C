@@ -269,11 +269,7 @@ void addToInterface
     EdgeMap<Map<label>>& regionsToSize
 )
 {
-    edge interface
-    (
-        min(ownRegion, neiRegion),
-        max(ownRegion, neiRegion)
-    );
+    const edge interface(ownRegion, neiRegion, true);  // sort=true
 
     auto iter = regionsToSize.find(interface);
 
@@ -509,11 +505,7 @@ void getInterfaceSizes
                 zoneID = mesh.faceZones().whichZone(facei);
             }
 
-            edge interface
-            (
-                min(ownRegion, neiRegion),
-                max(ownRegion, neiRegion)
-            );
+            const edge interface(ownRegion, neiRegion, true);  // sort=true
 
             faceToInterface[facei] = regionsToInterface[interface][zoneID];
         }
@@ -532,11 +524,7 @@ void getInterfaceSizes
                 zoneID = mesh.faceZones().whichZone(facei);
             }
 
-            edge interface
-            (
-                min(ownRegion, neiRegion),
-                max(ownRegion, neiRegion)
-            );
+            const edge interface(ownRegion, neiRegion, true);  // sort=true
 
             faceToInterface[facei] = regionsToInterface[interface][zoneID];
         }

@@ -75,8 +75,10 @@
     )
     {
         rDeltaT =
+        (
             rDeltaT0
-           *max(rDeltaT/rDeltaT0, scalar(1) - rDeltaTDampingCoeff);
+          * Foam::max(rDeltaT/rDeltaT0, scalar(1) - rDeltaTDampingCoeff)
+        );
 
         Info<< "Damped flow time scale min/max = "
             << gMin(1/rDeltaT.primitiveField())

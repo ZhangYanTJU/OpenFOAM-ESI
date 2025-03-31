@@ -31,7 +31,7 @@
             );
 
 
-            CoNum =
+            scalar maxPhiCoNum =
                 0.5*gMax
                 (
                     sumPhi/fluidRegions[regioni].V().field()
@@ -41,9 +41,9 @@
             (
                 fvc::surfaceSum(mag(phi1 - phi2))().primitiveField()
               / fluidRegions[regioni].V().field()
-            )*runTime.deltaTValue(),
+            )*runTime.deltaTValue();
 
-            CoNum = max(UrCoNum, CoNum);
+            CoNum = Foam::max(CoNum, Foam::max(maxPhiCoNum, UrCoNum));
         }
     }
 

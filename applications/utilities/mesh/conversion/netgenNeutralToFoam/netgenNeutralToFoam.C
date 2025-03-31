@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
         }
 
 
-        maxPatch = max(maxPatch, patchi);
+        maxPatch = Foam::max(maxPatch, patchi);
 
         triFace tri(readLabel(str)-1, readLabel(str)-1, readLabel(str)-1);
 

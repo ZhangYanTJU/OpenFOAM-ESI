@@ -269,7 +269,7 @@ void readCells
     label maxUnvPoint = 0;
     forAll(unvPointID, pointi)
     {
-        maxUnvPoint = max(maxUnvPoint, unvPointID[pointi]);
+        maxUnvPoint = Foam::max(maxUnvPoint, unvPointID[pointi]);
     }
     labelList unvToFoam(invert(maxUnvPoint+1, unvPointID));
 
@@ -784,7 +784,7 @@ int main(int argc, char *argv[])
     label maxUnvPoint = 0;
     forAll(unvPointID, pointi)
     {
-        maxUnvPoint = max(maxUnvPoint, unvPointID[pointi]);
+        maxUnvPoint = Foam::max(maxUnvPoint, unvPointID[pointi]);
     }
     labelList unvToFoam(invert(maxUnvPoint+1, unvPointID));
 

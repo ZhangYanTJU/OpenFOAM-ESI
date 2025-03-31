@@ -350,7 +350,7 @@ mtype                 {space}"MTYPE:"{space}
         // Find out how many labels are expected. If less or equal to
         // seven, read them all and finish with it. If there is more,
         // set read of the next line
-        label labelsToRead = min(8, nVertices);
+        label labelsToRead = Foam::min(8, nVertices);
         label labelI = 0;
         for (; labelI < labelsToRead; labelI++)
         {
@@ -387,7 +387,7 @@ mtype                 {space}"MTYPE:"{space}
 
         labelList& curLabels = cellLabels[curNumberOfCells];
 
-        label labelsToRead = min
+        label labelsToRead = Foam::min
         (
             (nCellContinuationLines + 1)*7,
             curLabels.size()
