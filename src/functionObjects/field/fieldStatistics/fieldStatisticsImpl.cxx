@@ -192,20 +192,18 @@ Foam::functionObjects::fieldStatistics::calcExtremaData
 
     labelPair minMaxIds = findMinMax(field);
 
-    label minId = minMaxIds.first();
-    if (minId != -1)
+    if (label celli = minMaxIds.first(); celli >= 0)
     {
-        minVs[proci] = field[minId];
-        minCells[proci] = minId;
-        minCs[proci] = mesh_.C()[minId];
+        minVs[proci] = field[celli];
+        minCells[proci] = celli;
+        minCs[proci] = mesh_.C()[celli];
     }
 
-    label maxId = minMaxIds.second();
-    if (maxId != -1)
+    if (label celli = minMaxIds.second(); celli >= 0)
     {
-        maxVs[proci] = field[maxId];
-        maxCells[proci] = maxId;
-        maxCs[proci] = mesh_.C()[maxId];
+        maxVs[proci] = field[celli];
+        maxCells[proci] = celli;
+        maxCs[proci] = mesh_.C()[celli];
     }
 
     if (!internal_)
@@ -226,20 +224,18 @@ Foam::functionObjects::fieldStatistics::calcExtremaData
 
                 minMaxIds = findMinMax(fp);
 
-                minId = minMaxIds.first();
-                if (minVs[proci] > fp[minId])
+                if (label celli = minMaxIds.first(); minVs[proci] > fp[celli])
                 {
-                    minVs[proci] = fp[minId];
-                    minCells[proci] = faceCells[minId];
-                    minCs[proci] = Cfp[minId];
+                    minVs[proci] = fp[celli];
+                    minCells[proci] = faceCells[celli];
+                    minCs[proci] = Cfp[celli];
                 }
 
-                maxId = minMaxIds.second();
-                if (maxVs[proci] < fp[maxId])
+                if (label celli = minMaxIds.second(); maxVs[proci] < fp[celli])
                 {
-                    maxVs[proci] = fp[maxId];
-                    maxCells[proci] = faceCells[maxId];
-                    maxCs[proci] = Cfp[maxId];
+                    maxVs[proci] = fp[celli];
+                    maxCells[proci] = faceCells[celli];
+                    maxCs[proci] = Cfp[celli];
                 }
             }
         }
@@ -255,14 +251,14 @@ Foam::functionObjects::fieldStatistics::calcExtremaData
     Pstream::allGatherList(maxCs);
 
     extremaData min;
-    minId = findMin(minVs);
+    const label minId = findMin(minVs);
     min.value_ = minVs[minId];
     min.procID_ = minId;
     min.cellID_ = minCells[minId];
     min.position_ = minCs[minId];
 
     extremaData max;
-    maxId = findMax(maxVs);
+    const label maxId = findMax(maxVs);
     max.value_ = maxVs[maxId];
     max.procID_ = maxId;
     max.cellID_ = maxCells[maxId];
