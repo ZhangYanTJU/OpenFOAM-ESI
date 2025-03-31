@@ -80,11 +80,6 @@ bool Foam::functionObjects::fieldStatistics::calcStat(const word& fieldName)
 {
     typedef GeometricField<Type, fvPatchField, volMesh> VolFieldType;
 
-    if (!obr_.foundObject<VolFieldType>(fieldName))
-    {
-        return false;
-    }
-
     const auto* fieldp = obr_.cfindObject<VolFieldType>(fieldName);
     if (!fieldp)
     {
