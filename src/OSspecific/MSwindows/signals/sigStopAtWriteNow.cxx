@@ -34,7 +34,7 @@ License
 #include "Time.H"
 
 // File-local functions
-#include "signalMacros.C"
+#include "signalMacros.cxx"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -54,12 +54,10 @@ static Foam::Time const* runTimePtr_ = nullptr;
 namespace Foam
 {
 // Register re-reader
-class addstopAtWriteNowSignalToOpt
+struct addstopAtWriteNowSignalToOpt
 :
     public ::Foam::simpleRegIOobject
 {
-public:
-
     addstopAtWriteNowSignalToOpt(const addstopAtWriteNowSignalToOpt&) = delete;
 
     void operator=(const addstopAtWriteNowSignalToOpt&) = delete;
@@ -139,6 +137,7 @@ void Foam::sigStopAtWriteNow::set(bool verbose)
     {
         return;
     }
+
 
     // Check that the signal is different from the writeNowSignal
     if (sigWriteNow::signalNumber() == signal_)

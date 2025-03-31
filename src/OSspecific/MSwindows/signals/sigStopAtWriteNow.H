@@ -32,7 +32,7 @@ Description
     The interrupt is defined by OptimisationSwitches::stopAtWriteNowSignal
 
 SourceFiles
-    sigStopAtWriteNow.C
+    sigStopAtWriteNow.cxx
 
 See also
     Foam::JobInfo

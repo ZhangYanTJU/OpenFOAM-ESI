@@ -6,8 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2011 Symscape
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,34 +26,35 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "sigInt.H"
+#include "sigQuit.H"
 #include "error.H"
 #include "JobInfo.H"
 #include "IOstreams.H"
 
 // File-local functions
-#include "signalMacros.C"
+#include "signalMacros.cxx"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-bool Foam::sigInt::sigActive_ = false;
+bool Foam::sigQuit::sigActive_ = false;
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::sigInt::sigHandler(int)
+void Foam::sigQuit::sigHandler(int)
 {
-    resetHandler("SIGINT", SIGINT);
+    resetHandler("SIGQUIT", SIGQUIT);
 
     JobInfo::shutdown();        // From running -> finished
-    ::raise(SIGINT);            // Throw signal (to old handler)
+    error::printStack(Perr);
+    ::raise(SIGQUIT);           // Throw signal (to old handler)
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::sigInt::sigInt()
+Foam::sigQuit::sigQuit()
 {
     set(false);
 }
@@ -62,7 +62,7 @@ Foam::sigInt::sigInt()
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::sigInt::~sigInt()
+Foam::sigQuit::~sigQuit()
 {
     unset(false);
 }
@@ -70,7 +70,7 @@ Foam::sigInt::~sigInt()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::sigInt::set(bool)
+void Foam::sigQuit::set(bool)
 {
     if (sigActive_)
     {
@@ -78,11 +78,11 @@ void Foam::sigInt::set(bool)
     }
     sigActive_ = true;
 
-    setHandler("SIGINT", SIGINT, sigHandler);
+    setHandler("SIGQUIT", SIGQUIT, sigHandler);
 }
 
 
-void Foam::sigInt::unset(const bool verbose)
+void Foam::sigQuit::unset(bool)
 {
     if (!sigActive_)
     {
@@ -90,7 +90,7 @@ void Foam::sigInt::unset(const bool verbose)
     }
     sigActive_ = false;
 
-    resetHandler("SIGINT", SIGINT);
+    resetHandler("SIGQUIT", SIGQUIT);
 }
 
 

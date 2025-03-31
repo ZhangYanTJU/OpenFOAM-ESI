@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,13 +50,15 @@ Description
     restores original). The class behaves as a singleton.
 
 SourceFiles
-    sigFpe.C
+    sigFpe.cxx
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef Foam_sigFpe_H
 #define Foam_sigFpe_H
 
+#include <algorithm>
+#include <limits>
 #include <cstddef>  // For std::size_t
 #include "scalarFwd.H"
 
@@ -96,6 +98,23 @@ class sigFpe
         //- Handler for caught signals - ends job and prints stack
         static void sigHandler(int);
 
+        //- Fill (float | double) buffer with signalling NaN
+        template<class FloatType>
+        inline static void fill_with_NaN(FloatType* buf, size_t count)
+        {
+            if (buf && count)
+            {
+                const auto val =
+                    std::numeric_limits<FloatType>::signaling_NaN();
+
+                // [float|double] so do not need std::uninitialized_fill_n()
+                // Can dispatch with
+                // - std::execution::par_unseq
+                // - std::execution::unseq
+                std::fill_n(buf, count, val);
+            }
+        }
+
 
 public:
 
@@ -124,6 +143,15 @@ public:
         //- True if NaN memory initialisation is currently active.
         static bool nanActive() noexcept { return nanActive_; }
 
+        //- Set NaN memory initialisation on/off.
+        //  \return the previous value
+        static bool nanActive(bool on) noexcept
+        {
+            bool old(nanActive_);
+            nanActive_ = on;
+            return old;
+        }
+
         //- Activate SIGFPE handler when FOAM_SIGFPE is enabled.
         //- Activate fill memory with signaling_NaN when FOAM_SETNAN is enabled
         static void set(bool verbose=false);
@@ -131,11 +159,36 @@ public:
         //- Deactivate SIGFPE handler and NaN memory initialisation
         static void unset(bool verbose=false);
 
-        //- Fill data block with signaling_NaN values
-        static void fillNan(char* buf, size_t count);
+        //- Fill data block with signaling_NaN values if nanActive().
+        //- Does a reinterpret to \c Foam::scalar
+        static void fillNan_if(void* buf, size_t count)
+        {
+            if (nanActive_)
+            {
+                fill_with_NaN
+                (
+                    reinterpret_cast<Foam::scalar*>(buf),
+                    (count/sizeof(Foam::scalar))
+                );
+            }
+        }
 
-        //- Fill data block with signaling_NaN values
-        static void fillNan(UList<scalar>& list);
+        //- Fill data block with signaling_NaN values.
+        //- Does a reinterpret to \c Foam::scalar
+        static void fillNan(char* buf, size_t count)
+        {
+            fill_with_NaN
+            (
+                reinterpret_cast<Foam::scalar*>(buf),
+                (count/sizeof(Foam::scalar))
+            );
+        }
+
+        //- Fill data block with (float) signaling_NaN values
+        static void fillNan(UList<float>& list);
+
+        //- Fill data block with (double) signaling_NaN values
+        static void fillNan(UList<double>& list);
 
 
     // Helpers

@@ -32,7 +32,7 @@ License
 #include "IOstreams.H"
 
 // File-local functions
-#include "signalMacros.C"
+#include "signalMacros.cxx"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

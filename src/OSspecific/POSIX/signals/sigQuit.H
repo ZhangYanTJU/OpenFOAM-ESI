@@ -40,7 +40,7 @@ See also
     Foam::JobInfo
 
 SourceFiles
-    sigQuit.C
+    sigQuit.cxx
 
 \*---------------------------------------------------------------------------*/
 

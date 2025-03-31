@@ -27,7 +27,7 @@ Description
     File-local code for setting/resetting signal handlers.
 
 SourceFiles
-    signalMacros.C
+    signalMacros.cxx
 
 \*---------------------------------------------------------------------------*/
 

@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2018-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,54 +24,73 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    File-local code for setting/resetting signal handlers.
-
-SourceFiles
-    signalMacros.C
-
 \*---------------------------------------------------------------------------*/
 
+#include "sigInt.H"
 #include "error.H"
-#include <csignal>
+#include "JobInfo.H"
+#include "IOstreams.H"
 
-// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+// File-local functions
+#include "signalMacros.cxx"
 
-namespace Foam
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+bool Foam::sigInt::sigActive_ = false;
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::sigInt::sigHandler(int)
 {
+    resetHandler("SIGINT", SIGINT);
 
-// Saved old signal trapping setting (file-local variable)
-static struct sigaction oldAction_;
-
-
-static void resetHandler(const char *what, int sigNum)
-{
-    if (sigaction(sigNum, &oldAction_, nullptr) < 0)
-    {
-        FatalError
-            << "Cannot unset " << what << " signal (" << sigNum
-            << ") trapping" << endl
-            << abort(FatalError);
-    }
+    JobInfo::shutdown();        // From running -> finished
+    ::raise(SIGINT);            // Throw signal (to old handler)
 }
 
 
-static void setHandler(const char *what, int sigNum, void (*handler)(int))
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::sigInt::sigInt()
 {
-    struct sigaction newAction;
-    newAction.sa_handler = handler;
-    newAction.sa_flags = SA_NODEFER;
-    sigemptyset(&newAction.sa_mask);
-    if (sigaction(sigNum, &newAction, &oldAction_) < 0)
-    {
-        FatalError
-            << "Could not set " << what << " signal (" << sigNum
-            << ") trapping" << endl
-            << abort(FatalError);
-    }
+    set(false);
 }
 
-} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::sigInt::~sigInt()
+{
+    unset(false);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::sigInt::set(bool)
+{
+    if (sigActive_)
+    {
+        return;
+    }
+    sigActive_ = true;
+
+    setHandler("SIGINT", SIGINT, sigHandler);
+}
+
+
+void Foam::sigInt::unset(bool)
+{
+    if (!sigActive_)
+    {
+        return;
+    }
+    sigActive_ = false;
+
+    resetHandler("SIGINT", SIGINT);
+}
 
 
 // ************************************************************************* //

@@ -27,37 +27,34 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "sigQuit.H"
+#include "sigInt.H"
 #include "error.H"
 #include "JobInfo.H"
 #include "IOstreams.H"
 
 // File-local functions
-#include "signalMacros.C"
-
-// NOTE: SIGBREAK is the best alternative to SIGQUIT on windows
+#include "signalMacros.cxx"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-bool Foam::sigQuit::sigActive_ = false;
+bool Foam::sigInt::sigActive_ = false;
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::sigQuit::sigHandler(int)
+void Foam::sigInt::sigHandler(int)
 {
-    resetHandler("SIGBREAK", SIGBREAK);
+    resetHandler("SIGINT", SIGINT);
 
     JobInfo::shutdown();        // From running -> finished
-    error::printStack(Perr);
-    ::raise(SIGBREAK);          // Throw signal (to old handler)
+    ::raise(SIGINT);            // Throw signal (to old handler)
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::sigQuit::sigQuit()
+Foam::sigInt::sigInt()
 {
     set(false);
 }
@@ -65,7 +62,7 @@ Foam::sigQuit::sigQuit()
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::sigQuit::~sigQuit()
+Foam::sigInt::~sigInt()
 {
     unset(false);
 }
@@ -73,7 +70,7 @@ Foam::sigQuit::~sigQuit()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::sigQuit::set(bool)
+void Foam::sigInt::set(bool)
 {
     if (sigActive_)
     {
@@ -81,11 +78,11 @@ void Foam::sigQuit::set(bool)
     }
     sigActive_ = true;
 
-    setHandler("SIGBREAK", SIGBREAK, sigHandler);
+    setHandler("SIGINT", SIGINT, sigHandler);
 }
 
 
-void Foam::sigQuit::unset(bool)
+void Foam::sigInt::unset(const bool verbose)
 {
     if (!sigActive_)
     {
@@ -93,7 +90,7 @@ void Foam::sigQuit::unset(bool)
     }
     sigActive_ = false;
 
-    resetHandler("SIGBREAK", SIGBREAK);
+    resetHandler("SIGINT", SIGINT);
 }
 
 

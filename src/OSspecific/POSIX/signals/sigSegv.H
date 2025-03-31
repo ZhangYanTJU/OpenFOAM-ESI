@@ -40,7 +40,7 @@ See also
     Foam::JobInfo
 
 SourceFiles
-    sigSegv.C
+    sigSegv.cxx
 
 \*---------------------------------------------------------------------------*/
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,117 +27,137 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "sigWriteNow.H"
+#include "sigStopAtWriteNow.H"
 #include "error.H"
-#include "Time.H"
+#include "JobInfo.H"
 #include "IOstreams.H"
+#include "Time.H"
 
 // File-local functions
-#include "signalMacros.C"
+#include "signalMacros.cxx"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 // Signal number to catch
-int Foam::sigWriteNow::signal_
+int Foam::sigStopAtWriteNow::signal_
 (
-    Foam::debug::optimisationSwitch("writeNowSignal", -1)
+    Foam::debug::optimisationSwitch("stopAtWriteNowSignal", -1)
 );
 
 // Pointer to Time (file-local variable)
-static Foam::Time* runTimePtr_ = nullptr;
+static Foam::Time const* runTimePtr_ = nullptr;
 
 
 // * * * * * * * * * * * * * * * Local Classes * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
 // Register re-reader
-class addwriteNowSignalToOpt
+class addstopAtWriteNowSignalToOpt
 :
     public ::Foam::simpleRegIOobject
 {
 public:
 
-    addwriteNowSignalToOpt(const addwriteNowSignalToOpt&) = delete;
+    addstopAtWriteNowSignalToOpt(const addstopAtWriteNowSignalToOpt&) = delete;
 
-    void operator=(const addwriteNowSignalToOpt&) = delete;
+    void operator=(const addstopAtWriteNowSignalToOpt&) = delete;
 
-    explicit addwriteNowSignalToOpt(const char* name)
+    explicit addstopAtWriteNowSignalToOpt(const char* name)
     :
         ::Foam::simpleRegIOobject(Foam::debug::addOptimisationObject, name)
     {}
 
-    virtual ~addwriteNowSignalToOpt() = default;
+    virtual ~addstopAtWriteNowSignalToOpt() = default;
 
     virtual void readData(Foam::Istream& is)
     {
-        is >> sigWriteNow::signal_;
-        sigWriteNow::set(true);
+        is >> sigStopAtWriteNow::signal_;
+        sigStopAtWriteNow::set(true);
     }
 
     virtual void writeData(Foam::Ostream& os) const
     {
-        os << sigWriteNow::signal_;
+        os << sigStopAtWriteNow::signal_;
     }
 };
 
-addwriteNowSignalToOpt addwriteNowSignalToOpt_("writeNowSignal");
+addstopAtWriteNowSignalToOpt addstopAtWriteNowSignalToOpt_
+(
+    "stopAtWriteNowSignal"
+);
 
 } // End namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::sigWriteNow::sigHandler(int)
+void Foam::sigStopAtWriteNow::sigHandler(int)
 {
+    resetHandler("stopAtWriteNow", signal_);
+
+    JobInfo::shutdown();        // From running -> finished
+
     if (runTimePtr_)
     {
-        Info<< "sigWriteNow :"
-            << " setting up write at end of the next iteration" << nl << endl;
-        runTimePtr_->writeOnce();
+        Info<< "sigStopAtWriteNow :"
+            << " setting up write and stop at end of the next iteration"
+            << nl << endl;
+        runTimePtr_->stopAt(Time::saWriteNow);
     }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::sigWriteNow::sigWriteNow(Time& runTime, bool verbose)
+Foam::sigStopAtWriteNow::sigStopAtWriteNow(const Time& runTime, bool verbose)
 {
-    runTimePtr_ = &runTime;  // Store Time reference
+    runTimePtr_ = &runTime; // Store runTime
     set(verbose);
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::sigWriteNow::~sigWriteNow()
+Foam::sigStopAtWriteNow::~sigStopAtWriteNow()
 {
     if (!active())
     {
         return;
     }
 
-    resetHandler("writeNow", signal_);
+    resetHandler("stopAtWriteNow", signal_);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::sigWriteNow::set(bool verbose)
+void Foam::sigStopAtWriteNow::set(bool verbose)
 {
     if (!active())
     {
         return;
     }
 
-    if (verbose)
+    // Check that the signal is different from the writeNowSignal
+    if (sigWriteNow::signalNumber() == signal_)
     {
-        Info<< "sigWriteNow :"
-            << " Enabling writing upon signal " << signal_ << nl;
+        FatalErrorInFunction
+            << "stopAtWriteNowSignal : " << signal_
+            << " cannot be the same as the writeNowSignal."
+            << " Please change this in the etc/controlDict."
+            << exit(FatalError);
     }
 
-    setHandler("writeNow", signal_, sigHandler);
+    if (verbose)
+    {
+        Info<< "sigStopAtWriteNow :"
+            << " Enabling writing and stopping upon signal " << signal_
+            << endl;
+    }
+
+    setHandler("stopAtWriteNow", signal_, sigHandler);
 }
 
 

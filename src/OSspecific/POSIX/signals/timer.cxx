@@ -6,7 +6,6 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2011 Symscape
     Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -30,19 +29,11 @@ License
 #include "timer.H"
 #include "error.H"
 #include "defineDebugSwitch.H"
-#include "MSwindows.H"
-#undef DebugInfo        // Windows name clash with OpenFOAM messageStream
 
-#define WIN32_LEAN_AND_MEAN
-#undef  WINVER
-#define WINVER 0x0500   // To access CreateTimerQueueTimer
-#include <windows.h>
+#include <unistd.h>
 
 // File-local functions
-#include "signalMacros.C"
-
-#undef  SIGALRM
-#define SIGALRM 14
+#include "signalMacros.cxx"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -57,22 +48,12 @@ jmp_buf Foam::timer::envAlarm;
 
 unsigned int Foam::timer::oldTimeOut_ = 0;
 
-static HANDLE hTimer_ = nullptr;
 
-
-// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
-
-static VOID CALLBACK timerExpired(PVOID lpParam, BOOLEAN TimerOrWaitFired)
-{
-    ::raise(SIGALRM);
-}
-
-
-// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::timer::sigHandler(int)
 {
-    DebugInFunction << "Timed out. Jumping." << endl;
+    DebugInFunction<< "Timed out. Jumping." << endl;
 
     longjmp(envAlarm, 1);
 }
@@ -90,7 +71,7 @@ Foam::timer::timer(unsigned int seconds)
     }
 
     // Singleton since handler is static function
-    if (hTimer_)
+    if (oldTimeOut_)
     {
         FatalErrorInFunction
             << "timer already used."
@@ -98,28 +79,13 @@ Foam::timer::timer(unsigned int seconds)
     }
 
     // Set alarm signal handler
+    // - do not block any signals while in it
+    // - clear list of signals to mask
+
     setHandler("SIGALRM", SIGALRM, sigHandler);
 
     // Set alarm timer
-    const bool ok = ::CreateTimerQueueTimer
-    (
-        &hTimer_,
-        nullptr,
-        static_cast<WAITORTIMERCALLBACK>(timerExpired),
-        nullptr,
-        timeOut_ * 1000,
-        0,
-        0
-    );
-
-    if (!ok)
-    {
-        hTimer_ = nullptr;
-        FatalErrorInFunction
-            << "CreateTimerQueueTimer, "
-            << MSwindows::lastError() << nl
-            << abort(FatalError);
-    }
+    oldTimeOut_ = ::alarm(timeOut_);
 
     DebugInFunction
         << "Installing timeout " << int(timeOut_) << " seconds"
@@ -141,17 +107,8 @@ Foam::timer::~timer()
         << " : resetting timeOut to " << int(oldTimeOut_) << endl;
 
     // Reset alarm timer
-    const bool ok = ::DeleteTimerQueueTimer(nullptr, hTimer_, nullptr);
-
-    hTimer_ = nullptr;
-
-    if (!ok)
-    {
-        FatalErrorInFunction
-            << "DeleteTimerQueueTimer, "
-            << MSwindows::lastError() << nl
-            << abort(FatalError);
-    }
+    ::alarm(oldTimeOut_);
+    oldTimeOut_ = 0;
 
     resetHandler("SIGALRM", SIGALRM);
 }

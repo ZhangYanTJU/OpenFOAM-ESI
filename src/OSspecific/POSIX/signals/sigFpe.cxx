@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,11 +33,9 @@ License
 #include "IOstreams.H"
 #include "UList.H"
 #include "Switch.H"
-#include <algorithm>
-#include <limits>
 
 // File-local functions
-#include "signalMacros.C"
+#include "signalMacros.cxx"
 
 #if defined(__linux__) && defined(__GNUC__)
     #ifndef __USE_GNU
@@ -91,24 +89,12 @@ extern "C"
         // Call the low-level GLIBC malloc function
         void* ptr = __libc_malloc(size);
 
-        if (Foam::sigFpe::nanActive())
-        {
-            // Fill with signaling_NaN
-            const auto val = std::numeric_limits<Foam::scalar>::signaling_NaN();
-
-            // Can dispatch with
-            // - std::execution::parallel_unsequenced_policy
-            // - std::execution::unsequenced_policy
-            std::fill_n
-            (
-                reinterpret_cast<Foam::scalar*>(ptr),
-                (size/sizeof(Foam::scalar)),
-                val
-            );
-        }
+        // Optionally fill with NaN (depends on current flags)
+        Foam::sigFpe::fillNan_if(ptr, size);
 
         return ptr;
     }
+
 } // End extern C
 
 #endif  // __linux__
@@ -248,37 +234,15 @@ void Foam::sigFpe::unset(bool verbose)
 }
 
 
-void Foam::sigFpe::fillNan(char* buf, size_t count)
+void Foam::sigFpe::fillNan(UList<float>& list)
 {
-    if (!buf || !count) return;
-
-    // Fill with signaling_NaN
-    const auto val = std::numeric_limits<scalar>::signaling_NaN();
-
-    // Can dispatch with
-    // - std::execution::parallel_unsequenced_policy
-    // - std::execution::unsequenced_policy
-    std::fill_n
-    (
-        reinterpret_cast<scalar*>(buf), (count/sizeof(scalar)), val
-    );
+    sigFpe::fill_with_NaN(list.data(), list.size());
 }
 
 
-void Foam::sigFpe::fillNan(UList<scalar>& list)
+void Foam::sigFpe::fillNan(UList<double>& list)
 {
-    if (list.empty()) return;
-
-    // Fill with signaling_NaN
-    const auto val = std::numeric_limits<scalar>::signaling_NaN();
-
-    // Can dispatch with
-    // - std::execution::parallel_unsequenced_policy
-    // - std::execution::unsequenced_policy
-    std::fill_n
-    (
-        list.data(), list.size(), val
-    );
+    sigFpe::fill_with_NaN(list.data(), list.size());
 }
 
 

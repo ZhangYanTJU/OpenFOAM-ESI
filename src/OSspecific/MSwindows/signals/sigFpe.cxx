@@ -36,11 +36,9 @@ License
 #include "Switch.H"
 
 #include <float.h>  // For *fp functions
-#include <algorithm>
-#include <limits>
 
 // File-local functions
-#include "signalMacros.C"
+#include "signalMacros.cxx"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -196,37 +194,15 @@ void Foam::sigFpe::unset(bool verbose)
 }
 
 
-void Foam::sigFpe::fillNan(char* buf, size_t count)
+void Foam::sigFpe::fillNan(UList<float>& list)
 {
-    if (!buf || !count) return;
-
-    // Fill with signaling_NaN
-    const scalar val = std::numeric_limits<scalar>::signaling_NaN();
-
-    // Can dispatch with
-    // - std::execution::parallel_unsequenced_policy
-    // - std::execution::unsequenced_policy
-    std::fill_n
-    (
-        reinterpret_cast<scalar*>(buf), (count/sizeof(scalar)), val
-    );
+    sigFpe::fill_with_NaN(list.data(), list.size());
 }
 
 
-void Foam::sigFpe::fillNan(UList<scalar>& list)
+void Foam::sigFpe::fillNan(UList<double>& list)
 {
-    if (list.empty()) return;
-
-    // Fill with signaling_NaN
-    const scalar val = std::numeric_limits<scalar>::signaling_NaN();
-
-    // Can dispatch with
-    // - std::execution::parallel_unsequenced_policy
-    // - std::execution::unsequenced_policy
-    std::fill_n
-    (
-        list.data(), list.size(), val
-    );
+    sigFpe::fill_with_NaN(list.data(), list.size());
 }
 
 

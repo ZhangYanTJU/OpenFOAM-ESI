@@ -57,7 +57,7 @@ Note
     ?something to do with stack frames.
 
 SourceFiles
-    timer.C
+    timer.cxx
 
 \*---------------------------------------------------------------------------*/
 

@@ -32,7 +32,7 @@ Description
     The interrupt is defined by OptimisationSwitches::writeNowSignal
 
 SourceFiles
-    sigWriteNow.C
+    sigWriteNow.cxx
 
 \*---------------------------------------------------------------------------*/
 

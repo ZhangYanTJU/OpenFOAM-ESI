@@ -41,7 +41,7 @@ See also
     Foam::JobInfo
 
 SourceFiles
-    sigInt.C
+    sigInt.cxx
 
 \*---------------------------------------------------------------------------*/
 

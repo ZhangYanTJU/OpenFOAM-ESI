@@ -6,7 +6,8 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2011 Symscape
+    Copyright (C) 2018-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +33,9 @@ License
 #include "IOstreams.H"
 
 // File-local functions
-#include "signalMacros.C"
+#include "signalMacros.cxx"
+
+// NOTE: SIGBREAK is the best alternative to SIGQUIT on windows
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -44,11 +47,11 @@ bool Foam::sigQuit::sigActive_ = false;
 
 void Foam::sigQuit::sigHandler(int)
 {
-    resetHandler("SIGQUIT", SIGQUIT);
+    resetHandler("SIGBREAK", SIGBREAK);
 
     JobInfo::shutdown();        // From running -> finished
     error::printStack(Perr);
-    ::raise(SIGQUIT);           // Throw signal (to old handler)
+    ::raise(SIGBREAK);          // Throw signal (to old handler)
 }
 
 
@@ -78,7 +81,7 @@ void Foam::sigQuit::set(bool)
     }
     sigActive_ = true;
 
-    setHandler("SIGQUIT", SIGQUIT, sigHandler);
+    setHandler("SIGBREAK", SIGBREAK, sigHandler);
 }
 
 
@@ -90,7 +93,7 @@ void Foam::sigQuit::unset(bool)
     }
     sigActive_ = false;
 
-    resetHandler("SIGQUIT", SIGQUIT);
+    resetHandler("SIGBREAK", SIGBREAK);
 }
 
 
