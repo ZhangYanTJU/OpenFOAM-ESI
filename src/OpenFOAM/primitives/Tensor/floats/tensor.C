@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -309,20 +309,7 @@ Foam::tensor Foam::pinv(const tensor& t)
     if (detval < ROOTVSMALL)
     {
         // Fall back to pseudo inverse
-        scalarRectangularMatrix mat(3, 3);
-
-        mat(0,0) = t.xx(); mat(0,1) = t.xy(); mat(0,2) = t.xz();
-        mat(1,0) = t.yx(); mat(1,1) = t.yy(); mat(1,2) = t.yz();
-        mat(2,0) = t.zx(); mat(2,1) = t.zy(); mat(2,2) = t.zz();
-
-        mat = SVDinv(mat);
-
-        return tensor
-        (
-            mat(0,0), mat(0,1), mat(0,2),
-            mat(1,0), mat(1,1), mat(1,2),
-            mat(2,0), mat(2,1), mat(2,2)
-        );
+        return SVD::pinv(t);
     }
 
     return Foam::inv(t, detval);
