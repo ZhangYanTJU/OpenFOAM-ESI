@@ -221,6 +221,13 @@ public:
             const scalarField& deltaCoeffs
         ) const;
 
+        //- Retrieve patch-normal gradient
+        virtual void snGrad
+        (
+            const scalarField& deltaCoeffs,
+            UList<Type>& result
+        ) const;
+
 
         // Coupled interface functionality
 

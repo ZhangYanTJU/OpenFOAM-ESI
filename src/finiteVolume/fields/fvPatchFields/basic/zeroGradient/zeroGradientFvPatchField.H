@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -128,14 +129,22 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
-        // Evaluation functions
+        // Evaluation Functions
 
-            //- Return gradient at boundary
+            //- Return patch-normal gradient
             virtual tmp<Field<Type>> snGrad() const
             {
-                return tmp<Field<Type>>::New(this->size(), Zero);
+                // zero-gradient
+                return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+            }
+
+            //- Retrieve patch-normal gradient [contiguous storage]
+            virtual void snGrad(UList<Type>& result) const
+            {
+                // zero-gradient
+                result = Foam::zero{};
             }
 
             //- Evaluate the patch field
@@ -146,25 +155,25 @@ public:
             );
 
             //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the value of this patchField with given weights
+            //- evaluation of the value of this patchField with given weights
             virtual tmp<Field<Type>> valueInternalCoeffs
             (
                 const tmp<scalarField>&
             ) const;
 
             //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the value of this patchField with given weights
+            //- evaluation of the value of this patchField with given weights
             virtual tmp<Field<Type>> valueBoundaryCoeffs
             (
                 const tmp<scalarField>&
             ) const;
 
             //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
+            //- evaluation of the gradient of this patchField
             virtual tmp<Field<Type>> gradientInternalCoeffs() const;
 
             //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
+            //- evaluation of the gradient of this patchField
             virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
 };
 

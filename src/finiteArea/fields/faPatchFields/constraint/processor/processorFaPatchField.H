@@ -210,6 +210,9 @@ public:
         //- Return patch-normal gradient
         virtual tmp<Field<Type>> snGrad() const;
 
+        //- Retrieve patch-normal gradient
+        virtual void snGrad(UList<Type>& result) const;
+
 
         // Coupled interface functionality
 

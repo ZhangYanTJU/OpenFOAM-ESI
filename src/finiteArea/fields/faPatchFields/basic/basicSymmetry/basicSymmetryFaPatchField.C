@@ -83,6 +83,41 @@ Foam::basicSymmetryFaPatchField<Type>::basicSymmetryFaPatchField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
+void Foam::basicSymmetryFaPatchField<Type>::snGrad(UList<Type>& result) const
+{
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : treat like zero-gradient
+        result = Foam::zero{};
+    }
+    else
+    {
+        // Get patch internal field, stored temporarily in result
+        this->patchInternalField(result);
+        const auto& pif = result;
+
+        tmp<vectorField> tnHat = this->patch().edgeNormals();
+        const auto& nHat = tnHat();
+
+        const auto& dc = this->patch().deltaCoeffs();
+
+        const label len = result.size();
+
+        // (dc/2.0)*(transform(I - 2.0*sqr(nHat), iF) - iF);
+
+        for (label i = 0; i < len; ++i)
+        {
+            result[i] =
+            (
+                (0.5*dc[i])
+              * (transform(I - 2.0*sqr(nHat[i]), pif[i]) - pif[i])
+            );
+        }
+    }
+}
+
+
+template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::basicSymmetryFaPatchField<Type>::snGrad() const
 {
@@ -93,17 +128,9 @@ Foam::basicSymmetryFaPatchField<Type>::snGrad() const
     }
     else
     {
-        tmp<vectorField> nHat = this->patch().edgeNormals();
-
-        const auto& dc = this->patch().deltaCoeffs();
-
-        const Field<Type> pif(this->patchInternalField());
-
-        return
-        (
-            (0.5*dc)
-          * (transform(I - 2.0*sqr(nHat), pif) - pif)
-        );
+        auto tresult = tmp<Field<Type>>::New(this->size());
+        this->snGrad(static_cast<UList<Type>&>(tresult.ref()));
+        return tresult;
     }
 }
 

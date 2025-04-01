@@ -148,6 +148,9 @@ public:
             //- Return patch-normal gradient
             virtual tmp<Field<Type>> snGrad() const;
 
+            //- Retrieve patch-normal gradient
+            virtual void snGrad(UList<Type>& result) const;
+
             //- Initialise the evaluation of the patch field
             virtual void initEvaluate
             (

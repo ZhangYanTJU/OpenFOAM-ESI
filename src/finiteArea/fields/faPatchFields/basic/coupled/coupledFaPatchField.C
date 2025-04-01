@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -108,11 +109,39 @@ Foam::coupledFaPatchField<Type>::coupledFaPatchField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
+void Foam::coupledFaPatchField<Type>::snGrad
+(
+    UList<Type>& result
+) const
+{
+    // Get patch neighbour field, store temporarily in result
+    this->patchNeighbourField(result);
+    const auto& pnf = result;
+
+    // Same as patchInternalField(...), assuming edgeFaces are an indirection
+    // into internal field, but without additional storage...
+    const auto& addr = this->patch().edgeFaces();
+    const auto& iF = this->primitiveField();
+
+    const auto& deltaCoeffs = this->patch().deltaCoeffs();
+
+    // snGrad = deltaCoeffs * (patchNeighbourField - patchInternalField)
+
+    const label len = result.size();
+
+    for (label i = 0; i < len; ++i)
+    {
+        result[i] = deltaCoeffs[i]*(pnf[i] - iF[addr[i]]);
+    }
+}
+
+
+template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::coupledFaPatchField<Type>::snGrad() const
 {
-    return
-        (patchNeighbourField() - this->patchInternalField())
-       *this->patch().deltaCoeffs();
+    auto tresult = tmp<Field<Type>>::New(this->size());
+    this->snGrad(static_cast<UList<Type>&>(tresult.ref()));
+    return tresult;
 }
 
 

@@ -208,32 +208,32 @@ public:
             }
 
             //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the value of this patchField with given weights
+            //- evaluation of the value of this patchField with given weights
             virtual tmp<Field<Type>> valueInternalCoeffs
             (
                 const tmp<scalarField>&
             ) const;
 
             //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the value of this patchField with given weights
+            //- evaluation of the value of this patchField with given weights
             virtual tmp<Field<Type>> valueBoundaryCoeffs
             (
                 const tmp<scalarField>&
             ) const;
 
             //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
+            //- evaluation of the gradient of this patchField
             virtual tmp<Field<Type>> gradientInternalCoeffs
             (
                 const scalarField& deltaCoeffs
             ) const;
 
             //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
+            //- evaluation of the gradient of this patchField
             virtual tmp<Field<Type>> gradientInternalCoeffs() const;
 
             //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
+            //- evaluation of the gradient of this patchField
             virtual tmp<Field<Type>> gradientBoundaryCoeffs
             (
                 const scalarField& deltaCoeffs
@@ -242,6 +242,65 @@ public:
             //- Return the matrix source coefficients corresponding to the
             //  evaluation of the gradient of this patchField
             virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
+
+
+      // Contiguous storage
+
+            //- Retrieve patch-normal gradient.
+            //- Assumes faceCells is an indirection into internal field
+            virtual void snGrad
+            (
+                const scalarField& deltaCoeffs,
+                UList<Type>&
+            ) const;
+
+            //- Retrieve patch-normal gradient
+            virtual void snGrad(UList<Type>&) const
+            {
+                NotImplemented;
+            }
+
+            //- Return the matrix diagonal coefficients corresponding to the
+            //  evaluation of the value of this patchField with given weights
+            virtual void valueInternalCoeffs
+            (
+                const tmp<scalarField>&,
+                UList<Type>&
+            ) const;
+
+            //- Return the matrix source coefficients corresponding to the
+            //  evaluation of the value of this patchField with given weights
+            virtual void valueBoundaryCoeffs
+            (
+                const tmp<scalarField>&,
+                UList<Type>&
+            ) const;
+
+            //- Return the matrix diagonal coefficients corresponding to the
+            //  evaluation of the gradient of this patchField
+            virtual void gradientInternalCoeffs(UList<Type>&) const;
+
+            //- Return the matrix diagonal coefficients corresponding to the
+            //  evaluation of the gradient of this coupled patchField
+            //  using the deltaCoeffs provided
+            virtual void gradientInternalCoeffs
+            (
+                const scalarField& deltaCoeffs,
+                UList<Type>&
+            ) const;
+
+            //- Return the matrix source coefficients corresponding to the
+            //  evaluation of the gradient of this patchField
+            virtual void gradientBoundaryCoeffs(UList<Type>&) const;
+
+            //- Return the matrix source coefficients corresponding to the
+            //  evaluation of the gradient of this coupled patchField
+            //  using the deltaCoeffs provided
+            virtual void gradientBoundaryCoeffs
+            (
+                const scalarField& deltaCoeffs,
+                UList<Type>&
+            ) const;
 
 
         // Coupled interface functionality

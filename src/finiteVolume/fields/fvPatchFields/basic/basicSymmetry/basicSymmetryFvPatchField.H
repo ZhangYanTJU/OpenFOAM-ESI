@@ -119,8 +119,11 @@ public:
 
     // Member Functions
 
-        //- Return gradient at boundary
+        //- Retrieve patch-normal gradient at boundary
         virtual tmp<Field<Type>> snGrad() const;
+
+        //- Retrieve patch-normal gradient at boundary
+        virtual void snGrad(UList<Type>& result) const;
 
         //- Evaluate the patch field
         virtual void evaluate

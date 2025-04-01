@@ -315,12 +315,38 @@ void Foam::processorFvPatchField<Type>::evaluate
 
 
 template<class Type>
+void Foam::processorFvPatchField<Type>::snGrad
+(
+    const scalarField& deltaCoeffs,
+    UList<Type>& result
+) const
+{
+    // Get patch internal field, store temporarily in result
+    this->patchInternalField(result);
+    const auto& pif = result;
+
+    const auto& pnf = *this;
+
+    const label len = result.size();
+
+    for (label i = 0; i < len; ++i)
+    {
+        result[i] = deltaCoeffs[i]*(pnf[i] - pif[i]);
+    }
+}
+
+
+template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::processorFvPatchField<Type>::snGrad
 (
     const scalarField& deltaCoeffs
 ) const
 {
+    // OR
+    // auto tfld = tmp<Field<Type>>::New(this->size());
+    // this->snGrad(deltaCoeffs, tfld.ref());
+    // return tfld;
     return deltaCoeffs*(*this - this->patchInternalField());
 }
 

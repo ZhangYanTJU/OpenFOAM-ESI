@@ -203,9 +203,30 @@ void Foam::faPatchField<Type>::check(const faPatchField<Type>& rhs) const
 
 
 template<class Type>
+void Foam::faPatchField<Type>::snGrad(UList<Type>& result) const
+{
+    // Get patch internal field, store temporarily in result
+    this->patchInternalField(result);
+    const auto& pif = result;
+
+    const Field<Type>& pfld = *this;
+    const auto& dc = patch().deltaCoeffs();
+
+    const label len = result.size();
+
+    for (label i = 0; i < len; ++i)
+    {
+        result[i] = dc[i]*(pfld[i] - pif[i]);
+    }
+}
+
+
+template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::faPatchField<Type>::snGrad() const
 {
-    return (*this - patchInternalField())*patch().deltaCoeffs();
+    auto tfld = tmp<Field<Type>>::New(this->size());
+    this->snGrad(static_cast<UList<Type>&>(tfld.ref()));
+    return tfld;
 }
 
 

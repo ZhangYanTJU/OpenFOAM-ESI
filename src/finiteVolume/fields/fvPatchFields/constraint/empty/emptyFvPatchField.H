@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -133,7 +134,7 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
         // Mapping functions
 
@@ -153,7 +154,7 @@ public:
             {}
 
 
-        // Evaluation functions
+        // Evaluation Functions
 
             //- Update the coefficients associated with the patch field
             //  This only checks to see the case is actually 1D or 2D
@@ -182,18 +183,29 @@ public:
             }
 
             //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
+            //- evaluation of the gradient of this patchField
             tmp<Field<Type>> gradientInternalCoeffs() const
             {
                 return tmp<Field<Type>>::New();
             }
 
             //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
+            //- evaluation of the gradient of this patchField
             tmp<Field<Type>> gradientBoundaryCoeffs() const
             {
                 return tmp<Field<Type>>::New();
             }
+
+
+    // Contiguous storage
+
+        //- Retrieve patch-normal gradient [contiguous storage].
+        //- Placeholder value is zero (treated like zero-gradient).
+        virtual void snGrad(UList<Type>& result) const
+        {
+            // Treat like zero-gradient
+            result = Foam::zero{};
+        }
 
 
     // Member Functions
