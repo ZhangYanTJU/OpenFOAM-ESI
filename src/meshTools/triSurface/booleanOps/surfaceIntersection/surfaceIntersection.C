@@ -989,8 +989,8 @@ void Foam::surfaceIntersection::joinDisconnected
 
         if (e.count() == 1)
         {
-            // minVertex = -1 (unused), maxVertex = pointId
-            const label pointId = e.maxVertex();
+            // min vertex = -1 (unused), max vertex = pointId
+            const label pointId = e.max();
 
             missedFacePoint[0](twoFaces[0]).insert
             (
@@ -1498,12 +1498,9 @@ void Foam::surfaceIntersection::mergePoints(const scalar mergeDist)
 
     if (nChanged)
     {
-        forAll(cutEdges_, edgei)
+        for (edge& e : cutEdges_)
         {
-            edge& e = cutEdges_[edgei];
-
-            e[0] = pointMap[e[0]];
-            e[1] = pointMap[e[1]];
+            e = edge(pointMap, e);
         }
 
         forAll(surf1EdgeCuts_, edgei)

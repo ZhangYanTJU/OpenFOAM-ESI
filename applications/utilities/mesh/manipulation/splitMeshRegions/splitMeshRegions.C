@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -269,11 +269,7 @@ void addToInterface
     EdgeMap<Map<label>>& regionsToSize
 )
 {
-    edge interface
-    (
-        min(ownRegion, neiRegion),
-        max(ownRegion, neiRegion)
-    );
+    const auto interface(edge::sorted(ownRegion, neiRegion));
 
     auto iter = regionsToSize.find(interface);
 
@@ -503,17 +499,13 @@ void getInterfaceSizes
 
         if (ownRegion != neiRegion)
         {
+            const auto interface(edge::sorted(ownRegion, neiRegion));
+
             label zoneID = -1;
             if (useFaceZones)
             {
                 zoneID = mesh.faceZones().whichZone(facei);
             }
-
-            edge interface
-            (
-                min(ownRegion, neiRegion),
-                max(ownRegion, neiRegion)
-            );
 
             faceToInterface[facei] = regionsToInterface[interface][zoneID];
         }
@@ -526,17 +518,13 @@ void getInterfaceSizes
 
         if (ownRegion != neiRegion)
         {
+            const auto interface(edge::sorted(ownRegion, neiRegion));
+
             label zoneID = -1;
             if (useFaceZones)
             {
                 zoneID = mesh.faceZones().whichZone(facei);
             }
-
-            edge interface
-            (
-                min(ownRegion, neiRegion),
-                max(ownRegion, neiRegion)
-            );
 
             faceToInterface[facei] = regionsToInterface[interface][zoneID];
         }

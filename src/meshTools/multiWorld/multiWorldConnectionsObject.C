@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -112,7 +112,7 @@ Foam::edge Foam::multiWorldConnections::worldPair(const label otherWorld)
     const label thisWorldID = UPstream::myWorldID();
 
     // The worlds (sorted)
-    return edge(thisWorldID, otherWorld, true);
+    return edge::sorted(thisWorldID, otherWorld);
 }
 
 
@@ -136,7 +136,7 @@ Foam::edge Foam::multiWorldConnections::worldPair(const word& otherWorld)
     }
 
     // The worlds (sorted)
-    return edge(thisWorldID, otherWorldID, true);
+    return edge::sorted(thisWorldID, otherWorldID);
 }
 
 

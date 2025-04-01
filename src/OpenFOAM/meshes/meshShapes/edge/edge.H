@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,19 +79,13 @@ public:
         inline edge();
 
         //- Construct from two vertex labels
-        inline edge(const label from, const label to);
+        inline edge(label from, label to);
 
-        //- Construct from pair of vertex labels
+        //- Construct from two vertex labels
         inline edge(const labelPair& pair);
 
-        //- Construct from list of vertex labels
-        inline edge(const FixedList<label, 2>& list);
-
-        //- Construct from two vertex labels, sorted with first less-than second
-        inline edge(const label from, const label to, const bool doSort);
-
-        //- Construct from list, sorted with first less-than second
-        inline edge(const FixedList<label, 2>& list, const bool doSort);
+        //- Construct from two vertex labels
+        inline edge(const FixedList<label, 2>& pair);
 
         //- Copy construct from a subset of vertex labels
         inline edge
@@ -104,6 +98,18 @@ public:
         inline edge(Istream& is);
 
 
+    // Static Functions
+
+        //- Create (in ascending order) from two vertex labels
+        inline static edge sorted(label from, label to);
+
+        //- Create (in ascending order) from two vertex labels
+        inline static edge sorted(const labelPair& pair);
+
+        //- Create (in ascending order) from two vertex labels
+        inline static edge sorted(const FixedList<label, 2>& pair);
+
+
     // Member Functions
 
     // Access
@@ -111,11 +117,11 @@ public:
         //- The first vertex
         label a() const noexcept { return labelPair::first(); }
 
-        //- The second vertex
-        label b() const noexcept { return labelPair::second(); }
-
         //- The first vertex
         label& a() noexcept { return labelPair::first(); }
+
+        //- The second vertex
+        label b() const noexcept { return labelPair::second(); }
 
         //- The second vertex
         label& b() noexcept { return labelPair::second(); }
@@ -123,14 +129,14 @@ public:
         //- The start (first) vertex label
         label start() const noexcept { return labelPair::first(); }
 
-        //- The end (last/second) vertex label
-        label end() const noexcept { return labelPair::second(); }
-
         //- The start (first) vertex label
         label& start() noexcept { return labelPair::first(); }
 
         //- The end (second/last) vertex label
         label& end() noexcept { return labelPair::second(); }
+
+        //- The end (last/second) vertex label
+        label end() const noexcept { return labelPair::second(); }
 
 
         //- Return reverse edge as copy.
@@ -142,11 +148,11 @@ public:
 
         //- Return the smallest vertex label used by the edge
         //  No special handling of negative vertex labels.
-        inline label minVertex() const noexcept;
+        inline label min() const noexcept;
 
         //- Return the largest vertex label used by the edge
         //  No special handling of negative vertex labels.
-        inline label maxVertex() const noexcept;
+        inline label max() const noexcept;
 
         //- True if the vertices are unique and non-negative.
         inline bool good() const noexcept;
@@ -328,11 +334,31 @@ public:
 
     // Housekeeping
 
+        //- Construct from two vertex labels, sorted with first less-than second
+        FOAM_DEPRECATED_FOR(2025-04, "edge::sorted() factory")
+        edge(label from, label to, bool doSort) : labelPair(from, to)
+        {
+            if (doSort) labelPair::sort();
+        }
+
+        //- Construct from list, sorted with first less-than second
+        FOAM_DEPRECATED_FOR(2025-04, "edge::sorted() factory")
+        edge(const FixedList<label, 2>& pair, bool doSort) : labelPair(pair)
+        {
+            if (doSort) labelPair::sort();
+        }
+
         //- Same as contains()
         bool found(label vertex) const { return contains(vertex); }
 
         //- Same as good()
         bool valid() const noexcept { return good(); }
+
+        //- Same as min()
+        label minVert() const noexcept { return edge::min(); }
+
+        //- Same as max()
+        label maxVert() const noexcept { return edge::max(); }
 
         //- Deprecated(2021-04) hashing functor. Use hasher()
         // \deprecated(2021-04) - use hasher() functor

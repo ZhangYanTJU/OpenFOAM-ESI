@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,6 +36,34 @@ inline int Foam::edge::compare(const edge& a, const edge& b)
 }
 
 
+inline Foam::edge Foam::edge::sorted(label from, label to)
+{
+    return (from < to) ? edge(from, to) : edge(to, from);
+}
+
+
+inline Foam::edge Foam::edge::sorted(const labelPair& pair)
+{
+    return
+    (
+        pair.first() < pair.second()
+      ? edge(pair.first(), pair.second())
+      : edge(pair.second(), pair.first())
+    );
+}
+
+
+inline Foam::edge Foam::edge::sorted(const FixedList<label, 2>& pair)
+{
+    return
+    (
+        (pair.get<0>() < pair.get<1>())
+      ? edge(pair.get<0>(), pair.get<1>())
+      : edge(pair.get<1>(), pair.get<0>())
+    );
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 inline Foam::edge::edge()
@@ -44,7 +72,7 @@ inline Foam::edge::edge()
 {}
 
 
-inline Foam::edge::edge(const label from, const label to)
+inline Foam::edge::edge(label from, label to)
 :
     labelPair(from, to)
 {}
@@ -56,21 +84,9 @@ inline Foam::edge::edge(const labelPair& pair)
 {}
 
 
-inline Foam::edge::edge(const FixedList<label, 2>& list)
+inline Foam::edge::edge(const FixedList<label, 2>& pair)
 :
-    labelPair(list.get<0>(), list.get<1>())
-{}
-
-
-inline Foam::edge::edge(const label from, const label to, const bool doSort)
-:
-    labelPair(from, to, doSort)
-{}
-
-
-inline Foam::edge::edge(const FixedList<label, 2>& list, const bool doSort)
-:
-    labelPair(list, doSort)
+    labelPair(pair.get<0>(), pair.get<1>())
 {}
 
 
@@ -92,13 +108,13 @@ inline Foam::edge::edge(Istream& is)
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline Foam::label Foam::edge::minVertex() const noexcept
+inline Foam::label Foam::edge::min() const noexcept
 {
     return (first() < second() ? first() : second());
 }
 
 
-inline Foam::label Foam::edge::maxVertex() const noexcept
+inline Foam::label Foam::edge::max() const noexcept
 {
     return (second() < first() ? first() : second());
 }

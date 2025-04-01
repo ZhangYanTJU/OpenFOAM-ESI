@@ -142,6 +142,26 @@ int main(int argc, char *argv[])
     Info<< "sorted ";
     printInfo(e4);
 
+    // Sorted construction
+    {
+        edge edge1(10, 5);
+
+        Info<< "plain ";
+        printInfo(edge1);
+
+        // construct sorted
+        auto edge3(edge::sorted(10, 5));
+
+        Info<< "sorted ";
+        printInfo(edge3);
+
+        // // construct sorted (deprecated)
+        // edge edge2(10, 5, true);
+        //
+        // Info<< "sorted ";
+        // printInfo(edge2);
+    }
+
     return 0;
 }
 

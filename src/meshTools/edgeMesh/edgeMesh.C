@@ -230,8 +230,7 @@ void Foam::edgeMesh::mergePoints(const scalar mergeDist)
 
         for (edge& e : edges_)
         {
-            e[0] = pointMap[e[0]];
-            e[1] = pointMap[e[1]];
+            e = edge(pointMap, e);
         }
     }
 
@@ -314,12 +313,9 @@ void Foam::edgeMesh::mergeEdges()
         points_.setSize(newId);
 
         // Renumber edges - already sorted (above)
-        forAll(edges_, edgeI)
+        for (edge& e : edges_)
         {
-            edge& e = edges_[edgeI];
-
-            e[0] = pointMap[e[0]];
-            e[1] = pointMap[e[1]];
+            e = edge(pointMap, e);
         }
     }
 }

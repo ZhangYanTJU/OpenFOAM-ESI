@@ -215,8 +215,7 @@ bool Foam::fileFormats::OBJedgeFormat::read(const fileName& filename)
     {
         for (edge& e : dynEdges)
         {
-            e[0] = dynUsedPoints[e[0]];
-            e[1] = dynUsedPoints[e[1]];
+            e = edge(dynUsedPoints, e);
         }
     }
     storedEdges().transfer(dynEdges);

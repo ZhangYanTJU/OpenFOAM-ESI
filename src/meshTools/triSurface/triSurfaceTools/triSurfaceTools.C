@@ -1636,7 +1636,7 @@ Foam::triSurface Foam::triSurfaceTools::collapseEdges
                         << abort(FatalError);
                 }
 
-                const label minVert = min(e.start(), e.end());
+                const label minVert = e.min();
                 pointMap[e.start()] = minVert;
                 pointMap[e.end()] = minVert;
 

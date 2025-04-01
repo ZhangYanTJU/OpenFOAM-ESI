@@ -174,13 +174,6 @@ public:
                 }
             }
         };
-
-
-    // Housekeeping
-
-        //- Deprecated(2023-07) Use is_sorted() method
-        //  \deprecated(2023-07) Use is_sorted() method
-        bool sorted() const { return is_sorted(); }
 };
 
 
