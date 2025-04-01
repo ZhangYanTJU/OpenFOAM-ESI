@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -645,7 +645,7 @@ void Foam::inplaceSubset
 
         const label outlen = (select.size() - select.count());
 
-        const label len = min(input.size(), select.size());
+        const label len = Foam::min(input.size(), select.size());
 
         for (label i=0; i < len; ++i)
         {
@@ -1285,9 +1285,7 @@ void Foam::ListOps::setValue
     const T& val
 )
 {
-    const label len = list.size();
-    const label count = locations.size();
-    const label end = min(count, len);
+    const label end = Foam::min(list.size(), locations.size());
 
     // The efficiency is modest
     for (label index = 0; index < end; ++index)

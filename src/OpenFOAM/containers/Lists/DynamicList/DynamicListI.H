@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,7 +66,7 @@ inline void Foam::DynamicList<T, SizeMin>::doCapacity
     }
 
     // Addressable length, possibly truncated by new capacity
-    const label currLen = min(List<T>::size(), newCapacity);
+    const label currLen = Foam::min(List<T>::size(), newCapacity);
 
     // Corner case...
     if (List<T>::size() == newCapacity)
@@ -104,8 +104,9 @@ inline void Foam::DynamicList<T, SizeMin>::doReserve
         // Preserve addressed size
         const label currLen = List<T>::size();
 
-        // Increase capacity (doubling)
-        capacity_ = max(SizeMin, max(len, label(2*capacity_)));
+        // Increase capacity (eg, doubling)
+        capacity_ =
+            Foam::ListPolicy::reserve_size<SizeMin, 2>(len, capacity_);
 
         if (nocopy)
         {
@@ -352,6 +353,24 @@ inline void Foam::DynamicList<T, SizeMin>::reserve_nocopy
 )
 {
     this->doReserve(true, len);  // nocopy = true
+}
+
+
+template<class T, int SizeMin>
+inline void Foam::DynamicList<T, SizeMin>::reserve_exact
+(
+    const label len
+)
+{
+    if (capacity_ < len)
+    {
+        // Preserve addressed size
+        const label currLen = List<T>::size();
+
+        capacity_ = len;
+        List<T>::resize(capacity_);
+        List<T>::setAddressableSize(currLen);
+    }
 }
 
 

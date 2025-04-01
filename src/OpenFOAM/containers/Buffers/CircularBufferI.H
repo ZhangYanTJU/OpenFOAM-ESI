@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -122,7 +122,7 @@ inline constexpr Foam::CircularBuffer<T>::CircularBuffer() noexcept
 template<class T>
 inline Foam::CircularBuffer<T>::CircularBuffer(const label len)
 :
-    storage_(max(min_size(), len + 1)),
+    storage_(Foam::max(min_size(), len+1)),
     begin_(0),
     end_(0)
 {}

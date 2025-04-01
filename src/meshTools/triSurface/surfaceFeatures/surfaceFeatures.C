@@ -1083,10 +1083,19 @@ Foam::labelList Foam::surfaceFeatures::selectFeatureEdges
 {
     DynamicList<label> selectedEdges;
 
+    // Presizing
+    {
+        label count = 0;
+
+        if (regionEdges) count += nRegionEdges();
+        if (externalEdges) count += nExternalEdges();
+        if (internalEdges) count += nInternalEdges();
+
+        selectedEdges.reserve_exact(count);
+    }
+
     if (regionEdges)
     {
-        selectedEdges.setCapacity(selectedEdges.size() + nRegionEdges());
-
         for (label i = 0; i < externalStart_; i++)
         {
             selectedEdges.append(featureEdges_[i]);
@@ -1095,8 +1104,6 @@ Foam::labelList Foam::surfaceFeatures::selectFeatureEdges
 
     if (externalEdges)
     {
-        selectedEdges.setCapacity(selectedEdges.size() + nExternalEdges());
-
         for (label i = externalStart_; i < internalStart_; i++)
         {
             selectedEdges.append(featureEdges_[i]);
@@ -1105,8 +1112,6 @@ Foam::labelList Foam::surfaceFeatures::selectFeatureEdges
 
     if (internalEdges)
     {
-        selectedEdges.setCapacity(selectedEdges.size() + nInternalEdges());
-
         for (label i = internalStart_; i < featureEdges_.size(); i++)
         {
             selectedEdges.append(featureEdges_[i]);

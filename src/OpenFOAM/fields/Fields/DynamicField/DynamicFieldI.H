@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,7 +64,7 @@ inline void Foam::DynamicField<T, SizeMin>::doCapacity
     }
 
     // Addressable length, possibly truncated by new capacity
-    const label currLen = min(List<T>::size(), newCapacity);
+    const label currLen = Foam::min(List<T>::size(), newCapacity);
 
     // Corner case - see comments in DynamicList doCapacity
     if (List<T>::size() == newCapacity)
@@ -98,8 +98,9 @@ inline void Foam::DynamicField<T, SizeMin>::doReserve
         // Preserve addressed size
         const label currLen = List<T>::size();
 
-        // Increase capacity (doubling)
-        capacity_ = max(SizeMin, max(len, label(2*capacity_)));
+        // Increase capacity (eg, doubling)
+        capacity_ =
+            Foam::ListPolicy::reserve_size<SizeMin, 2>(len, capacity_);
 
         if (nocopy)
         {
@@ -269,6 +270,77 @@ inline Foam::DynamicField<T, SizeMin>::DynamicField
 
 
 template<class T, int SizeMin>
+template<int AnySizeMin>
+inline Foam::DynamicField<T, SizeMin>::DynamicField
+(
+    DynamicField<T, AnySizeMin>& content,
+    bool reuse
+)
+:
+    Field<T>(),
+    capacity_(0)
+{
+    if (reuse)
+    {
+        Field<T>::transfer(static_cast<List<T>&>(content));
+        capacity_ = content.capacity();
+        content.setCapacity_unsafe(0);
+    }
+    else
+    {
+        Field<T>::operator=(content);
+        capacity_ = content.size();
+    }
+}
+
+
+template<class T, int SizeMin>
+template<int AnySizeMin>
+inline Foam::DynamicField<T, SizeMin>::DynamicField
+(
+    DynamicList<T, AnySizeMin>& content,
+    bool reuse
+)
+:
+    Field<T>(),
+    capacity_(0)
+{
+    if (reuse)
+    {
+        Field<T>::transfer(static_cast<List<T>&>(content));
+        capacity_ = content.capacity();
+        content.setCapacity_unsafe(0);
+    }
+    else
+    {
+        Field<T>::operator=(content);
+        capacity_ = content.size();
+    }
+}
+
+
+template<class T, int SizeMin>
+inline Foam::DynamicField<T, SizeMin>::DynamicField
+(
+    List<T>& content,
+    bool reuse
+)
+:
+    Field<T>(),
+    capacity_(content.size())
+{
+    if (reuse)
+    {
+        Field<T>::transfer(content);
+    }
+    else
+    {
+        Field<T>::operator=(content);
+    }
+}
+
+
+template<class T, int SizeMin>
 inline Foam::DynamicField<T, SizeMin>::DynamicField
 (
     const UList<T>& mapF,
@@ -378,6 +450,24 @@ inline void Foam::DynamicField<T, SizeMin>::reserve_nocopy
 )
 {
     this->doReserve(true, len);  // nocopy = true
+}
+
+
+template<class T, int SizeMin>
+inline void Foam::DynamicField<T, SizeMin>::reserve_exact
+(
+    const label len
+)
+{
+    if (capacity_ < len)
+    {
+        // Preserve addressed size
+        const label currLen = List<T>::size();
+
+        capacity_ = len;
+        List<T>::resize(capacity_);
+        List<T>::setAddressableSize(currLen);
+    }
 }
 
 

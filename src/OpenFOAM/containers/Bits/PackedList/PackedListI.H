@@ -547,7 +547,26 @@ inline void Foam::PackedList<Width>::reserve(const label numElem)
         blocks_.resize
         (
             // SizeMin=16, allocation doubling
-            max(16, max(newLen, 2*oldLen)),
+            Foam::max(16, Foam::max(newLen, 2*oldLen)),
+            0u
+        );
+    }
+}
+
+
+template<unsigned Width>
+inline void Foam::PackedList<Width>::reserve_exact(const label numElem)
+{
+    const label oldLen = blocks_.size();
+    const label newLen = num_blocks(numElem);
+
+    // Allocate more capacity if necessary
+    if (oldLen < newLen)
+    {
+        blocks_.resize
+        (
+            // SizeMin=16
+            Foam::max(16, newLen),
             0u
         );
     }

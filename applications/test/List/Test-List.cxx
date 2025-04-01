@@ -140,7 +140,45 @@ int main(int argc, char *argv[])
     argList::addBoolOption("ListList", "Test list of list functionality");
     argList::addBoolOption("flag");
 
+    argList::addBoolOption("reserve", "Test ListPolicy for reserve_size");
+
     #include "setRootCase.H"
+
+    if (args.found("reserve"))
+    {
+        using namespace Foam::ListPolicy;
+
+        using control = std::pair<label, label>;
+
+        for
+        (
+            const auto& tup :
+            {
+                control{ 10, 5 },
+                control{ 20, 25 }
+            }
+        )
+        {
+            const auto [len, capacity] = tup;
+
+            Info<< "test " << tup << nl;
+
+            auto size = reserve_size<16,2>(len, capacity);
+            Info<< "   => " << size << " (ratio 2)" << nl;
+
+            size = reserve_size<16,3,2>(len, capacity);
+            Info<< "   => " << size << " (ratio 3/2)" << nl;
+
+            size = reserve_size<16,13,8>(len, capacity);
+            Info<< "   => " << size << " (ratio " << (13.0/8) << ')' << nl;
+
+            size = reserve_size<16,25,16>(len, capacity);
+            Info<< "   => " << size << " (ratio " << (25.0/16) << ')' << nl;
+        }
+
+        Info<< nl << "\nEnd" << endl;
+        return 0;
+    }
 
     {
         List<label> ident(15);

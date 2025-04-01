@@ -38,7 +38,14 @@ void Foam::CircularBuffer<T>::doReserve
     {
         // Increase capacity (doubling)
         const label newCapacity =
-            max(min_size(), max(len+1, label(2*storage_.size())));
+            Foam::max(min_size(), Foam::max(len+1, label(2*storage_.size())));
+
+            // OR
+            // Foam::ListPolicy::reserve_size<min_size(), 2>
+            // (
+            //     len+1,
+            //     storage_.size()
+            // );
 
         if (nocopy || empty())
         {

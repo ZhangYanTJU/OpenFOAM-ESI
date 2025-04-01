@@ -393,6 +393,11 @@ public:
         //  Never shrinks the allocated size.
         inline void reserve(const label numElem);
 
+        //- Reserve allocation space for at least this size
+        //- (uses the specified size without any other resizing strategy).
+        //  Never shrinks the allocated size.
+        inline void reserve_exact(const label numElem);
+
         //- Clear the list, i.e. set addressable size to zero.
         //  Does not adjust the underlying storage
         inline void clear();

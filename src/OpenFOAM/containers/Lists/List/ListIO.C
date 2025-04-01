@@ -153,7 +153,7 @@ bool Foam::List<T>::readBracketList(Istream& is)
             List<T> currChunk(std::move(*(chunks[chunki])));
             chunks[chunki].reset(nullptr);
 
-            const label localLen = min(currChunk.size(), totalCount);
+            const label localLen = Foam::min(currChunk.size(), totalCount);
 
             dest = std::move
             (

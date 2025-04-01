@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -165,6 +165,10 @@ public:
         explicit DynamicList(Istream& is);
 
 
+    //- Destructor, sync allocated size before List destruction
+    ~DynamicList() { List<T>::setAddressableSize(capacity_); }
+
+
     // Member Functions
 
     // Capacity
@@ -207,6 +211,12 @@ public:
         //- space if required \em without retaining old content.
         //  Never shrinks the allocated size, use setCapacity() for that.
         inline void reserve_nocopy(const label len);
+
+        //- Reserve allocation space for at least this size, allocating new
+        //- space if required and \em retaining old content.
+        //- If allocation is required, uses the specified size
+        //- without any other resizing logic.
+        inline void reserve_exact(const label len);
 
         //- Alter addressable list size, allocating new space if required
         //- while \em recovering old content.

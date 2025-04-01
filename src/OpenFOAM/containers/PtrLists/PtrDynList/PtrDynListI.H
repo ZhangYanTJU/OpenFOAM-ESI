@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -122,9 +122,25 @@ inline void Foam::PtrDynList<T, SizeMin>::reserve(const label len)
         // Preserve addressed size
         const label currLen = PtrList<T>::size();
 
-        // Increase capacity (doubling)
-        capacity_ = max(SizeMin, max(len, label(2*capacity_)));
+        // Increase capacity (eg, doubling)
+        capacity_ =
+            Foam::ListPolicy::reserve_size<SizeMin, 2>(len, capacity_);
 
+        PtrList<T>::resize(capacity_);
+        PtrList<T>::setAddressableSize(currLen);
+    }
+}
+
+
+template<class T, int SizeMin>
+inline void Foam::PtrDynList<T, SizeMin>::reserve_exact(const label len)
+{
+    if (capacity_ < len)
+    {
+        // Preserve addressed size
+        const label currLen = PtrList<T>::size();
+
+        capacity_ = len;
         PtrList<T>::resize(capacity_);
         PtrList<T>::setAddressableSize(currLen);
     }
@@ -140,8 +156,9 @@ inline void Foam::PtrDynList<T, SizeMin>::resize(const label newLen)
 
     if (capacity_ < newLen)
     {
-        // Increase capacity (doubling)
-        capacity_ = max(SizeMin, max(newLen, label(2*capacity_)));
+        // Increase capacity (eg, doubling)
+        capacity_ =
+            Foam::ListPolicy::reserve_size<SizeMin, 2>(newLen, capacity_);
 
         PtrList<T>::resize(capacity_);
     }
@@ -165,8 +182,9 @@ inline void Foam::PtrDynList<T, SizeMin>::resize_null(const label newLen)
 {
     if (capacity_ < newLen)
     {
-        // Increase capacity (doubling)
-        capacity_ = max(SizeMin, max(newLen, label(2*capacity_)));
+        // Increase capacity (eg, doubling)
+        capacity_ =
+            Foam::ListPolicy::reserve_size<SizeMin, 2>(newLen, capacity_);
 
         PtrList<T>::resize_null(capacity_);
     }

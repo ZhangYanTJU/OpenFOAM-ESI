@@ -521,6 +521,8 @@ public:
                     // Increase capacity (doubling)
                     newCapacity =
                         Foam::max(label(len), label(2*storage_.size()));
+                    // ratio=1.5:
+                    // Foam::max(label(len), label((storage_.size()/2)*3));
                 }
 
                 // Info<<"request:" << len

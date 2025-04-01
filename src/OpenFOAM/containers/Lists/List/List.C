@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,7 +44,7 @@ void Foam::List<T>::doResize(const label len)
     if (len > 0)
     {
         // With sign-check to avoid spurious -Walloc-size-larger-than
-        const label overlap = min(this->size_, len);
+        const label overlap = Foam::min(this->size_, len);
 
         if (overlap > 0)
         {

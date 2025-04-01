@@ -88,6 +88,63 @@ template<> struct no_linebreak<wordRe> : std::true_type {};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+//- Calculate a reserve size (eg, doubling) based on the request length
+//- and the current capacity
+template<int SizeMin, int Numerator, class IntType>
+inline IntType reserve_size(IntType requested, IntType capacity)
+{
+    static_assert(Numerator > 1, "Invalid numerator");
+
+    // The caller already checks this:
+    // if (requested < capacity) { return capacity; }
+
+    IntType size(capacity*Numerator);
+    if (size < requested)
+    {
+        size = requested;
+    }
+    if constexpr (SizeMin > 0)  // The min size is optional
+    {
+        if (size < SizeMin)
+        {
+            size = SizeMin;
+        }
+    }
+    return size;
+}
+
+
+//- Calculate a reserve size based on the request length
+//- and the current capacity
+template<int SizeMin, int Numerator, int Denominator, class IntType>
+inline IntType reserve_size(IntType requested, IntType capacity)
+{
+    static_assert(Numerator > Denominator, "Invalid numerator");
+    static_assert(Denominator > 0, "Invalid denominator");
+
+    // The caller already checks this:
+    // if (requested < capacity) { return capacity; }
+
+    // Very unlikely that capacity is less than Denominator,
+    // so divide before multiply to avoid overflow
+    IntType size((capacity/Denominator)*Numerator);
+    if (size < requested)
+    {
+        size = requested;
+    }
+    if constexpr (SizeMin > 0)  // The min size is optional
+    {
+        if (size < SizeMin)
+        {
+            size = SizeMin;
+        }
+    }
+    return size;
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 //- Classification of list/container uniformity.
 //- The values can be used with bit-wise \c or reduction
 enum uniformity : unsigned char

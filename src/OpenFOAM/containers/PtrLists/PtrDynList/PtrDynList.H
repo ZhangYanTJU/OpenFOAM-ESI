@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,8 +96,8 @@ public:
         inline explicit PtrDynList(UList<T*>& list);
 
 
-    //- Destructor
-    ~PtrDynList() = default;
+    //- Destructor, sync allocated size before list destruction
+    ~PtrDynList() { PtrList<T>::setAddressableSize(capacity_); }
 
 
     // Member Functions
@@ -109,6 +109,11 @@ public:
 
         //- Reserve allocation space for at least this size.
         inline void reserve(const label len);
+
+        //- Reserve allocation space for at least this size.
+        //- If allocation is required, uses the specified size
+        //- without any other resizing logic.
+        inline void reserve_exact(const label len);
 
         //- Alter the addressed list size.
         inline void resize(const label newLen);
