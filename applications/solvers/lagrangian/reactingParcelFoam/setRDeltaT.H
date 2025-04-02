@@ -81,9 +81,11 @@ License
         // Limit the largest time scale (=> smallest reciprocal time)
         rDeltaT.clamp_min(1/maxDeltaT);
 
+        auto limits = gMinMax(rDeltaT.primitiveField());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
+
         Info<< "    Flow        = "
-            << gMin(1/rDeltaT.primitiveField()) << ", "
-            << gMax(1/rDeltaT.primitiveField()) << endl;
+            << limits.min() << ", " << limits.max() << endl;
     }
 
     // Reaction source time scale
@@ -105,9 +107,11 @@ License
 
         rDeltaT.primitiveFieldRef().clamp_min(rDeltaTT);
 
+        auto limits = gMinMax(rDeltaTT.field());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
+
         Info<< "    Temperature = "
-            << gMin(1/(rDeltaTT.field() + VSMALL)) << ", "
-            << gMax(1/(rDeltaTT.field() + VSMALL)) << endl;
+            << limits.min() << ", " << limits.max() << endl;
     }
 
     // Update the boundary values of the reciprocal time-step
@@ -130,9 +134,11 @@ License
     // Update the boundary values of the reciprocal time-step
     rDeltaT.correctBoundaryConditions();
 
+    auto limits = gMinMax(rDeltaT.primitiveField());
+    limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
+
     Info<< "    Overall     = "
-        << gMin(1/rDeltaT.primitiveField())
-        << ", " << gMax(1/rDeltaT.primitiveField()) << endl;
+        << limits.min() << ", " << limits.max() << endl;
 }
 
 

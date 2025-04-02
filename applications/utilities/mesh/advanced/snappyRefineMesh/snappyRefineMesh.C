@@ -81,26 +81,25 @@ void writeSet(const cellSet& cells, const string& msg)
 
 direction getNormalDir(const twoDPointCorrector* correct2DPtr)
 {
-    direction dir = 3;
-
     if (correct2DPtr)
     {
         const vector& normal = correct2DPtr->planeNormal();
 
-        if (mag(normal & vector(1, 0, 0)) > 1-edgeTol)
+        if (mag(normal.x()) > 1-edgeTol)
         {
-            dir = 0;
+            return vector::X;
         }
-        else if (mag(normal & vector(0, 1, 0)) > 1-edgeTol)
+        else if (mag(normal.y()) > 1-edgeTol)
         {
-            dir = 1;
+            return vector::Y;
         }
-        else if (mag(normal & vector(0, 0, 1)) > 1-edgeTol)
+        else if (mag(normal.z()) > 1-edgeTol)
         {
-            dir = 2;
+            return vector::Z;
         }
     }
-    return dir;
+
+    return direction(3);
 }
 
 
@@ -109,89 +108,95 @@ direction getNormalDir(const twoDPointCorrector* correct2DPtr)
 // directions but exclude component (0=x, 1=y, 2=z, other=none)
 scalar getEdgeStats(const primitiveMesh& mesh, const direction excludeCmpt)
 {
-    label nX = 0;
-    label nY = 0;
-    label nZ = 0;
+    label nAny(0);
+    label nX(0);
+    label nY(0);
+    label nZ(0);
 
-    scalar minX = GREAT;
-    scalar maxX = -GREAT;
-    vector x(1, 0, 0);
-
-    scalar minY = GREAT;
-    scalar maxY = -GREAT;
-    vector y(0, 1, 0);
-
-    scalar minZ = GREAT;
-    scalar maxZ = -GREAT;
-    vector z(0, 0, 1);
-
-    scalar minOther = GREAT;
-    scalar maxOther = -GREAT;
+    scalarMinMax limitsAny(GREAT, -GREAT);
+    scalarMinMax limitsX(limitsAny);
+    scalarMinMax limitsY(limitsAny);
+    scalarMinMax limitsZ(limitsAny);
 
     const edgeList& edges = mesh.edges();
 
-    forAll(edges, edgei)
+    for (const edge& e : edges)
     {
-        const edge& e = edges[edgei];
-
         vector eVec(e.vec(mesh.points()));
 
         scalar eMag = mag(eVec);
 
         eVec /= eMag;
 
-        if (mag(eVec & x) > 1-edgeTol)
+        if (mag(eVec.x()) > 1-edgeTol)
         {
-            minX = min(minX, eMag);
-            maxX = max(maxX, eMag);
+            limitsX.add(eMag);
             nX++;
         }
-        else if (mag(eVec & y) > 1-edgeTol)
+        else if (mag(eVec.y()) > 1-edgeTol)
         {
-            minY = min(minY, eMag);
-            maxY = max(maxY, eMag);
+            limitsY.add(eMag);
             nY++;
         }
-        else if (mag(eVec & z) > 1-edgeTol)
+        else if (mag(eVec.z()) > 1-edgeTol)
         {
-            minZ = min(minZ, eMag);
-            maxZ = max(maxZ, eMag);
+            limitsZ.add(eMag);
             nZ++;
         }
         else
         {
-            minOther = min(minOther, eMag);
-            maxOther = max(maxOther, eMag);
+            limitsAny.add(eMag);
+            nAny++;
         }
     }
 
     Info<< "Mesh bounding box:" << boundBox(mesh.points()) << nl << nl
         << "Mesh edge statistics:" << nl
-        << "    x aligned :  number:" << nX << "\tminLen:" << minX
-        << "\tmaxLen:" << maxX << nl
-        << "    y aligned :  number:" << nY << "\tminLen:" << minY
-        << "\tmaxLen:" << maxY << nl
-        << "    z aligned :  number:" << nZ << "\tminLen:" << minZ
-        << "\tmaxLen:" << maxZ << nl
-        << "    other     :  number:" << mesh.nEdges() - nX - nY - nZ
-        << "\tminLen:" << minOther
-        << "\tmaxLen:" << maxOther << nl << endl;
+        << "    x aligned :  number:" << nX
+        << "\tminLen:" << limitsX.min() << "\tmaxLen:" << limitsX.max() << nl
+        << "    y aligned :  number:" << nY
+        << "\tminLen:" << limitsY.min() << "\tmaxLen:" << limitsY.max() << nl
+        << "    z aligned :  number:" << nZ
+        << "\tminLen:" << limitsZ.min() << "\tmaxLen:" << limitsZ.max() << nl
+        << "    other     :  number:" << nAny
+        << "\tminLen:" << limitsAny.min()
+        << "\tmaxLen:" << limitsAny.max() << nl << endl;
 
-    if (excludeCmpt == 0)
+    if (excludeCmpt == vector::X)
     {
-        return min(minY, min(minZ, minOther));
+        return Foam::min
+        (
+            limitsAny.min(),
+            Foam::min(limitsY.min(), limitsZ.min())
+        );
     }
-    else if (excludeCmpt == 1)
+    else if (excludeCmpt == vector::Y)
     {
-        return min(minX, min(minZ, minOther));
+        return Foam::min
+        (
+            limitsAny.min(),
+            Foam::min(limitsX.min(), limitsZ.min())
+        );
     }
-    else if (excludeCmpt == 2)
+    else if (excludeCmpt == vector::Z)
     {
-        return min(minX, min(minY, minOther));
+        return Foam::min
+        (
+            limitsAny.min(),
+            Foam::min(limitsX.min(), limitsY.min())
+        );
     }
     else
     {
-        return min(minX, min(minY, min(minZ, minOther)));
+        return Foam::min
+        (
+            limitsAny.min(),
+            Foam::min
+            (
+                limitsX.min(),
+                Foam::min(limitsY.min(), limitsZ.min())
+            )
+        );
     }
 }
 

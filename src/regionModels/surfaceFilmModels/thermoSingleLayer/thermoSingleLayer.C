@@ -697,10 +697,11 @@ void thermoSingleLayer::info()
 
     const scalarField& Tinternal = T_;
 
+    auto limits = gMinMax(Tinternal);
+    auto avg = gAverage(Tinternal);
+
     Info<< indent << "min/mean/max(T)    = "
-        << gMin(Tinternal) << ", "
-        << gAverage(Tinternal) << ", "
-        << gMax(Tinternal) << nl;
+        << limits.min() << ", " << avg << ", " << limits.max() << nl;
 
     phaseChange_->info(Info);
 }

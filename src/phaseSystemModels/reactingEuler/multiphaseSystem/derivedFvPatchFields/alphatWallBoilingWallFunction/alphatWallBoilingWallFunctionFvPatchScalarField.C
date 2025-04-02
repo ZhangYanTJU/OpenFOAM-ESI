@@ -505,13 +505,12 @@ void alphatWallBoilingWallFunctionFvPatchScalarField::updateCoeffs()
             {
                 Info<< "alphat for vapour : " << nl << endl;
 
-                Info<< "  alphatEffv: " << gMin(vaporw*(*this + alphaw))
-                    << " - " << gMax(vaporw*(*this + alphaw)) << endl;
+                Info<< "  alphatEffv: " << gMinMax(vaporw*(*this + alphaw))
+                    << endl;
 
                 const scalarField qEff(vaporw*(*this + alphaw)*hewv.snGrad());
 
-                 Info<< "  qEffVap: " << gMin(qEff) << " - "
-                     << gMax(qEff) << endl;
+                Info<< "  qEffVap: " << gMinMax(qEff) << endl;
 
                 scalar Qeff = gWeightedSum(patch().magSf(), qEff);
                 Info<< " Effective heat transfer rate to vapor:" << Qeff
@@ -1096,24 +1095,16 @@ void alphatWallBoilingWallFunctionFvPatchScalarField::updateCoeffs()
                     fLiquid*liquidw*(*this + alphaw)*hew.snGrad()
                 );
 
-                Info<< "alphat for liquid:  " <<  nl << endl;
+                Info<< "alphat for liquid:  " <<  nl << nl;
+                Info<< "  qEffLiq: " << gMinMax(qEff) << nl;
+                Info<< "  alphatl: " << gMinMax(*this) << nl;
+                Info<< "  dmdt: " << gMinMax(dmdt_) << nl;
+                Info<< "  alphatlEff: "
+                    << gMinMax(liquidw*(*this + alphaw)) << nl;
 
-                Info<< "  qEffLiq: " << gMin(qEff) << " - "
-                    << gMax(qEff) << endl;
-
-
-                Info<< "  alphatl: " << gMin((*this)) << " - "
-                    << gMax((*this)) << endl;
-
-                Info<< "  dmdt: " << gMin((dmdt_)) << " - "
-                    << gMax((dmdt_)) << endl;
-
-                Info<< "  alphatlEff: " << gMin(liquidw*(*this + alphaw))
-                    << " - " << gMax(liquidw*(*this + alphaw)) << endl;
-
-                scalar Qeff = gWeightedSum(patch().magSf(), qEff);
-                Info<< " Effective heat transfer rate to liquid: " << Qeff
-                    << endl << nl;
+                Info<< " Effective heat transfer rate to liquid: "
+                    << gWeightedSum(patch().magSf(), qEff)
+                    << nl << endl;
 
                 if (debug == 2)
                 {

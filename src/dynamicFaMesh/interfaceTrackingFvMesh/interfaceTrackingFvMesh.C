@@ -2022,8 +2022,11 @@ bool Foam::interfaceTrackingFvMesh::update()
 
         const scalarField& K = aMesh().faceCurvatures().internalField();
 
-        Info<< "Free surface curvature: min = " << gMin(K)
-            << ", max = " << gMax(K) << ", average = " << gAverage(K) << nl;
+        auto limits = gMinMax(K);
+
+        Info<< "Free surface curvature: min = " << limits.min()
+            << ", max = " << limits.max()
+            << ", average = " << gAverage(K) << nl;
 
         timeIndex_ = mesh().time().timeIndex();
     }

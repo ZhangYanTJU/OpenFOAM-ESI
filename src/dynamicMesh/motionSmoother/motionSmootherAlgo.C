@@ -879,10 +879,13 @@ bool Foam::motionSmootherAlgo::scaleMesh
         vector::zero    // null value
     );
 
-    Info<< "Moving mesh using displacement scaling :"
-        << " min:" << gMin(scale_.primitiveField())
-        << "  max:" << gMax(scale_.primitiveField())
-        << endl;
+    {
+        auto limits = gMinMax(scale_.primitiveField());
+        Info<< "Moving mesh using displacement scaling :"
+            << " min:" << limits.min()
+            << " max:" << limits.max()
+            << endl;
+    }
 
     // Get points using current displacement and scale. Optionally 2D corrected.
     pointField newPoints(curPoints());
@@ -1018,9 +1021,11 @@ bool Foam::motionSmootherAlgo::scaleMesh
 
         if (debug)
         {
+            auto limits = gMinMax(scale_);
+
             Pout<< "scale_ after smoothing :"
-                << " min:" << Foam::gMin(scale_)
-                << " max:" << Foam::gMax(scale_)
+                << " min:" << limits.min()
+                << " max:" << limits.max()
                 << endl;
         }
 

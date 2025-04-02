@@ -430,21 +430,29 @@ Foam::ThermalPhaseChangePhaseSystem<BasePhaseSystem>::correctInterfaceThermo()
 
         Tf = (H1*T1 + H2*T2 + iDmdtNew*L)/(H1 + H2);
 
-        Info<< "Tf." << pair.name()
-            << ": min = " << gMin(Tf.primitiveField())
-            << ", mean = " << gAverage(Tf.primitiveField())
-            << ", max = " << gMax(Tf.primitiveField())
-            << endl;
+        {
+            auto limits = gMinMax(Tf.primitiveField());
+            auto avg = gAverage(Tf.primitiveField());
+
+            Info<< "Tf." << pair.name()
+                << ": min = " << limits.min()
+                << ", mean = " << avg
+                << ", max = " << limits.max()
+                << endl;
+        }
 
         scalar iDmdtRelax(this->mesh().fieldRelaxationFactor("iDmdt"));
         iDmdt = (1 - iDmdtRelax)*iDmdt + iDmdtRelax*iDmdtNew;
 
         if (phaseChange_)
         {
+            auto limits = gMinMax(iDmdt.primitiveField());
+            auto avg = gAverage(iDmdt.primitiveField());
+
             Info<< "iDmdt." << pair.name()
-                << ": min = " << gMin(iDmdt.primitiveField())
-                << ", mean = " << gAverage(iDmdt.primitiveField())
-                << ", max = " << gMax(iDmdt.primitiveField())
+                << ": min = " << limits.min()
+                << ", mean = " << avg
+                << ", max = " << limits.max()
                 << ", integral = " << fvc::domainIntegrate(iDmdt).value()
                 << endl;
         }
@@ -525,10 +533,13 @@ Foam::ThermalPhaseChangePhaseSystem<BasePhaseSystem>::correctInterfaceThermo()
 
         if (wallBoilingActive)
         {
+            auto limits = gMinMax(wDmdt.primitiveField());
+            auto avg = gAverage(wDmdt.primitiveField());
+
             Info<< "wDmdt." << pair.name()
-                << ": min = " << gMin(wDmdt.primitiveField())
-                << ", mean = " << gAverage(wDmdt.primitiveField())
-                << ", max = " << gMax(wDmdt.primitiveField())
+                << ": min = " << limits.min()
+                << ", mean = " << avg
+                << ", max = " << limits.max()
                 << ", integral = " << fvc::domainIntegrate(wDmdt).value()
                 << endl;
         }

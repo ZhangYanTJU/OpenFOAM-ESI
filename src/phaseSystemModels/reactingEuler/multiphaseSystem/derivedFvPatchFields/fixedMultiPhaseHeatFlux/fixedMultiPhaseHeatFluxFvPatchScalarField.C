@@ -147,8 +147,11 @@ void Foam::fixedMultiPhaseHeatFluxFvPatchScalarField::updateCoeffs()
             const scalarField q0(T.snGrad()*alpha*kappaEff);
             Q += q0;
 
+            auto limits = gMinMax(q0);
+
             Info<< patch().name() << " " << phase.name()
-                << ": Heat flux " << gMin(q0) << " - " << gMax(q0) << endl;
+                << ": Heat flux "
+                << limits.min() << " - " << limits.max() << endl;
         }
 
         A += T.patchInternalField()*alpha*kappaEff*patch().deltaCoeffs();
@@ -157,7 +160,7 @@ void Foam::fixedMultiPhaseHeatFluxFvPatchScalarField::updateCoeffs()
 
     if (debug)
     {
-        MinMax<scalar> limits = gMinMax(Q);
+        auto limits = gMinMax(Q);
 
         Info<< patch().name() << " " << ": overall heat flux "
             << limits.min() << " - " << limits.max() << " W/m2, power: "

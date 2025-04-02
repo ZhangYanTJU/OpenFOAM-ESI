@@ -138,16 +138,18 @@ void Foam::displacementInterpolationMotionSolver::calcInterpolation()
             scalar minCoord = VGREAT;
             scalar maxCoord = -VGREAT;
 
-            forAll(fz().meshPoints(), localI)
+            scalarMinMax limits;
+
+            for (const label pointi : fz().meshPoints())
             {
-                label pointi = fz().meshPoints()[localI];
                 const scalar coord = points0()[pointi][dir];
-                minCoord = min(minCoord, coord);
-                maxCoord = max(maxCoord, coord);
+                limits.add(coord);
             }
 
-            zoneCoordinates[2*i] = returnReduce(minCoord, minOp<scalar>());
-            zoneCoordinates[2*i+1] = returnReduce(maxCoord, maxOp<scalar>());
+            reduce(limits, sumOp<scalarMinMax>());
+
+            zoneCoordinates[2*i] = limits.min();
+            zoneCoordinates[2*i+1] = limits.max();
 
             if (debug)
             {
@@ -167,8 +169,13 @@ void Foam::displacementInterpolationMotionSolver::calcInterpolation()
         // Check if we have static min and max mesh bounds
         const scalarField meshCoords(points0().component(dir));
 
-        scalar minCoord = gMin(meshCoords);
-        scalar maxCoord = gMax(meshCoords);
+        scalar minCoord, maxCoord;
+        {
+            auto limits = gMinMax(meshCoords);
+
+            minCoord = limits.min();
+            maxCoord = limits.max();
+        }
 
         if (debug)
         {

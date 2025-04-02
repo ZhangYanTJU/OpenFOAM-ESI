@@ -344,13 +344,12 @@ int main(int argc, char *argv[])
 
         // Check constant profile
         {
-            const scalar max = gMax(one);
-            const scalar min = gMin(one);
+            auto limits =  gMinMax(one);
 
-            Info<< "Uniform one field min = " << min
-                << "  max = " << max << endl;
+            Info<< "Uniform one field min = "
+                << limits.min() << "  max = " << limits.max() << endl;
 
-            if (isNotEqual(min, 1) || isNotEqual(max, 1))
+            if (isNotEqual(limits.min(), 1) || isNotEqual(limits.max(), 1))
             {
                 FatalErrorInFunction
                     << "Uniform volVectorField not preserved."
@@ -368,13 +367,12 @@ int main(int argc, char *argv[])
         {
             const scalarField diff = ccX-mesh.C().component(0);
 
-            const scalar max = gMax(diff);
-            const scalar min = gMin(diff);
+            auto limits =  gMinMax(diff);
 
-            Info<< "Linear profile field min = " << min
-                << "  max = " << max << endl;
+            Info<< "Linear profile field min = "
+                << limits.min() << "  max = " << limits.max() << endl;
 
-            if (isNotEqual(min, 0) || isNotEqual(max, 0))
+            if (isNotEqual(limits.min(), 0) || isNotEqual(limits.max(), 0))
             {
                 Info<< "Linear profile not preserved."
                     << " Min and max should both be 0.0. min:" << min
@@ -389,13 +387,12 @@ int main(int argc, char *argv[])
         // Check face field mapping
         if (surfaceOne.size())
         {
-            const scalar max = gMax(surfaceOne.primitiveField());
-            const scalar min = gMin(surfaceOne.primitiveField());
+            auto limits =  gMinMax(surfaceOne.primitiveField());
 
-            Info<< "Uniform surface field min = " << min
-                << "  max = " << max << endl;
+            Info<< "Uniform surface field min = "
+                << limits.min() << "  max = " << limits.max() << endl;
 
-            if (isNotEqual(min, 1) || isNotEqual(max, 1))
+            if (isNotEqual(limits.min(), 1) || isNotEqual(limits.max(), 1))
             {
                 FatalErrorInFunction
                     << "Uniform surfaceScalarField not preserved."

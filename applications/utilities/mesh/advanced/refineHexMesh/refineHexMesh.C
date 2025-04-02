@@ -145,17 +145,22 @@ int main(int argc, char *argv[])
     hexRef8 meshCutter(mesh);
 
     // Some stats
-    Info<< "Read mesh:" << nl
-        << "    cells:" << mesh.globalData().nTotalCells() << nl
-        << "    faces:" << mesh.globalData().nTotalFaces() << nl
-        << "    points:" << mesh.globalData().nTotalPoints() << nl
-        << "    cellLevel :"
-        << " min:" << gMin(meshCutter.cellLevel())
-        << " max:" << gMax(meshCutter.cellLevel()) << nl
-        << "    pointLevel :"
-        << " min:" << gMin(meshCutter.pointLevel())
-        << " max:" << gMax(meshCutter.pointLevel()) << nl
-        << endl;
+    {
+        auto cellLimits = gMinMax(meshCutter.cellLevel());
+        auto pointLimits = gMinMax(meshCutter.pointLevel());
+
+        Info<< "Read mesh:" << nl
+            << "    cells:" << mesh.globalData().nTotalCells() << nl
+            << "    faces:" << mesh.globalData().nTotalFaces() << nl
+            << "    points:" << mesh.globalData().nTotalPoints() << nl
+            << "    cellLevel :"
+            << " min:" << cellLimits.min()
+            << " max:" << cellLimits.max() << nl
+            << "    pointLevel :"
+            << " min:" << pointLimits.min()
+            << " max:" << pointLimits.max() << nl
+            << endl;
+    }
 
 
     // Maintain 2:1 ratio

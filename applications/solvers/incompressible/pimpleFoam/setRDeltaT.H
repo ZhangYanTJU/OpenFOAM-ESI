@@ -36,18 +36,26 @@
     // Update the boundary values of the reciprocal time-step
     rDeltaT.correctBoundaryConditions();
 
-    Info<< "Flow time scale min/max = "
-        << gMin(1/rDeltaT.primitiveField())
-        << ", " << gMax(1/rDeltaT.primitiveField()) << endl;
+    {
+        auto limits = gMinMax(rDeltaT.primitiveField());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
+
+        Info<< "Flow time scale min/max = "
+            << limits.min() << ", " << limits.max() << endl;
+    }
 
     if (rDeltaTSmoothingCoeff < 1.0)
     {
         fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
     }
 
-    Info<< "Smoothed flow time scale min/max = "
-        << gMin(1/rDeltaT.primitiveField())
-        << ", " << gMax(1/rDeltaT.primitiveField()) << endl;
+    {
+        auto limits = gMinMax(rDeltaT.primitiveField());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
+
+        Info<< "Smoothed flow time scale min/max = "
+            << limits.min() << ", " << limits.max() << endl;
+    }
 
     // Limit rate of change of time scale
     // - reduce as much as required
@@ -62,8 +70,10 @@
             rDeltaT0
            *max(rDeltaT/rDeltaT0, scalar(1) - rDeltaTDampingCoeff);
 
+        auto limits = gMinMax(rDeltaT.primitiveField());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
+
         Info<< "Damped flow time scale min/max = "
-            << gMin(1/rDeltaT.primitiveField())
-            << ", " << gMax(1/rDeltaT.primitiveField()) << endl;
+            << limits.min() << ", " << limits.max() << endl;
     }
 }

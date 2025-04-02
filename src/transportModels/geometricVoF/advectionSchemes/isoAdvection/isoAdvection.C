@@ -160,11 +160,9 @@ Foam::isoAdvection::isoAdvection
 
         if (porosityPtr_)
         {
-            if
-            (
-                gMin(porosityPtr_->primitiveField()) <= 0
-             || gMax(porosityPtr_->primitiveField()) > 1 + SMALL
-            )
+            auto limits = gMinMax(porosityPtr_->primitiveField());
+
+            if (limits.min() <= 0 || limits.max() > 1 + SMALL)
             {
                 FatalErrorInFunction
                     << "Porosity field has values <= 0 or > 1"

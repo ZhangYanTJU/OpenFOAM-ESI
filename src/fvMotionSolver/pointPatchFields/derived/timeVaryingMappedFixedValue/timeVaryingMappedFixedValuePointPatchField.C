@@ -552,9 +552,12 @@ void Foam::timeVaryingMappedFixedValuePointPatchField<Type>::updateCoeffs()
 
     if (debug)
     {
-        Pout<< "updateCoeffs : set fixedValue to min:" << gMin(*this)
-            << " max:" << gMax(*this)
-            << " avg:" << gAverage(*this) << endl;
+        auto limits = gMinMax(*this);
+        auto avg = gAverage(*this);
+
+        Pout<< "updateCoeffs : set fixedValue to min:" << limits.min()
+            << " max:" << limits.max()
+            << " avg:" << avg << endl;
     }
 
     fixedValuePointPatchField<Type>::updateCoeffs();

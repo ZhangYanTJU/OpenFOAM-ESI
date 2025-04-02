@@ -223,11 +223,16 @@ int main(int argc, char *argv[])
     Info<< "Writing new alpha field " << alpha1.name() << endl;
     alpha1.write();
 
-    const scalarField& alpha = alpha1.internalField();
+    {
+        const auto& alpha = alpha1.primitiveField();
 
-    Info<< "sum(alpha*V):" << gSum(mesh.V()*alpha)
-        << ", 1-max(alpha1): " << 1 - gMax(alpha)
-        << " min(alpha1): " << gMin(alpha) << endl;
+        auto limits = gMinMax(alpha);
+        auto total = gWeightedSum(mesh.V(), alpha);
+
+        Info<< "sum(alpha*V):" << total
+            << ", 1-max(alpha1): " << 1 - limits.max()
+            << " min(alpha1): " << limits.min() << endl;
+    }
 
     Info<< "\nEnd\n" << endl;
 

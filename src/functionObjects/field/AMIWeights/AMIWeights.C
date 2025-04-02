@@ -88,52 +88,52 @@ void Foam::functionObjects::AMIWeights::reportPatch
     const Switch distributed = pp.AMI().distributed();
 
     const scalarField& srcWeightsSum = pp.AMI().srcWeightsSum();
-    const scalar srcMinWeight = gMin(srcWeightsSum);
-    const scalar srcMaxWeight = gMax(srcWeightsSum);
-    const scalar srcAveWeight = gAverage(srcWeightsSum);
+    const auto srcWeightLimits = gMinMax(srcWeightsSum);
+    const auto srcWeightAvg = gAverage(srcWeightsSum);
 
     const labelListList& srcAddress = pp.AMI().srcAddress();
-    label srcMinNbr = labelMax;
-    label srcMaxNbr = labelMin;
-    scalar srcAveNbr = 0;
+
+    labelMinMax srcNbrLimits(labelMax, labelMin);
+    scalar srcNbrAvg(0);
     for (const labelList& srcFace : srcAddress)
     {
         const label n = srcFace.size();
-        srcAveNbr += n;
-        srcMinNbr = min(srcMinNbr, n);
-        srcMaxNbr = max(srcMaxNbr, n);
+
+        srcNbrAvg += n;
+        srcNbrLimits.add(n);
     }
 
-    reduce(srcMinNbr, minOp<label>());
-    reduce(srcMaxNbr, maxOp<label>());
+    {
+        reduce(srcNbrLimits, sumOp<labelMinMax>());
 
-    srcAveNbr =
-        returnReduce(srcAveNbr, sumOp<scalar>())
-       /(returnReduce(srcAddress.size(), sumOp<scalar>()) + ROOTVSMALL);
+        label count = srcAddress.size();
+        sumReduce(srcNbrAvg, count);
+        srcNbrAvg /= (count + ROOTVSMALL);
+    }
 
     const scalarField& tgtWeightsSum = pp.AMI().tgtWeightsSum();
-    const scalar tgtMinWeight = gMin(tgtWeightsSum);
-    const scalar tgtMaxWeight = gMax(tgtWeightsSum);
-    const scalar tgtAveWeight = gAverage(tgtWeightsSum);
+    const auto tgtWeightLimits = gMinMax(tgtWeightsSum);
+    const auto tgtWeightAvg = gAverage(tgtWeightsSum);
 
     const labelListList& tgtAddress = pp.AMI().tgtAddress();
-    label tgtMinNbr = labelMax;
-    label tgtMaxNbr = labelMin;
-    scalar tgtAveNbr = 0;
+
+    labelMinMax tgtNbrLimits(labelMax, labelMin);
+    scalar tgtNbrAvg(0);
     for (const labelList& tgtFace : tgtAddress)
     {
         const label n = tgtFace.size();
-        tgtAveNbr += n;
-        tgtMinNbr = min(tgtMinNbr, n);
-        tgtMaxNbr = max(tgtMaxNbr, n);
+
+        tgtNbrAvg += n;
+        tgtNbrLimits.add(n);
     }
 
-    reduce(tgtMinNbr, minOp<label>());
-    reduce(tgtMaxNbr, maxOp<label>());
+    {
+        reduce(tgtNbrLimits, sumOp<labelMinMax>());
 
-    tgtAveNbr =
-        returnReduce(tgtAveNbr, sumOp<scalar>())
-       /(returnReduce(tgtAddress.size(), sumOp<scalar>()) + ROOTVSMALL);
+        label count = tgtAddress.size();
+        sumReduce(tgtNbrAvg, count);
+        tgtNbrAvg /= (count + ROOTVSMALL);
+    }
 
     file()
         << mesh_.time().timeName() << tab
@@ -147,18 +147,18 @@ void Foam::functionObjects::AMIWeights::reportPatch
     }
 
     file()
-        << srcMinWeight << tab
-        << srcMaxWeight << tab
-        << srcAveWeight << tab
-        << srcMinNbr << tab
-        << srcMaxNbr << tab
-        << srcAveNbr << tab
-        << tgtMinWeight << tab
-        << tgtMaxWeight << tab
-        << tgtAveWeight << tab
-        << tgtMinNbr << tab
-        << tgtMaxNbr << tab
-        << tgtAveNbr << tab
+        << srcWeightLimits.min() << tab
+        << srcWeightLimits.max() << tab
+        << srcWeightAvg << tab
+        << srcNbrLimits.min() << tab
+        << srcNbrLimits.max() << tab
+        << srcNbrAvg << tab
+        << tgtWeightLimits.min() << tab
+        << tgtWeightLimits.max() << tab
+        << tgtWeightAvg << tab
+        << tgtNbrLimits.min() << tab
+        << tgtNbrLimits.max() << tab
+        << tgtNbrAvg
         << endl;
 
     Log << "    Patches: " << nl
@@ -176,34 +176,34 @@ void Foam::functionObjects::AMIWeights::reportPatch
 
     Log << "                     | " << setw(w) << pp.name()
         << " | " << setw(w) << nbrPatchName << " | " << nl
-        << "        min(weight)  | " << setw(w) << srcMinWeight
-        << " | " << setw(w) << tgtMinWeight << " | " << nl
-        << "        max(weight)  | " << setw(w) << srcMaxWeight
-        << " | " << setw(w) << tgtMaxWeight << " | " << nl
-        << "        ave(weight)  | " << setw(w) << srcAveWeight
-        << " | " << setw(w) << tgtAveWeight << " | " << nl
-        << "        min(address) | " << setw(w) << srcMinNbr
-        << " | " << setw(w) << tgtMinNbr << " | " << nl
-        << "        max(address) | " << setw(w) << srcMaxNbr
-        << " | " << setw(w) << tgtMaxNbr << " | " << nl
-        << "        ave(address) | " << setw(w) << srcAveNbr
-        << " | " << setw(w) << tgtAveNbr << " | " << nl
+        << "        min(weight)  | " << setw(w) << srcWeightLimits.min()
+        << " | " << setw(w) << tgtWeightLimits.min() << " | " << nl
+        << "        max(weight)  | " << setw(w) << srcWeightLimits.max()
+        << " | " << setw(w) << tgtWeightLimits.max() << " | " << nl
+        << "        ave(weight)  | " << setw(w) << srcWeightAvg
+        << " | " << setw(w) << tgtWeightAvg << " | " << nl
+        << "        min(address) | " << setw(w) << srcNbrLimits.min()
+        << " | " << setw(w) << tgtNbrLimits.min() << " | " << nl
+        << "        max(address) | " << setw(w) << srcNbrLimits.max()
+        << " | " << setw(w) << tgtNbrLimits.max() << " | " << nl
+        << "        ave(address) | " << setw(w) << srcNbrAvg
+        << " | " << setw(w) << tgtNbrAvg << " | " << nl
         << endl;
 
     setResult(pp.name() + ":src", pp.name());
     setResult(pp.name() + ":tgt", nbrPatchName);
-    setResult(pp.name() + ":src:min(weight)", srcMinWeight);
-    setResult(pp.name() + ":src:max(weight)", srcMaxWeight);
-    setResult(pp.name() + ":src:ave(weight)", srcAveWeight);
-    setResult(pp.name() + ":src:min(address)", srcMinNbr);
-    setResult(pp.name() + ":src:max(address)", srcMaxNbr);
-    setResult(pp.name() + ":src:ave(address)", srcAveNbr);
-    setResult(pp.name() + ":tgt:min(weight)", tgtMinWeight);
-    setResult(pp.name() + ":tgt:max(weight)", tgtMaxWeight);
-    setResult(pp.name() + ":tgt:ave(weight)", tgtAveWeight);
-    setResult(pp.name() + ":tgt:min(address)", tgtMinNbr);
-    setResult(pp.name() + ":tgt:max(address)", tgtMaxNbr);
-    setResult(pp.name() + ":tgt:ave(address)", tgtAveNbr);
+    setResult(pp.name() + ":src:min(weight)", srcWeightLimits.min());
+    setResult(pp.name() + ":src:max(weight)", srcWeightLimits.max());
+    setResult(pp.name() + ":src:ave(weight)", srcWeightAvg);
+    setResult(pp.name() + ":src:min(address)", srcNbrLimits.min());
+    setResult(pp.name() + ":src:max(address)", srcNbrLimits.max());
+    setResult(pp.name() + ":src:ave(address)", srcNbrAvg);
+    setResult(pp.name() + ":tgt:min(weight)", tgtWeightLimits.min());
+    setResult(pp.name() + ":tgt:max(weight)", tgtWeightLimits.max());
+    setResult(pp.name() + ":tgt:ave(weight)", tgtWeightAvg);
+    setResult(pp.name() + ":tgt:min(address)", tgtNbrLimits.min());
+    setResult(pp.name() + ":tgt:max(address)", tgtNbrLimits.max());
+    setResult(pp.name() + ":tgt:ave(address)", tgtNbrAvg);
 }
 
 

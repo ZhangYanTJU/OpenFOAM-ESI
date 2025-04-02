@@ -31,7 +31,9 @@
 
     fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
 
+    auto limits = gMinMax(rDeltaT.primitiveField());
+    limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
+
     Info<< "Flow time scale min/max = "
-        << gMin(1/rDeltaT.primitiveField())
-        << ", " << gMax(1/rDeltaT.primitiveField()) << endl;
+        << limits.min() << ", " << limits.max() << endl;
 }

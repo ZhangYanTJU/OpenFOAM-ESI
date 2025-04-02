@@ -195,14 +195,17 @@ void Foam::lumpedMassWallTemperatureFvPatchScalarField::updateCoeffs()
             }
         }
 
+        auto limits = gMinMax(*this);
+        auto avg = gAverage(*this);
+
         Info<< patch().boundaryMesh().mesh().name() << ':'
             << patch().name() << ':'
             << this->internalField().name() << " :"
             << " heat transfer rate:" << Q
             << " wall temperature "
-            << " min:" << gMin(*this)
-            << " max:" << gMax(*this)
-            << " avg:" << gAverage(*this)
+            << " min:" << limits.min()
+            << " max:" << limits.max()
+            << " avg:" << avg
             << " Qin [W]:" << Qin
             << " Qout [W]:" << Qout
             << endl;

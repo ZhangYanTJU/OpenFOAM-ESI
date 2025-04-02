@@ -122,12 +122,15 @@ void Foam::mappedFixedValueFvPatchField<Type>::updateCoeffs()
 
     if (debug)
     {
+        auto limits = gMinMax(*this);
+        auto avg = gAverage(*this);
+
         Info<< "mapped on field:"
             << this->internalField().name()
             << " patch:" << this->patch().name()
-            << "  avg:" << gAverage(*this)
-            << "  min:" << gMin(*this)
-            << "  max:" << gMax(*this)
+            << "  avg:" << avg
+            << "  min:" << limits.min()
+            << "  max:" << limits.max()
             << endl;
     }
 

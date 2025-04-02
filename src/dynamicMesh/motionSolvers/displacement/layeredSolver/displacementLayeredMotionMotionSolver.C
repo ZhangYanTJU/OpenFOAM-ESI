@@ -386,15 +386,21 @@ void Foam::displacementLayeredMotionMotionSolver::cellZoneSolve
             patchi
         );
 
-        DebugInfo
-            << "For cellZone:" << cellZoneI
-            << " for faceZone:" << fz.name()
-            << " nPoints:" << tseed().size()
-            << " have patchField:"
-            << " max:" << gMax(tseed())
-            << " min:" << gMin(tseed())
-            << " avg:" << gAverage(tseed())
-            << endl;
+        if (debug)
+        {
+            auto limits = gMinMax(tseed());
+            auto avg = gAverage(tseed());
+
+            Info
+                << "For cellZone:" << cellZoneI
+                << " for faceZone:" << fz.name()
+                << " nPoints:" << tseed().size()
+                << " have patchField:"
+                << " min:" << limits.min()
+                << " max:" << limits.max()
+                << " avg:" << avg
+                << endl;
+        }
 
 
         // Set distance and transported value

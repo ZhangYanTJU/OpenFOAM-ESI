@@ -496,16 +496,15 @@ void Foam::electrostaticDepositionFvPatchScalarField::updateCoeffs()
     timei_ = db().time().timeIndex();
 
     {
-        const scalar hMin = gMin(h_);
-        const scalar hMax = gMax(h_);
-        const scalar hAvg = gAverage(h_);
+        auto limits = gMinMax(h_);
+        auto avg = gAverage(h_);
 
-        if (Pstream::master())
+        if (UPstream::master())
         {
             Info<< "    patch: " << patch().name()
-                << ", h: min = " << hMin
-                << ", max = " << hMax
-                << ", average = " << hAvg << nl
+                << ", h: min = " << limits.min()
+                << ", max = " << limits.max()
+                << ", average = " << avg << nl
                 << endl;
         }
     }

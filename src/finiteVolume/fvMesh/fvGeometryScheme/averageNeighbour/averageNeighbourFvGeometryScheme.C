@@ -814,6 +814,7 @@ void Foam::averageNeighbourFvGeometryScheme::movePoints()
                         Foam::acos(faceOrthogonality)
                     )
                 );
+
                 Pout<< "    iter:" << iter
                     << " nClipped:" << nClipped
                     << " average displacement:" << gAverage(magCorrection)
@@ -845,10 +846,13 @@ void Foam::averageNeighbourFvGeometryScheme::movePoints()
 
         if (debug)
         {
+            auto limits = gMinMax(cellWeight);
+            auto avg = gAverage(cellWeight);
+
             Pout<< "averageNeighbourFvGeometryScheme::movePoints() :"
                 << " averageNeighbour weight"
-                << " max:" << gMax(cellWeight) << " min:" << gMin(cellWeight)
-                << " average:" << gAverage(cellWeight) << endl;
+                << " min:" << limits.min() << " max:" << limits.max()
+                << " average:" << avg << endl;
 
             // Dump lines from old to new location
             const fileName tp(mesh_.time().timePath());

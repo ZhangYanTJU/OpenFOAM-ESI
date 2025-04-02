@@ -221,10 +221,13 @@ tmp<areaVectorField> faceLimitedGrad<scalar>::calcGrad
 
     if (fa::debug)
     {
+        auto limits = gMinMax(limiter);
+        auto avg = gAverage(limiter);
+
         Info<< "gradient limiter for: " << vsf.name()
-            << " max = " << gMax(limiter)
-            << " min = " << gMin(limiter)
-            << " average: " << gAverage(limiter) << endl;
+            << " min = " << limits.min()
+            << " max = " << limits.max()
+            << " average: " << avg << endl;
     }
 
     g.primitiveFieldRef() *= limiter;
@@ -370,10 +373,13 @@ tmp<areaTensorField> faceLimitedGrad<vector>::calcGrad
 
     if (fa::debug)
     {
+        auto limits = gMinMax(limiter);
+        auto avg = gAverage(limiter);
+
         Info<< "gradient limiter for: " << vsf.name()
-            << " max = " << gMax(limiter)
-            << " min = " << gMin(limiter)
-            << " average: " << gAverage(limiter) << endl;
+            << " min = " << limits.min()
+            << " max = " << limits.max()
+            << " average: " << avg << endl;
     }
 
     tensorField& gIf = g.primitiveFieldRef();

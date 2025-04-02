@@ -279,37 +279,31 @@ void Foam::AMIInterpolation::normaliseWeights
         }
     }
 
-    if (output && comm != -1)
+    if (output && comm != -1 && returnReduceOr(wght.size(), comm))
     {
-        // Note: change global communicator since gMin,gAverage etc don't
-        // support user communicator
-        const label oldWorldComm(UPstream::worldComm);
-        UPstream::worldComm = comm;
+        auto limits = gMinMax(wghtSum, comm);
+        auto avg = gAverage(wghtSum, comm);
 
-        if (returnReduceOr(wght.size()))
+        label nLow =
+            returnReduce(nLowWeight, sumOp<label>(), UPstream::msgType(), comm);
+
+        Info.masterStream(comm)
+            << indent
+            << "AMI: Patch " << patchName
+            << " sum(weights)"
+            << " min:" << limits.min()
+            << " max:" << limits.max()
+            << " average:" << avg << nl;
+
+        if (nLow)
         {
             Info.masterStream(comm)
                 << indent
                 << "AMI: Patch " << patchName
-                << " sum(weights)"
-                << " min:" << gMin(wghtSum)
-                << " max:" << gMax(wghtSum)
-                << " average:" << gAverage(wghtSum) << nl;
-
-            const label nLow = returnReduce(nLowWeight, sumOp<label>());
-
-            if (nLow)
-            {
-                Info.masterStream(comm)
-                    << indent
-                    << "AMI: Patch " << patchName
-                    << " identified " << nLow
-                    << " faces with weights less than " << lowWeightTol
-                    << endl;
-            }
+                << " identified " << nLow
+                << " faces with weights less than " << lowWeightTol
+                << endl;
         }
-
-        UPstream::worldComm = oldWorldComm;
     }
 }
 

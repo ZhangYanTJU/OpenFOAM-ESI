@@ -166,9 +166,7 @@ void Foam::componentDisplacementMotionSolver::updateMesh(const mapPolyMesh& mpm)
     );
 
     // Get extents of points0 and points and determine scale
-    const scalar scale =
-        (gMax(points0_)-gMin(points0_))
-       /(gMax(points)-gMin(points));
+    const scalar scale = gMinMax(points0_).span() / gMinMax(points).span();
 
     scalarField newPoints0(mpm.pointMap().size());
 

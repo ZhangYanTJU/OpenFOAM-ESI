@@ -2087,10 +2087,12 @@ Foam::vectorField Foam::snappySnapDriver::calcNearestSurface
 
             scalarField magDisp(mag(patchDisp));
 
+            auto limits = gMinMax(magDisp);
+
             Info<< "Wanted displacement : average:"
                 <<  meshRefinement::gAverage(isPatchMasterPoint, magDisp)
-                << " min:" << gMin(magDisp)
-                << " max:" << gMax(magDisp) << endl;
+                << " min:" << limits.min()
+                << " max:" << limits.max() << endl;
         }
     }
 

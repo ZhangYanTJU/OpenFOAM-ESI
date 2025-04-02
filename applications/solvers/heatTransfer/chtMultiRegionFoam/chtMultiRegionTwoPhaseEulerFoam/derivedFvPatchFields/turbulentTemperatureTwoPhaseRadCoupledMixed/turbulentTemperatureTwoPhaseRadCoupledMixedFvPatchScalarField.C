@@ -387,15 +387,18 @@ updateCoeffs()
         {
             scalar Q = gSum(kappa(Tp)*patch().magSf()*snGrad());
 
-                Info<< "T solid : " << nl << endl;
+            auto limits = gMinMax(Tp);
+            auto avg = gAverage(Tp);
 
-                Info
-                    << " heat transfer rate from solid:" << Q
-                    << " walltemperature "
-                    << " min:" << gMin(Tp)
-                    << " max:" << gMax(Tp)
-                    << " avg:" << gAverage(Tp) << nl
-                    << endl;
+            Info<< "T solid : " << nl << endl;
+
+            Info
+                << " heat transfer rate from solid:" << Q
+                << " walltemperature "
+                << " min:" << limits.min()
+                << " max:" << limits.max()
+                << " avg:" << avg << nl
+                << endl;
         }
     }
     else if (regionType_ == fluid)
@@ -445,10 +448,16 @@ updateCoeffs()
             scalarField qLiq((Tp - Tc)*KdeltaLiq);
             scalarField qVap((Tp - Tv.patchInternalField())*KdeltaVap);
 
+            auto infoT = gMinMax(Tp);
+            auto avgT = gAverage(Tp);
+
+            auto infoLiq = gMinMax(qLiq);
+            auto infoVap = gMinMax(qVap);
+
             Info<< "T flow : " << nl << endl;
 
-            Info<< "  qLiq: " << gMin(qLiq) << " - " << gMax(qLiq) << endl;
-            Info<< "  qVap: " << gMin(qVap) << " - " << gMax(qVap) << endl;
+            Info<< "  qLiq: " << infoLiq.min() << " - " << infoLiq.max() << nl
+                << "  qVap: " << infoVap.min() << " - " << infoVap.max() << nl;
 
             scalar QLiq = gSum(qLiq*patch().magSf());
             scalar QVap = gSum(qVap*patch().magSf());
@@ -457,9 +466,9 @@ updateCoeffs()
             Info<<  " Heat transfer to Vap: " << QVap << endl;
 
             Info<< " walltemperature "
-                << " min:" << gMin(Tp)
-                << " max:" << gMax(Tp)
-                << " avg:" << gAverage(Tp)
+                << " min:" << infoT.min()
+                << " max:" << infoT.max()
+                << " avg:" << avgT
                 << endl;
         }
     }

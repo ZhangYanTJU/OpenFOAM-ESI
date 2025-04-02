@@ -1676,8 +1676,7 @@ void Foam::snappyLayerDriver::calculateLayerThickness
         GREAT               // null value
     );
 
-    //Info<< "calculateLayerThickness : min:" << gMin(thickness)
-    //    << " max:" << gMax(thickness) << endl;
+    //Info<< "calculateLayerThickness : " << gMinMax(thickness) << endl;
 
     // Print a bit
     {
