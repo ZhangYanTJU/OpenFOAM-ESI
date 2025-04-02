@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,10 +57,22 @@ License
     // (relative to reference value)
     scalar alphaY(pimpleDict.getOrDefault<scalar>("alphaY", 1.0));
 
-    Info<< "Time scales min/max:" << endl;
 
-    // Cache old reciprocal time scale field
-    volScalarField rDeltaT0("rDeltaT0", rDeltaT);
+    // The old reciprocal time scale field, with any damping factor
+    tmp<volScalarField> rDeltaT0_damped;
+
+    // Calculate damped value before applying any other changes
+    if
+    (
+        rDeltaTDampingCoeff < 1
+     && runTime.timeIndex() > runTime.startTimeIndex() + 1
+    )
+    {
+        rDeltaT0_damped = (scalar(1) - rDeltaTDampingCoeff)*(rDeltaT);
+    }
+
+
+    Info<< "Time scales min/max:" << endl;
 
     // Flow time scale
     {
@@ -70,8 +82,8 @@ License
            /((2*maxCo)*mesh.V()*rho())
         );
 
-        // Limit the largest time scale
-        rDeltaT.max(1/maxDeltaT);
+        // Limit the largest time scale (=> smallest reciprocal time)
+        rDeltaT.clamp_min(1/maxDeltaT);
 
         Info<< "    Flow        = "
             << 1/gMax(rDeltaT.primitiveField()) << ", "
@@ -86,11 +98,11 @@ License
             mag(Qdot)/(alphaTemp*rho*thermo.Cp()*T)
         );
 
+        rDeltaT.primitiveFieldRef().clamp_min(rDeltaTT);
+
         Info<< "    Temperature = "
             << 1/(gMax(rDeltaTT.field()) + VSMALL) << ", "
             << 1/(gMin(rDeltaTT.field()) + VSMALL) << endl;
-
-        rDeltaT.ref() = max(rDeltaT(), rDeltaTT);
     }
 
     // Reaction rate time scale
@@ -138,11 +150,11 @@ License
 
         if (foundY)
         {
+            rDeltaT.primitiveFieldRef().clamp_min(rDeltaTY);
+
             Info<< "    Composition = "
                 << 1/(gMax(rDeltaTY.field()) + VSMALL) << ", "
                 << 1/(gMin(rDeltaTY.field()) + VSMALL) << endl;
-
-            rDeltaT.ref() = max(rDeltaT(), rDeltaTY);
         }
         else
         {
@@ -161,20 +173,12 @@ License
         fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
     }
 
-    // Limit rate of change of time scale
+    // Limit rate of change of time scale (=> smallest reciprocal time)
     // - reduce as much as required
     // - only increase at a fraction of old time scale
-    if
-    (
-        rDeltaTDampingCoeff < 1
-     && runTime.timeIndex() > runTime.startTimeIndex() + 1
-    )
+    if (rDeltaT0_damped)
     {
-        rDeltaT = max
-        (
-            rDeltaT,
-            (scalar(1) - rDeltaTDampingCoeff)*rDeltaT0
-        );
+        rDeltaT.clamp_min(rDeltaT0_damped());
     }
 
     // Update tho boundary values of the reciprocal time-step

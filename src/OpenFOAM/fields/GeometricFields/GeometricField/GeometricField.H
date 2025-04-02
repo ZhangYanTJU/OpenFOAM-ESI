@@ -936,16 +936,24 @@ public:
         //- Impose lower (floor) clamp on the field values (in-place)
         void clamp_min(const Type& lower);
 
-        //- Impose upper (ceiling) clamp on the field values (in-place)
-        void clamp_max(const Type& upper);
-
         //- Impose lower (floor) clamp on the field values (in-place)
         //  No dimension checking
         void clamp_min(const dimensioned<Type>& lower);
 
+        //- Impose lower (floor) clamp on the field values (in-place)
+        //  No dimension checking
+        void clamp_min(const GeometricField<Type, PatchField, GeoMesh>& lower);
+
+        //- Impose upper (ceiling) clamp on the field values (in-place)
+        void clamp_max(const Type& upper);
+
         //- Impose upper (ceiling) clamp on the field values (in-place)
         //  No dimension checking
         void clamp_max(const dimensioned<Type>& upper);
+
+        //- Impose upper (ceiling) clamp on the field values (in-place)
+        //  No dimension checking
+        void clamp_max(const GeometricField<Type, PatchField, GeoMesh>& upper);
 
         //- Clamp field values (in-place) to the specified range.
         //  Does not check if range is valid or not. No dimension checking.
@@ -1055,11 +1063,13 @@ public:
         //- Use minimum of the field and specified value. ie, clamp_max().
         //  This sets the \em ceiling on the field values
         //  \deprecated(2023-01) prefer clamp_max()
+        FOAM_DEPRECATED_STRICT(2023-01, "clamp_max() method")
         void min(const dimensioned<Type>& upper) { this->clamp_max(upper); }
 
         //- Use maximum of the field and specified value. ie, clamp_min().
         //  This sets the \em floor on the field values
         //  \deprecated(2023-01) prefer clamp_min()
+        FOAM_DEPRECATED_STRICT(2023-01, "clamp_min() method")
         void max(const dimensioned<Type>& lower) { this->clamp_min(lower); }
 
         //- Deprecated(2019-01) identical to clamp_range()

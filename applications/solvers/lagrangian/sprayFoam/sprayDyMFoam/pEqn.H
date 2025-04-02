@@ -1,6 +1,5 @@
 rho = thermo.rho();
-rho = max(rho, rhoMin);
-rho = min(rho, rhoMax);
+rho.clamp_range(rhoMin, rhoMax);
 rho.relax();
 
 volScalarField rAU(1.0/UEqn.A());
@@ -94,8 +93,7 @@ p.relax();
 
 // Recalculate density from the relaxed pressure
 rho = thermo.rho();
-rho = max(rho, rhoMin);
-rho = min(rho, rhoMax);
+rho.clamp_range(rhoMin, rhoMax);
 rho.relax();
 Info<< "rho min/max : " << min(rho).value() << " " << max(rho).value() << endl;
 

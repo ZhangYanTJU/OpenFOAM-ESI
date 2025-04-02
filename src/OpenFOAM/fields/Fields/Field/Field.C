@@ -669,6 +669,7 @@ void Foam::Field<Type>::clamp_min(const Type& lower)
     }
 }
 
+
 template<class Type>
 void Foam::Field<Type>::clamp_max(const Type& upper)
 {
@@ -678,6 +679,40 @@ void Foam::Field<Type>::clamp_max(const Type& upper)
     {
         val = min(val, upper);
     }
+}
+
+
+template<class Type>
+void Foam::Field<Type>::clamp_min(const UList<Type>& lower)
+{
+    // Use free function max() [sic] to impose component-wise clamp_min
+    std::transform
+    (
+        // Can use (std::execution::par_unseq | std::execution::unseq)
+        this->begin(),
+        // this->end() but with some extra range safety
+        this->begin(lower.size()),
+        lower.begin(),
+        this->begin(),
+        maxOp<Type>()
+    );
+}
+
+
+template<class Type>
+void Foam::Field<Type>::clamp_max(const UList<Type>& upper)
+{
+    // Use free function min() [sic] to impose component-wise clamp_max
+    std::transform
+    (
+        // Can use (std::execution::par_unseq | std::execution::unseq)
+        this->begin(),
+        // this->end() but with some extra range safety
+        this->begin(upper.size()),
+        upper.begin(),
+        this->begin(),
+        minOp<Type>()
+    );
 }
 
 

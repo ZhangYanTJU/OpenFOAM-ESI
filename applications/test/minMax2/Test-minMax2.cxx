@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -173,6 +173,36 @@ int main(int argc, char *argv[])
             << " : " << clamp(val, 0, 1)
             << " : " << clamp(val, zero_one{})
             << nl;
+    }
+
+    {
+        scalarField field1(10);
+        scalarField field2(10);
+        scalarField work;
+
+        Random rnd(4567);
+        for (scalar& val : field1)
+        {
+            val = rnd.position(scalar(-0.2), scalar(1.2));
+        }
+        for (scalar& val : field2)
+        {
+            val = rnd.position(scalar(-0.1), scalar(1.1));
+        }
+
+        Info<< nl
+            << "field1: " << flatOutput(field1) << nl
+            << "field2: " << flatOutput(field2) << nl;
+
+        work = field1;
+        work.clamp_min(field2);
+
+        Info<< "clamp_min: " << flatOutput(work) << nl;
+
+        work = field1;
+        work.clamp_max(field2);
+
+        Info<< "clamp_max: " << flatOutput(work) << nl;
     }
 
     Info<< nl << "\nDone\n" << endl;

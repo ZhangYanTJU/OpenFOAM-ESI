@@ -49,8 +49,7 @@
     fvOptions.correct(U);
 
     rho = thermo.rho();
-    rho = max(rho, rhoMin);
-    rho = min(rho, rhoMax);
+    rho.clamp_range(rhoMin, rhoMax);
     rho.relax();
 
     Info<< "p min/max = " << min(p).value() << ", " << max(p).value() << endl;

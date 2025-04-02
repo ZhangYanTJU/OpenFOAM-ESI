@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -304,6 +304,36 @@ void FieldField<Field, Type>::clamp_max
     for (auto& ff : *this)
     {
         ff.clamp_max(upper);
+    }
+}
+
+
+template<template<class> class Field, class Type>
+void FieldField<Field, Type>::clamp_min
+(
+    const FieldField<Field, Type>& lower
+)
+{
+    const label loopLen = this->size();
+
+    for (label i = 0; i < loopLen; ++i)
+    {
+        (*this)[i].clamp_min(lower[i]);
+    }
+}
+
+
+template<template<class> class Field, class Type>
+void FieldField<Field, Type>::clamp_max
+(
+    const FieldField<Field, Type>& upper
+)
+{
+    const label loopLen = this->size();
+
+    for (label i = 0; i < loopLen; ++i)
+    {
+        (*this)[i].clamp_max(upper[i]);
     }
 }
 
