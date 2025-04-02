@@ -109,7 +109,7 @@ void writeOBJ
     const auto& constraints = ppp.constraints();
     forAll(constraints, i)
     {
-        maxConstraint = max(maxConstraint, constraints[i].first());
+        maxConstraint = Foam::max(maxConstraint, constraints[i].first());
     }
     reduce(maxConstraint, maxOp<label>());
 

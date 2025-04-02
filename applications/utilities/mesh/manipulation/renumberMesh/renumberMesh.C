@@ -465,7 +465,7 @@ labelList getRegionFaceOrder
 
     // Do region interfaces
     {
-        const label nRegions = max(cellToRegion)+1;
+        const label nRegions = Foam::max(cellToRegion)+1;
 
         // Sort in increasing region
         SortableList<label> sortKey(mesh.nInternalFaces(), labelMax);
@@ -478,8 +478,10 @@ labelList getRegionFaceOrder
             if (ownRegion != neiRegion)
             {
                 sortKey[facei] =
-                    min(ownRegion, neiRegion)*nRegions
-                   +max(ownRegion, neiRegion);
+                (
+                    Foam::min(ownRegion, neiRegion)*nRegions
+                  + Foam::max(ownRegion, neiRegion)
+                );
             }
         }
 

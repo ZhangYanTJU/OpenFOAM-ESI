@@ -85,7 +85,8 @@ void Foam::faMeshDecomposition::distributeFaces()
         ioAddr.rename("faceProcAddressing");
         labelIOList fvFaceProcAddressing(ioAddr);
 
-        labelHashSet faceProcAddressingHash(2*fvFaceProcAddressing.size());
+        labelHashSet faceProcAddressingHash;
+        faceProcAddressingHash.reserve(fvFaceProcAddressing.size());
 
         // If faMesh's fvPatch is a part of the global face zones, faces of that
         // patch will be present on all processors. Because of that, looping
@@ -941,10 +942,8 @@ void Foam::faMeshDecomposition::decomposeMesh()
 
         // Globally shared points are the ones used by more than 2 processors
         // Size the list approximately and gather the points
-        labelHashSet gSharedPoints
-        (
-            min(100, nPoints()/1000)
-        );
+        labelHashSet gSharedPoints;
+        gSharedPoints.reserve(Foam::min(128, nPoints()/1000));
 
         // Loop through all the processors and mark up points used by
         // processor boundaries.  When a point is used twice, it is a

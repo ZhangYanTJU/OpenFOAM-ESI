@@ -21,19 +21,16 @@ void maxFaceToCell
     scalarField& cellFld = cellData.ref();
 
     cellFld = -GREAT;
-    forAll(cells, cellI)
+    forAll(cells, celli)
     {
-        const cell& cFaces = cells[cellI];
-        forAll(cFaces, i)
+        for (const label facei : cells[celli])
         {
-            cellFld[cellI] = max(cellFld[cellI], faceData[cFaces[i]]);
+            cellFld[celli] = Foam::max(cellFld[celli], faceData[facei]);
         }
     }
 
-    forAll(cellData.boundaryField(), patchI)
+    for (fvPatchScalarField& fvp : cellData.boundaryFieldRef())
     {
-        fvPatchScalarField& fvp = cellData.boundaryFieldRef()[patchI];
-
         fvp = fvp.patch().patchSlice(faceData);
     }
     cellData.correctBoundaryConditions();
@@ -51,19 +48,16 @@ void minFaceToCell
     scalarField& cellFld = cellData.ref();
 
     cellFld = GREAT;
-    forAll(cells, cellI)
+    forAll(cells, celli)
     {
-        const cell& cFaces = cells[cellI];
-        forAll(cFaces, i)
+        for (const label facei : cells[celli])
         {
-            cellFld[cellI] = min(cellFld[cellI], faceData[cFaces[i]]);
+            cellFld[celli] = Foam::min(cellFld[celli], faceData[facei]);
         }
     }
 
-    forAll(cellData.boundaryField(), patchI)
+    for (fvPatchScalarField& fvp : cellData.boundaryFieldRef())
     {
-        fvPatchScalarField& fvp = cellData.boundaryFieldRef()[patchI];
-
         fvp = fvp.patch().patchSlice(faceData);
     }
     cellData.correctBoundaryConditions();
@@ -77,7 +71,7 @@ void minFaceToCell
     const bool correctBoundaryConditions
 )
 {
-    scalarField& cellFld = cellData.ref();
+    scalarField& cellFld = cellData.primitiveFieldRef();
 
     cellFld = GREAT;
 
@@ -87,19 +81,19 @@ void minFaceToCell
     // Internal faces
     forAll(own, facei)
     {
-        cellFld[own[facei]] = min(cellFld[own[facei]], faceData[facei]);
-        cellFld[nei[facei]] = min(cellFld[nei[facei]], faceData[facei]);
+        cellFld[own[facei]] = Foam::min(cellFld[own[facei]], faceData[facei]);
+        cellFld[nei[facei]] = Foam::min(cellFld[nei[facei]], faceData[facei]);
     }
 
     // Patch faces
-    forAll(faceData.boundaryField(), patchi)
+    for (const fvsPatchScalarField& fvp : faceData.boundaryField())
     {
-        const fvsPatchScalarField& fvp = faceData.boundaryField()[patchi];
-        const labelUList& fc = fvp.patch().faceCells();
+        label pfacei = 0;
 
-        forAll(fc, i)
+        for (const label celli : fvp.patch().faceCells())
         {
-            cellFld[fc[i]] = min(cellFld[fc[i]], fvp[i]);
+            cellFld[celli] = Foam::max(cellFld[celli], fvp[pfacei]);
+            ++pfacei;
         }
     }
 
@@ -163,7 +157,7 @@ void Foam::writeFields
     if (selectedFields.found("nonOrthoAngle"))
     {
         //- Face based orthogonality
-        const scalarField faceOrthogonality
+        scalarField faceOrthogonality
         (
             polyMeshTools::faceOrthogonality
             (
@@ -172,14 +166,12 @@ void Foam::writeFields
                 mesh.cellCentres()
             )
         );
+        faceOrthogonality.clamp_range(-1, 1);
 
         //- Face based angle
         const scalarField nonOrthoAngle
         (
-            radToDeg
-            (
-                Foam::acos(min(scalar(1), max(scalar(-1), faceOrthogonality)))
-            )
+            radToDeg(Foam::acos(faceOrthogonality))
         );
 
         //- Cell field - max of either face
@@ -534,7 +526,7 @@ void Foam::writeFields
                         ownCc,
                         fc
                     ).quality();
-                    ownVol = min(ownVol, tetQual);
+                    ownVol = Foam::min(ownVol, tetQual);
                 }
             }
             if (mesh.isInternalFace(facei))
@@ -550,7 +542,7 @@ void Foam::writeFields
                         fc,
                         neiCc
                     ).quality();
-                    neiVol = min(neiVol, tetQual);
+                    neiVol = Foam::min(neiVol, tetQual);
                 }
             }
         }
@@ -602,19 +594,23 @@ void Foam::writeFields
         // Internal faces
         forAll(own, facei)
         {
-            cellFld[own[facei]] = min(cellFld[own[facei]], ownPyrVol[facei]);
-            cellFld[nei[facei]] = min(cellFld[nei[facei]], neiPyrVol[facei]);
+            cellFld[own[facei]] =
+                Foam::min(cellFld[own[facei]], ownPyrVol[facei]);
+            cellFld[nei[facei]] =
+                Foam::min(cellFld[nei[facei]], neiPyrVol[facei]);
         }
 
         // Patch faces
         for (const auto& fvp : minPyrVolume.boundaryField())
         {
-            const labelUList& fc = fvp.patch().faceCells();
+            label meshFacei = fvp.patch().start();
 
-            forAll(fc, i)
+            for (const label celli : fvp.patch().faceCells())
             {
-                const label meshFacei = fvp.patch().start();
-                cellFld[fc[i]] = min(cellFld[fc[i]], ownPyrVol[meshFacei]);
+                cellFld[celli] =
+                    Foam::min(cellFld[celli], ownPyrVol[meshFacei]);
+
+                ++meshFacei;
             }
         }
 
@@ -625,7 +621,7 @@ void Foam::writeFields
         if (writeFaceFields)
         {
             scalarField minFacePyrVol(neiPyrVol);
-            minFacePyrVol = min
+            minFacePyrVol = Foam::min
             (
                 minFacePyrVol,
                 SubField<scalar>(ownPyrVol, mesh.nInternalFaces())
