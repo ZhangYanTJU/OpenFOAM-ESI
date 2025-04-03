@@ -12,6 +12,10 @@ WMKDEP  := $(WMAKE_BIN)/wmkdepend
 WMKDEP_FLAGS := -eWM_PROJECT_DIR -eWM_THIRD_PARTY_DIR
 
 ifneq (,$(strip $(WM_QUIET)))
+    WMKDEP_FLAGS += -q
+endif
+
+ifneq (,$(strip $(WM_QUIET)))
     E=@
     define QUIET_MESSAGE
         @echo "    $1: $2";

@@ -94,6 +94,7 @@ export WM_COMPILE_OPTION=Opt
 #   +ccache : use ccache
 #   +xcrun  : use xcrun and native compilers [MacOS]
 #   +strict : more deprecation warnings (may generate *many* warnings)
+#   ++strict : even more deprecation warnings
 #   ccache=... : ccache command (unquoted, single/double or <> quoted)
 #   version=... : compiler suffix (eg, version=11 -> gcc-11)
 #   lnInclude-extra : add '-extra' option for wmakeLnInclude

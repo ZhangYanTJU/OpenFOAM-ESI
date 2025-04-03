@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2019-2023 OpenCFD Ltd.
+#     Copyright (C) 2019-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -22,6 +22,13 @@
 #   WM_COMPILE_CONTROL (+openmp | ~openmp)
 #   WM_COMPILE_CONTROL (~openfoam)
 #   WM_OSTYPE (windows)
+#
+# User modification entries. Usually specified in Make/options
+#
+#   EXE_INC   : defines/includes etc for executable or library targets
+#   EXE_LIBS  : linking for executables
+#   LIB_LIBS  : linking for libraries (.so)
+#   LIBO_LIBS : linking for object libraries (.o)
 #
 #------------------------------------------------------------------------------
 
@@ -74,6 +81,7 @@ endif
 EXE_INC         =
 EXE_LIBS        =
 LIB_LIBS        =
+LIBO_LIBS       =
 
 # Project include/libraries
 PROJECT_INC     = \
@@ -229,7 +237,7 @@ $(LIB).o: $(OBJECTS)
 	@$(WM_SCRIPTS)/makeTargetDir $(LIB)
 	@rm -f $(LIB).o
 	$(call QUIET_MESSAGE,ld,$(LIB).o)
-	$E $(LD) -r -o $(LIB).o $(OBJECTS)
+	$E $(LD) -r -o $(LIB).o $(OBJECTS) $(LIBO_LIBS)
 
 
 #------------------------------------------------------------------------------

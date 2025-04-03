@@ -46,7 +46,20 @@ Description
 
 #define FOAM_DEPRECATED(since) [[deprecated("Since " #since)]]
 #define FOAM_DEPRECATED_FOR(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
-#define FOAM_DEPRECATED_STRICT(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
+
+#ifdef FOAM_COMPILE_STRICT
+#  define FOAM_DEPRECATED_STRICT(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
+#  if (FOAM_COMPILE_STRICT > 1)
+#  define FOAM_DEPRECATED_STRICTER(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
+#  endif
+#endif
+
+#ifndef FOAM_DEPRECATED_STRICT
+#define FOAM_DEPRECATED_STRICT(since, replacement)
+#endif
+#ifndef FOAM_DEPRECATED_STRICTER
+#define FOAM_DEPRECATED_STRICTER(since, replacement)
+#endif
 
 // Branch prediction helpers. With C++20 can use [[likely]], [[unlikely]]
 #if defined(__GNUC__) || defined(__clang__)

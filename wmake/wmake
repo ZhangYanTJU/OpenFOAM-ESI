@@ -270,7 +270,8 @@ do
             ;;
 
         -strict)
-            opt_strict="+strict"
+            # Generate +strict (single use), ++strict (multiple use)
+            opt_strict="+${opt_strict:-strict}"
             ;;
 
         -build-root=*)
@@ -529,16 +530,9 @@ esac
 # Handle -strict flag(s)
 if [ -n "$opt_strict" ]
 then
-    # Add +strict into WM_COMPILE_CONTROL
-    opt_strict="${WM_COMPILE_CONTROL:+ }+strict"
-    case "$WM_COMPILE_CONTROL" in
-    (*+strict*)
-        # Appears to have already been added
-    ;;
-    (*)
-        export WM_COMPILE_CONTROL="${WM_COMPILE_CONTROL}${opt_strict}"
-    ;;
-    esac
+    # Add +strict, ++strict, ... into WM_COMPILE_CONTROL
+    WM_COMPILE_CONTROL="${WM_COMPILE_CONTROL} ${opt_strict}"
+    export WM_COMPILE_CONTROL
 fi
 
 

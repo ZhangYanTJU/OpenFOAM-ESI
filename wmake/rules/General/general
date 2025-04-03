@@ -34,7 +34,11 @@ endif
 
 # Enable additional compile-time checks
 ifneq (,$(findstring +strict,$(WM_COMPILE_CONTROL)))
-    GFLAGS += -DFOAM_COMPILE_STRICT
+    ifneq (,$(findstring ++strict,$(WM_COMPILE_CONTROL)))
+        GFLAGS += -DFOAM_COMPILE_STRICT=2
+    else
+        GFLAGS += -DFOAM_COMPILE_STRICT
+    endif
 endif
 
 # Default compilation is 'Opt' - never permit an empty value
