@@ -542,7 +542,7 @@ Istream& operator>>(Istream& is, CompactListList<T>& list)
 template<class T>
 Ostream& operator<<(Ostream& os, const CompactListList<T>& list)
 {
-    return list.writeList(os, Detail::ListPolicy::short_length<T>::value);
+    return list.writeList(os, Foam::ListPolicy::short_length<T>::value);
 }
 
 

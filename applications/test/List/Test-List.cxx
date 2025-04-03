@@ -75,8 +75,6 @@ public:
 
 
 
-namespace Detail
-{
 namespace ListPolicy
 {
 
@@ -84,7 +82,6 @@ namespace ListPolicy
 template<> struct short_length<short> : std::integral_constant<int,20> {};
 
 } // End namespace ListPolicy
-} // End namespace Detail
 } // End namespace Foam
 
 
@@ -119,9 +116,9 @@ Ostream& printListOutputType(const char* what)
     Info<< what
         << " (contiguous="
         << is_contiguous_v<T> << " no_linebreak="
-        << Detail::ListPolicy::no_linebreak<T>::value
+        << ListPolicy::no_linebreak<T>::value
         << " short_length="
-        << Detail::ListPolicy::short_length<T>::value << ')';
+        << ListPolicy::short_length<T>::value << ')';
 
     return Info;
 }

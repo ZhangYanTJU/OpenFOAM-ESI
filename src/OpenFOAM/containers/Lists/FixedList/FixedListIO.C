@@ -106,7 +106,7 @@ Foam::Ostream& Foam::FixedList<T, N>::writeList
      ||
         (
             (N <= unsigned(shortLen))
-         && (is_contiguous_v<T> || Detail::ListPolicy::no_linebreak<T>::value)
+         && (is_contiguous_v<T> || Foam::ListPolicy::no_linebreak<T>::value)
         )
     )
     {

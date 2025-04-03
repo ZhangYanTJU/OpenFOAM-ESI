@@ -127,7 +127,7 @@ Foam::Ostream& Foam::UList<T>::writeList
      ||
         (
             (len <= shortLen)
-         && (is_contiguous_v<T> || Detail::ListPolicy::no_linebreak<T>::value)
+         && (is_contiguous_v<T> || Foam::ListPolicy::no_linebreak<T>::value)
         )
     )
     {

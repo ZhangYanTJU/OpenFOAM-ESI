@@ -621,11 +621,11 @@ Istream& operator>>(Istream& is, Matrix<Form, Type>& mat)
 
 
 //- Write Matrix to Ostream, as per Matrix::writeMatrix() with
-//- default length, which is given by Detail::ListPolicy::short_length
+//- default length, which is given by Foam::ListPolicy::short_length
 template<class Form, class Type>
 Ostream& operator<<(Ostream& os, const Matrix<Form, Type>& mat)
 {
-    return mat.writeMatrix(os, Detail::ListPolicy::short_length<Type>::value);
+    return mat.writeMatrix(os, Foam::ListPolicy::short_length<Type>::value);
 }
 
 

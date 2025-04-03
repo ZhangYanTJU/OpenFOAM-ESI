@@ -34,7 +34,7 @@ bool Foam::expressions::exprValueFieldTag::empty() const noexcept
 {
     return
     (
-        uniformity_ == Foam::Detail::ListPolicy::uniformity::EMPTY
+        uniformity_ == Foam::ListPolicy::uniformity::EMPTY
     );
 }
 
@@ -43,7 +43,7 @@ bool Foam::expressions::exprValueFieldTag::is_uniform() const noexcept
 {
     return
     (
-        uniformity_ == Foam::Detail::ListPolicy::uniformity::UNIFORM
+        uniformity_ == Foam::ListPolicy::uniformity::UNIFORM
     );
 }
 
@@ -52,9 +52,9 @@ bool Foam::expressions::exprValueFieldTag::is_nonuniform() const noexcept
 {
     return
     (
-        uniformity_ == Foam::Detail::ListPolicy::uniformity::NONUNIFORM
+        uniformity_ == Foam::ListPolicy::uniformity::NONUNIFORM
         // Extra safety for direct reductions?
-        // || uniformity_ == Foam::Detail::ListPolicy::uniformity::MIXED
+        // || uniformity_ == Foam::ListPolicy::uniformity::MIXED
     );
 }
 
@@ -68,14 +68,14 @@ Foam::expressions::exprValueFieldTag::value() const noexcept
 
 void Foam::expressions::exprValueFieldTag::set_empty()
 {
-    uniformity_ = Foam::Detail::ListPolicy::uniformity::EMPTY;
+    uniformity_ = Foam::ListPolicy::uniformity::EMPTY;
     value_ = Foam::zero{};
 }
 
 
 void Foam::expressions::exprValueFieldTag::set_nouniform()
 {
-    uniformity_ = Foam::Detail::ListPolicy::uniformity::NONUNIFORM;
+    uniformity_ = Foam::ListPolicy::uniformity::NONUNIFORM;
     value_ = Foam::zero{};
 }
 
@@ -145,7 +145,7 @@ void Foam::expressions::exprValueFieldTag::reduce()
     (
         shape == static_cast<bitmask_type>
         (
-            Foam::Detail::ListPolicy::uniformity::EMPTY
+            Foam::ListPolicy::uniformity::EMPTY
         )
     )
     {
@@ -156,7 +156,7 @@ void Foam::expressions::exprValueFieldTag::reduce()
     (
         shape == static_cast<bitmask_type>
         (
-            Foam::Detail::ListPolicy::uniformity::UNIFORM
+            Foam::ListPolicy::uniformity::UNIFORM
         )
     )
     {

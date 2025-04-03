@@ -594,11 +594,11 @@ Istream& operator>>(Istream& is, FixedList<T, N>& list)
 
 
 //- Write List to Ostream, as per FixedList::writeList() with default length.
-//  The default short-length is given by Detail::ListPolicy::short_length
+//  The default short-length is given by Foam::ListPolicy::short_length
 template<class T, unsigned N>
 Ostream& operator<<(Ostream& os, const FixedList<T, N>& list)
 {
-    return list.writeList(os, Detail::ListPolicy::short_length<T>::value);
+    return list.writeList(os, Foam::ListPolicy::short_length<T>::value);
 }
 
 

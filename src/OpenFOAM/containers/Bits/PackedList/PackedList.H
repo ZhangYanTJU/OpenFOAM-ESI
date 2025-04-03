@@ -610,11 +610,11 @@ struct Hash<PackedList<Width>> : PackedList<Width>::hasher {};
 // * * * * * * * * * * * * * * * Global Operators  * * * * * * * * * * * * * //
 
 //- Write List to Ostream, as per UList::writeList() with default length.
-//  The default short-length is given by Detail::ListPolicy::short_length
+//  The default short-length is given by Foam::ListPolicy::short_length
 template<unsigned Width>
 Ostream& operator<<(Ostream& os, const PackedList<Width>& list)
 {
-    return list.writeList(os, Detail::ListPolicy::short_length<void>::value);
+    return list.writeList(os, Foam::ListPolicy::short_length<void>::value);
 }
 
 

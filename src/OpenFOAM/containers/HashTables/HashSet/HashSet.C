@@ -379,7 +379,7 @@ Foam::HashSet<Key, Hash>::operator-=(const HashSet<Key, Hash>& rhs)
 template<class Key, class Hash>
 Foam::Ostream& Foam::operator<<(Ostream& os, const HashSet<Key, Hash>& rhs)
 {
-    return rhs.writeKeys(os, Detail::ListPolicy::short_length<Key>::value);
+    return rhs.writeKeys(os, Foam::ListPolicy::short_length<Key>::value);
 }
 
 

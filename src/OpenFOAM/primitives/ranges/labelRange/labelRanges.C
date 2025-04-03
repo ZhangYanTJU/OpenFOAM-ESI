@@ -395,7 +395,7 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const labelRanges& list)
     return list.writeList
     (
         os,
-        Detail::ListPolicy::short_length<labelRange>::value
+        Foam::ListPolicy::short_length<labelRange>::value
     );
 }
 

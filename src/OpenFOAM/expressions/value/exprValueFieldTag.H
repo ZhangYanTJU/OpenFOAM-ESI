@@ -57,7 +57,7 @@ class exprValueFieldTag
     // Private Data
 
         //- Uniformity of field (0: empty, 1: uniform, 2: non-uniform, ...)
-        //  Values as per internal enum Foam::Detail::ListPolicy::uniformity
+        //  Values as per internal enum Foam::ListPolicy::uniformity
         int uniformity_{};
 
         //- Representative (uniform) type/value for the field
@@ -134,8 +134,7 @@ public:
         template<class Type>
         void set(const Type* first, const Type* last)
         {
-            uniformity_ =
-                Foam::Detail::ListPolicy::check_uniformity(first, last);
+            uniformity_ = Foam::ListPolicy::check_uniformity(first, last);
 
             if (first != last)  // or uniformity_ != EMPTY
             {
@@ -152,7 +151,7 @@ public:
         template<class Type>
         void set_value(const Type& val)
         {
-            uniformity_ = Foam::Detail::ListPolicy::uniformity::UNIFORM;
+            uniformity_ = Foam::ListPolicy::uniformity::UNIFORM;
             value_.set<Type>(val);
         }
 

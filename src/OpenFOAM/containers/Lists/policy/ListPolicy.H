@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Namespace
-    Foam::Detail::ListPolicy
+    Foam::ListPolicy
 
 Description
     Additional compile-time controls of List behaviour
@@ -46,8 +46,6 @@ class keyType;
 class word;
 class wordRe;
 
-namespace Detail
-{
 namespace ListPolicy
 {
 
@@ -126,7 +124,6 @@ enum uniformity check_uniformity(InputIt first, InputIt last)
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace ListPolicy
-} // End namespace Detail
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
