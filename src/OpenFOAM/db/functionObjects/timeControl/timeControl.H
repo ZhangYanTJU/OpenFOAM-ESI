@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019, 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,6 +74,7 @@ public:
         ocAdjustableRunTime,  //!< Currently identical to "runTime"
         ocClockTime,          //!< Use clock time for execution
         ocCpuTime,            //!< Use CPU time for execution
+        ocOnStart,            //!< Execute on first step of run
         ocOnEnd               //!< Execute on end of run
     };
 
