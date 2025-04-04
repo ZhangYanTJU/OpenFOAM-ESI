@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2019, 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,6 +47,7 @@ Foam::timeControl::controlNames_
     { timeControl::ocAdjustableRunTime, "adjustableRunTime" },
     { timeControl::ocClockTime, "clockTime" },
     { timeControl::ocCpuTime, "cpuTime" },
+    { timeControl::ocOnStart, "onStart" },
     { timeControl::ocOnEnd, "onEnd" },
 });
 
@@ -254,6 +255,12 @@ bool Foam::timeControl::execute()
                 executionIndex_ = executionIndex;
                 return true;
             }
+            break;
+        }
+
+        case ocOnStart:
+        {
+            return time_.timeIndex() == 1;
             break;
         }
 
