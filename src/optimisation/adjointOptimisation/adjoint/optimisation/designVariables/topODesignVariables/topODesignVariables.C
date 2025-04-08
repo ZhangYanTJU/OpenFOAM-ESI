@@ -268,11 +268,7 @@ void Foam::topODesignVariables::initialize()
         {
             if (isA<wallFvPatch>(patch))
             {
-                const labelList& faceCells = patch.faceCells();
-                forAll(faceCells, cI)
-                {
-                    alpha[faceCells[cI]] = 1.;
-                }
+                UIndirectList<scalar>(alpha, patch.faceCells()) = 1;
             }
         }
     }

@@ -157,7 +157,7 @@ void Foam::meshToMeshMethod::appendNbrCells
 (
     const label celli,
     const polyMesh& mesh,
-    const DynamicList<label>& visitedCells,
+    const labelUList& visitedCells,
     DynamicList<label>& nbrCellIDs
 ) const
 {

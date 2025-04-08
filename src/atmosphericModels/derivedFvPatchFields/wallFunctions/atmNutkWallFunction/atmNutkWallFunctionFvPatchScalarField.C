@@ -84,7 +84,7 @@ tmp<scalarField> atmNutkWallFunctionFvPatchScalarField::calcNut() const
     }
     #endif
 
-    const labelList& faceCells = patch().faceCells();
+    const labelUList& faceCells = patch().faceCells();
 
     // (HW:Eq. 5)
     forAll(nutw, facei)

@@ -436,7 +436,7 @@ void Foam::PairCollision<CloudType>::wallInteraction()
 template<class CloudType>
 bool Foam::PairCollision<CloudType>::duplicatePointInList
 (
-    const DynamicList<point>& existingPoints,
+    const UList<point>& existingPoints,
     const point& pointToTest,
     scalar duplicateRangeSqr
 ) const
@@ -456,7 +456,7 @@ bool Foam::PairCollision<CloudType>::duplicatePointInList
 template<class CloudType>
 bool Foam::PairCollision<CloudType>::duplicatePointInList
 (
-    const DynamicList<point>& existingPoints,
+    const UList<point>& existingPoints,
     const point& pointToTest,
     const scalarList& duplicateRangeSqr
 ) const

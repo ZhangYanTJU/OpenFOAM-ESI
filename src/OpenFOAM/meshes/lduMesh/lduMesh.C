@@ -105,8 +105,8 @@ Foam::Ostream& Foam::operator<<
     // Print actual contents
     if (lduMesh::debug)
     {
-        const labelList& l = addr.lowerAddr();
-        const labelList& u = addr.upperAddr();
+        const labelUList& l = addr.lowerAddr();
+        const labelUList& u = addr.upperAddr();
         forAll(l, facei)
         {
             os  << "        face:" << facei << " l:" << l[facei]

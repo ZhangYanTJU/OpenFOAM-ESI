@@ -259,8 +259,8 @@ private:
         void calcCellCellRays
         (
             const pointField& neiCc,
-            const labelList& neiLevel,
-            const labelList& testFaces,
+            const labelUList& neiLevel,
+            const labelUList& testFaces,
             pointField& start,
             pointField& end,
             labelList& minLevel
@@ -1589,7 +1589,7 @@ public:
             void selectSeparatedCoupledFaces(boolList&) const;
 
             //- Find any intersection of surface. Store in surfaceIndex_.
-            void updateIntersections(const labelList& changedFaces);
+            void updateIntersections(const labelUList& changedFaces);
 
             //- Calculate nearest intersection for selected mesh faces
             void nearestIntersection

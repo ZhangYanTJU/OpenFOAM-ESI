@@ -288,8 +288,8 @@ void Foam::meshRefinement::calcNeighbourData
 void Foam::meshRefinement::calcCellCellRays
 (
     const pointField& neiCc,
-    const labelList& neiLevel,
-    const labelList& testFaces,
+    const labelUList& neiLevel,
+    const labelUList& testFaces,
     pointField& start,
     pointField& end,
     labelList& minLevel
@@ -358,7 +358,7 @@ void Foam::meshRefinement::calcCellCellRays
 }
 
 
-void Foam::meshRefinement::updateIntersections(const labelList& changedFaces)
+void Foam::meshRefinement::updateIntersections(const labelUList& changedFaces)
 {
     // Stats on edges to test. Count proc faces only once.
     bitSet isMasterFace(syncTools::getMasterFaces(mesh_));

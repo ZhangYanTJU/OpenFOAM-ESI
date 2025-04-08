@@ -30,7 +30,7 @@ Description
 
 {
     const cellCellStencilObject& overlap = Stencil::New(mesh);
-    const labelList& cellTypes = overlap.cellTypes();
+    const labelUList& cellTypes = overlap.cellTypes();
 
     interpolatedCells.primitiveFieldRef() = 1.0;
     forAll(cellMask, cellI)

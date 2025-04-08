@@ -46,7 +46,7 @@ void Foam::cellCellStencil::interpolate
     }
 
     const mapDistribute& map = overlap.cellInterpolationMap();
-    const labelList& cellIDs = overlap.interpolationCells();
+    const labelUList& cellIDs = overlap.interpolationCells();
     const scalarList& factor = overlap.cellInterpolationWeight();
 
     Field<T> work(psi);

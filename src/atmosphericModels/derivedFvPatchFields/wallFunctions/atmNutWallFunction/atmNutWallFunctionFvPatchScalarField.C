@@ -86,7 +86,7 @@ tmp<scalarField> atmNutWallFunctionFvPatchScalarField::calcNut() const
     }
     #endif
 
-    const labelList& faceCells = patch().faceCells();
+    const labelUList& faceCells = patch().faceCells();
 
     forAll(nutw, facei)
     {

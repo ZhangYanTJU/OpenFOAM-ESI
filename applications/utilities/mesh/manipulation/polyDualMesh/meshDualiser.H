@@ -46,10 +46,9 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef meshDualiser_H
-#define meshDualiser_H
+#ifndef Foam_meshDualiser_H
+#define Foam_meshDualiser_H
 
-#include "DynamicList.H"
 #include "bitSet.H"
 #include "boolList.H"
 #include "typeInfo.H"
@@ -124,7 +123,7 @@ class meshDualiser
             const bool edgeOrder,
             const label dualCell0,
             const label dualCell1,
-            const DynamicList<label>& verts,
+            const labelUList& verts,
             polyTopoChange& meshMod
         ) const;
 
@@ -137,7 +136,7 @@ class meshDualiser
 
             const label dualCelli,
             const label patchi,
-            const DynamicList<label>& verts,
+            const labelUList& verts,
             polyTopoChange& meshMod
         ) const;
 

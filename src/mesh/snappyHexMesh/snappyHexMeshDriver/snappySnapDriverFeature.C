@@ -757,8 +757,8 @@ void Foam::snappySnapDriver::calcNearestFacePointProperties
 // and if so attracts the point to that non-dominant plane.
 void Foam::snappySnapDriver::correctAttraction
 (
-    const DynamicList<point>& surfacePoints,
-    const DynamicList<label>& surfaceCounts,
+    const UList<point>& surfacePoints,
+    const UList<label>& surfaceCounts,
     const point& edgePt,
     const vector& edgeNormal,       // normalised normal
     const point& pt,
@@ -820,7 +820,7 @@ Foam::label Foam::snappySnapDriver::findNormal
 (
     const scalar featureCos,
     const vector& n,
-    const DynamicList<vector>& surfaceNormals
+    const UList<vector>& surfaceNormals
 ) const
 {
     label index = -1;
@@ -853,7 +853,7 @@ Foam::pointIndexHit Foam::snappySnapDriver::findMultiPatchPoint
 (
     const point& pt,
     const labelList& patchIDs,
-    const DynamicList<vector>& surfaceNormals,
+    const UList<vector>& surfaceNormals,
     const labelList& faceToNormalBin
 ) const
 {

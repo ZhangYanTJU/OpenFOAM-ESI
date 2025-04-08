@@ -63,7 +63,7 @@ void Foam::faPatchMapper::calcAddressing() const
     }
 
     // Go through new edgeFaces and for each edge try to locate old index
-    const labelList& ef = patch_.edgeFaces();
+    const labelUList& ef = patch_.edgeFaces();
 
     forAll(ef, efI)
     {

@@ -99,7 +99,7 @@ void Foam::lduCalculatedProcessorField<Type>::initInterfaceMatrixUpdate
     }
 
     // Bypass patchInternalField since uses fvPatch addressing
-    const labelList& fc = lduAddr.patchAddr(patchId);
+    const labelUList& fc = lduAddr.patchAddr(patchId);
 
     scalarSendBuf_.resize_nocopy(fc.size());
     forAll(fc, i)

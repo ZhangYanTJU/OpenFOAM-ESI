@@ -222,7 +222,7 @@ void Foam::cyclicFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes
 ) const
 {
-    const labelList& nbrFaceCells =
+    const labelUList& nbrFaceCells =
         lduAddr.patchAddr
         (
             this->cyclicPatch().neighbPatchID()

@@ -1339,14 +1339,14 @@ void Foam::polyMeshAdder::mergeZones
 
 void Foam::polyMeshAdder::addZones
 (
-    const DynamicList<word>& pointZoneNames,
+    const UList<word>& pointZoneNames,
     const List<DynamicList<label>>& pzPoints,
 
-    const DynamicList<word>& faceZoneNames,
+    const UList<word>& faceZoneNames,
     const List<DynamicList<label>>& fzFaces,
     const List<DynamicList<bool>>& fzFlips,
 
-    const DynamicList<word>& cellZoneNames,
+    const UList<word>& cellZoneNames,
     const List<DynamicList<label>>& czCells,
 
     polyMesh& mesh
@@ -2423,9 +2423,9 @@ void Foam::polyMeshAdder::patchFacePairs
     {
         const auto& mesh = meshes[meshi];
         const polyBoundaryMesh& pbm = mesh.boundaryMesh();
-        const DynamicList<label>& procPatches = localPatch[meshi];
-        const DynamicList<label>& procNbrs = remoteMesh[meshi];
-        const DynamicList<label>& procNbrPatches = remotePatch[meshi];
+        const labelUList& procPatches = localPatch[meshi];
+        const labelUList& procNbrs = remoteMesh[meshi];
+        const labelUList& procNbrPatches = remotePatch[meshi];
 
 
         // Count number of processor faces

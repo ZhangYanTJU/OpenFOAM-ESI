@@ -168,8 +168,8 @@ void Foam::oversetFvPatchField<Type>::storeFringeCoefficients
     const fvMesh& mesh = this->internalField().mesh();
 
     const cellCellStencilObject& overlap = Stencil::New(mesh);
-    const labelList& cellTypes = overlap.cellTypes();
-    const labelList& zoneID = overlap.zoneID();
+    const labelUList& cellTypes = overlap.cellTypes();
+    const labelUList& zoneID = overlap.zoneID();
     const labelUList& own = mesh.owner();
     const labelUList& nei = mesh.neighbour();
 
@@ -345,8 +345,8 @@ void Foam::oversetFvPatchField<Type>::fringeFlux
     {
         const fvMesh& mesh = this->internalField().mesh();
         const cellCellStencilObject& overlap = Stencil::New(mesh);
-        const labelList& cellTypes = overlap.cellTypes();
-        const labelList& zoneID = overlap.zoneID();
+        const labelUList& cellTypes = overlap.cellTypes();
+        const labelUList& zoneID = overlap.zoneID();
 
         // Check all faces on the outside of interpolated cells
         const labelUList& own = mesh.owner();
@@ -421,8 +421,8 @@ void Foam::oversetFvPatchField<Type>::adjustPsi
     const fvMesh& mesh = this->internalField().mesh();
 
     const cellCellStencilObject& overlap = Stencil::New(mesh);
-    const labelList& cellTypes = overlap.cellTypes();
-    const labelList& zoneID = overlap.zoneID();
+    const labelUList& cellTypes = overlap.cellTypes();
+    const labelUList& zoneID = overlap.zoneID();
 
     // Pass-1: accumulate all fluxes, calculate correction factor
 

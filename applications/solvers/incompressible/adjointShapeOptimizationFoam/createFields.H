@@ -103,8 +103,8 @@ dimensionedScalar alphaMax
     laminarTransport
 );
 
-const labelList& inletCells = mesh.boundary()["inlet"].faceCells();
-//const labelList& outletCells = mesh.boundary()["outlet"].faceCells();
+const labelUList& inletCells = mesh.boundary()["inlet"].faceCells();
+//const labelUList& outletCells = mesh.boundary()["outlet"].faceCells();
 
 volScalarField alpha
 (

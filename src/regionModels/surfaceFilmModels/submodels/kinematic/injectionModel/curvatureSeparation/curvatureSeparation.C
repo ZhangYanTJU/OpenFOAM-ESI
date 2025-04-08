@@ -144,7 +144,7 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
     {
         const fvsPatchScalarField& phip = phi.boundaryField()[patchi];
         const fvPatch& pp = phip.patch();
-        const labelList& faceCells = pp.faceCells();
+        const labelUList& faceCells = pp.faceCells();
         const vectorField nf(pp.nf());
         forAll(phip, i)
         {
@@ -166,7 +166,7 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
         {
             const scalarField& phip = phi.boundaryField()[patchi];
             const vectorField nf(pbm[patchi].nf());
-            const labelList& faceCells = pbm[patchi].faceCells();
+            const labelUList& faceCells = pbm[patchi].faceCells();
             const label sizeBy2 = pbm[patchi].size()/2;
 
             for (label face0=0; face0<sizeBy2; face0++)

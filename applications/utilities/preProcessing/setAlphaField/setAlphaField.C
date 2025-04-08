@@ -55,7 +55,7 @@ Description
 
 void isoFacesToFile
 (
-    const DynamicList<List<point>>& faces,
+    const UList<List<point>>& faces,
     const word& fileName
 )
 {
@@ -65,7 +65,7 @@ void isoFacesToFile
     if (Pstream::parRun())
     {
         // Collect points from all the processors
-        List<DynamicList<List<point>>> allProcFaces(Pstream::nProcs());
+        List<List<List<point>>> allProcFaces(Pstream::nProcs());
         allProcFaces[Pstream::myProcNo()] = faces;
         Pstream::gatherList(allProcFaces);
 
@@ -73,9 +73,9 @@ void isoFacesToFile
         {
             Info<< "Writing file: " << fileName << endl;
 
-            for (const DynamicList<List<point>>& procFaces : allProcFaces)
+            for (const auto& procFaces : allProcFaces)
             {
-                for (const List<point>& facePts : procFaces)
+                for (const auto& facePts : procFaces)
                 {
                     os.writeFace(facePts);
                 }
@@ -86,7 +86,7 @@ void isoFacesToFile
     {
         Info<< "Writing file: " << fileName << endl;
 
-        for (const List<point>& facePts : faces)
+        for (const auto& facePts : faces)
         {
             os.writeFace(facePts);
         }

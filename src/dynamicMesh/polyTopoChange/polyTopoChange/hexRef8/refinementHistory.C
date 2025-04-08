@@ -983,7 +983,7 @@ Foam::autoPtr<Foam::refinementHistory> Foam::refinementHistory::clone
 Foam::autoPtr<Foam::refinementHistory> Foam::refinementHistory::clone
 (
     const IOobject& io,
-    const labelList& cellMap
+    const labelUList& cellMap
 ) const
 {
     if (active_)

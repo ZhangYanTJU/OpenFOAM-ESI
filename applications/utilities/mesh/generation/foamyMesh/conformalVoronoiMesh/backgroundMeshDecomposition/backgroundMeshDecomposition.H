@@ -213,7 +213,7 @@ public:
     // Member Functions
 
         //- Build a mapDistribute for the supplied destination processor data
-        static autoPtr<mapDistribute> buildMap(const List<label>& toProc);
+        static autoPtr<mapDistribute> buildMap(const labelUList& toProc);
 
         //- Redistribute the background mesh based on a supplied weight field,
         //  returning a map to use to redistribute vertices.

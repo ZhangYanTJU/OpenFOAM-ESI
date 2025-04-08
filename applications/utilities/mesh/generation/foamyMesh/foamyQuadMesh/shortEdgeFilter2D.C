@@ -80,10 +80,10 @@ void Foam::shortEdgeFilter2D::updateEdgeRegionMap
 
         label region = -1;
 
-        const DynamicList<label>& startPtRegions =
+        const labelUList& startPtRegions =
             boundaryPtRegions[surfPtToBoundaryPt[meshPoints[e.first()]]];
 
-        const DynamicList<label>& endPtRegions =
+        const labelUList& endPtRegions =
             boundaryPtRegions[surfPtToBoundaryPt[meshPoints[e.second()]]];
 
         if (startPtRegions.size() > 1 && endPtRegions.size() > 1)
@@ -363,9 +363,9 @@ void Foam::shortEdgeFilter2D::filter()
              && !flagDegenerateFace
             )
             {
-                const DynamicList<label>& startVertexRegions =
+                const labelUList& startVertexRegions =
                     boundaryPointRegions[meshPoints[startVertex]];
-                const DynamicList<label>& endVertexRegions =
+                const labelUList& endVertexRegions =
                     boundaryPointRegions[meshPoints[endVertex]];
 
                 if (startVertexRegions.size() && endVertexRegions.size())

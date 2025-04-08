@@ -294,7 +294,7 @@ void Foam::mergeAndWrite
     forAll(pbm, patchi)
     {
         const polyPatch& pp = pbm[patchi];
-        const labelList& fc = pp.faceCells();
+        const labelUList& fc = pp.faceCells();
         forAll(fc, i)
         {
             bndInSet[pp.start()+i-mesh.nInternalFaces()] = isInSet[fc[i]];
@@ -319,7 +319,7 @@ void Foam::mergeAndWrite
     forAll(pbm, patchi)
     {
         const polyPatch& pp = pbm[patchi];
-        const labelList& fc = pp.faceCells();
+        const labelUList& fc = pp.faceCells();
         if (pp.coupled())
         {
             forAll(fc, i)

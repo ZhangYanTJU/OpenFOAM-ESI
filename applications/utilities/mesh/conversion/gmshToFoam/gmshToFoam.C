@@ -1506,7 +1506,7 @@ int main(int argc, char *argv[])
     // Go through all the patchFaces and find corresponding face in pp.
     forAll(patchFaces, patchi)
     {
-        const DynamicList<face>& pFaces = patchFaces[patchi];
+        const auto& pFaces = patchFaces[patchi];
 
         Info<< "Finding faces of patch " << patchi << endl;
 

@@ -181,7 +181,7 @@ void Foam::cellCellStencils::inverseDistance::markBoundaries
     forAll(pbm, patchI)
     {
         const fvPatch& fvp = pbm[patchI];
-        const labelList& fc = fvp.faceCells();
+        const labelUList& fc = fvp.faceCells();
 
         if (!fvPatch::constraintType(fvp.type()))
         {
@@ -209,7 +209,7 @@ void Foam::cellCellStencils::inverseDistance::markBoundaries
     forAll(pbm, patchI)
     {
         const fvPatch& fvp = pbm[patchI];
-        const labelList& fc = fvp.faceCells();
+        const labelUList& fc = fvp.faceCells();
 
         if (isA<oversetFvPatch>(fvp))
         {
@@ -1074,12 +1074,11 @@ void Foam::cellCellStencils::inverseDistance::findHoles
         {}
         else if (!fvPatch::constraintType(fvp.type()))
         {
-            const labelList& fc = fvp.faceCells();
-            forAll(fc, i)
+            for (const label celli : fvp.faceCells())
             {
-                label regionI = cellRegion[fc[i]];
+                label regionI = cellRegion[celli];
 
-                if (cellTypes[fc[i]] != HOLE && regionType[regionI] != 2)
+                if (cellTypes[celli] != HOLE && regionType[regionI] != 2)
                 {
                     regionType[regionI] = 2;
                 }

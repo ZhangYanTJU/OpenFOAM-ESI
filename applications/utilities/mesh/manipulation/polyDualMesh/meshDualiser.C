@@ -33,6 +33,7 @@ License
 #include "mapPolyMesh.H"
 #include "edgeFaceCirculator.H"
 #include "mergePoints.H"
+#include "DynamicList.H"
 #include "OFstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -98,20 +99,14 @@ void Foam::meshDualiser::dumpPolyTopoChange
     Info<< "Dumping current polyTopoChange. Faces to " << str1.name()
         << " , points and edges to " << str2.name() << endl;
 
-    const DynamicList<point>& points = meshMod.points();
-
-    forAll(points, pointi)
+    for (const auto& p : meshMod.points())
     {
-        meshTools::writeOBJ(str1, points[pointi]);
-        meshTools::writeOBJ(str2, points[pointi]);
+        meshTools::writeOBJ(str1, p);
+        meshTools::writeOBJ(str2, p);
     }
 
-    const DynamicList<face>& faces = meshMod.faces();
-
-    forAll(faces, facei)
+    for (const face& f : meshMod.faces())
     {
-        const face& f = faces[facei];
-
         str1<< 'f';
         forAll(f, fp)
         {
@@ -210,7 +205,7 @@ Foam::label Foam::meshDualiser::addInternalFace
     const bool edgeOrder,
     const label dualCell0,
     const label dualCell1,
-    const DynamicList<label>& verts,
+    const labelUList& verts,
     polyTopoChange& meshMod
 ) const
 {
@@ -326,7 +321,7 @@ Foam::label Foam::meshDualiser::addBoundaryFace
 
     const label dualCelli,
     const label patchi,
-    const DynamicList<label>& verts,
+    const labelUList& verts,
     polyTopoChange& meshMod
 ) const
 {

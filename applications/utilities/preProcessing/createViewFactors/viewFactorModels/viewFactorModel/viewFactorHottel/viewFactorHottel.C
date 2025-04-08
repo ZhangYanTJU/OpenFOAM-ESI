@@ -63,10 +63,10 @@ Foam::scalarListList Foam::VF::viewFactorHottel::calculate
     const labelListList& visibleFaceFaces,
     const pointField& compactCf,
     const vectorField& compactSf,
-    const List<List<vector>>& compactFineSf,
-    const List<List<point>>& compactFineCf,
-    const DynamicList<List<point>>& compactPoints,
-    const DynamicList<label>& compactPatchId
+    const UList<List<vector>>& compactFineSf,
+    const UList<List<point>>& compactFineCf,
+    const UList<List<point>>& compactPoints,
+    const UList<label>& compactPatchId
 ) const
 {
     // Fill local view factor matrix

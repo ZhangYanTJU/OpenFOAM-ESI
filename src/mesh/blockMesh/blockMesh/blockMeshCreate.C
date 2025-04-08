@@ -163,7 +163,7 @@ Foam::faceList Foam::blockMesh::createPatchFaces
 {
     const blockList& blocks = *this;
 
-    labelList blockLabels = patchTopologyFaces.polyPatch::faceCells();
+    const labelUList& blockLabels = patchTopologyFaces.polyPatch::faceCells();
 
     label nFaces = 0;
 

@@ -259,7 +259,7 @@ class isoSurfacePoint
             const VolumeField<Type>& cCoords,
             const Field<Type>& pCoords,
 
-            const DynamicList<Type>& snappedPoints,
+            const UList<Type>& snappedPoints,
             const labelList& snappedCc,
             const labelList& snappedPoint,
             const label facei,
@@ -282,7 +282,7 @@ class isoSurfacePoint
             const VolumeField<Type>& cCoords,
             const Field<Type>& pCoords,
 
-            const DynamicList<Type>& snappedPoints,
+            const UList<Type>& snappedPoints,
             const labelList& snappedCc,
             const labelList& snappedPoint,
 
@@ -298,7 +298,7 @@ class isoSurfacePoint
             const labelList& interpolatedPoints,
             const List<FixedList<label, 3>>& interpolatedOldPoints,
             const List<FixedList<scalar, 3>>& interpolationWeights,
-            const DynamicList<Type>& unmergedValues
+            const UList<Type>& unmergedValues
         );
 
         triSurface stitchTriPoints

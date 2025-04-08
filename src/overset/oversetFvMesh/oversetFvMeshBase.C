@@ -359,8 +359,8 @@ bool Foam::oversetFvMeshBase::updateAddressing() const
 
 Foam::scalar Foam::oversetFvMeshBase::cellAverage
 (
-    const labelList& types,
-    const labelList& nbrTypes,
+    const labelUList& types,
+    const labelUList& nbrTypes,
     const scalarField& norm,
     const scalarField& nbrNorm,
     const label celli,

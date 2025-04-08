@@ -36,7 +36,7 @@ License
 template<class Type>
 Type Foam::isoSurfaceCell::generatePoint
 (
-    const DynamicList<Type>& snappedPoints,
+    const UList<Type>& snappedPoints,
 
     const scalar s0,
     const Type& p0,
@@ -78,7 +78,7 @@ Type Foam::isoSurfaceCell::generatePoint
 template<class Type>
 void Foam::isoSurfaceCell::generateTriPoints
 (
-    const DynamicList<Type>& snapped,
+    const UList<Type>& snapped,
 
     const scalar s0,
     const Type& p0,
@@ -273,7 +273,7 @@ void Foam::isoSurfaceCell::generateTriPoints
     const Field<Type>& cCoords,
     const Field<Type>& pCoords,
 
-    const DynamicList<Type>& snappedPoints,
+    const UList<Type>& snappedPoints,
     const labelList& snappedCc,
     const labelList& snappedPoint,
 

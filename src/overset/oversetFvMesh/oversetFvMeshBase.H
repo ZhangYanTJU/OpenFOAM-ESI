@@ -142,8 +142,8 @@ protected:
         //- Average norm of valid neighbours
         scalar cellAverage
         (
-            const labelList& types,
-            const labelList& nbrTypes,
+            const labelUList& types,
+            const labelUList& nbrTypes,
             const scalarField& norm,
             const scalarField& nbrNorm,
             const label celli,

@@ -266,7 +266,7 @@ void Foam::isoAdvection::timeIntegratedFlux()
 
     // Storage for isoFace points. Only used if writeIsoFacesToFile_
     DynamicList<List<point>> isoFacePts;
-    const DynamicField<label>& interfaceLabels = surf_->interfaceLabels();
+    const labelUList& interfaceLabels = surf_->interfaceLabels();
 
     // Calculating isoface normal velocity
     scalarField Un0(interfaceLabels.size());
@@ -678,7 +678,7 @@ void Foam::isoAdvection::writeSurfaceCells() const
 
 void Foam::isoAdvection::writeIsoFaces
 (
-    const DynamicList<List<point>>& faces
+    const UList<List<point>>& faces
 ) const
 {
     if (!writeIsoFacesToFile_ || !mesh_.time().writeTime()) return;
@@ -694,7 +694,7 @@ void Foam::isoAdvection::writeIsoFaces
     if (Pstream::parRun())
     {
         // Collect points from all the processors
-        List<DynamicList<List<point>>> allProcFaces(Pstream::nProcs());
+        List<List<List<point>>> allProcFaces(Pstream::nProcs());
         allProcFaces[Pstream::myProcNo()] = faces;
         Pstream::gatherList(allProcFaces);
 
@@ -705,13 +705,9 @@ void Foam::isoAdvection::writeIsoFaces
             Info<< nl << "isoAdvection: writing iso faces to file: "
                 << os.name() << nl << endl;
 
-            for
-            (
-                const DynamicList<List<point>>& procFacePts
-              : allProcFaces
-            )
+            for (const auto& procFacePts : allProcFaces)
             {
-                for (const List<point>& facePts : procFacePts)
+                for (const auto& facePts : procFacePts)
                 {
                     os.writeFace(facePts, false);
                 }
@@ -725,7 +721,7 @@ void Foam::isoAdvection::writeIsoFaces
         Info<< nl << "isoAdvection: writing iso faces to file: "
             << os.name() << nl << endl;
 
-        for (const List<point>& facePts : faces)
+        for (const auto& facePts : faces)
         {
             os.writeFace(facePts, false);
         }

@@ -86,13 +86,13 @@ class enrichedPatch
         mutable Map<label> pointMergeMap_;
 
         //- Slave point point hits
-        const labelList& slavePointPointHits_;
+        const labelUList& slavePointPointHits_;
 
         //- Slave point edge hits
-        const labelList& slavePointEdgeHits_;
+        const labelUList& slavePointEdgeHits_;
 
         //- Slave point face hits
-        const List<objectHit>& slavePointFaceHits_;
+        const UList<objectHit>& slavePointFaceHits_;
 
 
     // Demand-driven private data

@@ -60,13 +60,10 @@ template<class Type>
 void zeroCells
 (
     GeometricField<Type, fvPatchField, volMesh>& vf,
-    const labelList& cells
+    const labelUList& cells
 )
 {
-    forAll(cells, i)
-    {
-        vf[cells[i]] = Zero;
-    }
+    UIndirectList<Type>(vf.primitiveField(), cells) = Zero;
 }
 
 

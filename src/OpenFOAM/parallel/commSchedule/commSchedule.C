@@ -49,7 +49,7 @@ namespace Foam
 static label outstandingComms
 (
     const labelUList& commToSchedule,
-    const DynamicList<label>& procComms
+    const labelUList& procComms
 )
 {
     label nOutstanding = 0;

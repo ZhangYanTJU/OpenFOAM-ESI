@@ -3097,7 +3097,7 @@ void Foam::snappyLayerDriver::printLayerData
         label sumSize = pp.size();
 
         // Number of layers
-        const labelList& faceCells = pp.faceCells();
+        const labelUList& faceCells = pp.faceCells();
         label sumNLayers = 0;
         forAll(faceCells, i)
         {
@@ -3265,7 +3265,7 @@ bool Foam::snappyLayerDriver::writeLayerData
             {
                 label patchi = patchIDs[i];
                 const polyPatch& pp = pbm[patchi];
-                const labelList& faceCells = pp.faceCells();
+                const labelUList& faceCells = pp.faceCells();
                 scalarField pfld(faceCells.size());
                 forAll(faceCells, i)
                 {
@@ -5536,9 +5536,9 @@ void Foam::snappyLayerDriver::doLayers
                 if (numLayers[patchi] > 0)
                 {
                     const polyPatch& pp = mesh.boundaryMesh()[patchi];
-                    forAll(pp.faceCells(), i)
+                    for (const label celli : pp.faceCells())
                     {
-                        cellWeights[pp.faceCells()[i]] += numLayers[patchi];
+                        cellWeights[celli] += numLayers[patchi];
                     }
                 }
             }

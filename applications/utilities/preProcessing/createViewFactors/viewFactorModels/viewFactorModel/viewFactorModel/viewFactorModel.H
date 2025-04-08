@@ -117,10 +117,10 @@ protected:
             const labelListList& visibleFaceFaces,
             const pointField& compactCoarseCf,
             const vectorField& compactCoarseSf,
-            const List<List<vector>>& compactFineSf,
-            const List<List<point>>& compactFineCf,
-            const DynamicList<List<point>>& compactPoints,
-            const DynamicList<label>& compactPatchId
+            const UList<List<vector>>& compactFineSf,
+            const UList<List<point>>& compactFineCf,
+            const UList<List<point>>& compactPoints,
+            const labelUList& compactPatchId
         ) const = 0;
 
 

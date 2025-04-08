@@ -136,7 +136,7 @@ void waWallFunctionFvPatchScalarField::manipulateMatrix
     FieldField<Field, scalar>& internalCoeffs = matrix.internalCoeffs();
     FieldField<Field, scalar>& boundaryCoeffs = matrix.boundaryCoeffs();
     const fvMesh& mesh = patch().boundaryMesh().mesh();
-    const labelList& faceCells = patch().faceCells();
+    const labelUList& faceCells = patch().faceCells();
 
     // Add diag term from the omega expression next to the wall
     for (const label celli : faceCells)

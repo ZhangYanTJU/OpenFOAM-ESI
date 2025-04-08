@@ -733,12 +733,13 @@ void Foam::interfaceTrackingFvMesh::initializeControlPointsPosition()
                     << abort(FatalError);
             }
 
-            const labelList& eFaces =
-                aMesh().boundary()[fixedPatchID].edgeFaces();
-
-            forAll(eFaces, edgeI)
+            for
+            (
+                const label facei
+              : aMesh().boundary()[fixedPatchID].edgeFaces()
+            )
             {
-                deltaH[eFaces[edgeI]] *= 2.0;
+                deltaH[facei] *= 2.0;
             }
         }
 
@@ -789,12 +790,13 @@ void Foam::interfaceTrackingFvMesh::smoothFreeSurfaceMesh()
                 << abort(FatalError);
         }
 
-        const labelList& eFaces =
-            aMesh().boundary()[fixedPatchID].edgeFaces();
-
-        forAll(eFaces, edgeI)
+        for
+        (
+            const label facei
+          : aMesh().boundary()[fixedPatchID].edgeFaces()
+        )
         {
-            deltaHf[eFaces[edgeI]] *= 2.0;
+            deltaHf[facei] *= 2.0;
         }
     }
 
@@ -1060,7 +1062,7 @@ void Foam::interfaceTrackingFvMesh::correctPointDisplacement
         const labelList& pLabels =
             aMesh().boundary()[fixedPatchID].pointLabels();
 
-        const labelList& eFaces =
+        const labelUList& eFaces =
             aMesh().boundary()[fixedPatchID].edgeFaces();
 
         labelHashSet pointSet;
@@ -1147,7 +1149,7 @@ void Foam::interfaceTrackingFvMesh::correctPointDisplacement
         const labelList& pLabels =
             aMesh().boundary()[nonReflectingPatchID].pointLabels();
 
-        const labelList& eFaces =
+        const labelUList& eFaces =
             aMesh().boundary()[nonReflectingPatchID].edgeFaces();
 
         labelList corrPoints = pLabels;
@@ -2123,12 +2125,13 @@ bool Foam::interfaceTrackingFvMesh::update()
                     << abort(FatalError);
             }
 
-            const labelList& eFaces =
-                aMesh().boundary()[fixedPatchID].edgeFaces();
-
-            forAll(eFaces, edgeI)
+            for
+            (
+                const label facei
+              : aMesh().boundary()[fixedPatchID].edgeFaces()
+            )
             {
-                deltaHf[eFaces[edgeI]] *= 2.0;
+                deltaHf[facei] *= 2.0;
             }
         }
 

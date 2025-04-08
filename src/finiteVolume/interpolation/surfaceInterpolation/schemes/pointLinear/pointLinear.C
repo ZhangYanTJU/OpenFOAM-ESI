@@ -56,8 +56,8 @@ correction
     const pointField& C = mesh.C();
     const faceList& faces = mesh.faces();
     const scalarField& w = mesh.weights();
-    const labelList& owner = mesh.owner();
-    const labelList& neighbour = mesh.neighbour();
+    const auto& owner = mesh.owner();
+    const auto& neighbour = mesh.neighbour();
 
     forAll(sfCorr, facei)
     {

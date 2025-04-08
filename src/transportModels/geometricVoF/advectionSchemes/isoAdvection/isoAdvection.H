@@ -400,10 +400,7 @@ public:
             }
 
             //- Write isoface points to .obj file
-            void writeIsoFaces
-            (
-                const DynamicList<List<point>>& isoFacePts
-            ) const;
+            void writeIsoFaces(const UList<List<point>>& isoFacePts) const;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

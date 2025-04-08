@@ -91,7 +91,7 @@ protected:
             label& tgtCelli,
             const labelList& srcCellIDs,
             const boolList& mapFlag,
-            const DynamicList<label>& visitedCells,
+            const labelUList& visitedCells,
             labelList& seedCells
         ) const;
 

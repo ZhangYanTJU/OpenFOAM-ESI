@@ -945,7 +945,7 @@ Foam::labelHashSet Foam::conformalVoronoiMesh::findOffsetPatchFaces
         const faceList& localFaces = patch.localFaces();
         const pointField& localPoints = patch.localPoints();
 
-        const labelList& fCell = patch.faceCells();
+        const labelUList& fCell = patch.faceCells();
 
         forAll(localFaces, pLFI)
         {

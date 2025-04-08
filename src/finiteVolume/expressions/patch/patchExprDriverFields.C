@@ -84,7 +84,7 @@ Foam::expressions::patchExpr::parseDriver::field_cellSelection
     // Not particularly efficient...
     labelHashSet inSelection(tselected());
 
-    const labelList& faceCells = patch_.faceCells();
+    const labelUList& faceCells = patch_.faceCells();
     auto tresult = tmp<boolField>::New(this->size(), false);
     auto& result = tresult.ref();
 

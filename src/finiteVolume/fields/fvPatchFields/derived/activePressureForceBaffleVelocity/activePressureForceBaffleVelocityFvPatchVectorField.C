@@ -253,11 +253,11 @@ void Foam::activePressureForceBaffleVelocityFvPatchVectorField::updateCoeffs()
             db().lookupObject<volScalarField>(pName_);
 
         const fvPatch& cyclicPatch = patch().boundaryMesh()[cyclicPatchLabel_];
-        const labelList& cyclicFaceCells = cyclicPatch.patch().faceCells();
+        const labelUList& cyclicFaceCells = cyclicPatch.patch().faceCells();
         const fvPatch& nbrPatch =
             refCast<const cyclicFvPatch>(cyclicPatch).neighbFvPatch();
 
-        const labelList& nbrFaceCells = nbrPatch.patch().faceCells();
+        const labelUList& nbrFaceCells = nbrPatch.patch().faceCells();
 
         scalar valueDiff = 0;
         scalar area = 0;

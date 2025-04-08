@@ -113,7 +113,7 @@ Foam::interfaceTrackingFvMesh::pointDisplacement()
             aMesh().boundary()[patchI].ngbPolyPatchFaceNormals()
         );
 
-        const labelList& eFaces =
+        const labelUList& eFaces =
             aMesh().boundary()[patchI].edgeFaces();
 
         // Correct N according to specified contact angle

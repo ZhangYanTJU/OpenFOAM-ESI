@@ -102,7 +102,7 @@ void Foam::regionModels::singleLayerRegion::initialise()
     {
         const label patchi = intCoupledPatchIDs_[i];
         const polyPatch& pp = rbm[patchi];
-        const labelList& fCells = pp.faceCells();
+        const labelUList& fCells = pp.faceCells();
 
         nBoundaryFaces += fCells.size();
 

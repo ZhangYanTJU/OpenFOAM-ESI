@@ -188,10 +188,16 @@ public:
         inline bool cacheTriangulation() const;
 
         //- Const access to the triangulation
-        inline const DynamicList<triPoints> triangles() const;
+        const DynamicList<triPoints>& triangles() const noexcept
+        {
+            return triangles_;
+        }
 
         //- Non-const access to the triangulation
-        inline DynamicList<triPoints>& triangles();
+        DynamicList<triPoints>& triangles() noexcept
+        {
+            return triangles_;
+        }
 
         //- Decompose face into triangle fan
         static inline void triangleFan
