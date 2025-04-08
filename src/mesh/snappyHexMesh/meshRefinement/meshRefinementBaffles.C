@@ -3995,7 +3995,8 @@ Foam::labelList Foam::meshRefinement::freeStandingBaffleFaces
             }
         }
     }
-    return faceLabels.shrink();
+
+    return labelList(std::move(faceLabels));
 }
 
 

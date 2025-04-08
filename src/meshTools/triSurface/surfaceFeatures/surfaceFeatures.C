@@ -1113,7 +1113,7 @@ Foam::labelList Foam::surfaceFeatures::selectFeatureEdges
         }
     }
 
-    return selectedEdges.shrink();
+    return labelList(std::move(selectedEdges));
 }
 
 

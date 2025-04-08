@@ -314,7 +314,7 @@ void Foam::fileFormats::AC3DsurfaceFormat<Face>::write
     const pointField& pointLst = surf.points();
     const UList<Face>& faceLst = surf.surfFaces();
 
-    const surfZoneList zones =
+    const surfZoneList zones
     (
         surf.surfZones().size()
       ? surf.surfZones()
@@ -404,7 +404,7 @@ void Foam::fileFormats::AC3DsurfaceFormat<Face>::write
 
     if (zoneLst.size() <= 1)
     {
-        const surfZoneList zones =
+        const surfZoneList zones
         (
             zoneLst.size()
           ? zoneLst

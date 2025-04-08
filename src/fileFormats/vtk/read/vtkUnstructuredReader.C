@@ -566,7 +566,8 @@ Foam::wordList Foam::vtkUnstructuredReader::readFieldArray
         );
         fields.append(arrayName);
     }
-    return fields.shrink();
+
+    return wordList(std::move(fields));
 }
 
 

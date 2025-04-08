@@ -180,7 +180,7 @@ Foam::labelList Foam::removeCells::getExposedFaces
         }
     }
 
-    return exposedFaces.shrink();
+    return labelList(std::move(exposedFaces));
 }
 
 

@@ -780,13 +780,12 @@ Foam::labelList Foam::vtk::vtuSizing::copyVertLabelsLegacy
     const label globalPointOffset
 )
 {
-    if (!globalPointOffset)
-    {
-        return vertLabels;
-    }
-
     labelList output(vertLabels);
-    renumberVertLabelsLegacy(output, globalPointOffset);
+
+    if (globalPointOffset)
+    {
+        renumberVertLabelsLegacy(output, globalPointOffset);
+    }
 
     return output;
 }
@@ -863,13 +862,12 @@ Foam::labelList Foam::vtk::vtuSizing::copyVertLabelsXml
     const label globalPointOffset
 )
 {
-    if (!globalPointOffset)
-    {
-        return vertLabels;
-    }
-
     labelList output(vertLabels);
-    renumberVertLabelsXml(output, globalPointOffset);
+
+    if (globalPointOffset)
+    {
+        renumberVertLabelsXml(output, globalPointOffset);
+    }
 
     return output;
 }
@@ -902,13 +900,12 @@ Foam::labelList Foam::vtk::vtuSizing::copyFaceLabelsXml
     const label globalPointOffset
 )
 {
-    if (!globalPointOffset)
-    {
-        return faceLabels;
-    }
-
     labelList output(faceLabels);
-    renumberFaceLabelsXml(output, globalPointOffset);
+
+    if (globalPointOffset)
+    {
+        renumberFaceLabelsXml(output, globalPointOffset);
+    }
 
     return output;
 }
@@ -957,13 +954,12 @@ Foam::labelList Foam::vtk::vtuSizing::copyFaceOffsetsXml
     const label prevOffset
 )
 {
-    if (!prevOffset)
-    {
-        return faceOffsets;
-    }
-
     labelList output(faceOffsets);
-    renumberFaceOffsetsXml(output, prevOffset);
+
+    if (prevOffset)
+    {
+        renumberFaceOffsetsXml(output, prevOffset);
+    }
 
     return output;
 }

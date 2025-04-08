@@ -253,7 +253,7 @@ void Foam::fileFormats::ABAQUSsurfaceFormat<Face>::write
     const UList<label>& elemIds  = surf.faceIds();
 
     // for no zones, suppress the group name
-    const surfZoneList zones =
+    const surfZoneList zones
     (
         surf.surfZones().empty()
       ? surfaceFormatsCore::oneZone(faceLst, "")

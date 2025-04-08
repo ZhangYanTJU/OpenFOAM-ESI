@@ -677,7 +677,8 @@ Foam::List<Foam::labelPair> Foam::localPointRegion::findDuplicateFacePairs
             }
         }
     }
-    return baffles.shrink();
+
+    return List<labelPair>(std::move(baffles));
 }
 
 

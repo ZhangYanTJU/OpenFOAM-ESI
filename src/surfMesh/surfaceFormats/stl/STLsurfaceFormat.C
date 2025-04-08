@@ -219,7 +219,7 @@ void Foam::fileFormats::STLsurfaceFormat<Face>::writeAscii
     const UList<Face>&   faceLst = surf.surfFaces();
     const UList<label>&  faceMap = surf.faceMap();
 
-    const surfZoneList zones =
+    const surfZoneList zones
     (
         surf.surfZones().empty()
       ? surfaceFormatsCore::oneZone(faceLst)
@@ -266,7 +266,7 @@ void Foam::fileFormats::STLsurfaceFormat<Face>::writeBinary
     const UList<Face>&   faceLst = surf.surfFaces();
     const UList<label>&  faceMap = surf.faceMap();
 
-    const surfZoneList zones =
+    const surfZoneList zones
     (
         surf.surfZones().size() > 1
       ? surf.surfZones()

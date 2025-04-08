@@ -277,7 +277,7 @@ Foam::MeshedSurface<Face>::MeshedSurface
     const UList<surfZone>& zoneLst
 )
 :
-    MeshReference(faceLst, pointLst), // Copy construct
+    MeshReference(List<Face>(faceLst), pointLst),  // Copy construct
     faceIds_(),
     zones_(zoneLst)
 {
@@ -310,7 +310,7 @@ Foam::MeshedSurface<Face>::MeshedSurface
     const UList<word>& zoneNames
 )
 :
-    MeshReference(faceLst, pointLst), // Copy construct
+    MeshReference(List<Face>(faceLst), pointLst),  // Copy construct
     faceIds_(),
     zones_()
 {

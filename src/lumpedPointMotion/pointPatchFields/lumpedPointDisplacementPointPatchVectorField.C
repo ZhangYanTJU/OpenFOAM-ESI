@@ -137,7 +137,7 @@ Foam::lumpedPointDisplacementPointPatchVectorField::patchIds
         }
     }
 
-    return patchLst.shrink();
+    return labelList(std::move(patchLst));
 }
 
 

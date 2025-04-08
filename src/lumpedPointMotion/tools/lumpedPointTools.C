@@ -92,21 +92,24 @@ Foam::lumpedPointTools::lumpedPointStates
     Info<<"Reading states\n";
     List<dictionary> entries(dict.lookup("response"));
 
-    DynamicList<Tuple2<scalar, lumpedPointState>> states(entries.size());
+    label statei = 0;
+
+    // List<lumpedPointStateTuple>
+    List<Tuple2<scalar, lumpedPointState>> states(entries.size());
 
     for (const dictionary& subDict : entries)
     {
-        states.append
-        (
+        states[statei] =
             lumpedPointStateTuple
             (
                 subDict.get<scalar>("time"),
                 lumpedPointState(subDict)
-            )
-        );
+            );
+
+        ++statei;
     }
 
-    return states.shrink();
+    return states;
 }
 
 

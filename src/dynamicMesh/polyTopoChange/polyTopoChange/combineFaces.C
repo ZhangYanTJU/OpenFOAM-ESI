@@ -409,7 +409,7 @@ Foam::labelListList Foam::combineFaces::getMergeSets
         }
     }
 
-    return allFaceSets.shrink();
+    return labelListList(std::move(allFaceSets));
 }
 
 

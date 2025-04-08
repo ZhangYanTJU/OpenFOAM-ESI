@@ -78,7 +78,7 @@ Foam::labelList Foam::functionObjects::vtkWrite::getSelectedPatches
         }
     }
 
-    return patchIDs.shrink();
+    return labelList(std::move(patchIDs));
 }
 
 

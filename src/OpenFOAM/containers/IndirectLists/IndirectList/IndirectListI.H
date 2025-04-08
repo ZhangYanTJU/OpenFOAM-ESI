@@ -35,7 +35,8 @@ inline Foam::IndirectList<T>::IndirectList
     const labelUList& addr
 )
 :
-    IndirectListAddressing<labelList>(addr),
+    // Copy addressing
+    IndirectListAddressing<labelList>(labelList(addr)),
     UIndirectList<T>
     (
         values,
@@ -51,6 +52,7 @@ inline Foam::IndirectList<T>::IndirectList
     labelList&& addr
 )
 :
+    // Move addressing
     IndirectListAddressing<labelList>(std::move(addr)),
     UIndirectList<T>
     (

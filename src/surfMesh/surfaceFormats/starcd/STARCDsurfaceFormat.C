@@ -270,7 +270,7 @@ void Foam::fileFormats::STARCDsurfaceFormat<Face>::write
     const UList<label>& faceMap  = surf.faceMap();
     const UList<label>& elemIds  = surf.faceIds();
 
-    const surfZoneList zones =
+    const surfZoneList zones
     (
         surf.surfZones().empty()
       ? surfaceFormatsCore::oneZone(faceLst)
