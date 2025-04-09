@@ -192,6 +192,18 @@ Foam::argList::initValidTables::initValidTables()
         "name"
     );
 
+    argList::addBoolOption
+    (
+        "mpi-split-by-appnum",
+        "Split world communicator based on the APPNUM",
+        true  // advanced option
+    );
+    validParOptions.set
+    (
+        "mpi-split-by-appnum",
+        ""
+    );
+
 
     // Some standard option aliases (with or without version warnings)
 //     argList::addOptionCompat

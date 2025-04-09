@@ -28,6 +28,7 @@ sed -ne '1,/^[Oo]ptions:/d' \
     -e '/^-doc-source/d; /^-help-man/d;' \
     -e '/^-hostRoots /d; /^-roots /d;' \
     -e '/^-lib /d; /^-no-libs /d;' \
+    -e '/^-mpi-.*/d;' \
     -e '/^-[a-z]*-switch /d;' \
     -e 'y/,/ /; s/=.*$/=/;' \
     -e '/^-[^ ]* </{ s/^\(-[^ ]* <\).*$/\1/; p; d }' \

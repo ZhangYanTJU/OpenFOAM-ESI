@@ -261,34 +261,54 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
         PstreamGlobals::printDataTypes();
     }
 
+    // Check argument list for local world and/or split-by-appnum
+    // - Extract world name and filter out '-world <name>' from argv list
+    // - Filter out '-mpi-split-by-appnum' from argv list
 
-    // Check argument list for local world
-    label worldIndex = -1;
+    word worldName;
+    bool split_by_appnum = false;
+
     for (int argi = 1; argi < argc; ++argi)
     {
         if (strcmp(argv[argi], "-world") == 0)
         {
-            worldIndex = argi;
             if (argi+1 >= argc)
             {
                 FatalErrorInFunction
                     << "Missing world name for option '-world'" << nl
                     << Foam::abort(FatalError);
             }
-            break;
+            worldName = argv[argi+1];
+
+            // Remove two arguments (-world name)
+            for (int i = argi+2; i < argc; ++i)
+            {
+                argv[i-2] = argv[i];
+            }
+            --argi;  // re-examine
+            argc -= 2;
+        }
+        else if (strcmp(argv[argi], "-mpi-split-by-appnum") == 0)
+        {
+            split_by_appnum = true;
+
+            // Remove one argument
+            for (int i = argi+1; i < argc; ++i)
+            {
+                argv[i-1] = argv[i];
+            }
+            --argi;  // re-examine
+            --argc;
         }
     }
 
-    // Extract world name and filter out '-world <name>' from argv list
-    word worldName;
-    if (worldIndex != -1)
+    const bool hasLocalWorld(!worldName.empty());
+
+    if (hasLocalWorld && split_by_appnum)
     {
-        worldName = argv[worldIndex+1];
-        for (label i = worldIndex+2; i < argc; i++)
-        {
-            argv[i-2] = argv[i];
-        }
-        argc -= 2;
+        FatalErrorInFunction
+            << "Cannot specify both -world and -mpi-split-by-appnum" << nl
+            << Foam::abort(FatalError);
     }
 
     int numProcs = 0, globalRanki = 0;
@@ -314,7 +334,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
             << " world:" << worldName << endl;
     }
 
-    if (worldIndex == -1 && numProcs <= 1)
+    if (numProcs <= 1 && !(hasLocalWorld || split_by_appnum))
     {
         FatalErrorInFunction
             << "attempt to run parallel on 1 processor"
@@ -324,7 +344,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
     // Initialise parallel structure
     setParRun(numProcs, provided_thread_support == MPI_THREAD_MULTIPLE);
 
-    if (worldIndex != -1)
+    if (hasLocalWorld)
     {
         // Using local worlds.
         // During startup, so commWorld() == commGlobal()
@@ -333,7 +353,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
 
         // Gather the names of all worlds and determine unique names/indices.
         //
-        // Minimize communication and use low-level MPI to relying on any
+        // Minimize communication and use low-level MPI to avoid relying on any
         // OpenFOAM structures which not yet have been created
 
         {
@@ -450,6 +470,107 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
 
         // Override Pout prefix (move to setParRun?)
         Pout.prefix() = '[' + worldName + '/' + Foam::name(worldRanki) + "] ";
+        Perr.prefix() = Pout.prefix();
+    }
+    else if (split_by_appnum)
+    {
+        // Using APPNUM
+        // During startup, so commWorld() == commGlobal()
+        const auto mpiGlobalComm =
+            PstreamGlobals::MPICommunicators_[UPstream::commGlobal()];
+
+        int myAppNum(0);
+
+        {
+            void* val;
+            int flag;
+
+            MPI_Comm_get_attr(mpiGlobalComm, MPI_APPNUM, &val, &flag);
+            if (flag)
+            {
+                myAppNum = *static_cast<int*>(val);
+            }
+            else
+            {
+                myAppNum = 0;
+                Perr<< "UPstream::init : used -mpi-split-by-appnum "
+                    << " with a single application!!" << endl;
+            }
+        }
+
+        // Gather the appnum and determine unique values
+        //
+        // Minimize communication and use low-level MPI to avoid relying on any
+        // OpenFOAM structures which not yet have been created
+
+        List<int> allAppNum(numProcs);
+        allAppNum[globalRanki] = myAppNum;
+
+        // Gather everything
+        MPI_Allgather
+        (
+            MPI_IN_PLACE, 0, MPI_INT,
+            allAppNum.data(), 1, MPI_INT,
+            mpiGlobalComm
+        );
+
+        DynamicList<label> subRanks;
+        forAll(allAppNum, proci)
+        {
+            if (allAppNum[proci] == myAppNum)
+            {
+                subRanks.push_back(proci);
+            }
+        }
+
+        // New world communicator with comm-global as its parent.
+        // - the updated (const) world comm does not change after this.
+
+        UPstream::constWorldComm_ =
+            UPstream::newCommunicator(UPstream::commGlobal(), subRanks);
+
+        UPstream::worldComm = UPstream::constWorldComm_;
+        UPstream::warnComm = UPstream::constWorldComm_;
+
+        const int worldRanki = UPstream::myProcNo(UPstream::constWorldComm_);
+
+        // MPI_COMM_SELF : the processor number wrt the new world communicator
+        if (procIDs_[UPstream::commSelf()].size())
+        {
+            procIDs_[UPstream::commSelf()].front() = worldRanki;
+        }
+
+        // Name the old world communicator as '<openfoam:global>'
+        // - it is the inter-world communicator
+        if (MPI_COMM_NULL != mpiGlobalComm)
+        {
+            MPI_Comm_set_name(mpiGlobalComm, "<openfoam:global>");
+        }
+
+        const auto mpiWorldComm =
+            PstreamGlobals::MPICommunicators_[UPstream::constWorldComm_];
+
+        const word commName("app=" + Foam::name(myAppNum));
+
+        if (MPI_COMM_NULL != mpiWorldComm)
+        {
+            MPI_Comm_set_name(mpiWorldComm, commName.data());
+        }
+
+        if (UPstream::debug)
+        {
+            // Check
+            int newRanki, newSize;
+            MPI_Comm_rank(mpiWorldComm, &newRanki);
+            MPI_Comm_size(mpiWorldComm, &newSize);
+
+            Perr<< "UPstream::init : app:" << myAppNum
+                << " using local communicator:" << constWorldComm_
+                << " rank " << newRanki << " of " << newSize << endl;
+        }
+
+        // Override Pout prefix (move to setParRun?)
+        Pout.prefix() = '[' + commName + '/' + Foam::name(worldRanki) + "] ";
         Perr.prefix() = Pout.prefix();
     }
     else
