@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2024 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -693,19 +693,19 @@ void Foam::faMeshReconstructor::writeAddressing
 
     // boundaryProcAddressing
     ioAddr.rename("boundaryProcAddressing");
-    IOListRef<label>(ioAddr, faBoundaryProcAddr).write();
+    IOList<label>::writeContents(ioAddr, faBoundaryProcAddr);
 
     // faceProcAddressing
     ioAddr.rename("faceProcAddressing");
-    IOListRef<label>(ioAddr, faFaceProcAddr).write();
+    IOList<label>::writeContents(ioAddr, faFaceProcAddr);
 
     // pointProcAddressing
     ioAddr.rename("pointProcAddressing");
-    IOListRef<label>(ioAddr, faPointProcAddr).write();
+    IOList<label>::writeContents(ioAddr, faPointProcAddr);
 
     // edgeProcAddressing
     ioAddr.rename("edgeProcAddressing");
-    IOListRef<label>(ioAddr, faEdgeProcAddr).write();
+    IOList<label>::writeContents(ioAddr, faEdgeProcAddr);
 }
 
 
@@ -760,7 +760,7 @@ void Foam::faMeshReconstructor::writeMesh
         IOobject io(fullMesh.boundary());
 
         io.rename("faceLabels");
-        IOListRef<label>(io, singlePatchFaceLabels).write();
+        IOList<label>::writeContents(io, singlePatchFaceLabels);
 
         fullMesh.boundary().write();
 

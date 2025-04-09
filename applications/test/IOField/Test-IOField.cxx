@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
         ioOutput.rename(args.executable() + "-labels");
         Info<< "write " << ioOutput.objectRelPath() << endl;
         {
-            IOListRef<label>(ioOutput, ints).write();
+            IOList<label>::writeContents(ioOutput, ints);
         }
 
         ioOutput.rename(args.executable() + "-points");

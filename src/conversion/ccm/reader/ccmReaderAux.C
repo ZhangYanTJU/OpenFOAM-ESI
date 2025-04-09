@@ -145,7 +145,7 @@ void Foam::ccm::reader::writeMeshLabelList
 (
     const objectRegistry& registry,
     const word& propertyName,
-    const labelList& list,
+    const labelUList& list,
     IOstreamOption streamOpt
 ) const
 {

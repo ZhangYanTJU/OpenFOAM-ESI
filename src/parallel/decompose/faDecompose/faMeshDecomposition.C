@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1318,19 +1318,19 @@ bool Foam::faMeshDecomposition::writeDecomposition()
 
         // pointProcAddressing
         ioAddr.rename("pointProcAddressing");
-        IOListRef<label>(ioAddr, procPatchPointAddressing_[procI]).write();
+        IOList<label>::writeContents(ioAddr, procPatchPointAddressing_[procI]);
 
         // edgeProcAddressing
         ioAddr.rename("edgeProcAddressing");
-        IOListRef<label>(ioAddr, procEdgeAddressing_[procI]).write();
+        IOList<label>::writeContents(ioAddr, procEdgeAddressing_[procI]);
 
         // faceProcAddressing
         ioAddr.rename("faceProcAddressing");
-        IOListRef<label>(ioAddr, procFaceAddressing_[procI]).write();
+        IOList<label>::writeContents(ioAddr, procFaceAddressing_[procI]);
 
         // boundaryProcAddressing
         ioAddr.rename("boundaryProcAddressing");
-        IOListRef<label>(ioAddr, procBoundaryAddressing_[procI]).write();
+        IOList<label>::writeContents(ioAddr, procBoundaryAddressing_[procI]);
     }
 
 

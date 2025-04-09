@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -461,19 +461,12 @@ void writeDecomposition
 {
     // Write the decomposition as labelList for use with 'manual'
     // decomposition method.
-    IOListRef<label>
+    IOList<label>::writeContents
     (
-        IOobject
-        (
-            "cellDecomposition",
-            mesh.facesInstance(),  // mesh read from facesInstance
-            mesh,
-            IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE,
-            IOobjectOption::NO_REGISTER
-        ),
+        // NB: mesh read from facesInstance
+        IOobject("cellDecomposition", mesh.facesInstance(), mesh),
         decomp
-    ).write();
+    );
 
     InfoOrPout
         << "Writing wanted cell distribution to volScalarField " << name
@@ -991,7 +984,8 @@ autoPtr<mapDistributePolyMesh> redistributeAndWrite
             polyMesh::meshSubDir,
             mesh.thisDb(),
             IOobjectOption::NO_READ,
-            IOobjectOption::AUTO_WRITE
+            IOobjectOption::AUTO_WRITE,
+            IOobjectOption::REGISTER
         ),
         distMap()
     );
@@ -3029,20 +3023,17 @@ int main(int argc, char *argv[])
                 {
                     auto oldHandler = fileOperation::fileHandler(writeHandler);
 
-                    IOmapDistributePolyMeshRef
+                    IOmapDistributePolyMesh::writeContents
                     (
                         IOobject
                         (
                             "procAddressing",
                             areaProcMeshPtr->facesInstance(),
                             faMesh::meshSubDir,
-                            areaProcMeshPtr->thisDb(),
-                            IOobjectOption::NO_READ,
-                            IOobjectOption::NO_WRITE,
-                            IOobjectOption::NO_REGISTER
+                            areaProcMeshPtr->thisDb()
                         ),
                         faDistMap
-                    ).write();
+                    );
 
                     areaProcMeshPtr->write();
 
