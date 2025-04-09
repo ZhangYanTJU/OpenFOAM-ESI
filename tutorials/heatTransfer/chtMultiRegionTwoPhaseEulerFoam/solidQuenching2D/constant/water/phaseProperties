@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2412                                 |
+|  \\    /   O peration     | Version:  v2506                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -304,8 +304,10 @@ wallLubrication
     (gas in liquid)
     {
         type            Antal;
+        // Antal:
         Cw1             -0.01;
         Cw2             0.05;
+        // Frank:
         Cwc             10.0;
         Cwd             6.8;
         p               1.7;

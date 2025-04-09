@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2412                                 |
+|  \\    /   O peration     | Version:  v2506                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -29,7 +29,7 @@ localCode
     // Generate new set of points
     tmp<pointField> twistColumn
     (
-        const scalar& maxRotAngle,
+        const scalar maxRotAngle,
         const pointField& points
     )
     {
@@ -37,22 +37,22 @@ localCode
         auto& newPoints = tnewPoints.ref();
 
         const boundBox bb(points, true);
-        const scalar zMin = bb.min()[vector::Z];
-        const scalar zSpan = bb.span()[vector::Z];
+        const scalar zMin = bb.min().z();
+        const scalar zSpan = bb.span().z();
 
-        forAll(points, pointI)
+        for (auto& p : newPoints)
         {
-            const scalar x = points[pointI].component(0);
-            const scalar y = points[pointI].component(1);
-            const scalar z = points[pointI].component(2);
+            const scalar x = p.x();
+            const scalar y = p.y();
+            const scalar z = p.z();
 
             // Scale the angle by height
             const scalar localAngle = maxRotAngle*(z-zMin)/zSpan;
 
-            const scalar xr = x*cos(localAngle)-y*sin(localAngle);
-            const scalar yr = x*sin(localAngle)+y*cos(localAngle);
-            newPoints[pointI] = vector(xr, yr, z);
+            p.x() = x*cos(localAngle)-y*sin(localAngle);
+            p.y() = x*sin(localAngle)+y*cos(localAngle);
         }
+
         return tnewPoints;
     }
 #};
