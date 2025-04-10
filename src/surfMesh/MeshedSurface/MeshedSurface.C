@@ -375,46 +375,20 @@ Foam::MeshedSurface<Face>::MeshedSurface(const surfMesh& mesh)
 template<class Face>
 Foam::MeshedSurface<Face>::MeshedSurface
 (
-    const polyBoundaryMesh& bMesh,
+    const polyBoundaryMesh& pbm,
     const bool useGlobalPoints
 )
 :
     MeshedSurface<Face>()
 {
-    const polyMesh& mesh = bMesh.mesh();
-    const polyPatchList& bPatches = bMesh;
-
-    // Get a single patch for all boundaries
-    primitivePatch allBoundary
-    (
-        SubList<face>
-        (
-            mesh.faces(),
-            mesh.nBoundaryFaces(),
-            mesh.nInternalFaces()
-        ),
-        mesh.points()
-    );
-
-    // use global/local points:
-    const pointField& bPoints =
-    (
-        useGlobalPoints ? mesh.points() : allBoundary.localPoints()
-    );
-
-    // global/local face addressing:
-    const List<Face>& bFaces =
-    (
-        useGlobalPoints ? allBoundary : allBoundary.localFaces()
-    );
-
+    const polyMesh& mesh = pbm.mesh();
 
     // create zone list
-    surfZoneList newZones(bPatches.size());
+    surfZoneList newZones(pbm.size());
 
     label startFacei = 0;
     label nZone = 0;
-    for (const polyPatch& p : bPatches)
+    for (const polyPatch& p : pbm)
     {
         if (p.size())
         {
@@ -433,8 +407,27 @@ Foam::MeshedSurface<Face>::MeshedSurface
 
     newZones.setSize(nZone);
 
+    // Get a single patch for all boundaries
+    primitivePatch allBoundary(pbm.faces(), mesh.points());
+
     // Face type as per polyBoundaryMesh
-    MeshedSurface<face> surf(bPoints, bFaces, newZones);
+    MeshedSurface<face> surf;
+
+    if (useGlobalPoints)
+    {
+        // use global points, global face addressing
+        surf = MeshedSurface<face>(mesh.points(), allBoundary, newZones);
+    }
+    else
+    {
+        // use local points, local face addressing
+        surf = MeshedSurface<face>
+        (
+            allBoundary.localPoints(),
+            allBoundary.localFaces(),
+            newZones
+        );
+    }
 
     this->transcribe(surf);
 }

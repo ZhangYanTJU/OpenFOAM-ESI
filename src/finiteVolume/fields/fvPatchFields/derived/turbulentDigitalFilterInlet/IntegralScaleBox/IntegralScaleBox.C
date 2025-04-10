@@ -372,7 +372,7 @@ void Foam::turbulence::IntegralScaleBox<Type>::calcPatch()
         (
             new primitivePatch
             (
-                SubList<face>(patchFaces_, patchFaces_.size()),
+                SubList<face>(patchFaces_),
                 patchPoints_
             )
         );

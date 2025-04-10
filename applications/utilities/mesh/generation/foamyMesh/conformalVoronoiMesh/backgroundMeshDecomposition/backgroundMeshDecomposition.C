@@ -608,12 +608,7 @@ void Foam::backgroundMeshDecomposition::buildPatchAndTree()
 {
     primitivePatch tmpBoundaryFaces
     (
-        SubList<face>
-        (
-            mesh_.faces(),
-            mesh_.nBoundaryFaces(),
-            mesh_.nInternalFaces()
-        ),
+        mesh_.boundaryMesh().faces(),
         mesh_.points()
     );
 

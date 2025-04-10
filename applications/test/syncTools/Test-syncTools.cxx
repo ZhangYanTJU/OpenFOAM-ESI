@@ -195,16 +195,7 @@ void testSparseData(const polyMesh& mesh, Random& rndGen)
         << "Position test of sparse data only correct for cases without cyclics"
         << " with shared points." << endl;
 
-    primitivePatch allBoundary
-    (
-        SubList<face>
-        (
-            mesh.faces(),
-            mesh.nBoundaryFaces(),
-            mesh.nInternalFaces()
-        ),
-        mesh.points()
-    );
+    primitivePatch allBoundary(mesh.boundaryMesh().faces(), mesh.points());
     const pointField& localPoints = allBoundary.localPoints();
 
 

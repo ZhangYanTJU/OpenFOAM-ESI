@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -723,16 +723,7 @@ void Foam::polyDualMesh::calcDual
 
 
     // Get patch for all of outside
-    primitivePatch allBoundary
-    (
-        SubList<face>
-        (
-            mesh.faces(),
-            mesh.nBoundaryFaces(),
-            mesh.nInternalFaces()
-        ),
-        mesh.points()
-    );
+    primitivePatch allBoundary(patches.faces(), mesh.points());
 
     // Correspondence from patch edge to mesh edge.
     labelList meshEdges
@@ -1467,31 +1458,19 @@ void Foam::polyDualMesh::calcFeatures
     labelList& featurePoints
 )
 {
+    const polyBoundaryMesh& patches = mesh.boundaryMesh();
+
     // Create big primitivePatch for all outside.
-    primitivePatch allBoundary
-    (
-        SubList<face>
-        (
-            mesh.faces(),
-            mesh.nBoundaryFaces(),
-            mesh.nInternalFaces()
-        ),
-        mesh.points()
-    );
+    primitivePatch allBoundary(patches.faces(), mesh.points());
 
     // For ease of use store patch number per face in allBoundary.
     labelList allRegion(allBoundary.size());
-
-    const polyBoundaryMesh& patches = mesh.boundaryMesh();
 
     forAll(patches, patchi)
     {
         const polyPatch& pp = patches[patchi];
 
-        forAll(pp, i)
-        {
-            allRegion[i + pp.start() - mesh.nInternalFaces()] = patchi;
-        }
+        allRegion.slice(pp.offset(), pp.size()) = patchi;
     }
 
 

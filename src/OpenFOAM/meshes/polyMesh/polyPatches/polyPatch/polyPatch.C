@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -91,7 +91,7 @@ Foam::polyPatch::polyPatch
     patchIdentifier(name, index),
     primitivePatch
     (
-        faceSubList(bm.mesh().faces(), size, start),
+        SubList<face>(bm.mesh().faces(), size, start),
         bm.mesh().points()
     ),
     start_(start),
@@ -118,7 +118,7 @@ Foam::polyPatch::polyPatch
     patchIdentifier(name, index, physicalType, inGroups),
     primitivePatch
     (
-        faceSubList(bm.mesh().faces(), size, start),
+        SubList<face>(bm.mesh().faces(), size, start),
         bm.mesh().points()
     ),
     start_(start),
@@ -138,7 +138,7 @@ Foam::polyPatch::polyPatch
     patchIdentifier(name, dict, index),
     primitivePatch
     (
-        faceSubList
+        SubList<face>
         (
             bm.mesh().faces(),
             dict.get<label>("nFaces"),
@@ -165,7 +165,7 @@ Foam::polyPatch::polyPatch
     patchIdentifier(pp),
     primitivePatch
     (
-        faceSubList
+        SubList<face>
         (
             bm.mesh().faces(),
             pp.size(),
@@ -190,7 +190,7 @@ Foam::polyPatch::polyPatch
     patchIdentifier(pp, index),
     primitivePatch
     (
-        faceSubList
+        SubList<face>
         (
             bm.mesh().faces(),
             newSize,
@@ -215,7 +215,7 @@ Foam::polyPatch::polyPatch
     patchIdentifier(pp, index),
     primitivePatch
     (
-        faceSubList
+        SubList<face>
         (
             bm.mesh().faces(),
             mapAddressing.size(),
@@ -303,6 +303,25 @@ const Foam::polyBoundaryMesh& Foam::polyPatch::boundaryMesh() const noexcept
 {
     return boundaryMesh_;
 }
+
+
+const Foam::faceList::subList Foam::polyPatch::faces() const
+{
+    return patchSlice(boundaryMesh().mesh().faces());
+}
+
+
+const Foam::labelList::subList Foam::polyPatch::faceOwner() const
+{
+    return patchSlice(boundaryMesh().mesh().faceOwner());
+}
+
+
+// Potentially useful to simplify logic elsewhere?
+// const Foam::labelList::subList Foam::polyPatch::faceNeighbour() const
+// {
+//     return labelList::subList();
+// }
 
 
 const Foam::vectorField::subField Foam::polyPatch::faceCentres() const

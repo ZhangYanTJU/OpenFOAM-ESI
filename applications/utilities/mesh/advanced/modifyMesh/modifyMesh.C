@@ -417,14 +417,7 @@ int main(int argc, char *argv[])
 
 
     // Get calculating engine for all of outside
-    const SubList<face> outsideFaces
-    (
-        mesh.faces(),
-        mesh.nBoundaryFaces(),
-        mesh.nInternalFaces()
-    );
-
-    primitivePatch allBoundary(outsideFaces, mesh.points());
+    primitivePatch allBoundary(mesh.boundaryMesh().faces(), mesh.points());
 
 
     // Look up mesh labels and convert to input for boundaryCutter.

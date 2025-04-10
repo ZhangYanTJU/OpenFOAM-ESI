@@ -288,7 +288,7 @@ public:
         //- Construct from a boundary mesh with local points/faces
         MeshedSurface
         (
-            const polyBoundaryMesh& bMesh,
+            const polyBoundaryMesh& pbm,
             const bool globalPoints = false
         );
 

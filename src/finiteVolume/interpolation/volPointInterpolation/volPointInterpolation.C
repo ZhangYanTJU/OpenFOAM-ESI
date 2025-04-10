@@ -71,30 +71,18 @@ void Foam::volPointInterpolation::calcBoundaryAddressing()
             << endl;
     }
 
-    boundaryPtr_.reset
-    (
-        new primitivePatch
-        (
-            SubList<face>
-            (
-                mesh().faces(),
-                mesh().nBoundaryFaces(),
-                mesh().nInternalFaces()
-            ),
-            mesh().points()
-        )
-    );
-    const primitivePatch& boundary = boundaryPtr_();
+    const polyBoundaryMesh& pbm = mesh().boundaryMesh();
 
-    boundaryIsPatchFace_.setSize(boundary.size());
+    boundaryPtr_.reset(new primitivePatch(pbm.faces(), mesh().points()));
+    const auto& boundary = *boundaryPtr_;
+
+    boundaryIsPatchFace_.resize_nocopy(boundary.size());
     boundaryIsPatchFace_ = false;
 
     // Store per mesh point whether it is on any 'real' patch. Currently
     // boolList just so we can use syncUntransformedData (does not take
     // bitSet. Tbd)
     boolList isPatchPoint(mesh().nPoints(), false);
-
-    const polyBoundaryMesh& pbm = mesh().boundaryMesh();
 
     // Get precalculated volField only so we can use coupled() tests for
     // cyclicAMI
@@ -110,18 +98,11 @@ void Foam::volPointInterpolation::calcBoundaryAddressing()
          && !magSf.boundaryField()[patchi].coupled()
         )
         {
-            label bFacei = pp.start()-mesh().nInternalFaces();
+            boundaryIsPatchFace_.set(labelRange(pp.offset(), pp.size()));
 
-            forAll(pp, i)
+            for (const auto& f : pp.faces())
             {
-                boundaryIsPatchFace_[bFacei] = true;
-
-                const face& f = boundary[bFacei++];
-
-                forAll(f, fp)
-                {
-                    isPatchPoint[f[fp]] = true;
-                }
+                UIndirectList<bool>(isPatchPoint, f) = true;
             }
         }
     }
@@ -136,27 +117,15 @@ void Foam::volPointInterpolation::calcBoundaryAddressing()
     );
 
     // Convert to bitSet
-    isPatchPoint_.setSize(mesh().nPoints());
+    isPatchPoint_.reset();
+    isPatchPoint_.resize(mesh().nPoints());
     isPatchPoint_.assign(isPatchPoint);
 
     if (debug)
     {
-        label nPatchFace = 0;
-        forAll(boundaryIsPatchFace_, i)
-        {
-            if (boundaryIsPatchFace_[i])
-            {
-                nPatchFace++;
-            }
-        }
-        label nPatchPoint = 0;
-        forAll(isPatchPoint_, i)
-        {
-            if (isPatchPoint_[i])
-            {
-                nPatchPoint++;
-            }
-        }
+        label nPatchFace = boundaryIsPatchFace_.count();
+        label nPatchPoint = isPatchPoint_.count();
+
         Pout<< "boundary:" << nl
             << "    faces :" << boundary.size() << nl
             << "    of which on proper patch:" << nPatchFace << nl
