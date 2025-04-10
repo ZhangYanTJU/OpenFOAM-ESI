@@ -182,18 +182,11 @@ int main(int argc, char *argv[])
         const labelListList& transformedSlaves =
             globalData.globalPointTransformedBoundaryFaces();
 
-        const label nBnd = mesh.nBoundaryFaces();
-
         pointField fc(globalPointBoundaryFacesMap.constructSize());
-        SubList<point>(fc, nBnd) =
+        pointField::subList(fc, mesh.nBoundaryFaces()) =
             primitivePatch
             (
-                SubList<face>
-                (
-                    mesh.faces(),
-                    nBnd,
-                    mesh.nInternalFaces()
-                ),
+                mesh.boundaryMesh().faces(),
                 mesh.points()
             ).faceCentres();
 

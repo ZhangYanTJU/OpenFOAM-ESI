@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -434,6 +434,12 @@ public:
 
 
         // Geometric data; point list required
+
+            //- Return mesh faces for the patch
+            const faceList::subList faces() const;
+
+            //- Return face owner for the patch
+            const labelList::subList faceOwner() const;
 
             //- Return face centres
             const vectorField::subField faceCentres() const;

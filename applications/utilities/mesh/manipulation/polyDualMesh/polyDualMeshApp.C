@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -137,16 +137,7 @@ void simpleMarkFeatures
     // multiple 'half' cells.
 
     // Addressing for all outside faces
-    primitivePatch allBoundary
-    (
-        SubList<face>
-        (
-            mesh.faces(),
-            mesh.nBoundaryFaces(),
-            mesh.nInternalFaces()
-        ),
-        mesh.points()
-    );
+    primitivePatch allBoundary(patches.faces(), mesh.points());
 
     // Check for non-manifold points (surface pinched at point)
     allBoundary.checkPointManifold(false, &singleCellFeaturePointSet);
@@ -240,7 +231,9 @@ void simpleMarkFeatures
     // ~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // Face centres that need inclusion in the dual mesh
-    labelHashSet featureFaceSet(mesh.nBoundaryFaces());
+    labelHashSet featureFaceSet;
+    featureFaceSet.reserve(mesh.nBoundaryFaces());
+
     // A. boundary faces.
     for (label facei = mesh.nInternalFaces(); facei < mesh.nFaces(); facei++)
     {

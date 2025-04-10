@@ -160,14 +160,7 @@ void Foam::meshPointPatch::movePoints(PstreamBuffers&, const pointField& p)
     // Recalculate the point normals? Something like
     //if (owner())
     //{
-    //    const SubList<face> subFaces
-    //    (
-    //        mesh.faces(),
-    //        mesh.nBoundaryFaces(),
-    //        mesh.nInternalFaces()
-    //    );
-    //    const primitivePatch pp(subFaces, mesh.points());
-    //
+    //    const primitivePatch pp(mesh.boundaryMesh().faces(), mesh.points());
     //
     //    for (const label pointi : meshPoints())
     //    {
@@ -180,9 +173,8 @@ void Foam::meshPointPatch::movePoints(PstreamBuffers&, const pointField& p)
     //        const auto& point
     //
     //
-
 }
-    
+
 
 void Foam::meshPointPatch::updateMesh(PstreamBuffers&)
 {

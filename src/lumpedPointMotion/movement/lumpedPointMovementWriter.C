@@ -235,11 +235,7 @@ void Foam::lumpedPointMovement::writeZonesVTP
     {
         const labelList& faceToPoint = patchControls_[patchi].faceToPoint_;
 
-        primitivePatch pp
-        (
-            SubList<face>(mesh.faces(), patches[patchi].range()),
-            points0
-        );
+        primitivePatch pp(patches[patchi].faces(), points0);
 
         writer.piece(pp.localPoints(), pp.localFaces());
 

@@ -55,22 +55,12 @@ void Foam::volPointInterpolationAdjoint::calcBoundaryAddressing()
             << endl;
     }
 
-    boundaryPtr_.reset
-    (
-        new primitivePatch
-        (
-            SubList<face>
-            (
-                mesh().faces(),
-                mesh().nBoundaryFaces(),
-                mesh().nInternalFaces()
-            ),
-            mesh().points()
-        )
-    );
-    const primitivePatch& boundary = boundaryPtr_();
+    const polyBoundaryMesh& pbm = mesh().boundaryMesh();
 
-    boundaryIsPatchFace_.setSize(boundary.size());
+    boundaryPtr_.reset(new primitivePatch(pbm.faces(), mesh().points()));
+    const auto& boundary = *boundaryPtr_;
+
+    boundaryIsPatchFace_.resize_nocopy(boundary.size());
     boundaryIsPatchFace_ = false;
 
     // Store per mesh point whether it is on any 'real' patch. Currently
@@ -78,8 +68,6 @@ void Foam::volPointInterpolationAdjoint::calcBoundaryAddressing()
     // bitSet. Tbd)
     boolList isPatchPoint(mesh().nPoints(), false);
     boolList isSymmetryPoint(mesh().nPoints(), false);
-
-    const polyBoundaryMesh& pbm = mesh().boundaryMesh();
 
     // Get precalculated volField only so we can use coupled() tests for
     // cyclicAMI
@@ -97,27 +85,16 @@ void Foam::volPointInterpolationAdjoint::calcBoundaryAddressing()
          && !isA<symmetryPlanePolyPatch>(pp)
         )
         {
-            label bFacei = pp.start()-mesh().nInternalFaces();
+            boundaryIsPatchFace_.set(labelRange(pp.offset(), pp.size()));
 
-            forAll(pp, i)
+            for (const auto& f : pp.faces())
             {
-                boundaryIsPatchFace_[bFacei] = true;
-
-                const face& f = boundary[bFacei++];
-
-                forAll(f, fp)
-                {
-                    isPatchPoint[f[fp]] = true;
-                }
+                UIndirectList<bool>(isPatchPoint, f) = true;
             }
         }
         else if (isA<symmetryPolyPatch>(pp) || isA<symmetryPlanePolyPatch>(pp))
         {
-            const labelList& meshPoints = pp.meshPoints();
-            for (const label pointI : meshPoints)
-            {
-                isSymmetryPoint[pointI] = true;
-            }
+            UIndirectList<bool>(isSymmetryPoint, pp.meshPoints()) = true;
         }
     }
 
@@ -131,30 +108,19 @@ void Foam::volPointInterpolationAdjoint::calcBoundaryAddressing()
     );
 
     // Convert to bitSet
-    isPatchPoint_.setSize(mesh().nPoints());
+    isPatchPoint_.reset();
+    isPatchPoint_.resize(mesh().nPoints());
     isPatchPoint_.assign(isPatchPoint);
 
-    isSymmetryPoint_.setSize(mesh().nPoints());
+    isSymmetryPoint_.reset();
+    isSymmetryPoint_.resize(mesh().nPoints());
     isSymmetryPoint_.assign(isSymmetryPoint);
 
     if (debug)
     {
-        label nPatchFace = 0;
-        forAll(boundaryIsPatchFace_, i)
-        {
-            if (boundaryIsPatchFace_[i])
-            {
-                nPatchFace++;
-            }
-        }
-        label nPatchPoint = 0;
-        forAll(isPatchPoint_, i)
-        {
-            if (isPatchPoint_[i])
-            {
-                nPatchPoint++;
-            }
-        }
+        label nPatchFace = boundaryIsPatchFace_.count();
+        label nPatchPoint = isPatchPoint_.count();
+
         Pout<< "boundary:" << nl
             << "    faces :" << boundary.size() << nl
             << "    of which on proper patch:" << nPatchFace << nl
