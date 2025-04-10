@@ -214,7 +214,7 @@ public:
     // Member Operators
 
         //- Assign from zero. Changes value but not type
-        void operator=(const Foam::zero) { value_ = Foam::zero{}; }
+        void operator=(Foam::zero) { value_ = Foam::zero{}; }
 
         //- Compare (uniformity,value) for equality
         bool operator==(const exprValueFieldTag&) const;

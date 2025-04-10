@@ -84,7 +84,7 @@ struct clampOp
     {}
 
     //- Construct as 0-1 min/max range
-    clampOp(const Foam::zero_one)
+    clampOp(Foam::zero_one)
     :
         clampOp(MinMax<T>(Foam::zero_one{}))
     {}

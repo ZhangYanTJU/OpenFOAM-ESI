@@ -75,7 +75,7 @@ template<class Type>
 inline Foam::IjkField<Type>::IjkField
 (
     const labelVector& ijk,
-    const Foam::zero
+    Foam::zero
 )
 :
     Field<Type>(cmptProduct(ijk), Foam::zero{}),
@@ -101,7 +101,7 @@ inline Foam::IjkField<Type>::IjkField
             << nl << nl;
         #endif
 
-        Field<Type>::resize(ijk_.size(), Zero);
+        Field<Type>::resize(ijk_.size(), Foam::zero{});
     }
 }
 
@@ -124,7 +124,7 @@ inline Foam::IjkField<Type>::IjkField
             << nl << nl;
         #endif
 
-        Field<Type>::resize(ijk_.size(), Zero);
+        Field<Type>::resize(ijk_.size(), Foam::zero{});
     }
 }
 

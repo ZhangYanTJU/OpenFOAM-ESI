@@ -29,8 +29,6 @@ License
 
 template<class Type>
 inline constexpr Foam::Field<Type>::Field() noexcept
-:
-    List<Type>()
 {}
 
 
@@ -49,28 +47,28 @@ inline Foam::Field<Type>::Field(const label len, const Type& val)
 
 
 template<class Type>
-inline Foam::Field<Type>::Field(const label len, const Foam::zero)
+inline Foam::Field<Type>::Field(const label len, Foam::zero)
 :
     List<Type>(len, Foam::zero{})
 {}
 
 
 template<class Type>
-inline Foam::Field<Type>::Field(const Foam::one, const Type& val)
+inline Foam::Field<Type>::Field(Foam::one, const Type& val)
 :
     List<Type>(Foam::one{}, val)
 {}
 
 
 template<class Type>
-inline Foam::Field<Type>::Field(const Foam::one, Type&& val)
+inline Foam::Field<Type>::Field(Foam::one, Type&& val)
 :
     List<Type>(Foam::one{}, std::move(val))
 {}
 
 
 template<class Type>
-inline Foam::Field<Type>::Field(const Foam::one, const Foam::zero)
+inline Foam::Field<Type>::Field(Foam::one, Foam::zero)
 :
     List<Type>(Foam::one{}, Foam::zero{})
 {}
@@ -209,7 +207,7 @@ inline void Foam::Field<Type>::operator=(const Type& val)
 
 
 template<class Type>
-inline void Foam::Field<Type>::operator=(const Foam::zero)
+inline void Foam::Field<Type>::operator=(Foam::zero)
 {
     List<Type>::operator=(Foam::zero{});
 }

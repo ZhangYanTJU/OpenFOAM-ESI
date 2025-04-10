@@ -41,7 +41,6 @@ See also
 #include "List.H"
 #include "IPstream.H"
 #include "OPstream.H"
-#include <numeric>
 
 using namespace Foam;
 

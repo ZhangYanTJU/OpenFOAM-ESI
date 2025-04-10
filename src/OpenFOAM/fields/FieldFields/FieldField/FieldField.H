@@ -197,7 +197,7 @@ public:
         void operator=(const Type& val);
 
         //- Assign uniform zero
-        void operator=(const Foam::zero);
+        void operator=(Foam::zero);
 
         void operator+=(const FieldField<Field, Type>&);
         void operator+=(const tmp<FieldField<Field, Type>>&);

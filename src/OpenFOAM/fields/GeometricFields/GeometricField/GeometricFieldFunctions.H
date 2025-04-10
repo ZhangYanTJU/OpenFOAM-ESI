@@ -287,7 +287,7 @@ void clamp
 (
     GeometricField<Type, PatchField, GeoMesh>& result,
     const GeometricField<Type, PatchField, GeoMesh>& f1,
-    const Foam::zero_one
+    Foam::zero_one
 );
 
 template<class Type, template<class> class PatchField, class GeoMesh>
@@ -295,7 +295,7 @@ tmp<GeometricField<Type, PatchField, GeoMesh>>
 clamp
 (
     const GeometricField<Type, PatchField, GeoMesh>& f1,
-    const Foam::zero_one
+    Foam::zero_one
 );
 
 template<class Type, template<class> class PatchField, class GeoMesh>
@@ -303,7 +303,7 @@ tmp<GeometricField<Type, PatchField, GeoMesh>>
 clamp
 (
     const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1,
-    const Foam::zero_one
+    Foam::zero_one
 );
 
 BINARY_TYPE_FUNCTION_FS(Type, Type, MinMax<Type>, clamp)

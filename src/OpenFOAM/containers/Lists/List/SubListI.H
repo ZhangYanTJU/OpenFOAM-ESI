@@ -215,13 +215,6 @@ inline Foam::UList<T>& Foam::SubList<T>::reset
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class T>
-inline Foam::SubList<T>::operator const Foam::List<T>&() const
-{
-    return *reinterpret_cast<const List<T>*>(this);
-}
-
-
-template<class T>
 inline void Foam::SubList<T>::operator=(const SubList<T>& list)
 {
     UList<T>::deepCopy(list);

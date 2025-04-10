@@ -126,13 +126,6 @@ inline Foam::tmp<Foam::Field<Type>> Foam::SubField<Type>::T() const
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Type>
-inline Foam::SubField<Type>::operator const Foam::Field<Type>&() const
-{
-    return *reinterpret_cast<const Field<Type>*>(this);
-}
-
-
-template<class Type>
 inline void Foam::SubField<Type>::operator=(const SubField<Type>& rhs)
 {
     SubList<Type>::operator=(rhs);
@@ -154,7 +147,7 @@ inline void Foam::SubField<Type>::operator=(const Type& val)
 
 
 template<class Type>
-inline void Foam::SubField<Type>::operator=(const Foam::zero)
+inline void Foam::SubField<Type>::operator=(Foam::zero)
 {
     SubList<Type>::operator=(Foam::zero{});
 }
