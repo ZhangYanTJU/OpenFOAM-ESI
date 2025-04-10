@@ -438,7 +438,7 @@ Foam::label Foam::isoSurfacePoint::generateFaceTriPoints
     const VolumeField<Type>& cCoords,
     const Field<Type>& pCoords,
 
-    const DynamicList<Type>& snappedPoints,
+    const UList<Type>& snappedPoints,
     const labelList& snappedCc,
     const labelList& snappedPoint,
     const label facei,
@@ -521,7 +521,7 @@ void Foam::isoSurfacePoint::generateTriPoints
     const VolumeField<Type>& cCoords,
     const Field<Type>& pCoords,
 
-    const DynamicList<Type>& snappedPoints,
+    const UList<Type>& snappedPoints,
     const labelList& snappedCc,
     const labelList& snappedPoint,
 
@@ -738,7 +738,7 @@ Foam::isoSurfacePoint::interpolate
     const labelList& interpolatedPoints,
     const List<FixedList<label, 3>>& interpolatedOldPoints,
     const List<FixedList<scalar, 3>>& interpolationWeights,
-    const DynamicList<Type>& unmergedValues
+    const UList<Type>& unmergedValues
 )
 {
     // One value per point

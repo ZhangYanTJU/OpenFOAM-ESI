@@ -63,96 +63,72 @@ static const scalar edgeTol = 1e-3;
 // Print edge statistics on mesh.
 void printEdgeStats(const polyMesh& mesh)
 {
-    label nX = 0;
-    label nY = 0;
-    label nZ = 0;
+    label nAny(0);
+    label nX(0);
+    label nY(0);
+    label nZ(0);
 
-    scalar minX = GREAT;
-    scalar maxX = -GREAT;
-    static const vector x(1, 0, 0);
-
-    scalar minY = GREAT;
-    scalar maxY = -GREAT;
-    static const vector y(0, 1, 0);
-
-    scalar minZ = GREAT;
-    scalar maxZ = -GREAT;
-    static const vector z(0, 0, 1);
-
-    scalar minOther = GREAT;
-    scalar maxOther = -GREAT;
+    scalarMinMax limitsAny(GREAT, -GREAT);
+    scalarMinMax limitsX(limitsAny);
+    scalarMinMax limitsY(limitsAny);
+    scalarMinMax limitsZ(limitsAny);
 
     bitSet isMasterEdge(syncTools::getMasterEdges(mesh));
 
     const edgeList& edges = mesh.edges();
 
-    forAll(edges, edgeI)
+    for (const label edgei : isMasterEdge)
     {
-        if (isMasterEdge.test(edgeI))
+        const edge& e = edges[edgei];
+
+        vector eVec(e.vec(mesh.points()));
+
+        scalar eMag = mag(eVec);
+
+        eVec /= eMag;
+
+        if (mag(eVec.x()) > 1-edgeTol)
         {
-            const edge& e = edges[edgeI];
-
-            vector eVec(e.vec(mesh.points()));
-
-            scalar eMag = mag(eVec);
-
-            eVec /= eMag;
-
-            if (mag(eVec & x) > 1-edgeTol)
-            {
-                minX = min(minX, eMag);
-                maxX = max(maxX, eMag);
-                nX++;
-            }
-            else if (mag(eVec & y) > 1-edgeTol)
-            {
-                minY = min(minY, eMag);
-                maxY = max(maxY, eMag);
-                nY++;
-            }
-            else if (mag(eVec & z) > 1-edgeTol)
-            {
-                minZ = min(minZ, eMag);
-                maxZ = max(maxZ, eMag);
-                nZ++;
-            }
-            else
-            {
-                minOther = min(minOther, eMag);
-                maxOther = max(maxOther, eMag);
-            }
+            limitsX.add(eMag);
+            nX++;
+        }
+        else if (mag(eVec.y()) > 1-edgeTol)
+        {
+            limitsY.add(eMag);
+            nY++;
+        }
+        else if (mag(eVec.z()) > 1-edgeTol)
+        {
+            limitsZ.add(eMag);
+            nZ++;
+        }
+        else
+        {
+            limitsAny.add(eMag);
+            nAny++;
         }
     }
 
-    label nEdges = mesh.nEdges();
-    reduce(nEdges, sumOp<label>());
     reduce(nX, sumOp<label>());
     reduce(nY, sumOp<label>());
     reduce(nZ, sumOp<label>());
+    reduce(nAny, sumOp<label>());
 
-    reduce(minX, minOp<scalar>());
-    reduce(maxX, maxOp<scalar>());
-
-    reduce(minY, minOp<scalar>());
-    reduce(maxY, maxOp<scalar>());
-
-    reduce(minZ, minOp<scalar>());
-    reduce(maxZ, maxOp<scalar>());
-
-    reduce(minOther, minOp<scalar>());
-    reduce(maxOther, maxOp<scalar>());
-
+    reduce(limitsX, sumOp<scalarMinMax>());
+    reduce(limitsY, sumOp<scalarMinMax>());
+    reduce(limitsZ, sumOp<scalarMinMax>());
+    reduce(limitsAny, sumOp<scalarMinMax>());
 
     Info<< "Mesh edge statistics:" << nl
-        << "    x aligned :  number:" << nX << "\tminLen:" << minX
-        << "\tmaxLen:" << maxX << nl
-        << "    y aligned :  number:" << nY << "\tminLen:" << minY
-        << "\tmaxLen:" << maxY << nl
-        << "    z aligned :  number:" << nZ << "\tminLen:" << minZ
-        << "\tmaxLen:" << maxZ << nl
-        << "    other     :  number:" << nEdges - nX - nY - nZ
-        << "\tminLen:" << minOther
-        << "\tmaxLen:" << maxOther << nl << endl;
+        << "    x aligned :  number:" << nX
+        << "\tminLen:" << limitsX.min() << "\tmaxLen:" << limitsX.max() << nl
+        << "    y aligned :  number:" << nY
+        << "\tminLen:" << limitsY.min() << "\tmaxLen:" << limitsY.max() << nl
+        << "    z aligned :  number:" << nZ
+        << "\tminLen:" << limitsZ.min() << "\tmaxLen:" << limitsZ.max() << nl
+        << "    other     :  number:" << nAny
+        << "\tminLen:" << limitsAny.min()
+        << "\tmaxLen:" << limitsAny.max() << nl << endl;
 }
 
 

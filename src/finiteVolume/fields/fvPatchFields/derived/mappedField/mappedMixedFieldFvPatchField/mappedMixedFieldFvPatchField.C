@@ -173,6 +173,9 @@ void Foam::mappedMixedFieldFvPatchField<Type>::updateCoeffs()
 
     if (debug)
     {
+        auto limits = gMinMax(*this);
+        auto avg = gAverage(*this);
+
         Info<< this->patch().boundaryMesh().mesh().name() << ':'
             << this->patch().name() << ':'
             << this->internalField().name() << " <- "
@@ -180,9 +183,9 @@ void Foam::mappedMixedFieldFvPatchField<Type>::updateCoeffs()
             << this->mapper_.samplePatch() << ':'
             << this->fieldName_ << " :"
             << " value "
-            << " min:" << gMin(*this)
-            << " max:" << gMax(*this)
-            << " avg:" << gAverage(*this)
+            << " min:" << limits.min()
+            << " max:" << limits.max()
+            << " avg:" << avg
             << endl;
     }
 }

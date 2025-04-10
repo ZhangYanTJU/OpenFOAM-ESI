@@ -195,23 +195,23 @@ Foam::heatExchangerModels::effectivenessTable::energyDensity
         secondaryInletT_ += targetQdotRelax_*dT;
     }
 
-    const scalarField TCells(T, cells);
-    scalarField deltaTCells(cells.size(), Zero);
+    // start with a copy
+    scalarField deltaTCells(T, cells);
     Tref_ = 0;
     if (Qt_ > 0)
     {
-        Tref_ = gMax(TCells);
-        forAll(deltaTCells, i)
+        Tref_ = gMax(deltaTCells);
+        for (scalar& delta : deltaTCells)
         {
-            deltaTCells[i] = max(Tref_ - TCells[i], scalar(0));
+            delta = Foam::max(Tref_ - delta, scalar(0));
         }
     }
     else
     {
-        Tref_ = gMin(TCells);
-        forAll(deltaTCells, i)
+        Tref_ = gMin(deltaTCells);
+        for (scalar& delta : deltaTCells)
         {
-            deltaTCells[i] = max(TCells[i] - Tref_, scalar(0));
+            delta = Foam::max(delta - Tref_, scalar(0));
         }
     }
 

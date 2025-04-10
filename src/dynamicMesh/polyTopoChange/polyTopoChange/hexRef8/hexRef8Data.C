@@ -101,8 +101,8 @@ Foam::hexRef8Data::hexRef8Data
 (
     const IOobject& io,
     const hexRef8Data& data,
-    const labelList& cellMap,
-    const labelList& pointMap
+    const labelUList& cellMap,
+    const labelUList& pointMap
 )
 {
     if (data.cellLevelPtr_)

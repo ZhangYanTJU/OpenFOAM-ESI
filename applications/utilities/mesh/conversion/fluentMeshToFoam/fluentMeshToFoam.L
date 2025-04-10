@@ -1674,10 +1674,9 @@ int main(int argc, char *argv[])
             // Add cell zones to patch zone list
             forAll(bPatches, pI)
             {
-                const labelList& faceCells = bPatches[pI].faceCells();
-                forAll(faceCells, fcI)
+                for (const label celli : bPatches[pI].faceCells())
                 {
-                    if (zoneCell.test(faceCells[fcI]))
+                    if (zoneCell.test(celli))
                     {
                         boundaryZones[pI].append(name);
                         break;

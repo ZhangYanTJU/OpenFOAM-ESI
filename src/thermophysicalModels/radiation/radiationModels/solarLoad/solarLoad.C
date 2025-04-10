@@ -281,7 +281,7 @@ void Foam::radiation::solarLoad::updateSkyDiffusiveRadiation
                 const scalarField& sf = mesh_.magSf().boundaryField()[patchID];
 
                 const vectorField n = pp.faceNormals();
-                const labelList& cellids = pp.faceCells();
+                const labelUList& cellids = pp.faceCells();
 
                 // Calculate diffusive radiance
                 // contribution from sky and ground
@@ -326,7 +326,7 @@ void Foam::radiation::solarLoad::updateSkyDiffusiveRadiation
                 const polyPatch& pp = patches[patchID];
                 const scalarField& sf = mesh_.magSf().boundaryField()[patchID];
 
-                const labelList& cellids = pp.faceCells();
+                const labelUList& cellids = pp.faceCells();
                 forAll(pp, facei)
                 {
                     const label celli = cellids[facei];
@@ -697,7 +697,7 @@ void Foam::radiation::solarLoad::calculateQdiff
         else
         {
             const polyPatch& pp = patches[patchID];
-            const labelList& cellids = pp.faceCells();
+            const labelUList& cellids = pp.faceCells();
             const scalarField& sf = mesh_.magSf().boundaryField()[patchID];
             forAll(pp, facei)
             {

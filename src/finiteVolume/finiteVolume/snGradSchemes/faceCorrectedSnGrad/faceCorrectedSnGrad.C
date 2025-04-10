@@ -71,8 +71,8 @@ Foam::fv::faceCorrectedSnGrad<Type>::fullGradCorrection
     const vectorField& Sf = mesh.Sf();
     const vectorField& C = mesh.C();
     const scalarField& magSf = mesh.magSf();
-    const labelList& owner = mesh.owner();
-    const labelList& neighbour = mesh.neighbour();
+    const auto& owner = mesh.owner();
+    const auto& neighbour = mesh.neighbour();
 
     forAll(sfCorr, facei)
     {

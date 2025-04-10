@@ -163,7 +163,8 @@ scalar pyrolysisModelCollection::maxDiff() const
     scalar maxDiff = 0.0;
     forAll(*this, i)
     {
-        maxDiff = max(maxDiff, this->operator[](i).maxDiff());
+        maxDiff =
+            Foam::max(maxDiff, this->operator[](i).maxDiff());
     }
 
     return maxDiff;
@@ -175,7 +176,8 @@ scalar pyrolysisModelCollection::solidRegionDiffNo() const
     scalar totalDiNum = GREAT;
     forAll(*this, i)
     {
-        totalDiNum = min(totalDiNum, this->operator[](i).solidRegionDiffNo());
+        totalDiNum =
+            Foam::min(totalDiNum, this->operator[](i).solidRegionDiffNo());
     }
 
     return totalDiNum;

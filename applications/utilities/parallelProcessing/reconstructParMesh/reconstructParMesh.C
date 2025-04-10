@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -502,7 +502,7 @@ void writeMaps
 
     Info<< "    pointProcAddressing" << endl;
     ioAddr.rename("pointProcAddressing");
-    IOListRef<label>(ioAddr, pointProcAddressing).write();
+    IOList<label>::writeContents(ioAddr, pointProcAddressing);
 
     // From processor face to reconstructed mesh face
     Info<< "    faceProcAddressing" << endl;
@@ -551,13 +551,13 @@ void writeMaps
     // From processor cell to reconstructed mesh cell
     Info<< "    cellProcAddressing" << endl;
     ioAddr.rename("cellProcAddressing");
-    IOListRef<label>(ioAddr, cellProcAddressing).write();
+    IOList<label>::writeContents(ioAddr, cellProcAddressing);
 
 
     // From processor patch to reconstructed mesh patch
     Info<< "    boundaryProcAddressing" << endl;
     ioAddr.rename("boundaryProcAddressing");
-    IOListRef<label>(ioAddr, boundProcAddressing).write();
+    IOList<label>::writeContents(ioAddr, boundProcAddressing);
 
     Info<< endl;
 }
@@ -1131,7 +1131,7 @@ int main(int argc, char *argv[])
                         for
                         (
                             label addedI=next;
-                            addedI<min(proci+step, nProcs);
+                            addedI < Foam::min(proci+step, nProcs);
                             addedI++
                         )
                         {

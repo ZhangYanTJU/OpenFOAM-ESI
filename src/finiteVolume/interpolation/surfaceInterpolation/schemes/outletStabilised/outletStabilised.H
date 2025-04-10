@@ -154,17 +154,14 @@ public:
                     (vf.boundaryField()[patchi])
                 )
                 {
-                    const labelList& pFaceCells =
-                        mesh_.boundary()[patchi].faceCells();
-
-                    forAll(pFaceCells, pFacei)
+                    for
+                    (
+                        const label celli
+                      : mesh_.boundary()[patchi].faceCells()
+                    )
                     {
-                        const cell& pFaceCell = cells[pFaceCells[pFacei]];
-
-                        forAll(pFaceCell, fi)
+                        for (const label facei : cells[celli])
                         {
-                            label facei = pFaceCell[fi];
-
                             if (mesh_.isInternalFace(facei))
                             {
                                 // Apply upwind differencing
@@ -213,17 +210,14 @@ public:
                             (vf.boundaryField()[patchi])
                     )
                     {
-                        const labelList& pFaceCells =
-                            mesh_.boundary()[patchi].faceCells();
-
-                        forAll(pFaceCells, pFacei)
+                        for
+                        (
+                            const label celli
+                          : mesh_.boundary()[patchi].faceCells()
+                        )
                         {
-                            const cell& pFaceCell = cells[pFaceCells[pFacei]];
-
-                            forAll(pFaceCell, fi)
+                            for (const label facei : cells[celli])
                             {
-                                label facei = pFaceCell[fi];
-
                                 if (mesh_.isInternalFace(facei))
                                 {
                                     // Remove correction

@@ -124,7 +124,7 @@ void Foam::kaqRWallFunctionFvPatchScalarField::manipulateMatrix
 
         const scalar Cmu25 = pow025(Cmu);
 
-        const labelList& faceCells = patch().faceCells();
+        const labelUList& faceCells = patch().faceCells();
         const fvPatchVectorField& Uw = boundaryContrPtr_->Ub();
         const scalarField magGradUw(mag(Uw.snGrad()));
 

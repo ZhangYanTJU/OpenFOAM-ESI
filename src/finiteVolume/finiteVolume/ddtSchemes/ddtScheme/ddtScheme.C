@@ -186,12 +186,12 @@ tmp<surfaceScalarField> ddtScheme<Type>::fvcDdtPhiCoeff
 
     if (debug > 1)
     {
+        auto limits = gMinMax(ddtCouplingCoeff.primitiveField());
+        auto avg = gAverage(ddtCouplingCoeff.primitiveField());
+
         InfoInFunction
             << "ddtCouplingCoeff mean max min = "
-            << gAverage(ddtCouplingCoeff.primitiveField())
-            << " " << gMax(ddtCouplingCoeff.primitiveField())
-            << " " << gMin(ddtCouplingCoeff.primitiveField())
-            << endl;
+            << avg << ' ' << limits.max() << ' ' << limits.min() << endl;
     }
 
     return tddtCouplingCoeff;
@@ -267,12 +267,12 @@ tmp<surfaceScalarField> ddtScheme<Type>::fvcDdtPhiCoeffExperimental
 
     if (debug > 1)
     {
+        auto limits = gMinMax(ddtCouplingCoeff.primitiveField());
+        auto avg = gAverage(ddtCouplingCoeff.primitiveField());
+
         InfoInFunction
             << "ddtCouplingCoeff mean max min = "
-            << gAverage(ddtCouplingCoeff.primitiveField())
-            << " " << gMax(ddtCouplingCoeff.primitiveField())
-            << " " << gMin(ddtCouplingCoeff.primitiveField())
-            << endl;
+            << avg << ' ' << limits.max() << ' ' << limits.min() << endl;
     }
 
     return tddtCouplingCoeff;

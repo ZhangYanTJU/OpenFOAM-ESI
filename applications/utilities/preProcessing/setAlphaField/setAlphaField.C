@@ -55,7 +55,7 @@ Description
 
 void isoFacesToFile
 (
-    const DynamicList<List<point>>& faces,
+    const UList<List<point>>& faces,
     const word& fileName
 )
 {
@@ -65,7 +65,7 @@ void isoFacesToFile
     if (Pstream::parRun())
     {
         // Collect points from all the processors
-        List<DynamicList<List<point>>> allProcFaces(Pstream::nProcs());
+        List<List<List<point>>> allProcFaces(Pstream::nProcs());
         allProcFaces[Pstream::myProcNo()] = faces;
         Pstream::gatherList(allProcFaces);
 
@@ -73,9 +73,9 @@ void isoFacesToFile
         {
             Info<< "Writing file: " << fileName << endl;
 
-            for (const DynamicList<List<point>>& procFaces : allProcFaces)
+            for (const auto& procFaces : allProcFaces)
             {
-                for (const List<point>& facePts : procFaces)
+                for (const auto& facePts : procFaces)
                 {
                     os.writeFace(facePts);
                 }
@@ -86,7 +86,7 @@ void isoFacesToFile
     {
         Info<< "Writing file: " << fileName << endl;
 
-        for (const List<point>& facePts : faces)
+        for (const auto& facePts : faces)
         {
             os.writeFace(facePts);
         }
@@ -223,11 +223,16 @@ int main(int argc, char *argv[])
     Info<< "Writing new alpha field " << alpha1.name() << endl;
     alpha1.write();
 
-    const scalarField& alpha = alpha1.internalField();
+    {
+        const auto& alpha = alpha1.primitiveField();
 
-    Info<< "sum(alpha*V):" << gSum(mesh.V()*alpha)
-        << ", 1-max(alpha1): " << 1 - gMax(alpha)
-        << " min(alpha1): " << gMin(alpha) << endl;
+        auto limits = gMinMax(alpha);
+        auto total = gWeightedSum(mesh.V(), alpha);
+
+        Info<< "sum(alpha*V):" << total
+            << ", 1-max(alpha1): " << 1 - limits.max()
+            << " min(alpha1): " << limits.min() << endl;
+    }
 
     Info<< "\nEnd\n" << endl;
 

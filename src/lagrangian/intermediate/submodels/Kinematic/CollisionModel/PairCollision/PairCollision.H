@@ -111,14 +111,14 @@ class PairCollision
 
         bool duplicatePointInList
         (
-            const DynamicList<point>& existingPoints,
+            const UList<point>& existingPoints,
             const point& pointToTest,
             scalar duplicateRangeSqr
         ) const;
 
         bool duplicatePointInList
         (
-            const DynamicList<point>& existingPoints,
+            const UList<point>& existingPoints,
             const point& pointToTest,
             const scalarList& duplicateRangeSqr
         ) const;

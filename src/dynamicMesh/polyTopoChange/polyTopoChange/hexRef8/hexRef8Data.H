@@ -93,8 +93,8 @@ public:
         (
             const IOobject& io,
             const hexRef8Data&,
-            const labelList& cellMap,
-            const labelList& pointMap
+            const labelUList& cellMap,
+            const labelUList& pointMap
         );
 
         //- Construct from multiple hexRef8Data

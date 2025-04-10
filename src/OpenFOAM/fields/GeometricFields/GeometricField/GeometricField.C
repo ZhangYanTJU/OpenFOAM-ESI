@@ -1277,6 +1277,38 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::clamp_max
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::clamp_min
+(
+    const GeometricField<Type, PatchField, GeoMesh>& lower
+)
+{
+    primitiveFieldRef().clamp_min(lower.primitiveField());
+    boundaryFieldRef().clamp_min(lower.boundaryField());
+    correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        boundaryField().check();
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::clamp_max
+(
+    const GeometricField<Type, PatchField, GeoMesh>& upper
+)
+{
+    primitiveFieldRef().clamp_max(upper.primitiveField());
+    boundaryFieldRef().clamp_max(upper.boundaryField());
+    correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        boundaryField().check();
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricField<Type, PatchField, GeoMesh>::clamp_range
 (
     const Type& lower,

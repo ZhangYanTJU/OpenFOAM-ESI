@@ -101,7 +101,7 @@ void Foam::adjointOutletVelocityFluxFvPatchVectorField::manipulateMatrix
     );
     vectorField& source = matrix.source();
     const vectorField& Sf = patch().Sf();
-    const labelList& faceCells = patch().faceCells();
+    const labelUList& faceCells = patch().faceCells();
     const scalarField& magSf = patch().magSf();
     tmp<vectorField> tvelocitySource(boundaryContrPtr_->velocitySource());
     const vectorField& velocitySource = tvelocitySource();

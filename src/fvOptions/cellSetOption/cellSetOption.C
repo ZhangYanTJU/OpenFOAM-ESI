@@ -314,7 +314,7 @@ void Foam::fv::cellSetOption::setCellSelection()
         {
             labelHashSet selectedCells;
             const cellCellStencilObject& overlap = Stencil::New(mesh_);
-            const labelList& cellTypes = overlap.cellTypes();
+            const labelUList& cellTypes = overlap.cellTypes();
             forAll(cellTypes, celli)
             {
                 if (cellTypes[celli] == cellCellStencil::POROUS)

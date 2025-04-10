@@ -327,8 +327,8 @@ class snappySnapDriver
                 ) const;
                 void correctAttraction
                 (
-                    const DynamicList<point>& surfacePoints,
-                    const DynamicList<label>& surfaceCounts,
+                    const UList<point>& surfacePoints,
+                    const UList<label>& surfaceCounts,
                     const point& edgePt,
                     const vector& edgeNormal,   // normalised normal
                     const point& pt,
@@ -504,7 +504,7 @@ class snappySnapDriver
                 (
                     const point& pt,
                     const labelList& pfPatchID,
-                    const DynamicList<vector>& surfaceNormals,
+                    const UList<vector>& surfaceNormals,
                     const labelList& faceToNormalBin
                 ) const;
 
@@ -513,7 +513,7 @@ class snappySnapDriver
                 (
                     const scalar featureCos,
                     const vector& faceSurfaceNormal,
-                    const DynamicList<vector>& surfaceNormals
+                    const UList<vector>& surfaceNormals
                 ) const;
 
                 //- Determine attraction and constraints for single point

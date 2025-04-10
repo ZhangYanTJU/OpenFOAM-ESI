@@ -142,7 +142,7 @@ tmp<volScalarField> adjointkOmegaSST::zeroFirstCell()
         if (isA<omegaWallFunctionFvPatchScalarField>(omegab))
         {
             const label patchi = patch.index();
-            const labelList& faceCells = patch.faceCells();
+            const labelUList& faceCells = patch.faceCells();
             fvPatchScalarField& bf = zeroFirstCell.boundaryFieldRef()[patchi];
             forAll(faceCells, faceI)
             {
@@ -180,7 +180,7 @@ tmp<volScalarField> adjointkOmegaSST::dR_dnut()
     {
         const fvPatch& patch = mesh_.boundary()[pI];
         const fvPatchScalarField& nutb = nutRef().boundaryField()[pI];
-        const labelList& faceCells = patch.faceCells();
+        const labelUList& faceCells = patch.faceCells();
         if (isA<nutkWallFunctionFvPatchScalarField>(nutb))
         {
             fvPatchScalarField& bf = dRdnut.boundaryFieldRef()[pI];
@@ -716,7 +716,7 @@ tmp<volScalarField> adjointkOmegaSST::dNutdbMult
                 dev2(gradU_.boundaryField()[pI].patchInternalField())
             );
             const vectorField& Sfb = Sf.boundaryField()[pI];
-            const labelList& faceCells = mesh_.boundary()[pI].faceCells();
+            const labelUList& faceCells = mesh_.boundary()[pI].faceCells();
             forAll(faceCells, fI)
             {
                 const label celli = faceCells[fI];
@@ -969,7 +969,7 @@ void adjointkOmegaSST::addWallFunctionTerms
 
             const scalar Cmu25 = pow025(Cmu);
 
-            const labelList& faceCells = patch.faceCells();
+            const labelUList& faceCells = patch.faceCells();
             const fvPatchScalarField& dR_dnutw =
                 dR_dnut.boundaryField()[patchi];
             const fvPatchScalarField& omegaw = omega.boundaryField()[patchi];
@@ -1845,7 +1845,7 @@ tmp<fvVectorMatrix> adjointkOmegaSST::divDevReff(volVectorField& Ua) const
             const fvPatchScalarField& nuEffb = nuEff.boundaryField()[pI];
             const vectorField nf = mesh_.boundary()[pI].nf();
             const vectorField Uai = Ua.boundaryField()[pI].patchInternalField();
-            const labelList& faceCells = mesh_.boundary()[pI].faceCells();
+            const labelUList& faceCells = mesh_.boundary()[pI].faceCells();
             const vectorField& Sfb = Sf.boundaryField()[pI];
 
             forAll(faceCells, fI)
@@ -1989,7 +1989,7 @@ tmp<volVectorField> adjointkOmegaSST::adjointMeanFlowSource()
             const scalar kappa = wallCoeffs.kappa();
             const scalar Cmu25 = pow025(Cmu);
 
-            const labelList& faceCells = patch.faceCells();
+            const labelUList& faceCells = patch.faceCells();
 
             const fvPatchVectorField& Uw =
                 primalVars_.U().boundaryField()[patchi];

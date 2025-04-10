@@ -341,7 +341,7 @@ public:
         autoPtr<refinementHistory> clone
         (
             const IOobject& io,
-            const labelList& cellMap
+            const labelUList& cellMap
         ) const;
 
         //- Update numbering for mesh changes

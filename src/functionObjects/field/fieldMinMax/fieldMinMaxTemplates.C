@@ -162,7 +162,7 @@ void Foam::functionObjects::fieldMinMax::calcMinMaxFieldType
         {
             const vectorField& Cfp = CfBoundary[patchi];
 
-            const labelList& faceCells =
+            const labelUList& faceCells =
                 fieldBoundary[patchi].patch().faceCells();
 
             minMaxIds = findMinMax(fp);

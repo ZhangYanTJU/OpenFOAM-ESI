@@ -272,7 +272,7 @@ void Foam::fvPatchField<Type>::autoMap
              && mapper.directAddressing().size()
             )
             {
-                const labelList& mapAddressing = mapper.directAddressing();
+                const labelUList& mapAddressing = mapper.directAddressing();
 
                 forAll(mapAddressing, i)
                 {

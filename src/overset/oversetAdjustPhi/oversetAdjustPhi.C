@@ -43,8 +43,8 @@ bool Foam::oversetAdjustPhi
 {
     const fvMesh& mesh = U.mesh();
     const cellCellStencilObject& overlap = Stencil::New(mesh);
-    const labelList& cellTypes = overlap.cellTypes();
-    const labelList& zoneID = overlap.zoneID();
+    const labelUList& cellTypes = overlap.cellTypes();
+    const labelUList& zoneID = overlap.zoneID();
 
     // Pass1: accumulate all fluxes, calculate correction factor
 

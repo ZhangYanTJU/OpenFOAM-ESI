@@ -129,7 +129,7 @@ void Foam::calculatedProcessorFvPatchField<Type>::initEvaluate
         // Bypass patchInternalField since uses fvPatch addressing
         {
             const Field<Type>& iF = this->internalField();
-            const labelList& fc = procInterface_.faceCells();
+            const labelUList& fc = procInterface_.faceCells();
             sendBuf_.resize_nocopy(fc.size());
             forAll(fc, i)
             {
@@ -202,7 +202,7 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
     }
 
     // Bypass patchInternalField since uses fvPatch addressing
-    const labelList& fc = lduAddr.patchAddr(patchId);
+    const labelUList& fc = lduAddr.patchAddr(patchId);
 
     scalarSendBuf_.resize_nocopy(fc.size());
     forAll(fc, i)

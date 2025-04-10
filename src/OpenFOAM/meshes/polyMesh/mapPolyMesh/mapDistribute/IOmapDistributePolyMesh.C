@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -123,6 +123,23 @@ Foam::IOmapDistributePolyMeshRef::IOmapDistributePolyMeshRef
 /// {
 ///     contentRef_.ref(map);  // writable reference
 /// }
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+void Foam::IOmapDistributePolyMesh::writeContents
+(
+    const IOobject& io,
+    const mapDistributePolyMesh& map
+)
+{
+    IOmapDistributePolyMeshRef writer
+    (
+        IOobject(io, IOobjectOption::NO_REGISTER),
+        map
+    );
+
+    writer.write();
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

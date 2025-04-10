@@ -364,7 +364,7 @@ void Foam::advancingFrontAMI::appendNbrFaces
 (
     const label facei,
     const primitivePatch& patch,
-    const DynamicList<label>& visitedFaces,
+    const labelUList& visitedFaces,
     DynamicList<label>& faceIDs
 ) const
 {

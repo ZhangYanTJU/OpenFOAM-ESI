@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,7 +85,8 @@ void Foam::faMeshDecomposition::distributeFaces()
         ioAddr.rename("faceProcAddressing");
         labelIOList fvFaceProcAddressing(ioAddr);
 
-        labelHashSet faceProcAddressingHash(2*fvFaceProcAddressing.size());
+        labelHashSet faceProcAddressingHash;
+        faceProcAddressingHash.reserve(fvFaceProcAddressing.size());
 
         // If faMesh's fvPatch is a part of the global face zones, faces of that
         // patch will be present on all processors. Because of that, looping
@@ -941,10 +942,8 @@ void Foam::faMeshDecomposition::decomposeMesh()
 
         // Globally shared points are the ones used by more than 2 processors
         // Size the list approximately and gather the points
-        labelHashSet gSharedPoints
-        (
-            min(100, nPoints()/1000)
-        );
+        labelHashSet gSharedPoints;
+        gSharedPoints.reserve(Foam::min(128, nPoints()/1000));
 
         // Loop through all the processors and mark up points used by
         // processor boundaries.  When a point is used twice, it is a
@@ -1318,19 +1317,19 @@ bool Foam::faMeshDecomposition::writeDecomposition()
 
         // pointProcAddressing
         ioAddr.rename("pointProcAddressing");
-        IOListRef<label>(ioAddr, procPatchPointAddressing_[procI]).write();
+        IOList<label>::writeContents(ioAddr, procPatchPointAddressing_[procI]);
 
         // edgeProcAddressing
         ioAddr.rename("edgeProcAddressing");
-        IOListRef<label>(ioAddr, procEdgeAddressing_[procI]).write();
+        IOList<label>::writeContents(ioAddr, procEdgeAddressing_[procI]);
 
         // faceProcAddressing
         ioAddr.rename("faceProcAddressing");
-        IOListRef<label>(ioAddr, procFaceAddressing_[procI]).write();
+        IOList<label>::writeContents(ioAddr, procFaceAddressing_[procI]);
 
         // boundaryProcAddressing
         ioAddr.rename("boundaryProcAddressing");
-        IOListRef<label>(ioAddr, procBoundaryAddressing_[procI]).write();
+        IOList<label>::writeContents(ioAddr, procBoundaryAddressing_[procI]);
     }
 
 

@@ -120,8 +120,11 @@ void Foam::cellAspectRatio::calcAspectRatio()
 
     if (debug)
     {
-        InfoInFunction << "Calculated cell aspect ratio min:" << gMin(aRatio)
-            << " max:" << gMax(aRatio) << " average:" << gAverage(aRatio)
+        auto limits = gMinMax(aRatio);
+        auto avg = gAverage(aRatio);
+
+        InfoInFunction << "Calculated cell aspect ratio min:" << limits.min()
+            << " max:" << limits.max() << " average:" << avg
             << endl;
     }
 }

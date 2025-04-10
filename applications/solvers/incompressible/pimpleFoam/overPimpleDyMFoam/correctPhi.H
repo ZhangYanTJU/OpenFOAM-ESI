@@ -55,7 +55,7 @@ if (mesh.changing())
     dimensionedScalar rAUf("rAUf", dimTime, 1.0);
 
     const cellCellStencilObject& overlap = Stencil::New(mesh);
-    const labelList& cellTypes = overlap.cellTypes();
+    const labelUList& cellTypes = overlap.cellTypes();
     const labelIOList& zoneIDs = overlap.zoneID();
 
     while (pimple.correctNonOrthogonal())

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -700,19 +700,11 @@ Foam::label Foam::checkTopology
                 << mesh.time().timeName()/"cellToRegion"
                 << endl;
 
-            IOListRef<label>
+            IOList<label>::writeContents
             (
-                IOobject
-                (
-                    "cellToRegion",
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
+                IOobject("cellToRegion", mesh.time().timeName(), mesh),
                 rs
-            ).write();
+            );
 
 
             // Points in multiple regions

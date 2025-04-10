@@ -119,7 +119,7 @@ public:
         coupledFaPatch
         (
             const word& name,
-            const labelList& edgeLabels,
+            const labelUList& edgeLabels,
             const label index,
             const faBoundaryMesh& bm,
             const label nbrPolyPatchIndex,

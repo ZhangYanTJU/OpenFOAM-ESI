@@ -211,25 +211,24 @@ bool Foam::functionObjects::yPlus::write()
         {
             const scalarField& yPlusp = yPlusBf[patchi];
 
-            const scalar minYplus = gMin(yPlusp);
-            const scalar maxYplus = gMax(yPlusp);
-            const scalar avgYplus = gAverage(yPlusp);
+            auto limits = gMinMax(yPlusp);
+            auto avg = gAverage(yPlusp);
 
             if (UPstream::master())
             {
                 writeCurrentTime(file());
                 file()
                     << token::TAB << patch.name()
-                    << token::TAB << minYplus
-                    << token::TAB << maxYplus
-                    << token::TAB << avgYplus
+                    << token::TAB << limits.min()
+                    << token::TAB << limits.max()
+                    << token::TAB << avg
                     << endl;
             }
 
             Log << "    patch " << patch.name()
-                << " y+ : min = " << minYplus
-                << ", max = " << maxYplus
-                << ", average = " << avgYplus << endl;
+                << " y+ : min = " << limits.min()
+                << ", max = " << limits.max()
+                << ", average = " << avg << endl;
         }
     }
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -846,12 +846,9 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
                     "boundaryProcAddressing",
                     procMesh.facesInstance(),
                     polyMesh::meshSubDir/pointMesh::meshSubDir,
-                    procPointMesh.thisDb(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
+                    procPointMesh.thisDb()
                 );
-                IOListRef<label>(ioAddr, boundaryProcAddressing).write();
+                IOList<label>::writeContents(ioAddr, boundaryProcAddressing);
             }
         }
 
@@ -1013,15 +1010,15 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
 
         // pointProcAddressing
         ioAddr.rename("pointProcAddressing");
-        IOListRef<label>(ioAddr, procPointAddressing_[proci]).write();
+        IOList<label>::writeContents(ioAddr, procPointAddressing_[proci]);
 
         // faceProcAddressing
         ioAddr.rename("faceProcAddressing");
-        IOListRef<label>(ioAddr, procFaceAddressing_[proci]).write();
+        IOList<label>::writeContents(ioAddr, procFaceAddressing_[proci]);
 
         // cellProcAddressing
         ioAddr.rename("cellProcAddressing");
-        IOListRef<label>(ioAddr, procCellAddressing_[proci]).write();
+        IOList<label>::writeContents(ioAddr, procCellAddressing_[proci]);
 
         // Write patch map for backwards compatibility.
         // (= identity map for original patches, -1 for processor patches)
@@ -1031,7 +1028,7 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
 
         // boundaryProcAddressing
         ioAddr.rename("boundaryProcAddressing");
-        IOListRef<label>(ioAddr, procBoundaryAddr).write();
+        IOList<label>::writeContents(ioAddr, procBoundaryAddr);
     }
 
 

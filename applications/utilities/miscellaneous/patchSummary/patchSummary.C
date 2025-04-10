@@ -191,10 +191,8 @@ int main(int argc, char *argv[])
             }
 
 
-            forAll(groupToPatches, groupI)
+            for (const auto& patchIDs : groupToPatches)
             {
-                const DynamicList<label>& patchIDs = groupToPatches[groupI];
-
                 if (patchIDs.size() > 1)
                 {
                     // Check if part of a group

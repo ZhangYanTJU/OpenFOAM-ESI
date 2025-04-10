@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -54,10 +54,21 @@ License
     scalar alphaTemp(pimpleDict.getOrDefault("alphaTemp", 0.05));
 
 
-    Info<< "Time scales min/max:" << endl;
+    // The old reciprocal time scale field, with any damping factor
+    tmp<volScalarField> rDeltaT0_damped;
 
-    // Cache old reciprocal time scale field
-    volScalarField rDeltaT0("rDeltaT0", rDeltaT);
+    // Calculate damped value before applying any other changes
+    if
+    (
+        rDeltaTDampingCoeff < 1
+     && runTime.timeIndex() > runTime.startTimeIndex() + 1
+    )
+    {
+        rDeltaT0_damped = (scalar(1) - rDeltaTDampingCoeff)*(rDeltaT);
+    }
+
+
+    Info<< "Time scales min/max:" << endl;
 
     // Flow time scale
     {
@@ -67,12 +78,14 @@ License
            /((2*maxCo)*mesh.V()*rho())
         );
 
-        // Limit the largest time scale
-        rDeltaT.max(1/maxDeltaT);
+        // Limit the largest time scale (=> smallest reciprocal time)
+        rDeltaT.clamp_min(1/maxDeltaT);
+
+        auto limits = gMinMax(rDeltaT.primitiveField());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
 
         Info<< "    Flow        = "
-            << gMin(1/rDeltaT.primitiveField()) << ", "
-            << gMax(1/rDeltaT.primitiveField()) << endl;
+            << limits.min() << ", " << limits.max() << endl;
     }
 
     // Reaction source time scale
@@ -92,15 +105,13 @@ License
            )
         );
 
-        Info<< "    Temperature = "
-            << gMin(1/(rDeltaTT.field() + VSMALL)) << ", "
-            << gMax(1/(rDeltaTT.field() + VSMALL)) << endl;
+        rDeltaT.primitiveFieldRef().clamp_min(rDeltaTT);
 
-        rDeltaT.ref() = max
-        (
-            rDeltaT(),
-            rDeltaTT
-        );
+        auto limits = gMinMax(rDeltaTT.field());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
+
+        Info<< "    Temperature = "
+            << limits.min() << ", " << limits.max() << endl;
     }
 
     // Update the boundary values of the reciprocal time-step
@@ -112,25 +123,22 @@ License
         fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
     }
 
-    // Limit rate of change of time scale
+    // Limit rate of change of time scale (=> smallest reciprocal time)
     // - reduce as much as required
     // - only increase at a fraction of old time scale
-    if
-    (
-        rDeltaTDampingCoeff < 1.0
-     && runTime.timeIndex() > runTime.startTimeIndex() + 1
-    )
+    if (rDeltaT0_damped)
     {
-        rDeltaT = max
-        (
-            rDeltaT,
-            (scalar(1) - rDeltaTDampingCoeff)*rDeltaT0
-        );
+        rDeltaT.clamp_min(rDeltaT0_damped());
     }
 
+    // Update the boundary values of the reciprocal time-step
+    rDeltaT.correctBoundaryConditions();
+
+    auto limits = gMinMax(rDeltaT.primitiveField());
+    limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
+
     Info<< "    Overall     = "
-        << gMin(1/rDeltaT.primitiveField())
-        << ", " << gMax(1/rDeltaT.primitiveField()) << endl;
+        << limits.min() << ", " << limits.max() << endl;
 }
 
 

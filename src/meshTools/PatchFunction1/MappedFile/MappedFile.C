@@ -747,9 +747,13 @@ Foam::PatchFunction1Types::MappedFile<Type>::value
 
     if (debug)
     {
-        Pout<< "MappedFile<Type>::value : set fixedValue to min:" << gMin(fld)
-            << " max:" << gMax(fld)
-            << " avg:" << gAverage(fld) << endl;
+        auto limits = gMinMax(fld);
+        auto avg = gAverage(fld);
+
+        Pout<< "MappedFile<Type>::value : set fixedValue to min:"
+            << limits.min()
+            << " max:" << limits.max()
+            << " avg:" << avg << endl;
     }
 
     return this->transform(tfld);

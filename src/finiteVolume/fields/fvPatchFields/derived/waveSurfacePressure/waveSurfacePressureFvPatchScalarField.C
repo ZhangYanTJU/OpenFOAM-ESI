@@ -210,8 +210,12 @@ void Foam::waveSurfacePressureFvPatchScalarField::updateCoeffs()
     }
 
 
-    Info<< "min/max zetap = " << gMin(zetap & nf()) << ", "
-        << gMax(zetap & nf()) << endl;
+    {
+        auto limits = gMinMax(zetap & nf());
+
+        Info<< "min/max zetap = "
+            << limits.min() << ", " << limits.max() << endl;
+    }
 
     // Update the surface pressure
     const uniformDimensionedVectorField& g =

@@ -434,10 +434,13 @@ void Foam::highAspectRatioFvGeometryScheme::movePoints()
 
         if (debug)
         {
+            auto limits = gMinMax(cellWeight);
+            auto avg = gAverage(cellWeight);
+
             Pout<< "highAspectRatioFvGeometryScheme::movePoints() :"
                 << " highAspectRatio weight"
-                << " max:" << gMax(cellWeight) << " min:" << gMin(cellWeight)
-                << " average:" << gAverage(cellWeight) << endl;
+                << " min:" << limits.max() << " max:" << limits.max()
+                << " average:" << avg << endl;
         }
 
         vectorField faceAreas(mesh_.faceAreas());

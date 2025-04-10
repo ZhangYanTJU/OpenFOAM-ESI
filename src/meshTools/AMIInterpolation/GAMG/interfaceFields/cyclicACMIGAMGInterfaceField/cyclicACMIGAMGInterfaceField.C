@@ -202,7 +202,7 @@ void Foam::cyclicACMIGAMGInterfaceField::initInterfaceMatrixUpdate
         }
 
         // Get neighbouring field
-        const labelList& nbrFaceCells =
+        const labelUList& nbrFaceCells =
             lduAddr.patchAddr(cyclicACMIInterface_.neighbPatchID());
 
         solveScalarField pnf(psiInternal, nbrFaceCells);
@@ -315,7 +315,7 @@ void Foam::cyclicACMIGAMGInterfaceField::updateInterfaceMatrix
     else
     {
         // Get neighbouring field
-        const labelList& nbrFaceCells =
+        const labelUList& nbrFaceCells =
             lduAddr.patchAddr(cyclicACMIInterface_.neighbPatchID());
 
         solveScalarField pnf(psiInternal, nbrFaceCells);

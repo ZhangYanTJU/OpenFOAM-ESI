@@ -226,14 +226,14 @@ class polyMeshAdder
         //- Create new zones and add to new mesh.
         static void addZones
         (
-            const DynamicList<word>& pointZoneNames,
+            const UList<word>& pointZoneNames,
             const List<DynamicList<label>>& pzPoints,
 
-            const DynamicList<word>& faceZoneNames,
+            const UList<word>& faceZoneNames,
             const List<DynamicList<label>>& fzFaces,
             const List<DynamicList<bool>>& fzFlips,
 
-            const DynamicList<word>& cellZoneNames,
+            const UList<word>& cellZoneNames,
             const List<DynamicList<label>>& czCells,
 
             polyMesh& mesh

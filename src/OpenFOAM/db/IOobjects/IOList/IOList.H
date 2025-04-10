@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,6 +96,10 @@ public:
         //- Read and return contents. The IOobject is never registered
         static List<T> readContents(const IOobject& io);
 
+        //- Write contents. The IOobject is never registered.
+        //  Uses IOListRef internally.
+        static void writeContents(const IOobject& io, const UList<T>& content);
+
 
     //- Destructor
     virtual ~IOList() = default;
@@ -121,7 +125,7 @@ public:
                           Class IOListRef Declaration
 \*---------------------------------------------------------------------------*/
 
-//- A IOList wrapper for writing external data.
+//- A IOList wrapper for writing external List data
 template<class T>
 class IOListRef
 :
@@ -130,7 +134,7 @@ class IOListRef
     // Private Data
 
         //- Reference to the external content
-        refPtr<List<T>> contentRef_;
+        UList<T> contentRef_;
 
 
 public:
@@ -161,7 +165,7 @@ public:
     // Constructors
 
         //- Construct from IOobject and const data reference
-        IOListRef(const IOobject& io, const List<T>& content);
+        IOListRef(const IOobject& io, const UList<T>& content);
 
 
     //- Destructor
@@ -171,10 +175,9 @@ public:
     // Member Functions
 
         //- Allow cast to const content
-        //  Fatal if content is not set
-        operator const List<T>&() const
+        operator const UList<T>&() const
         {
-            return contentRef_.cref();
+            return contentRef_;
         }
 
         //- The writeData method for regIOobject write operation

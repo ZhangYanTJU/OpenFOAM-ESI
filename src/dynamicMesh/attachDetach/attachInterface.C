@@ -110,8 +110,8 @@ void Foam::attachDetach::attachInterface
     }
 
     // Modify the faces from the master patch
-    const labelList& masterFaceCells = masterPatch.faceCells();
-    const labelList& slaveFaceCells = slavePatch.faceCells();
+    const labelUList& masterFaceCells = masterPatch.faceCells();
+    const labelUList& slaveFaceCells = slavePatch.faceCells();
 
     const boolList& mfFlip = mesh.faceZones()[faceZoneID_.index()].flipMap();
 

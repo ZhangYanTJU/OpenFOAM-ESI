@@ -400,6 +400,10 @@ void thermalBaffle1DFvPatchScalarField<solidType>::updateCoeffs()
         if (debug)
         {
             scalar Q = gAverage(kappaw*snGrad());
+
+            auto limits = gMinMax(*this);
+            auto avg = gAverage(*this);
+
             Info<< patch().boundaryMesh().mesh().name() << ':'
                 << patch().name() << ':'
                 << this->internalField().name() << " <- "
@@ -407,9 +411,9 @@ void thermalBaffle1DFvPatchScalarField<solidType>::updateCoeffs()
                 << this->internalField().name() << " :"
                 << " heat[W]:" << Q
                 << " walltemperature "
-                << " min:" << gMin(*this)
-                << " max:" << gMax(*this)
-                << " avg:" << gAverage(*this)
+                << " min:" << limits.min()
+                << " max:" << limits.max()
+                << " avg:" << avg
                 << endl;
         }
     }

@@ -234,8 +234,10 @@ patchSource() const
 
     if (debug)
     {
+        auto limits = gMinMax(dhdt);
+
         Info<< " Patch enthalpy rate min/max [J/m3/sec]: "
-            << gMin(dhdt) << " - " << gMax(dhdt) << endl;
+            << limits.min() << " - " << limits.max() << endl;
     }
 
     return tmp<scalarField>::New(dhdt);
@@ -282,8 +284,10 @@ void Foam::enthalpySorptionFvPatchScalarField::updateCoeffs()
 
     if (debug)
     {
+        auto limits = gMinMax(dhdt_);
+
         Info<< "  Enthalpy change min/max [J/kg]: "
-            << gMin(dhdt_) << " - " << gMax(dhdt_) << endl;
+            << limits.min() << " - " << limits.max() << endl;
     }
 
     zeroGradientFvPatchScalarField::updateCoeffs();

@@ -118,7 +118,7 @@ protected:
                 label& tgtFacei,
                 const bitSet& mapFlag,
                 labelList& seedFaces,
-                const DynamicList<label>& visitedFaces,
+                const labelUList& visitedFaces,
                 const bool errorOnNotFound = true
             ) const;
 

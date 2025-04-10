@@ -256,8 +256,7 @@ void Foam::rhoThermo::correctRho
 )
 {
     rho_ += deltaRho;
-    rho_ = max(rho_, rhoMin);
-    rho_ = min(rho_, rhoMax);
+    rho_.clamp_range(rhoMin, rhoMax);
 }
 
 void Foam::rhoThermo::correctRho(const Foam::volScalarField& deltaRho)

@@ -162,7 +162,7 @@ void Foam::cyclicGAMGInterfaceField::updateInterfaceMatrix
 {
     // Get neighbouring field
 
-    const labelList& nbrFaceCells =
+    const auto& nbrFaceCells =
         lduAddr.patchAddr
         (
             cyclicInterface_.neighbPatchID()
@@ -172,7 +172,7 @@ void Foam::cyclicGAMGInterfaceField::updateInterfaceMatrix
 
     transformCoupleField(pnf, cmpt);
 
-    const labelList& faceCells = lduAddr.patchAddr(patchId);
+    const auto& faceCells = lduAddr.patchAddr(patchId);
 
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
 }

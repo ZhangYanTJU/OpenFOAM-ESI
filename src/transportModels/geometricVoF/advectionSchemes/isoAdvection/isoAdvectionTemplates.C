@@ -121,9 +121,11 @@ void Foam::isoAdvection::limitFluxes
     addProfilingInFunction(geometricVoF);
     DebugInFunction << endl;
 
+    auto alpha1Limits = gMinMax(alpha1_);
+
     const scalar aTol = 100*SMALL;          // Note: tolerances
-    scalar maxAlphaMinus1 = gMax(alpha1_) - 1;      // max(alphaNew - 1);
-    scalar minAlpha = gMin(alpha1_);           // min(alphaNew);
+    scalar maxAlphaMinus1 = alpha1Limits.max() - 1;  // max(alphaNew - 1);
+    scalar minAlpha = alpha1Limits.min();            // min(alphaNew);
     const label nOvershoots = 20;         // sum(pos0(alphaNew - 1 - aTol));
 
     const labelList& owner = mesh_.faceOwner();
@@ -232,8 +234,10 @@ void Foam::isoAdvection::limitFluxes
             break;
         }
 
-        maxAlphaMinus1 = gMax(alpha1_) - 1;     // max(alphaNew - 1);
-        minAlpha = gMin(alpha1_);               // min(alphaNew);
+        alpha1Limits = gMinMax(alpha1_);
+
+        maxAlphaMinus1 = alpha1Limits.max() - 1;  // max(alphaNew - 1);
+        minAlpha = alpha1Limits.min();            // min(alphaNew);
 
         if (debug)
         {
@@ -486,11 +490,13 @@ void Foam::isoAdvection::advect(const SpType& Sp, const SuType& Su)
     // Adjust dVf for unbounded cells
     limitFluxes(Sp, Su);
 
-    scalar maxAlphaMinus1 = gMax(alpha1In_) - 1;
-    scalar minAlpha = gMin(alpha1In_);
+    {
+        auto limits = gMinMax(alpha1In_);
 
-    Info<< "isoAdvection: After conservative bounding: min(alpha) = "
-        << minAlpha << ", max(alpha) = 1 + " << maxAlphaMinus1 << endl;
+        Info<< "isoAdvection: After conservative bounding:"
+            << " min(alpha) = " << limits.min()
+            << ", max(alpha) = 1 + " << (limits.max()-1) << endl;
+    }
 
     // Apply non-conservative bounding mechanisms (clipping and snapping)
     // Note: We should be able to write out alpha before this is done!

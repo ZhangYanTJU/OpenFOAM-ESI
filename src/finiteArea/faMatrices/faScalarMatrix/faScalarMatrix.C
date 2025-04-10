@@ -85,7 +85,7 @@ Foam::solverPerformance Foam::faMatrix<Foam::scalar>::solve
         internalCoeffs_,
         psi_.boundaryField().scalarInterfaces(),
         solverControls
-    )->solve(psi.ref(), totalSource);
+    )->solve(psi.primitiveFieldRef(), totalSource);
 
     if (logLevel)
     {
@@ -146,7 +146,7 @@ Foam::tmp<Foam::areaScalarField> Foam::faMatrix<Foam::scalar>::H() const
     Hphi.primitiveFieldRef() = (lduMatrix::H(psi_.primitiveField()) + source_);
     addBoundarySource(Hphi.primitiveFieldRef());
 
-    Hphi.ref() /= psi_.mesh().S();
+    Hphi.primitiveFieldRef() /= psi_.mesh().S();
     Hphi.correctBoundaryConditions();
 
     return tHphi;

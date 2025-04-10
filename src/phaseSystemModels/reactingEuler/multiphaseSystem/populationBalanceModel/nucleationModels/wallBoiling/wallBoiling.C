@@ -175,7 +175,7 @@ Foam::diameterModels::nucleationModels::wallBoiling::addToNucleationRate
             const scalarField& dmdt = alphatw.dmdt();
             const scalarField& dDep = alphatw.dDeparture();
 
-            const labelList& faceCells = alphatw.patch().faceCells();
+            const labelUList& faceCells = alphatw.patch().faceCells();
 
             dimensionedScalar unitLength("unitLength", dimLength, 1.0);
 

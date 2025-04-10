@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,6 +50,7 @@ SourceFiles
 #include "direction.H"
 #include "labelList.H"
 #include "keyType.H"
+#include "ops.H"
 #include "scalarList.H"
 #include "VectorSpace.H"
 #include "IOobjectOption.H"
@@ -441,8 +442,14 @@ public:
         //- Impose lower (floor) clamp on the field values (in-place)
         void clamp_min(const Type& lower);
 
+        //- Impose lower (floor) clamp on the field values (in-place)
+        void clamp_min(const UList<Type>& lower);
+
         //- Impose upper (ceiling) clamp on the field values (in-place)
         void clamp_max(const Type& upper);
+
+        //- Impose upper (ceiling) clamp on the field values (in-place)
+        void clamp_max(const UList<Type>& upper);
 
         //- Clamp field values (in-place) to the specified range.
         //  Does not check if range is valid or not.

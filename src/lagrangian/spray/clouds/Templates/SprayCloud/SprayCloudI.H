@@ -136,7 +136,7 @@ inline Foam::scalar Foam::SprayCloud<CloudType>::penetration
             const SortList<scalar> sortedDist(dist);
 
             const scalar mLimit = fraction*mTotal;
-            const labelList& indices = sortedDist.indices();
+            const labelUList& indices = sortedDist.indices();
 
             if (mLimit > (mTotal - mass[indices.last()]))
             {

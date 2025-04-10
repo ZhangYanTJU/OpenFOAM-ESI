@@ -513,18 +513,29 @@ void Foam::cyclicPeriodicAMIPolyPatch::resetAMI() const
                 tgtWghtSum[faceI] = sum(AMIPtr_->tgtWeights()[faceI]);
             }
 
-            Info<< indent
-                << "AMI: Patch " << name()
-                << " sum(weights)"
-                << " min:" << gMin(srcWghtSum)
-                << " max:" << gMax(srcWghtSum)
-                << " average:" << gAverage(srcWghtSum) << nl;
-            Info<< indent
-                << "AMI: Patch " << neighbPatch().name()
-                << " sum(weights)"
-                << " min:" << gMin(tgtWghtSum)
-                << " max:" << gMax(tgtWghtSum)
-                << " average:" << gAverage(tgtWghtSum) << nl;
+            {
+                auto limits = gMinMax(srcWghtSum);
+                auto avg = gAverage(srcWghtSum);
+
+                Info<< indent
+                    << "AMI: Patch " << name()
+                    << " sum(weights)"
+                    << " min:" << limits.min()
+                    << " max:" << limits.max()
+                    << " average:" << avg << nl;
+            }
+
+            {
+                auto limits = gMinMax(tgtWghtSum);
+                auto avg = gAverage(tgtWghtSum);
+
+                Info<< indent
+                    << "AMI: Patch " << neighbPatch().name()
+                    << " sum(weights)"
+                    << " min:" << limits.min()
+                    << " max:" << limits.max()
+                    << " average:" << avg << nl;
+            }
         }
     }
 }

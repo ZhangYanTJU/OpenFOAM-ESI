@@ -424,8 +424,14 @@ public:
         //       out-of-range element returns false without ill-effects
         inline const T& operator[](const label i) const;
 
-        //- Allow cast to a const List<T>&
-        inline operator const Foam::List<T>&() const;
+        //- Allow cast to a const List<T>&.
+        //  \note Marked as "strictly" deprecated.
+        //  Currently (2025-04) code still depends on this cast.
+        FOAM_DEPRECATED_STRICTER(2025-04, "dereference as UList, not List")
+        operator const Foam::List<T>&() const
+        {
+            return *reinterpret_cast<const List<T>*>(this);
+        }
 
         //- Assignment of all entries to the given value
         inline void operator=(const T& val);

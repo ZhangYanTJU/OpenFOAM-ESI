@@ -75,10 +75,10 @@ bool Foam::CV2D::dualCellSurfaceIntersection
 
 void Foam::CV2D::insertPointPairs
 (
-    const DynamicList<point2D>& nearSurfacePoints,
-    const DynamicList<point2D>& surfacePoints,
-    const DynamicList<label>& surfaceTris,
-    const DynamicList<label>& surfaceHits,
+    const UList<point2D>& nearSurfacePoints,
+    const UList<point2D>& surfacePoints,
+    const labelUList& surfaceTris,
+    const labelUList& surfaceHits,
     const fileName fName
 )
 {

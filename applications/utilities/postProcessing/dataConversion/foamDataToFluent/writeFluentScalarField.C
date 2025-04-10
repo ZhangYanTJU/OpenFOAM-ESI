@@ -76,7 +76,7 @@ void Foam::writeFluentField
             const scalarField& phiInternal = phi;
 
             // Get reference to internal cells
-            const labelList emptyFaceCells =
+            const auto& emptyFaceCells =
                 phi.boundaryField()[patchi].patch().patch().faceCells();
 
             // Writing cells for empty patch

@@ -163,7 +163,7 @@ class isoSurfaceCell
         template<class Type>
         Type generatePoint
         (
-            const DynamicList<Type>& snappedPoints,
+            const UList<Type>& snappedPoints,
             const scalar s0,
             const Type& p0,
             const label p0Index,
@@ -175,7 +175,7 @@ class isoSurfaceCell
         template<class Type>
         void generateTriPoints
         (
-            const DynamicList<Type>& snapped,
+            const UList<Type>& snapped,
             const scalar s0,
             const Type& p0,
             const label p0Index,
@@ -200,7 +200,7 @@ class isoSurfaceCell
             const Field<Type>& cCoords,
             const Field<Type>& pCoords,
 
-            const DynamicList<Type>& snappedPoints,
+            const UList<Type>& snappedPoints,
             const labelList& snappedCc,
             const labelList& snappedPoint,
 

@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
                     if (blockPFacePointi != blockPFacePointi2)
                     {
                         sqrMergeTol =
-                            min
+                            Foam::min
                             (
                                 sqrMergeTol,
                                 magSqr
@@ -338,16 +338,16 @@ int main(int argc, char *argv[])
                         blockNFacePoints[blockNFacePointi]
                       + blockOffsets[blockNlabel];
 
-                    label minPN = min(PpointLabel, NpointLabel);
+                    label minPN = Foam::min(PpointLabel, NpointLabel);
 
                     if (pointMergeList[PpointLabel] != -1)
                     {
-                        minPN = min(minPN, pointMergeList[PpointLabel]);
+                        minPN = Foam::min(minPN, pointMergeList[PpointLabel]);
                     }
 
                     if (pointMergeList[NpointLabel] != -1)
                     {
-                        minPN = min(minPN, pointMergeList[NpointLabel]);
+                        minPN = Foam::min(minPN, pointMergeList[NpointLabel]);
                     }
 
                     pointMergeList[PpointLabel]
@@ -411,7 +411,7 @@ int main(int argc, char *argv[])
 
                         pointMergeList[PpointLabel]
                       = pointMergeList[NpointLabel]
-                      = min
+                      = Foam::min
                         (
                             pointMergeList[PpointLabel],
                             pointMergeList[NpointLabel]

@@ -86,7 +86,7 @@ protected:
         (
             const Map<label>& toLocal,
             const face& f,
-            const DynamicList<point>& u,
+            const UList<point>& u,
             const scalarField& dist,
             scalarField& weights
         ) const;

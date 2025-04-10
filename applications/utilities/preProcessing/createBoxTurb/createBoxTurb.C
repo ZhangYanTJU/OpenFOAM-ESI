@@ -167,18 +167,24 @@ int main(int argc, char *argv[])
         Info<< "Generating kinetic energy field" << endl;
         volScalarField k("k", 0.5*magSqr(U));
         k.write();
+
+        auto limits = gMinMax(k);
+        auto avg = gAverage(k);
+
         Info<< "min/max/average k = "
-            << gMin(k) << ", " << gMax(k) << ", " << gAverage(k)
-            << endl;
+            << limits.min() << ", " << limits.max() << ", " << avg << endl;
     }
 
     {
         Info<< "Generating div(U) field" << endl;
         volScalarField divU(fvc::div(U));
         divU.write();
+
+        auto limits = gMinMax(divU);
+        auto avg = gAverage(divU);
+
         Info<< "min/max/average div(U) = "
-            << gMin(divU) << ", " << gMax(divU) << ", " << gAverage(divU)
-            << endl;
+            << limits.min() << ", " << limits.max() << ", " << avg << endl;
     }
 
     Info<< nl;

@@ -64,8 +64,8 @@ Foam::linearUpwindV<Type>::correction
     const surfaceScalarField& faceFlux = this->faceFlux_;
     const surfaceScalarField& w = mesh.weights();
 
-    const labelList& own = mesh.owner();
-    const labelList& nei = mesh.neighbour();
+    const auto& own = mesh.owner();
+    const auto& nei = mesh.neighbour();
 
     const volVectorField& C = mesh.C();
     const surfaceVectorField& Cf = mesh.Cf();

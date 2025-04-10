@@ -77,7 +77,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::markBoundaries
     forAll(pbm, patchi)
     {
         const fvPatch& fvp = pbm[patchi];
-        const labelList& fc = fvp.faceCells();
+        const labelUList& fc = fvp.faceCells();
 
         if (!fvPatch::constraintType(fvp.type()))
         {
@@ -112,7 +112,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::markBoundaries
     forAll(pbm, patchi)
     {
         const fvPatch& fvp = pbm[patchi];
-        const labelList& fc = fvp.faceCells();
+        const labelUList& fc = fvp.faceCells();
 
         if (isA<oversetFvPatch>(fvp))
         {

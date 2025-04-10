@@ -121,17 +121,4 @@ bool Foam::faceAreaIntersect::cacheTriangulation() const
 }
 
 
-const Foam::DynamicList<Foam::triPoints>
-Foam::faceAreaIntersect::triangles() const
-{
-    return triangles_;
-}
-
-
-Foam::DynamicList<Foam::triPoints>& Foam::faceAreaIntersect::triangles()
-{
-    return triangles_;
-}
-
-
 // ************************************************************************* //

@@ -53,6 +53,21 @@
         pimpleDict.getOrDefault<scalar>("maxDeltaT", GREAT)
     );
 
+
+    // The old reciprocal time scale field, with any damping factor
+    tmp<volScalarField> rDeltaT0_damped;
+
+    // Calculate damped value before applying any other changes
+    if
+    (
+        rDeltaTDampingCoeff < 1
+     && runTime.timeIndex() > runTime.startTimeIndex() + 1
+    )
+    {
+        rDeltaT0_damped = (scalar(1) - rDeltaTDampingCoeff)*(rDeltaT);
+    }
+
+
     volScalarField rDeltaT0("rDeltaT0", rDeltaT);
 
     // Set the reciprocal time-step from the local Courant number
@@ -83,10 +98,13 @@
     // Update tho boundary values of the reciprocal time-step
     rDeltaT.correctBoundaryConditions();
 
-    Info<< "Flow time scale min/max = "
-        << gMin(1/rDeltaT.primitiveField())
-        << ", " << gMax(1/rDeltaT.primitiveField()) << endl;
+    {
+        auto limits = gMinMax(rDeltaT.primitiveField());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
 
+        Info<< "Flow time scale min/max = "
+            << limits.min() << ", " << limits.max() << endl;
+    }
     if (rDeltaTSmoothingCoeff < 1.0)
     {
         fvc::smooth(rDeltaT, rDeltaTSmoothingCoeff);
@@ -110,27 +128,25 @@
         fvc::sweep(rDeltaT, alpha1, nAlphaSweepIter, alphaSpreadDiff);
     }
 
-    Info<< "Smoothed flow time scale min/max = "
-        << gMin(1/rDeltaT.primitiveField())
-        << ", " << gMax(1/rDeltaT.primitiveField()) << endl;
+    {
+        auto limits = gMinMax(rDeltaT.primitiveField());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
 
-    // Limit rate of change of time scale
+        Info<< "Smoothed flow time scale min/max = "
+            << limits.min() << ", " << limits.max() << endl;
+    }
+
+    // Limit rate of change of time scale (=> smallest reciprocal time)
     // - reduce as much as required
     // - only increase at a fraction of old time scale
-    if
-    (
-        rDeltaTDampingCoeff < 1.0
-     && runTime.timeIndex() > runTime.startTimeIndex() + 1
-    )
+    if (rDeltaT0_damped)
     {
-        rDeltaT = max
-        (
-            rDeltaT,
-            (scalar(1) - rDeltaTDampingCoeff)*rDeltaT0
-        );
+        rDeltaT.clamp_min(rDeltaT0_damped());
+
+        auto limits = gMinMax(rDeltaT.primitiveField());
+        limits.reset(1/(limits.max()+VSMALL), 1/(limits.min()+VSMALL));
 
         Info<< "Damped flow time scale min/max = "
-            << gMin(1/rDeltaT.primitiveField())
-            << ", " << gMax(1/rDeltaT.primitiveField()) << endl;
+            << limits.min() << ", " << limits.max() << endl;
     }
 }

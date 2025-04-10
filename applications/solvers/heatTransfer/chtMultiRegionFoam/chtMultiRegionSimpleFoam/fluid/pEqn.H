@@ -78,8 +78,8 @@
     }
 
     rho = thermo.rho();
-    rho = max(rho, rhoMin[i]);
-    rho = min(rho, rhoMax[i]);
+
+    rho.clamp_range(rhoMin[i], rhoMax[i]);
     rho.relax();
 
     Info<< "Min/max rho:" << min(rho).value() << ' '

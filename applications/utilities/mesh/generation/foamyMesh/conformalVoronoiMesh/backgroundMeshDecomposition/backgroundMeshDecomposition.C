@@ -47,7 +47,7 @@ namespace Foam
 
 Foam::autoPtr<Foam::mapDistribute> Foam::backgroundMeshDecomposition::buildMap
 (
-    const List<label>& toProc
+    const labelUList& toProc
 )
 {
     // Determine send map

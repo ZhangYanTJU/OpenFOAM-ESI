@@ -385,13 +385,6 @@ inline const T& Foam::UList<T>::operator[](const label i) const
 }
 
 
-template<class T>
-inline Foam::UList<T>::operator const Foam::List<T>&() const
-{
-    return *reinterpret_cast<const List<T>*>(this);
-}
-
-
 // * * * * * * * * * * * * * * STL Member Functions  * * * * * * * * * * * * //
 
 template<class T>

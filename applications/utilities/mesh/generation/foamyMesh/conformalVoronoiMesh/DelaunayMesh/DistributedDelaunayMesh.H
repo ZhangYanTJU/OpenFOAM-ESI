@@ -115,7 +115,7 @@ private:
 
         label referVertices
         (
-            const DynamicList<label>& targetProcessor,
+            const labelUList& targetProcessor,
             DynamicList<Vb>& parallelVertices,
             PtrList<labelPairHashSet>& referralVertices,
             labelPairHashSet& receivedVertices
@@ -160,7 +160,7 @@ public:
     // Member Functions
 
         //- Build a mapDistribute for the supplied destination processor data
-        static autoPtr<mapDistribute> buildMap(const List<label>& toProc);
+        static autoPtr<mapDistribute> buildMap(const labelUList& toProc);
 
         //-
         bool distribute(const boundBox& bb);

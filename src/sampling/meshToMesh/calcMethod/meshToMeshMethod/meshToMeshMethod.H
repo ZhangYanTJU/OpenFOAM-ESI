@@ -100,7 +100,7 @@ protected:
         (
             const label tgtCelli,
             const polyMesh& mesh,
-            const DynamicList<label>& visitedTgtCells,
+            const labelUList& visitedTgtCells,
             DynamicList<label>& nbrTgtCellIDs
         ) const;
 

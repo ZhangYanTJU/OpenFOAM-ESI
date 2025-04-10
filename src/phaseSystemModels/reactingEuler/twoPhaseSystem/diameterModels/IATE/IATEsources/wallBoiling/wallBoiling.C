@@ -122,7 +122,7 @@ Foam::diameterModels::IATEsources::wallBoiling::R
             const scalarField& dmdt = alphatw.dmdt();
             const scalarField& dDep = alphatw.dDeparture();
 
-            const labelList& faceCells = alphatw.patch().faceCells();
+            const labelUList& faceCells = alphatw.patch().faceCells();
 
             forAll(alphatw, facei)
             {

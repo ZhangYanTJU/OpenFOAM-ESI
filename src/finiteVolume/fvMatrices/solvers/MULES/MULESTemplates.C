@@ -321,7 +321,7 @@ void Foam::MULES::limiter
         const scalarField& phiBDPf = phiBDBf[patchi];
         const scalarField& phiCorrPf = phiCorrBf[patchi];
 
-        const labelList& pFaceCells = mesh.boundary()[patchi].faceCells();
+        const labelUList& pFaceCells = mesh.boundary()[patchi].faceCells();
 
         if (psiPf.coupled())
         {
@@ -469,7 +469,7 @@ void Foam::MULES::limiter
             scalarField& lambdaPf = lambdaBf[patchi];
             const scalarField& phiCorrfPf = phiCorrBf[patchi];
 
-            const labelList& pFaceCells = mesh.boundary()[patchi].faceCells();
+            const labelUList& pFaceCells = mesh.boundary()[patchi].faceCells();
 
             forAll(lambdaPf, pFacei)
             {
@@ -542,7 +542,7 @@ void Foam::MULES::limiter
             }
             else if (psiPf.coupled())
             {
-                const labelList& pFaceCells =
+                const labelUList& pFaceCells =
                     mesh.boundary()[patchi].faceCells();
 
                 forAll(lambdaPf, pFacei)

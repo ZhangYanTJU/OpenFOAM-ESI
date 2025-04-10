@@ -210,7 +210,7 @@ void VoFPatchTransfer::correct
             film().toRegion(patchi, Vp);
 
             const polyPatch& pp = pbm[patchi];
-            const labelList& faceCells = pp.faceCells();
+            const labelUList& faceCells = pp.faceCells();
 
             // Accumulate the total mass removed from patch
             scalar dMassPatch = 0;

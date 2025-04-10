@@ -117,7 +117,7 @@ template<class Triangulation>
 inline bool Foam::pointPairs<Triangulation>::addPointPair
 (
     const labelPair& master,
-    const DynamicList<labelPair>& slaves
+    const UList<labelPair>& slaves
 )
 {
     for (const labelPair& slave : slaves)

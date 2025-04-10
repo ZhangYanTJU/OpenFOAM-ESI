@@ -423,7 +423,7 @@ void Foam::cellCellStencil::setUpFrontOnOversetPatch
     {
         if (isA<oversetFvPatch>(fvm[patchi]))
         {
-            const labelList& fc = fvm[patchi].faceCells();
+            const labelUList& fc = fvm[patchi].faceCells();
             forAll(fc, i)
             {
                 const label celli = fc[i];

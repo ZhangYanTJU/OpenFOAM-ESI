@@ -231,7 +231,7 @@ void Foam::Helmholtz::regularise
             );
             // Map result back to original field
             result.rmap(resultSub, cellMap);
-            Info<< "min max " << gMin(result) << " " << gMax(result) << endl;
+            Info<< "min max " << gMinMax(result) << endl;
             return;
         }
     }

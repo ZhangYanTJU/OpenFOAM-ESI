@@ -180,8 +180,9 @@ void Foam::combustionModels::EDC<ReactionThermo>::correct()
             kappa_.correctBoundaryConditions();
         }
 
-        Info<< "Chemistry time solved max/min : "
-            << gMax(tauStar) << " / " << gMin(tauStar) << endl;
+        auto limits = gMinMax(tauStar);
+        Info<< "Chemistry time solved min/max : "
+            << limits.min() << ", " << limits.max() << endl;
 
         this->chemistryPtr_->solve(tauStar);
     }

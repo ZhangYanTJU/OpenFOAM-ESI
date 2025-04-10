@@ -385,6 +385,9 @@ void turbulentTemperatureCoupledBaffleMixedFvPatchScalarField::updateCoeffs()
     {
         scalar Q = gSum(kappaTp*patch().magSf()*snGrad());
 
+        auto limits = gMinMax(*this);
+        auto avg = gAverage(*this);
+
         Info<< patch().boundaryMesh().mesh().name() << ':'
             << patch().name() << ':'
             << this->internalField().name() << " <- "
@@ -393,9 +396,9 @@ void turbulentTemperatureCoupledBaffleMixedFvPatchScalarField::updateCoeffs()
             << this->internalField().name() << " :"
             << " heat transfer rate:" << Q
             << " walltemperature "
-            << " min:" << gMin(*this)
-            << " max:" << gMax(*this)
-            << " avg:" << gAverage(*this)
+            << " min:" << limits.min()
+            << " max:" << limits.max()
+            << " avg:" << avg
             << endl;
     }
 

@@ -215,10 +215,13 @@ Foam::fv::cellLimitedGrad<Type, Limiter>::calcGrad
 
     if (fv::debug)
     {
+        auto limits = gMinMax(limiter);
+        auto avg = gAverage(limiter);
+
         Info<< "gradient limiter for: " << vsf.name()
-            << " max = " << gMax(limiter)
-            << " min = " << gMin(limiter)
-            << " average: " << gAverage(limiter) << endl;
+            << " min = " << limits.min()
+            << " max = " << limits.max()
+            << " average: " << avg << endl;
     }
 
     limitGradient(limiter, g);

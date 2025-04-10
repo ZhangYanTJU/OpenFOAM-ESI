@@ -134,7 +134,7 @@ void Foam::movingConeTopoFvMesh::addZonesAndModifiers()
          && fc[facei].x() < -0.003499
         )
         {
-            if ((fa[facei] & vector(1, 0, 0)) < 0)
+            if (fa[facei].x() < 0)
             {
                 flipZone1[nZoneFaces1] = true;
             }
@@ -152,7 +152,7 @@ void Foam::movingConeTopoFvMesh::addZonesAndModifiers()
         {
             zone2[nZoneFaces2] = facei;
 
-            if ((fa[facei] & vector(1, 0, 0)) > 0)
+            if (fa[facei].x() > 0)
             {
                 flipZone2[nZoneFaces2] = true;
             }

@@ -161,8 +161,7 @@ void Foam::fluentFvMesh::writeFluentMesh() const
     {
         const faceUList& patchFaces = boundaryMesh()[patchi];
 
-        const labelList& patchFaceCells =
-            boundaryMesh()[patchi].faceCells();
+        const labelUList& patchFaceCells = boundaryMesh()[patchi].faceCells();
 
         // The face group will be offset by 10 from the patch label
 

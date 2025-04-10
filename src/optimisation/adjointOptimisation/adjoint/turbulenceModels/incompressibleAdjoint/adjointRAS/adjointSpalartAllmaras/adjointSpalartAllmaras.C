@@ -907,7 +907,7 @@ tmp<volScalarField> adjointSpalartAllmaras::distanceSensitivities()
             const scalarField rt(tsource() & tf);
             const scalarField Uap_t(Uap & tf);
 
-            const labelList& faceCells = patch.faceCells();
+            const labelUList& faceCells = patch.faceCells();
             forAll(faceCells, faceI)
             {
                 label cellI = faceCells[faceI];

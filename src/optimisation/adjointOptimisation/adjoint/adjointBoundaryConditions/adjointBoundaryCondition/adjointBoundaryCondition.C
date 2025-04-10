@@ -54,7 +54,7 @@ adjointBoundaryCondition<Type>::computePatchGrad(word name)
     auto tresGrad = tmp<Field<GradType>>::New(patch_.size(), Zero);
     auto& resGrad = tresGrad.ref();
 
-    const labelList& faceCells = patch_.faceCells();
+    const labelUList& faceCells = patch_.faceCells();
     const fvMesh& mesh = patch_.boundaryMesh().mesh();
     const cellList& cells = mesh.cells();
 

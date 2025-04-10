@@ -321,8 +321,10 @@ patchSource() const
 
     if (debug)
     {
+        auto limits = gMinMax(dfldp);
+
         Info<< " Patch mass rate min/max [kg/m3/sec]: "
-            << gMin(dfldp) << " - " << gMax(dfldp) << endl;
+            << limits.min() << " - " << limits.max() << endl;
     }
 
     return tmp<scalarField>::New(dfldp);
@@ -391,8 +393,10 @@ void Foam::speciesSorptionFvPatchScalarField::updateCoeffs()
 
     if (debug)
     {
+        auto limits = gMinMax(dfldp_);
+
         Info<< "  Absorption rate min/max [mol/kg/sec]: "
-            << gMin(dfldp_) << " - " << gMax(dfldp_) << endl;
+            << limits.min() << " - " << limits.max() << endl;
     }
 
     zeroGradientFvPatchScalarField::updateCoeffs();

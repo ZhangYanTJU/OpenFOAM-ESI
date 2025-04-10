@@ -115,12 +115,11 @@ void patchInjection::correct
     {
         label patchi = patchIDs_[pidi];
         const polyPatch& pp = pbm[patchi];
-        const labelList& faceCells = pp.faceCells();
 
         // Accumulate the total mass removed from patch
         scalar dMassPatch = 0;
 
-        for (const label celli : faceCells)
+        for (const label celli : pp.faceCells())
         {
             scalar ddelta = max(0.0, delta[celli] - deltaStable_);
             scalar dMass = ddelta*rho[celli]*magSf[celli];

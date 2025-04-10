@@ -130,7 +130,7 @@ public:
             inline bool addPointPair
             (
                 const labelPair& master,
-                const DynamicList<labelPair>& slaves
+                const UList<labelPair>& slaves
             );
 
             inline bool addPointPair

@@ -393,7 +393,7 @@ private:
         (
             const objectRegistry& registry,
             const word& propertyName,
-            const labelList& list,
+            const labelUList& list,
             IOstreamOption streamOpt
         ) const;
 

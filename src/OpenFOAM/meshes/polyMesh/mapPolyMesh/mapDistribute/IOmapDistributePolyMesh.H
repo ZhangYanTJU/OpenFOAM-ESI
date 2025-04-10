@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,6 +85,17 @@ public:
         (
             const IOobject& io,
             mapDistributePolyMesh&& map
+        );
+
+
+    // Factory Methods
+
+        //- Write contents. The IOobject is never registered.
+        //  Uses IOmapDistributePolyMeshRef internally.
+        static void writeContents
+        (
+            const IOobject& io,
+            const mapDistributePolyMesh& map
         );
 
 

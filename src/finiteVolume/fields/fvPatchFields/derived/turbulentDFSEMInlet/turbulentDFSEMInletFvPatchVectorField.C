@@ -962,6 +962,8 @@ void Foam::turbulentDFSEMInletFvPatchVectorField::updateCoeffs()
 
         if (debug)
         {
+            auto limits = gMinMax(*this);
+
             Info<< "Magnitude of bulk velocity: " << UBulk << endl;
 
             Info<< "Number of eddies: "
@@ -969,7 +971,7 @@ void Foam::turbulentDFSEMInletFvPatchVectorField::updateCoeffs()
                 << endl;
 
             Info<< "Patch:" << patch().patch().name()
-                << " min/max(U):" << gMin(U) << ", " << gMax(U)
+                << " min/max(U):" << limits.min() << ", " << limits.max()
                 << endl;
 
             if (db().time().writeTime())

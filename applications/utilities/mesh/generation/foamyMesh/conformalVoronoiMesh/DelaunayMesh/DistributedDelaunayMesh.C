@@ -42,7 +42,7 @@ template<class Triangulation>
 Foam::autoPtr<Foam::mapDistribute>
 Foam::DistributedDelaunayMesh<Triangulation>::buildMap
 (
-    const List<label>& toProc
+    const labelUList& toProc
 )
 {
     // Determine send map
@@ -431,7 +431,7 @@ void Foam::DistributedDelaunayMesh<Triangulation>::markVerticesToRefer
 template<class Triangulation>
 Foam::label Foam::DistributedDelaunayMesh<Triangulation>::referVertices
 (
-    const DynamicList<label>& targetProcessor,
+    const labelUList& targetProcessor,
     DynamicList<Vb>& parallelVertices,
     PtrList<labelPairHashSet>& referralVertices,
     labelPairHashSet& receivedVertices
