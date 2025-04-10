@@ -136,7 +136,13 @@ public:
     // Member Operators
 
         //- Allow cast to a const Field\<Type\>&
-        inline operator const Foam::Field<Type>&() const;
+        //  \note Marked as "strictly" deprecated.
+        //  Currently (2025-04) code still depends on this cast.
+        FOAM_DEPRECATED_STRICTER(2025-04, "dereference as SubField, not Field?")
+        operator const Foam::Field<Type>&() const
+        {
+            return *reinterpret_cast<const Field<Type>*>(this);
+        }
 
         //- Copy assign via UList operator. Takes linear time.
         inline void operator=(const SubField<Type>&);
@@ -148,7 +154,7 @@ public:
         inline void operator=(const Type& val);
 
         //- Assign all entries to zero
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 
         //- Copy assign via UList operator. Takes linear time.
         template<class Form, direction Ncmpts>

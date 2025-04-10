@@ -458,7 +458,7 @@ void FieldField<Field, Type>::operator=(const Type& val)
 
 
 template<template<class> class Field, class Type>
-void FieldField<Field, Type>::operator=(const Foam::zero)
+void FieldField<Field, Type>::operator=(Foam::zero)
 {
     forAll(*this, i)
     {

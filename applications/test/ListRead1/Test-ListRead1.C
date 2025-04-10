@@ -50,7 +50,6 @@ Description
 #include "ListPolicy.H"
 
 #include <list>
-#include <numeric>
 #include <functional>
 
 using namespace Foam;

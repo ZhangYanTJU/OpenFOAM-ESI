@@ -43,7 +43,6 @@ SourceFiles
 #define Foam_DiagonalMatrix_H
 
 #include "List.H"
-#include <numeric>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

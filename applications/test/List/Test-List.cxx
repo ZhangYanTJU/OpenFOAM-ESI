@@ -54,7 +54,6 @@ See also
 #include "ListPolicy.H"
 
 #include <list>
-#include <numeric>
 #include <functional>
 
 // see issue #2083

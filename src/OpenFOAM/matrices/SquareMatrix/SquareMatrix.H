@@ -45,7 +45,6 @@ SourceFiles
 
 #include "Matrix.H"
 #include "Identity.H"
-#include <numeric>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

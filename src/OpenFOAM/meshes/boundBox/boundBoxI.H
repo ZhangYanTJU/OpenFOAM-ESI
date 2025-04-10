@@ -112,7 +112,7 @@ inline Foam::boundBox::boundBox()
 {}
 
 
-inline Foam::boundBox::boundBox(const Foam::zero_one)
+inline Foam::boundBox::boundBox(Foam::zero_one)
 :
     min_(point::zero),
     max_(point::one)
@@ -306,7 +306,7 @@ inline void Foam::boundBox::reset()
 }
 
 
-inline void Foam::boundBox::reset(const Foam::zero_one)
+inline void Foam::boundBox::reset(Foam::zero_one)
 {
     min_ = point::zero;
     max_ = point::one;

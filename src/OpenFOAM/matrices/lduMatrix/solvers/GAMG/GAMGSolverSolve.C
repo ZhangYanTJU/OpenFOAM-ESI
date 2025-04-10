@@ -239,7 +239,7 @@ void Foam::GAMGSolver::Vcycle
                         coarseCorrFields[leveli],
                         const_cast<solveScalarField&>
                         (
-                            ACf.operator const solveScalarField&()
+                            static_cast<const solveScalarField&>(ACf)
                         ),
                         matrixLevels_[leveli],
                         interfaceLevelsBouCoeffs_[leveli],
@@ -346,11 +346,10 @@ void Foam::GAMGSolver::Vcycle
                 scratch1,
                 coarseCorrFields[leveli].size()
             );
-            solveScalarField& ACfRef =
-                const_cast<solveScalarField&>
-                (
-                    ACf.operator const solveScalarField&()
-                );
+            auto& ACfRef = const_cast<solveScalarField&>
+            (
+                static_cast<const solveScalarField&>(ACf)
+            );
 
             if (interpolateCorrection_)
             {

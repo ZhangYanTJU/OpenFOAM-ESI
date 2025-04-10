@@ -172,7 +172,11 @@ public:
     // Member Operators
 
         //- Allow cast to a const List\<T\>&
-        inline operator const Foam::List<T>&() const;
+        FOAM_DEPRECATED_STRICTER(2025-04, "dereference as SubList, not List?")
+        operator const Foam::List<T>&() const
+        {
+            return *reinterpret_cast<const List<T>*>(this);
+        }
 
         //- Copy assign entries (deep copy) from given sub-list.
         //- Sizes must match!

@@ -149,7 +149,7 @@ void clamp
 (
     DimensionedField<Type, GeoMesh>& result,
     const DimensionedField<Type, GeoMesh>& f1,
-    const Foam::zero_one
+    Foam::zero_one
 );
 
 template<class Type, class GeoMesh>
@@ -157,7 +157,7 @@ tmp<DimensionedField<Type, GeoMesh>>
 clamp
 (
     const DimensionedField<Type, GeoMesh>& f1,
-    const Foam::zero_one
+    Foam::zero_one
 );
 
 template<class Type, class GeoMesh>
@@ -165,7 +165,7 @@ tmp<DimensionedField<Type, GeoMesh>>
 clamp
 (
     const tmp<DimensionedField<Type, GeoMesh>>& tf1,
-    const Foam::zero_one
+    Foam::zero_one
 );
 
 BINARY_TYPE_FUNCTION_FS(Type, Type, MinMax<Type>, clamp)

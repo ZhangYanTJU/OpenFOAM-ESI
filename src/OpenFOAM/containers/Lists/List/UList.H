@@ -427,7 +427,7 @@ public:
         //- Allow cast to a const List<T>&.
         //  \note Marked as "strictly" deprecated.
         //  Currently (2025-04) code still depends on this cast.
-        FOAM_DEPRECATED_STRICTER(2025-04, "dereference as UList, not List")
+        FOAM_DEPRECATED_STRICTER(2025-04, "dereference as UList, not List?")
         operator const Foam::List<T>&() const
         {
             return *reinterpret_cast<const List<T>*>(this);

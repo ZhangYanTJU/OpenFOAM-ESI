@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Includes some standard C++ headers, defines global macros and templates
+    Includes some common C++ headers, defines global macros and templates
     used in multiple places by OpenFOAM.
 
 \*---------------------------------------------------------------------------*/
@@ -36,6 +36,7 @@ Description
 #include <initializer_list>
 #include <iterator>  // for std::begin, std::end, ...
 #include <memory>
+#include <numeric>   // for std::iota, std::reduce, ...
 #include <type_traits>
 #include <utility>
 

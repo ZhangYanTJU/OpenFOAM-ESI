@@ -43,8 +43,6 @@ Description
 #include "SubList.H"
 #include "FlatOutput.H"
 
-#include <numeric>
-
 using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
