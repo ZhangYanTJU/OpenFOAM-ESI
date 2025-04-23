@@ -27,6 +27,7 @@ License
 
 #include "fvcSurfaceOps.H"
 #include "fvMesh.H"
+#include "fusedGaussLaplacianScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,17 +55,116 @@ void surfaceSum
     const auto& Sf = mesh.Sf();
     const auto& P = mesh.owner();
     const auto& N = mesh.neighbour();
+    const auto& pbm = mesh.boundaryMesh();
+    const auto& cells = mesh.cells();
+    const label nCells = cells.size();
+    const label nIntFaces = mesh.nInternalFaces();
 
     const auto& vfi = vf.primitiveField();
     auto& sfi = result.primitiveFieldRef();
 
     // See e.g. surfaceInterpolationScheme<Type>::dotInterpolate
 
-    // Internal field
-    {
-        const auto& Sfi = Sf.primitiveField();
-        const auto& lambda = lambdas.primitiveField();
+    // Fetch patchNeighbourField or value onto end of vf
+    bitSet isCoupled(vf.boundaryField().size());
 
+    const label oldSize = vf.constCast().boundaryEvaluate
+    (
+        [&](const auto& pfld, UList<Type>& slice)
+        {
+            if (pfld.coupled())
+            {
+                pfld.patchNeighbourField(slice);
+                isCoupled.set(pfld.patch().index());
+            }
+            else
+            {
+                SubList<Type>(slice, pfld.size()) = pfld;
+            }
+        }
+    );
+
+    // Internal field
+    const auto& Sfi = Sf.primitiveField();
+    const auto& lambda = lambdas.primitiveField();
+
+    if (fv::fusedGaussLaplacianScheme<Type, scalar>::debug)
+    {
+        Pout<< "Doing surfaceSum on " << vf.name()
+            << " size:" << vf.size()
+            << " capacity:" << vf.capacity() << endl;
+
+        const auto& patchID = pbm.patchID();
+        for (label celli = 0; celli < nCells; celli++)
+        {
+            const auto& cFaces = cells[celli];
+
+            auto& res = sfi[celli];
+            res = Zero;
+            for (const label facei : cFaces)
+            {
+                if (facei < nIntFaces)
+                {
+                    ResultType faceVal
+                    (
+                        cop
+                        (
+                            Sfi[facei],
+                            lambda[facei],
+                            vfi[P[facei]],
+                            vfi[N[facei]]
+                        )
+                    );
+                    if (P[facei] != celli)
+                    {
+                        faceVal = -faceVal;
+                    }
+                    sfi[celli] += faceVal;
+                }
+                else
+                {
+                    const label patchi = patchID[facei-nIntFaces];
+                    const label patchFacei = facei-pbm[patchi].start();
+                    const label offset = mesh.nCells()+pbm[patchi].offset();
+                    const auto& pSf = Sf.boundaryField()[patchi];
+                    const auto& pLambda = lambdas.boundaryField()[patchi];
+
+                    if (isCoupled(patchi))
+                    {
+                        // Interpolate between owner-side and neighbour-side values
+                        const ResultType faceVal
+                        (
+                            cop
+                            (
+                                pSf[patchFacei],
+                                pLambda[patchFacei],
+                                vfi[celli],
+                                vfi[offset+patchFacei]
+                            )
+                        );
+                        sfi[celli] += faceVal;
+                    }
+                    else if (pSf.size())
+                    {
+                        // Use patch value only
+                        const ResultType faceVal
+                        (
+                            cop
+                            (
+                                pSf[patchFacei],
+                                scalar(1.0),
+                                vfi[offset+patchFacei],
+                                pTraits<Type>::zero  // not used
+                            )
+                        );
+                        sfi[celli] += faceVal;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
         for (label facei=0; facei<P.size(); facei++)
         {
             const label ownCelli = P[facei];
@@ -83,22 +183,19 @@ void surfaceSum
             sfi[ownCelli] += faceVal;
             sfi[neiCelli] -= faceVal;
         }
-    }
 
-
-    // Boundary field
-    {
+        // Boundary field
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
+            const label offset = mesh.nCells()+pbm[patchi].offset();
             const auto& pSf = Sf.boundaryField()[patchi];
-            const auto& pvf = vf.boundaryField()[patchi];
             const auto& pLambda = lambdas.boundaryField()[patchi];
 
-            if (pvf.coupled())
+            if (isCoupled(patchi))
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.patchNeighbourField());
+                //auto& pnf = tpnf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -110,10 +207,10 @@ void surfaceSum
                             pSf[facei],
                             pLambda[facei],
                             vfi[pFaceCells[facei]],
-                            pnf[facei]
+                            //pnf[facei]
+                            vfi[offset+facei]
                         )
                     );
-
                     sfi[pFaceCells[facei]] += faceVal;
                 }
             }
@@ -128,7 +225,7 @@ void surfaceSum
                         (
                             pSf[facei],
                             scalar(1.0),
-                            pvf[facei],
+                            vfi[offset+facei],
                             pTraits<Type>::zero  // not used
                         )
                     );
@@ -137,6 +234,9 @@ void surfaceSum
             }
         }
     }
+
+    // Restore original size
+    vf.constCast().resize(oldSize);
 
     if (doCorrectBoundaryConditions)
     {
@@ -197,6 +297,18 @@ void surfaceSum
 
     // Boundary field
     {
+        // Fetch patchNeighbourField onto end of GeoField
+        const label oldSize = vf.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -207,8 +319,10 @@ void surfaceSum
 
             if (pvf.coupled())
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.patchNeighbourField());
+                //auto& pnf = tpnf();
+
+                const label offset = mesh.nCells()+pvf.patch().offset();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -220,11 +334,11 @@ void surfaceSum
                             pSf[facei],
                             pLambda[facei],
                             vfi[pFaceCells[facei]],
-                            pnf[facei],
+                            //pnf[facei],
+                            vfi[offset+facei],
                             psadd[facei]
                         )
                     );
-
                     sfi[pFaceCells[facei]] += faceVal;
                 }
             }
@@ -249,6 +363,9 @@ void surfaceSum
                 }
             }
         }
+
+        // Restore original size
+        vf.constCast().resize(oldSize);
     }
 
     if (doCorrectBoundaryConditions)
@@ -323,6 +440,18 @@ void surfaceSum
 
     // Boundary field
     {
+        // Fetch patchNeighbourField onto end of GeoField
+        const label oldSize = vf.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -334,8 +463,10 @@ void surfaceSum
 
             if (pvf.coupled())
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.patchNeighbourField());
+                //auto& pnf = tpnf();
+
+                const label offset = mesh.nCells()+pvf.patch().offset();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -348,7 +479,8 @@ void surfaceSum
 
                             pLambda[facei],
                             vfi[pFaceCells[facei]],
-                            pnf[facei],
+                            //pnf[facei],
+                            vfi[offset+facei],
 
                             psf0[facei],
                             psf1[facei]
@@ -376,10 +508,14 @@ void surfaceSum
                             psf1[facei]
                         )
                     );
+
                     resulti[pFaceCells[facei]] += faceVal;
                 }
             }
         }
+
+        // Restore original size
+        vf.constCast().resize(oldSize);
     }
 
     if (doCorrectBoundaryConditions)
@@ -454,6 +590,18 @@ void surfaceOp
 
     // Boundary field
     {
+        // Fetch patchNeighbourField onto end of GeoField
+        const label oldSize = vf.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -463,8 +611,10 @@ void surfaceOp
 
             if (pvf.coupled())
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.patchNeighbourField());
+                //auto& pnf = tpnf();
+
+                const label offset = mesh.nCells()+pvf.patch().offset();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -474,10 +624,10 @@ void surfaceOp
                         (
                             pSf[facei], // needed?
                             vfi[pFaceCells[facei]],
-                            pnf[facei]
+                            //pnf[facei]
+                            vfi[offset+facei]
                         )
                     );
-
                     sfi[pFaceCells[facei]] += pOwnLs[facei]*faceVal;
                 }
             }
@@ -498,6 +648,9 @@ void surfaceOp
                 }
             }
         }
+
+        // Restore original size
+        vf.constCast().resize(oldSize);
     }
 
     result.correctBoundaryConditions();
@@ -552,6 +705,21 @@ void surfaceSnSum
 
     // Boundary field
     {
+        const label oldSize = vf.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+                else
+                {
+                    pfld.snGrad(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -559,10 +727,12 @@ void surfaceSnSum
             const auto& pvf = vf.boundaryField()[patchi];
             const auto& pdc = deltaCoeffs.boundaryField()[patchi];
 
+            const label offset = mesh.nCells()+pvf.patch().offset();
+
             if (pvf.coupled())
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.patchNeighbourField());
+                //auto& pnf = tpnf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -576,17 +746,17 @@ void surfaceSnSum
                             pSf[facei],         // area vector
                             pdc[facei],
                             vfi[ownCelli],
-                            pnf[facei]
+                            //pnf[facei]
+                            vfi[offset+facei]
                         )
                     );
-
                     sfi[ownCelli] += faceVal;
                 }
             }
             else
             {
-                auto tpnf(pvf.snGrad());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.snGrad());
+                //auto& pnf = tpnf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -600,13 +770,17 @@ void surfaceSnSum
                             pSf[facei],             // area vector
                             scalar(1.0),            // use 100% of pnf
                             pTraits<Type>::zero,
-                            pnf[facei]
+                            //pnf[facei]
+                            vfi[offset+facei]
                         )
                     );
                     sfi[ownCelli] += faceVal;
                 }
             }
         }
+
+        // Restore original size
+        vf.constCast().resize(oldSize);
     }
 
     if (doCorrectBoundaryConditions)
@@ -667,6 +841,22 @@ void surfaceSnSum
 
     // Boundary field
     {
+        // Fetch patchNeighbourField onto end of GeoField
+        const label oldSize = vf.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+                else
+                {
+                    pfld.snGrad(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -675,10 +865,12 @@ void surfaceSnSum
             const auto& pdc = deltaCoeffs.boundaryField()[patchi];
             const auto& psadd = sadd.boundaryField()[patchi];
 
+            const label offset = mesh.nCells()+pvf.patch().offset();
+
             if (pvf.coupled())
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.patchNeighbourField());
+                //auto& pnf = tpnf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -692,18 +884,18 @@ void surfaceSnSum
                             pSf[facei],         // area vector
                             pdc[facei],
                             vfi[ownCelli],
-                            pnf[facei],
+                            //pnf[facei],
+                            vfi[offset+facei],
                             psadd[facei]
                         )
                     );
-
                     sfi[ownCelli] += faceVal;
                 }
             }
             else
             {
-                auto tpnf(pvf.snGrad());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.snGrad());
+                //auto& pnf = tpnf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -717,7 +909,8 @@ void surfaceSnSum
                             pSf[facei],             // area vector
                             scalar(1.0),            // use 100% of pnf
                             pTraits<Type>::zero,
-                            pnf[facei],
+                            //pnf[facei],
+                            vfi[offset+facei],
                             psadd[facei]
                         )
                     );
@@ -725,6 +918,9 @@ void surfaceSnSum
                 }
             }
         }
+
+        // Restore original size
+        vf.constCast().resize(oldSize);
     }
 
     if (doCorrectBoundaryConditions)
@@ -792,6 +988,33 @@ void surfaceSnSum
 
     // Boundary field
     {
+        // Fetch patchNeighbourField onto end of GeoField
+        const label oldSize = vf.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+                else
+                {
+                    pfld.snGrad(slice);
+                }
+            }
+        );
+
+        (void) gamma.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<GType>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -801,12 +1024,14 @@ void surfaceSnSum
             const auto& pweights = gammaWeights.boundaryField()[patchi];
             const auto& pgamma = gamma.boundaryField()[patchi];
 
+            const label offset = mesh.nCells()+pvf.patch().offset();
+
             if (pvf.coupled())
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
-                auto tgammanf(pgamma.patchNeighbourField());
-                auto& gammanf = tgammanf();
+                //auto tpnf(pvf.patchNeighbourField());
+                //auto& pnf = tpnf();
+                //auto tgammanf(pgamma.patchNeighbourField());
+                //auto& gammanf = tgammanf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -821,21 +1046,22 @@ void surfaceSnSum
 
                             pweights[facei],
                             gammai[ownCelli],
-                            gammanf[facei],
+                            //gammanf[facei],
+                            gammai[offset+facei],
 
                             pdc[facei],
                             vfi[ownCelli],
-                            pnf[facei]
+                            //pnf[facei]
+                            vfi[offset+facei]
                         )
                     );
-
                     sfi[ownCelli] += faceVal;
                 }
             }
             else
             {
-                auto tpnf(pvf.snGrad());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.snGrad());
+                //auto& pnf = tpnf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -855,13 +1081,18 @@ void surfaceSnSum
 
                             scalar(1.0),            // use 100% of pnf
                             pTraits<Type>::zero,
-                            pnf[facei]
+                            //pnf[facei]
+                            vfi[offset+facei]
                         )
                     );
                     sfi[ownCelli] += faceVal;
                 }
             }
         }
+
+        // Restore original size
+        vf.constCast().resize(oldSize);
+        gamma.constCast().resize(oldSize);
     }
 
     if (doCorrectBoundaryConditions)
@@ -934,6 +1165,33 @@ void surfaceSnSum
 
     // Boundary field
     {
+        // Fetch patchNeighbourField onto end of GeoField
+        const label oldSize = vf.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+                else
+                {
+                    pfld.snGrad(slice);
+                }
+            }
+        );
+
+        (void) gamma.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<GType>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -944,13 +1202,10 @@ void surfaceSnSum
             const auto& pgamma = gamma.boundaryField()[patchi];
             const auto& psadd = sadd.boundaryField()[patchi];
 
+            const label offset = mesh.nCells()+pvf.patch().offset();
+
             if (pvf.coupled())
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
-                auto tgammanf(pgamma.patchNeighbourField());
-                auto& gammanf = tgammanf();
-
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
                     const label ownCelli = pFaceCells[facei];
@@ -964,23 +1219,24 @@ void surfaceSnSum
 
                             pweights[facei],
                             gammai[ownCelli],
-                            gammanf[facei],
+                            //gammanf[facei],
+                            gammai[offset+facei],
 
                             pdc[facei],
                             vfi[ownCelli],
-                            pnf[facei],
+                            //pnf[facei],
+                            vfi[offset+facei],
 
                             psadd[facei]
                         )
                     );
-
                     sfi[ownCelli] += faceVal;
                 }
             }
             else
             {
-                auto tpnf(pvf.snGrad());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.snGrad());
+                //auto& pnf = tpnf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -1000,7 +1256,8 @@ void surfaceSnSum
 
                             scalar(1.0),            // use 100% of pnf
                             pTraits<Type>::zero,
-                            pnf[facei],
+                            //pnf[facei],
+                            vfi[offset+facei],
 
                             psadd[facei]
                         )
@@ -1009,6 +1266,10 @@ void surfaceSnSum
                 }
             }
         }
+
+        // Restore original size
+        vf.constCast().resize(oldSize);
+        gamma.constCast().resize(oldSize);
     }
 
     if (doCorrectBoundaryConditions)
@@ -1089,6 +1350,44 @@ void surfaceSnSum
 
     // Boundary field
     {
+        // Fetch patchNeighbourField onto end of GeoField
+        const label oldSize = vf.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+                else
+                {
+                    pfld.snGrad(slice);
+                }
+            }
+        );
+
+        (void) gamma0.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<GType0>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
+        (void) gamma1.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<GType1>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -1099,14 +1398,16 @@ void surfaceSnSum
             const auto& pgamma0 = gamma0.boundaryField()[patchi];
             const auto& pgamma1 = gamma1.boundaryField()[patchi];
 
+            const label offset = mesh.nCells()+pvf.patch().offset();
+
             if (pvf.coupled())
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
-                auto tgamma0nf(pgamma0.patchNeighbourField());
-                auto& gamma0nf = tgamma0nf();
-                auto tgamma1nf(pgamma1.patchNeighbourField());
-                auto& gamma1nf = tgamma1nf();
+                //auto tpnf(pvf.patchNeighbourField());
+                //auto& pnf = tpnf();
+                //auto tgamma0nf(pgamma0.patchNeighbourField());
+                //auto& gamma0nf = tgamma0nf();
+                //auto tgamma1nf(pgamma1.patchNeighbourField());
+                //auto& gamma1nf = tgamma1nf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -1122,25 +1423,23 @@ void surfaceSnSum
                             pweights[facei],
 
                             gamma0i[ownCelli],
-                            gamma0nf[facei],
+                            gamma0i[offset+facei],  //gamma0nf[facei],
 
                             gamma1i[ownCelli],
-                            gamma1nf[facei],
+                            gamma1i[offset+facei],  //gamma1nf[facei],
 
                             pdc[facei],
                             vfi[ownCelli],
-                            pnf[facei]
+                            vfi[offset+facei]       //pnf[facei]
                         )
                     );
-
                     sfi[ownCelli] += faceVal;
                 }
             }
             else
             {
-                auto tpnf(pvf.snGrad());
-                auto& pnf = tpnf();
-
+                //auto tpnf(pvf.snGrad());
+                //auto& pnf = tpnf();
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
                     const label ownCelli = pFaceCells[facei];
@@ -1162,13 +1461,18 @@ void surfaceSnSum
 
                             scalar(1.0),            // use 100% of pnf
                             pTraits<Type>::zero,
-                            pnf[facei]
+                            vfi[offset+facei]       //pnf[facei]
                         )
                     );
                     sfi[ownCelli] += faceVal;
                 }
             }
         }
+
+        // Restore original size
+        vf.constCast().resize(oldSize);
+        gamma0.constCast().resize(oldSize);
+        gamma1.constCast().resize(oldSize);
     }
 
     if (doCorrectBoundaryConditions)
@@ -1226,6 +1530,18 @@ void interpolate
 
     // Boundary field
     {
+        // Fetch patchNeighbourField onto end of GeoField
+        const label oldSize = vf.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -1235,10 +1551,12 @@ void interpolate
             const auto& psf = sf.boundaryField()[patchi];
             auto& presult = result.boundaryFieldRef()[patchi];
 
+            const label offset = mesh.nCells()+pvf.patch().offset();
+
             if (pvf.coupled())
             {
-                auto tpnf(pvf.patchNeighbourField());
-                auto& pnf = tpnf();
+                //auto tpnf(pvf.patchNeighbourField());
+                //auto& pnf = tpnf();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -1249,7 +1567,7 @@ void interpolate
 
                         pweight[facei],
                         vfi[pFaceCells[facei]],
-                        pnf[facei],
+                        vfi[offset+facei],  //pnf[facei],
 
                         psf[facei],
 
@@ -1277,8 +1595,13 @@ void interpolate
                 }
             }
         }
+
+        // Restore original size
+        vf.constCast().resize(oldSize);
     }
 }
+
+
 template
 <
     class Type0,
@@ -1335,6 +1658,30 @@ void interpolate
 
     // Boundary field
     {
+        // Fetch patchNeighbourField onto end of GeoField
+        const label oldSize = vf0.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type0>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
+        // Fetch patchNeighbourField onto end of GeoField
+        (void) vf1.constCast().boundaryEvaluate
+        (
+            [](const auto& pfld, UList<Type1>& slice)
+            {
+                if (pfld.coupled())
+                {
+                    pfld.patchNeighbourField(slice);
+                }
+            }
+        );
+
         forAll(mesh.boundary(), patchi)
         {
             const auto& pFaceCells = mesh.boundary()[patchi].faceCells();
@@ -1344,13 +1691,14 @@ void interpolate
             const auto& pweight = weights.boundaryField()[patchi];
             auto& presult = result.boundaryFieldRef()[patchi];
 
+            const label offset = mesh.nCells()+pvf0.patch().offset();
+
             if (pvf0.coupled() || pvf1.coupled())
             {
-                auto tpnf0(pvf0.patchNeighbourField());
-                auto& pnf0 = tpnf0();
-
-                auto tpnf1(pvf1.patchNeighbourField());
-                auto& pnf1 = tpnf1();
+                //auto tpnf0(pvf0.patchNeighbourField());
+                //auto& pnf0 = tpnf0();
+                //auto tpnf1(pvf1.patchNeighbourField());
+                //auto& pnf1 = tpnf1();
 
                 for (label facei=0; facei<pFaceCells.size(); facei++)
                 {
@@ -1362,10 +1710,10 @@ void interpolate
                         pweight[facei],
 
                         vf0i[pFaceCells[facei]],
-                        pnf0[facei],
+                        vf0i[offset+facei], //pnf0[facei],
 
                         vf1i[pFaceCells[facei]],
-                        pnf1[facei],
+                        vf1i[offset+facei], //pnf1[facei],
 
                         presult[facei]
                     );
@@ -1393,6 +1741,10 @@ void interpolate
                 }
             }
         }
+
+        // Restore original size
+        vf0.constCast().resize(oldSize);
+        vf1.constCast().resize(oldSize);
     }
 }
 

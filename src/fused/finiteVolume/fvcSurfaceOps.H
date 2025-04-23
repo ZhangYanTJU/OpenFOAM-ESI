@@ -35,9 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-
-#ifndef fvcSurfaceOps_H
-#define fvcSurfaceOps_H
+#ifndef Foam_fvcSurfaceOps_H
+#define Foam_fvcSurfaceOps_H
 
 #include "primitiveFieldsFwd.H"
 #include "volFieldsFwd.H"
