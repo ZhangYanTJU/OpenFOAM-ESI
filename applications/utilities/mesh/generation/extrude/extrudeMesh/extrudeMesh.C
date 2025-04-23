@@ -473,16 +473,6 @@ int main(int argc, char *argv[])
         );
 
 
-        // Precalculate mesh edges for pp.edges.
-        const labelList meshEdges
-        (
-            extrudePatch.meshEdges
-            (
-                mesh.edges(),
-                mesh.pointEdges()
-            )
-        );
-
         // Global face indices engine
         const globalIndex globalFaces(mesh.nFaces());
 
