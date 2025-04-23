@@ -28,6 +28,7 @@ License
 
 #include "fusedGaussLaplacianScheme.H"
 #include "fvMesh.H"
+#include "fvMatrixExpression.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -40,7 +41,7 @@ Foam::tmp<Foam::fvMatrix<Foam::Type>>                                          \
 Foam::fv::fusedGaussLaplacianScheme<Foam::Type, Foam::scalar>::                \
 fvmLaplacian                                                                   \
 (                                                                              \
-    const GeometricField<scalar, fvsPatchField, surfaceMesh>& gamma,           \
+    const GeometricField<scalar, fvPatchField, volMesh>& gamma,                \
     const GeometricField<Type, fvPatchField, volMesh>& vf                      \
 )                                                                              \
 {                                                                              \
@@ -49,46 +50,89 @@ fvmLaplacian                                                                   \
                                                                                \
     const fvMesh& mesh = this->mesh();                                         \
                                                                                \
-    GeometricField<scalar, fvsPatchField, surfaceMesh> gammaMagSf              \
-    (                                                                          \
-        gamma*mesh.magSf()                                                     \
-    );                                                                         \
+    const auto weights = this->tinterpGammaScheme_().weights(gamma).expr();    \
+    const auto gammaMagSf =                                                    \
+        Expression::lerp(gamma.expr(), weights, mesh)                          \
+      * mesh.magSf().expr();                                                   \
+    const auto deltaCoeffs = this->tsnGradScheme_().deltaCoeffs(vf).expr();    \
                                                                                \
-    tmp<fvMatrix<Type>> tfvm = fvmLaplacianUncorrected                         \
+    tmp<fvMatrix<Type>> tfvm                                                   \
     (                                                                          \
-        gammaMagSf,                                                            \
-        this->tsnGradScheme_().deltaCoeffs(vf),                                \
-        vf                                                                     \
+        new fvMatrix<Type>                                                     \
+        (                                                                      \
+            vf,                                                                \
+            gamma.dimensions()*mesh.magSf().dimensions()*vf.dimensions()       \
+        )                                                                      \
     );                                                                         \
     fvMatrix<Type>& fvm = tfvm.ref();                                          \
                                                                                \
+    Expression::fvmLaplacianUncorrected(fvm, gammaMagSf, deltaCoeffs);         \
+                                                                               \
     if (this->tsnGradScheme_().corrected())                                    \
     {                                                                          \
+       typedef GeometricField<Type, fvsPatchField, surfaceMesh> surfaceType;   \
+                                                                               \
+        const auto corr(this->tsnGradScheme_().correction(vf).expr());         \
+        const auto V = mesh.V().expr();                                        \
+                                                                               \
         if (mesh.fluxRequired(vf.name()))                                      \
         {                                                                      \
-            fvm.faceFluxCorrectionPtr() = std::make_unique                     \
-            <                                                                  \
-                GeometricField<Type, fvsPatchField, surfaceMesh>               \
-            >                                                                  \
+            fvm.faceFluxCorrectionPtr() = std::make_unique<surfaceType>        \
             (                                                                  \
-                gammaMagSf*this->tsnGradScheme_().correction(vf)               \
-            );                                                                 \
-                                                                               \
-            fvm.source() -=                                                    \
-                mesh.V()*                                                      \
-                fvc::div                                                       \
+                IOobject                                                       \
                 (                                                              \
-                    *fvm.faceFluxCorrectionPtr()                               \
-                )().primitiveField();                                          \
+                    "faceFluxCorr",                                            \
+                    mesh.time().timeName(),                                    \
+                    mesh,                                                      \
+                    IOobject::NO_READ,                                         \
+                    IOobject::NO_WRITE,                                        \
+                    IOobject::NO_REGISTER                                      \
+                ),                                                             \
+                mesh,                                                          \
+                gamma.dimensions()                                             \
+               *mesh.magSf().dimensions()                                      \
+               *corr.data().dimensions()                                       \
+            );                                                                 \
+            auto& faceFluxCorr = *fvm.faceFluxCorrectionPtr();                 \
+            faceFluxCorr = gammaMagSf*corr;                                    \
+                                                                               \
+            fvm.source() =                                                     \
+                fvm.source().expr()                                            \
+              - (                                                              \
+                    V * fvc::div                                               \
+                    (                                                          \
+                        faceFluxCorr                                           \
+                    )().primitiveField().expr()                                \
+                );                                                             \
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            fvm.source() -=                                                    \
-                mesh.V()*                                                      \
-                fvc::div                                                       \
+            surfaceType faceFluxCorr                                           \
+            (                                                                  \
+                IOobject                                                       \
                 (                                                              \
-                    gammaMagSf*this->tsnGradScheme_().correction(vf)           \
-                )().primitiveField();                                          \
+                    "faceFluxCorr",                                            \
+                    mesh.time().timeName(),                                    \
+                    mesh,                                                      \
+                    IOobject::NO_READ,                                         \
+                    IOobject::NO_WRITE,                                        \
+                    IOobject::NO_REGISTER                                      \
+                ),                                                             \
+                mesh,                                                          \
+                gamma.dimensions()                                             \
+               *mesh.magSf().dimensions()                                      \
+               *corr.data().dimensions()                                       \
+            );                                                                 \
+            faceFluxCorr = gammaMagSf*corr;                                    \
+                                                                               \
+            fvm.source() =                                                     \
+                fvm.source().expr()                                            \
+              - (                                                              \
+                    V * fvc::div                                               \
+                    (                                                          \
+                        faceFluxCorr                                           \
+                    )().primitiveField().expr()                                \
+                );                                                             \
         }                                                                      \
     }                                                                          \
                                                                                \
@@ -500,36 +544,36 @@ Foam::fv::fusedGaussLaplacianScheme<Foam::vector, Foam::scalar>::fvcLaplacian
 }
 
 
-template<>
-Foam::tmp<Foam::fvMatrix<Foam::scalar>>
-Foam::fv::fusedGaussLaplacianScheme<Foam::scalar, Foam::scalar>::fvmLaplacian
-(
-    const GeometricField<scalar, fvPatchField, volMesh>& gamma,
-    const GeometricField<scalar, fvPatchField, volMesh>& vf
-)
-{
-    // TBD
-    DebugPout
-        << "fusedGaussLaplacianScheme<scalar, scalar>::fvmLaplacian"
-        << " on " << vf.name() << " with gamma " << gamma.name() << endl;
-    return fvmLaplacian(this->tinterpGammaScheme_().interpolate(gamma)(), vf);
-}
-
-
-template<>
-Foam::tmp<Foam::fvMatrix<Foam::vector>>
-Foam::fv::fusedGaussLaplacianScheme<Foam::vector, Foam::scalar>::fvmLaplacian
-(
-    const GeometricField<scalar, fvPatchField, volMesh>& gamma,
-    const GeometricField<vector, fvPatchField, volMesh>& vf
-)
-{
-    // TBD
-    DebugPout
-        << "fusedGaussLaplacianScheme<vector, scalar>::fvmLaplacian"
-        << " on " << vf.name() << " with gamma " << gamma.name() << endl;
-    return fvmLaplacian(this->tinterpGammaScheme_().interpolate(gamma)(), vf);
-}
+//template<>
+//Foam::tmp<Foam::fvMatrix<Foam::scalar>>
+//Foam::fv::fusedGaussLaplacianScheme<Foam::scalar, Foam::scalar>::fvmLaplacian
+//(
+//    const GeometricField<scalar, fvPatchField, volMesh>& gamma,
+//    const GeometricField<scalar, fvPatchField, volMesh>& vf
+//)
+//{
+//    // TBD
+//    DebugPout
+//        << "fusedGaussLaplacianScheme<scalar, scalar>::fvmLaplacian"
+//        << " on " << vf.name() << " with gamma " << gamma.name() << endl;
+//    return fvmLaplacian(this->tinterpGammaScheme_().interpolate(gamma)(), vf);
+//}
+//
+//
+//template<>
+//Foam::tmp<Foam::fvMatrix<Foam::vector>>
+//Foam::fv::fusedGaussLaplacianScheme<Foam::vector, Foam::scalar>::fvmLaplacian
+//(
+//    const GeometricField<scalar, fvPatchField, volMesh>& gamma,
+//    const GeometricField<vector, fvPatchField, volMesh>& vf
+//)
+//{
+//    // TBD
+//    DebugPout
+//        << "fusedGaussLaplacianScheme<vector, scalar>::fvmLaplacian"
+//        << " on " << vf.name() << " with gamma " << gamma.name() << endl;
+//    return fvmLaplacian(this->tinterpGammaScheme_().interpolate(gamma)(), vf);
+//}
 
 
 template<>

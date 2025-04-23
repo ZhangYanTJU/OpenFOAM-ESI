@@ -43,6 +43,105 @@ tmp<volScalarField> someFunction(const volScalarField& fld)
 }
 
 
+template<class Type>
+void fusedGaussFvmLaplacian
+(
+    fvMatrix<Type>& fvm,
+    const surfaceInterpolationScheme<scalar>& interpGammaScheme,
+    const fv::snGradScheme<Type>& snGradScheme,
+    const GeometricField<scalar, fvPatchField, volMesh>& gamma,
+    const GeometricField<Type, fvPatchField, volMesh>& vf
+)
+{
+    // Replacement for gaussLaplacianScheme::fvmLaplacian with scalar gamma
+    typedef GeometricField<Type, fvsPatchField, surfaceMesh> surfaceType;
+
+    const auto& mesh = vf.mesh();
+
+    // Expression for weights
+    const auto weights = interpGammaScheme.weights(gamma).expr();
+
+    // Expression for gamma_face * magSf
+    const auto gammaMagSf =
+        Expression::lerp(gamma.expr(), weights, mesh)
+      * mesh.magSf().expr();
+
+    // Expression for deltaCoeffs
+    const auto deltaCoeffs = snGradScheme.deltaCoeffs(vf).expr();
+
+    // Construct matrix
+    Expression::fvmLaplacianUncorrected(fvm, gammaMagSf, deltaCoeffs);
+
+    if (snGradScheme.corrected())
+    {
+        // Wrap correction
+        const auto corr(snGradScheme.correction(vf).expr());
+        const auto V = mesh.V().expr();
+
+        if (mesh.fluxRequired(vf.name()))
+        {
+            fvm.faceFluxCorrectionPtr() = std::make_unique<surfaceType>
+            (
+                IOobject
+                (
+                    "faceFluxCorr",
+                    mesh.time().timeName(),
+                    mesh,
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
+                ),
+                mesh,
+                gamma.dimensions()
+               *mesh.magSf().dimensions()
+               *corr.data().dimensions()
+            );
+            auto& faceFluxCorr = *fvm.faceFluxCorrectionPtr();
+            faceFluxCorr = gammaMagSf*corr;
+
+            fvm.source() =
+                fvm.source().expr()
+              - (
+                    V * fvc::div
+                    (
+                        faceFluxCorr
+                    )().primitiveField().expr()
+                );
+        }
+        else
+        {
+            // Temporary field
+            surfaceType faceFluxCorr
+            (
+                IOobject
+                (
+                    "faceFluxCorr",
+                    mesh.time().timeName(),
+                    mesh,
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
+                ),
+                mesh,
+                gamma.dimensions()
+               *mesh.magSf().dimensions()
+               *corr.data().dimensions()
+            );
+            faceFluxCorr = gammaMagSf*corr;
+
+            fvm.source() =
+                fvm.source().expr()
+              - (
+                    V * fvc::div
+                    (
+                        faceFluxCorr
+                    )().primitiveField().expr()
+                );
+        }
+    }
+}
+
+
 int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
@@ -90,7 +189,7 @@ int main(int argc, char *argv[])
         (
             "result",
             mesh,
-            p.expr() + Expression::sqr(p.expr())
+            sqr(p.expr() + p.expr())
         );
         DebugVar(result);
     }
@@ -116,6 +215,45 @@ int main(int argc, char *argv[])
         );
         DebugVar(result);
     }
+    {
+        // For testing as a replacement of laplacian weights
+        const volScalarField gamma
+        (
+            IOobject
+            (
+                "gamma",
+                runTime.timeName(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            mesh,
+            dimensionedScalar(dimless, 1.0)
+        );
+
+        fvMatrix<scalar> fvm
+        (
+            p,
+            gamma.dimensions()*mesh.magSf().dimensions()*p.dimensions()
+        );
+
+        const linear<scalar> interpGammaScheme(mesh);
+        const fv::correctedSnGrad<scalar> snGradScheme(mesh);
+
+        fusedGaussFvmLaplacian
+        (
+            fvm,
+            interpGammaScheme,
+            snGradScheme,
+            gamma,
+            p
+        );
+
+        DebugVar(fvm.source());
+    }
+
+
 
     // Expressions of fvMatrix
     {
