@@ -136,10 +136,9 @@ void Foam::lduAddressing::calcLosortStart() const
             << abort(FatalError);
     }
 
-    losortStartPtr_ = std::make_unique<labelList>(size() + 1, Foam::zero{});
-    auto& lsrtStart = *losortStartPtr_;
-
     const labelUList& nbr = upperAddr();
+    losortStartPtr_ = std::make_unique<labelList>(size() + 1, nbr.size());
+    auto& lsrtStart = *losortStartPtr_;
 
     const labelUList& lsrt = losortAddr();
 
