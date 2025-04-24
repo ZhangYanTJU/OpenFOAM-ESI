@@ -319,6 +319,19 @@ inline Foam::scalar Foam::triangle<Point, PointRef>::mag() const
 }
 
 
+inline Foam::scalar Foam::triPoints::magSqr() const
+{
+    return ::Foam::magSqr(areaNormal());
+}
+
+
+template<class Point, class PointRef>
+inline Foam::scalar Foam::triangle<Point, PointRef>::magSqr() const
+{
+    return ::Foam::magSqr(areaNormal());
+}
+
+
 template<class Point, class PointRef>
 inline Point Foam::triangle<Point, PointRef>::circumCentre() const
 {

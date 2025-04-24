@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -206,6 +206,9 @@ public:
 
         //- Magnitude of face area
         inline scalar mag(const UList<point>& p) const;
+
+        //- Magnitude squared of face area
+        inline scalar magSqr(const UList<point>& p) const;
 
         //- The enclosing (bounding) box for the face
         inline Pair<point> box(const UList<point>& pts) const;

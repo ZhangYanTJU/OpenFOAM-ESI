@@ -53,8 +53,8 @@ namespace Foam
 
 Foam::label Foam::cyclicPolyPatch::findMaxArea
 (
-    const pointField& points,
-    const faceList& faces
+    const UList<point>& points,
+    const UList<face>& faces
 )
 {
     label maxI = -1;
@@ -62,7 +62,7 @@ Foam::label Foam::cyclicPolyPatch::findMaxArea
 
     forAll(faces, facei)
     {
-        scalar areaSqr = magSqr(faces[facei].areaNormal(points));
+        scalar areaSqr = faces[facei].magSqr(points);
 
         if (maxAreaSqr < areaSqr)
         {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -198,6 +198,12 @@ inline Foam::vector Foam::triFace::unitNormal(const UList<point>& points) const
 inline Foam::scalar Foam::triFace::mag(const UList<point>& points) const
 {
     return ::Foam::mag(areaNormal(points));
+}
+
+
+inline Foam::scalar Foam::triFace::magSqr(const UList<point>& points) const
+{
+    return ::Foam::magSqr(areaNormal(points));
 }
 
 

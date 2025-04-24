@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -109,6 +109,19 @@ inline Foam::scalar Foam::line<Point, PointRef>::mag() const
 inline Foam::scalar Foam::linePoints::mag() const
 {
     return ::Foam::mag(b() - a());
+}
+
+
+template<class Point, class PointRef>
+inline Foam::scalar Foam::line<Point, PointRef>::magSqr() const
+{
+    return ::Foam::magSqr(b() - a());
+}
+
+
+inline Foam::scalar Foam::linePoints::magSqr() const
+{
+    return ::Foam::magSqr(b() - a());
 }
 
 

@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef oldCyclicPolyPatch_H
-#define oldCyclicPolyPatch_H
+#ifndef Foam_oldCyclicPolyPatch_H
+#define Foam_oldCyclicPolyPatch_H
 
 #include "coupledPolyPatch.H"
 
@@ -80,7 +80,7 @@ class oldCyclicPolyPatch
     // Private member functions
 
         //- Find amongst selected faces the one with the largest area
-        static label findMaxArea(const pointField&, const faceList&);
+        static label findMaxArea(const UList<point>&, const UList<face>&);
 
         void calcTransforms();
 

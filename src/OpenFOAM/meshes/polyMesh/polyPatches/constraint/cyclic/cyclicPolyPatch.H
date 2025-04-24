@@ -112,7 +112,7 @@ class cyclicPolyPatch
     // Private Member Functions
 
         //- Find amongst selected faces the one with the largest area
-        static label findMaxArea(const pointField&, const faceList&);
+        static label findMaxArea(const UList<point>&, const UList<face>&);
 
         void calcTransforms
         (

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -128,6 +128,9 @@ public:
         //- The magnitude (length) of the line
         inline scalar mag() const;
 
+        //- The magnitude squared (length squared) of the line
+        inline scalar magSqr() const;
+
         //- Return start-to-end vector
         inline vector vec() const;
 
@@ -213,6 +216,9 @@ public:
 
         //- The magnitude (length) of the line
         inline scalar mag() const;
+
+        //- The magnitude squared (length squared) of the line
+        inline scalar magSqr() const;
 
         //- Return start-to-end vector
         inline Point vec() const;

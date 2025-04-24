@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -112,6 +112,12 @@ inline Foam::vector Foam::face::unitNormal(const UList<point>& p) const
 inline Foam::scalar Foam::face::mag(const UList<point>& p) const
 {
     return ::Foam::mag(areaNormal(p));
+}
+
+
+inline Foam::scalar Foam::face::magSqr(const UList<point>& p) const
+{
+    return ::Foam::magSqr(areaNormal(p));
 }
 
 

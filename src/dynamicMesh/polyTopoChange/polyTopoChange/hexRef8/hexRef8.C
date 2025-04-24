@@ -431,7 +431,7 @@ Foam::scalar Foam::hexRef8::getLevel0EdgeLength() const
             {
                 const edge& e = mesh_.edges()[edgeI];
 
-                scalar edgeLenSqr = magSqr(e.vec(mesh_.points()));
+                scalar edgeLenSqr = e.magSqr(mesh_.points());
 
                 typEdgeLenSqr[eLevel] = min(typEdgeLenSqr[eLevel], edgeLenSqr);
             }
@@ -468,7 +468,7 @@ Foam::scalar Foam::hexRef8::getLevel0EdgeLength() const
         {
             const edge& e = mesh_.edges()[cEdges[i]];
 
-            scalar edgeLenSqr = magSqr(e.vec(mesh_.points()));
+            scalar edgeLenSqr = e.magSqr(mesh_.points());
 
             maxEdgeLenSqr[cLevel] = max(maxEdgeLenSqr[cLevel], edgeLenSqr);
         }

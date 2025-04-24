@@ -181,6 +181,9 @@ public:
         //- Magnitude of face area
         inline scalar mag(const UList<point>& points) const;
 
+        //- Magnitude squared of face area
+        inline scalar magSqr(const UList<point>& points) const;
+
         //- The enclosing (bounding) box for the face
         inline Pair<point> box(const UList<point>& points) const;
 
