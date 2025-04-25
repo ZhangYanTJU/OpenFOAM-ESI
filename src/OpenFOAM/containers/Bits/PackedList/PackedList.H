@@ -406,7 +406,10 @@ public:
         inline void clearStorage();
 
         //- Shrink the allocated space to what is actually used.
-        inline void shrink();
+        inline void shrink_to_fit();
+
+        //- Alias for shrink_to_fit()
+        void shrink() { this->shrink_to_fit(); }
 
         //- Swap contents with argument
         inline void swap(PackedList<Width>& rhs);

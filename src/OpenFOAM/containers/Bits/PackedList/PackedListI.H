@@ -597,7 +597,7 @@ inline void Foam::PackedList<Width>::clearStorage()
 
 
 template<unsigned Width>
-inline void Foam::PackedList<Width>::shrink()
+inline void Foam::PackedList<Width>::shrink_to_fit()
 {
     // Any unneeded space allocated?
     const label nblocks = num_blocks(size());

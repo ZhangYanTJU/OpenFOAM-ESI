@@ -52,6 +52,19 @@ inline Foam::PtrDynList<T, SizeMin>::PtrDynList(const label len)
 template<class T, int SizeMin>
 inline Foam::PtrDynList<T, SizeMin>::PtrDynList
 (
+    const std::pair<label,label>& sizing
+)
+:
+    PtrList<T>(std::max(sizing.first, sizing.second)),
+    capacity_(PtrList<T>::size())
+{
+    PtrList<T>::setAddressableSize(sizing.first);
+}
+
+
+template<class T, int SizeMin>
+inline Foam::PtrDynList<T, SizeMin>::PtrDynList
+(
     const PtrDynList<T, SizeMin>& list
 )
 :
@@ -220,8 +233,7 @@ inline void Foam::PtrDynList<T, SizeMin>::shrink_to_fit()
     const label currLen = PtrList<T>::size();
     if (currLen < capacity_)
     {
-        // Adjust addressable size to trigger proper resizing
-        PtrList<T>::setAddressableSize(currLen+1);
+        PtrList<T>::setAddressableSize(capacity_);
         PtrList<T>::resize(currLen);
         capacity_ = PtrList<T>::size();
     }

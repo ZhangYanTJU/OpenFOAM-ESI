@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,7 +102,7 @@ inline Foam::List<T>::List
 :
     UList<T>(nullptr, len)
 {
-    if (this->size_)
+    if (len > 0)
     {
         doAlloc();
 
@@ -149,9 +149,9 @@ namespace Foam
 {
     // Template specialization for bool. Fills new entries with false
     template<>
-    inline void List<bool>::resize(const label newLen)
+    inline void List<bool>::resize(const label len)
     {
-        this->resize(newLen, false);
+        this->resize(len, false);
     }
 }
 
@@ -159,7 +159,10 @@ namespace Foam
 template<class T>
 inline void Foam::List<T>::resize(const label len)
 {
-    this->doResize(len);
+    if (this->size_ != len)
+    {
+        this->resize_copy(this->size_, len);
+    }
 }
 
 
@@ -269,7 +272,6 @@ inline void Foam::List<T>::push_back(const IndirectListBase<T, Addr>& list)
 
     const label idx = this->size();
     const label n = list.size();
-
     resize(idx + n);
 
     auto iter = this->begin(idx);

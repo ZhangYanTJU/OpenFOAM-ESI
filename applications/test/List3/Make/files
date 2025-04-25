@@ -1,3 +1,3 @@
-Test-List3.C
+Test-List3.cxx
 
 EXE = $(FOAM_USER_APPBIN)/Test-List3

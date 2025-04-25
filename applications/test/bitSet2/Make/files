@@ -1,3 +1,3 @@
-Test-bitSet2.C
+Test-bitSet2.cxx
 
 EXE = $(FOAM_USER_APPBIN)/Test-bitSet2

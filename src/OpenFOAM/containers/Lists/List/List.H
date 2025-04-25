@@ -93,10 +93,6 @@ class List
         template<class ListType, class ListIndices>
         inline void copyList(const ListType& list, const ListIndices& indices);
 
-        //- Change allocation size of List, retaining old contents.
-        //  Backend for resize
-        void doResize(const label len);
-
         //- Construct given begin/end iterators and number of elements
         //  Since the size is provided, the end iterator is actually ignored.
         template<class InputIterator>
@@ -116,6 +112,16 @@ class List
 
         //- Stub method for internal naming as per DynamicList
         void setCapacity_nocopy(const label len) { resize_nocopy(len); }
+
+
+protected:
+
+    // Protected Member Functions
+
+        //- Low-level resizing (backend for resize).
+        //- Change allocation size of list, retaining the first count contents.
+        //  \note Only uses a limited number of internal checks.
+        void resize_copy(const label count, const label len);
 
 
 public:
