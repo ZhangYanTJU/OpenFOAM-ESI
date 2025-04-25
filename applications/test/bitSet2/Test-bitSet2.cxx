@@ -499,7 +499,7 @@ int main(int argc, char *argv[])
         Info<<"bitSet ";
         report(list4);
 
-        list4.shrink();
+        list4.shrink_to_fit();
         Info<<"shrunk ";
         report(list4);
 

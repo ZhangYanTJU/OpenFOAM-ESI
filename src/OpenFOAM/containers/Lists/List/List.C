@@ -31,31 +31,34 @@ License
 #include "PtrList.H"
 #include "contiguous.H"
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class T>
-void Foam::List<T>::doResize(const label len)
+void Foam::List<T>::resize_copy(const label count, const label len)
 {
-    if (len == this->size_)
-    {
-        return;
-    }
+    // Only a limited number of internal size checks.
+    // Caller knows what they are doing.
 
-    if (len > 0)
+    if (FOAM_LIKELY(len > 0))
     {
         // With sign-check to avoid spurious -Walloc-size-larger-than
-        const label overlap = Foam::min(this->size_, len);
+        // const label oldLen = this->size_;
+        const label overlap = Foam::min(count, len);
+        // Extra safety, not currently necessary:
+        // const label overlap = Foam::min(Foam::min(count, oldLen), len);
+
+        T* old = this->v_;
 
         if (overlap > 0)
         {
             // Recover overlapping content when resizing
-            T* old = this->v_;
+
             this->size_ = len;
             this->v_ = new T[len];
 
             // Can dispatch with
-            // - std::execution::parallel_unsequenced_policy
-            // - std::execution::unsequenced_policy
+            // - std::execution::par_unseq
+            // - std::execution::unseq
             std::move(old, (old + overlap), this->v_);
 
             delete[] old;
@@ -63,7 +66,8 @@ void Foam::List<T>::doResize(const label len)
         else
         {
             // No overlapping content
-            delete[] this->v_;
+            delete[] old;
+
             this->size_ = len;
             this->v_ = new T[len];
         }
@@ -71,7 +75,7 @@ void Foam::List<T>::doResize(const label len)
     else
     {
         // Or only #ifdef FULLDEBUG
-        if (len < 0)
+        if (FOAM_UNLIKELY(len < 0))
         {
             FatalErrorInFunction
                 << "bad size " << len
@@ -91,14 +95,17 @@ Foam::List<T>::List(const label len)
 :
     UList<T>(nullptr, len)
 {
-    if (len < 0)
+    if (FOAM_UNLIKELY(len < 0))
     {
         FatalErrorInFunction
             << "bad size " << len
             << abort(FatalError);
     }
 
-    doAlloc();
+    if (len > 0)
+    {
+        doAlloc();
+    }
 }
 
 
@@ -107,14 +114,14 @@ Foam::List<T>::List(const label len, const T& val)
 :
     UList<T>(nullptr, len)
 {
-    if (len < 0)
+    if (FOAM_UNLIKELY(len < 0))
     {
         FatalErrorInFunction
             << "bad size " << len
             << abort(FatalError);
     }
 
-    if (len)
+    if (len > 0)
     {
         doAlloc();
         UList<T>::operator=(val);
@@ -127,14 +134,14 @@ Foam::List<T>::List(const label len, Foam::zero)
 :
     UList<T>(nullptr, len)
 {
-    if (len < 0)
+    if (FOAM_UNLIKELY(len < 0))
     {
         FatalErrorInFunction
             << "bad size " << len
             << abort(FatalError);
     }
 
-    if (len)
+    if (len > 0)
     {
         doAlloc();
         UList<T>::operator=(Foam::zero{});
@@ -206,10 +213,8 @@ Foam::List<T>::List(List<T>& list, bool reuse)
         this->v_ = list.v_;
         list.v_ = nullptr;
         list.size_ = 0;
-        return;
     }
-
-    if (this->size_)
+    else if (this->size_ > 0)
     {
         doAlloc();
         UList<T>::deepCopy(list);
@@ -316,7 +321,13 @@ template<class T>
 void Foam::List<T>::resize(const label len, const T& val)
 {
     const label oldLen = this->size_;
-    this->doResize(len);
+
+    if (oldLen == len)
+    {
+        return;
+    }
+
+    this->resize_copy(oldLen, len);
 
     // Fill trailing part with new values
     if (oldLen < this->size_)

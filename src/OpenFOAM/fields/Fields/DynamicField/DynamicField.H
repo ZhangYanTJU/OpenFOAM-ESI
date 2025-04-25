@@ -29,6 +29,7 @@ Class
 
 Description
     Dynamically sized Field.
+    Similar to DynamicList, but inheriting from a Field instead of a List.
 
 SourceFiles
     DynamicFieldI.H
@@ -95,15 +96,6 @@ class DynamicField
 
 public:
 
-    // Static Member Functions
-
-        //- Return a null DynamicField (reference to a nullObject).
-        static const DynamicField<T, SizeMin>& null() noexcept
-        {
-            return NullObjectRef<DynamicField<T, SizeMin>>();
-        }
-
-
     // Constructors
 
         //- Default construct, an empty field without allocation.
@@ -112,11 +104,22 @@ public:
         //- Construct empty field with given initial capacity
         inline explicit DynamicField(const label initialCapacity);
 
+        //- Construct with given size (and capacity)
+        inline DynamicField(std::piecewise_construct_t, const label len);
+
+        //- Construct with given size and capacity
+        inline DynamicField
+        (
+            std::piecewise_construct_t,
+            const label len,
+            const label initialCapacity
+        );
+
         //- Construct given size and initial value
         inline DynamicField(const label len, const T& val);
 
         //- Construct given size and initial value of zero
-        inline DynamicField(const label len, const Foam::zero);
+        inline DynamicField(const label len, Foam::zero);
 
         //- Copy construct
         inline DynamicField(const DynamicField<T, SizeMin>& list);
@@ -222,7 +225,7 @@ public:
 
         //- Change the value for the list capacity directly (ADVANCED, UNSAFE)
         //- Does not perform any memory management or resizing.
-        inline void setCapacity_unsafe(const label len) noexcept;
+        void setCapacity_unsafe(const label len) noexcept { capacity_ = len; }
 
         //- Reserve allocation space for at least this size, allocating new
         //- space if required and \em retaining old content.
@@ -248,20 +251,17 @@ public:
         //  setting values (as per List usage).
         inline void resize(const label len);
 
-        //- Alter addressable size and fill new space with constant value
+        //- Alter addressable size and fill \em new entries with constant value
         inline void resize(const label len, const T& val);
+
+        //- Alter addressable size and set val for \em all addressed entries
+        inline void resize_fill(const label len, const T& val);
 
         //- Alter addressable list size, allocating new space if required
         //- \em without necessarily recovering old content.
         //  If no reallocation is required, the contents remain untouched.
         //  Otherwise all entries will be uninitialized.
         inline void resize_nocopy(const label len);
-
-        //- Alias for resize()
-        void setSize(const label n) { this->resize(n); }
-
-        //- Alias for resize()
-        void setSize(const label n, const T& val) { this->resize(n, val); }
 
         //- Clear the addressed list, i.e. set the size to zero.
         //  Allocated size does not change
@@ -278,9 +278,6 @@ public:
         //  \note when empty() it will delete any allocated memory.
         inline void shrink_unsafe();
 
-        //- Calls shrink_to_fit() and returns a reference to the DynamicField.
-        inline DynamicField<T, SizeMin>& shrink();
-
 
     // Edit
 
@@ -289,11 +286,11 @@ public:
 
         //- Swap content, independent of sizing parameter
         template<int AnySizeMin>
-        inline void swap(DynamicField<T, AnySizeMin>& other);
+        inline void swap(DynamicField<T, AnySizeMin>& other) noexcept;
 
         //- Swap content with DynamicList, independent of sizing parameter
         template<int AnySizeMin>
-        inline void swap(DynamicList<T, AnySizeMin>& other);
+        inline void swap(DynamicList<T, AnySizeMin>& other) noexcept;
 
         //- Transfer the parameter contents into this
         inline void transfer(List<T>& list);
@@ -311,7 +308,7 @@ public:
         template<class... Args>
         inline T& emplace_back(Args&&... args);
 
-        //- Copy append an element at the end of the list
+        //- Copy append an element to the end of the list
         inline void push_back(const T& val);
 
         //- Move append an element
@@ -340,7 +337,7 @@ public:
         inline void operator=(const T& val);
 
         //- Assign addressed entries to zero
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 
         //- Copy assignment
         inline void operator=(const UList<T>& list);
@@ -391,6 +388,20 @@ public:
 
 
     // Housekeeping
+
+        //- Alias for resize()
+        void setSize(const label n) { this->resize(n); }
+
+        //- Alias for resize()
+        void setSize(const label n, const T& val) { this->resize(n, val); }
+
+        //- Calls shrink_to_fit() and returns a reference to the DynamicField.
+        //FOAM_DEPRECATED_FOR(2025-04, "shrink_to_fit()")
+        DynamicField<T, SizeMin>& shrink()
+        {
+            this->shrink_to_fit();
+            return *this;
+        }
 
         //- Append an element at the end of the list
         //FOAM_DEPRECATED_FOR(2022-10, "push_back()")

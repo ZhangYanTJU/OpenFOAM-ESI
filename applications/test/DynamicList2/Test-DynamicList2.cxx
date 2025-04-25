@@ -52,7 +52,8 @@ void printInfo
     if (showSize)
     {
         Info<< " size=\"" << list.size()
-            << "\" capacity=\"" << list.capacity() << "\"";
+            << "\" capacity=\"" << list.capacity() << "\""
+            << "\" min=\"" << SizeMin << "\"" ;
         if (list.cdata())
         {
             Info<< " ptr=\"" << name(list.cdata()) << "\"";
@@ -79,7 +80,8 @@ void printInfo
     if (showSize)
     {
         Info<< " size=\"" << list.size()
-            << "\" capacity=\"" << list.capacity() << "\"";
+            << "\" capacity=\"" << list.capacity() << "\""
+            << "\" min=\"" << SizeMin << "\"" ;
         if (list.cdata())
         {
             Info<< " ptr=\"" << name(list.cdata()) << "\"";
@@ -166,6 +168,22 @@ int main(int argc, char *argv[])
         std::copy_n(range.begin(), range.size(), std::back_inserter(list2));
         Info<< "back_inserter to append more values" << nl;
         printInfo("", list2);
+    }
+
+    {
+        DynamicList<label, 32> list1(std::piecewise_construct, 16);
+        list1 = -1;
+
+        Info<< "construct with specified size/capacity" << nl;
+        printInfo("", list1);
+    }
+
+    {
+        DynamicList<label, 32> list1(std::piecewise_construct, 8, 16);
+        list1 = -1;
+
+        Info<< "construct with specified size/capacity" << nl;
+        printInfo("", list1);
     }
 
     Info<< "\nEnd\n";

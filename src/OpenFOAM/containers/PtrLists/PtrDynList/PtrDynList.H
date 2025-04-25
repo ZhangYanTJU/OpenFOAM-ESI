@@ -76,8 +76,19 @@ public:
         //- Default construct
         inline constexpr PtrDynList() noexcept;
 
-        //- Construct with given capacity.
+        //- Construct with given initial capacity
         inline explicit PtrDynList(const label len);
+
+        //- Construct with given size (and capacity)
+        inline PtrDynList(std::piecewise_construct_t, const label len);
+
+        //- Construct with given size and capacity
+        inline PtrDynList
+        (
+            std::piecewise_construct_t,
+            const label len,
+            const label initialCapacity
+        );
 
         //- Copy construct using 'clone()' method on each element
         inline PtrDynList(const PtrDynList<T, SizeMin>& list);
@@ -106,6 +117,10 @@ public:
 
         //- Size of the underlying storage.
         label capacity() const noexcept { return capacity_; }
+
+        //- Change the value for the list capacity directly (ADVANCED, UNSAFE)
+        //- Does not perform any memory management or resizing.
+        void setCapacity_unsafe(const label len) noexcept { capacity_ = len; }
 
         //- Reserve allocation space for at least this size.
         inline void reserve(const label len);
@@ -138,8 +153,8 @@ public:
         //  \note when empty() it will delete any allocated memory.
         inline void shrink_unsafe();
 
-        //- Calls shrink_to_fit()
-        void shrink() { shrink_to_fit(); }
+        //- Alias for shrink_to_fit()
+        void shrink() { this->shrink_to_fit(); }
 
 
     // Edit

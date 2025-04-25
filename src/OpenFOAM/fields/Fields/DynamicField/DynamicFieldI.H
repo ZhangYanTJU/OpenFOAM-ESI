@@ -40,7 +40,7 @@ inline void Foam::DynamicField<T, SizeMin>::doAssignDynList
     if (capacity_ < len)
     {
         // Needs more space for the copy operation
-        List<T>::setAddressableSize(capacity_);  // Use entire space
+        List<T>::setAddressableSize(capacity_);
         List<T>::resize_nocopy(len);
         capacity_ = List<T>::size();
     }
@@ -66,19 +66,14 @@ inline void Foam::DynamicField<T, SizeMin>::doCapacity
     // Addressable length, possibly truncated by new capacity
     const label currLen = Foam::min(List<T>::size(), newCapacity);
 
-    // Corner case - see comments in DynamicList doCapacity
-    if (List<T>::size() == newCapacity)
-    {
-        List<T>::setAddressableSize(currLen+1);
-    }
-
+    List<T>::setAddressableSize(capacity_);
     if (nocopy)
     {
         List<T>::resize_nocopy(newCapacity);
     }
     else
     {
-        List<T>::resize(newCapacity);
+        List<T>::resize_copy(currLen, newCapacity);
     }
 
     capacity_ = List<T>::size();
@@ -150,6 +145,33 @@ inline Foam::DynamicField<T, SizeMin>::DynamicField(const label initialCapacity)
 template<class T, int SizeMin>
 inline Foam::DynamicField<T, SizeMin>::DynamicField
 (
+    std::piecewise_construct_t,
+    const label len,
+    const label initialCapacity
+)
+:
+    Field<T>(std::max(len, initialCapacity)),
+    capacity_(Field<T>::size())
+{
+    List<T>::setAddressableSize(len);
+}
+
+
+template<class T, int SizeMin>
+inline Foam::DynamicField<T, SizeMin>::DynamicField
+(
+    std::piecewise_construct_t,
+    const label len
+)
+:
+    Field<T>(len),
+    capacity_(Field<T>::size())
+{}
+
+
+template<class T, int SizeMin>
+inline Foam::DynamicField<T, SizeMin>::DynamicField
+(
     const label len,
     const T& val
 )
@@ -163,7 +185,7 @@ template<class T, int SizeMin>
 inline Foam::DynamicField<T, SizeMin>::DynamicField
 (
     const label len,
-    const Foam::zero
+    Foam::zero
 )
 :
     Field<T>(len, Foam::zero{}),
@@ -424,16 +446,6 @@ inline void Foam::DynamicField<T, SizeMin>::setCapacity_nocopy
 
 
 template<class T, int SizeMin>
-inline void Foam::DynamicField<T, SizeMin>::setCapacity_unsafe
-(
-    const label len
-) noexcept
-{
-    capacity_ = len;
-}
-
-
-template<class T, int SizeMin>
 inline void Foam::DynamicField<T, SizeMin>::reserve
 (
     const label len
@@ -492,6 +504,18 @@ inline void Foam::DynamicField<T, SizeMin>::resize_nocopy
 
 
 template<class T, int SizeMin>
+inline void Foam::DynamicField<T, SizeMin>::resize_fill
+(
+    const label len,
+    const T& val
+)
+{
+    this->doResize(true, len);  // nocopy = true
+    UList<T>::operator=(val);
+}
+
+
+template<class T, int SizeMin>
 inline void Foam::DynamicField<T, SizeMin>::resize
 (
     const label len,
@@ -534,8 +558,7 @@ inline void Foam::DynamicField<T, SizeMin>::shrink_to_fit()
 
     if (currLen < capacity_)
     {
-        // Adjust addressable size to trigger proper resizing
-        List<T>::setAddressableSize(currLen+1);
+        List<T>::setAddressableSize(capacity_);
         List<T>::resize(currLen);
         capacity_ = List<T>::size();
     }
@@ -551,15 +574,6 @@ inline void Foam::DynamicField<T, SizeMin>::shrink_unsafe()
         List<T>::clear();
     }
     capacity_ = List<T>::size();
-}
-
-
-template<class T, int SizeMin>
-inline Foam::DynamicField<T, SizeMin>&
-Foam::DynamicField<T, SizeMin>::shrink()
-{
-    this->shrink_to_fit();
-    return *this;
 }
 
 
@@ -592,7 +606,7 @@ template<int AnySizeMin>
 inline void Foam::DynamicField<T, SizeMin>::swap
 (
     DynamicField<T, AnySizeMin>& other
-)
+) noexcept
 {
     if
     (
@@ -616,7 +630,7 @@ template<int AnySizeMin>
 inline void Foam::DynamicField<T, SizeMin>::swap
 (
     DynamicList<T, AnySizeMin>& other
-)
+) noexcept
 {
     if
     (
@@ -822,7 +836,7 @@ inline void Foam::DynamicField<T, SizeMin>::operator=
 template<class T, int SizeMin>
 inline void Foam::DynamicField<T, SizeMin>::operator=
 (
-    const Foam::zero
+    Foam::zero
 )
 {
     UList<T>::operator=(Foam::zero{});
