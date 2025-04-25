@@ -397,6 +397,9 @@ private:
         //- Have support for threads?
         static bool haveThreads_;
 
+        //- Initial MPI_Comm_dup(MPI_COMM_WORLD,...) disabled? (default: false)
+        static bool noInitialCommDup_;
+
         //- Standard transfer message type
         static int msgType_;
 

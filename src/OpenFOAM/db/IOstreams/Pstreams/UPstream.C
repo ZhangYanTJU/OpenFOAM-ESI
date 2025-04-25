@@ -857,6 +857,8 @@ bool Foam::UPstream::parRun_(false);
 
 bool Foam::UPstream::haveThreads_(false);
 
+bool Foam::UPstream::noInitialCommDup_(false);
+
 int Foam::UPstream::msgType_(1);
 
 

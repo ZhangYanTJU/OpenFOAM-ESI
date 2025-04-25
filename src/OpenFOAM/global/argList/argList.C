@@ -128,7 +128,14 @@ Foam::argList::initValidTables::initValidTables()
     (
         "mpi-threads",
         "Request use of MPI threads",
-        true  //  advanced option
+        true  // advanced option
+    );
+
+    argList::addBoolOption
+    (
+        "mpi-no-comm-dup",
+        "Disable initial MPI_Comm_dup()",
+        true  // advanced option
     );
 
     argList::addOption
@@ -596,6 +603,7 @@ void Foam::argList::noParallel()
     removeOption("hostRoots");
     removeOption("world");
     removeOption("mpi-threads");
+    removeOption("mpi-no-comm-dup");
     validParOptions.clear();
 }
 

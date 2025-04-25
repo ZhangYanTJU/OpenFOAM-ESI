@@ -262,34 +262,61 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
     }
 
 
-    // Check argument list for local world
-    label worldIndex = -1;
+    // Check argument list for any of the following:
+    // - local world
+    //    -> Extract world name and filter out '-world <name>' from argv list
+    // - mpi-no-comm-dup option
+    //    -> disable initial comm_dup and filter out the option
+
+    // Default handling of initial MPI_Comm_dup(MPI_COMM_WORLD,...)
+    UPstream::noInitialCommDup_ = false;
+
+    // Local world name
+    word worldName;
+
     for (int argi = 1; argi < argc; ++argi)
     {
-        if (strcmp(argv[argi], "-world") == 0)
+        const char *optName = argv[argi];
+        if (optName[0] != '-')
         {
-            worldIndex = argi;
+            continue;
+        }
+        ++optName;  // Looks like an option, skip leading '-'
+
+        if (strcmp(optName, "world") == 0)
+        {
             if (argi+1 >= argc)
             {
                 FatalErrorInFunction
                     << "Missing world name for option '-world'" << nl
                     << Foam::abort(FatalError);
             }
-            break;
+            worldName = argv[argi+1];
+
+            // Remove two arguments (-world name)
+            for (int i = argi+2; i < argc; ++i)
+            {
+                argv[i-2] = argv[i];
+            }
+            argc -= 2;
+            --argi;  // re-examine
+        }
+        else if (strcmp(optName, "mpi-no-comm-dup") == 0)
+        {
+            UPstream::noInitialCommDup_ = true;
+
+            // Remove one argument
+            for (int i = argi+1; i < argc; ++i)
+            {
+                argv[i-1] = argv[i];
+            }
+            --argc;
+            --argi;  // re-examine
         }
     }
 
-    // Extract world name and filter out '-world <name>' from argv list
-    word worldName;
-    if (worldIndex != -1)
-    {
-        worldName = argv[worldIndex+1];
-        for (label i = worldIndex+2; i < argc; i++)
-        {
-            argv[i-2] = argv[i];
-        }
-        argc -= 2;
-    }
+    const bool hasLocalWorld(!worldName.empty());
+
 
     int numProcs = 0, globalRanki = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &globalRanki);
@@ -314,7 +341,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
             << " world:" << worldName << endl;
     }
 
-    if (worldIndex == -1 && numProcs <= 1)
+    if (numProcs <= 1 && !(hasLocalWorld))
     {
         FatalErrorInFunction
             << "attempt to run parallel on 1 processor"
@@ -324,7 +351,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
     // Initialise parallel structure
     setParRun(numProcs, provided_thread_support == MPI_THREAD_MULTIPLE);
 
-    if (worldIndex != -1)
+    if (hasLocalWorld)
     {
         // Using local worlds.
         // During startup, so commWorld() == commGlobal()
@@ -333,7 +360,7 @@ bool Foam::UPstream::init(int& argc, char**& argv, const bool needsThread)
 
         // Gather the names of all worlds and determine unique names/indices.
         //
-        // Minimize communication and use low-level MPI to relying on any
+        // Minimize communication and use low-level MPI to avoid relying on any
         // OpenFOAM structures which not yet have been created
 
         {
@@ -665,11 +692,16 @@ void Foam::UPstream::allocateCommunicatorComponents
         }
         auto& mpiNewComm = PstreamGlobals::MPICommunicators_[index];
 
-        // PstreamGlobals::pendingMPIFree_[index] = false;
-        // PstreamGlobals::MPICommunicators_[index] = MPI_COMM_WORLD;
-
-        PstreamGlobals::pendingMPIFree_[index] = true;
-        MPI_Comm_dup(MPI_COMM_WORLD, &mpiNewComm);
+        if (UPstream::noInitialCommDup_)
+        {
+            PstreamGlobals::pendingMPIFree_[index] = false;
+            PstreamGlobals::MPICommunicators_[index] = MPI_COMM_WORLD;
+        }
+        else
+        {
+            PstreamGlobals::pendingMPIFree_[index] = true;
+            MPI_Comm_dup(MPI_COMM_WORLD, &mpiNewComm);
+        }
 
         MPI_Comm_rank(mpiNewComm, &myProcNo_[index]);
 
