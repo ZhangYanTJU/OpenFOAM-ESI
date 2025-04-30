@@ -42,7 +42,7 @@ inline void Foam::DynamicList<T, SizeMin>::doAssignDynList
     if (capacity_ < len)
     {
         // Needs more space for the copy operation
-        List<T>::setAddressableSize(capacity_);  // Use entire space
+        List<T>::setAddressableSize(capacity_);
         List<T>::resize_nocopy(len);
         capacity_ = List<T>::size();
     }
@@ -68,23 +68,14 @@ inline void Foam::DynamicList<T, SizeMin>::doCapacity
     // Addressable length, possibly truncated by new capacity
     const label currLen = Foam::min(List<T>::size(), newCapacity);
 
-    // Corner case...
-    if (List<T>::size() == newCapacity)
-    {
-        // Adjust addressable size to trigger proper resizing.
-        // Using (old size+1) is safe since it does not affect the 'overlap'
-        // of old and new addressable regions, but incurs fewew copy
-        // operations than extending to use the current capacity would.
-        List<T>::setAddressableSize(currLen+1);
-    }
-
+    List<T>::setAddressableSize(capacity_);
     if (nocopy)
     {
         List<T>::resize_nocopy(newCapacity);
     }
     else
     {
-        List<T>::resize(newCapacity);
+        List<T>::resize_copy(currLen, newCapacity);
     }
 
     capacity_ = List<T>::size();
@@ -150,6 +141,19 @@ inline Foam::DynamicList<T, SizeMin>::DynamicList(const label initialCapacity)
     capacity_(0)
 {
     reserve_nocopy(initialCapacity);
+}
+
+
+template<class T, int SizeMin>
+inline Foam::DynamicList<T, SizeMin>::DynamicList
+(
+    const std::pair<label,label>& sizing
+)
+:
+    List<T>(std::max(sizing.first, sizing.second)),
+    capacity_(List<T>::size())
+{
+    List<T>::setAddressableSize(sizing.first);
 }
 
 
@@ -327,16 +331,6 @@ inline void Foam::DynamicList<T, SizeMin>::setCapacity_nocopy
 
 
 template<class T, int SizeMin>
-inline void Foam::DynamicList<T, SizeMin>::setCapacity_unsafe
-(
-    const label len
-) noexcept
-{
-    capacity_ = len;
-}
-
-
-template<class T, int SizeMin>
 inline void Foam::DynamicList<T, SizeMin>::reserve
 (
     const label len
@@ -448,8 +442,7 @@ inline void Foam::DynamicList<T, SizeMin>::shrink_to_fit()
     const label currLen = List<T>::size();
     if (currLen < capacity_)
     {
-        // Adjust addressable size to trigger proper resizing
-        List<T>::setAddressableSize(currLen+1);
+        List<T>::setAddressableSize(capacity_);
         List<T>::resize(currLen);
         capacity_ = List<T>::size();
     }
@@ -465,15 +458,6 @@ inline void Foam::DynamicList<T, SizeMin>::shrink_unsafe()
         List<T>::clear();
     }
     capacity_ = List<T>::size();
-}
-
-
-template<class T, int SizeMin>
-inline Foam::DynamicList<T, SizeMin>&
-Foam::DynamicList<T, SizeMin>::shrink()
-{
-    this->shrink_to_fit();
-    return *this;
 }
 
 
@@ -608,7 +592,7 @@ inline void Foam::DynamicList<T, SizeMin>::push_back
     const UList<T>& list
 )
 {
-    if (this == &list)
+    if (FOAM_UNLIKELY(this == &list))
     {
         FatalErrorInFunction
             << "Attempted push_back to self"
@@ -662,8 +646,7 @@ inline void Foam::DynamicList<T, SizeMin>::push_back
 
     const label idx = this->size();
     const label n = list.size();
-
-    resize(list + n);
+    resize(idx + n);
 
     auto iter = this->begin(idx);
 
@@ -680,7 +663,7 @@ inline void Foam::DynamicList<T, SizeMin>::push_back
     List<T>&& list
 )
 {
-    if (this == &list)
+    if (FOAM_UNLIKELY(this == &list))
     {
         FatalErrorInFunction
             << "Attempted push_back to self"

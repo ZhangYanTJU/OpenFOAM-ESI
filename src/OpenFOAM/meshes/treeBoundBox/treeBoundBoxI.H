@@ -31,9 +31,9 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-inline Foam::treeBoundBox::treeBoundBox(const Foam::zero_one)
+inline Foam::treeBoundBox::treeBoundBox(Foam::zero_one)
 :
-    boundBox(zero_one{})
+    boundBox(Foam::zero_one{})
 {}
 
 

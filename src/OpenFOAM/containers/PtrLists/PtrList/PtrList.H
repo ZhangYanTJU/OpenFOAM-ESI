@@ -249,7 +249,7 @@ public:
         }
 
         //- Same as resize()
-        void setSize(const label newLen) { this->resize(newLen); }
+        void setSize(const label n) { this->resize(n); }
 
         //- Move append an element to the end of the list
         //FOAM_DEPRECATED_FOR(2022-10, "push_back()")

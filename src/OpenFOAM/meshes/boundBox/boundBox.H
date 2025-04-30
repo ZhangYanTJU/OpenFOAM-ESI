@@ -164,7 +164,7 @@ public:
         inline explicit boundBox(const point& p);
 
         //- Construct a 0/1 unit bounding box
-        inline explicit boundBox(const Foam::zero_one);
+        inline explicit boundBox(Foam::zero_one);
 
         //- Construct from bound box min/max points
         inline boundBox(const point& min, const point& max);
@@ -295,7 +295,7 @@ public:
             inline void reset();
 
             //- Reset to a 0/1 unit bounding box
-            inline void reset(const Foam::zero_one);
+            inline void reset(Foam::zero_one);
 
             //- Reset min/max to be identical to the specified point
             inline void reset(const point& pt);

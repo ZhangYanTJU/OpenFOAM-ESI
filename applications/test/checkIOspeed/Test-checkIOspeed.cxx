@@ -50,8 +50,6 @@ Description
 #include "SliceStreamRepo.H"
 #endif
 
-#include <numeric>
-
 using namespace Foam;
 
 

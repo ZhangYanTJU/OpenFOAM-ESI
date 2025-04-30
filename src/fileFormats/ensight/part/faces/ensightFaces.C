@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -193,22 +193,22 @@ void Foam::ensightFaces::sort()
         if (!sub.empty())
         {
             SubList<label> ids(sub, addressing());
-            labelList order(Foam::sortedOrder(ids));
+            const labelList order(Foam::sortedOrder(ids));
 
-            ids = reorder<labelList>(order, ids);
+            ids = UIndirectList<label>(ids, order).list();
 
             // Sort flip map as well
             if (!flipMap_.empty())
             {
                 SubList<bool> flips(flipMap_, sub);
-                flips = reorder<boolList>(order, flips);
+                flips = UIndirectList<bool>(flips, order).list();
             }
 
             // Sort face ordering as well
             if (!faceOrder_.empty())
             {
                 SubList<label> faceOrder(faceOrder_, sub);
-                faceOrder = reorder<labelList>(order, faceOrder);
+                faceOrder = UIndirectList<label>(faceOrder, order).list();
             }
         }
     }

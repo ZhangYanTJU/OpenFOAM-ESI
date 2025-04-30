@@ -38,7 +38,6 @@ Description
 #include "SubField.H"
 #include "labelRange.H"
 #include "ListOps.H"
-#include <numeric>
 
 using namespace Foam;
 

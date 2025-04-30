@@ -81,7 +81,7 @@ public:
         inline IjkField(const labelVector& ijk, const Type& val);
 
         //- Construct with sizing information and initial values of zero
-        inline IjkField(const labelVector& ijk, const Foam::zero);
+        inline IjkField(const labelVector& ijk, Foam::zero);
 
         //- Copy construct from components
         inline IjkField(const labelVector& ijk, const UList<Type>& list);
@@ -118,7 +118,7 @@ public:
         //- Clear dimensions and field
         inline void clear();
 
-        //- Change dimensions. Fill new values with Zero
+        //- Change dimensions. Fill new values with zero
         void resize(const labelVector& newSizes);
 
         //- Change dimensions

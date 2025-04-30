@@ -73,7 +73,6 @@ Description
 #include "perfectInterface.H"
 #include "IOobjectList.H"
 #include "ReadFields.H"
-#include <numeric>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -202,7 +202,7 @@ public:
     // Constructors
 
         //- Construct a 0/1 unit bounding box
-        inline explicit treeBoundBox(const Foam::zero_one);
+        inline explicit treeBoundBox(Foam::zero_one);
 
         //- Construct a bounding box containing a single initial point
         inline explicit treeBoundBox(const point& p);

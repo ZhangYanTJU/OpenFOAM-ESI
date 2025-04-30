@@ -308,7 +308,7 @@ public:
         void operator=(const exprValue& rhs) { deepCopy(rhs); }
 
         //- Assign from zero. Changes value but not type
-        void operator=(const Foam::zero) { fill_zero(); }
+        void operator=(Foam::zero) { fill_zero(); }
 
 
     // Low-level access

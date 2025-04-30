@@ -331,7 +331,7 @@ void clamp
 (
     DimensionedField<Type, GeoMesh>& result,
     const DimensionedField<Type, GeoMesh>& f1,
-    const Foam::zero_one
+    Foam::zero_one
 )
 {
     const MinMax<Type> range(Foam::zero_one{});
@@ -345,7 +345,7 @@ tmp<DimensionedField<Type, GeoMesh>>
 clamp
 (
     const DimensionedField<Type, GeoMesh>& f1,
-    const Foam::zero_one
+    Foam::zero_one
 )
 {
     auto tres =
@@ -367,7 +367,7 @@ tmp<DimensionedField<Type, GeoMesh>>
 clamp
 (
     const tmp<DimensionedField<Type, GeoMesh>>& tf1,
-    const Foam::zero_one
+    Foam::zero_one
 )
 {
     const auto& f1 = tf1();

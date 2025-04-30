@@ -524,7 +524,7 @@ void clamp
 (
     GeometricField<Type, PatchField, GeoMesh>& result,
     const GeometricField<Type, PatchField, GeoMesh>& f1,
-    const Foam::zero_one
+    Foam::zero_one
 )
 {
     const MinMax<Type> range(Foam::zero_one{});
@@ -544,7 +544,7 @@ tmp<GeometricField<Type, PatchField, GeoMesh>>
 clamp
 (
     const GeometricField<Type, PatchField, GeoMesh>& f1,
-    const Foam::zero_one
+    Foam::zero_one
 )
 {
     auto tres =
@@ -566,7 +566,7 @@ tmp<GeometricField<Type, PatchField, GeoMesh>>
 clamp
 (
     const tmp<GeometricField<Type, PatchField, GeoMesh>>& tf1,
-    const Foam::zero_one
+    Foam::zero_one
 )
 {
     const auto& f1 = tf1();

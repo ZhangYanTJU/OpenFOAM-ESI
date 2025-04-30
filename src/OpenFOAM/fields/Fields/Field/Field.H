@@ -145,16 +145,16 @@ public:
         inline Field(const label len, const Type& val);
 
         //- Construct given size and initial values of zero
-        inline Field(const label len, const Foam::zero);
+        inline Field(const label len, Foam::zero);
 
         //- Construct with length=1, copying the value as the only content
-        inline Field(const Foam::one, const Type& val);
+        inline Field(Foam::one, const Type& val);
 
         //- Construct with length=1, moving the value as the only content
-        inline Field(const Foam::one, Type&& val);
+        inline Field(Foam::one, Type&& val);
 
         //- Construct with length=1, initializing content to zero
-        inline Field(const Foam::one, const Foam::zero);
+        inline Field(Foam::one, Foam::zero);
 
         //- Copy construct
         inline Field(const Field<Type>& fld);
@@ -276,7 +276,7 @@ public:
         //- and assign its contents to this. The behaviour largely as
         //- described in assign():
         //  - For MUST_READ and key not found: FatalIOError.
-        //  - For LAZY_READ and key not found: initialise field with Zero.
+        //  - For LAZY_READ and key not found: initialise field with zero.
         //  - For NO_READ and key not found: simply size the field.
         //  .
         Field
@@ -508,7 +508,7 @@ public:
         inline void operator=(const Type& val);
 
         //- Assign entries to zero
-        inline void operator=(const Foam::zero);
+        inline void operator=(Foam::zero);
 
         template<class Form, class Cmpt, direction nCmpt>
         void operator=(const VectorSpace<Form,Cmpt,nCmpt>&);
