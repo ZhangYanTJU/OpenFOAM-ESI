@@ -6,7 +6,7 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
-#     Copyright (C) 2017-2023 OpenCFD Ltd.
+#     Copyright (C) 2017-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -168,6 +168,7 @@ extractOptions()
             -e '/^-doc-source/d; /^-help-man/d;' \
             -e '/^-hostRoots /d; /^-roots /d;' \
             -e '/^-lib /d; /^-no-libs /d;' \
+            -e '/^-mpi-.*/d;' \
             -e '/^-[a-z]*-switch /d;' \
             -e 'y/,/ /; s/=.*$/=/;' \
             -e '/^-[^ ]* </{ s/^\(-[^ ]* <\).*$/\1/; p; d }' \

@@ -100,7 +100,8 @@ void Foam::UPstream::splitCommunicatorComponents
 (
     const label parentIndex,
     const label index,
-    int colour
+    int colour,
+    const bool two_step
 )
 {}
 

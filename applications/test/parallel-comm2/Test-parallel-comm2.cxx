@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
     argList::addBoolOption("info", "information");
     argList::addBoolOption("print-tree", "Report tree(s) as graph");
     argList::addBoolOption("no-test", "Disable general tests");
+    argList::addBoolOption("split", "Test Pstream split-comm");
     argList::addBoolOption("host-comm", "Test Pstream host-comm");
     argList::addBoolOption("host-broadcast", "Test host-base broadcasts");
 
@@ -85,8 +86,8 @@ int main(int argc, char *argv[])
 
     if (UPstream::parRun() && optPrintTree)
     {
-        Info<< "comms: "
-            << UPstream::whichCommunication(UPstream::worldComm) << nl;
+        // Info<< "comms: "
+        //     << UPstream::whichCommunication(UPstream::worldComm) << nl;
         UPstream::printCommTree(UPstream::commWorld());
     }
 
@@ -101,6 +102,34 @@ int main(int argc, char *argv[])
         Pout<< "local-node ranks: "
             << flatOutput(UPstream::procID(UPstream::commLocalNode())) << nl;
     }
+
+    if (UPstream::parRun() && args.found("split"))
+    {
+        Info<< "split: alternative ranks" << nl;
+
+        const auto myRank = UPstream::myProcNo();
+
+        int colour =
+        (
+            (myRank == 5 || myRank == 6)  // Exclude these ones
+          ? -1
+          : (myRank % 2)
+        );
+
+        UPstream::communicator comm =
+            UPstream::communicator::split(UPstream::commWorld(), colour, true);
+
+        Pout<< "split ranks (colour=" << colour << ") "
+            << flatOutput(UPstream::procID(comm.comm())) << nl;
+
+        comm.reset();
+        comm =
+            UPstream::communicator::split(UPstream::commWorld(), colour, false);
+
+        Pout<< "Split ranks (colour=" << colour << ") "
+            << flatOutput(UPstream::procID(comm.comm())) << nl;
+    }
+
 
     if (args.found("info"))
     {
@@ -135,8 +164,8 @@ int main(int argc, char *argv[])
             << endl;
 
         {
-            Info<< "host-master: "
-                << UPstream::whichCommunication(commInterNode) << endl;
+            // Info<< "host-master: "
+            //     << UPstream::whichCommunication(commInterNode) << endl;
 
             UPstream::printCommTree(commInterNode);
             UPstream::printCommTree(commLocalNode);

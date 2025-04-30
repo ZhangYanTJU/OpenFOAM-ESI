@@ -445,7 +445,8 @@ Foam::label Foam::UPstream::dupCommunicator
 Foam::label Foam::UPstream::splitCommunicator
 (
     const label parentIndex,
-    const int colour
+    const int colour,
+    const bool two_step
 )
 {
     #ifdef FULLDEBUG
@@ -465,7 +466,8 @@ Foam::label Foam::UPstream::splitCommunicator
     {
         Perr<< "Split communicator ["
             << index << "] from [" << parentIndex
-            << "] using colour=" << colour << endl;
+            << "] using colour=" << colour
+            << " (two_step=" << two_step << ")" << endl;
     }
 
     // Initially treat as unknown,
@@ -475,7 +477,7 @@ Foam::label Foam::UPstream::splitCommunicator
 
     if (UPstream::parRun())
     {
-        splitCommunicatorComponents(parentIndex, index, colour);
+        splitCommunicatorComponents(parentIndex, index, colour, two_step);
     }
 
     return index;
@@ -856,6 +858,8 @@ const Foam::UPstream::rangeType& Foam::UPstream::localNode_parentProcs()
 bool Foam::UPstream::parRun_(false);
 
 bool Foam::UPstream::haveThreads_(false);
+
+bool Foam::UPstream::noInitialCommDup_(false);
 
 int Foam::UPstream::msgType_(1);
 

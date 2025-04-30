@@ -128,7 +128,14 @@ Foam::argList::initValidTables::initValidTables()
     (
         "mpi-threads",
         "Request use of MPI threads",
-        true  //  advanced option
+        true  // advanced option
+    );
+
+    argList::addBoolOption
+    (
+        "mpi-no-comm-dup",
+        "Disable initial MPI_Comm_dup()",
+        true  // advanced option
     );
 
     argList::addOption
@@ -192,6 +199,12 @@ Foam::argList::initValidTables::initValidTables()
         "name"
     );
 
+    argList::addBoolOption
+    (
+        "mpi-split-by-appnum",
+        "Split world communicator based on the APPNUM",
+        true  // advanced option
+    );
 
     // Some standard option aliases (with or without version warnings)
 //     argList::addOptionCompat
@@ -596,6 +609,8 @@ void Foam::argList::noParallel()
     removeOption("hostRoots");
     removeOption("world");
     removeOption("mpi-threads");
+    removeOption("mpi-no-comm-dup");
+    removeOption("mpi-split-by-appnum");
     validParOptions.clear();
 }
 
