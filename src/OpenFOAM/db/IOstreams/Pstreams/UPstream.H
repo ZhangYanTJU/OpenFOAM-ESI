@@ -397,6 +397,9 @@ private:
         //- Have support for threads?
         static bool haveThreads_;
 
+        //- Initial MPI_Comm_dup(MPI_COMM_WORLD,...) disabled? (default: false)
+        static bool noInitialCommDup_;
+
         //- Standard transfer message type
         static int msgType_;
 
@@ -495,7 +498,9 @@ private:
         (
             const label parentIndex,
             const label index,
-            const int colour
+            const int colour,
+            //! Use MPI_Allgather+MPI_Comm_create_group vs MPI_Comm_split
+            const bool two_step = true
         );
 
         //- Free MPI components of communicator.
@@ -877,7 +882,10 @@ public:
 
             //! The colouring to select which ranks to include.
             //! Negative values correspond to 'ignore'
-            const int colour
+            const int colour,
+
+            //! Use MPI_Allgather+MPI_Comm_create_group vs MPI_Comm_split
+            const bool two_step = true
         );
 
         //- Free a previously allocated communicator.
@@ -949,11 +957,14 @@ public:
                 const label parentComm,
                 //! The colouring to select which ranks to include.
                 //! Negative values correspond to 'ignore'
-                const int colour
+                const int colour,
+                //! Use MPI_Allgather+MPI_Comm_create_group vs MPI_Comm_split
+                const bool two_step = true
             )
             {
                 communicator c;
-                c.comm_ = UPstream::splitCommunicator(parentComm, colour);
+                c.comm_ =
+                    UPstream::splitCommunicator(parentComm, colour, two_step);
                 return c;
             }
 
