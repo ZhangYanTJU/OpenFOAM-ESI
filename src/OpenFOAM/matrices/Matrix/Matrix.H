@@ -139,7 +139,7 @@ public:
     // Constructors
 
         //- Default construct (empty matrix)
-        inline Matrix() noexcept;
+        inline constexpr Matrix() noexcept;
 
         //- Construct given number of rows/columns, uninitialised content
         Matrix(const label m, const label n);

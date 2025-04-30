@@ -38,9 +38,7 @@ License
 template<class Form, class Type>
 Foam::Matrix<Form, Type>::Matrix(Istream& is)
 :
-    mRows_(0),
-    nCols_(0),
-    v_(nullptr)
+    Matrix<Form, Type>()
 {
     this->readMatrix(is);
 }

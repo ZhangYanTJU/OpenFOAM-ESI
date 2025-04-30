@@ -46,7 +46,7 @@ inline void Foam::Matrix<Form, Type>::doAlloc()
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Form, class Type>
-inline Foam::Matrix<Form, Type>::Matrix() noexcept
+inline constexpr Foam::Matrix<Form, Type>::Matrix() noexcept
 :
     mRows_(0),
     nCols_(0),
