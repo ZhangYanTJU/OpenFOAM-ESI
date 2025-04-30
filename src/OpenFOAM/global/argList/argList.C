@@ -199,6 +199,12 @@ Foam::argList::initValidTables::initValidTables()
         "name"
     );
 
+    argList::addBoolOption
+    (
+        "mpi-split-by-appnum",
+        "Split world communicator based on the APPNUM",
+        true  // advanced option
+    );
 
     // Some standard option aliases (with or without version warnings)
 //     argList::addOptionCompat
@@ -604,6 +610,7 @@ void Foam::argList::noParallel()
     removeOption("world");
     removeOption("mpi-threads");
     removeOption("mpi-no-comm-dup");
+    removeOption("mpi-split-by-appnum");
     validParOptions.clear();
 }
 
