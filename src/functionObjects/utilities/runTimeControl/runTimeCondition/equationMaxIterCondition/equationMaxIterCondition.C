@@ -107,7 +107,7 @@ bool Foam::functionObjects::runTimeControls::equationMaxIterCondition::apply()
 
         if (solverDict.found(fieldName))
         {
-            const List<solverPerformance> sp(solverDict.lookup(fieldName));
+            const Pair<solverPerformance> sp(solverDict.lookup(fieldName));
             const label nIterations = sp.first().nIterations();
             result[fieldi] = nIterations;
 

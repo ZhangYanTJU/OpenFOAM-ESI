@@ -227,7 +227,7 @@ bool Foam::solutionControl::maxTypeResidual
 
     if (fvmesh.foundObject<fieldType>(fieldName))
     {
-        const List<SolverPerformance<Type>> sp(solverPerfDictEntry.stream());
+        const Pair<SolverPerformance<Type>> sp(solverPerfDictEntry.stream());
 
         residuals.first() = cmptMax(sp.first().initialResidual());
         residuals.last()  = cmptMax(sp.last().initialResidual());

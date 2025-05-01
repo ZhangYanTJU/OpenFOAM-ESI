@@ -119,7 +119,7 @@ void Foam::functionObjects::solverInfo::updateSolverInfo(const word& fieldName)
 
         if (solverDict.found(fieldName))
         {
-            const List<SolverPerformance<Type>> sp
+            const Pair<SolverPerformance<Type>> sp
             (
                 solverDict.lookup(fieldName)
             );

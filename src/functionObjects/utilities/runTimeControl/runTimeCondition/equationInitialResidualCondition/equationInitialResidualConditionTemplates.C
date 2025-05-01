@@ -43,7 +43,7 @@ equationInitialResidualCondition::setResidual
 
     if (canSet && mesh.foundObject<volFieldType>(fieldName))
     {
-        const List<SolverPerformance<Type>> sp(dict.lookup(fieldName));
+        const Pair<SolverPerformance<Type>> sp(dict.lookup(fieldName));
         const Type& allComponents = sp.first().initialResidual();
 
         if (componenti != -1)

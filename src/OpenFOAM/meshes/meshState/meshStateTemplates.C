@@ -39,12 +39,14 @@ void Foam::meshState::setSolverPerformance
 {
     dictionary& dict = const_cast<dictionary&>(solverPerformanceDict());
 
-    List<SolverPerformance<Type>> perfs;
+    Pair<SolverPerformance<Type>> perfs;
 
-    if (prevTimeIndex_ != this->time().timeIndex())
+    const label timeIndex = this->time().timeIndex();
+
+    if (prevTimeIndex_ != timeIndex)
     {
         // Reset solver performance between iterations
-        prevTimeIndex_ = this->time().timeIndex();
+        prevTimeIndex_ = timeIndex;
         dict.clear();
     }
     else
@@ -52,7 +54,14 @@ void Foam::meshState::setSolverPerformance
         dict.readIfPresent(name, perfs);
     }
 
-    perfs.push_back(sp);
+    if (dict.found(name))
+    {
+        perfs.second() = sp;
+    }
+    else
+    {
+        perfs = Pair<SolverPerformance<Type>>(sp, sp);
+    }
 
     dict.set(name, perfs);
 }
