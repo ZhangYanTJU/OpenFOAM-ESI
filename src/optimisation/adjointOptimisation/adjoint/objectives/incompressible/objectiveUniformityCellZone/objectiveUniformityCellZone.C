@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2023 PCOpt/NTUA
-    Copyright (C) 2013-2023 FOSS GP
+    Copyright (C) 2007-2025 PCOpt/NTUA
+    Copyright (C) 2013-2025 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -118,9 +118,9 @@ scalar objectiveUniformityCellZone::J()
     const volVectorField& U = vars_.UInst();
     const scalarField& V = mesh_.V().field();
 
-    for (const label zI : zones_)
+    forAll(zones_, zI)
     {
-        const cellZone& zoneI = mesh_.cellZones()[zI];
+        const cellZone& zoneI = mesh_.cellZones()[zones_[zI]];
         scalarField VZone(V, zoneI);
         vectorField UZone(U.primitiveField(), zoneI);
         volZone_[zI] = gSum(VZone);
@@ -138,9 +138,9 @@ void objectiveUniformityCellZone::update_dJdv()
 {
     const volVectorField& U = vars_.U();
 
-    for (const label zI : zones_)
+    forAll(zones_, zI)
     {
-        const cellZone& zoneI = mesh_.cellZones()[zI];
+        const cellZone& zoneI = mesh_.cellZones()[zones_[zI]];
         for (const label cellI : zoneI)
         {
             dJdvPtr_()[cellI] = (U[cellI] - UMean_[zI])/volZone_[zI];
@@ -154,9 +154,9 @@ void objectiveUniformityCellZone::update_divDxDbMultiplier()
     volScalarField& divDxDbMult = divDxDbMultPtr_();
     const volVectorField& U = vars_.U();
 
-    for (const label zI : zones_)
+    forAll(zones_, zI)
     {
-        const cellZone& zoneI = mesh_.cellZones()[zI];
+        const cellZone& zoneI = mesh_.cellZones()[zones_[zI]];
         for (const label cellI : zoneI)
         {
             divDxDbMult[cellI] =
