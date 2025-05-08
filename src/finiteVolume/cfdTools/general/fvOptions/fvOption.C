@@ -72,7 +72,10 @@ Foam::fv::option::option
     active_(dict_.getOrDefault("active", true)),
     log(true)
 {
-    Log << incrIndent << indent << "Source: " << name_ << endl << decrIndent;
+    Log << incrIndent
+        << indent << "Source: " << name_ << endl
+        << indent << "State: " << (active_ ? "active" : "inactive") << endl
+        << decrIndent;
 }
 
 
