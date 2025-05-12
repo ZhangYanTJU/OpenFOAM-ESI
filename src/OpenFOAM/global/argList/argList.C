@@ -37,6 +37,7 @@ License
 #include "IOobject.H"
 #include "dynamicCode.H"
 #include "simpleObjectRegistry.H"
+#include "MemoryPool.H"
 #include "sigFpe.H"
 #include "sigInt.H"
 #include "sigQuit.H"
@@ -2181,6 +2182,9 @@ void Foam::argList::parse
         sigInt::set(bannerEnabled());
         sigQuit::set(bannerEnabled());
         sigSegv::set(bannerEnabled());
+
+        // Create memory pool (if any) after MPI has been setup
+        MemoryPool::create(bannerEnabled());
 
         if (UPstream::master() && bannerEnabled())
         {

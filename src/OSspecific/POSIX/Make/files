@@ -4,6 +4,8 @@ cpuInfo/cpuInfo.C
 cpuTime/cpuTimePosix.C
 memInfo/memInfo.C
 
+memory/MemoryPool.cxx
+
 signals/sigFpe.cxx
 signals/sigSegv.cxx
 signals/sigInt.cxx

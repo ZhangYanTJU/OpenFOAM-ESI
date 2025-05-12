@@ -34,6 +34,7 @@ Description
 #ifndef Foam_ListPolicy_H
 #define Foam_ListPolicy_H
 
+#include "MemoryPool.H"  // Also includes <cstdint>
 #include "contiguous.H"  // Also includes <type_traits>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -103,6 +104,18 @@ template<> struct no_linebreak<wordRe> : std::true_type {};
 // - use_offload(n) :
 //   Lower threshold for switching to device offloading
 //
+//
+// Use of the memory-pool is controlled by the 'is_aligned_type()' test
+// and the minimum field size, controlled by the 'use_memory_pool()' test.
+//
+// If the memory-pool is not enabled or not required according to the two
+// above tests, the allocation falls back to either an aligned or unaligned
+// allocation.
+//
+// The decision about when to choose aligned vs unaligned allocation
+// is still a compile-time option. Made by direct edit of the
+// appropriate functions.
+//
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Consider aligned allocation for the given type?
@@ -146,27 +159,104 @@ inline constexpr bool use_offload(IntType n) noexcept
 }
 
 
+//- Default alignment for larger fields
+inline constexpr std::align_val_t default_alignment() noexcept
+{
+    return std::align_val_t(256);
+}
+
+
+//- Allocate from memory pool (if active), or aligned, or normal
 template<class T, class IntType>
 inline T* allocate(IntType n)
 {
-    // Plain new
-    return new T[n];
+    if constexpr (ListPolicy::is_aligned_type<T>())
+    {
+        // Note: threshold for use_memory_pool() >= use_alignment()
+
+        if (ListPolicy::use_alignment(n))
+        {
+            if
+            (
+                void *pool_ptr
+                (
+                    // Consider memory pool for large amounts of data
+                    ListPolicy::use_memory_pool(n)
+                  ? Foam::MemoryPool::try_allocate(sizeof(T)*n)
+                  : nullptr
+                );
+                pool_ptr
+            )
+            {
+                // Placement new
+                return new (pool_ptr) T[n];
+            }
+            else
+            {
+                return new (ListPolicy::default_alignment()) T[n];
+            }
+        }
+        else
+        {
+            // Plain new
+            return new T[n];
+        }
+    }
+    else
+    {
+        // Plain new
+        return new T[n];
+    }
 }
 
 
+//- Deallocate from memory pool, or normal
 template<class T, class IntType>
 inline void deallocate(T* ptr)
 {
-    // Plain new
-    delete[] ptr;
+    if constexpr (ListPolicy::is_aligned_type<T>())
+    {
+        if (ptr && !Foam::MemoryPool::try_deallocate(ptr))
+        {
+            // Plain new
+            delete[] ptr;
+        }
+    }
+    else
+    {
+        // Plain new
+        delete[] ptr;
+    }
 }
 
 
+//- Deallocate from memory pool, or aligned, or normal
 template<class T, class IntType>
 inline void deallocate(T* ptr, [[maybe_unused]] IntType n)
 {
-    // Plain new
-    delete[] ptr;
+    if constexpr (ListPolicy::is_aligned_type<T>())
+    {
+        // Note: threshold for use_memory_pool() >= use_alignment()
+
+        if (ListPolicy::use_alignment(n))
+        {
+            if (ptr && !Foam::MemoryPool::try_deallocate(ptr))
+            {
+                // Alignment depends on the number of elements
+                ::operator delete[](ptr, ListPolicy::default_alignment());
+            }
+        }
+        else
+        {
+            // Plain new
+            delete[] ptr;
+        }
+    }
+    else
+    {
+        // Plain new
+        delete[] ptr;
+    }
 }
 
 

@@ -132,6 +132,11 @@ projectDir="$HOME/OpenFOAM/OpenFOAM-$WM_PROJECT_VERSION"
 # projectDir="@PROJECT_DIR@"
 : # Safety statement (if the user removed all fallback values)
 
+# [FOAM_MEMORY_POOL] - Optional memory management
+#                    - overrides the 'memory_pool' etc/controlDict entry
+# = "true | false | host [size=nn] [incr=nn]"
+#export FOAM_MEMORY_POOL="host"
+
 # [FOAM_SIGFPE] - Trap floating-point exceptions.
 #               - overrides the 'trapFpe' controlDict entry
 # = true | false
