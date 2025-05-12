@@ -3,6 +3,8 @@ MSwindows.C
 cpuInfo/cpuInfo.C
 memInfo/memInfo.C
 
+memory/MemoryPool.cxx
+
 signals/sigFpe.cxx
 signals/sigInt.cxx
 signals/sigQuit.cxx

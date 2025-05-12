@@ -2,6 +2,7 @@
 cd "${0%/*}" || exit                                # Run from this directory
 targetType=libo                                     # Preferred library type
 . ${WM_PROJECT_DIR:?}/wmake/scripts/AllwmakeParseArguments $*
+. ${WM_PROJECT_DIR:?}/wmake/scripts/have_umpire
 
 #------------------------------------------------------------------------------
 # Hack for MacOS (with Gcc).
@@ -58,6 +59,47 @@ then
     echo "    found <sys/inotify.h> -- using inotify for file monitoring" 1>&2
     export COMP_FLAGS="-DFOAM_USE_INOTIFY"
 fi
+
+#------------------------------------------------------------------------------
+
+# Have -lumpire, but also -lcamp etc.
+# Also need to follow the link order
+get_umpire_libs()
+{
+    if [ -d "${UMPIRE_LIB_DIR}" ]
+    then
+        set -- $(
+            # Expected link order
+            for name in umpire fmt camp
+            do
+                [ -f "$UMPIRE_LIB_DIR/lib${name}.a" ] && echo "-l$name"
+            done
+        )
+        echo "$@"
+    else
+        echo
+    fi
+}
+
+
+if have_umpire
+then
+    libNames="$(get_umpire_libs)"
+
+    if [ -n "$libNames" ]
+    then
+        echo "    found umpire -- enabling memory pool interface" 1>&2
+        echo "    umpire libs: $libNames" 1>&2
+
+        COMP_FLAGS="$COMP_FLAGS -DFOAM_USE_UMPIRE -I${UMPIRE_INC_DIR}"
+        LINK_FLAGS="$LINK_FLAGS -L${UMPIRE_LIB_DIR} $libNames"
+        export COMP_FLAGS LINK_FLAGS
+    else
+        echo "    expecting umpire, but did not resolve the libraries" 1>&2
+    fi
+fi
+
+#------------------------------------------------------------------------------
 
 # Make object (non-shared by default)
 # Never want/need openmp, especially for static objects

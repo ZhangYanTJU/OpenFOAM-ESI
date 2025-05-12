@@ -134,6 +134,11 @@ set projectDir=`lsof +p $$ |& sed -ne 's#^[^/]*##;\@/'"$projectName"'[^/]*/etc/c
 # Or optionally hard-coded (eg, with autoconfig)
 # set projectDir="@PROJECT_DIR@"
 
+# [FOAM_MEMORY_POOL] - Optional memory management
+#                    - overrides the 'memory_pool' etc/controlDict entry
+# = "true | false | host [size=nn] [incr=nn]"
+#setenv FOAM_MEMORY_POOL "host"
+
 # [FOAM_SIGFPE] - Trap floating-point exceptions.
 #               - overrides the 'trapFpe' controlDict entry
 # = true | false
