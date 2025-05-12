@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2412                                 |
+|  \\    /   O peration     | Version:  v2506                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -212,6 +212,9 @@ OptimisationSwitches
     // =====
     // Other
     // =====
+
+    // Optional memory management (sizing in MB)
+    // memory_pool     "host; size=1024; incr=5"
 
     // Trap floating point exception.
     // Can override with FOAM_SIGFPE env variable (true|false)

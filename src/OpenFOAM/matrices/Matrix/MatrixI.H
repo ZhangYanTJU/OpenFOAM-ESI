@@ -38,7 +38,8 @@ inline void Foam::Matrix<Form, Type>::doAlloc()
     if (len > 0)
     {
         // With sign-check to avoid spurious -Walloc-size-larger-than
-        v_ = new Type[len];
+        this->v_ = ListPolicy::allocate<Type>(len);
+
     }
 }
 

@@ -1,1 +1,4 @@
-EXE_INC = $(COMP_FLAGS)
+/* umpire uses old-style cast etc */
+EXE_INC = $(COMP_FLAGS) $(c++LESSWARN)
+
+LIBO_LIBS = $(LINK_FLAGS)
