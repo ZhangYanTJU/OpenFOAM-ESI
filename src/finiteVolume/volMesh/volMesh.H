@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,13 +32,12 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef volMesh_H
-#define volMesh_H
+#ifndef Foam_volMesh_H
+#define Foam_volMesh_H
 
 #include "GeoMesh.H"
 #include "fvMesh.H"
 #include "primitiveMesh.H"
-#include <type_traits>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -57,23 +56,35 @@ public:
 
     // Constructors
 
-        //- Construct from fvMesh
+        //- Construct from fvMesh reference
         explicit volMesh(const fvMesh& mesh)
         :
             GeoMesh<fvMesh>(mesh)
         {}
 
 
-    // Member Functions
+    // Static Functions
 
-        //- Return size. Number of cells
-        static label size(const Mesh& mesh)
+        //- The geometric (internal) mesh size - number of cells.
+        //  Method name expected by GeoMesh interface
+        static label size(const polyMesh& mesh) noexcept
         {
             return mesh.nCells();
         }
 
-        //- Return size. Number of cells
-        label size() const
+        //- The geometric boundary size - number of boundary faces.
+        //  Method name expected by GeoMesh interface
+        static label boundary_size(const polyMesh& mesh) noexcept
+        {
+            return mesh.nBoundaryFaces();
+        }
+
+
+    // Member Functions
+
+        //- The geometric (internal) mesh size - number of cells.
+        //  Method name expected by GeoMesh interface
+        label size() const noexcept
         {
             return size(mesh_);
         }

@@ -121,15 +121,27 @@ public:
     ~pointMesh() = default;
 
 
-    // Member Functions
+    // Static Functions
 
-        //- Return size. Number of points
+        //- The geometric (internal) size - number of mesh points.
+        //  Method name expected by GeoMesh interface
         static label size(const Mesh& mesh)
         {
             return mesh.GeoMesh<polyMesh>::mesh_.nPoints();
         }
 
-        //- Return size. Number of points
+        //- The geometric boundary size - not implemented.
+        //  Method name expected by GeoMesh interface
+        static label boundary_size(const Mesh& mesh)
+        {
+            return 0;
+        }
+
+
+    // Member Functions
+
+        //- The geometric (internal) size - number of points.
+        //  Method name expected by GeoMesh interface
         label size() const
         {
             return size(*this);

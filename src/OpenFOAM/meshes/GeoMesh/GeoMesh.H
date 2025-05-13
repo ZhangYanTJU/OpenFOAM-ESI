@@ -29,10 +29,13 @@ Class
 Description
     Generic mesh wrapper used by volMesh, surfaceMesh, pointMesh etc.
 
+    Derived classes are typically expected to implement the static methods
+    size() and boundary_size().
+
 \*---------------------------------------------------------------------------*/
 
-#ifndef GeoMesh_H
-#define GeoMesh_H
+#ifndef Foam_GeoMesh_H
+#define Foam_GeoMesh_H
 
 #include "objectRegistry.H"
 
