@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2023 Sergey Lesnik
-    Copyright (C) 2023-2024 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,7 +37,7 @@ namespace Foam
 // Write tokens without keyword, suppress/ignore bad tokens.
 // Mostly like primitiveEntry::write(os, true);
 
-static void writeTokens(Ostream& os, const tokenList& toks)
+static void writeTokens(Ostream& os, const UList<token>& toks)
 {
     bool started = false;  // Separate from previous token?
 
@@ -110,7 +110,7 @@ Foam::formattingEntry::formattingEntry
     primitiveEntry
     (
         key,
-        token(token::tokenType::CHAR_DATA, std::move(content))
+        token(token::tokenType::CHAR_DATA, content)
     )
 {}
 

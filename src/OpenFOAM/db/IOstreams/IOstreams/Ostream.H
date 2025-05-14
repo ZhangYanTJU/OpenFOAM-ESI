@@ -327,7 +327,6 @@ public:
 
 // * * * * * * * * * * * * * * * Global Operators  * * * * * * * * * * * * * //
 
-#if __cplusplus >= 201703L
 //- Write operator for std::string_view
 inline Ostream& operator<<(Ostream& os, std::string_view s)
 {
@@ -335,7 +334,6 @@ inline Ostream& operator<<(Ostream& os, std::string_view s)
     os.check("Foam::operator<<(Ostream&, std::string_view)");
     return os;
 }
-#endif
 
 //- Write operator for character span. Output like string data
 inline Ostream& operator<<(Ostream& os, stdFoam::span<char> s)

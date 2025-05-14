@@ -40,11 +40,6 @@ using namespace Foam;
 int main(int argc, char *argv[])
 {
     Info<< "Compiled with C++ " << __cplusplus;
-    #if __cplusplus >= 201703L
-    Info<< " - has std::string_view" << nl << nl;
-    #else
-    Info<< " - NO std::string_view" << nl << nl;
-    #endif
 
     // basics
     {
@@ -63,9 +58,7 @@ int main(int argc, char *argv[])
                 << "input: <" << cstr << '>'
                 << " type: " << typeid(cstr).name() << " len:" << len << nl;
 
-            #if __cplusplus >= 201703L
             Info<< "    view: " << std::string_view(cstr) << nl;
-            #endif
 
             Info<< "    span: "
                 << stdFoam::span<const char>(cstr, len) << nl;

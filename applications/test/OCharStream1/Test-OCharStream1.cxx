@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,12 +83,10 @@ Ostream& printView(Ostream& os, const char* first, const char* last)
 }
 
 
-#if __cplusplus >= 201703L
 Ostream& printView(Ostream& os, std::string_view s)
 {
     return printView(os, s.begin(), s.end());
 }
-#endif
 
 
 Ostream& printView(Ostream& os, stdFoam::span<char> s)
@@ -105,7 +103,7 @@ Ostream& printView(Ostream& os, const UList<char>& list)
 
 Ostream& writeList(Ostream& os, const UList<char>& list)
 {
-    return printView(os, list.begin(), list.end());
+    return printView(os, list);
 }
 
 
@@ -126,30 +124,25 @@ void printInfo(const BufType& buf)
 }
 
 
-template<>
-void printInfo(const List<char>& buf)
-{
-    Info<< nl << "=========================" << endl;
-    toString(Info, buf);
-    Info<< nl << "=========================" << endl;
-}
-
-
 void printTokens(Istream& is)
 {
     label count = 0;
-    token t;
-    while (is.good())
+    for (token tok; tok.read(is); ++count)
     {
-        is >> t;
-        if (t.good())
-        {
-            ++count;
-            Info<<"token: " << t << endl;
-        }
+        Info<< "token: " << tok << nl;
     }
-
     Info<< count << " tokens" << endl;
+}
+
+
+// Generate some dictionary-like content
+template<class OS>
+void outputDict(OS& os)
+{
+    os.beginBlock("testDict");
+    os.writeEntry("bool",   "false");
+    os.writeEntry("scalar", 3.14159);
+    os.endBlock();
 }
 
 
@@ -158,19 +151,51 @@ void printTokens(Istream& is)
 
 int main(int argc, char *argv[])
 {
+    #include "setRootCase.H"
+
     // Buffer storage
     DynamicList<char> storage(16);
 
     OCharStream obuf(std::move(storage));
-    obuf << 1002 << " " << "abcd" << " " << "def" << " " << 3.14159 << ";\n";
 
-    // Move contents to output buffer
     printInfo(obuf);
 
-    Info<<nl << "as string: ";
-    toString(Info, obuf.list()) << endl;
+    // Fill with some content
+    for (label i = 0; i < 50; ++i)
+    {
+        obuf<< 1002 << " " << "abcd" << " "
+            << "def" << " " << 3.14159 << ";\n";
+    }
 
-    Info<< "transfer contents to a List" << endl;
+    printInfo(obuf);
+
+    obuf.rewind();
+    printInfo(obuf);
+
+    for (label i=0; i < 10; ++i)
+    {
+        obuf << "item" << i << "\n";
+    }
+
+    printInfo(obuf);
+
+    // Add some more
+    for (label i=10; i < 15; ++i)
+    {
+        obuf << "more" << i << nl;
+    }
+
+    Info<< "appended more" << nl;
+    printInfo(obuf);
+
+    // Overwrite at some position
+    obuf.stdStream().rdbuf()->pubseekpos(0.60 * obuf.size());
+    obuf << "<" << nl << "OVERWRITE" << nl;
+
+    Info<<"after overwrite" << nl;
+    printInfo(obuf);
+
+    Info<< "transfer contents to a List or ICharStream" << nl;
 
     // Reclaim data storage from OCharStream -> ICharStream
     ICharStream ibuf(std::move(obuf));
@@ -183,90 +208,86 @@ int main(int argc, char *argv[])
     //     ibuf.swap(data);
     // }
 
-    Info<< nl;
-    Info<< nl << "input string:";
-    printInfo(ibuf);
-
-    Info<< nl << "orig output:";
+    Info<<"original:";
     printInfo(obuf);
+
+    Info<<"new input:" << nl;
+    printInfo(ibuf);
 
     printTokens(ibuf);
 
-    Info<<nl << "after:";
-    printInfo(ibuf);
+    // Create from other storage types
 
-    // This should also work
-    ibuf.list() = 'X';
-
-    Info<<nl << "overwritten with const value:";
-    printInfo(ibuf);
-
-    // Can also change content like this:
+    DynamicList<char> written;
+    Info<< nl;
     {
-        const int n = min(26, ibuf.size());
+        Info<<"create std::move(List)" << endl;
+        List<char> list(16, 'A');
 
-        for (int i=0; i<n; ++i)
+        Info<<"input:";
+        toString(Info, list) << endl;
+
+        OCharStream buf1(std::move(list));
+
+        Info<<"orig:";
+        toString(Info, list) << endl;
+        printInfo(buf1);
+
+        for (label i = 0; i < 26; ++i)
         {
-            ibuf.list()[i] = 'A' + i;
+            buf1 << char('A' +i);
         }
+        for (label i = 0; i < 26; ++i)
+        {
+            buf1 << char('a' +i);
+        }
+
+        Info<<"orig:";
+        toString(Info, list) << endl;
+
+        printInfo(buf1);
+
+        // Move back to written
+        buf1.swap(written);
+
+        printInfo(buf1);
+    }
+    Info<<"'captured' content ";
+    toString(Info, written);
+
+    Info<< nl
+        << "content size=" << written.size()
+        << " capacity=" << written.capacity() << nl;
+
+
+    Info<< nl << "Test dictionary" << nl;
+    {
+        OCharStream os1;
+
+        outputDict(os1);
+
+        Info<< "Regular" << nl;
+        printInfo(os1);
     }
 
-    Info<<nl << "directly written:";
-    printInfo(ibuf);
-
-    // Swap in/out an entirely new list storage:
-    List<char> newvalues(52);
     {
-        for (int i=0; i<26; ++i)
-        {
-            newvalues[2*i+0] = char('a' + i);
-            newvalues[2*i+1] = char('A' + i);
-        }
+        OCharStream os2;
+        os2.indentSize(0);
+
+        outputDict(os2);
+
+        Info<< "Compact" << nl;
+        printInfo(os2);
+
+        Info<< "address: " << Foam::name(os2.list().cdata()) << nl;
+
+        DynamicList<char> chars(os2.release());
+        Info<< "chars: " << chars.size() << '/' << chars.capacity() << nl;
+        Info<< "address: " << Foam::name(chars.cdata()) << nl;
+        Info<< "release" << nl;
+        printInfo(os2);
     }
-    ibuf.swap(newvalues);
 
-    Info<<nl << "after swap:";
-    printInfo(ibuf);
-
-    Info<<nl << "swapped out:";
-    printInfo(newvalues);
-
-    {
-        icharstream is(std::move(newvalues));
-
-        char c = 0;
-
-        Info<< nl
-            << "getting values from icharstream of "
-            << is.list() << endl;
-
-        // Info<< " (" << is.tellg() << " " << is.remaining() << ")";
-        // Info<< "get:";
-        while (is.get(c))
-        {
-            Info<< ' ' << c;
-            // Info<< " (" << is.tellg() << " " << is.remaining() << ")";
-        }
-        Info<< " - end" << nl;
-
-        // Info<< "remaining: " << is.list() << endl;
-        // Info<< "remaining: " << is.remaining() << endl;
-
-        // Manipulate the list view
-        {
-            UList<char> chars(is.list());
-            Foam::reverse(chars);
-        }
-
-        is.rewind();
-
-        Info<< "get:";
-        while (is.get(c))
-        {
-            Info<< ' ' << c;
-        }
-        Info<< " - end" << nl;
-    }
 
     Info<< "\nEnd\n" << endl;
 

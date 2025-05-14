@@ -165,11 +165,7 @@ public:
         //  Uses static parse function internally.
         explicit ITstream
         (
-            #if __cplusplus >= 201703L
             std::string_view s,
-            #else
-            const std::string& s,
-            #endif
             IOstreamOption streamOpt = IOstreamOption(),
             const string& name = "input"
         )
@@ -281,7 +277,6 @@ public:
             return parse_chars(input, strlen(input), streamOpt);
         }
 
-        #if __cplusplus >= 201703L
         //- Create token list by parsing the input character sequence
         //- until no good tokens remain.
         static tokenList parse
@@ -292,7 +287,6 @@ public:
         {
             return parse_chars(s.data(), s.size(), streamOpt);
         }
-        #endif
 
         //- Create token list by parsing the input character sequence
         //- until no good tokens remain.

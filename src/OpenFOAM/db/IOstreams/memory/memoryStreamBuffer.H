@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -213,17 +213,10 @@ public:
         //- The span size (number of input characters)
         std::streamsize size_bytes() const { return (egptr() - eback()); }
 
-        #if __cplusplus >= 201703L
         std::string_view view() const
         {
             return std::string_view(data_bytes(), size_bytes());
         }
-        #else
-        stdFoam::span<const char> view() const
-        {
-            return stdFoam::span<const char>(data_bytes(), size_bytes());
-        }
-        #endif
 
         //- Some information about the input buffer position/capacity
         void info(Ostream& os) const
@@ -403,17 +396,10 @@ public:
         //- The span size (size of output buffer)
         std::streamsize size_bytes() const { return (pptr() - pbase()); }
 
-        #if __cplusplus >= 201703L
         std::string_view view() const
         {
             return std::string_view(data_bytes(), size_bytes());
         }
-        #else
-        stdFoam::span<const char> view() const
-        {
-            return stdFoam::span<const char>(data_bytes(), size_bytes());
-        }
-        #endif
 
         //- Some information about the output buffer position/capacity
         void info(Ostream& os) const

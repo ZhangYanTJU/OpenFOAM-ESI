@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -134,50 +134,51 @@ int main(int argc, char *argv[])
         Info<< "resized: "
             << ctok1.info() << nl << ctok1 << endl;
 
+        // Using isA<> on compoundToken()
+        if
+        (
+            const auto* listptr
+          = ctok1.compoundToken().isA<scalarList>()
+        )
         {
-            // Using isA<> on compoundToken()
-            const auto* listptr = ctok1.compoundToken().isA<scalarList>();
-            if (listptr)
-            {
-                // sneaky, SubField bypasses const!
-                scalarField::subField fld(*listptr);
-                fld *= 5;
+            // sneaky, SubField bypasses const!
+            scalarField::subField fld(*listptr);
+            fld *= 5;
 
-                Info<< "multiplied List<scalar>: "
-                    << ctok1.info() << nl << ctok1 << endl;
-            }
+            Info<< "multiplied List<scalar>: "
+                << ctok1.info() << nl << ctok1 << endl;
         }
 
+        // Using isCompound<...> - combined check
+        if
+        (
+            const auto* listptr
+          = ctok1.isCompound<scalarList>()
+        )
         {
-            // Using isCompound<...> - combined check
+            scalarField::subField fld(*listptr);
+            fld /= 2;
 
-            const auto* listptr = ctok1.isCompound<scalarList>();
-            if (listptr)
-            {
-                scalarField::subField fld(*listptr);
-                fld /= 2;
-
-                Info<< "divided List<scalar>: "
-                    << ctok1.info() << nl << ctok1 << endl;
-            }
+            Info<< "divided List<scalar>: "
+                << ctok1.info() << nl << ctok1 << endl;
         }
 
+        // Using isCompound<...> - combined check
+        if
+        (
+            const auto* listptr
+          = ctok1.isCompound<labelList>()
+        )
         {
-            // Using isCompound<...> - combined check
+            labelField::subField fld(*listptr);
+            fld /= 2;
 
-            const auto* listptr = ctok1.isCompound<labelList>();
-            if (listptr)
-            {
-                labelField::subField fld(*listptr);
-                fld /= 2;
-
-                Info<< "divided List<label>: "
-                    << ctok1.info() << nl << ctok1 << endl;
-            }
-            else
-            {
-                Info<< "compound is not List<label>" << nl;
-            }
+            Info<< "divided List<label>: "
+                << ctok1.info() << nl << ctok1 << endl;
+        }
+        else
+        {
+            Info<< "compound is not List<label>" << nl;
         }
 
         Info<< "Before fill_zero: " << ctok1 << endl;
@@ -248,13 +249,14 @@ int main(int argc, char *argv[])
 
         token tok;
 
+        if (auto v = obuf.view(); !v.empty())
         {
-            auto v = obuf.view();
-            if (!v.empty())
-            {
-                tok = string(v.data(), v.size());
-                tok.setType(token::tokenType::CHAR_DATA);
-            }
+            tok = string(v.data(), v.size());
+            tok.setType(token::tokenType::CHAR_DATA);
+        }
+        else
+        {
+            tok = token();
         }
 
         Info<< "tok: " << tok.name() << nl << nl;
@@ -274,13 +276,14 @@ int main(int argc, char *argv[])
 
         obuf.endBlock();
 
+        if (auto v = obuf.view(); !v.empty())
         {
-            auto v = obuf.view();
-            if (!v.empty())
-            {
-                tok = string(v.data(), v.size());
-                tok.setType(token::tokenType::CHAR_DATA);
-            }
+            tok = string(v.data(), v.size());
+            tok.setType(token::tokenType::CHAR_DATA);
+        }
+        else
+        {
+            tok = token();
         }
 
         // Output like xml:
@@ -349,10 +352,11 @@ int main(int argc, char *argv[])
         {
             typedef List<scalar> ListType;
 
-            auto* inputDataPtr =
-                const_cast<ListType*>(entry0.stream().findCompound<ListType>());
-
-            if (inputDataPtr)
+            if
+            (
+                auto* inputDataPtr
+              = const_cast<ListType*>(entry0.stream().findCompound<ListType>())
+            )
             {
                 Info<< "found input data" << nl;
                 Info<< entry0 << nl;

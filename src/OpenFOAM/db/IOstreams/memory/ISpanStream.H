@@ -116,14 +116,12 @@ public:
             stream_type(static_cast<buffer_type*>(this))
         {}
 
-        #if __cplusplus >= 201703L
         //- Construct (shallow copy) from std::string_view content
         explicit ispanstream(std::string_view s)
         :
             buffer_type(const_cast<char*>(s.data()), s.size()),
             stream_type(static_cast<buffer_type*>(this))
         {}
-        #endif
 
         //- Construct (shallow copy) from span character content
         explicit ispanstream(stdFoam::span<char> s)
@@ -215,14 +213,12 @@ public:
             stream_type::clear();  // Clear old errors
         }
 
-        #if __cplusplus >= 201703L
         //- Reset the get buffer area to use the data from a string_view
         void reset(std::string_view s)
         {
             buffer_type::resetg(const_cast<char*>(s.data()), s.size());
             stream_type::clear();  // Clear old errors
         }
-        #endif
 
         //- Some information about the input buffer position/capacity
         void debug_info(Ostream& os) const
@@ -292,7 +288,6 @@ public:
             ISpanStream(s.data(), s.size(), streamOpt)
         {}
 
-        #if __cplusplus >= 201703L
         //- Use data area from string_view content
         explicit ISpanStream
         (
@@ -302,7 +297,6 @@ public:
         :
             ISpanStream(s.data(), s.size(), streamOpt)
         {}
-        #endif
 
         //- Construct using data area from a List and its inherent storage size
         //  Uses addressed size, thus no special treatment for a DynamicList
@@ -384,14 +378,12 @@ public:
             syncState();
         }
 
-        #if __cplusplus >= 201703L
         //- Reset input area to use data from a std::string_view
         void reset(std::string_view s)
         {
             stream_.reset(s.data(), s.size());
             syncState();
         }
-        #endif
 
         //- Reset input area to use data from span character content
         void reset(stdFoam::span<char> s)

@@ -85,7 +85,7 @@ bool readBracketList(List<T>& list, Istream& is)
         // constexpr label chunkSize = 128;
         typedef std::unique_ptr<List<T>> chunkType;
 
-        is >> tok;
+        tok.read(is);
         is.fatalCheck(FUNCTION_NAME);
 
         if (tok.isPunctuation(token::END_LIST))
@@ -149,7 +149,7 @@ bool readBracketList(List<T>& list, Istream& is)
                 "reading entry"
             );
 
-            is >> tok;
+            tok.read(is);
             is.fatalCheck(FUNCTION_NAME);
         }
 

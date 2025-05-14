@@ -117,14 +117,7 @@ Foam::Ostream& Foam::OSstream::writeQuoted
 
     if (!quoted)
     {
-        #if __cplusplus >= 201703L
         os_ << std::string_view(str, len);
-        #else
-        for (const char* iter = str; iter != last; ++iter)
-        {
-            os_ << *iter;
-        }
-        #endif
         syncState();
 
         // Unquoted, only advance line number on newline

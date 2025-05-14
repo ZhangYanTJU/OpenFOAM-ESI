@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,12 +85,10 @@ Ostream& printView(Ostream& os, const char* first, const char* last)
 }
 
 
-#if __cplusplus >= 201703L
 Ostream& printView(Ostream& os, std::string_view s)
 {
     return printView(os, s.begin(), s.end());
 }
-#endif
 
 
 Ostream& printView(Ostream& os, stdFoam::span<char> s)
@@ -145,17 +143,10 @@ void printInfo(const UList<char>& buf)
 void printTokens(Istream& is)
 {
     label count = 0;
-    token t;
-    while (is.good())
+    for (token tok; tok.read(is); ++count)
     {
-        is >> t;
-        if (t.good())
-        {
-            ++count;
-            Info<<"token: " << t << endl;
-        }
+        Info<< "token: " << tok << nl;
     }
-
     Info<< count << " tokens" << endl;
 }
 

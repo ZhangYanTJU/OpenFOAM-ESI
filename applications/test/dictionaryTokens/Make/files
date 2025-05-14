@@ -1,4 +1,4 @@
-Test-dictionaryTokens.C
-dictionaryTokens.C
+Test-dictionaryTokens.cxx
+dictionaryTokens.cxx
 
 EXE = $(FOAM_USER_APPBIN)/Test-dictionaryTokens

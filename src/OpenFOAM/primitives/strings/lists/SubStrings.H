@@ -57,7 +57,6 @@ public:
 
     // Static Functions
 
-        #if __cplusplus >= 201703L
         //- Return match as a string_view
         static std::string_view view(const std::ssub_match& m)
         {
@@ -74,7 +73,6 @@ public:
             );
             #endif
         }
-        #endif  /* __cplusplus >= 201703L */
 
 
     // Member Functions
@@ -105,13 +103,11 @@ public:
             return (*this)[pos].str();
         }
 
-        #if __cplusplus >= 201703L
         //- Return element at pos as a string_view
         std::string_view view(size_t pos) const
         {
             return view((*this)[pos]);
         }
-        #endif  /* __cplusplus >= 201703L */
 
         //- Append sub-string defined by begin/end iterators
         void append

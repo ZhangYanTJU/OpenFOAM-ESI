@@ -274,9 +274,7 @@ int main(int argc, char *argv[])
         Info<< nl << "No " << is.name() << " file found ..." << nl;
     }
 
-    token tok;
-
-    while (is.good() && is.read(tok) && tok.good())
+    for (token tok; tok.read(is); /*nil*/)
     {
         const word listType(tok.wordToken());
 

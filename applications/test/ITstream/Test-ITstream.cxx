@@ -73,14 +73,13 @@ Ostream& toString(Ostream& os, const List<char>& list)
 
 void printTokens(Istream& is)
 {
-    label count = 0;
-
     Info<< "stream tokens:" << endl;
+
+    label count = 0;
     for (token tok; tok.read(is); ++count)
     {
-        Info<< "  : " << tok << endl;
+        Info<< "  : " << tok << nl;
     }
-
     Info<< count << " tokens" << endl;
 }
 
