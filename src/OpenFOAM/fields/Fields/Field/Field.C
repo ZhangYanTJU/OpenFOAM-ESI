@@ -236,7 +236,7 @@ void Foam::Field<Type>::assign(const entry& e, const label len)
             // Check lengths
             if (len >= 0 && len != lenRead)
             {
-                if (len < lenRead && allowConstructFromLargerSize)
+                if (len < lenRead && FieldBase::allowConstructFromLargerSize)
                 {
                     // Truncate the data
                     this->resize(len);

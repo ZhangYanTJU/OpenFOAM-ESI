@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,15 +60,27 @@ public:
         {}
 
 
-    // Member Functions
+    // Static Functions
 
-        //- Return size. Number of points
-        static label size(const Mesh& mesh)
+        //- The geometric (internal) size - number of points.
+        //  Method name expected by GeoMesh interface
+        static label size(const triSurface& mesh)
         {
             return mesh.points().size();
         }
 
-        //- Return size. Number of points
+        //- The geometric boundary size - not applicable.
+        //  Method name expected by GeoMesh interface
+        static label boundary_size(const triSurface& mesh) noexcept
+        {
+            return 0;
+        }
+
+
+    // Member Functions
+
+        //- The geometric (internal) size - number of points.
+        //  Method name expected by GeoMesh interface
         label size() const
         {
             return size(mesh_);

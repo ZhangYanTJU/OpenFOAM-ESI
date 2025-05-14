@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,8 +32,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef surfaceMesh_H
-#define surfaceMesh_H
+#ifndef Foam_surfaceMesh_H
+#define Foam_surfaceMesh_H
 
 #include "GeoMesh.H"
 #include "fvMesh.H"
@@ -62,19 +63,32 @@ public:
         {}
 
 
-    // Member Functions
+    // Static Functions
 
-        //- Return size. Number of internal faces
-        static label size(const Mesh& mesh)
+        //- The geometric (internal) size - number of internal faces.
+        //  Method name expected by GeoMesh interface
+        static label size(const polyMesh& mesh) noexcept
         {
             return mesh.nInternalFaces();
         }
 
-        //- Return size. Number of internal faces
-        label size() const
+        //- The geometric boundary size - number of boundary faces.
+        //  Method name expected by GeoMesh interface
+        static label boundary_size(const polyMesh& mesh) noexcept
+        {
+            return mesh.nBoundaryFaces();
+        }
+
+
+    // Member Functions
+
+        //- The geometric mesh size - number of internal faces.
+        //  Method name expected by GeoMesh interface
+        label size() const noexcept
         {
             return size(mesh_);
         }
+
 
         //- Field of face centres
         const surfaceVectorField& C() const

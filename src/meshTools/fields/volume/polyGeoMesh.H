@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,16 +61,28 @@ public:
         {}
 
 
-    // Member Functions
+    // Static Functions
 
-        //- Return size. Number of cells
-        static label size(const Mesh& mesh)
+        //- The geometric (internal) mesh size - number of cells.
+        //  Method name expected by GeoMesh interface
+        static label size(const polyMesh& mesh) noexcept
         {
             return mesh.nCells();
         }
 
-        //- Return size. Number of cells
-        label size() const
+        //- The geometric boundary size - not used (internal fields only).
+        //  Method name expected by GeoMesh interface
+        static label boundary_size(const polyMesh& mesh) noexcept
+        {
+            return 0;
+        }
+
+
+    // Member Functions
+
+        //- The geometric (internal) mesh size - number of cells.
+        //  Method name expected by GeoMesh interface
+        label size() const noexcept
         {
             return size(mesh_);
         }

@@ -36,8 +36,8 @@ Author
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef areaFaMesh_H
-#define areaFaMesh_H
+#ifndef Foam_areaFaMesh_H
+#define Foam_areaFaMesh_H
 
 #include "GeoMesh.H"
 #include "faMesh.H"
@@ -66,13 +66,32 @@ public:
         {}
 
 
+    // Static Functions
+
+        //- The geometric (internal) size - number of faces.
+        //  Method name expected by GeoMesh interface
+        static label size(const faMesh& mesh) noexcept
+        {
+            return mesh.nFaces();
+        }
+
+        //- The geometric boundary size - number of boundary edges.
+        //  Method name expected by GeoMesh interface
+        static label boundary_size(const faMesh& mesh) noexcept
+        {
+            return mesh.nBoundaryEdges();
+        }
+
+
     // Member Functions
 
-        //- Return size. Number of faces
-        static label size(const Mesh& mesh) { return mesh.nFaces(); }
+        //- The geometric (internal) size - number of faces.
+        //  Method name expected by GeoMesh interface
+        label size() const noexcept
+        {
+            return size(mesh_);
+        }
 
-        //- Return size. Number of faces
-        label size() const { return size(mesh_); }
 
         //- Field of face centres
         const areaVectorField& C() const { return mesh_.areaCentres(); }

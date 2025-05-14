@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2412                                 |
+|  \\    /   O peration     | Version:  v2506                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -207,6 +207,14 @@ OptimisationSwitches
     //        * NBX for buffer sizes [new approach]
     //        * point-to-point for contents
     pbufs.tuning    0;
+
+
+    // ==========
+    // Allocation
+    // ==========
+
+    // GeometricField with extra capacity for flattened boundary fields.
+    unifiedGeometricField   0;
 
 
     // =====

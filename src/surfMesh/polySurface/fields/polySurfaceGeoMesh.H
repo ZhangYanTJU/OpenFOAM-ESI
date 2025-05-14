@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,15 +61,27 @@ public:
         {}
 
 
-    // Member Functions
+    // Static Functions
 
-        //- Return size. Number of faces
-        static label size(const Mesh& mesh)
+        //- The geometric (internal) size - number of faces.
+        //  Method name expected by GeoMesh interface
+        static label size(const polySurface& mesh)
         {
             return mesh.nFaces();
         }
 
-        //- Return size. Number of faces
+        //- The geometric boundary size - not used.
+        //  Method name expected by GeoMesh interface
+        static label boundary_size(const polySurface& mesh) noexcept
+        {
+            return 0;
+        }
+
+
+    // Member Functions
+
+        //- The geometric (internal) size - number of faces.
+        //  Method name expected by GeoMesh interface
         label size() const
         {
             return size(mesh_);

@@ -91,6 +91,40 @@ public:
         //  Mostly required for things like column mesh, for example.
         static bool allowConstructFromLargerSize;
 
+        //- GeometricField with extra capacity for flattened boundary fields.
+        //- Uses opt-switch "unifiedGeometricField"
+        static bool unifiedGeometricField;
+
+        //- Local boundary field consistency checks.
+        //- Uses opt-switch "localBoundaryConsistency"
+        static int localBoundaryConsistency_;
+
+        //- Tolerance for local boundary field consistency checks.
+        //- Uses opt-switch "localBoundaryConsistency::tolerance"
+        static scalar localBoundaryTolerance_;
+
+
+    // Static Member Functions
+
+        //- Warn about keyword changes for local boundary consistency checks.
+        //  The supplied dictionary corresponds to the optimisationSwitches
+        static void warnLocalBoundaryConsistencyCompat(const dictionary&);
+
+        //- Get flag for local boundary consistency checks.
+        static int localBoundaryConsistency() noexcept
+        {
+            return localBoundaryConsistency_;
+        }
+
+        //- Set flag for local boundary consistency checks.
+        //  \return the previous value
+        static int localBoundaryConsistency(int val) noexcept
+        {
+            int old(localBoundaryConsistency_);
+            localBoundaryConsistency_ = val;
+            return old;
+        }
+
 
     // Constructors
 
