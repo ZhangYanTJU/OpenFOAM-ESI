@@ -44,6 +44,7 @@ License
 #include "OBJstream.H"
 #include "labelBits.H"
 #include "profiling.H"
+#include "orientedSurface.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -3113,6 +3114,16 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh(const IOobject& io)
     readSettings(readFromMaster);
 
     bounds().reduce();
+
+    if (readFromMaster)
+    {
+        // Make sure orientation is consistent in case we
+        // want to use for inside/outside testing
+        DebugInFunction
+            << "Forcing consistent normals since undecomposed" << endl;
+        const triSurface& surf = *this;
+        orientedSurface::orientConsistent(const_cast<triSurface&>(surf));
+    }
 
     if (readFromMaster && !decomposeUsingBbs_)
     {

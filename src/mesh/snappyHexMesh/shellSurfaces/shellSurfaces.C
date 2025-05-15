@@ -193,6 +193,15 @@ void Foam::shellSurfaces::orient()
 
             if (modes_[shellI] != DISTANCE && isA<triSurfaceMesh>(s))
             {
+                triSurfaceMesh& shell = const_cast<triSurfaceMesh&>
+                (
+                    refCast<const triSurfaceMesh>(s)
+                );
+
+                // Make sure that normals are consistent. Does not change
+                // anything if surface is consistent.
+                orientedSurface::orientConsistent(shell);
+
                 List<pointIndexHit> info;
                 vectorField normal;
                 labelList region;
@@ -213,14 +222,9 @@ void Foam::shellSurfaces::orient()
                 bool anyFlipped = false;
                 if ((normal[0] & (info[0].point()-outsidePt)) > 0)
                 {
-                    triSurfaceMesh& shell = const_cast<triSurfaceMesh&>
-                    (
-                        refCast<const triSurfaceMesh>(s)
-                    );
                     shell.flip();
                     anyFlipped = true;
                 }
-
 
                 if (anyFlipped && !dryRun_)
                 {
