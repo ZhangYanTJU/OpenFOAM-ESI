@@ -126,10 +126,6 @@ private:
         //  anything flipped.
         static bool flipSurface(triSurface& s, const labelList& flipState);
 
-        //- Make surface surface has consistent orientation across connected
-        //  triangles.
-        static bool orientConsistent(triSurface& s);
-
 
 public:
 
@@ -176,6 +172,10 @@ public:
             const point& samplePoint,
             const bool orientOutside
         );
+
+        //- Make sure surface has consistent orientation across connected
+        //  triangles. Does not change anything if it has.
+        static bool orientConsistent(triSurface& s);
 };
 
 
