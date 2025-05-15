@@ -1548,7 +1548,7 @@ void fvmLaplacianUncorrected
       * vf.dimensions()
     );
 
-    evaluator
+    Expression::ListRefWrap<scalar>
     (
         fvm.upper(),
         deltaCoeffs.internalField()*gammaMagSf.internalField()
@@ -1571,15 +1571,15 @@ void fvmLaplacianUncorrected
             evaluator
             (
                 intCoeffs,
-                gammaMagSf.patchField(patchi)
-               *expr(pvf.gradientInternalCoeffs(pDeltaCoeffs)())
+                expr(pvf.gradientInternalCoeffs(pDeltaCoeffs)())
+               *gammaMagSf.patchField(patchi)
             );
             //bouCoeffs = -pGamma*pvf.gradientBoundaryCoeffs(pDeltaCoeffs);
             evaluator
             (
                 bouCoeffs,
-               -gammaMagSf.patchField(patchi)
-               *expr(pvf.gradientBoundaryCoeffs(pDeltaCoeffs)())
+               -expr(pvf.gradientBoundaryCoeffs(pDeltaCoeffs)())
+               *gammaMagSf.patchField(patchi)
             );
         }
         else
@@ -1588,15 +1588,15 @@ void fvmLaplacianUncorrected
             evaluator
             (
                 intCoeffs,
-                gammaMagSf.patchField(patchi)
-               *expr(pvf.gradientInternalCoeffs()())
+                expr(pvf.gradientInternalCoeffs()())
+               *gammaMagSf.patchField(patchi)
             );
             //bouCoeffs = -pGamma*pvf.gradientBoundaryCoeffs();
             evaluator
             (
                 bouCoeffs,
-               -gammaMagSf.patchField(patchi)
-               *expr(pvf.gradientBoundaryCoeffs()())
+               -expr(pvf.gradientBoundaryCoeffs()())
+               *gammaMagSf.patchField(patchi)
             );
         }
     }

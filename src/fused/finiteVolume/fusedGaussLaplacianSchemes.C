@@ -94,15 +94,16 @@ fvmLaplacian                                                                   \
                *corr.data().dimensions()                                       \
             );                                                                 \
             auto& faceFluxCorr = *fvm.faceFluxCorrectionPtr();                 \
-            faceFluxCorr = gammaMagSf*corr;                                    \
+            faceFluxCorr = corr*gammaMagSf;                                    \
                                                                                \
             fvm.source() =                                                     \
                 fvm.source().expr()                                            \
               - (                                                              \
-                    V * fvc::div                                               \
+                    fvc::div                                                   \
                     (                                                          \
                         faceFluxCorr                                           \
                     )().primitiveField().expr()                                \
+                   *V                                                          \
                 );                                                             \
         }                                                                      \
         else                                                                   \
@@ -123,15 +124,16 @@ fvmLaplacian                                                                   \
                *mesh.magSf().dimensions()                                      \
                *corr.data().dimensions()                                       \
             );                                                                 \
-            faceFluxCorr = gammaMagSf*corr;                                    \
+            faceFluxCorr = corr*gammaMagSf;                                    \
                                                                                \
             fvm.source() =                                                     \
                 fvm.source().expr()                                            \
               - (                                                              \
-                    V * fvc::div                                               \
+                    fvc::div                                                   \
                     (                                                          \
                         faceFluxCorr                                           \
                     )().primitiveField().expr()                                \
+                   *V                                                          \
                 );                                                             \
         }                                                                      \
     }                                                                          \
