@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,20 +28,92 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::labelHashSet Foam::polyBoundaryMesh::findPatchIDs() const
+template<class UnaryPredicate>
+Foam::label Foam::polyBoundaryMesh::nFaces_if(UnaryPredicate pred) const
 {
     const polyBoundaryMesh& patches = *this;
 
-    labelHashSet patchIDs(patches.size());
+    label count = 0;
 
-    forAll(patches, patchi)
+    for (const polyPatch& pp : patches)
     {
-        if (isA<Type>(patches[patchi]))
+        if (pred(pp))
+        {
+            count += pp.size();
+        }
+    }
+
+    return count;
+}
+
+
+template<class UnaryPredicate>
+Foam::labelList Foam::polyBoundaryMesh::indices_if(UnaryPredicate pred) const
+{
+    const polyBoundaryMesh& patches = *this;
+    const label total = patches.size();
+
+    labelList patchIDs(total);
+
+    label count = 0;
+
+    for (label patchi = 0; patchi < total; ++patchi)
+    {
+        if (pred(patches[patchi]))
+        {
+            patchIDs[count] = patchi;
+            ++count;
+        }
+    }
+
+    patchIDs.resize(count);
+
+    return patchIDs;
+}
+
+
+template<class PatchType>
+Foam::labelList Foam::polyBoundaryMesh::indices_if() const
+{
+    const polyBoundaryMesh& patches = *this;
+    const label total = patches.size();
+
+    labelList patchIDs(total);
+
+    label count = 0;
+
+    for (label patchi = 0; patchi < total; ++patchi)
+    {
+        if (isA<PatchType>(patches[patchi]))
+        {
+            patchIDs[count] = patchi;
+            ++count;
+        }
+    }
+
+    patchIDs.resize(count);
+
+    return patchIDs;
+}
+
+
+template<class PatchType>
+Foam::labelHashSet Foam::polyBoundaryMesh::findPatchIDs() const
+{
+    const polyBoundaryMesh& patches = *this;
+    const label total = patches.size();
+
+    labelHashSet patchIDs;
+    patchIDs.reserve(total);
+
+    for (label patchi = 0; patchi < total; ++patchi)
+    {
+        if (isA<PatchType>(patches[patchi]))
         {
             patchIDs.insert(patchi);
         }
     }
+
     return patchIDs;
 }
 

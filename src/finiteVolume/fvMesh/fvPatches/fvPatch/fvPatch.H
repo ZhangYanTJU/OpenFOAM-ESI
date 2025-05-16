@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2018 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -188,6 +188,12 @@ public:
         label start() const noexcept
         {
             return polyPatch_.start();
+        }
+
+        //- The offset of this patch within the boundary face list
+        label offset() const noexcept
+        {
+            return polyPatch_.offset();
         }
 
         //- Patch size is the number of faces, but can be overloaded

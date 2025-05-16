@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,7 +66,9 @@ bool Foam::faPatchField<Type>::readValueEntry
 template<class Type>
 void Foam::faPatchField<Type>::extrapolateInternal()
 {
-    faPatchFieldBase::patch().patchInternalField(internalField_, *this);
+    const auto& p = faPatchFieldBase::patch();
+    this->resize_nocopy(p.size());  // In general this is a no-op
+    p.patchInternalField(internalField_, *this);
 }
 
 
@@ -208,6 +210,10 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::faPatchField<Type>::patchInternalField() const
 {
+    // const auto& p = faPatchFieldBase::patch();
+    // auto tpfld = tmp<Field<Type>>::New(p.size());
+    // p.patchInternalField(internalField_, tpfld.ref());
+    // return tpfld;
     return patch().patchInternalField(internalField_);
 }
 
@@ -215,7 +221,9 @@ Foam::faPatchField<Type>::patchInternalField() const
 template<class Type>
 void Foam::faPatchField<Type>::patchInternalField(Field<Type>& pfld) const
 {
-    patch().patchInternalField(internalField_, pfld);
+    const auto& p = faPatchFieldBase::patch();
+    pfld.resize_nocopy(p.size());  // In general this is a no-op
+    p.patchInternalField(internalField_, pfld);
 }
 
 

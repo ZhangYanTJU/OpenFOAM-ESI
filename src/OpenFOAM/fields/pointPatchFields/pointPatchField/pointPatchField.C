@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -146,7 +146,7 @@ Foam::pointPatchField<Type>::patchInternalField
     const labelUList& addressing
 ) const
 {
-    auto tpfld = tmp<Field<Type1>>::New();
+    auto tpfld = tmp<Field<Type1>>::New(this->size());
     this->patchInternalField(internalData, addressing, tpfld.ref());
     return tpfld;
 }
@@ -160,7 +160,7 @@ Foam::pointPatchField<Type>::patchInternalField
     const UList<Type1>& internalData
 ) const
 {
-    auto tpfld = tmp<Field<Type1>>::New();
+    auto tpfld = tmp<Field<Type1>>::New(this->size());
     this->patchInternalField(internalData, patch().meshPoints(), tpfld.ref());
     return tpfld;
 }

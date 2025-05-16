@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,6 +56,7 @@ void Foam::fvPatch::patchInternalField
     Field<Type>& pfld
 ) const
 {
+    pfld.resize_nocopy(this->size());  // In general this is a no-op
     patchInternalField(internalData, this->faceCells(), pfld);
 }
 
@@ -66,7 +67,7 @@ Foam::tmp<Foam::Field<Type>> Foam::fvPatch::patchInternalField
     const UList<Type>& internalData
 ) const
 {
-    auto tpfld = tmp<Field<Type>>::New();
+    auto tpfld = tmp<Field<Type>>::New(this->size());
     patchInternalField(internalData, this->faceCells(), tpfld.ref());
     return tpfld;
 }

@@ -244,6 +244,11 @@ public:
         //  Same as polyMesh::nBoundaryFaces()
         label nFaces() const noexcept;
 
+        //- The number of boundary faces with patches that match the
+        //- given predicate.
+        template<class UnaryPredicate>
+        label nFaces_if(UnaryPredicate pred) const;
+
         //- The face range for all boundary faces
         //  Spans [nInternalFaces, nFaces) of the underlying mesh
         labelRange range() const noexcept;
@@ -284,6 +289,17 @@ public:
             const bool useGroups = true
         ) const;
 
+        //- Return (sorted) patch indices for patches that match the
+        //- given polyPatch type (uses \c isA test).
+        //- Can be used as a direct alternative to findPatchIDs
+        template<class PatchType>
+        labelList indices_if() const;
+
+        //- Return (sorted) patch indices for patches that match the
+        //- given predicate. Can be used as an alternative to findPatchIDs
+        template<class UnaryPredicate>
+        labelList indices_if(UnaryPredicate pred) const;
+
         //- Return patch index for the first match, return -1 if not found
         //  A no-op (returns -1) for an empty key
         label findIndex(const wordRe& key) const;
@@ -296,8 +312,8 @@ public:
             const bool allowNotFound = true
         ) const;
 
-        //- Find patch indices for a given polyPatch type
-        template<class Type>
+        //- Find patch indices for a given polyPatch type (uses \c isA test).
+        template<class PatchType>
         labelHashSet findPatchIDs() const;
 
         //- Lookup mesh face index and return (patchi, patchFacei) tuple

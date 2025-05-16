@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -326,7 +326,7 @@ Foam::tmp<Foam::labelField> Foam::cyclicFaPatch::interfaceInternalField
     const labelUList& edgeFaces
 ) const
 {
-    auto tpfld = tmp<labelField>::New();
+    auto tpfld = tmp<labelField>::New(this->size());
     patchInternalField(internalData, edgeFaces, tpfld.ref());
     return tpfld;
 }
