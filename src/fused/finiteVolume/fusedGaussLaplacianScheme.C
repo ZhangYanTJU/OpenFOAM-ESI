@@ -46,6 +46,87 @@ namespace fv
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type, class GType>
+template<class E1, class E2>
+void fusedGaussLaplacianScheme<Type, GType>::fvmCorrection
+(
+    fvMatrix<Type>& fvm,
+    const dimensionSet& gammaDim,
+    const E1& gammaMagSf,
+    const E2& corr
+)
+{
+    typedef GeometricField<Type, fvsPatchField, surfaceMesh> surfaceType;
+
+    const auto& vf = fvm.psi();
+    const fvMesh& mesh = vf.mesh();
+    const auto V = mesh.V().expr();
+
+    if (mesh.fluxRequired(vf.name()))
+    {
+        fvm.faceFluxCorrectionPtr() = std::make_unique<surfaceType>
+        (
+            IOobject
+            (
+                "faceFluxCorr",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            mesh,
+            gammaDim
+           *mesh.magSf().dimensions()
+           *corr.data().dimensions()
+        );
+        auto& faceFluxCorr = *fvm.faceFluxCorrectionPtr();
+
+        faceFluxCorr = corr*gammaMagSf;
+
+        fvm.source() =
+            fvm.source().expr()
+          - (
+                fvc::div
+                (
+                    faceFluxCorr
+                )().primitiveField().expr()
+               *V
+            );
+    }
+    else
+    {
+        surfaceType faceFluxCorr
+        (
+            IOobject
+            (
+                "faceFluxCorr",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            mesh,
+            gammaDim
+           *mesh.magSf().dimensions()
+           *corr.data().dimensions()
+        );
+        faceFluxCorr = corr*gammaMagSf;
+
+        fvm.source() =
+            fvm.source().expr()
+          - (
+                fvc::div
+                (
+                    faceFluxCorr
+                )().primitiveField().expr()
+               *V
+            );
+    }
+}
+
+
+template<class Type, class GType>
 tmp<fvMatrix<Type>>
 fusedGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
 (

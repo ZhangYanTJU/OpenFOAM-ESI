@@ -112,7 +112,7 @@ public:
         return dimensions_;
     }
 
-    orientedType oriented() const noexcept
+    const orientedType& oriented() const noexcept
     {
         return oriented_;
     }
