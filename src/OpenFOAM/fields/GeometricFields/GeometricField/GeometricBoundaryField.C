@@ -55,10 +55,7 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
             << endl;
     }
 
-    auto& bfld = const_cast<GeometricBoundaryField<Type, PatchField, GeoMesh>&>
-    (
-        *this
-    );
+    auto& bfld = this->constCast();
 
 
     // Store old value
@@ -719,7 +716,7 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal
 {
     // DebugInFunction << nl;
 
-    if (!localConsistency)
+    if (!FieldBase::localBoundaryConsistency())
     {
         return;
     }

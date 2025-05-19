@@ -114,16 +114,11 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
         // old logic (ultimately calls the fully self contained
         // patchNeighbourField)
 
-        int& consistency =
-            GeometricField<Type, fvPatchField, volMesh>::
-            Boundary::localConsistency;
-
-        const int oldConsistency = consistency;
-        consistency = 0;
+        const auto oldConsistency = FieldBase::localBoundaryConsistency(0);
 
         this->evaluate(Pstream::commsTypes::buffered);
 
-        consistency = oldConsistency;
+        FieldBase::localBoundaryConsistency(oldConsistency);
     }
 }
 
@@ -331,11 +326,7 @@ template<class Type>
 bool Foam::cyclicACMIFvPatchField<Type>::cacheNeighbourField()
 {
     /*
-    return
-    (
-        GeometricField<Type, fvPatchField, volMesh>::Boundary::localConsistency
-     != 0
-    );
+    return (FieldBase::localBoundaryConsistency() != 0);
     */
     return false;
 }

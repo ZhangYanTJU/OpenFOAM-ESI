@@ -64,17 +64,39 @@ void GeometricField<scalar, fvPatchField, volMesh>::replace
     const GeometricField<scalar, fvPatchField, volMesh>& sf
 );
 
+
+// Local consistency checks
+//
+// template<class Type>
+// bool GeometricBoundaryField<Type, fvPatchField, volMesh>::check() const
+// {
+//     return checkConsistency<coupledFvPatchField<Type>>
+//     (
+//         FieldBase::localBoundaryTolerance_,
+//        !(debug&4)       // make into warning if debug&4
+//     );
+// }
+
 template<>
-bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check() const;
+bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::
+check() const;
+
 template<>
-bool GeometricBoundaryField<vector, fvPatchField, volMesh>::check() const;
+bool GeometricBoundaryField<vector, fvPatchField, volMesh>::
+check() const;
+
 template<>
-bool GeometricBoundaryField<sphericalTensor, fvPatchField, volMesh>::check
-() const;
+bool GeometricBoundaryField<sphericalTensor, fvPatchField, volMesh>::
+check() const;
+
 template<>
-bool GeometricBoundaryField<symmTensor, fvPatchField, volMesh>::check() const;
+bool GeometricBoundaryField<symmTensor, fvPatchField, volMesh>::
+check() const;
+
 template<>
-bool GeometricBoundaryField<tensor, fvPatchField, volMesh>::check() const;
+bool GeometricBoundaryField<tensor, fvPatchField, volMesh>::
+check() const;
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -100,12 +100,6 @@ public:
     //- Enable debug
     static int debug;
 
-    //- User-defined tolerance (for consistency checks)
-    static scalar tolerance;
-
-    //- Enable local consistency
-    static int localConsistency;
-
 
     // Constructors
 

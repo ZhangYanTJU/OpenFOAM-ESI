@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,127 +79,6 @@ defineTemplateDebugSwitchWithName
     0
 );
 
-template<> scalar areaScalarField::Boundary::tolerance
-(
-    debug::floatOptimisationSwitch("areaScalarField::Boundary::tolerance", 0)
-);
-registerOptSwitch
-(
-    "areaScalarField::Boundary::tolerance",
-    scalar,
-    Foam::areaScalarField::Boundary::tolerance
-);
-
-template<> scalar areaVectorField::Boundary::tolerance
-(
-    debug::floatOptimisationSwitch("areaVectorField::Boundary::tolerance", 0)
-);
-registerOptSwitch
-(
-    "areaVectorField::Boundary::tolerance",
-    scalar,
-    Foam::areaVectorField::Boundary::tolerance
-);
-
-template<> scalar areaSphericalTensorField::Boundary::tolerance
-(
-    debug::floatOptimisationSwitch
-    (
-        "areaSphericalTensorField::Boundary::tolerance",
-        0
-    )
-);
-registerOptSwitch
-(
-    "areaSphericalTensorField::Boundary::tolerance",
-    scalar,
-    Foam::areaSphericalTensorField::Boundary::tolerance
-);
-
-template<> scalar areaSymmTensorField::Boundary::tolerance
-(
-    debug::floatOptimisationSwitch
-    (
-        "areaSymmTensorField::Boundary::tolerance",
-        0
-    )
-);
-registerOptSwitch
-(
-    "areaSymmTensorField::Boundary::tolerance",
-    scalar,
-    Foam::areaSymmTensorField::Boundary::tolerance
-);
-
-template<> scalar areaTensorField::Boundary::tolerance
-(
-    debug::floatOptimisationSwitch("areaTensorField::Boundary::tolerance", 0)
-);
-registerOptSwitch
-(
-    "areaTensorField::Boundary::tolerance",
-    scalar,
-    Foam::areaTensorField::Boundary::tolerance
-);
-
-
-// Local-ops consistency enforcing
-
-template<> int areaScalarField::Boundary::localConsistency
-(
-    debug::optimisationSwitch("localConsistency", 1)
-);
-registerOptSwitch
-(
-    "areaScalarField::Boundary::localConsistency",
-    int,
-    Foam::areaScalarField::Boundary::localConsistency
-);
-
-template<> int areaVectorField::Boundary::localConsistency
-(
-    debug::optimisationSwitch("localConsistency", 1)
-);
-registerOptSwitch
-(
-    "areaVectorField::Boundary::localConsistency",
-    int,
-    Foam::areaVectorField::Boundary::localConsistency
-);
-
-template<> int areaSphericalTensorField::Boundary::localConsistency
-(
-    debug::optimisationSwitch("localConsistency", 1)
-);
-registerOptSwitch
-(
-    "areaSphericalTensorField::Boundary::localConsistency",
-    int,
-    Foam::areaSphericalTensorField::Boundary::localConsistency
-);
-
-template<> int areaSymmTensorField::Boundary::localConsistency
-(
-    debug::optimisationSwitch("localConsistency", 1)
-);
-registerOptSwitch
-(
-    "areaSymmTensorField::Boundary::localConsistency",
-    int,
-    Foam::areaSymmTensorField::Boundary::localConsistency
-);
-
-template<> int areaTensorField::Boundary::localConsistency
-(
-    debug::optimisationSwitch("localConsistency", 1)
-);
-registerOptSwitch
-(
-    "areaTensorField::Boundary::localConsistency",
-    int,
-    Foam::areaTensorField::Boundary::localConsistency
-);
-
 } // End namespace Foam
 
 
@@ -230,56 +109,26 @@ void GeometricField<scalar, faPatchField, areaMesh>::replace
     *this == gsf;
 }
 
-template<>
-bool GeometricBoundaryField<scalar, faPatchField, areaMesh>::check() const
-{
-    return checkConsistency<coupledFaPatchField<scalar>>
-    (
-        Foam::areaScalarField::Boundary::tolerance,
-       !(debug&4)       // make into warning if debug&4
-    );
+
+#undef  fieldChecks
+#define fieldChecks(Type)                                                     \
+template<>                                                                    \
+bool GeometricBoundaryField<Type, faPatchField, areaMesh>::check() const      \
+{                                                                             \
+    return checkConsistency<coupledFaPatchField<Type>>                        \
+    (                                                                         \
+        FieldBase::localBoundaryTolerance_,                                   \
+       !(debug&4)  /* make into warning if debug&4 */                         \
+    );                                                                        \
 }
 
-template<>
-bool GeometricBoundaryField<vector, faPatchField, areaMesh>::check() const
-{
-    return checkConsistency<coupledFaPatchField<vector>>
-    (
-        Foam::areaScalarField::Boundary::tolerance,
-       !(debug&4)       // make into warning if debug&4
-    );
-}
+fieldChecks(scalar);
+fieldChecks(vector);
+fieldChecks(sphericalTensor);
+fieldChecks(symmTensor);
+fieldChecks(tensor);
 
-template<>
-bool GeometricBoundaryField<sphericalTensor, faPatchField, areaMesh>::check
-() const
-{
-    return checkConsistency<coupledFaPatchField<sphericalTensor>>
-    (
-        Foam::areaScalarField::Boundary::tolerance,
-       !(debug&4)       // make into warning if debug&4
-    );
-}
-
-template<>
-bool GeometricBoundaryField<symmTensor, faPatchField, areaMesh>::check() const
-{
-    return checkConsistency<coupledFaPatchField<symmTensor>>
-    (
-        Foam::areaScalarField::Boundary::tolerance,
-       !(debug&4)       // make into warning if debug&4
-    );
-}
-
-template<>
-bool GeometricBoundaryField<tensor, faPatchField, areaMesh>::check() const
-{
-    return checkConsistency<coupledFaPatchField<tensor>>
-    (
-        Foam::areaScalarField::Boundary::tolerance,
-       !(debug&4)       // make into warning if debug&4
-    );
-}
+#undef fieldChecks
 
 } // End namespace Foam
 
