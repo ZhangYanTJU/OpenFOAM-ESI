@@ -53,14 +53,14 @@ wmake $targetType fileFormats
 wmake $targetType surfMesh
 wmake $targetType meshTools
 
-#wmake $targetType finiteArea
+wmake $targetType finiteArea
 wmake $targetType finiteVolume
 wmake $targetType fused/finiteVolume
 
 wmake $targetType mesh/blockMesh
-#wmake $targetType mesh/extrudeModel  # Requires: blockMesh
+wmake $targetType mesh/extrudeModel  # Requires: blockMesh
 wmake $targetType dynamicMesh  # Requires: extrudeModel
-#wmake $targetType genericPatchFields
+wmake $targetType genericPatchFields
 
 wmake $targetType parallel/decompose/decompositionMethods
 
@@ -70,14 +70,14 @@ dummyThirdParty/Allwmake $targetType $*
 
 wmakeLnInclude -u fvOptions
 
-#wmake $targetType lagrangian/basic
-#wmake $targetType lagrangian/distributionModels
+wmake $targetType lagrangian/basic
+wmake $targetType lagrangian/distributionModels
 
-#renumber/Allwmake $targetType $*
+renumber/Allwmake $targetType $*
 parallel/Allwmake $targetType $*
 
-#wmake $targetType dynamicFvMesh
-#wmake $targetType topoChangerFvMesh
+wmake $targetType dynamicFvMesh
+wmake $targetType topoChangerFvMesh
 
 wmake $targetType sampling
 transportModels/Allwmake $targetType $*
@@ -90,8 +90,8 @@ thermophysicalModels/Allwmake $targetType $*
 TurbulenceModels/Allwmake $targetType $*
 wmake $targetType combustionModels
 
-#wmakeLnInclude -u regionFaModels
-#wmakeLnInclude -u faOptions
+wmakeLnInclude -u regionFaModels
+wmakeLnInclude -u faOptions
 
 wmakeLnInclude -u overset
 wmake $targetType overset
@@ -116,8 +116,8 @@ wmake $targetType thermoTools
 
 regionModels/Allwmake $targetType $*
 
-#wmake $targetType faOptions
-#wmake $targetType regionFaModels
+wmake $targetType faOptions
+wmake $targetType regionFaModels
 
 lagrangian/Allwmake $targetType $*
 wmake $targetType functionObjects/lagrangian
@@ -128,8 +128,8 @@ wmake $targetType sixDoFRigidBodyMotion
 wmake $targetType sixDoFRigidBodyState
 wmake $targetType rigidBodyDynamics
 wmake $targetType rigidBodyMeshMotion
-#wmake $targetType atmosphericModels
-#wmake $targetType optimisation/adjointOptimisation/adjoint
+wmake $targetType atmosphericModels
+wmake $targetType optimisation/adjointOptimisation/adjoint
 
 
 # interfaceTracking libs
