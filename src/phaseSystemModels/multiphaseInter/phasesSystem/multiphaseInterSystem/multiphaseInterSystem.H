@@ -282,7 +282,7 @@ public:
         virtual volScalarField& he()
         {
             NotImplemented;
-            return const_cast<volScalarField&>(volScalarField::null());
+            return volScalarField::null().constCast();
         }
 
         //- Return access to the internal energy field [J/Kg]

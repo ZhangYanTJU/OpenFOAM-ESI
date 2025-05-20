@@ -367,10 +367,8 @@ void Foam::oversetFvMeshBase::addInterpolation
 
         // 1c. Adapt field for additional interfaceFields (note: solver uses
         //     GeometricField::scalarInterfaces() to get hold of interfaces)
-        typedef GeometricField<Type, fvPatchField, volMesh> GeoField;
 
-        typename GeoField::Boundary& bfld =
-            const_cast<GeoField&>(m.psi()).boundaryFieldRef();
+        auto& bfld = m.psi().constCast().boundaryFieldRef();
 
         bfld.setSize(interfaces.size());
 
@@ -717,8 +715,7 @@ Foam::SolverPerformance<Type> Foam::oversetFvMeshBase::solveOverset
 {
     typedef GeometricField<Type, fvPatchField, volMesh> GeoField;
     // Check we're running with bcs that can handle implicit matrix manipulation
-    typename GeoField::Boundary& bpsi =
-        const_cast<GeoField&>(m.psi()).boundaryFieldRef();
+    auto& bpsi = m.psi().constCast().boundaryFieldRef();
 
     bool hasOverset = false;
     forAll(bpsi, patchi)
@@ -834,8 +831,7 @@ Foam::SolverPerformance<Type> Foam::oversetFvMeshBase::solveOverset
     const labelList& own = mesh_.faceOwner();
     const labelList& nei = mesh_.faceNeighbour();
 
-    auto& psi =
-        const_cast<GeometricField<Type, fvPatchField, volMesh>&>(m.psi());
+    auto& psi = m.psi().constCast();
 
     // Mirror hole cell values next to calculated cells
     for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)

@@ -148,7 +148,7 @@ Foam::patchDistMethods::exact::exact
 
 bool Foam::patchDistMethods::exact::correct(volScalarField& y)
 {
-    return correct(y, const_cast<volVectorField&>(volVectorField::null()));
+    return correct(y, volVectorField::null().constCast());
 }
 
 

@@ -87,7 +87,7 @@ Foam::patchDistMethods::advectionDiffusion::advectionDiffusion
 
 bool Foam::patchDistMethods::advectionDiffusion::correct(volScalarField& y)
 {
-    return correct(y, const_cast<volVectorField&>(volVectorField::null()));
+    return correct(y, volVectorField::null().constCast());
 }
 
 

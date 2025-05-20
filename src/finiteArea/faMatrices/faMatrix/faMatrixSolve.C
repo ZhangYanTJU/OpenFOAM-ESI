@@ -67,8 +67,7 @@ Foam::SolverPerformance<Type> Foam::faMatrix<Type>::solve
             SolverPerformance<Type>::debug
         );
 
-    auto& psi =
-        const_cast<GeometricField<Type, faPatchField, areaMesh>&>(psi_);
+    auto& psi = psi_.constCast();
 
     SolverPerformance<Type> solverPerfVec
     (

@@ -63,10 +63,7 @@ SpalartAllmaras::SpalartAllmaras
     // The wall dist name can vary depending on how wallDist was
     // constructed. Grab the field directly from wallDist
 
-    distPtr_.ref
-    (
-        const_cast<volScalarField&>(wallDist::New(mesh_).y())
-    );
+    distPtr_.ref(wallDist::New(mesh_).y().constCast());
 
     allocateInitValues();
     allocateMeanFields();

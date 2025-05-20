@@ -150,10 +150,7 @@ void Foam::matchedFlowRateOutletVelocityFvPatchVectorField::updateValues
     // Lookup non-const access to velocity field
     volVectorField& U
     (
-        const_cast<volVectorField&>
-        (
-            dynamic_cast<const volVectorField&>(internalField())
-        )
+        dynamic_cast<const volVectorField&>(internalField()).constCast()
     );
 
     // Get the corresponding inlet velocity patch field

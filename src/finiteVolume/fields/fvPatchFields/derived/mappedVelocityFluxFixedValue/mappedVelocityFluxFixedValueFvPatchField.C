@@ -218,10 +218,7 @@ void Foam::mappedVelocityFluxFixedValueFvPatchField::updateCoeffs()
     }
 
     operator==(newUValues);
-    const_cast<surfaceScalarField&>
-    (
-        phiField
-    ).boundaryFieldRef()[patch().index()] == newPhiValues;
+    phiField.constCast().boundaryFieldRef()[patch().index()] == newPhiValues;
 
     UPstream::msgType(oldTag);  // Restore tag
 

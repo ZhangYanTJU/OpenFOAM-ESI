@@ -154,7 +154,7 @@ Foam::StationaryPhaseModel<BasePhaseModel>::URef()
         << "Cannot access the velocity of a stationary phase"
         << exit(FatalError);
 
-    return const_cast<volVectorField&>(volVectorField::null());
+    return volVectorField::null().constCast();
 }
 
 
@@ -174,7 +174,7 @@ Foam::StationaryPhaseModel<BasePhaseModel>::phiRef()
         << "Cannot access the flux of a stationary phase"
         << exit(FatalError);
 
-    return const_cast<surfaceScalarField&>(surfaceScalarField::null());
+    return surfaceScalarField::null().constCast();
 }
 
 
@@ -194,7 +194,7 @@ Foam::StationaryPhaseModel<BasePhaseModel>::alphaPhiRef()
         << "Cannot access the volumetric flux of a stationary phase"
         << exit(FatalError);
 
-    return const_cast<surfaceScalarField&>(surfaceScalarField::null());
+    return surfaceScalarField::null().constCast();
 }
 
 
@@ -214,7 +214,7 @@ Foam::StationaryPhaseModel<BasePhaseModel>::alphaRhoPhiRef()
         << "Cannot access the mass flux of a stationary phase"
         << exit(FatalError);
 
-    return const_cast<surfaceScalarField&>(surfaceScalarField::null());
+    return surfaceScalarField::null().constCast();
 }
 
 

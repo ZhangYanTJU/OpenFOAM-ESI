@@ -92,13 +92,13 @@ void MapGeometricFields
         //      the pointMesh instead of now on the polyMesh!
         if (&field.mesh() == &mapper.mesh())
         {
-            const_cast<FieldType&>(field).storeOldTimes();
+            field.storeOldTimes();
         }
     }
 
     for (const auto& field : fields)
     {
-        FieldType& fld = const_cast<FieldType&>(field);
+        auto& fld = field.constCast();
 
         if (&field.mesh() == &mapper.mesh())
         {

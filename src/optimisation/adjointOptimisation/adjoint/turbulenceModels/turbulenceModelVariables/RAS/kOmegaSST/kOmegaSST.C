@@ -91,7 +91,7 @@ kOmegaSST::kOmegaSST
     TMVar2Ptr_.ref(mesh_.lookupObjectRef<volScalarField>(TMVar2BaseName_));
     nutPtr_.ref(mesh_.lookupObjectRef<volScalarField>(nutBaseName_));
 
-    distPtr_.ref(const_cast<volScalarField&>(wallDist::New(mesh_).y()));
+    distPtr_.ref(wallDist::New(mesh_).y().constCast());
 
     allocateInitValues();
     allocateMeanFields();

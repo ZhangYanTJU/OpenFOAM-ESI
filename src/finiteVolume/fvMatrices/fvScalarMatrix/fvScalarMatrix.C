@@ -125,11 +125,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::fvSolver::solve
             solverPerformance::debug
         );
 
-    auto& psi =
-        const_cast<GeometricField<scalar, fvPatchField, volMesh>&>
-        (
-            fvMat_.psi()
-        );
+    auto& psi = fvMat_.psi().constCast();
 
     scalarField saveDiag(fvMat_.diag());
     fvMat_.addBoundaryDiag(fvMat_.diag(), 0);
@@ -227,13 +223,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
     tmp<scalarField> tpsi;
     if (!useImplicit_)
     {
-        tpsi.ref
-        (
-            const_cast<GeometricField<scalar, fvPatchField, volMesh>&>
-            (
-                psi_
-            ).primitiveFieldRef()
-        );
+        tpsi.ref(psi_.constCast().primitiveFieldRef());
     }
     else
     {
@@ -269,10 +259,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
         for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
         {
             auto& psiInternal =
-                const_cast<GeometricField<scalar, fvPatchField, volMesh>&>
-                (
-                    this->psi(fieldi)
-                ).primitiveFieldRef();
+                this->psi(fieldi).constCast().primitiveFieldRef();
 
             const label cellOffset = lduMeshPtr()->cellOffsets()[fieldi];
 
@@ -310,11 +297,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
 
     for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
     {
-        auto& localPsi =
-            const_cast<GeometricField<scalar, fvPatchField, volMesh>&>
-            (
-                this->psi(fieldi)
-            );
+        auto& localPsi = this->psi(fieldi).constCast();
 
         localPsi.correctBoundaryConditions();
         localPsi.mesh().data().setSolverPerformance

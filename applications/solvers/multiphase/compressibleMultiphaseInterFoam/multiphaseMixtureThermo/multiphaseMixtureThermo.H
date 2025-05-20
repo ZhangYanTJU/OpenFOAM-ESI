@@ -243,7 +243,7 @@ public:
             virtual volScalarField& he()
             {
                 NotImplemented;
-                return const_cast<volScalarField&>(volScalarField::null());
+                return volScalarField::null().constCast();
             }
 
             //- Enthalpy/Internal energy [J/kg]

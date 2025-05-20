@@ -288,13 +288,13 @@ void Foam::fvMeshAdder::MapVolFields
             << "MapVolFields : Storing old time for "
             << field.name() << endl;
 
-        const_cast<fldType&>(field).storeOldTimes();
+        field.storeOldTimes();
     }
 
 
     for (const auto& field : fields)
     {
-        fldType& fld = const_cast<fldType&>(field);
+        fldType& fld = field.constCast();
 
         const auto* toAdd =
             meshToAdd.objectRegistry::cfindObject<fldType>(field.name());
@@ -592,12 +592,12 @@ void Foam::fvMeshAdder::MapSurfaceFields
             << "MapSurfaceFields : Storing old time for "
             << field.name() << endl;
 
-        const_cast<fldType&>(field).storeOldTimes();
+        field.storeOldTimes();
     }
 
     for (const auto& field : fields)
     {
-        fldType& fld = const_cast<fldType&>(field);
+        fldType& fld = field.constCast();
 
         const auto* toAdd =
             meshToAdd.objectRegistry::cfindObject<fldType>(field.name());
@@ -1114,7 +1114,7 @@ void Foam::fvMeshAdder::MapVolFields
             << "MapVolFields : Storing old time for "
             << field.name() << endl;
 
-        const_cast<fldType&>(field).storeOldTimes();
+        field.storeOldTimes();
     }
 
 
@@ -1240,7 +1240,7 @@ void Foam::fvMeshAdder::MapSurfaceFields
             << "MapSurfaceFields : Storing old time for "
             << field.name() << endl;
 
-        const_cast<fldType&>(field).storeOldTimes();
+        field.storeOldTimes();
     }
 
 

@@ -83,6 +83,9 @@ public:
 
     // Public Typedefs
 
+        //- The template instance used for this DimensionedField type
+        typedef DimensionedField<Type, GeoMesh> this_type;
+
         //- The mesh type for the DimensionedField
         typedef typename GeoMesh::Mesh Mesh;
 
@@ -116,7 +119,7 @@ private:
         void checkFieldSize() const;
 
         //- Read from file if it is present. Checks the readOption flag
-        void readIfPresent(const word& fieldDictEntry = "value");
+        bool readIfPresent(const word& fieldDictEntry = "value");
 
         //- Read the field - create the field dictionary on-the-fly
         void readField(const word& fieldDictEntry = "value");
@@ -509,20 +512,26 @@ public:
             const word& fieldDictEntry = "value"
         );
 
-        //- Return mesh
-        inline const Mesh& mesh() const noexcept;
+        //- Return non-const reference to this field
+        this_type& constCast() const noexcept
+        {
+            return const_cast<this_type&>(*this);
+        }
+
+        //- Return const reference to mesh
+        const Mesh& mesh() const noexcept { return mesh_; }
 
         //- Return dimensions
-        inline const dimensionSet& dimensions() const noexcept;
+        const dimensionSet& dimensions() const noexcept { return dimensions_; }
 
         //- Return non-const access to dimensions
-        inline dimensionSet& dimensions() noexcept;
+        dimensionSet& dimensions() noexcept { return dimensions_; }
 
         //- Return oriented type
-        inline orientedType oriented() const noexcept;
+        orientedType oriented() const noexcept { return oriented_; }
 
         //- Return non-const access to the oriented type
-        inline orientedType& oriented() noexcept;
+        orientedType& oriented() noexcept { return oriented_; }
 
         //- True if field is ORIENTED
         inline bool is_oriented() const noexcept;
@@ -530,11 +539,11 @@ public:
         //- Set the oriented flag: on/off
         inline void setOriented(bool on = true) noexcept;
 
-        //- Return const-reference to the field values
-        inline const Field<Type>& field() const noexcept;
+        //- Return const-reference to the primitive field values
+        const Field<Type>& field() const noexcept { return *this; }
 
-        //- Return reference to the field values
-        inline Field<Type>& field() noexcept;
+        //- Return reference to the primitive field values
+        Field<Type>& field() noexcept { return *this; }
 
         //- Return a component field of the field
         tmp<DimensionedField<cmptType, GeoMesh>> component

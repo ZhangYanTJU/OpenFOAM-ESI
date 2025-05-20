@@ -55,20 +55,4 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::boundaryField() const noexcept
 }
 
 
-template<class Type, template<class> class PatchField, class GeoMesh>
-inline Foam::label
-Foam::GeometricField<Type, PatchField, GeoMesh>::timeIndex() const noexcept
-{
-    return timeIndex_;
-}
-
-
-template<class Type, template<class> class PatchField, class GeoMesh>
-inline Foam::label&
-Foam::GeometricField<Type, PatchField, GeoMesh>::timeIndex() noexcept
-{
-    return timeIndex_;
-}
-
-
 // ************************************************************************* //

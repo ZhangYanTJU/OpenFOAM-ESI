@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -90,7 +90,7 @@ void Foam::DimensionedField<Type, GeoMesh>::readField
 
 
 template<class Type, class GeoMesh>
-void Foam::DimensionedField<Type, GeoMesh>::readIfPresent
+bool Foam::DimensionedField<Type, GeoMesh>::readIfPresent
 (
     const word& fieldDictEntry
 )
@@ -102,7 +102,10 @@ void Foam::DimensionedField<Type, GeoMesh>::readIfPresent
     )
     {
         readField(fieldDictEntry);
+        return true;
     }
+
+    return false;
 }
 
 
@@ -117,10 +120,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(io),
-    Field<Type>(),
-    mesh_(mesh),
-    dimensions_(dimless),
-    oriented_()
+    mesh_(mesh)
 {
     readField(fieldDictEntry);
 }
@@ -136,10 +136,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(io),
-    Field<Type>(),
-    mesh_(mesh),
-    dimensions_(dimless),
-    oriented_()
+    mesh_(mesh)
 {
     readField(fieldDict, fieldDictEntry);
 }

@@ -29,46 +29,6 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, class GeoMesh>
-inline const typename GeoMesh::Mesh&
-Foam::DimensionedField<Type, GeoMesh>::mesh() const noexcept
-{
-    return mesh_;
-}
-
-
-template<class Type, class GeoMesh>
-inline const Foam::dimensionSet&
-Foam::DimensionedField<Type, GeoMesh>::dimensions() const noexcept
-{
-    return dimensions_;
-}
-
-
-template<class Type, class GeoMesh>
-inline Foam::dimensionSet&
-Foam::DimensionedField<Type, GeoMesh>::dimensions() noexcept
-{
-    return dimensions_;
-}
-
-
-template<class Type, class GeoMesh>
-inline Foam::orientedType
-Foam::DimensionedField<Type, GeoMesh>::oriented() const noexcept
-{
-    return oriented_;
-}
-
-
-template<class Type, class GeoMesh>
-inline Foam::orientedType&
-Foam::DimensionedField<Type, GeoMesh>::oriented() noexcept
-{
-    return oriented_;
-}
-
-
-template<class Type, class GeoMesh>
 inline bool Foam::DimensionedField<Type, GeoMesh>::is_oriented() const noexcept
 {
     return oriented_.is_oriented();
@@ -79,22 +39,6 @@ template<class Type, class GeoMesh>
 inline void Foam::DimensionedField<Type, GeoMesh>::setOriented(bool on) noexcept
 {
     oriented_.setOriented(on);
-}
-
-
-template<class Type, class GeoMesh>
-inline const Foam::Field<Type>&
-Foam::DimensionedField<Type, GeoMesh>::field() const noexcept
-{
-    return *this;
-}
-
-
-template<class Type, class GeoMesh>
-inline Foam::Field<Type>&
-Foam::DimensionedField<Type, GeoMesh>::field() noexcept
-{
-    return *this;
 }
 
 

@@ -213,8 +213,7 @@ Foam::faMatrix<Type>::faMatrix
     }
 
     // Update the boundary coefficients of psi without changing its event No.
-    auto& psiRef =
-        const_cast<GeometricField<Type, faPatchField, areaMesh>&>(psi_);
+    auto& psiRef = psi_.constCast();
 
     const label currentStatePsi = psiRef.eventNo();
     psiRef.boundaryFieldRef().updateCoeffs();
@@ -313,11 +312,7 @@ void Foam::faMatrix<Type>::setValuesFromList
     const labelUList& nei = mesh.neighbour();
 
     scalarField& Diag = diag();
-    Field<Type>& psi =
-        const_cast
-        <
-            GeometricField<Type, faPatchField, areaMesh>&
-        >(psi_).primitiveFieldRef();
+    Field<Type>& psi = psi_.constCast().primitiveFieldRef();
 
     // Following actions:
     // - adjust local field psi

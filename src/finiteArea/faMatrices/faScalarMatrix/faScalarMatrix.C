@@ -67,8 +67,7 @@ Foam::solverPerformance Foam::faMatrix<Foam::scalar>::solve
             solverPerformance::debug
         );
 
-    auto& psi =
-        const_cast<GeometricField<scalar, faPatchField, areaMesh>&>(psi_);
+    auto& psi = psi_.constCast();
 
     scalarField saveDiag(diag());
     addBoundaryDiag(diag(), 0);

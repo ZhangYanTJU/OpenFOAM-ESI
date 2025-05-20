@@ -67,11 +67,7 @@ Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
 Foam::basicSolidChemistryModel::RR(const label i)
 {
     NotImplemented;
-    return
-        const_cast<volScalarField::Internal&>
-        (
-            volScalarField::Internal::null()
-        );
+    return volScalarField::Internal::null().constCast();
 }
 
 

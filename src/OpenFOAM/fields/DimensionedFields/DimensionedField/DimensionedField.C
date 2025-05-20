@@ -79,8 +79,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
     regIOobject(io),
     Field<Type>(field),
     mesh_(mesh),
-    dimensions_(dims),
-    oriented_()
+    dimensions_(dims)
 {
     checkFieldSize();
 }
@@ -134,8 +133,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
     regIOobject(io),
     Field<Type>(tfield.constCast(), tfield.movable()),
     mesh_(mesh),
-    dimensions_(dims),
-    oriented_()
+    dimensions_(dims)
 {
     tfield.clear();
     checkFieldSize();
@@ -154,8 +152,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
     regIOobject(io),
     Field<Type>(GeoMesh::size(mesh)),
     mesh_(mesh),
-    dimensions_(dims),
-    oriented_()
+    dimensions_(dims)
 {
     if (checkIOFlags)
     {
@@ -175,14 +172,14 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(io),
-    Field<Type>(GeoMesh::size(mesh), value),
+    Field<Type>(GeoMesh::size(mesh)),
     mesh_(mesh),
-    dimensions_(dims),
-    oriented_()
+    dimensions_(dims)
 {
-    if (checkIOFlags)
+    if (!checkIOFlags || !readIfPresent())
     {
-        readIfPresent();
+        // Set default value (if not read)
+        this->field() = value;
     }
 }
 

@@ -81,6 +81,9 @@ public:
 
     // Public Typedefs
 
+        //- The template instance used for this GeometricField type
+        typedef GeometricField<Type, PatchField, GeoMesh> this_type;
+
         //- The mesh type for the GeometricField
         typedef typename GeoMesh::Mesh Mesh;
 
@@ -101,12 +104,6 @@ public:
 
 
 private:
-
-    // Private Typedefs
-
-        //- The GeometricField type
-        typedef GeometricField<Type, PatchField, GeoMesh> this_type;
-
 
     // Private Data
 
@@ -794,6 +791,12 @@ public:
 
     // Member Functions
 
+        //- Return non-const reference to this field
+        this_type& constCast() const noexcept
+        {
+            return const_cast<this_type&>(*this);
+        }
+
         //- Return a const-reference to the dimensioned internal field.
         inline const Internal& internalField() const noexcept;
 
@@ -841,11 +844,11 @@ public:
         //  \note Should avoid using updateAccessTime = true within loops.
         Boundary& boundaryFieldRef(const bool updateAccessTime = true);
 
-        //- Return the time index of the field
-        inline label timeIndex() const noexcept;
+        //- The time index of the field
+        label timeIndex() const noexcept { return timeIndex_; }
 
         //- Write-access to the time index of the field
-        inline label& timeIndex() noexcept;
+        label& timeIndex() noexcept { return timeIndex_; }
 
         //- The number of old time fields stored
         label nOldTimes() const noexcept;

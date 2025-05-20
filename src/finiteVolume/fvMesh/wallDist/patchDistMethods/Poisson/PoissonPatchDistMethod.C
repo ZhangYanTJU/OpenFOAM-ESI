@@ -69,7 +69,7 @@ Foam::patchDistMethods::Poisson::Poisson
 
 bool Foam::patchDistMethods::Poisson::correct(volScalarField& y)
 {
-    return correct(y, const_cast<volVectorField&>(volVectorField::null()));
+    return correct(y, volVectorField::null().constCast());
 }
 
 

@@ -100,7 +100,7 @@ Foam::UniformDimensionedField<Type>::UniformDimensionedField
 )
 :
     regIOobject(io),
-    dimensioned<Type>(regIOobject::name(), dimless, Zero)
+    dimensioned<Type>(regIOobject::name(), dimless, Foam::zero{})
 {
     // For if MUST_READ_IF_MODIFIED
     addWatch();

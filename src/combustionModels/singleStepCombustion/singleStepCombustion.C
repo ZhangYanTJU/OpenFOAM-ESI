@@ -131,8 +131,7 @@ tmp<volScalarField>
 singleStepCombustion<ReactionThermo, ThermoType>::Qdot() const
 {
     const label fuelI = singleMixturePtr_->fuelIndex();
-    volScalarField& YFuel =
-        const_cast<volScalarField&>(this->thermo().composition().Y(fuelI));
+    volScalarField& YFuel = this->thermo().composition().Y(fuelI).constCast();
 
     return -singleMixturePtr_->qFuel()*(R(YFuel) & YFuel);
 }

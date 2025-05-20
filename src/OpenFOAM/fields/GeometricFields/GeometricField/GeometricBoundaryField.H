@@ -62,6 +62,9 @@ public:
 
     // Public Typedefs
 
+        //- The template instance used for this GeometricBoundaryField type
+        typedef GeometricBoundaryField<Type, PatchField, GeoMesh> this_type;
+
         //- The boundary mesh type for the boundary fields
         typedef typename GeoMesh::BoundaryMesh BoundaryMesh;
 
@@ -172,6 +175,12 @@ public:
 
 
     // Member Functions
+
+        //- Return non-const reference to this boundary field
+        this_type& constCast() const noexcept
+        {
+            return const_cast<this_type&>(*this);
+        }
 
         //- Read the boundary field
         void readField(const Internal& iField, const dictionary& dict);
