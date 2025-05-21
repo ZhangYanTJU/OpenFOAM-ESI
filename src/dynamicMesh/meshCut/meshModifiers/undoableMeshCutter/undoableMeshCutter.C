@@ -393,7 +393,7 @@ Foam::labelList Foam::undoableMeshCutter::getSplitFaces() const
         }
     }
 
-    return liveSplitFaces.shrink();
+    return labelList(std::move(liveSplitFaces));
 }
 
 

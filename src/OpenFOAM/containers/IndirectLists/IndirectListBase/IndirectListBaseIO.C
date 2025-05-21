@@ -29,7 +29,6 @@ License
 #include "IndirectListBase.H"
 #include "Ostream.H"
 #include "token.H"
-#include "contiguous.H"
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 

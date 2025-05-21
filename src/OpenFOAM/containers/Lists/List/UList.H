@@ -50,13 +50,11 @@ SourceFiles
 #include "uLabel.H"
 #include "zero.H"
 #include "one.H"
-#include "contiguous.H"
 #include "stdFoam.H"
 #include "nullObject.H"
 #include "Hash.H"
-#include "ListPolicy.H"
+#include "ListPolicy.H"  // Also includes "contiguous"
 
-#include <iterator>
 #include <vector>  // i.e, std::vector
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

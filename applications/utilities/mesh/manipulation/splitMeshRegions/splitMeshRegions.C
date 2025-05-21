@@ -256,7 +256,7 @@ labelList getNonRegionCells(const labelList& cellRegion, const label regionI)
             nonRegionCells.append(celli);
         }
     }
-    return nonRegionCells.shrink();
+    return labelList(std::move(nonRegionCells));
 }
 
 

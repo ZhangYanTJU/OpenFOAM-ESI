@@ -27,7 +27,6 @@ License
 
 #include "DynamicList.H"
 #include "Istream.H"
-#include "contiguous.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 

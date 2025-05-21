@@ -29,7 +29,6 @@ License
 #include "List.H"
 #include "FixedList.H"
 #include "PtrList.H"
-#include "contiguous.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
@@ -42,7 +41,7 @@ void Foam::List<T>::resize_copy(const label count, const label len)
     if (FOAM_LIKELY(len > 0))
     {
         // With sign-check to avoid spurious -Walloc-size-larger-than
-        // const label oldLen = this->size_;
+        const label oldLen = this->size_;
         const label overlap = Foam::min(count, len);
         // Extra safety, not currently necessary:
         // const label overlap = Foam::min(Foam::min(count, oldLen), len);
@@ -54,22 +53,22 @@ void Foam::List<T>::resize_copy(const label count, const label len)
             // Recover overlapping content when resizing
 
             this->size_ = len;
-            this->v_ = new T[len];
+            this->v_ = ListPolicy::allocate<T>(len);
 
             // Can dispatch with
             // - std::execution::par_unseq
             // - std::execution::unseq
             std::move(old, (old + overlap), this->v_);
 
-            delete[] old;
+            ListPolicy::deallocate(old, oldLen);
         }
         else
         {
             // No overlapping content
-            delete[] old;
+            ListPolicy::deallocate(old, oldLen);
 
             this->size_ = len;
-            this->v_ = new T[len];
+            this->v_ = ListPolicy::allocate<T>(len);
         }
     }
     else
@@ -152,7 +151,7 @@ Foam::List<T>::List(const label len, Foam::zero)
 template<class T>
 Foam::List<T>::List(Foam::one, const T& val)
 :
-    UList<T>(new T[1], 1)
+    UList<T>(ListPolicy::allocate<T>(1), 1)
 {
     this->v_[0] = val;
 }
@@ -161,7 +160,7 @@ Foam::List<T>::List(Foam::one, const T& val)
 template<class T>
 Foam::List<T>::List(Foam::one, T&& val)
 :
-    UList<T>(new T[1], 1)
+    UList<T>(ListPolicy::allocate<T>(1), 1)
 {
     this->v_[0] = std::move(val);
 }
@@ -170,9 +169,9 @@ Foam::List<T>::List(Foam::one, T&& val)
 template<class T>
 Foam::List<T>::List(Foam::one, Foam::zero)
 :
-    UList<T>(new T[1], 1)
+    UList<T>(ListPolicy::allocate<T>(1), 1)
 {
-    this->v_[0] = Zero;
+    this->v_[0] = Foam::zero{};
 }
 
 
@@ -311,7 +310,8 @@ Foam::List<T>::List(DynamicList<T, SizeMin>&& list)
 template<class T>
 Foam::List<T>::~List()
 {
-    delete[] this->v_;
+    //TODO? May need to verify that size is accurate (for correct alignment)
+    ListPolicy::deallocate(this->v_, this->size_);
 }
 
 

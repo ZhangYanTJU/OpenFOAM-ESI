@@ -29,7 +29,6 @@ License
 #include "UList.H"
 #include "Ostream.H"
 #include "token.H"
-#include "contiguous.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 

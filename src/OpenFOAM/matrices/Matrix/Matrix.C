@@ -244,7 +244,8 @@ inline Foam::Matrix<Form, Type>::Matrix
 template<class Form, class Type>
 Foam::Matrix<Form, Type>::~Matrix()
 {
-    delete[] v_;
+    // Accurate alignment information?
+    ListPolicy::deallocate(this->v_, (mRows_*nCols_));
 }
 
 
@@ -253,12 +254,10 @@ Foam::Matrix<Form, Type>::~Matrix()
 template<class Form, class Type>
 void Foam::Matrix<Form, Type>::clear()
 {
-    if (v_)
-    {
-        delete[] v_;
-        v_ = nullptr;
-    }
+    // Accurate alignment information?
+    ListPolicy::deallocate(this->v_, (mRows_*nCols_));
 
+    v_ = nullptr;
     mRows_ = 0;
     nCols_ = 0;
 }

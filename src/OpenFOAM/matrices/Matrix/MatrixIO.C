@@ -30,8 +30,6 @@ License
 #include "Istream.H"
 #include "Ostream.H"
 #include "token.H"
-#include "contiguous.H"
-#include "ListPolicy.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
