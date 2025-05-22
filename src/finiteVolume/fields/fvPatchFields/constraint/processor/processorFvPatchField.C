@@ -321,14 +321,16 @@ void Foam::processorFvPatchField<Type>::initInterfaceMatrixUpdate
     const Pstream::commsTypes commsType
 ) const
 {
-    //this->patch().patchInternalField(psiInternal, scalarSendBuf_);
-
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
-    scalarSendBuf_.resize_nocopy(this->patch().size());
-    forAll(scalarSendBuf_, facei)
     {
-        scalarSendBuf_[facei] = psiInternal[faceCells[facei]];
+        scalarSendBuf_.resize_nocopy(faceCells.size());
+        scalarRecvBuf_.resize_nocopy(faceCells.size());
+
+        forAll(faceCells, i)
+        {
+            scalarSendBuf_[i] = psiInternal[faceCells[i]];
+        }
     }
 
     if
@@ -344,8 +346,6 @@ void Foam::processorFvPatchField<Type>::initInterfaceMatrixUpdate
                 << "Outstanding request(s) on patch " << procPatch_.name()
                 << abort(FatalError);
         }
-
-        scalarRecvBuf_.resize_nocopy(scalarSendBuf_.size());
 
         recvRequest_ = UPstream::nRequests();
         UIPstream::read
@@ -411,7 +411,7 @@ void Foam::processorFvPatchField<Type>::updateInterfaceMatrix
     }
     else
     {
-        scalarRecvBuf_.resize_nocopy(this->size());
+        scalarRecvBuf_.resize_nocopy(faceCells.size());  // In general a no-op
         procPatch_.compressedReceive(commsType, scalarRecvBuf_);
     }
 
@@ -441,13 +441,16 @@ void Foam::processorFvPatchField<Type>::initInterfaceMatrixUpdate
     const Pstream::commsTypes commsType
 ) const
 {
-    sendBuf_.resize_nocopy(this->patch().size());
-
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
-    forAll(sendBuf_, facei)
     {
-        sendBuf_[facei] = psiInternal[faceCells[facei]];
+        sendBuf_.resize_nocopy(faceCells.size());
+        recvBuf_.resize_nocopy(faceCells.size());
+
+        forAll(faceCells, i)
+        {
+            sendBuf_[i] = psiInternal[faceCells[i]];
+        }
     }
 
     if
@@ -463,8 +466,6 @@ void Foam::processorFvPatchField<Type>::initInterfaceMatrixUpdate
                 << "Outstanding request(s) on patch " << procPatch_.name()
                 << abort(FatalError);
         }
-
-        recvBuf_.resize_nocopy(sendBuf_.size());
 
         recvRequest_ = UPstream::nRequests();
         UIPstream::read
@@ -529,7 +530,7 @@ void Foam::processorFvPatchField<Type>::updateInterfaceMatrix
     }
     else
     {
-        recvBuf_.resize_nocopy(this->size());
+        recvBuf_.resize_nocopy(faceCells.size());  // In general a no-op
         procPatch_.compressedReceive(commsType, recvBuf_);
     }
 

@@ -125,21 +125,22 @@ void Foam::calculatedProcessorFvPatchField<Type>::initEvaluate
                 << abort(FatalError);
         }
 
-        //this->patchInternalField(sendBuf_);
         // Bypass patchInternalField since uses fvPatch addressing
+
+        Field<Type>& self = *this;  // Receive straight into *this
+
         {
-            const Field<Type>& iF = this->internalField();
-            const labelUList& fc = procInterface_.faceCells();
-            sendBuf_.resize_nocopy(fc.size());
-            forAll(fc, i)
+            const Field<Type>& psiInternal = this->internalField();
+            const labelUList& faceCells = procInterface_.faceCells();
+
+            sendBuf_.resize_nocopy(faceCells.size());
+            self.resize_nocopy(faceCells.size());
+
+            forAll(faceCells, i)
             {
-                sendBuf_[i] = iF[fc[i]];
+                sendBuf_[i] = psiInternal[faceCells[i]];
             }
         }
-
-        // Receive straight into *this
-        Field<Type>& self = *this;
-        self.resize_nocopy(sendBuf_.size());
 
         recvRequest_ = UPstream::nRequests();
         UIPstream::read
@@ -202,15 +203,17 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
     }
 
     // Bypass patchInternalField since uses fvPatch addressing
-    const labelUList& fc = lduAddr.patchAddr(patchId);
+    const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
-    scalarSendBuf_.resize_nocopy(fc.size());
-    forAll(fc, i)
     {
-        scalarSendBuf_[i] = psiInternal[fc[i]];
-    }
+        scalarSendBuf_.resize_nocopy(faceCells.size());
+        scalarRecvBuf_.resize_nocopy(faceCells.size());
 
-    scalarRecvBuf_.resize_nocopy(scalarSendBuf_.size());
+        forAll(faceCells, i)
+        {
+            scalarSendBuf_[i] = psiInternal[faceCells[i]];
+        }
+    }
 
     recvRequest_ = UPstream::nRequests();
     UIPstream::read

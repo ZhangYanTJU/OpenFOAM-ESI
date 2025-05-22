@@ -69,7 +69,7 @@ protected:
     // Protected Data
 
         //- Local reference cast into the interface
-         const lduPrimitiveProcessorInterface& procInterface_;
+        const lduPrimitiveProcessorInterface& procInterface_;
 
 
         // Sending and receiving

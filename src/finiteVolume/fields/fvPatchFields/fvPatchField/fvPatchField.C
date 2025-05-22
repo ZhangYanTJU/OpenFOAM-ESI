@@ -229,10 +229,6 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::fvPatchField<Type>::patchInternalField() const
 {
-    // const auto& p = fvPatchFieldBase::patch();
-    // auto tpfld = tmp<Field<Type>>::New(p.size());
-    // p.patchInternalField(internalField_, tpfld.ref());
-    // return tpfld;
     return patch().patchInternalField(internalField_);
 }
 

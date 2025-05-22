@@ -69,17 +69,39 @@ void GeometricField<scalar, faPatchField, areaMesh>::replace
     const GeometricField<scalar, faPatchField, areaMesh>& sf
 );
 
+
+// Local consistency checks
+//
+// template<class Type>
+// bool GeometricBoundaryField<Type, faPatchField, areaMesh>::check() const
+// {
+//     return checkConsistency<coupledFaPatchField<Type>>
+//     (
+//         FieldBase::localBoundaryTolerance_,
+//        !(debug&4)       // make into warning if debug&4
+//     );
+// }
+
 template<>
-bool GeometricBoundaryField<scalar, faPatchField, areaMesh>::check() const;
+bool GeometricBoundaryField<scalar, faPatchField, areaMesh>::
+check() const;
+
 template<>
-bool GeometricBoundaryField<vector, faPatchField, areaMesh>::check() const;
+bool GeometricBoundaryField<vector, faPatchField, areaMesh>::
+check() const;
+
 template<>
-bool GeometricBoundaryField<sphericalTensor, faPatchField, areaMesh>::check
-() const;
+bool GeometricBoundaryField<sphericalTensor, faPatchField, areaMesh>::
+check() const;
+
 template<>
-bool GeometricBoundaryField<symmTensor, faPatchField, areaMesh>::check() const;
+bool GeometricBoundaryField<symmTensor, faPatchField, areaMesh>::
+check() const;
+
 template<>
-bool GeometricBoundaryField<tensor, faPatchField, areaMesh>::check() const;
+bool GeometricBoundaryField<tensor, faPatchField, areaMesh>::
+check() const;
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

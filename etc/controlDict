@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2412                                 |
+|  \\    /   O peration     | Version:  v2506                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -209,6 +209,14 @@ OptimisationSwitches
     pbufs.tuning    0;
 
 
+    // ==========
+    // Allocation
+    // ==========
+
+    // GeometricField with extra capacity for flattened boundary fields.
+    unifiedGeometricField   0;
+
+
     // =====
     // Other
     // =====
@@ -242,8 +250,8 @@ OptimisationSwitches
     experimentalDdtCorr 0;
 
     //- Enable enforced consistency of constraint bcs after 'local' operations.
-    //  Default is on. Set to 0/false to revert to <v2306 behaviour
-    //localConsistency 0;
+    //  Default is on. Set to 0 (ie, false) to revert to <v2306 behaviour
+    //localBoundaryConsistency 0;
 
     //- Since v2412 wall distance is calculated on a combined patch, created
     //  from all the individual wall patches. Set to 0/false to revert to

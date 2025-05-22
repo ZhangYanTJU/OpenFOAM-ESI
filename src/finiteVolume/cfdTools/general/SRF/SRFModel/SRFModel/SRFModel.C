@@ -169,8 +169,7 @@ Foam::vectorField Foam::SRF::SRFModel::velocity
 
 Foam::tmp<Foam::volVectorField> Foam::SRF::SRFModel::U() const
 {
-    const int oldLocal = volVectorField::Boundary::localConsistency;
-    volVectorField::Boundary::localConsistency = 0;
+    const auto oldConsistency = FieldBase::localBoundaryConsistency(0);
     tmp<volVectorField> relPos(mesh_.C() - origin_);
 
     auto tU = volVectorField::New
@@ -181,7 +180,7 @@ Foam::tmp<Foam::volVectorField> Foam::SRF::SRFModel::U() const
             omega_ ^ (relPos() - axis_*(axis_ & relPos()))
         )
     );
-    volVectorField::Boundary::localConsistency = oldLocal;
+    FieldBase::localBoundaryConsistency(oldConsistency);
 
     return tU;
 }

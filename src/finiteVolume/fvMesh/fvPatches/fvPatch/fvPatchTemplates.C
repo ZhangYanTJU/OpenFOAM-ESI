@@ -35,12 +35,27 @@ void Foam::fvPatch::patchInternalField
 (
     const UList<Type>& internalData,
     const labelUList& addressing,
-    Field<Type>& pfld
+    UList<Type>& pfld
 ) const
 {
-    const label len = this->size();
+    // For v2412 and earlier this was a field and was resized here:
+    //     const label len = this->size();
+    //     pfld.resize_nocopy(len);
+    //
+    // Now uses pre-sized storage (note: behaves like a static method)
 
-    pfld.resize_nocopy(len);
+    const label len = pfld.size();
+
+    #ifdef FULLDEBUG
+    if (FOAM_UNLIKELY((addressing.size() < len) || (this->size() < len)))
+    {
+        FatalErrorInFunction
+            << "patchField size = " << len
+            << " but patch size = " << this->size()
+            << " and addressing size = " << addressing.size() << nl
+            << abort(FatalError);
+    }
+    #endif
 
     for (label i = 0; i < len; ++i)
     {
@@ -53,10 +68,14 @@ template<class Type>
 void Foam::fvPatch::patchInternalField
 (
     const UList<Type>& internalData,
-    Field<Type>& pfld
+    UList<Type>& pfld
 ) const
 {
-    pfld.resize_nocopy(this->size());  // In general this is a no-op
+    // For v2412 and earlier this was a field and was resized here:
+    //     pfld.resize_nocopy(this->size());
+    //
+    // Now uses pre-sized storage
+
     patchInternalField(internalData, this->faceCells(), pfld);
 }
 

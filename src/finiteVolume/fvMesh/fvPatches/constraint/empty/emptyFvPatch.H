@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef emptyFvPatch_H
-#define emptyFvPatch_H
+#ifndef Foam_emptyFvPatch_H
+#define Foam_emptyFvPatch_H
 
 #include "fvPatch.H"
 #include "emptyPolyPatch.H"
@@ -54,9 +54,9 @@ class emptyFvPatch
 :
     public fvPatch
 {
-    // Private data
+    // Private Data
 
-        //- face-cell addressing
+        //- Empty face-cell addressing
         const labelList::subList faceCells_;
 
 
@@ -74,15 +74,11 @@ public:
 
     // Member Functions
 
-        // Access
+        //- Empty patch has zero size
+        virtual label size() const { return 0; }
 
-            virtual label size() const
-            {
-                return 0;
-            }
-
-            //- Return faceCells
-            virtual const labelUList& faceCells() const;
+        //- Return faceCells
+        virtual const labelUList& faceCells() const { return faceCells_; }
 };
 
 

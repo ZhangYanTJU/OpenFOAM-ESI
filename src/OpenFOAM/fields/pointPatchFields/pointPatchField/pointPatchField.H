@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -475,14 +475,14 @@ public:
             // \param internalData The internal field to extract from
             // \param addressing Addressing (mesh-points) into internal field
             // \param [out] pfld The extracted patch field.
-            //     It is always resized according to the patch size(),
+            //     Should normally be sized according to the patch size(),
             //     which can be smaller than the addressing size
             template<class Type1>
             void patchInternalField
             (
                 const UList<Type1>& internalData,
                 const labelUList& addressing,
-                Field<Type1>& pfld
+                UList<Type1>& pfld
             ) const;
 
             //- Return field created from selected internal field values
@@ -490,7 +490,8 @@ public:
             // \param internalData The internal field to extract from
             // \param addressing Addressing (mesh-points) into internal field
             template<class Type1>
-            tmp<Field<Type1>> patchInternalField
+            [[nodiscard]] tmp<Field<Type1>>
+            patchInternalField
             (
                 const UList<Type1>& internalData,
                 const labelUList& addressing
@@ -499,7 +500,8 @@ public:
             //- Return field created from appropriate internal field values
             //- given internal field reference
             template<class Type1>
-            tmp<Field<Type1>> patchInternalField
+            [[nodiscard]] tmp<Field<Type1>>
+            patchInternalField
             (
                 const UList<Type1>& internalData
             ) const;

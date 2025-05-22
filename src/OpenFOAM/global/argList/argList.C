@@ -47,6 +47,7 @@ License
 #include "stringListOps.H"
 #include "fileOperation.H"
 #include "fileOperationInitialise.H"
+#include "Field.H"  // Ugly handling of localBoundaryConsistency switches
 
 #include <cctype>
 
@@ -2231,6 +2232,12 @@ void Foam::argList::parse
             Info<< " user-supplied system call operations" << nl
                 << nl;
             IOobject::writeDivider(Info);
+
+            // Ugly handling of localBoundaryConsistency switches
+            FieldBase::warnLocalBoundaryConsistencyCompat
+            (
+                debug::optimisationSwitches()
+            );
         }
     }
 }
