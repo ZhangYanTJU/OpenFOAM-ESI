@@ -44,17 +44,13 @@ SourceFiles
 #include "label.H"
 #include "uLabel.H"
 #include "zero.H"
-#include "contiguous.H"
 #include "stdFoam.H"
 #include "nullObject.H"
 #include "Hash.H"
-#include "ListPolicy.H"
+#include "ListPolicy.H"  // Also includes "contiguous"
 #include "autoPtr.H"
 
-// <algorithm> already included by stdFoam.H
-#include <iterator>
 #include <limits>
-#include <type_traits>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

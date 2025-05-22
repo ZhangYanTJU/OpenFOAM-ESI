@@ -193,7 +193,7 @@ Foam::List<Vb::Point> Foam::bodyCentredCubic::initialPoints() const
         }
     }
 
-    return initialPoints.shrink();
+    return List<Vb::Point>(std::move(initialPoints));
 }
 
 

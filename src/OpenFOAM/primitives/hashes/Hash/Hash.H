@@ -35,8 +35,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Hash_H
-#define Hash_H
+#ifndef Foam_Hash_H
+#define Foam_Hash_H
 
 #include "Hasher.H"
 #include <cstdint>

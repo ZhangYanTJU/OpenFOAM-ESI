@@ -34,7 +34,7 @@ Description
 #ifndef Foam_ListPolicy_H
 #define Foam_ListPolicy_H
 
-#include <type_traits>
+#include "contiguous.H"  // Also includes <type_traits>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -87,11 +87,95 @@ template<> struct no_linebreak<wordRe> : std::true_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//
+// Memory allocation/deallocation handling - primarily used by List and Matrix
+//
+// - is_aligned_type() :
+//   Defines which types may be aligned
+//
+// - use_alignment(n) :
+//   Lower threshold for using memory alignment
+//
+// - use_memory_pool(n) :
+//   Lower threshold for using a memory pool.
+//   Must be larger than use_alignment() value.
+//
+// - use_offload(n) :
+//   Lower threshold for switching to device offloading
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//- Calculate a reserve size (eg, doubling) based on the request length
+//- Consider aligned allocation for the given type?
+//  Benefits for field data (floating-point, ints, vectorspace),
+//  but avoid for char data, strings, pointers etc
+template<class T>
+inline constexpr bool is_aligned_type() noexcept
+{
+    return
+    (
+        !std::is_enum_v<T>
+     && !std::is_pointer_v<T>
+     && !std::is_union_v<T>
+     && (sizeof(T) >= 4)    // skip small data (eg, char)
+     && is_contiguous_v<T>
+    );
+}
+
+
+//- True if size exceeds the min-size for using memory alignment
+template<class IntType>
+inline constexpr bool use_alignment(IntType n) noexcept
+{
+    return (n >= IntType(200));
+}
+
+
+//- True if size exceeds the min-size for using the memory pool
+template<class IntType>
+inline constexpr bool use_memory_pool(IntType n) noexcept
+{
+    return (n >= IntType(3000));
+}
+
+
+//- True if size exceeds the min-size for offloading
+template<class IntType>
+inline constexpr bool use_offload(IntType n) noexcept
+{
+    return (n >= IntType(1000));
+}
+
+
+template<class T, class IntType>
+inline T* allocate(IntType n)
+{
+    // Plain new
+    return new T[n];
+}
+
+
+template<class T, class IntType>
+inline void deallocate(T* ptr)
+{
+    // Plain new
+    delete[] ptr;
+}
+
+
+template<class T, class IntType>
+inline void deallocate(T* ptr, [[maybe_unused]] IntType n)
+{
+    // Plain new
+    delete[] ptr;
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Calculate a reserve size (eg, doubling) based on the requested length
 //- and the current capacity
 template<int SizeMin, int Numerator, class IntType>
-inline IntType reserve_size(IntType requested, IntType capacity)
+inline IntType reserve_size(IntType requested, IntType capacity) noexcept
 {
     static_assert(Numerator > 1, "Invalid numerator");
 
@@ -114,10 +198,10 @@ inline IntType reserve_size(IntType requested, IntType capacity)
 }
 
 
-//- Calculate a reserve size based on the request length
+//- Calculate a reserve size based on the requested length
 //- and the current capacity
 template<int SizeMin, int Numerator, int Denominator, class IntType>
-inline IntType reserve_size(IntType requested, IntType capacity)
+inline IntType reserve_size(IntType requested, IntType capacity) noexcept
 {
     static_assert(Numerator > Denominator, "Invalid numerator");
     static_assert(Denominator > 0, "Invalid denominator");

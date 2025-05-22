@@ -28,8 +28,6 @@ License
 #include "List.H"
 #include "Istream.H"
 #include "token.H"
-#include "contiguous.H"
-#include <memory>
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 

@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UList.H"
-#include "contiguous.H"
 #include "labelRange.H"
 
 #include <random>

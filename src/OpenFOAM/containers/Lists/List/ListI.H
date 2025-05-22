@@ -34,7 +34,7 @@ inline void Foam::List<T>::doAlloc()
     if (this->size_ > 0)
     {
         // With sign-check to avoid spurious -Walloc-size-larger-than
-        this->v_ = new T[this->size_];
+        this->v_ = ListPolicy::allocate<T>(this->size_);
     }
 }
 
@@ -136,11 +136,8 @@ inline Foam::autoPtr<Foam::List<T>> Foam::List<T>::clone() const
 template<class T>
 inline void Foam::List<T>::clear()
 {
-    if (this->v_)
-    {
-        delete[] this->v_;
-        this->v_ = nullptr;
-    }
+    ListPolicy::deallocate(this->v_, this->size_);
+    this->v_ = nullptr;
     this->size_ = 0;
 }
 

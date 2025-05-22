@@ -29,7 +29,6 @@ License
 #include "FieldMapper.H"
 #include "FieldM.H"
 #include "dictionary.H"
-#include "contiguous.H"
 #include "mapDistributeBase.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
