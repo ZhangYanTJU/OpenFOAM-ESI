@@ -98,6 +98,10 @@ void Foam::processorCyclicPointPatchField<Type>::initSwapAddSeparated
         // Get internal field into correct order for opposite side. Note use
         // of member data buffer since using non-blocking. Could be optimised
         // out if not using non-blocking...
+
+        sendBuf_.resize_nocopy(this->size());  // <- presize buffer
+        recvBuf_.resize_nocopy(this->size());
+
         this->patchInternalField
         (
             pField,
@@ -107,8 +111,6 @@ void Foam::processorCyclicPointPatchField<Type>::initSwapAddSeparated
 
         if (commsType == Pstream::commsTypes::nonBlocking)
         {
-            recvBuf_.resize_nocopy(sendBuf_.size());
-
             UIPstream::read
             (
                 commsType,
@@ -118,6 +120,7 @@ void Foam::processorCyclicPointPatchField<Type>::initSwapAddSeparated
                 procPatch_.comm()
             );
         }
+
         UOPstream::write
         (
             commsType,
@@ -143,7 +146,8 @@ void Foam::processorCyclicPointPatchField<Type>::swapAddSeparated
 
         if (commsType != Pstream::commsTypes::nonBlocking)
         {
-            recvBuf_.resize_nocopy(this->size());
+            recvBuf_.resize_nocopy(this->size());  // In general a no-op
+
             UIPstream::read
             (
                 commsType,
@@ -156,8 +160,7 @@ void Foam::processorCyclicPointPatchField<Type>::swapAddSeparated
 
         if (doTransform())
         {
-            const processorCyclicPolyPatch& ppp =
-                procPatch_.procCyclicPolyPatch();
+            const auto& ppp = procPatch_.procCyclicPolyPatch();
             const tensor& forwardT = ppp.forwardT()[0];
 
             transform(recvBuf_, forwardT, recvBuf_);

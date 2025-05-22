@@ -292,34 +292,35 @@ public:
             // \param internalData The internal field to extract from
             // \param addressing Addressing from patch into internal field
             // \param [out] pfld The extracted patch field.
-            //     It is always resized according to the patch size(),
+            //     Should normally be sized according to the patch size(),
             //     which can be smaller than the addressing size
             template<class Type>
             inline void patchInternalField
             (
                 const UList<Type>& internalData,
                 const labelUList& addressing,
-                Field<Type>& pfld
+                UList<Type>& pfld
             ) const;
 
             //- Extract internal field next to patch as patch field
             //- using faceCells() mapping.
             // \param internalData The internal field to extract from
             // \param [out] pfld The extracted patch field.
-            //     It is always resized according to the patch size(),
+            //     Should normally be sized according to the patch size(),
             //     which can be smaller than the faceCells() size
             template<class Type>
             void patchInternalField
             (
                 const UList<Type>& internalData,
-                Field<Type>& pfld
+                UList<Type>& pfld
             ) const;
 
             //- Return given internal field next to patch as patch field
             //- using faceCells() mapping.
             // \param internalData The internal field to extract from
             template<class Type>
-            tmp<Field<Type>> patchInternalField
+            [[nodiscard]] tmp<Field<Type>>
+            patchInternalField
             (
                 const UList<Type>& internalData
             ) const;

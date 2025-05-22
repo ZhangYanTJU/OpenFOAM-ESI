@@ -114,11 +114,10 @@ void Foam::pointPatchField<Type>::patchInternalField
 (
     const UList<Type1>& internalData,
     const labelUList& addressing,
-    Field<Type1>& pfld
+    UList<Type1>& pfld
 ) const
 {
-    // Check size
-    if (internalData.size() != primitiveField().size())
+    if (FOAM_UNLIKELY(internalData.size() != primitiveField().size()))
     {
         FatalErrorInFunction
             << "Internal field size: " << internalData.size()
@@ -126,9 +125,24 @@ void Foam::pointPatchField<Type>::patchInternalField
             << abort(FatalError);
     }
 
-    const label len = this->size();
+    // For v2412 and earlier this was a field:
+    //     const label len = this->size();
+    //     pfld.resize_nocopy(len);
+    //
+    // Now uses pre-sized storage
 
-    pfld.resize_nocopy(len);
+    const label len = pfld.size();
+
+    #ifdef FULLDEBUG
+    if (FOAM_UNLIKELY((addressing.size() < len) || (this->size() < len)))
+    {
+        FatalErrorInFunction
+            << "patchField size = " << len
+            << " but patch size = " << this->size()
+            << " and addressing size = " << addressing.size() << nl
+            << abort(FatalError);
+    }
+    #endif
 
     for (label i = 0; i < len; ++i)
     {
@@ -182,8 +196,7 @@ void Foam::pointPatchField<Type>::addToInternalField
     const Field<Type1>& pF
 ) const
 {
-    // Check size
-    if (iF.size() != primitiveField().size())
+    if (FOAM_UNLIKELY(iF.size() != primitiveField().size()))
     {
         FatalErrorInFunction
             << "Internal field size: " << iF.size()
@@ -191,7 +204,7 @@ void Foam::pointPatchField<Type>::addToInternalField
             << abort(FatalError);
     }
 
-    if (pF.size() != size())
+    if (FOAM_UNLIKELY(pF.size() != size()))
     {
         FatalErrorInFunction
             << "Patch field size: " << pF.size()
@@ -218,8 +231,7 @@ void Foam::pointPatchField<Type>::addToInternalField
     const labelUList& points
 ) const
 {
-    // Check size
-    if (iF.size() != primitiveField().size())
+    if (FOAM_UNLIKELY(iF.size() != primitiveField().size()))
     {
         FatalErrorInFunction
             << "Internal field size: " << iF.size()
@@ -227,7 +239,7 @@ void Foam::pointPatchField<Type>::addToInternalField
             << abort(FatalError);
     }
 
-    if (pF.size() != size())
+    if (FOAM_UNLIKELY(pF.size() != size()))
     {
         FatalErrorInFunction
             << "Patch field size: " << pF.size()
@@ -255,8 +267,7 @@ void Foam::pointPatchField<Type>::setInInternalField
     const labelUList& meshPoints
 ) const
 {
-    // Check size
-    if (iF.size() != primitiveField().size())
+    if (FOAM_UNLIKELY(iF.size() != primitiveField().size()))
     {
         FatalErrorInFunction
             << "Internal field size: " << iF.size()
@@ -264,7 +275,7 @@ void Foam::pointPatchField<Type>::setInInternalField
             << abort(FatalError);
     }
 
-    if (pF.size() != meshPoints.size())
+    if (FOAM_UNLIKELY(pF.size() != meshPoints.size()))
     {
         FatalErrorInFunction
             << "Patch field size: " << pF.size()

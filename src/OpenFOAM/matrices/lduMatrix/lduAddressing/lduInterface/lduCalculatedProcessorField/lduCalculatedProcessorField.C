@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,13 +101,15 @@ void Foam::lduCalculatedProcessorField<Type>::initInterfaceMatrixUpdate
     // Bypass patchInternalField since uses fvPatch addressing
     const labelUList& fc = lduAddr.patchAddr(patchId);
 
-    scalarSendBuf_.resize_nocopy(fc.size());
-    forAll(fc, i)
     {
-        scalarSendBuf_[i] = psiInternal[fc[i]];
-    }
+        scalarSendBuf_.resize_nocopy(fc.size());
+        scalarRecvBuf_.resize_nocopy(fc.size());
 
-    scalarRecvBuf_.resize_nocopy(scalarSendBuf_.size());
+        forAll(fc, i)
+        {
+            scalarSendBuf_[i] = psiInternal[fc[i]];
+        }
+    }
 
     recvRequest_ = UPstream::nRequests();
     UIPstream::read
