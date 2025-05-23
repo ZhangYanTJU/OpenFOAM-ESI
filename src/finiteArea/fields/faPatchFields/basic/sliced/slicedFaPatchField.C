@@ -151,21 +151,9 @@ Foam::slicedFaPatchField<Type>::patchInternalField() const
 
 
 template<class Type>
-void Foam::slicedFaPatchField<Type>::patchInternalField(Field<Type>&) const
+void Foam::slicedFaPatchField<Type>::patchInternalField(UList<Type>&) const
 {
     NotImplemented;
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::slicedFaPatchField<Type>::patchNeighbourField
-(
-    const Field<Type>& iField
-) const
-{
-    NotImplemented;
-    return nullptr;
 }
 
 
@@ -175,6 +163,13 @@ Foam::slicedFaPatchField<Type>::patchNeighbourField() const
 {
     NotImplemented;
     return nullptr;
+}
+
+
+template<class Type>
+void Foam::slicedFaPatchField<Type>::patchNeighbourField(UList<Type>&) const
+{
+    NotImplemented;
 }
 
 

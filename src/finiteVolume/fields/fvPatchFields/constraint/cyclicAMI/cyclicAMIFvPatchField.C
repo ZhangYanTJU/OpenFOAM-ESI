@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -289,22 +289,22 @@ void Foam::cyclicAMIFvPatchField<Type>::rmap
 
 template<class Type>
 Foam::tmp<Foam::Field<Type>>
-Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField
+Foam::cyclicAMIFvPatchField<Type>::getNeighbourField
 (
-    const Field<Type>& iField
+    const UList<Type>& internalData
 ) const
 {
     // By pass polyPatch to get nbrId. Instead use cyclicAMIFvPatch virtual
     // neighbPatch()
-    const cyclicAMIFvPatch& neighbPatch = cyclicAMIPatch_.neighbPatch();
+    const auto& neighbPatch = cyclicAMIPatch_.neighbPatch();
     const labelUList& nbrFaceCells = neighbPatch.faceCells();
 
-    Field<Type> pnf(iField, nbrFaceCells);
+    Field<Type> pnf(internalData, nbrFaceCells);
     Field<Type> defaultValues;
 
     if (cyclicAMIPatch_.applyLowWeightCorrection())
     {
-        defaultValues = Field<Type>(iField, cyclicAMIPatch_.faceCells());
+        defaultValues = Field<Type>(internalData, cyclicAMIPatch_.faceCells());
     }
 
     tmp<Field<Type>> tpnf = cyclicAMIPatch_.interpolate(pnf, defaultValues);
@@ -327,11 +327,18 @@ bool Foam::cyclicAMIFvPatchField<Type>::cacheNeighbourField()
 
 template<class Type>
 Foam::tmp<Foam::Field<Type>>
-Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
+Foam::cyclicAMIFvPatchField<Type>::getPatchNeighbourField
+(
+    bool checkCommunicator
+) const
 {
     const auto& AMI = this->ownerAMI();
 
-    if (AMI.distributed() && cacheNeighbourField() && AMI.comm() != -1)
+    if
+    (
+        AMI.distributed() && cacheNeighbourField()
+     && (!checkCommunicator || AMI.comm() != -1)
+    )
     {
         if (!this->ready())
         {
@@ -372,7 +379,7 @@ Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
             // Do interpolation and store result
             patchNeighbourFieldPtr_.reset
             (
-                patchNeighbourField(this->primitiveField()).ptr()
+                getNeighbourField(this->primitiveField()).ptr()
             );
         }
         else
@@ -382,7 +389,7 @@ Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
             //{
             //    tmp<Field<Type>> tpnf
             //    (
-            //        patchNeighbourField(this->primitiveField())
+            //        getNeighbourField(this->primitiveField())
             //    );
             //    if (tpnf() != patchNeighbourFieldPtr_())
             //    {
@@ -402,8 +409,28 @@ Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
     else
     {
         // Do interpolation
-        return patchNeighbourField(this->primitiveField());
+        return getNeighbourField(this->primitiveField());
     }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
+{
+    return this->getPatchNeighbourField(true);  // checkCommunicator = true
+}
+
+
+template<class Type>
+void Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField
+(
+    UList<Type>& pnf
+) const
+{
+    // checkCommunicator = false
+    auto tpnf = this->getPatchNeighbourField(false);
+    pnf.deepCopy(tpnf());
 }
 
 
@@ -411,7 +438,7 @@ template<class Type>
 const Foam::cyclicAMIFvPatchField<Type>&
 Foam::cyclicAMIFvPatchField<Type>::neighbourPatchField() const
 {
-    const GeometricField<Type, fvPatchField, volMesh>& fld =
+    const auto& fld =
         static_cast<const GeometricField<Type, fvPatchField, volMesh>&>
         (
             this->primitiveField()
@@ -542,12 +569,11 @@ void Foam::cyclicAMIFvPatchField<Type>::evaluate
         // Receive requests all handled by last function call
         recvRequests_.clear();
 
-        auto& patchNeighbourField = patchNeighbourFieldPtr_.ref();
-
         if (doTransform())
         {
             // In-place transform
-            transform(patchNeighbourField, forwardT(), patchNeighbourField);
+            auto& pnf = *patchNeighbourFieldPtr_;
+            transform(pnf, forwardT(), pnf);
         }
     }
 
@@ -982,7 +1008,7 @@ void Foam::cyclicAMIFvPatchField<Type>::collectStencilData
 
         forAll(stencil, facei)
         {
-            const labelList& slots = stencil[facei];
+            const auto& slots = stencil[facei];
             expandedData[facei].push_back
             (
                 UIndirectList<typename Type2::value_type>(work, slots)
@@ -993,7 +1019,7 @@ void Foam::cyclicAMIFvPatchField<Type>::collectStencilData
     {
         forAll(stencil, facei)
         {
-            const labelList& slots = stencil[facei];
+            const auto& slots = stencil[facei];
             expandedData[facei].push_back
             (
                 UIndirectList<typename Type2::value_type>(data, slots)
@@ -1033,31 +1059,21 @@ void Foam::cyclicAMIFvPatchField<Type>::operator=
     //    << endl;
 
     const auto* cycPtr = isA<cyclicAMIFvPatchField<Type>>(ptf);
-    if (cycPtr)
+
+    if
+    (
+        cycPtr
+     && cycPtr->patchNeighbourFieldPtr_
+     && cycPtr->patchNeighbourFieldPtr_->size() == this->size()
+    )
     {
-        const auto& cyc = *cycPtr;
-        if
-        (
-            cyc.patchNeighbourFieldPtr_
-         && cyc.patchNeighbourFieldPtr_->size() == this->size()
-        )
+        if (!patchNeighbourFieldPtr_)
         {
-            const auto& cycPnf = cyc.patchNeighbourFieldPtr_();
-            if (patchNeighbourFieldPtr_)
-            {
-                // Copy values
-                patchNeighbourFieldPtr_() = cycPnf;
-            }
-            else
-            {
-                // Copy values
-                patchNeighbourFieldPtr_.reset(new Field<Type>(cycPnf));
-            }
+            patchNeighbourFieldPtr_ = autoPtr<Field<Type>>::New();
         }
-        else
-        {
-            patchNeighbourFieldPtr_.reset(nullptr);
-        }
+
+        // Copy values
+        *patchNeighbourFieldPtr_ = *(cycPtr->patchNeighbourFieldPtr_);
     }
     else
     {
@@ -1081,31 +1097,21 @@ void Foam::cyclicAMIFvPatchField<Type>::operator==
     //    << endl;
 
     const auto* cycPtr = isA<cyclicAMIFvPatchField<Type>>(ptf);
-    if (cycPtr)
+
+    if
+    (
+        cycPtr
+     && cycPtr->patchNeighbourFieldPtr_
+     && cycPtr->patchNeighbourFieldPtr_->size() == this->size()
+    )
     {
-        const auto& cyc = *cycPtr;
-        if
-        (
-            cyc.patchNeighbourFieldPtr_
-         && cyc.patchNeighbourFieldPtr_->size() == this->size()
-        )
+        if (!patchNeighbourFieldPtr_)
         {
-            const auto& cycPnf = cyc.patchNeighbourFieldPtr_();
-            if (patchNeighbourFieldPtr_)
-            {
-                // Copy values
-                patchNeighbourFieldPtr_() = cycPnf;
-            }
-            else
-            {
-                // Copy values
-                patchNeighbourFieldPtr_.reset(new Field<Type>(cycPnf));
-            }
+            patchNeighbourFieldPtr_ = autoPtr<Field<Type>>::New();
         }
-        else
-        {
-            patchNeighbourFieldPtr_.reset(nullptr);
-        }
+
+        // Copy values
+        *patchNeighbourFieldPtr_ = *(cycPtr->patchNeighbourFieldPtr_);
     }
     else
     {

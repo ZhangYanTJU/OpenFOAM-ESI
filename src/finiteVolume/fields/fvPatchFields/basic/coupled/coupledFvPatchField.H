@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -142,7 +142,7 @@ public:
         ) const = 0;
 
 
-    // Member functions
+    // Member Functions
 
         // Access
 
@@ -155,8 +155,11 @@ public:
             //- Return neighbour field of internal field
             virtual tmp<Field<Type>> patchNeighbourField() const = 0;
 
+            //- Retrieve neighbour coupled data
+            virtual void patchNeighbourField(UList<Type>&) const = 0;
 
-        // Evaluation functions
+
+        // Evaluation Functions
 
             //- Return patch-normal gradient
             virtual tmp<Field<Type>> snGrad

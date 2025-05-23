@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2019,2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -126,23 +126,19 @@ class cyclicACMIFvPatchField
         static bool cacheNeighbourField();
 
         //- Return neighbour coupled internal cell data
-        tmp<Field<Type>> patchNeighbourField(const Field<Type>&) const;
+        tmp<Field<Type>> getNeighbourField(const UList<Type>&) const;
 
-        //- Return neighbour side field given internal fields
-        template<class Type2>
-        tmp<Field<Type2>> neighbourSideField
-        (
-            const Field<Type2>&
-        ) const;
+        //- Return neighbour coupled internal cell data (cached or extracted),
+        //- with optional check that AMI.comm() is valid.
+        tmp<Field<Type>> getPatchNeighbourField(bool checkCommunicator) const;
 
-         //- Return new matrix coeffs
+        //- Return new matrix coeffs
         tmp<Field<scalar>> coeffs
         (
             fvMatrix<Type>& matrix,
             const Field<scalar>&,
             const label
         ) const;
-
 
 
 public:
@@ -245,6 +241,9 @@ public:
 
             //- Return neighbour coupled internal cell data
             virtual tmp<Field<Type>> patchNeighbourField() const;
+
+            //- Retrieve neighbour coupled internal cell data
+            virtual void patchNeighbourField(UList<Type>& pnf) const;
 
             //- Return reference to neighbour patchField
             const cyclicACMIFvPatchField<Type>& neighbourPatchField() const;

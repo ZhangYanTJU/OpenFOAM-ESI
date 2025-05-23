@@ -582,14 +582,6 @@ void Foam::oversetFvPatchField<Type>::adjustPsi
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::oversetFvPatchField<Type>::
-patchNeighbourField() const
-{
-    return tmp<Field<Type>>::New(this->size(), Zero);
-}
-
-
-template<class Type>
 void Foam::oversetFvPatchField<Type>::initEvaluate
 (
     const Pstream::commsTypes commsType

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,17 +66,6 @@ class cyclicFaPatchField
 
         //- Local reference cast into the cyclic patch
         const cyclicFaPatch& cyclicPatch_;
-
-
-    // Private Member Functions
-
-        //- Return neighbour side field given internal fields
-        template<class Type2>
-        tmp<Field<Type2>> neighbourSideField
-        (
-            const Field<Type2>&
-        ) const;
-
 
 public:
 
@@ -141,21 +130,24 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
         // Access
 
             //- Return local reference cast into the cyclic patch
-            const cyclicFaPatch& cyclicPatch() const
+            const cyclicFaPatch& cyclicPatch() const noexcept
             {
                 return cyclicPatch_;
             }
 
 
-        // Evaluation functions
+        // Evaluation Functions
 
             //- Return neighbour coupled given internal cell data
             virtual tmp<Field<Type>> patchNeighbourField() const;
+
+            //- Retrieve neighbour coupled given internal cell data
+            virtual void patchNeighbourField(UList<Type>& pnf) const;
 
 
         // Coupled interface functionality

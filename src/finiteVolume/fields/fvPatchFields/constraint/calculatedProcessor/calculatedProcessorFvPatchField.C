@@ -111,6 +111,25 @@ Foam::calculatedProcessorFvPatchField<Type>::patchNeighbourField() const
 
 
 template<class Type>
+void Foam::calculatedProcessorFvPatchField<Type>::patchNeighbourField
+(
+    UList<Type>& pnf
+) const
+{
+    if (!this->ready())
+    {
+        FatalErrorInFunction
+            << "Outstanding request on patch of size "
+            << procInterface_.faceCells().size()
+            << " between proc " << procInterface_.myProcNo()
+            << " and " << procInterface_.neighbProcNo()
+            << abort(FatalError);
+    }
+    pnf.deepCopy(*this);
+}
+
+
+template<class Type>
 void Foam::calculatedProcessorFvPatchField<Type>::initEvaluate
 (
     const Pstream::commsTypes commsType

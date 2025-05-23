@@ -626,9 +626,9 @@ public:
             //- Return internal field next to patch
             virtual tmp<Field<Type>> patchInternalField() const;
 
-            //- Extract internal field next to patch
-            // \param [out] pfld The extracted patch field.
-            virtual void patchInternalField(Field<Type>& pfld) const;
+            //- Retrieve internal field next to patch
+            //  \param [out] pfld The extracted patch field.
+            virtual void patchInternalField(UList<Type>& pfld) const;
 
             //- Return patchField on the opposite patch of a coupled patch
             virtual tmp<Field<Type>> patchNeighbourField() const

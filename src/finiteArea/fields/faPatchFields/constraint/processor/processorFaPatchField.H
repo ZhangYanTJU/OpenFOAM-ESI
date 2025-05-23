@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -176,6 +176,9 @@ public:
 
         //- Return neighbour field given internal field
         virtual tmp<Field<Type>> patchNeighbourField() const;
+
+        //- Retrieve neighbour field
+        virtual void patchNeighbourField(UList<Type>& pnf) const;
 
 
     // Evaluation

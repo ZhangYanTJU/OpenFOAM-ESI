@@ -169,8 +169,11 @@ public:
         //- Are all (receive) data available?
         virtual bool ready() const;
 
-        //- Return neighbour field of internal field
+        //- Return neighbour field
         virtual tmp<Field<Type>> patchNeighbourField() const;
+
+        //- Retrieve neighbour field
+        virtual void patchNeighbourField(UList<Type>& result) const;
 
 
     // Evaluation

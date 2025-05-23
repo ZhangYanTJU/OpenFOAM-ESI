@@ -543,7 +543,7 @@ public:
             );
 
 
-        // Evaluation
+        // Evaluation Functions
 
             //- Return patch-normal gradient
             virtual tmp<Field<Type>> snGrad() const;
@@ -551,15 +551,21 @@ public:
             //- Return internal field next to patch
             virtual tmp<Field<Type>> patchInternalField() const;
 
-            //- Extract internal field next to patch
+            //- Retrieve internal field next to patch
             //  \param [out] pfld The extracted patch field.
-            virtual void patchInternalField(Field<Type>& pfld) const;
+            virtual void patchInternalField(UList<Type>& pfld) const;
 
             //- Return patchField on the opposite patch of a coupled patch
             virtual tmp<Field<Type>> patchNeighbourField() const
             {
                 NotImplemented;
                 return *this;
+            }
+
+            //- Retrieve patchField on the opposite patch of a coupled patch
+            virtual void patchNeighbourField(UList<Type>&) const
+            {
+                NotImplemented;
             }
 
             //- Update the coefficients associated with the patch field

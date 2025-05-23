@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -91,11 +91,12 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
         // Extra check: make sure that the non-overlap patch is before
         // this so it has actually been read - evaluate will crash otherwise
 
-        const GeometricField<Type, fvPatchField, volMesh>& fld =
+        const auto& fld =
             static_cast<const GeometricField<Type, fvPatchField, volMesh>&>
             (
                 this->primitiveField()
             );
+
         if (!fld.boundaryField().set(cyclicACMIPatch_.nonOverlapPatchID()))
         {
             FatalIOErrorInFunction(dict)
@@ -284,32 +285,27 @@ bool Foam::cyclicACMIFvPatchField<Type>::ready() const
 
 template<class Type>
 Foam::tmp<Foam::Field<Type>>
-Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField
+Foam::cyclicACMIFvPatchField<Type>::getNeighbourField
 (
-    const Field<Type>& iField
+    const UList<Type>& internalData
 ) const
 {
     DebugPout
-        << "cyclicACMIFvPatchField::patchNeighbourField(const Field<Type>&) :"
+        << "cyclicACMIFvPatchField::getNeighbourField(const UList<Type>&) :"
         << " field:" << this->internalField().name()
         << " patch:" << this->patch().name()
         << endl;
 
     // By pass polyPatch to get nbrId. Instead use cyclicACMIFvPatch virtual
     // neighbPatch()
-    const cyclicACMIFvPatch& neighbPatch = cyclicACMIPatch_.neighbPatch();
+    const auto& neighbPatch = cyclicACMIPatch_.neighbPatch();
     const labelUList& nbrFaceCells = neighbPatch.faceCells();
 
     tmp<Field<Type>> tpnf
     (
         cyclicACMIPatch_.interpolate
         (
-            Field<Type>
-            (
-                iField,
-                nbrFaceCells
-                //cpp.neighbPatch().faceCells()
-            )
+            Field<Type>(internalData, nbrFaceCells)
         )
     );
 
@@ -334,11 +330,18 @@ bool Foam::cyclicACMIFvPatchField<Type>::cacheNeighbourField()
 
 template<class Type>
 Foam::tmp<Foam::Field<Type>>
-Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
+Foam::cyclicACMIFvPatchField<Type>::getPatchNeighbourField
+(
+    const bool checkCommunicator
+) const
 {
     const auto& AMI = this->ownerAMI();
 
-    if (AMI.distributed() && cacheNeighbourField() && AMI.comm() != -1)
+    if
+    (
+        AMI.distributed() && cacheNeighbourField()
+     && (!checkCommunicator || AMI.comm() != -1)
+    )
     {
         if (!this->ready())
         {
@@ -362,7 +365,7 @@ Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
             // Do interpolation and store result
             patchNeighbourFieldPtr_.reset
             (
-                patchNeighbourField(this->primitiveField()).ptr()
+                getNeighbourField(this->primitiveField()).ptr()
             );
         }
         else
@@ -386,8 +389,28 @@ Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
             << " calculating up-to-date patchNeighbourField"
             << endl;
 
-        return patchNeighbourField(this->primitiveField());
+        return getNeighbourField(this->primitiveField());
     }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
+{
+    return this->getPatchNeighbourField(true);  // checkCommunicator = true
+}
+
+
+template<class Type>
+void Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField
+(
+    UList<Type>& pnf
+) const
+{
+    // checkCommunicator = false
+    auto tpnf = this->getPatchNeighbourField(false);
+    pnf.deepCopy(tpnf());
 }
 
 
@@ -395,7 +418,7 @@ template<class Type>
 const Foam::cyclicACMIFvPatchField<Type>&
 Foam::cyclicACMIFvPatchField<Type>::neighbourPatchField() const
 {
-    const GeometricField<Type, fvPatchField, volMesh>& fld =
+    const auto& fld =
         static_cast<const GeometricField<Type, fvPatchField, volMesh>&>
         (
             this->primitiveField()
@@ -412,7 +435,7 @@ template<class Type>
 const Foam::fvPatchField<Type>&
 Foam::cyclicACMIFvPatchField<Type>::nonOverlapPatchField() const
 {
-    const GeometricField<Type, fvPatchField, volMesh>& fld =
+    const auto& fld =
         static_cast<const GeometricField<Type, fvPatchField, volMesh>&>
         (
             this->primitiveField()
@@ -531,13 +554,11 @@ void Foam::cyclicACMIFvPatchField<Type>::evaluate
         // Receive requests all handled by last function call
         recvRequests_.clear();
 
-
-        auto& patchNeighbourField = patchNeighbourFieldPtr_.ref();
-
         if (doTransform())
         {
             // In-place transform
-            transform(patchNeighbourField, forwardT(), patchNeighbourField);
+            auto& pnf = *patchNeighbourFieldPtr_;
+            transform(pnf, forwardT(), pnf);
         }
      }
 

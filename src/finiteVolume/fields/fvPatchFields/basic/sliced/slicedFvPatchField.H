@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -151,26 +151,22 @@ public:
         virtual bool assignable() const { return false; }
 
 
-        // Evaluation functions
+        // Evaluation Functions
 
             //- Return patch-normal gradient
             virtual tmp<Field<Type>> snGrad() const;
 
-            //- Return internal field next to patch as patch field
+            //- Return internal field next to patch
             virtual tmp<Field<Type>> patchInternalField() const;
 
-            //- Return internal field next to patch as patch field
-            virtual void patchInternalField(Field<Type>&) const;
+            //- Retrieve internal field next to patch
+            virtual void patchInternalField(UList<Type>&) const;
 
-            //- Return neighbour coupled given internal cell data
-            virtual tmp<Field<Type>> patchNeighbourField
-            (
-                const Field<Type>& iField
-            ) const;
-
-            //- Return patchField of the values on the patch or on the
-            //  opposite patch
+            //- Return patchField on the opposite patch of a coupled patch
             virtual tmp<Field<Type>> patchNeighbourField() const;
+
+            //- Retrieve neighbour coupled field
+            virtual void patchNeighbourField(UList<Type>&) const;
 
             //- Initialise the evaluation of the patch field
             virtual void initEvaluate

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -124,16 +124,15 @@ Foam::cyclicFaPatchField<Type>::cyclicFaPatchField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::cyclicFaPatchField<Type>::patchNeighbourField() const
+void Foam::cyclicFaPatchField<Type>::patchNeighbourField
+(
+    UList<Type>& pnf
+) const
 {
     const Field<Type>& iField = this->primitiveField();
     const labelUList& faceCells = cyclicPatch_.faceCells();
 
-    auto tpnf = tmp<Field<Type>>::New(this->size());
-    auto& pnf = tpnf.ref();
-
-    const label sizeby2 = this->size()/2;
+    const label sizeby2 = pnf.size()/2;
 
     if (doTransform())
     {
@@ -158,7 +157,15 @@ Foam::cyclicFaPatchField<Type>::patchNeighbourField() const
             pnf[facei + sizeby2] = iField[faceCells[facei]];
         }
     }
+}
 
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::cyclicFaPatchField<Type>::patchNeighbourField() const
+{
+    auto tpnf = tmp<Field<Type>>::New(this->size());
+    this->patchNeighbourField(tpnf.ref());
     return tpnf;
 }
 

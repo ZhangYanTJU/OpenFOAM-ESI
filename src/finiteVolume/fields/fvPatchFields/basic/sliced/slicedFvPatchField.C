@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -151,21 +151,9 @@ Foam::slicedFvPatchField<Type>::patchInternalField() const
 
 
 template<class Type>
-void Foam::slicedFvPatchField<Type>::patchInternalField(Field<Type>&) const
+void Foam::slicedFvPatchField<Type>::patchInternalField(UList<Type>&) const
 {
     NotImplemented;
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::slicedFvPatchField<Type>::patchNeighbourField
-(
-    const Field<Type>& iField
-) const
-{
-    NotImplemented;
-    return nullptr;
 }
 
 
@@ -175,6 +163,13 @@ Foam::slicedFvPatchField<Type>::patchNeighbourField() const
 {
     NotImplemented;
     return nullptr;
+}
+
+
+template<class Type>
+void Foam::slicedFvPatchField<Type>::patchNeighbourField(UList<Type>&) const
+{
+    NotImplemented;
 }
 
 

@@ -91,15 +91,14 @@ Foam::jumpCyclicFvPatchField<Type>::jumpCyclicFvPatchField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::jumpCyclicFvPatchField<Type>::patchNeighbourField() const
+void Foam::jumpCyclicFvPatchField<Type>::patchNeighbourField
+(
+    UList<Type>& pnf
+) const
 {
     const Field<Type>& iField = this->primitiveField();
     const labelUList& nbrFaceCells =
         this->cyclicPatch().neighbFvPatch().faceCells();
-
-    auto tpnf = tmp<Field<Type>>::New(this->size());
-    auto& pnf = tpnf.ref();
 
     Field<Type> jf(this->jump());
     if (!this->cyclicPatch().owner())
@@ -109,22 +108,29 @@ Foam::jumpCyclicFvPatchField<Type>::patchNeighbourField() const
 
     if (this->doTransform())
     {
-        forAll(*this, facei)
+        const auto& rot = this->forwardT()[0];
+
+        forAll(pnf, i)
         {
-            pnf[facei] = transform
-            (
-                this->forwardT()[0], iField[nbrFaceCells[facei]]
-            ) - jf[facei];
+            pnf[i] = (transform(rot, iField[nbrFaceCells[i]]) - jf[i]);
         }
     }
     else
     {
-        forAll(*this, facei)
+        forAll(pnf, i)
         {
-            pnf[facei] = iField[nbrFaceCells[facei]] - jf[facei];
+            pnf[i] = (iField[nbrFaceCells[i]] - jf[i]);
         }
     }
+}
 
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::jumpCyclicFvPatchField<Type>::patchNeighbourField() const
+{
+    auto tpnf = tmp<Field<Type>>::New(this->size());
+    this->patchNeighbourField(tpnf.ref());
     return tpnf;
 }
 
@@ -176,14 +182,14 @@ void Foam::jumpCyclicFvPatchField<Type>::updateInterfaceMatrix
             jf *= -1.0;
         }
 
-        forAll(*this, facei)
+        forAll(pnf, facei)
         {
             pnf[facei] = psiInternal[nbrFaceCells[facei]] - jf[facei];
         }
     }
     else
     {
-        forAll(*this, facei)
+        forAll(pnf, facei)
         {
             pnf[facei] = psiInternal[nbrFaceCells[facei]];
         }

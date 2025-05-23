@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef oversetFvPatchField_H
-#define oversetFvPatchField_H
+#ifndef Foam_oversetFvPatchField_H
+#define Foam_oversetFvPatchField_H
 
 #include "oversetFvPatch.H"
 #include "coupledFvPatchFields.H"
@@ -159,8 +159,17 @@ public:
 
         // Coupled and adjust flux
 
-            //- Return neighbour field.  Dummy
-            virtual tmp<Field<Type>> patchNeighbourField() const;
+            //- Return neighbour field.  Dummy (treat like zero-gradient)
+            virtual tmp<Field<Type>> patchNeighbourField() const
+            {
+                return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+            }
+
+            //- Retrieve neighbour field.  Dummy (treat like zero-gradient)
+            virtual void patchNeighbourField(UList<Type>& pnf) const
+            {
+                pnf = Foam::zero{};
+            }
 
             //- Adjust psi for mass correction. Requires storeFringeCoefficients
             //  to have been called before

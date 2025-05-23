@@ -234,11 +234,9 @@ Foam::fvPatchField<Type>::patchInternalField() const
 
 
 template<class Type>
-void Foam::fvPatchField<Type>::patchInternalField(Field<Type>& pfld) const
+void Foam::fvPatchField<Type>::patchInternalField(UList<Type>& pfld) const
 {
-    const auto& p = fvPatchFieldBase::patch();
-    pfld.resize_nocopy(p.size());  // In general this is a no-op
-    p.patchInternalField(internalField_, pfld);
+    patch().patchInternalField(internalField_, pfld);
 }
 
 

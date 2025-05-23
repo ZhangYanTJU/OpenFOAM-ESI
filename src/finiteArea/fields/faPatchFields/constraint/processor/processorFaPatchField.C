@@ -208,6 +208,22 @@ Foam::processorFaPatchField<Type>::patchNeighbourField() const
 
 
 template<class Type>
+void Foam::processorFaPatchField<Type>::patchNeighbourField
+(
+    UList<Type>& pnf
+) const
+{
+    if (debug && !this->ready())
+    {
+        FatalErrorInFunction
+            << "Outstanding request on patch " << procPatch_.name()
+            << abort(FatalError);
+    }
+    pnf.deepCopy(*this);
+}
+
+
+template<class Type>
 void Foam::processorFaPatchField<Type>::initEvaluate
 (
     const Pstream::commsTypes commsType
@@ -215,6 +231,7 @@ void Foam::processorFaPatchField<Type>::initEvaluate
 {
     if (UPstream::parRun())
     {
+        sendBuf_.resize_nocopy(this->patch().size());
         this->patchInternalField(sendBuf_);
 
         if (commsType == UPstream::commsTypes::nonBlocking)
