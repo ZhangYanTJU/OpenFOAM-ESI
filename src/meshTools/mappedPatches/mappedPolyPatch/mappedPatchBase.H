@@ -88,8 +88,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef mappedPatchBase_H
-#define mappedPatchBase_H
+#ifndef Foam_mappedPatchBase_H
+#define Foam_mappedPatchBase_H
 
 #include "pointField.H"
 #include "Tuple2.H"
@@ -103,6 +103,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class polyPatch;
 class polyMesh;
 class mapDistribute;
@@ -405,6 +406,7 @@ protected:
 
             //- Lookup (sub)objectRegistry by following names of sub registries.
             //- Creates non-existing intermediate ones.
+            FOAM_NO_DANGLING_REFERENCE
             static const objectRegistry& subRegistry
             (
                 const objectRegistry& obr,
@@ -603,12 +605,12 @@ public:
 
         // For database storage
 
-            inline const fileName& sampleDatabasePath() const
+            const fileName& sampleDatabasePath() const
             {
                 return *sampleDatabasePtr_;
             }
 
-            inline bool sampleDatabase() const
+            bool sampleDatabase() const noexcept
             {
                 return bool(sampleDatabasePtr_);
             }
@@ -630,6 +632,7 @@ public:
 
             //- Lookup (sub)objectRegistry from '/' separated path (relative to
             //- objectRegistry). Creates non-existing intermediate ones.
+            FOAM_NO_DANGLING_REFERENCE
             static const objectRegistry& subRegistry
             (
                 const objectRegistry& obr,

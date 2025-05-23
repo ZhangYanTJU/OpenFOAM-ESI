@@ -71,6 +71,21 @@ Description
 #  define FOAM_LIKELY(cond)   (cond)
 #endif
 
+// Shadow macro for __GNUC__, excluding compilers masquerading as gcc
+#undef FOAM_REAL_GNUC
+#if defined(__GNUC__) && !defined(__llvm__)
+#  define FOAM_REAL_GNUC __GNUC__
+#endif
+
+// Suppress false positives from -Wdangling-reference (gcc >= 14)
+#if (FOAM_REAL_GNUC >= 14)
+#  define FOAM_NO_DANGLING_REFERENCE [[gnu::no_dangling]]
+#endif
+
+#ifndef FOAM_NO_DANGLING_REFERENCE
+#define FOAM_NO_DANGLING_REFERENCE
+#endif
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

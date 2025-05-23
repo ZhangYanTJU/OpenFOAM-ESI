@@ -210,6 +210,7 @@ autoPtr<labelIOList> faProcAddressing
 
 
 // Return cached or read proc addressing from facesInstance
+FOAM_NO_DANGLING_REFERENCE
 const labelIOList& procAddressing
 (
     const PtrList<fvMesh>& procMeshList,

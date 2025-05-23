@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -168,10 +168,12 @@ public:
 
         //- Get existing or create MeshObject registered with typeName
         template<class... Args>
+        FOAM_NO_DANGLING_REFERENCE  //< Reference stored in registry
         static const Type& New(const Mesh& mesh, Args&&... args);
 
         //- Get existing or create MeshObject with given registration name
         template<class... Args>
+        FOAM_NO_DANGLING_REFERENCE  //< Reference stored in registry
         static const Type& New
         (
             const word& objName,
@@ -320,7 +322,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "MeshObject.C"
+    #include "MeshObject.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

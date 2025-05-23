@@ -1927,6 +1927,7 @@ public:
             );
 
             //- Wrapper around dictionary::subDict which does not exit
+            FOAM_NO_DANGLING_REFERENCE
             static const dictionary& subDict
             (
                 const dictionary& dict,
