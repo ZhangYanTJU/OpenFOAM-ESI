@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,17 +31,32 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class GeometricField, class AnyType>
-const typename GeometricField::Patch& Foam::fvPatch::lookupPatchField
-(
-    const word& name,
-    const GeometricField*,
-    const AnyType*
-) const
+const typename GeometricField::Patch&
+Foam::fvPatch::lookupPatchField(const word& fldName) const
 {
     return
         boundaryMesh().mesh().thisDb().template
-            lookupObject<GeometricField>(name)
+            lookupObject<GeometricField>(fldName)
             .boundaryField()[this->index()];
+}
+
+
+template<class GeometricField>
+const typename GeometricField::Patch*
+Foam::fvPatch::cfindPatchField(const word& fldName) const
+{
+    const auto* fldptr =
+        boundaryMesh().mesh().thisDb().template
+        cfindObject<GeometricField>(fldName);
+
+    if (fldptr)
+    {
+        return &(fldptr->boundaryField()[this->index()]);
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 

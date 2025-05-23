@@ -222,14 +222,16 @@ updateCoeffs()
             dom.primaryFluxName_ + "_0"
         );
 
-        word qSecName = dom.relfectedFluxName_ + "_0";
-
-        if (this->db().foundObject<volScalarField>(qSecName))
+        if
+        (
+            const auto* qSec
+          = patch().cfindPatchField<volScalarField>
+            (
+                dom.relfectedFluxName_ + "_0"
+            )
+        )
         {
-             const volScalarField& qSec =
-                this->db().lookupObject<volScalarField>(qSecName);
-
-            Ir += qSec.boundaryField()[patch().index()];
+            Ir += *qSec;
         }
     }
 

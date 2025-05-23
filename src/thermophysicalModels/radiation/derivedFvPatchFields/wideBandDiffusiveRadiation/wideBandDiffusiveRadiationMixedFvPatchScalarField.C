@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -212,18 +212,20 @@ updateCoeffs()
             dom.primaryFluxName_ + "_" + name(lambdaId)
         );
 
-        word qSecName = dom.relfectedFluxName_ + "_" + name(lambdaId);
-
-        if (this->db().foundObject<volScalarField>(qSecName))
+        if
+        (
+            const auto* qSec
+          = patch().cfindPatchField<volScalarField>
+            (
+                dom.relfectedFluxName_ + "_" + name(lambdaId)
+            )
+        )
         {
-             const volScalarField& qSec =
-                this->db().lookupObject<volScalarField>(qSecName);
-
-            Ir += qSec.boundaryField()[patchi];
+            Ir += *qSec;
         }
     }
 
-    scalarField Iexternal(this->size(), 0.0);
+    scalarField Iexternal(this->size(), Zero);
 
     if (dom.useExternalBeam())
     {

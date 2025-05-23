@@ -480,25 +480,26 @@ public:
                 const UList<Type>& internalData
             ) const;
 
-            //- Return the patch field of the GeometricField
-            //- corresponding to this patch.
-            template<class GeometricField, class AnyType = bool>
-            const typename GeometricField::Patch& patchField
-            (
-                const GeometricField& gf
-            ) const;
 
-            //- Lookup the named field from the local registry and
-            //- return the patch field corresponding to this patch.
-            //  N.B.  The dummy pointer arguments are used if this function is
-            //  instantiated within a templated function to avoid a bug in gcc.
-            template<class GeometricField, class AnyType = bool>
-            const typename GeometricField::Patch& lookupPatchField
-            (
-                const word& name,
-                const GeometricField* = nullptr,
-                const AnyType* = nullptr
-            ) const;
+    // Lookup
+
+        //- Return the patch field of the GeometricField
+        //- corresponding to this patch.
+        template<class GeometricField, class AnyType = bool>
+        const typename GeometricField::Patch&
+        patchField(const GeometricField& gf) const;
+
+        //- Lookup the named field from the local registry and
+        //- return the patch field corresponding to this patch.
+        template<class GeometricField, class AnyType = bool>
+        const typename GeometricField::Patch&
+        lookupPatchField(const word& fldName) const;
+
+        //- Lookup the named field (if any) from the local registry and
+        //- return the patch field corresponding to this patch.
+        template<class GeometricField>
+        const typename GeometricField::Patch*
+        cfindPatchField(const word& fldName) const;
 
 
     // Ostream Operator
