@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,20 +88,27 @@ void Foam::basicSymmetryPointPatchField<Type>::evaluate
     const Pstream::commsTypes
 )
 {
-    const vectorField& nHat = this->patch().pointNormals();
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : no-op
+    }
+    else
+    {
+        const vectorField& nHat = this->patch().pointNormals();
 
-    tmp<Field<Type>> tvalues =
-    (
+        const Field<Type> pif(this->patchInternalField());
+
+        // Could write as loop instead...
+        tmp<Field<Type>> tvalues
         (
-            this->patchInternalField()
-          + transform(I - 2.0*sqr(nHat), this->patchInternalField())
-        )/2.0
-    );
+            0.5*(pif + transform(I - 2.0*sqr(nHat), pif))
+        );
 
-    // Get internal field to insert values into
-    Field<Type>& iF = const_cast<Field<Type>&>(this->primitiveField());
+        // Get internal field to insert values into
+        auto& iF = const_cast<Field<Type>&>(this->primitiveField());
 
-    this->setInInternalField(iF, tvalues());
+        this->setInInternalField(iF, tvalues());
+    }
 }
 
 

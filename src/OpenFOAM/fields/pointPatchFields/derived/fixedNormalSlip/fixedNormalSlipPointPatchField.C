@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,13 +89,22 @@ void Foam::fixedNormalSlipPointPatchField<Type>::evaluate
     const Pstream::commsTypes
 )
 {
-    tmp<Field<Type>> tvalues =
-        transform(I - n_*n_, this->patchInternalField());
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : no-op
+    }
+    else
+    {
+        tmp<Field<Type>> tvalues
+        (
+            transform(I - n_*n_, this->patchInternalField())
+        );
 
-    // Get internal field to insert values into
-    Field<Type>& iF = const_cast<Field<Type>&>(this->primitiveField());
+        // Get internal field to insert values into
+        auto& iF = const_cast<Field<Type>&>(this->primitiveField());
 
-    this->setInInternalField(iF, tvalues());
+        this->setInInternalField(iF, tvalues());
+    }
 }
 
 

@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fixedValuePointPatchField.H"
-#include "boolList.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 

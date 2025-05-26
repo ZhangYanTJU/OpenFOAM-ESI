@@ -106,20 +106,27 @@ void Foam::symmetryPlanePointPatchField<Type>::evaluate
     const Pstream::commsTypes
 )
 {
-    vector nHat = symmetryPlanePatch_.n();
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : no-op
+    }
+    else
+    {
+        const symmTensor rot(I - 2.0*sqr(symmetryPlanePatch_.n()));
 
-    tmp<Field<Type>> tvalues =
-    (
+        const Field<Type> pif(this->patchInternalField());
+
+        // Could write as loop instead...
+        tmp<Field<Type>> tvalues
         (
-            this->patchInternalField()
-          + transform(I - 2.0*sqr(nHat), this->patchInternalField())
-        )/2.0
-    );
+            0.5*(pif + transform(rot, pif))
+        );
 
-    // Get internal field to insert values into
-    Field<Type>& iF = const_cast<Field<Type>&>(this->primitiveField());
+        // Get internal field to insert values into
+        auto& iF = const_cast<Field<Type>&>(this->primitiveField());
 
-    this->setInInternalField(iF, tvalues());
+        this->setInInternalField(iF, tvalues());
+    }
 }
 
 
