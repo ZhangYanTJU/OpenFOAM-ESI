@@ -209,6 +209,8 @@ defineFvmLaplacianScalarGamma(sphericalTensor);
 defineFvmLaplacianScalarGamma(symmTensor);
 defineFvmLaplacianScalarGamma(tensor);
 
+#undef defineFvmLaplacianScalarGamma
+
 // Unweighted laplacian
 template<>
 tmp<GeometricField<scalar, fvPatchField, volMesh>>
