@@ -103,7 +103,12 @@ void Foam::reconstruction::plicRDF::interpolateNormal()
                         centre_,
                         mapCentre,
                         gblIdx,
-                        exchangeFields.getCyclicPatches(celli, gblIdx)
+                        exchangeFields.getCyclicPatches
+                        (
+                            celli,
+                            gblIdx,
+                            exchangeFields.getValue(mesh_.C(), mapCC, gblIdx)
+                        )
                     )
                 );
                 vector distanceToIntSeg = (tensor::I- n*n) & (p - centre);
@@ -157,7 +162,12 @@ void Foam::reconstruction::plicRDF::interpolateNormal()
                     exchangeFields.getPosition
                     (
                         mesh_.C(), mapCC, gblIdx,
-                        exchangeFields.getCyclicPatches(celli, gblIdx)
+                        exchangeFields.getCyclicPatches
+                        (
+                            celli,
+                            gblIdx,
+                            exchangeFields.getValue(mesh_.C(), mapCC, gblIdx)
+                        )
                     )
                 );
                 alphaValues.append
@@ -208,7 +218,12 @@ void Foam::reconstruction::plicRDF::gradSurf(const volScalarField& phi)
                 exchangeFields.getPosition
                 (
                     mesh_.C(), mapCC, gblIdx,
-                    exchangeFields.getCyclicPatches(celli, gblIdx)
+                    exchangeFields.getCyclicPatches
+                    (
+                        celli,
+                        gblIdx,
+                        exchangeFields.getValue(mesh_.C(), mapCC, gblIdx)
+                    )
                 )
             );
             phiValues.append
