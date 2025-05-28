@@ -386,6 +386,8 @@ void Foam::cyclicAMIPolyPatch::resetAMI(const UList<point>& points) const
     bool restoredFromCache = false;
     if (AMIPtr_->cacheActive())
     {
+        const label comm = boundaryMesh().mesh().comm();
+
         if (UPstream::parRun())
         {
             label refProci = -1;
@@ -393,13 +395,13 @@ void Foam::cyclicAMIPolyPatch::resetAMI(const UList<point>& points) const
             {
                 refProci = UPstream::myProcNo();
             }
-            reduce(refProci, maxOp<label>());
+            reduce(refProci, maxOp<label>(), UPstream::msgType(), comm);
 
             if (refProci == UPstream::myProcNo())
             {
                 refPt = points[meshPoints()[0]];
             }
-            reduce(refPt, minOp<point>());
+            reduce(refPt, minOp<point>(), UPstream::msgType(), comm);
         }
         else
         {
@@ -410,13 +412,12 @@ void Foam::cyclicAMIPolyPatch::resetAMI(const UList<point>& points) const
         // Sets cache indices to use and time interpolation weight
         restoredFromCache = AMIPtr_->restoreCache(refPt);
 
-        if (returnReduce(restoredFromCache, orOp<bool>()))
+        if (returnReduceOr(restoredFromCache, comm))
         {
             // Restored AMI weight and addressing from cache - all done
             return;
         }
     }
-
 
     const cyclicAMIPolyPatch& nbr = neighbPatch();
     const pointField srcPoints(points, meshPoints());
@@ -484,7 +485,7 @@ void Foam::cyclicAMIPolyPatch::resetAMI(const UList<point>& points) const
         AMIPtr_->checkSymmetricWeights(true);
     }
 
-    AMIPtr_->addToCache(refPt, rotationAxis_, rotationCentre_);
+    AMIPtr_->addToCache(refPt);
 }
 
 
@@ -790,13 +791,6 @@ Foam::cyclicAMIPolyPatch::cyclicAMIPolyPatch
         srcFaceIDs_.setSize(dict.get<label>("srcSize"));
         tgtFaceIDs_.setSize(dict.get<label>("tgtSize"));
         moveFaceCentres_ = dict.getOrDefault("moveFaceCentres", true);
-    }
-
-    if (AMIPtr_->cacheActive() && transform() != ROTATIONAL)
-    {
-        FatalErrorInFunction
-            << "AMI Caching is only available for rotational transforms"
-            << exit(FatalError);
     }
 }
 
