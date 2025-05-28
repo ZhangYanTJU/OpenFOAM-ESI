@@ -61,7 +61,7 @@ SourceFiles
 #include "indexedOctree.H"
 #include "treeDataPrimitivePatch.H"
 #include "runTimeSelectionTables.H"
-#include "cylindricalCS.H"
+#include "AMICache.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -181,27 +181,8 @@ protected:
         //- Up-to-date flag
         bool upToDate_;
 
-        // Cache
-
-            label cacheSize_;
-            bool cacheComplete_;
-            label cachedIndex0_;
-            label cachedIndex1_;
-            scalar cachedWeight_;
-            autoPtr<coordSystem::cylindrical> coordSysPtr_;
-            List<scalar> cachedTheta_;
-
-            //-
-
-            List<labelListList> cachedSrcAddress_;
-            List<scalarListList> cachedSrcWeights_;
-            List<scalarField> cachedSrcWeightsSum_;
-            List<autoPtr<mapDistribute>> cachedSrcMapPtr_;
-
-            List<labelListList> cachedTgtAddress_;
-            List<scalarListList> cachedTgtWeights_;
-            List<scalarField> cachedTgtWeightsSum_;
-            List<autoPtr<mapDistribute>> cachedTgtMapPtr_;
+        //- Cache
+        AMICache cache_;
 
 
     // Protected Member Functions
@@ -245,9 +226,6 @@ protected:
             //- Return the original tgt patch with optionally updated points
             inline const primitivePatch& tgtPatch0() const;
 
-            //- Get rotation angle for cached AMI cases
-            scalar getRotationAngle(const point& p) const;
-
 
         // Evaluation
 
@@ -266,27 +244,6 @@ protected:
                 const bool conformal,
                 const bool output,
                 const scalar lowWeightTol,
-                const label comm
-            );
-
-
-        // Constructor helpers
-
-            static void agglomerate
-            (
-                const autoPtr<mapDistribute>& targetMap,
-                const scalarList& fineSrcMagSf,
-                const labelListList& fineSrcAddress,
-                const scalarListList& fineSrcWeights,
-
-                const labelList& sourceRestrictAddressing,
-                const labelList& targetRestrictAddressing,
-
-                scalarList& srcMagSf,
-                labelListList& srcAddress,
-                scalarListList& srcWeights,
-                scalarField& srcWeightsSum,
-                autoPtr<mapDistribute>& tgtMap,
                 const label comm
             );
 
@@ -396,6 +353,26 @@ public:
 
     // Member Functions
 
+        // Constructor helpers
+
+            static void agglomerate
+            (
+                const autoPtr<mapDistribute>& targetMap,
+                const scalarList& fineSrcMagSf,
+                const labelListList& fineSrcAddress,
+                const scalarListList& fineSrcWeights,
+
+                const labelList& sourceRestrictAddressing,
+                const labelList& targetRestrictAddressing,
+
+                scalarList& srcMagSf,
+                labelListList& srcAddress,
+                scalarListList& srcWeights,
+                scalarField& srcWeightsSum,
+                autoPtr<mapDistribute>& tgtMap,
+                const label comm
+            );
+
         // Access
 
             //- Is up-to-date?
@@ -408,6 +385,10 @@ public:
                 upToDate_ = flag;
                 return old;
             }
+
+            //- Return a reference to the AMI cache
+            const AMICache& cache() const noexcept { return cache_; }
+            AMICache& cache() noexcept { return cache_; }
 
             //- Distributed across processors (singlePatchProc == -1)
             inline bool distributed() const noexcept;
@@ -723,12 +704,7 @@ public:
             bool restoreCache(const point& refPt);
 
             //- Add AMI weights and addressing to the cache
-            void addToCache
-            (
-                const point& refPt,
-                const vector& rotationAxis,
-                const vector& rotationCentre
-            );
+            void addToCache(const point& refPt);
 
 
         // Checks
