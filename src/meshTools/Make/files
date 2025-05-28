@@ -281,6 +281,7 @@ processorLOD/faceBox/faceBox.C
 AMI=AMIInterpolation
 $(AMI)/AMIInterpolation/AMIInterpolation.C
 $(AMI)/AMIInterpolation/AMIInterpolationNew.C
+$(AMI)/AMIInterpolation/AMICache.C
 $(AMI)/AMIInterpolation/advancingFrontAMI/advancingFrontAMI.C
 $(AMI)/AMIInterpolation/advancingFrontAMI/advancingFrontAMIParallelOps.C
 $(AMI)/AMIInterpolation/faceAreaWeightAMI/faceAreaWeightAMI.C
