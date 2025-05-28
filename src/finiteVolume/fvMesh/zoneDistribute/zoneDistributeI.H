@@ -174,7 +174,12 @@ Foam::Map<Foam::Field<Type>> Foam::zoneDistribute::getPositionFields
                 List<label> cyclicPatches(0);
                 if(checkTransformation)
                 {
-                    cyclicPatches = getCyclicPatches(celli, gblIdx);
+                    cyclicPatches = getCyclicPatches
+                    (
+                        celli,
+                        gblIdx,
+                        getValue(phi, neiValues, gblIdx)
+                    );
                 }
 
                 tmpField.append
