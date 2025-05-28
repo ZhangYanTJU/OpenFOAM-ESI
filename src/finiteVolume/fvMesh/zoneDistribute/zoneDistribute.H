@@ -186,7 +186,7 @@ public:
 
         //- Finds and returns list of all cyclic patch labels to which celli's
         //  point neighbour cell, globalIdx, belongs. celli and globalIdx touch
-        //  in at least one point on these patces. globalIdx typically belongs
+        //  in at least one point on these patches. globalIdx typically belongs
         //  to stencil_[celli]. The returned label list is used to transform
         //  positions across cyclic boundaries e.g. to be able to calculate
         //  distances between cell centres and interface centres in plicRDF
@@ -194,7 +194,8 @@ public:
         List<label> getCyclicPatches
         (
             const label celli,
-            const label globalIdx
+            const label globalIdx,
+            const vector globalIdxCellCentre
         ) const;
 
         //- Gives patchNumber and patchFaceNumber for a given
