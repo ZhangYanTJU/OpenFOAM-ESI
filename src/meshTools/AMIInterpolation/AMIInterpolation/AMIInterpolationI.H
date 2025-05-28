@@ -122,9 +122,10 @@ inline Foam::label Foam::AMIInterpolation::comm(const label newComm)
     return old;
 }
 
+
 inline bool Foam::AMIInterpolation::cacheActive() const
 {
-    return cacheSize_ > 0;
+    return cache_.active();
 }
 
 
