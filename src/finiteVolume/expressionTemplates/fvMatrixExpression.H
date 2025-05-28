@@ -1139,7 +1139,7 @@ operator-
 
 //- fvMatrix, internal parts and dimensions only. No upper/lower/boundaryCoeffs
 //  etc. Used for source manipulation.
-template<class E1, class E2>
+template<class E1, class E2>    //, class FaceFluxExpr>
 class fvMatrixInternal
 :
     public fvMatrixExpression
@@ -1148,7 +1148,7 @@ class fvMatrixInternal
         E1, // Diag
         E1, // Upper, Not used
         E1, // Lower, Not used
-        E1, // FaceFlux, Not used
+        GeometricField<typename E1::value_type, fvPatchField, volMesh>, // FaceFlux, Not used
         E2  // Source
     >
 {
@@ -1163,7 +1163,8 @@ public:
     typedef E1 DiagExpr;
     typedef E1 UpperExpr;   // not yet used
     typedef E1 LowerExpr;   // not yet used
-    typedef E1 FaceFluxExpr;   // not yet used
+    typedef GeometricField<value_type, fvPatchField, volMesh>
+        FaceFluxExpr;   // not yet used
     typedef E2 SourceExpr;
 
 
@@ -1185,11 +1186,11 @@ public:
     :
         fvMatrixExpression
         <
-            fvMatrixInternal<DiagExpr, SourceExpr>,
+            fvMatrixInternal<DiagExpr, SourceExpr>,  //, FaceFluxExpr>,
             DiagExpr,
             UpperExpr,       // upper not yet used
             LowerExpr,       // lower not yet used
-            FaceFluxExpr,       // lower not yet used
+            FaceFluxExpr,    // face flux not used
             SourceExpr
         >
         (
@@ -1222,7 +1223,7 @@ public:
     :
         fvMatrixExpression
         <
-            fvMatrixInternal<DiagExpr, SourceExpr>,
+            fvMatrixInternal<DiagExpr, SourceExpr>,  //, FaceFluxExpr>,
             DiagExpr,
             UpperExpr,       // upper not yet used
             LowerExpr,       // lower not yet used
@@ -1278,7 +1279,7 @@ public:
 
         auto faceFluxCorrection() const
         {
-            return List<value_type>::null();
+            return GeometricField<value_type, fvPatchField, volMesh>::null();
         }
 };
 template<typename E1>
@@ -1359,6 +1360,103 @@ auto Su
         -V*expression
     );
 }
+
+
+//XXXXXXXX
+// Alternative in-place fvMatrix sources. Can be removed once ones above
+// work.
+template<class Expr>
+void Su
+(
+    fvMatrix<typename Expr::value_type>& m,
+    const Expr& expression
+)
+{
+    //- Wrap of List as an expression
+    typedef ListConstRefWrap<typename Expr::value_type> expr;
+    //- Evaluator of an expression
+    typedef ListRefWrap<typename Expr::value_type> evaluator;
+
+    // Wrap mesh volume
+    const expr V(m.psi().mesh().V());
+
+    // Add expression to source
+    auto& s = m.source();
+    evaluator(s, expr(s) + V*expression);
+}
+template<class Expr>
+void rhs
+(
+    fvMatrix<typename Expr::value_type>& m,
+    const Expr& expression
+)
+{
+    Su(m, expression);
+}
+template<class Expr, class Expr2>
+void Sp
+(
+    fvMatrix<typename Expr::value_type>& m,
+    const Expr2& mult,
+    const Expr& expression
+)
+{
+    //- Wrap of List as an expression
+    typedef ListConstRefWrap<typename Expr::value_type> expr;
+    //- Evaluator of an expression
+    typedef ListRefWrap<typename Expr::value_type> evaluator;
+
+    // Wrap mesh volume
+    const expr V(m.psi().mesh().V());
+
+    // Add expression onto diag
+    auto& d = m.diag();
+    evaluator(d, expr(d) - mult*V*expression);
+}
+template<class Expr, class Expr2>
+void SuSp
+(
+    fvMatrix<typename Expr::value_type>& m,
+    const Expr2& mult,
+    const Expr& expression
+)
+{
+    //- Wrap of constant as a list expression
+    typedef UniformListWrap<scalar> constant;
+    //- Wrap of List as an expression
+    typedef ListConstRefWrap<typename Expr::value_type> expr;
+    //- Evaluator of an expression
+    typedef ListRefWrap<typename Expr::value_type> evaluator;
+
+    const constant constantZero(expression.size(), 0.0);
+
+    // Wrap mesh volume
+    const expr V(m.psi().mesh().V());
+
+    // Linearise expression
+    auto& diag = m.diag();
+    auto& source = m.source();
+
+    // diag() += domain*max(susp.field(), scalar(0));
+    evaluator
+    (
+        diag,
+        expr(diag) - mult*V*max(expression, constantZero)
+    );
+    // source() -= domain*min(susp.field(), scalar(0))*fld.primitiveField();
+    evaluator
+    (
+        source,
+        expr(source)
+      + (
+            mult
+           *V
+           *min(expression, constantZero)
+           *expr(m.psi().internalField())
+        )
+    );
+}
+//XXXXXXXX
 
 
 
