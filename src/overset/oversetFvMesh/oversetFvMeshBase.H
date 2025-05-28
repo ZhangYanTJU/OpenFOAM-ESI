@@ -257,13 +257,12 @@ public:
         template<class GeoField>
         static void checkCoupledBC(const GeoField& fld);
 
-        //- Correct boundary conditions of certain type (typeOnly = true)
-        //- or explicitly not of the type (typeOnly = false)
-        template<class GeoField, class PatchType>
+        //- Correct boundary conditions of certain type (TypeOnly = true)
+        //- or explicitly not of the type (TypeOnly = false)
+        template<class GeoField, class PatchType, bool TypeOnly>
         static void correctBoundaryConditions
         (
-            typename GeoField::Boundary& bfld,
-            const bool typeOnly
+            typename GeoField::Boundary& bfld
         );
 
         //- Determine normalisation for interpolation. This equals the

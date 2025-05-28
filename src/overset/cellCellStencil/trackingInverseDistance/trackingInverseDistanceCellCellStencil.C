@@ -1059,8 +1059,9 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
     oversetFvMeshBase::correctBoundaryConditions
     <
         volScalarField,
-        oversetFvPatchField<scalar>
-    >(cellInterpolationWeight_.boundaryFieldRef(), false);
+        oversetFvPatchField<scalar>,
+        false
+    >(cellInterpolationWeight_.boundaryFieldRef());
 
 
     if ((debug & 2) && mesh_.time().writeTime())

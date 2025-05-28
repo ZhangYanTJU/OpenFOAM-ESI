@@ -251,7 +251,7 @@ public:
             const PtrList<PatchField<Type>>& ptfl
         );
 
-        //- Move construct from internal field and a patch list to clone
+        //- Construct from internal field (tmp) and a patch list to clone
         GeometricField
         (
             const IOobject& io,
@@ -273,7 +273,7 @@ public:
             const PtrList<PatchField<Type>>& ptfl
         );
 
-        //- Copy construct from internal field, with specified patch type
+        //- Copy construct from primitive field, with specified patch type
         GeometricField
         (
             const IOobject& io,
@@ -283,7 +283,7 @@ public:
             const word& patchFieldType = PatchField<Type>::calculatedType()
         );
 
-        //- Move construct from internal field, with specified patch type
+        //- Move construct from primitive field, with specified patch type
         GeometricField
         (
             const IOobject& io,
@@ -293,7 +293,17 @@ public:
             const word& patchFieldType = PatchField<Type>::calculatedType()
         );
 
-        //- Copy construct from components
+        //- Construct from primitive field (tmp), with specified patch type
+        GeometricField
+        (
+            const IOobject& io,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            const tmp<Field<Type>>& tfield,
+            const word& patchFieldType = PatchField<Type>::calculatedType()
+        );
+
+        //- Copy construct from primitive field and a patch list to clone
         GeometricField
         (
             const IOobject& io,
@@ -303,7 +313,7 @@ public:
             const PtrList<PatchField<Type>>& ptfl
         );
 
-        //- Move construct from internal field and a patch list to clone
+        //- Move construct from primitive field and a patch list to clone
         GeometricField
         (
             const IOobject& io,
@@ -319,7 +329,7 @@ public:
             const IOobject& io,
             const Mesh& mesh,
             const dimensionSet& dims,
-            const tmp<Field<Type>>& tiField,
+            const tmp<Field<Type>>& tfield,
             const PtrList<PatchField<Type>>& ptfl
         );
 
@@ -505,6 +515,37 @@ public:
             const Mesh& mesh,
             const dimensionSet& dims,
             Field<Type>&& iField,
+            const word& patchFieldType = PatchField<Type>::calculatedType()
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, tmp of primitive field
+        //- and patch type.
+        //- [Takes current timeName from the mesh registry].
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<GeometricField<Type, PatchField, GeoMesh>> New
+        (
+            const word& name,
+            IOobjectOption::registerOption regOpt,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            const tmp<Field<Type>>& tfield,
+            const word& patchFieldType = PatchField<Type>::calculatedType()
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, tmp of primitive field
+        //- and patch type.
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<GeometricField<Type, PatchField, GeoMesh>> New
+        (
+            const word& name,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            const tmp<Field<Type>>& tfield,
             const word& patchFieldType = PatchField<Type>::calculatedType()
         );
 

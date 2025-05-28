@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,72 +36,18 @@ void Foam::functionObjects::mapFields::evaluateConstraintTypes
     GeometricField<Type, fvPatchField, volMesh>& fld
 ) const
 {
-    auto& bfld = fld.boundaryFieldRef();
-
-    const UPstream::commsTypes commsType = UPstream::defaultCommsType;
-
-    if
+    fld.boundaryFieldRef().evaluate_if
     (
-        commsType == UPstream::commsTypes::buffered
-     || commsType == UPstream::commsTypes::nonBlocking
-    )
-    {
-        const label startOfRequests = UPstream::nRequests();
-
-        for (auto& pfld : bfld)
+        [](const auto& pfld) -> bool
         {
-            if
+            return
             (
                 pfld.type() == pfld.patch().patch().type()
              && polyPatch::constraintType(pfld.patch().patch().type())
-            )
-            {
-                pfld.initEvaluate(commsType);
-            }
-        }
-
-        // Wait for outstanding requests (non-blocking)
-        UPstream::waitRequests(startOfRequests);
-
-        for (auto& pfld : bfld)
-        {
-            if
-            (
-                pfld.type() == pfld.patch().patch().type()
-             && polyPatch::constraintType(pfld.patch().patch().type())
-            )
-            {
-                pfld.evaluate(commsType);
-            }
-        }
-    }
-    else if (commsType == UPstream::commsTypes::scheduled)
-    {
-        const lduSchedule& patchSchedule =
-            fld.mesh().globalData().patchSchedule();
-
-        for (const auto& schedEval : patchSchedule)
-        {
-            const label patchi = schedEval.patch;
-            auto& pfld = bfld[patchi];
-
-            if
-            (
-                pfld.type() == pfld.patch().patch().type()
-             && polyPatch::constraintType(pfld.patch().patch().type())
-            )
-            {
-                if (schedEval.init)
-                {
-                    pfld.initEvaluate(commsType);
-                }
-                else
-                {
-                    pfld.evaluate(commsType);
-                }
-            }
-        }
-    }
+            );
+        },
+        UPstream::defaultCommsType
+    );
 }
 
 

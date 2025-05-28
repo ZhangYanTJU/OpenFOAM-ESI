@@ -374,6 +374,33 @@ public:
         );
 
         //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, primitive field (tmp).
+        //- [Takes current timeName from the mesh registry].
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<DimensionedField<Type, GeoMesh>> New
+        (
+            const word& name,
+            IOobjectOption::registerOption regOpt,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            const tmp<Field<Type>>& tfield
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, primitive field (tmp).
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<DimensionedField<Type, GeoMesh>> New
+        (
+            const word& name,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            const tmp<Field<Type>>& tfield
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
         //- from name, mesh, dimensions.
         //- [Takes current timeName from the mesh registry].
         //  For LEGACY_REGISTER, registration is determined by

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -159,6 +159,49 @@ Foam::DimensionedField<Type, GeoMesh>::New
         mesh,
         dims,
         std::move(iField)
+    );
+}
+
+
+template<class Type, class GeoMesh>
+Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
+Foam::DimensionedField<Type, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    const tmp<Field<Type>>& tfield
+)
+{
+    return DimensionedField<Type, GeoMesh>::New_impl
+    (
+        regOpt,
+        name,
+        mesh,
+        dims,
+        tfield
+    );
+}
+
+
+template<class Type, class GeoMesh>
+Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
+Foam::DimensionedField<Type, GeoMesh>::New
+(
+    const word& name,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    const tmp<Field<Type>>& tfield
+)
+{
+    return DimensionedField<Type, GeoMesh>::New_impl
+    (
+        IOobjectOption::LEGACY_REGISTER,
+        name,
+        mesh,
+        dims,
+        tfield
     );
 }
 

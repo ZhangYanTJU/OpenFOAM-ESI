@@ -445,11 +445,12 @@ void Foam::oversetFvMeshBase::writeAgglomeration
             fld[celli] = cellToCoarse[celli];
         }
         fld /= max(fld);
-        correctBoundaryConditions
+        oversetFvMeshBase::correctBoundaryConditions
         <
             volScalarField,
-            oversetFvPatchField<scalar>
-        >(scalarAgglomeration.boundaryFieldRef(), false);
+            oversetFvPatchField<scalar>,
+            false
+        >(scalarAgglomeration.boundaryFieldRef());
         scalarAgglomeration.write();
 
         Info<< "Writing initial cell distribution to "
@@ -503,11 +504,12 @@ void Foam::oversetFvMeshBase::writeAgglomeration
             //{
             //    fld /= max(fld);
             //}
-            correctBoundaryConditions
+            oversetFvMeshBase::correctBoundaryConditions
             <
                 volScalarField,
-                oversetFvPatchField<scalar>
-            >(scalarAgglomeration.boundaryFieldRef(), false);
+                oversetFvPatchField<scalar>,
+                false
+            >(scalarAgglomeration.boundaryFieldRef());
             scalarAgglomeration.write();
         }
     }

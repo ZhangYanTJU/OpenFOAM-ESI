@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -210,6 +210,53 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
         mesh,
         dims,
         std::move(iField),
+        patchFieldType
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    const tmp<Field<Type>>& tfield,
+    const word& patchFieldType
+)
+{
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
+    (
+        regOpt,
+        name,
+        mesh,
+        dims,
+        tfield,
+        patchFieldType
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New
+(
+    const word& name,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    const tmp<Field<Type>>& tfield,
+    const word& patchFieldType
+)
+{
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
+    (
+        IOobjectOption::LEGACY_REGISTER,
+        name,
+        mesh,
+        dims,
+        tfield,
         patchFieldType
     );
 }
