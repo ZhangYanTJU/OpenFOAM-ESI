@@ -1442,20 +1442,12 @@ flux() const
     (
         "flux(" + psi_.name() + ')',
         psi_.mesh(),
-        dimensions()
+        dimensions(),
+        lduMatrix::faceH(psi_.primitiveField())
     );
     auto& fieldFlux = tfieldFlux.ref();
-
     fieldFlux.setOriented();
 
-    for (direction cmpt=0; cmpt<pTraits<Type>::nComponents; cmpt++)
-    {
-        fieldFlux.primitiveFieldRef().replace
-        (
-            cmpt,
-            lduMatrix::faceH(psi_.primitiveField().component(cmpt))
-        );
-    }
 
     FieldField<Field, Type> InternalContrib = internalCoeffs_;
 
@@ -1503,13 +1495,15 @@ flux() const
         mapContributions(fieldi, fluxBoundaryContrib, NeighbourContrib, false);
     }
 
-    typename GeometricField<Type, fvsPatchField, surfaceMesh>::
-        Boundary& ffbf = fieldFlux.boundaryFieldRef();
 
-    forAll(ffbf, patchi)
     {
-        ffbf[patchi] = InternalContrib[patchi] - NeighbourContrib[patchi];
-        //DebugVar(gSum(ffbf[patchi]))
+        auto& ffbf = fieldFlux.boundaryFieldRef();
+
+        forAll(ffbf, patchi)
+        {
+            ffbf[patchi] = InternalContrib[patchi] - NeighbourContrib[patchi];
+            //DebugVar(gSum(ffbf[patchi]))
+        }
     }
 
     if (faceFluxCorrectionPtr_)

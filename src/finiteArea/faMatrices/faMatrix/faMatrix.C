@@ -673,18 +673,12 @@ Foam::faMatrix<Type>::flux() const
     (
         "flux(" + psi_.name() + ')',
         psi_.mesh(),
-        dimensions()
+        dimensions(),
+        lduMatrix::faceH(psi_.primitiveField())
     );
     auto& fieldFlux = tfieldFlux.ref();
+    // not yet: fieldFlux.setOriented();
 
-    for (direction cmpt=0; cmpt<pTraits<Type>::nComponents; ++cmpt)
-    {
-        fieldFlux.primitiveFieldRef().replace
-        (
-            cmpt,
-            lduMatrix::faceH(psi_.primitiveField().component(cmpt))
-        );
-    }
 
     FieldField<Field, Type> InternalContrib = internalCoeffs_;
 
@@ -713,10 +707,13 @@ Foam::faMatrix<Type>::flux() const
         }
     }
 
-    forAll(fieldFlux.boundaryField(), patchI)
     {
-        fieldFlux.boundaryFieldRef()[patchI] =
-            InternalContrib[patchI] - NeighbourContrib[patchI];
+        auto& ffbf = fieldFlux.boundaryFieldRef();
+
+        forAll(ffbf, patchi)
+        {
+            ffbf[patchi] = InternalContrib[patchi] - NeighbourContrib[patchi];
+        }
     }
 
     if (faceFluxCorrectionPtr_)
