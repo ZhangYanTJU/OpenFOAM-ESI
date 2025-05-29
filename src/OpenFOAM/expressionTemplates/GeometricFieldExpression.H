@@ -961,6 +961,93 @@ operator+
 }
 
 
+#define EXPRESSION_GF_FUNCTION1_DIMLESS(Func, BaseFunc, WrapType, OpFunc)      \
+template<typename E1>                                                          \
+class OpFunc                                                                   \
+:                                                                              \
+    public GeometricFieldExpression                                            \
+    <                                                                          \
+        OpFunc<E1>,                                                            \
+        WrapType<typename E1::IntExpr>,                                        \
+        WrapType<typename E1::UncoupledPatchExpr>,                             \
+        WrapType<typename E1::CoupledPatchExpr>,                               \
+        typename E1::value_type                                                \
+    >                                                                          \
+{                                                                              \
+    /* cref if leaf, copy otherwise */                                         \
+    typename std::conditional<E1::is_leaf, const E1&, const E1>::type u_;      \
+                                                                               \
+public:                                                                        \
+    static constexpr bool is_leaf = false;                                     \
+                                                                               \
+    /* Type to return for internal field */                                    \
+    typedef typename E1::value_type value_type;                                \
+                                                                               \
+    /* Type to return for patchField */                                        \
+    typedef WrapType<typename E1::IntExpr> IntExpr;                            \
+    typedef WrapType<typename E1::UncoupledPatchExpr> UncoupledPatchExpr;      \
+    typedef WrapType<typename E1::CoupledPatchExpr> CoupledPatchExpr;          \
+                                                                               \
+    OpFunc(const E1& u)                                                        \
+    :                                                                          \
+        GeometricFieldExpression                                               \
+        <                                                                      \
+            OpFunc<E1>,                                                        \
+            IntExpr,                                                           \
+            UncoupledPatchExpr,                                                \
+            CoupledPatchExpr,                                                  \
+            value_type                                                         \
+        >                                                                      \
+        (                                                                      \
+            u.dimensions(),                                                    \
+            u.oriented()                                                       \
+        ),                                                                     \
+        u_(u)                                                                  \
+    {}                                                                         \
+    auto operator[](const label i) const                                       \
+    {                                                                          \
+        return BaseFunc(u_[i]);                                                \
+    }                                                                          \
+    auto size() const noexcept { return u_.size(); }                           \
+                                                                               \
+    IntExpr internalField() const                                              \
+    {                                                                          \
+        return IntExpr(u_.internalField());                                    \
+    }                                                                          \
+                                                                               \
+    UncoupledPatchExpr patchField(const label i) const                         \
+    {                                                                          \
+        return UncoupledPatchExpr(u_.patchField(i));                           \
+    }                                                                          \
+                                                                               \
+    CoupledPatchExpr coupledPatchField(const label i) const                    \
+    {                                                                          \
+        return CoupledPatchExpr(u_.coupledPatchField(i));                      \
+    }                                                                          \
+                                                                               \
+    template<class AccessOpOp>                                                 \
+    auto access(const AccessOpOp& cop, const label i) const                    \
+    {                                                                          \
+        return UncoupledPatchExpr(u_.access(cop, i));                          \
+    }                                                                          \
+};                                                                             \
+template<typename E1>                                                          \
+OpFunc<E1> Func                                                                \
+(                                                                              \
+    GeometricFieldExpression                                                   \
+    <                                                                          \
+        E1,                                                                    \
+        typename E1::IntExpr,                                                  \
+        typename E1::UncoupledPatchExpr,                                       \
+        typename E1::CoupledPatchExpr,                                         \
+        typename E1::value_type                                                \
+    > const& u                                                                 \
+)                                                                              \
+{                                                                              \
+    return OpFunc<E1>(static_cast<const E1&>(u));                              \
+}
+
+
 #define EXPRESSION_GF_FUNCTION1(Func, BaseFunc, WrapType, OpFunc)              \
 template<typename E1>                                                          \
 class OpFunc                                                                   \
@@ -1415,12 +1502,15 @@ OpFunc<E1, E2> Func                                                            \
 //  - '::sin' : per-element function to call
 //  - 'List_sin' : helper class to handle patchFields
 //  - 'GF_sin' : generated expression helper class
-EXPRESSION_GF_FUNCTION1(sin, ::sin, List_sin, GF_sin)
-EXPRESSION_GF_FUNCTION1(cos, ::cos, List_cos, GF_cos)
-EXPRESSION_GF_FUNCTION1(tan, ::tan, List_tan, GF_tan)
-EXPRESSION_GF_FUNCTION1(sinh, ::sinh, List_sinh, GF_sinh)
-EXPRESSION_GF_FUNCTION1(cosh, ::cosh, List_cosh, GF_cosh)
-EXPRESSION_GF_FUNCTION1(tanh, ::tanh, List_tanh, GF_tanh)
+EXPRESSION_GF_FUNCTION1_DIMLESS(sin, ::sin, List_sin, GF_sin)
+EXPRESSION_GF_FUNCTION1_DIMLESS(cos, ::cos, List_cos, GF_cos)
+EXPRESSION_GF_FUNCTION1_DIMLESS(tan, ::tan, List_tan, GF_tan)
+EXPRESSION_GF_FUNCTION1_DIMLESS(sinh, ::sinh, List_sinh, GF_sinh)
+EXPRESSION_GF_FUNCTION1_DIMLESS(cosh, ::cosh, List_cosh, GF_cosh)
+EXPRESSION_GF_FUNCTION1_DIMLESS(tanh, ::tanh, List_tanh, GF_tanh)
+
+#undef EXPRESSION_GF_FUNCTION1_DIMLESS
+
 EXPRESSION_GF_FUNCTION1(sqr, Foam::sqr, List_sqr, GF_sqr)
 EXPRESSION_GF_FUNCTION1(sqrt, Foam::sqrt, List_sqrt, GF_sqrt)
 EXPRESSION_GF_FUNCTION1(magSqr, Foam::magSqr, List_magSqr, GF_magSqr)
