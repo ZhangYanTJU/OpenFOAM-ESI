@@ -164,6 +164,9 @@ protected:
             void makeCf() const;
 
 
+        //- Helper: search for parent mesh
+        refPtr<fvMesh> parentMesh(const objectRegistry& obr) const;
+
         //- No copy construct
         fvMesh(const fvMesh&) = delete;
 

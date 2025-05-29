@@ -53,6 +53,7 @@ Description
 #include "pointSet.H"
 #include "ReadFields.H"
 #include "processorMeshes.H"
+#include "IOmapDistributePolyMesh.H"
 
 using namespace Foam;
 
@@ -369,6 +370,11 @@ int main(int argc, char *argv[])
         "Subset with cellZone(s) instead of cellSet."
         " The command argument may be a list of words or regexs"
     );
+    argList::addBoolOption
+    (
+        "no-map",
+        "Suppress writing of map."
+    );
     argList::addOption
     (
         "resultTime",
@@ -393,6 +399,7 @@ int main(int argc, char *argv[])
 
     const bool useCellZone = args.found("zone");
     const bool overwrite = args.found("overwrite");
+    const bool noMap = args.found("no-map");
     const bool specifiedInstance = args.readIfPresent
     (
         "resultTime",
@@ -663,8 +670,6 @@ int main(int argc, char *argv[])
     Info<< "Writing subsetted mesh and fields to time " << runTime.timeName()
         << endl;
     subsetter.subMesh().write();
-    processorMeshes::removeFiles(subsetter.subMesh());
-
     auto* subPointMeshPtr =
         subsetter.subMesh().thisDb().findObject<pointMesh>
         (
@@ -675,6 +680,115 @@ int main(int argc, char *argv[])
         pointMesh& subPointMesh = const_cast<pointMesh&>(*subPointMeshPtr);
         subPointMesh.setInstance(subsetter.subMesh().facesInstance());
         subPointMesh.write();
+    }
+    processorMeshes::removeFiles(subsetter.subMesh());
+
+
+    if (!noMap)
+    {
+        const auto& subMesh = subsetter.subMesh();
+        const auto& pbm = mesh.boundaryMesh();
+        labelList patchStarts(pbm.size());
+        labelList patchNMeshPoints(pbm.size());
+        for (const auto& pp : pbm)
+        {
+            patchStarts[pp.index()] = pp.start();
+            patchNMeshPoints[pp.index()] = pp.nPoints();
+        }
+
+        const label myProcNo = UPstream::myProcNo(mesh.comm());
+
+        // cellMap
+        labelListList cellSubMap(UPstream::nProcs(mesh.comm()));
+        cellSubMap[myProcNo] = subsetter.cellMap();
+        labelListList cellConstructMap(UPstream::nProcs(mesh.comm()));
+        cellConstructMap[myProcNo] = identity(subMesh.nCells());
+        mapDistribute cellMap
+        (
+            subMesh.nCells(),
+            std::move(cellSubMap),
+            std::move(cellConstructMap),
+            false,
+            false,
+            mesh.comm()
+        );
+
+        // faceMap
+        labelListList faceSubMap(UPstream::nProcs(mesh.comm()));
+        faceSubMap[myProcNo] = subsetter.faceMap();
+        labelListList faceConstructMap(UPstream::nProcs(mesh.comm()));
+        faceConstructMap[myProcNo] = identity(subMesh.nFaces());
+        mapDistribute faceMap
+        (
+            subMesh.nFaces(),
+            std::move(faceSubMap),
+            std::move(faceConstructMap),
+            false,
+            false,
+            mesh.comm()
+        );
+
+        // pointMap
+        labelListList pointSubMap(UPstream::nProcs(mesh.comm()));
+        pointSubMap[myProcNo] = subsetter.pointMap();
+        labelListList pointConstructMap(UPstream::nProcs(mesh.comm()));
+        pointConstructMap[myProcNo] = identity(subMesh.nPoints());
+        mapDistribute pointMap
+        (
+            subMesh.nPoints(),
+            std::move(pointSubMap),
+            std::move(pointConstructMap),
+            false,
+            false,
+            mesh.comm()
+        );
+
+        // patchMap
+        labelListList patchSubMap(UPstream::nProcs(mesh.comm()));
+        patchSubMap[myProcNo] = identity(pbm.size());
+        labelListList patchConstructMap(UPstream::nProcs(mesh.comm()));
+        patchConstructMap[myProcNo] = identity(pbm.size()); // or subMesh?
+        mapDistribute patchMap
+        (
+            subMesh.nPoints(),
+            std::move(patchSubMap),
+            std::move(patchConstructMap),
+            false,
+            false,
+            mesh.comm()
+        );
+
+        mapDistributePolyMesh map
+        (
+            mesh.nPoints(), // old points
+            mesh.nFaces(),  // old faces
+            mesh.nCells(),  // old cells
+
+            std::move(patchStarts),
+            std::move(patchNMeshPoints),
+
+            std::move(pointMap),
+            std::move(faceMap),
+            std::move(cellMap),
+            std::move(patchMap)
+        );
+
+
+        const IOobject io
+        (
+            "parentMeshAddressing",
+            subMesh.facesInstance(),
+            fvMesh::meshSubDir,
+            subMesh.thisDb(),
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
+        );
+
+        Info<< "Writing map from subsetted to original mesh to "
+            << io.objectRelPath() << endl;
+
+        IOmapDistributePolyMeshRef(io, map).write();
     }
 
 

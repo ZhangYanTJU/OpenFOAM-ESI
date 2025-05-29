@@ -51,6 +51,26 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+Foam::refPtr<Foam::fvMesh>
+Foam::fvMesh::parentMesh(const objectRegistry& obr) const
+{
+    const fvMesh* meshPtr = isA<fvMesh>(obr);
+
+    if (meshPtr)
+    {
+        return refPtr<fvMesh>(*meshPtr);
+    }
+    else if (obr.isTimeDb())
+    {
+        return refPtr<fvMesh>();
+    }
+    else
+    {
+        return parentMesh(obr.parent());
+    }
+}
+
+
 void Foam::fvMesh::clearGeomNotOldVol()
 {
     meshObject::clearUpto
