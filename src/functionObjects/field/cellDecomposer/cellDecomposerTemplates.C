@@ -39,79 +39,17 @@ License
 //    GeometricField<Type, fvPatchField, volMesh>& fld
 //) const
 //{
-//    auto& fldBf = fld.boundaryFieldRef();
-//
-//    const UPstream::commsTypes commsType = UPstream::defaultCommsType;
-//    const label startOfRequests = UPstream::nRequests();
-//
-//    if
+//    fld.boundaryFieldRef().evaluate_if
 //    (
-//        commsType == UPstream::commsTypes::blocking
-//     || commsType == UPstream::commsTypes::nonBlocking
-//    )
-//    {
-//        forAll(fldBf, patchi)
+//        [](const auto& pfld) -> bool
 //        {
-//            fvPatchField<Type>& tgtField = fldBf[patchi];
-//
-//            if
+//            return
 //            (
-//                tgtField.type() == tgtField.patch().patch().type()
-//             && polyPatch::constraintType(tgtField.patch().patch().type())
-//            )
-//            {
-//                tgtField.initEvaluate(commsType);
-//            }
+//                pfld.type() == pfld.patch().patch().type()
+//             && polyPatch::constraintType(pfld.patch().patch().type())
+//            );
 //        }
-//
-//        // Wait for outstanding requests
-//        if (commsType == UPstream::commsTypes::nonBlocking)
-//        {
-//            UPstream::waitRequests(startOfRequests);
-//        }
-//
-//        forAll(fldBf, patchi)
-//        {
-//            fvPatchField<Type>& tgtField = fldBf[patchi];
-//
-//            if
-//            (
-//                tgtField.type() == tgtField.patch().patch().type()
-//             && polyPatch::constraintType(tgtField.patch().patch().type())
-//            )
-//            {
-//                tgtField.evaluate(commsType);
-//            }
-//        }
-//    }
-//    else if (commsType == UPstream::commsTypes::scheduled)
-//    {
-//        const lduSchedule& patchSchedule =
-//            fld.mesh().globalData().patchSchedule();
-//
-//        for (const auto& schedEval : patchSchedule)
-//        {
-//            const label patchi = schedEval.patch;
-//
-//            fvPatchField<Type>& tgtField = fldBf[patchi];
-//
-//            if
-//            (
-//                tgtField.type() == tgtField.patch().patch().type()
-//             && polyPatch::constraintType(tgtField.patch().patch().type())
-//            )
-//            {
-//                if (schedEval.init)
-//                {
-//                    tgtField.initEvaluate(commsType);
-//                }
-//                else
-//                {
-//                    tgtField.evaluate(commsType);
-//                }
-//            }
-//        }
-//    }
+//    );
 //}
 
 template<class Type>

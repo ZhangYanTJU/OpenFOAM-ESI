@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wedgeFvPatch_H
-#define wedgeFvPatch_H
+#ifndef Foam_wedgeFvPatch_H
+#define Foam_wedgeFvPatch_H
 
 #include "fvPatch.H"
 #include "wedgePolyPatch.H"
@@ -53,7 +53,7 @@ class wedgeFvPatch
 :
     public fvPatch
 {
-    // Private data
+    // Private Data
 
         const wedgePolyPatch& wedgePolyPatch_;
 
@@ -70,21 +70,21 @@ public:
         wedgeFvPatch(const polyPatch& patch, const fvBoundaryMesh& bm);
 
 
-    // Member functions
+    // Member Functions
 
-        // Access
+    // Access
 
-            //- Return face transformation tensor
-            const tensor& faceT() const
-            {
-                return wedgePolyPatch_.faceT();
-            }
+        //- Return face transformation tensor
+        const tensor& faceT() const noexcept
+        {
+            return wedgePolyPatch_.faceT();
+        }
 
-            //- Return neighbour-cell transformation tensor
-            const tensor& cellT() const
-            {
-                return wedgePolyPatch_.cellT();
-            }
+        //- Return neighbour-cell transformation tensor
+        const tensor& cellT() const noexcept
+        {
+            return wedgePolyPatch_.cellT();
+        }
 };
 
 

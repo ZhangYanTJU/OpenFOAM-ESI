@@ -138,7 +138,7 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
         //- Return gradient at boundary
         virtual tmp<Field<Type>> snGrad() const;
@@ -152,18 +152,6 @@ public:
         //- Return face-gradient transform diagonal
         virtual tmp<Field<Type>> snGradTransformDiag() const;
 };
-
-
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> wedgeFvPatchField<scalar>::snGrad() const;
-
-template<>
-void wedgeFvPatchField<scalar>::evaluate
-(
-    const Pstream::commsTypes commsType
-);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -167,13 +167,13 @@ public:
         }
 
         //- Return processor number
-        int myProcNo() const
+        int myProcNo() const noexcept
         {
             return procPolyPatch_.myProcNo();
         }
 
         //- Return neighbour processor number
-        int neighbProcNo() const
+        int neighbProcNo() const noexcept
         {
             return procPolyPatch_.neighbProcNo();
         }
@@ -191,13 +191,13 @@ public:
         }
 
         //- Return the underlying processorPolyPatch
-        const processorPolyPatch& procPolyPatch() const
+        const processorPolyPatch& procPolyPatch() const noexcept
         {
             return procPolyPatch_;
         }
 
         //- Return mesh points in the correct order for the receiving side
-        const labelList& reverseMeshPoints() const
+        const labelList& reverseMeshPoints() const noexcept
         {
             return reverseMeshPoints_;
         }

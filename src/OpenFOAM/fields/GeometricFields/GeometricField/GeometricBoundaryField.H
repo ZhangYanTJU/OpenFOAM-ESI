@@ -205,8 +205,12 @@ public:
             const UPstream::commsTypes commsType = UPstream::defaultCommsType
         );
 
-        //- Evaluate boundary conditions on coupled patches of given type.
-        //- Uses specified or default comms.
+        //- Evaluate boundary conditions on coupled patches of the given type,
+        //- using specified or default comms.
+        //
+        //  \tparam CoupledPatchType The coupled \b patch type that should
+        //     be evaluated. For a \c void type,
+        //     all coupled patch fields will be evaluated.
         template<class CoupledPatchType>
         void evaluateCoupled
         (

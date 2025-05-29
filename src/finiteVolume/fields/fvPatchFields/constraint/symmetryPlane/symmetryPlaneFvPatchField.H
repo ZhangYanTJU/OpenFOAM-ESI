@@ -49,8 +49,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef symmetryPlaneFvPatchField_H
-#define symmetryPlaneFvPatchField_H
+#ifndef Foam_symmetryPlaneFvPatchField_H
+#define Foam_symmetryPlaneFvPatchField_H
 
 #include "basicSymmetryFvPatchField.H"
 #include "symmetryPlaneFvPatch.H"
@@ -61,7 +61,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                         Class symmetryPlaneFvPatchField Declaration
+                  Class symmetryPlaneFvPatchField Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
@@ -151,18 +151,6 @@ public:
         //- Return face-gradient transform diagonal
         virtual tmp<Field<Type>> snGradTransformDiag() const;
 };
-
-
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> symmetryPlaneFvPatchField<scalar>::snGrad() const;
-
-template<>
-void symmetryPlaneFvPatchField<scalar>::evaluate
-(
-    const Pstream::commsTypes commsType
-);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

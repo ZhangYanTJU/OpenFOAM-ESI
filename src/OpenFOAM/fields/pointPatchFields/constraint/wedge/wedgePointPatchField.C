@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +28,6 @@ License
 
 #include "wedgePointPatchField.H"
 #include "transformField.H"
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -101,17 +101,28 @@ Foam::wedgePointPatchField<Type>::wedgePointPatchField
 template<class Type>
 void Foam::wedgePointPatchField<Type>::evaluate(const Pstream::commsTypes)
 {
-    // In order to ensure that the wedge patch is always flat, take the
-    // normal vector from the first point
-    const vector& nHat = this->patch().pointNormals()[0];
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : no-op
+    }
+    else
+    {
+        // In order to ensure that the wedge patch is always flat, take the
+        // normal vector from the first point
 
-    tmp<Field<Type>> tvalues =
-        transform(I - nHat*nHat, this->patchInternalField());
+        const symmTensor rot(I - 2.0*sqr(this->patch().pointNormals()[0]));
 
-    // Get internal field to insert values into
-    Field<Type>& iF = const_cast<Field<Type>&>(this->primitiveField());
+        // Could write as loop instead...
+        tmp<Field<Type>> tvalues
+        (
+            transform(rot, this->patchInternalField())
+        );
 
-    this->setInInternalField(iF, tvalues());
+        // Get internal field to insert values into
+        auto& iF = const_cast<Field<Type>&>(this->primitiveField());
+
+        this->setInInternalField(iF, tvalues());
+    }
 }
 
 

@@ -2351,8 +2351,9 @@ bool Foam::cellCellStencils::inverseDistance::update()
     oversetFvMeshBase::correctBoundaryConditions
     <
         volScalarField,
-        oversetFvPatchField<scalar>
-    >(cellInterpolationWeight_.boundaryFieldRef(), false);
+        oversetFvPatchField<scalar>,
+        false
+    >(cellInterpolationWeight_.boundaryFieldRef());
 
 
     if ((debug & 2) && mesh_.time().writeTime())
@@ -2435,8 +2436,9 @@ bool Foam::cellCellStencils::inverseDistance::update()
             oversetFvMeshBase::correctBoundaryConditions
             <
                 volScalarField,
-                oversetFvPatchField<scalar>
-            >(tfld.ref().boundaryFieldRef(), false);
+                oversetFvPatchField<scalar>,
+                false
+            >(tfld.ref().boundaryFieldRef());
             tfld().write();
         }
 
@@ -2450,8 +2452,9 @@ bool Foam::cellCellStencils::inverseDistance::update()
             oversetFvMeshBase::correctBoundaryConditions
             <
                 volScalarField,
-                oversetFvPatchField<scalar>
-            >(tfld.ref().boundaryFieldRef(), false);
+                oversetFvPatchField<scalar>,
+                false
+            >(tfld.ref().boundaryFieldRef());
             tfld().write();
         }
 

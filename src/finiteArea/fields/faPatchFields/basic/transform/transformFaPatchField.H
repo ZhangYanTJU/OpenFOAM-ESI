@@ -148,12 +148,6 @@ public:
 };
 
 
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> transformFaPatchField<scalar>::gradientInternalCoeffs() const;
-
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

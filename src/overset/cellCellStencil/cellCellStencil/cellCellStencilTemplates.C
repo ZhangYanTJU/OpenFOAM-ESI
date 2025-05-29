@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -182,31 +182,16 @@ void Foam::cellCellStencil::correctBoundaryConditions
     GeoField& psi
 )
 {
-    // Version of GeoField::correctBoundaryConditions that exclude evaluation
-    // of oversetFvPatchFields
+    // correctBoundaryConditions excluding oversetFvPatchFields
 
-    auto& bfld = psi.boundaryFieldRef();
-
-    const label startOfRequests = UPstream::nRequests();
-
-    for (auto& pfld : bfld)
-    {
-        if (!isA<SuppressBC>(pfld))
+    psi.boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld)
         {
-            pfld.initEvaluate(UPstream::commsTypes::nonBlocking);
-        }
-    }
-
-    // Wait for outstanding requests (non-blocking)
-    UPstream::waitRequests(startOfRequests);
-
-    for (auto& pfld : bfld)
-    {
-        if (!isA<SuppressBC>(pfld))
-        {
-            pfld.evaluate(UPstream::commsTypes::nonBlocking);
-        }
-    }
+            return (!isA<SuppressBC>(pfld));
+        },
+        UPstream::commsTypes::nonBlocking
+    );
 }
 
 

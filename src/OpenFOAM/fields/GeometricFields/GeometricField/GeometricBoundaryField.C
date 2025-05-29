@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,6 +64,8 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
     //Note: areaFields (finiteArea) do not have manipulatedMatrix() flag. TBD.
     //boolList oldManipulated(this->size());
 
+    label nEvaluated(0);
+
     for (auto& pfld : bfld)
     {
         if (isA<CheckPatchFieldType>(pfld))
@@ -72,19 +74,24 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
             oldUpdated[patchi] = pfld.updated();
             oldBfld[patchi] = pfld;
             //oldManipulated[patchi] = pfld.manipulatedMatrix();
+            ++nEvaluated;
         }
     }
 
+    if (!nEvaluated) return true;  // Early termination
 
     // Re-evaluate
     {
         const label startOfRequests = UPstream::nRequests();
+
+        nEvaluated = 0;
 
         for (auto& pfld : bfld)
         {
             if (isA<CheckPatchFieldType>(pfld))
             {
                 pfld.initEvaluate(UPstream::commsTypes::nonBlocking);
+                ++nEvaluated;
             }
         }
 
@@ -96,13 +103,15 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
             if (isA<CheckPatchFieldType>(pfld))
             {
                 pfld.evaluate(UPstream::commsTypes::nonBlocking);
+                if (--nEvaluated == 0) break;  // Early termination
             }
         }
     }
 
 
     // Check
-    bool ok = true;
+    bool allOk(true);
+
     for (auto& pfld : bfld)
     {
         if (isA<CheckPatchFieldType>(pfld))
@@ -110,16 +119,23 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
             const label patchi = pfld.patch().index();
             const auto& oldPfld = oldBfld[patchi];
 
-            forAll(pfld, facei)
+            bool localOk(true);
+
+            if (allOk)
             {
-                if (mag(pfld[facei]-oldPfld[facei]) > tol)
+                // Only check once
+                forAll(pfld, facei)
                 {
-                    ok = false;
-                    break;
+                    if (mag(pfld[facei]-oldPfld[facei]) > tol)
+                    {
+                        allOk = false;
+                        localOk = false;
+                        break;
+                    }
                 }
             }
 
-            if (!ok)
+            if (!localOk)
             {
                 if (doExit)
                 {
@@ -133,7 +149,7 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
                         << ". Average of evaluated field = "
                         << average(pfld)
                         << ". Difference:" << average(pfld-oldPfld)
-                        << ". Tolerance:" << tol
+                        << ". Tolerance:" << tol << endl
                         << exit(FatalError);
                 }
                 else
@@ -148,25 +164,13 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
                         << ". Average of evaluated field = "
                         << average(pfld)
                         << ". Difference:" << average(pfld-oldPfld)
-                        << ". Tolerance:" << tol
-                        << endl;
-
-                    // Skip other patches
-                    break;
+                        << ". Tolerance:" << tol << endl;
                 }
             }
-        }
-    }
 
-    // Restore bfld, updated
-    for (auto& pfld : bfld)
-    {
-        if (isA<CheckPatchFieldType>(pfld))
-        {
-            const label patchi = pfld.patch().index();
+            // Restore bfld, updated
             pfld.setUpdated(oldUpdated[patchi]);
-            Field<Type>& vals = pfld;
-            vals = std::move(oldBfld[patchi]);
+            static_cast<Field<Type>&>(pfld) = std::move(oldBfld[patchi]);
             //pfld.setManipulated(oldManipulated[patchi]);
         }
     }
@@ -176,10 +180,10 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
         const auto& pfld0 = this->operator[](0);
         PoutInFunction
             << " Result of checking for field "
-            << pfld0.internalField().name() << " : " << ok << endl;
+            << pfld0.internalField().name() << " : " << allOk << endl;
     }
 
-    return ok;
+    return allOk;
 }
 
 
@@ -626,6 +630,7 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate_if
      || commsType == UPstream::commsTypes::nonBlocking
     )
     {
+        label nEvaluated(0);
         const label startOfRequests = UPstream::nRequests();
 
         for (auto& pfld : *this)
@@ -633,17 +638,21 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate_if
             if (pred(pfld))
             {
                 pfld.initEvaluate(commsType);
+                ++nEvaluated;
             }
         }
 
         // Wait for outstanding requests (non-blocking)
         UPstream::waitRequests(startOfRequests);
 
+        if (!nEvaluated) return;  // Early termination
+
         for (auto& pfld : *this)
         {
             if (pred(pfld))
             {
                 pfld.evaluate(commsType);
+                if (--nEvaluated == 0) break;  // Early termination
             }
         }
     }
@@ -778,81 +787,25 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateCoupled
     const UPstream::commsTypes commsType
 )
 {
-    // Alternative (C++14)
-    //
-    // this->evaluate_if
-    // (
-    //     [](const auto& pfld) -> bool
-    //     {
-    //         const auto* cpp = isA<CoupledPatchType>(pfld.patch());
-    //         return (cpp && cpp->coupled());
-    //     },
-    //     commsType
-    // );
-
-    // DebugInFunction << nl;
-
-    if
-    (
-        commsType == UPstream::commsTypes::buffered
-     || commsType == UPstream::commsTypes::nonBlocking
-    )
+    if constexpr (std::is_void_v<CoupledPatchType>)
     {
-        const label startOfRequests = UPstream::nRequests();
-
-        for (auto& pfld : *this)
-        {
-            const auto* cpp = isA<CoupledPatchType>(pfld.patch());
-
-            if (cpp && cpp->coupled())
-            {
-                pfld.initEvaluate(commsType);
-            }
-        }
-
-        // Wait for outstanding requests (non-blocking)
-        UPstream::waitRequests(startOfRequests);
-
-        for (auto& pfld : *this)
-        {
-            const auto* cpp = isA<CoupledPatchType>(pfld.patch());
-
-            if (cpp && cpp->coupled())
-            {
-                pfld.evaluate(commsType);
-            }
-        }
-    }
-    else if (commsType == UPstream::commsTypes::scheduled)
-    {
-        const lduSchedule& patchSchedule =
-            bmesh_.mesh().globalData().patchSchedule();
-
-        for (const auto& schedEval : patchSchedule)
-        {
-            const label patchi = schedEval.patch;
-            auto& pfld = (*this)[patchi];
-
-            const auto* cpp = isA<CoupledPatchType>(pfld.patch());
-
-            if (cpp && cpp->coupled())
-            {
-                if (schedEval.init)
-                {
-                    pfld.initEvaluate(commsType);
-                }
-                else
-                {
-                    pfld.evaluate(commsType);
-                }
-            }
-        }
+        this->evaluate_if
+        (
+            [](const auto& pfld) { return pfld.coupled(); },
+            commsType
+        );
     }
     else
     {
-        FatalErrorInFunction
-            << "Unsupported communications type " << int(commsType) << nl
-            << exit(FatalError);
+        this->evaluate_if
+        (
+            [](const auto& pfld) -> bool
+            {
+                const auto* cpp = isA<CoupledPatchType>(pfld.patch());
+                return (cpp && cpp->coupled());
+            },
+            commsType
+        );
     }
 }
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,12 +88,14 @@ bool Foam::patchDistMethods::meshWaveAddressing::correct
     // since the supplied options (wall patchIDs and correctWalls)
     // are not assumed to be different from the defaults of other usage.
 
+    const labelList patchIds(patchIDs_.sortedToc());
+
     // Calculate distance and addressing
     const auto& wDist = wallDistAddressing::New
     (
         "wall",
         mesh_,
-        patchIDs_.sortedToc(),
+        patchIds,
         correctWalls_
     );
 
@@ -102,31 +104,18 @@ bool Foam::patchDistMethods::meshWaveAddressing::correct
     // Note: copying value only so might not be consistent with supplied
     // patch types (e.g. zeroGradient when called from wallDist). Assume
     // only affected ones are the supplied patches ...
-    {
-        auto& bfld = y.boundaryFieldRef();
-        const label startOfRequests = UPstream::nRequests();
-        for (const label patchi : patchIDs_)
-        {
-            bfld[patchi].initEvaluate(UPstream::commsTypes::nonBlocking);
-        }
 
-        // Wait for outstanding requests
-        UPstream::waitRequests(startOfRequests);
-
-        for (const label patchi : patchIDs_)
-        {
-            bfld[patchi].evaluate(UPstream::commsTypes::nonBlocking);
-        }
-    }
+    y.boundaryFieldRef().evaluateSelected(patchIds);
 
 
     // Only calculate n if the field is defined
     if (notNull(n))
     {
-        for (const label patchi : patchIDs_)
+        auto& bfld = n.boundaryFieldRef();
+
+        for (const label patchi : patchIds)
         {
-            auto& pnf = n.boundaryFieldRef()[patchi];
-            pnf == pnf.patch().nf();
+            bfld[patchi] == bfld[patchi].patch().nf();
         }
 
         // No problem with inconsistency as for y (see above) since doing

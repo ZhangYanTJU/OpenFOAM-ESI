@@ -63,8 +63,10 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::readFields
 
     if (dict.readIfPresent("referenceLevel", refLevel))
     {
-        Field<Type>::operator+=(refLevel);
+        // Add to internal (primitive) field
+        this->field() += refLevel;
 
+        // Add to boundary fields
         forAll(boundaryField_, patchi)
         {
             boundaryField_[patchi] == boundaryField_[patchi] + refLevel;
@@ -409,7 +411,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     boundaryField_(mesh.boundary(), *this, patchFieldType)
 {
     DebugInFunction
-        << "Copy construct from internal field" << nl << this->info() << endl;
+        << "Copy construct from primitive field" << nl << this->info() << endl;
 
     readIfPresent();
 }
@@ -430,7 +432,28 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     boundaryField_(mesh.boundary(), *this, patchFieldType)
 {
     DebugInFunction
-        << "Move construct from internal field" << nl << this->info() << endl;
+        << "Move construct from primitive field" << nl << this->info() << endl;
+
+    readIfPresent();
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
+(
+    const IOobject& io,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    const tmp<Field<Type>>& tfield,
+    const word& patchFieldType
+)
+:
+    Internal(io, mesh, dims, tfield),
+    timeIndex_(this->time().timeIndex()),
+    boundaryField_(mesh.boundary(), *this, patchFieldType)
+{
+    DebugInFunction
+        << "Construct from tmp primitive field" << nl << this->info() << endl;
 
     readIfPresent();
 }
@@ -1391,10 +1414,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
     // Make sure any e.g. jump-cyclic are updated.
     boundaryFieldRef().evaluate_if
     (
-        [](const auto& pfld) -> bool
-        {
-            return pfld.constraintOverride();
-        }
+        [](const auto& pfld) { return pfld.constraintOverride(); }
     );
 }
 
@@ -1436,10 +1456,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
     // Make sure any e.g. jump-cyclic are updated.
     boundaryFieldRef().evaluate_if
     (
-        [](const auto& pfld) -> bool
-        {
-            return pfld.constraintOverride();
-        }
+        [](const auto& pfld) { return pfld.constraintOverride(); }
     );
 }
 
@@ -1456,10 +1473,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
     // Make sure any e.g. jump-cyclic are updated.
     boundaryFieldRef().evaluate_if
     (
-        [](const auto& pfld) -> bool
-        {
-            return pfld.constraintOverride();
-        }
+        [](const auto& pfld) { return pfld.constraintOverride(); }
     );
 }
 
@@ -1484,10 +1498,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
     // Make sure any e.g. jump-cyclic are updated.
     boundaryFieldRef().evaluate_if
     (
-        [](const auto& pfld) -> bool
-        {
-            return pfld.constraintOverride();
-        }
+        [](const auto& pfld) { return pfld.constraintOverride(); }
     );
 }
 
@@ -1504,10 +1515,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
     // Make sure any e.g. jump-cyclic are updated.
     boundaryFieldRef().evaluate_if
     (
-        [](const auto& pfld) -> bool
-        {
-            return pfld.constraintOverride();
-        }
+        [](const auto& pfld) { return pfld.constraintOverride(); }
     );
 }
 
@@ -1527,10 +1535,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
                                                                                \
     boundaryFieldRef().evaluate_if                                             \
     (                                                                          \
-        [](const auto& pfld) -> bool                                           \
-        {                                                                      \
-            return pfld.constraintOverride();                                  \
-        }                                                                      \
+        [](const auto& pfld) { return pfld.constraintOverride(); }             \
     );                                                                         \
 }                                                                              \
                                                                                \
@@ -1545,10 +1550,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
                                                                                \
     boundaryFieldRef().evaluate_if                                             \
     (                                                                          \
-        [](const auto& pfld) -> bool                                           \
-        {                                                                      \
-            return pfld.constraintOverride();                                  \
-        }                                                                      \
+        [](const auto& pfld) { return pfld.constraintOverride(); }             \
     );                                                                         \
 }                                                                              \
                                                                                \
@@ -1563,10 +1565,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator op              \
                                                                                \
     boundaryFieldRef().evaluate_if                                             \
     (                                                                          \
-        [](const auto& pfld) -> bool                                           \
-        {                                                                      \
-            return pfld.constraintOverride();                                  \
-        }                                                                     \
+        [](const auto& pfld) { return pfld.constraintOverride(); }             \
     );                                                                         \
 }
 

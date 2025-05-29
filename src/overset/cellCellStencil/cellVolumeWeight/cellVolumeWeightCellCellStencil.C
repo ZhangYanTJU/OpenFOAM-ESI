@@ -1033,8 +1033,9 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
     oversetFvMeshBase::correctBoundaryConditions
     <
         volScalarField,
-        oversetFvPatchField<scalar>
-    >(cellInterpolationWeight_.boundaryFieldRef(), false);
+        oversetFvPatchField<scalar>,
+        false
+    >(cellInterpolationWeight_.boundaryFieldRef());
 
     DynamicList<label> interpolationCells;
     forAll(cellStencil_, cellI)

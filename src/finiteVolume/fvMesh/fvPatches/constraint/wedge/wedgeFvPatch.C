@@ -33,23 +33,23 @@ License
 namespace Foam
 {
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 defineTypeNameAndDebug(wedgeFvPatch, 0);
 addToRunTimeSelectionTable(fvPatch, wedgeFvPatch, polyPatch);
+
+} // End namespace Foam
 
 
 // * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
 
-wedgeFvPatch::wedgeFvPatch(const polyPatch& patch, const fvBoundaryMesh& bm)
+Foam::wedgeFvPatch::wedgeFvPatch
+(
+    const polyPatch& patch,
+    const fvBoundaryMesh& bm
+)
 :
     fvPatch(patch, bm),
     wedgePolyPatch_(refCast<const wedgePolyPatch>(patch))
 {}
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

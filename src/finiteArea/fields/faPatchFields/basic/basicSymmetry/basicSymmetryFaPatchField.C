@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,13 +86,25 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::basicSymmetryFaPatchField<Type>::snGrad() const
 {
-    const vectorField nHat(this->patch().edgeNormals());
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : treat like zero-gradient
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        tmp<vectorField> nHat = this->patch().edgeNormals();
 
-    return
-    (
-        transform(I - 2.0*sqr(nHat), this->patchInternalField())
-      - this->patchInternalField()
-    )*(this->patch().deltaCoeffs()/2.0);
+        const auto& dc = this->patch().deltaCoeffs();
+
+        const Field<Type> pif(this->patchInternalField());
+
+        return
+        (
+            (0.5*dc)
+          * (transform(I - 2.0*sqr(nHat), pif) - pif)
+        );
+    }
 }
 
 
@@ -103,14 +116,22 @@ void Foam::basicSymmetryFaPatchField<Type>::evaluate(const Pstream::commsTypes)
         this->updateCoeffs();
     }
 
-    const vectorField nHat(this->patch().edgeNormals());
-    Field<Type>::operator=
-    (
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type : treat like zero-gradient
+        this->extrapolateInternal();
+    }
+    else
+    {
+        tmp<vectorField> nHat = this->patch().edgeNormals();
+
+        const Field<Type> pif(this->patchInternalField());
+
+        Field<Type>::operator=
         (
-            this->patchInternalField()
-          + transform(I - 2.0*sqr(nHat), this->patchInternalField())
-        )/2.0
-    );
+            0.5*(pif + transform(I - 2.0*sqr(nHat), pif))
+        );
+    }
 
     transformFaPatchField<Type>::evaluate();
 }
