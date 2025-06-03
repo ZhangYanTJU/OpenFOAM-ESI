@@ -165,20 +165,31 @@ Foam::label Foam::AMIInterpolation::calcDistribution
         {
             if (hasLocalFaces)
             {
-                geomComm.reset
-                (
-                    new UPstream::communicator
-                    (
-                        comm,
-                        hasFaces.sortedToc()
-                    )
-                );
-                if (debug)
+                const labelList newProcIDs(hasFaces.sortedToc());
+                if (geomComm && UPstream::procID(geomComm()) == newProcIDs)
                 {
-                    Pout<< "Allocated geomComm:" << geomComm()
-                        << " from " << nHaveFaces
-                        << " processors out of " << UPstream::nProcs(comm)
-                        << endl;
+                    // Keep geomComm
+                    if (debug)
+                    {
+                        Pout<< "Kept geomComm:" << geomComm()
+                            << " with " << nHaveFaces
+                            << " processors out of " << UPstream::nProcs(comm)
+                            << endl;
+                    }
+                }
+                else
+                {
+                    geomComm.reset
+                    (
+                        new UPstream::communicator(comm, newProcIDs)
+                    );
+                    if (debug)
+                    {
+                        Pout<< "Allocated geomComm:" << geomComm()
+                            << " from " << nHaveFaces
+                            << " processors out of " << UPstream::nProcs(comm)
+                            << endl;
+                    }
                 }
             }
             else
