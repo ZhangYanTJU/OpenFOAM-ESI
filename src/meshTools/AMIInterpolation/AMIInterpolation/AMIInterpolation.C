@@ -34,7 +34,7 @@ License
 #include "triangle.H"
 #include "OFstream.H"
 #include "registerSwitch.H"
-#include <numeric>  // For std::iota
+#include "ListOps.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -97,73 +97,84 @@ Foam::label Foam::AMIInterpolation::calcDistribution
     // Either not parallel or no faces on any processor
     label proci = 0;
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
-        bool hasLocalFaces = false;
+        bool hasLocalFaces = (srcPatch.size() > 0 || tgtPatch.size() > 0);
+
         if (localComm_ == 0)
         {
             // Backwards compatible : all processors involved
             hasLocalFaces = true;
         }
-        else if (localComm_ == 1)
+        else if (localComm_ > 1 && UPstream::master(comm))
         {
-            // Only if locally have faces
-            hasLocalFaces = (srcPatch.size() > 0 || tgtPatch.size() > 0);
-        }
-        else
-        {
-            // If master (so messages always come from master) or if locally
-            // have faces
-            hasLocalFaces =
-            (
-                UPstream::master(comm)
-             || srcPatch.size() > 0
-             || tgtPatch.size() > 0
-            );
+            // Include master (so messages always come from master)
+            hasLocalFaces = true;
         }
 
 
-        // Better to use MPI_Comm_split? So only provide local information
-        // (hasLocalFaces). Problem is that we don't know who else is in the
-        // set. Whereas now, because we all loop over the same data in the same
-        // order we coud find out (except we don't use this information?)
-        const bitSet hasFaces
+        // Could use UPstream::splitCommunicator(), but that also incurs
+        // global communication to determine who belongs to the same set.
+        // Instead, an Allgather of the members and compare with the
+        // existing communicator to decide if a new communicator is
+        // required.
+
+        const List<bool> hasFaces
         (
-            UPstream::allGatherValues<bool>
-            (
-                hasLocalFaces,
-                comm
-            )
+            UPstream::allGatherValues<bool>(hasLocalFaces, comm)
         );
 
-        const auto nHaveFaces = hasFaces.count();
+        DynamicList<label> newProcIDs(hasFaces.size());
+        forAll(hasFaces, i)
+        {
+            if (hasFaces.test(i))
+            {
+                newProcIDs.push_back(i);
+            }
+        }
 
-        if (nHaveFaces == 1)
+        if (newProcIDs.size() == 1)
         {
             // Release any previously allocated communicator
-            geomComm.clear();
-            proci = hasFaces.find_first();
+            geomComm.reset();
+            proci = newProcIDs.front();
             DebugInFunction
                 << "AMI local to processor" << proci << endl;
         }
-        else if (nHaveFaces > 1)
+        else if (newProcIDs.size() > 1)
         {
+            const label currComm = (geomComm.good() ? geomComm().comm() : -1);
+
             if (hasLocalFaces)
             {
-                geomComm.reset
+                if
                 (
-                    new UPstream::communicator
-                    (
-                        comm,
-                        hasFaces.sortedToc()
-                    )
-                );
-                if (debug)
+                    currComm >= 0
+                 && ListOps::equal(newProcIDs, UPstream::procID(currComm))
+                )
                 {
-                    Pout<< "Allocated geomComm:" << geomComm()
-                        << " from " << nHaveFaces
-                        << " processors out of " << UPstream::nProcs(comm)
-                        << endl;
+                    // Keep geomComm
+                    if (debug)
+                    {
+                        Pout<< "Retained geomComm:" << currComm
+                            << " with " << newProcIDs.size()
+                            << " processors out of " << UPstream::nProcs(comm)
+                            << endl;
+                    }
+                }
+                else
+                {
+                    geomComm.reset
+                    (
+                        new UPstream::communicator(comm, newProcIDs)
+                    );
+                    if (debug)
+                    {
+                        Pout<< "Allocated geomComm:" << geomComm().comm()
+                            << " from " << newProcIDs.size()
+                            << " processors out of " << UPstream::nProcs(comm)
+                            << endl;
+                    }
                 }
             }
             else
@@ -171,7 +182,7 @@ Foam::label Foam::AMIInterpolation::calcDistribution
                 geomComm.reset(new UPstream::communicator());
                 if (debug & 2)
                 {
-                    Pout<< "Allocated dummy geomComm:" << geomComm()
+                    Pout<< "Allocated dummy geomComm:" << geomComm().comm()
                         << " since no src:" << srcPatch.size()
                         << " and no tgt:" << tgtPatch.size() << endl;
                 }
@@ -180,7 +191,7 @@ Foam::label Foam::AMIInterpolation::calcDistribution
             proci = -1;
             DebugInFunction
                 << "AMI split across multiple processors "
-                << flatOutput(hasFaces.sortedToc()) << endl;
+                << flatOutput(newProcIDs) << endl;
         }
     }
 
