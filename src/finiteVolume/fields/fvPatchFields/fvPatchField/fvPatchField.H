@@ -113,21 +113,6 @@ protected:
 
 public:
 
-        //- Set updated state
-        void setUpdated(bool state) noexcept
-        {
-            updated_ = state;
-        }
-
-        //- Set matrix manipulated state
-        void setManipulated(bool state) noexcept
-        {
-            manipulatedMatrix_ = state;
-        }
-
-
-public:
-
     //- Debug switch to disallow the use of generic fvPatchField
     static int disallowGenericPatchField;
 
@@ -248,10 +233,22 @@ public:
             return updated_;
         }
 
+        //- Set updated state
+        void setUpdated(bool state) noexcept
+        {
+            updated_ = state;
+        }
+
         //- True if the matrix has already been manipulated
         bool manipulatedMatrix() const noexcept
         {
             return manipulatedMatrix_;
+        }
+
+        //- Set matrix manipulated state
+        void setManipulated(bool state) noexcept
+        {
+            manipulatedMatrix_ = state;
         }
 
         //- Use implicit formulation for coupled patches only
@@ -296,6 +293,9 @@ public:
 
         //- The value_type for the patch field
         typedef Type value_type;
+
+        //- The component type for patch field
+        typedef typename pTraits<Type>::cmptType cmptType;
 
         //- The internal field type associated with the patch field
         typedef DimensionedField<Type, volMesh> Internal;

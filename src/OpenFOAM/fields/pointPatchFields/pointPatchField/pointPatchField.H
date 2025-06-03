@@ -98,16 +98,6 @@ protected:
         //  Useful when initially constructed without a dictionary
         virtual void readDict(const dictionary& dict);
 
-        //- Set updated state
-        void setUpdated(bool state) noexcept
-        {
-            updated_ = state;
-        }
-
-        //- Set matrix manipulated state. Currently a no-op for pointPatchField.
-        void setManipulated(bool state) noexcept
-        {}
-
 
 public:
 
@@ -228,12 +218,23 @@ public:
             return updated_;
         }
 
+        //- Set updated state
+        void setUpdated(bool state) noexcept
+        {
+            updated_ = state;
+        }
+
         //- True if the matrix has already been manipulated.
-        //- Currently ignored (always false) for pointPatchField
+        //- Currently always false for pointPatchField
         bool manipulatedMatrix() const noexcept
         {
             return false;
         }
+
+        //- Set matrix manipulated state.
+        //- Currently a no-op for pointPatchField.
+        void setManipulated(bool state) noexcept
+        {}
 
 
     // Check
@@ -261,6 +262,9 @@ public:
 
         //- The value_type for the patch field
         typedef Type value_type;
+
+        //- The component type for patch field
+        typedef typename pTraits<Type>::cmptType cmptType;
 
         //- The internal field type associated with the patch field
         typedef DimensionedField<Type, pointMesh> Internal;

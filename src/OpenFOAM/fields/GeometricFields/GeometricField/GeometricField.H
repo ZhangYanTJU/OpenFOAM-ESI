@@ -156,9 +156,9 @@ public:
     // Static Member Functions
 
         //- Return a null GeometricField (reference to a nullObject).
-        static const GeometricField<Type, PatchField, GeoMesh>& null() noexcept
+        static const this_type& null() noexcept
         {
-            return NullObjectRef<GeometricField<Type, PatchField, GeoMesh>>();
+            return NullObjectRef<this_type>();
         }
 
 

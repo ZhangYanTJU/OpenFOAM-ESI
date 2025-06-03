@@ -255,6 +255,7 @@ void Foam::faPatchField<Type>::evaluate(const Pstream::commsTypes)
     }
 
     faPatchFieldBase::setUpdated(false);
+    faPatchFieldBase::setManipulated(false);
 }
 
 

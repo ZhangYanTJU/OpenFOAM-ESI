@@ -318,6 +318,7 @@ void Foam::pointPatchField<Type>::evaluate(const Pstream::commsTypes)
     }
 
     pointPatchFieldBase::setUpdated(false);
+    pointPatchFieldBase::setManipulated(false);
 }
 
 

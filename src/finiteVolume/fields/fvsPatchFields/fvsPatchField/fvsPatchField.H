@@ -96,14 +96,6 @@ protected:
         //  Useful when initially constructed without a dictionary
         virtual void readDict(const dictionary& dict);
 
-        //- Set updated state. This is a no-op for fvsPatchField
-        void setUpdated(bool state) noexcept
-        {}
-
-        //- Set matrix manipulated state. This is a no-op for fvsPatchField
-        void setManipulated(bool state) noexcept
-        {}
-
 
 public:
 
@@ -212,11 +204,21 @@ public:
             return true;
         }
 
+        //- Set updated state. This is a no-op for fvsPatchField
+        void setUpdated(bool state) noexcept
+        {}
+
         //- True if the matrix has already been manipulated
+        //- Always false for fvsPatchField
         bool manipulatedMatrix() const noexcept
         {
             return false;
         }
+
+        //- Set matrix manipulated state.
+        //- This is a no-op for fvsPatchField
+        void setManipulated(bool state) noexcept
+        {}
 
 
     // Check
@@ -245,6 +247,9 @@ public:
 
         //- The value_type for the patch field
         typedef Type value_type;
+
+        //- The component type for patch field
+        typedef typename pTraits<Type>::cmptType cmptType;
 
         //- The internal field type associated with the patch field
         typedef DimensionedField<Type, surfaceMesh> Internal;

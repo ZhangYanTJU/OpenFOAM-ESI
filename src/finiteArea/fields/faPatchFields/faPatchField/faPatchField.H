@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -226,6 +226,17 @@ public:
             updated_ = state;
         }
 
+        //- True if the matrix has already been manipulated.
+        //- Currently always false for faPatchField
+        bool manipulatedMatrix() const noexcept
+        {
+            return false;
+        }
+
+        //- Set matrix manipulated state. Currently a no-op for faPatchField
+        void setManipulated(bool state) noexcept
+        {}
+
 
     // Check
 
@@ -253,6 +264,9 @@ public:
 
         //- The value_type for the patch field
         typedef Type value_type;
+
+        //- The component type for patch field
+        typedef typename pTraits<Type>::cmptType cmptType;
 
         //- The internal field type associated with the patch field
         typedef DimensionedField<Type, areaMesh> Internal;

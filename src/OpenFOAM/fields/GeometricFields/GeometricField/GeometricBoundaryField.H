@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,7 +88,8 @@ private:
 
     // Private Member Functions
 
-        //- Helper: check if patchfields have been evaluated. If not:
+        //- Check if patch fields have been consistently evaluated.
+        //  If not:
         //      exit = true  : FatalError
         //      exit = false : return bool
         template<class CheckPatchField>

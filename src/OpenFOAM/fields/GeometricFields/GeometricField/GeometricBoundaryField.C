@@ -38,31 +38,27 @@ template<class CheckPatchFieldType>
 bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
 (
     const scalar tol,
-    const bool doExit
+    const bool exitIfBad
 ) const
 {
-    if (!this->size())
+    auto& bfld = this->constCast();
+
+    if (!bfld.size())
     {
         return true;
     }
 
     if (debug&2)
     {
-        const auto& pfld0 = this->operator[](0);
         PoutInFunction
             << " Checking boundary consistency for field "
-            << pfld0.internalField().name()
-            << endl;
+            << bfld[0].internalField().name() << endl;
     }
 
-    auto& bfld = this->constCast();
-
-
-    // Store old value
-    List<Field<Type>> oldBfld(this->size());
-    boolList oldUpdated(this->size());
-    //Note: areaFields (finiteArea) do not have manipulatedMatrix() flag. TBD.
-    //boolList oldManipulated(this->size());
+    // Store old values and states
+    List<Field<Type>> oldFields(bfld.size());
+    boolList oldUpdated(bfld.size());
+    boolList oldManipulated(bfld.size());
 
     label nEvaluated(0);
 
@@ -71,9 +67,9 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
         if (isA<CheckPatchFieldType>(pfld))
         {
             const label patchi = pfld.patch().index();
+            oldFields[patchi] = pfld;
             oldUpdated[patchi] = pfld.updated();
-            oldBfld[patchi] = pfld;
-            //oldManipulated[patchi] = pfld.manipulatedMatrix();
+            oldManipulated[patchi] = pfld.manipulatedMatrix();
             ++nEvaluated;
         }
     }
@@ -117,16 +113,16 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
         if (isA<CheckPatchFieldType>(pfld))
         {
             const label patchi = pfld.patch().index();
-            const auto& oldPfld = oldBfld[patchi];
+            auto& oldPfld = oldFields[patchi];
 
             bool localOk(true);
 
             if (allOk)
             {
-                // Only check once
+                // Only check for first failed patch
                 forAll(pfld, facei)
                 {
-                    if (mag(pfld[facei]-oldPfld[facei]) > tol)
+                    if (tol < Foam::mag(pfld[facei]-oldPfld[facei]))
                     {
                         allOk = false;
                         localOk = false;
@@ -137,50 +133,44 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
 
             if (!localOk)
             {
-                if (doExit)
+                // Raise warning or error
+                OSstream& err =
+                (
+                    exitIfBad
+                  ? FatalErrorInFunction
+                  : WarningInFunction
+                );
+
+                err << "Field "
+                    << pfld.internalField().name()
+                    << " is not evaluated?"
+                    << " On patch " << pfld.patch().name()
+                    << " type " << pfld.type()
+                    << " : average of field = "
+                    << average(oldPfld)
+                    << ". Average of evaluated field = "
+                    << average(pfld)
+                    << ". Difference:" << average(pfld-oldPfld)
+                    << ". Tolerance:" << tol << endl;
+
+                if (exitIfBad)
                 {
-                    FatalErrorInFunction << "Field "
-                        << pfld.internalField().name()
-                        << " is not evaluated?"
-                        << " On patch " << pfld.patch().name()
-                        << " type " << pfld.type()
-                        << " : average of field = "
-                        << average(oldPfld)
-                        << ". Average of evaluated field = "
-                        << average(pfld)
-                        << ". Difference:" << average(pfld-oldPfld)
-                        << ". Tolerance:" << tol << endl
-                        << exit(FatalError);
-                }
-                else
-                {
-                    WarningInFunction << "Field "
-                        << pfld.internalField().name()
-                        << " is not evaluated?"
-                        << " On patch " << pfld.patch().name()
-                        << " type " << pfld.type()
-                        << " : average of field = "
-                        << average(oldPfld)
-                        << ". Average of evaluated field = "
-                        << average(pfld)
-                        << ". Difference:" << average(pfld-oldPfld)
-                        << ". Tolerance:" << tol << endl;
+                    FatalError<< exit(FatalError);
                 }
             }
 
-            // Restore bfld, updated
+            // Restore patch field values and states
+            static_cast<Field<Type>&>(pfld) = std::move(oldPfld);
             pfld.setUpdated(oldUpdated[patchi]);
-            static_cast<Field<Type>&>(pfld) = std::move(oldBfld[patchi]);
-            //pfld.setManipulated(oldManipulated[patchi]);
+            pfld.setManipulated(oldManipulated[patchi]);
         }
     }
 
     if (debug&2)
     {
-        const auto& pfld0 = this->operator[](0);
         PoutInFunction
             << " Result of checking for field "
-            << pfld0.internalField().name() << " : " << allOk << endl;
+            << bfld[0].internalField().name() << " : " << allOk << endl;
     }
 
     return allOk;
