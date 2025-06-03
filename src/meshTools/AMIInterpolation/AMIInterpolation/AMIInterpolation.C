@@ -141,7 +141,7 @@ Foam::label Foam::AMIInterpolation::calcDistribution
         // Better to use MPI_Comm_split? So only provide local information
         // (hasLocalFaces). Problem is that we don't know who else is in the
         // set. Whereas now, because we all loop over the same data in the same
-        // order we coud find out (except we don't use this information?)
+        // order we could find out (except we don't use this information?)
         const bitSet hasFaces
         (
             UPstream::allGatherValues<bool>
