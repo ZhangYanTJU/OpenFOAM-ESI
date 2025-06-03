@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2412                                 |
+|  \\    /   O peration     | Version:  v2506                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -26,7 +26,7 @@ endTime         0.2;
 
 deltaT          1e-3;
 
-writeControl    adjustableRunTime;
+writeControl    adjustable;
 
 writeInterval   0.1;
 
@@ -67,17 +67,8 @@ functions
 
     AMI2
     {
-        type            surfaceFieldValue;
-        libs            (fieldFunctionObjects);
-        log             true;
-        executeControl  timeStep;
-        executeInterval 1;
-        writeFields     true;
-        regionType      patch;
+        ${../AMI1}
         name            AMI2;
-        operation       sum;
-        surfaceFormat   none;
-        fields          (phi);
     }
 
     forces
@@ -85,7 +76,7 @@ functions
         type            forces;
         libs            (forces);
         writeControl    timeStep;
-        timeInterval    1;
+        writeInterval   1;
         log             yes;
         patches         ( "rotor" );
         pName           p;

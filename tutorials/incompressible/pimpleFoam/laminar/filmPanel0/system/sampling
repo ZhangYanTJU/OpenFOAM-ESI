@@ -30,7 +30,7 @@ patch
     libs    (sampling);
 
     surfaceFormat   boundaryData;
-    writeControl    adjustableRunTime;
+    writeControl    adjustable;
     writeInterval   0.1;
     interpolationScheme cell;
 

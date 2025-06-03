@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2412                                 |
+|  \\    /   O peration     | Version:  v2506                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -13,11 +13,11 @@ forceCoeffs
     libs            (forces);
 
     writeControl    timeStep;
-    timeInterval    1;
+    writeInterval   1;
 
     log             no;
 
-    AoA             13.87;       // Angle-of-attack
+    AoA             13.87;       // Angle-of-attack (deg)
     magUInf         1.0;         // Freestream velocity
     lRef            1.0;         // Chord length
     Aref            #eval{ $lRef*0.004 };  // Chord length times span width
@@ -25,16 +25,8 @@ forceCoeffs
     patches         (aerofoil);
     rho             rhoInf;      // Indicates incompressible
     rhoInf          1;           // Required when rho = rhoInf
-    liftDir         (
-                        #eval{-sin(degToRad($AoA))} 
-                        0 
-                        #eval{cos(degToRad($AoA))}
-                    );
-    dragDir         (
-                        #eval{cos(degToRad($AoA))} 
-                        0 
-                        #eval{sin(degToRad($AoA))}
-                    );
+    liftDir    #eval{vector( -sin(degToRad($AoA)), 0, cos(degToRad($AoA)) )};
+    dragDir    #eval{vector(  cos(degToRad($AoA)), 0, sin(degToRad($AoA)) )};
     CofR            (0.25 0 0);  // Aerodynamic center point
     pitchAxis       (0 1 0);
 }
