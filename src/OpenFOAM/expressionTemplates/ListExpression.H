@@ -163,7 +163,7 @@ public:
     }
     auto cend() const
     {
-        return elems_.cbegin();
+        return elems_.cend();
     }
 };
 
@@ -252,6 +252,7 @@ public:
         return elems_.size();
     }
 
+    typedef typename List<T>::const_iterator const_iterator;
     auto cbegin() const
     {
         return elems_.cbegin();
@@ -259,6 +260,16 @@ public:
     auto cend() const
     {
         return elems_.cend();
+    }
+
+    typedef typename List<T>::iterator iterator;
+    auto begin()
+    {
+        return elems_.begin();
+    }
+    auto cend()
+    {
+        return elems_.end();
     }
 };
 
@@ -312,28 +323,75 @@ public:
         using value_type = typename ConstIterTraits::value_type;
         using pointer = typename ConstIterTraits::pointer;
         using reference = typename ConstIterTraits::reference;
-        using iterator_category = typename ConstIterTraits::iterator_category;
+//using iterator_category = typename ConstIterTraits::iterator_category;
+        using iterator_category = std::random_access_iterator_tag;
 
         ConstIter base_;
 
         const_iterator(ConstIter it) : base_(it) {}
+        const_iterator() : base_() {}
+        void operator=(ConstIter it)
+        {
+            base_ = it;
+        }
+
+    // Indexing operators
+
         value_type operator*() const
         {
             return *base_;
         }
+        //value_type operator->() const
+        //{
+        //    return *base_;
+        //}
+        value_type operator[](const difference_type i) const
+        {
+           return *(base_+i);
+        }
+
+    // Increment/Decrement
+
         const_iterator& operator++()
         {
             ++base_;
             return *this;
         }
+        const_iterator operator++(int)
+        {
+            const_iterator old(*this);
+            ++base_;
+            return old;
+        }
+        const_iterator& operator--()
+        {
+            --base_;
+            return *this;
+        }
+        const_iterator operator--(int)
+        {
+            const_iterator old(*this);
+            --base_;
+            return old;
+        }
+
+    // Arithmetic operators
+
+        const_iterator operator+(const difference_type i) const
+        {
+            return const_iterator(base_+i);
+        }
+        const_iterator operator-(const difference_type i) const
+        {
+            return const_iterator(base_-i);
+        }
         difference_type operator-(const const_iterator& it) const
         {
             return (base_ - it.base_);
         }
-        const_iterator operator+(const label i) const
-        {
-            return const_iterator(&base_[i]);
-        }
+
+    // Comparison operators
+
         bool operator==(const const_iterator& it) const
         {
             return (base_ == it.base_);
@@ -341,6 +399,35 @@ public:
         bool operator!=(const const_iterator& it) const
         {
             return (base_ != it.base_);
+        }
+        bool operator<(const const_iterator& it) const
+        {
+            return (base_ < it.base_);
+        }
+        bool operator<=(const const_iterator& it) const
+        {
+            return (base_ <= it.base_);
+        }
+        bool operator>(const const_iterator& it) const
+        {
+            return (base_ > it.base_);
+        }
+        bool operator>=(const const_iterator& it) const
+        {
+            return (base_ >= it.base_);
+        }
+
+    // Compound assignment 
+
+        const_iterator& operator+=(const difference_type n)
+        {
+            base_ += n;
+            return *this;
+        }
+        const_iterator& operator-=(const difference_type n)
+        {
+            base_ -= n;
+            return *this;
         }
     };
     auto cbegin() const
@@ -419,6 +506,7 @@ public:
         return elems_().size();
     }
 
+    typedef typename T::const_iterator const_iterator;
     auto cbegin() const
     {
         return elems_().cbegin();
@@ -426,6 +514,15 @@ public:
     auto cend() const
     {
         return elems_().cend();
+    }
+    typedef typename List<T>::iterator iterator;
+    auto begin()
+    {
+        return elems_().begin();
+    }
+    auto cend()
+    {
+        return elems_().end();
     }
 };
 
@@ -487,18 +584,43 @@ public:
         {
             return *base_;
         }
+        value_type operator[](const difference_type i) const
+        {
+            return base_[i];
+        }
         const_iterator& operator++()
         {
             ++base_;
             return *this;
         }
+        const_iterator operator++(int)
+        {
+            const_iterator old(*this);
+            ++base_;
+            return old;
+        }
+        const_iterator& operator--()
+        {
+            --base_;
+            return *this;
+        }
+        const_iterator operator--(int)
+        {
+            const_iterator old(*this);
+            --base_;
+            return old;
+        }
+        const_iterator operator+(const difference_type i) const
+        {
+            return const_iterator(base_+i);
+        }
+        const_iterator operator-(const difference_type i) const
+        {
+            return const_iterator(base_-i);
+        }
         difference_type operator-(const const_iterator& it) const
         {
             return (base_ - it.base_);
-        }
-        const_iterator operator+(const label i) const
-        {
-            return const_iterator(base_ + i);
         }
         bool operator==(const const_iterator& it) const
         {
@@ -508,7 +630,34 @@ public:
         {
             return (base_ != it.base_);
         }
+        bool operator<(const const_iterator& it) const
+        {
+            return (base_ < it.base_);
+        }
+        bool operator<=(const const_iterator& it) const
+        {
+            return (base_ <= it.base_);
+        }
+        bool operator>(const const_iterator& it) const
+        {
+            return (base_ > it.base_);
+        }
+        bool operator>=(const const_iterator& it) const
+        {
+            return (base_ >= it.base_);
+        }
+        const_iterator& operator+=(const difference_type n)
+        {
+            base_ += n;
+            return base_;
+        }
+        const_iterator& operator-=(const difference_type n)
+        {
+            base_ -= n;
+            return base_;
+        }
     };
+    //typedef typename T::const_iterator const_iterator;
     auto cbegin() const
     {
         return const_iterator(elems_().cbegin());
@@ -579,10 +728,11 @@ public:
 
         //- Iterator definition for E1
         typedef typename E1::const_iterator ConstIter;
+        //using difference_type = typename ConstIter::difference_type;
         using value_type = typename ConstIter::value_type;
         using pointer = typename ConstIter::pointer;
         using reference = typename ConstIter::reference;
-        using iterator_category = std::forward_iterator_tag;
+        using iterator_category = std::random_access_iterator_tag;
 
         ConstIter begin_;
         typename labelUList::const_iterator iter_;
@@ -600,18 +750,43 @@ public:
         {
             return *(begin_ + *iter_);
         }
+        value_type operator[](const difference_type i) const
+        {
+            return *(begin_+iter_[i]);
+        }
         const_iterator& operator++()
         {
             ++iter_;
             return *this;
         }
+        const_iterator operator++(int)
+        {
+            const_iterator old(*this);
+            ++iter_;
+            return old;
+        }
+        const_iterator& operator--()
+        {
+            --iter_;
+            return *this;
+        }
+        const_iterator operator--(int)
+        {
+            const_iterator old(*this);
+            --iter_;
+            return old;
+        }
+        const_iterator operator+(const difference_type i) const
+        {
+            return const_iterator(begin_, iter_+i);
+        }
+        const_iterator operator-(const difference_type i) const
+        {
+            return const_iterator(begin_, iter_-i);
+        }
         difference_type operator-(const const_iterator& it) const
         {
             return (iter_ - it.iter_);
-        }
-        const_iterator operator+(const label i) const
-        {
-            return const_iterator(begin_, iter_+i);
         }
         bool operator==(const const_iterator& it) const
         {
@@ -620,6 +795,32 @@ public:
         bool operator!=(const const_iterator& it) const
         {
             return iter_ != it.iter_;
+        }
+        bool operator<(const const_iterator& it) const
+        {
+            return (iter_ < it.iter_);
+        }
+        bool operator<=(const const_iterator& it) const
+        {
+            return (iter_ <= it.iter_);
+        }
+        bool operator>(const const_iterator& it) const
+        {
+            return (iter_ > it.iter_);
+        }
+        bool operator>=(const const_iterator& it) const
+        {
+            return (iter_ >= it.iter_);
+        }
+        const_iterator& operator+=(const difference_type n)
+        {
+            iter_ += n;
+            return *this;
+        }
+        const_iterator& operator-=(const difference_type n)
+        {
+            iter_ -= n;
+            return *this;
         }
     };
     auto cbegin() const
@@ -677,18 +878,43 @@ public:                                                                        \
         {                                                                      \
             return BaseFunc(*base_);                                           \
         }                                                                      \
+        value_type operator[](const difference_type i) const                   \
+        {                                                                      \
+            return BaseFunc(base_[i]);                                         \
+        }                                                                      \
         const_iterator& operator++()                                           \
         {                                                                      \
             ++base_;                                                           \
             return *this;                                                      \
         }                                                                      \
+        const_iterator operator++(int)                                         \
+        {                                                                      \
+            const_iterator old(*this);                                         \
+            ++base_;                                                           \
+            return old;                                                        \
+        }                                                                      \
+        const_iterator& operator--()                                           \
+        {                                                                      \
+            --base_;                                                           \
+            return *this;                                                      \
+        }                                                                      \
+        const_iterator operator--(int)                                         \
+        {                                                                      \
+            const_iterator old(*this);                                         \
+            --base_;                                                           \
+            return old;                                                        \
+        }                                                                      \
+        const_iterator operator+(const difference_type i) const                \
+        {                                                                      \
+            return const_iterator(base_+i);                                    \
+        }                                                                      \
+        const_iterator operator-(const difference_type i) const                \
+        {                                                                      \
+            return const_iterator(base_-i);                                    \
+        }                                                                      \
         difference_type operator-(const const_iterator& it) const              \
         {                                                                      \
             return (base_ - it.base_);                                         \
-        }                                                                      \
-        const_iterator operator+(const label i) const                          \
-        {                                                                      \
-            return const_iterator(base_ + i);                                  \
         }                                                                      \
         bool operator==(const const_iterator& it) const                        \
         {                                                                      \
@@ -697,6 +923,32 @@ public:                                                                        \
         bool operator!=(const const_iterator& it) const                        \
         {                                                                      \
             return base_ != it.base_;                                          \
+        }                                                                      \
+        bool operator<(const const_iterator& it) const                         \
+        {                                                                      \
+            return (base_ < it.base_);                                         \
+        }                                                                      \
+        bool operator<=(const const_iterator& it) const                        \
+        {                                                                      \
+            return (base_ <= it.base_);                                        \
+        }                                                                      \
+        bool operator>(const const_iterator& it) const                         \
+        {                                                                      \
+            return (base_ > it.base_);                                         \
+        }                                                                      \
+        bool operator>=(const const_iterator& it) const                        \
+        {                                                                      \
+            return (base_ >= it.base_);                                        \
+        }                                                                      \
+        const_iterator& operator+=(const difference_type n)                    \
+        {                                                                      \
+            base_ += n;                                                        \
+            return *this;                                                      \
+        }                                                                      \
+        const_iterator& operator-=(const difference_type n)                    \
+        {                                                                      \
+            base_ -= n;                                                        \
+            return *this;                                                      \
         }                                                                      \
     };                                                                         \
     const_iterator cbegin() const                                              \
@@ -761,18 +1013,43 @@ public:
         {
             return -(*base_);
         }
+        value_type operator[](const difference_type i) const
+        {
+           return -*(base_+i);
+        }
         const_iterator& operator++()
         {
             ++base_;
             return *this;
         }
+        const_iterator operator++(int)
+        {
+            const_iterator old(*this);
+            ++base_;
+            return old;
+        }
+        const_iterator& operator--()
+        {
+            --base_;
+            return *this;
+        }
+        const_iterator operator--(int)
+        {
+            const_iterator old(*this);
+            --base_;
+            return old;
+        }
+        const_iterator operator+(const difference_type i) const
+        {
+            return const_iterator(base_+i);
+        }
+        const_iterator operator-(const difference_type i) const
+        {
+            return const_iterator(base_-i);
+        }
         difference_type operator-(const const_iterator& it) const
         {
             return (base_ - it.base_);
-        }
-        const_iterator operator+(const label i) const
-        {
-            return const_iterator(base_ + i);
         }
         bool operator==(const const_iterator& it) const
         {
@@ -781,6 +1058,32 @@ public:
         bool operator!=(const const_iterator& it) const
         {
             return base_ != it.base_;
+        }
+        bool operator<(const const_iterator& it) const
+        {
+            return (base_ < it.base_);
+        }
+        bool operator<=(const const_iterator& it) const
+        {
+            return (base_ <= it.base_);
+        }
+        bool operator>(const const_iterator& it) const
+        {
+            return (base_ > it.base_);
+        }
+        bool operator>=(const const_iterator& it) const
+        {
+            return (base_ >= it.base_);
+        }
+        const_iterator& operator+=(const difference_type n)
+        {
+            base_ += n;
+            return base_;
+        }
+        const_iterator& operator-=(const difference_type n)
+        {
+            base_ -= n;
+            return base_;
         }
     };
     const_iterator cbegin() const
@@ -878,6 +1181,10 @@ public:                                                                        \
         {                                                                      \
             return !operator==(it);                                            \
         }                                                                      \
+        bool operator<(const const_iterator& it) const                         \
+        {                                                                      \
+            return (uIter_ < it.uIter_);                                       \
+        }                                                                      \
     };                                                                         \
     const_iterator cbegin() const                                              \
     {                                                                          \
@@ -963,19 +1270,47 @@ public:                                                                        \
         {                                                                      \
             return *uIter_ Op *vIter_;                                         \
         }                                                                      \
+        value_type operator[](const difference_type i) const                   \
+        {                                                                      \
+           return uIter_[i] Op vIter_[i];                                      \
+        }                                                                      \
         const_iterator& operator++()                                           \
         {                                                                      \
             ++uIter_;                                                          \
             ++vIter_;                                                          \
             return *this;                                                      \
         }                                                                      \
+        const_iterator operator++(int)                                         \
+        {                                                                      \
+            const_iterator old(*this);                                         \
+            ++uIter_;                                                          \
+            ++vIter_;                                                          \
+            return old;                                                        \
+        }                                                                      \
+        const_iterator& operator--()                                           \
+        {                                                                      \
+            --uIter_;                                                          \
+            --vIter_;                                                          \
+            return *this;                                                      \
+        }                                                                      \
+        const_iterator operator--(int)                                         \
+        {                                                                      \
+            const_iterator old(*this);                                         \
+            --uIter_;                                                          \
+            --vIter_;                                                          \
+            return old;                                                        \
+        }                                                                      \
+        const_iterator operator+(const difference_type i) const                \
+        {                                                                      \
+            return const_iterator(uIter_+i, vIter_+i);                         \
+        }                                                                      \
+        const_iterator operator-(const difference_type i) const                \
+        {                                                                      \
+            return const_iterator(uIter_-i, vIter_-i);                         \
+        }                                                                      \
         difference_type operator-(const const_iterator& it) const              \
         {                                                                      \
             return (uIter_ - it.uIter_);                                       \
-        }                                                                      \
-        const_iterator operator+(const label i) const                          \
-        {                                                                      \
-            return const_iterator(uIter_+i, vIter_+i);                         \
         }                                                                      \
         bool operator==(const const_iterator& it) const                        \
         {                                                                      \
@@ -984,6 +1319,34 @@ public:                                                                        \
         bool operator!=(const const_iterator& it) const                        \
         {                                                                      \
             return !operator==(it);                                            \
+        }                                                                      \
+        bool operator<(const const_iterator& it) const                         \
+        {                                                                      \
+            return (uIter_ < it.uIter_);                                       \
+        }                                                                      \
+        bool operator<=(const const_iterator& it) const                        \
+        {                                                                      \
+            return (uIter_ <= it.uIter_);                                      \
+        }                                                                      \
+        bool operator>(const const_iterator& it) const                         \
+        {                                                                      \
+            return (uIter_ > it.uIter_);                                       \
+        }                                                                      \
+        bool operator>=(const const_iterator& it) const                        \
+        {                                                                      \
+            return (uIter_ >= it.uIter_);                                      \
+        }                                                                      \
+        const_iterator& operator+=(const difference_type n)                    \
+        {                                                                      \
+            uIter_ += n;                                                       \
+            vIter_ += n;                                                       \
+            return *this;                                                      \
+        }                                                                      \
+        const_iterator& operator-=(const difference_type n)                    \
+        {                                                                      \
+            uIter_ -= n;                                                       \
+            vIter_ -= n;                                                       \
+            return *this;                                                      \
         }                                                                      \
     };                                                                         \
     const_iterator cbegin() const                                              \
@@ -1139,6 +1502,12 @@ public:
             const auto neiVal = *vIter_;
             return *weightIter_*(ownVal-neiVal) + neiVal;
         }
+        value_type operator[](const difference_type i) const
+        {
+            const auto ownVal = uIter_[i];
+            const auto neiVal = vIter_[i];
+            return weightIter_[i]*(ownVal-neiVal) + neiVal;
+        }
         const_iterator& operator++()
         {
             ++uIter_;
@@ -1146,13 +1515,40 @@ public:
             ++weightIter_;
             return *this;
         }
-        difference_type operator-(const const_iterator& it) const
+        const_iterator operator++(int)
         {
-            return (uIter_ - it.uIter_);
+            const_iterator old(*this);
+            ++uIter_;
+            ++vIter_;
+            ++weightIter_;
+            return old;
+        }
+        const_iterator& operator--()
+        {
+            --uIter_;
+            --vIter_;
+            --weightIter_;
+            return *this;
+        }
+        const_iterator operator--(int)
+        {
+            const_iterator old(*this);
+            --uIter_;
+            --vIter_;
+            --weightIter_;
+            return old;
         }
         const_iterator operator+(const label i) const
         {
             return const_iterator(uIter_+i, vIter_+i, weightIter_+i);
+        }
+        const_iterator operator-(const label i) const
+        {
+            return const_iterator(uIter_-i, vIter_-i, weightIter_-i);
+        }
+        difference_type operator-(const const_iterator& it) const
+        {
+            return (uIter_ - it.uIter_);
         }
         bool operator==(const const_iterator& it) const
         {
@@ -1164,6 +1560,36 @@ public:
         bool operator!=(const const_iterator& it) const
         {
             return !operator==(it);
+        }
+        bool operator<(const const_iterator& it) const
+        {
+            return (uIter_ < it.uIter_);
+        }
+        bool operator<=(const const_iterator& it) const
+        {
+            return (uIter_ <= it.uIter_);
+        }
+        bool operator>(const const_iterator& it) const
+        {
+            return (uIter_ > it.uIter_);
+        }
+        bool operator>=(const const_iterator& it) const
+        {
+            return (uIter_ >= it.uIter_);
+        }
+        const_iterator& operator+=(const difference_type n)
+        {
+            uIter_ += n;
+            vIter_ += n;
+            weightIter_ += n;
+            return *this;
+        }
+        const_iterator& operator-=(const difference_type n)
+        {
+            uIter_ -= n;
+            vIter_ -= n;
+            weightIter_ -= n;
+            return *this;
         }
     };
     const_iterator cbegin() const
@@ -1230,31 +1656,56 @@ public:
         using reference = const T&;
         using iterator_category = std::random_access_iterator_tag;
 
-        label count_;
+        difference_type count_;
 
         const T val_;
 
-        const_iterator(const label count, const T val)
+        const_iterator(const difference_type count, const T val)
         :
             count_(count),
             val_(val)
         {}
-        reference operator*() const
+        value_type operator*() const
         {
             return val_;
         }
+        value_type operator[](const difference_type i) const
+        {
+           return val_;
+        }
         const_iterator& operator++()
         {
-            count_;
+            count_++;
             return *this;
+        }
+        const_iterator operator++(int)
+        {
+            const_iterator old(*this);
+            ++count_;
+            return old;
+        }
+        const_iterator& operator--()
+        {
+            count_--;
+            return *this;
+        }
+        const_iterator operator--(int)
+        {
+            const_iterator old(*this);
+            --count_;
+            return old;
+        }
+        const_iterator operator+(const difference_type i) const
+        {
+            return const_iterator(count_+i, val_);
+        }
+        const_iterator operator-(const difference_type i) const
+        {
+            return const_iterator(count_-i, val_);
         }
         difference_type operator-(const const_iterator& it) const
         {
             return (count_ - it.count_);
-        }
-        const_iterator operator+(const label i) const
-        {
-            return const_iterator(count_+i, val_);
         }
         bool operator==(const const_iterator& it) const
         {
@@ -1263,6 +1714,32 @@ public:
         bool operator!=(const const_iterator& it) const
         {
             return !operator==(it);
+        }
+        bool operator<(const const_iterator& it) const
+        {
+            return (count_ < it.count_);
+        }
+        bool operator<=(const const_iterator& it) const
+        {
+            return (count_ <= it.count_);
+        }
+        bool operator>(const const_iterator& it) const
+        {
+            return (count_ > it.count_);
+        }
+        bool operator>=(const const_iterator& it) const
+        {
+            return (count_ >= it.count_);
+        }
+        const_iterator& operator+=(const difference_type n)
+        {
+            count_ += n;
+            return *this;
+        }
+        const_iterator& operator-=(const difference_type n)
+        {
+            count_ -= n;
+            return *this;
         }
     };
     auto cbegin() const
