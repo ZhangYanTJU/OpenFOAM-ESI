@@ -43,8 +43,8 @@ template<class BasicTurbulenceModel>
 void sigma<BasicTurbulenceModel>::correctNut()
 {
     this->nut_ =
-        sqr(this->delta())
-       *DESModel<BasicTurbulenceModel>::Ssigma(fvc::grad(this->U_), Csigma_);
+        sqr(this->delta()*Csigma_)
+       *DESModel<BasicTurbulenceModel>::Ssigma(fvc::grad(this->U_), scalar(1));
     this->nut_.correctBoundaryConditions();
     fv::options::New(this->mesh_).correct(this->nut_);
 
