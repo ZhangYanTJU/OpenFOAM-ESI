@@ -257,13 +257,13 @@ public:
             return ioState_ & std::ios_base::badbit;
         }
 
-        //- Return true if the stream has not failed
+        //- True if the stream has not failed
         explicit operator bool() const noexcept
         {
             return !fail();
         }
 
-        //- Return true if the stream has failed
+        //- True if the stream has failed
         bool operator!() const noexcept
         {
             return fail();
@@ -406,10 +406,10 @@ public:
             return flags((flags() & ~mask) | (f & mask));
         }
 
-        //- Unset flags of stream
-        void unsetf(std::ios_base::fmtflags f)
+        //- Unset stream flags, return old stream flags
+        std::ios_base::fmtflags unsetf(std::ios_base::fmtflags f)
         {
-            flags(flags() & ~f);
+            return flags(flags() & ~f);
         }
 
 

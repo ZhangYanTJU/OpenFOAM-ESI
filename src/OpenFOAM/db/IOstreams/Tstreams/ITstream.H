@@ -470,18 +470,10 @@ public:
 
         //- Copy append a list of tokens at the current tokenIndex,
         //- incrementing the index.
-        //
-        //  \param newTokens the list of tokens to copy append
-        //  \param lazy leaves any excess capacity for further appends.
-        //      The caller will be responsible for resizing later.
         void add_tokens(const UList<token>& toks);
 
         //- Move append a list of tokens at the current tokenIndex,
         //- incrementing the index.
-        //
-        //  \param newTokens the list of tokens to move append
-        //  \param lazy leaves any excess capacity for further appends.
-        //      The caller will be responsible for resizing later.
         void add_tokens(List<token>&& toks);
 
 

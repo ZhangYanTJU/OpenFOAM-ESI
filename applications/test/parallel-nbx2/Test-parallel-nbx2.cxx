@@ -131,7 +131,6 @@ int main(int argc, char *argv[])
         if (probed.second > 0)
         {
             // Message found and had size: receive it
-
             const label proci(probed.first);
             const label count(probed.second);
 
@@ -164,8 +163,7 @@ int main(int argc, char *argv[])
 
                 scalarField fld(is);
 
-                Info<< "from [" << probed.first
-                    << "] : " << flatOutput(fld) << endl;
+                Info<< "from [" << proci << "] : " << flatOutput(fld) << endl;
             }
         }
 

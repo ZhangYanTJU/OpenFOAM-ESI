@@ -447,7 +447,7 @@ public:
             inline constexpr IntType operator-
             (
                 const const_reverse_iterator& iter
-            )const noexcept;
+            ) const noexcept;
 
 
         // Comparison

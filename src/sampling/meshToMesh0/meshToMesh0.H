@@ -298,7 +298,7 @@ public:
                 const labelList& adr,
                 const vectorField& centres,
                 const CombineOp& cop
-            )const;
+            ) const;
 
 
             //- Interpolate internal volume field

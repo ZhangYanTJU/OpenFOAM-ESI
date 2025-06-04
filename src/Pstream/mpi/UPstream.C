@@ -1401,31 +1401,7 @@ Foam::UPstream::probeMessage
     int flag = 0;
     MPI_Status status;
 
-    if (UPstream::commsTypes::buffered == commsType)
-    {
-        // Blocking
-        profilingPstream::beginTiming();
-
-        if
-        (
-            MPI_Probe
-            (
-                source,
-                tag,
-                PstreamGlobals::MPICommunicators_[communicator],
-                &status
-            )
-        )
-        {
-            FatalErrorInFunction
-                << "MPI_Probe returned with error"
-                << Foam::abort(FatalError);
-        }
-
-        profilingPstream::addProbeTime();
-        flag = 1;
-    }
-    else
+    if (UPstream::commsTypes::nonBlocking == commsType)
     {
         // Non-blocking
         profilingPstream::beginTiming();
@@ -1437,8 +1413,8 @@ Foam::UPstream::probeMessage
                 source,
                 tag,
                 PstreamGlobals::MPICommunicators_[communicator],
-                &flag,
-                &status
+               &flag,
+               &status
             )
         )
         {
@@ -1448,6 +1424,30 @@ Foam::UPstream::probeMessage
         }
 
         profilingPstream::addRequestTime();
+    }
+    else
+    {
+        // Blocking
+        profilingPstream::beginTiming();
+
+        if
+        (
+            MPI_Probe
+            (
+                source,
+                tag,
+                PstreamGlobals::MPICommunicators_[communicator],
+               &status
+            )
+        )
+        {
+            FatalErrorInFunction
+                << "MPI_Probe returned with error"
+                << Foam::abort(FatalError);
+        }
+
+        profilingPstream::addProbeTime();
+        flag = 1;
     }
 
     if (flag)

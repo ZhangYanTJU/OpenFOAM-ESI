@@ -850,7 +850,7 @@ public:
             const bool withComponents = true
         );
 
-        //- Creaet new communicator with sub-ranks on the parent communicator
+        //- Create new communicator with sub-ranks on the parent communicator
         static label newCommunicator
         (
             //! The parent communicator
