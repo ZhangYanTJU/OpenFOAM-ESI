@@ -197,33 +197,42 @@ void Foam::shellSurfaces::orient()
                 (
                     refCast<const triSurfaceMesh>(s)
                 );
-
-                // Make sure that normals are consistent. Does not change
-                // anything if surface is consistent.
-                orientedSurface::orientConsistent(shell);
-
-                List<pointIndexHit> info;
-                vectorField normal;
-                labelList region;
-                s.findNearest
-                (
-                    pointField(1, outsidePt),
-                    scalarField(1, GREAT),
-                    info,
-                    normal,
-                    region
-                );
-
-                //Pout<< "outsidePt:" << outsidePt << endl;
-                //Pout<< "info     :" << info[0] << endl;
-                //Pout<< "normal   :" << normal[0] << endl;
-                //Pout<< "region   :" << region[0] << endl;
-
                 bool anyFlipped = false;
-                if ((normal[0] & (info[0].point()-outsidePt)) > 0)
+                if (!isA<distributedTriSurfaceMesh>(s))
                 {
-                    shell.flip();
-                    anyFlipped = true;
+                    anyFlipped = orientedSurface::orient
+                    (
+                       shell,
+                        outsidePt,
+                        true
+                    );
+                }
+                else
+                {
+                    // TBD. - determine nearest with normal
+                    //      - override nearest only if better normal
+
+                    // Make sure that normals are consistent. Does not change
+                    // anything if surface is consistent.
+                    orientedSurface::orientConsistent(shell);
+
+                    List<pointIndexHit> info;
+                    vectorField normal;
+                    labelList region;
+                    s.findNearest
+                    (
+                        pointField(1, outsidePt),
+                        scalarField(1, GREAT),
+                        info,
+                        normal,
+                        region
+                    );
+
+                    if ((normal[0] & (info[0].point()-outsidePt)) > 0)
+                    {
+                        shell.flip();
+                        anyFlipped = true;
+                    }
                 }
 
                 if (anyFlipped && !dryRun_)
