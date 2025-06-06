@@ -27,8 +27,8 @@ propellerInfo1
 
     // rotationMode = specified:
     origin          (0 -0.1 0);
-    n               25.15;
     axis            (0 1 0);
+    n               25.15;  // Or as  rpm 1509;
 
     // Optionally write wake text files
     // Note: controlled by writeControl

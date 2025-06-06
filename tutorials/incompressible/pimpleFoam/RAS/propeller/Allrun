@@ -8,9 +8,9 @@ then
 
     ./Allrun.pre
 
-    restore0Dir
-
     runApplication decomposePar
+
+    restore0Dir -processor
 
     runParallel $(getApplication)
 

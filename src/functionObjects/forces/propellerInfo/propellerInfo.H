@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2024 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -121,9 +121,10 @@ Usage
         URef            | Reference velocity            | yes      |
         rotationMode    | Rotation mode (see below)     | yes      |
         origin          | Sample disk centre            | no*      |
-        n               | Revolutions per second        | no*      |
         axis            | Propeller axis                | no*      |
         alphaAxis       | Axis that defines alpha=0 dir | no       |
+        n               | Rotation speed [rev/sec]      | no*      |
+        rpm             | Rotation speed [rev/min]      | no*      |
         MRF             | Name of MRF zone              | no*      |
         originOffset    | Origin offset for MRF mode    | no       | (0 0 0)
         writePropellerPerformance| Write propeller performance text file | yes |
@@ -140,6 +141,7 @@ Usage
 Note
 - URef is a scalar Function1 type, i.e. supports constant, table, lookup values
 - rotationMode is used to set the origin, axis and revolutions per second
+  (alternatively rpm)
   - if set to 'specified' all 3 entries are required
     - note: origin is the sample disk origin
   - if set to 'MRF' only the MRF entry is required
@@ -173,9 +175,8 @@ SourceFiles
 namespace Foam
 {
 
-template<class Type>
-class Function1;
-
+// Forward Declarations
+template<class Type> class Function1;
 class surfaceWriter;
 
 namespace functionObjects

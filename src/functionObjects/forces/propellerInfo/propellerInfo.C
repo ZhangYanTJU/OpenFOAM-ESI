@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2024 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -73,7 +73,16 @@ void Foam::functionObjects::propellerInfo::setCoordinateSystem
             axis = dict.get<vector>("axis");
             axis.normalise();
 
-            n_ = dict.get<scalar>("n");
+            // Can specify 'rpm' or 'n' (rev/s)
+            if (dict.readIfPresent("rpm", n_))
+            {
+                n_ /= 60;  // -> rev/s
+                dict.readIfPresent("n", n_);  // Optional if rpm was specified
+            }
+            else
+            {
+                n_ = dict.get<scalar>("n");
+            }
             break;
         }
         case rotationMode::MRF:
@@ -90,11 +99,12 @@ void Foam::functionObjects::propellerInfo::setCoordinateSystem
                     << exit(FatalIOError);
             }
             const auto& mrf = MRFZones->MRFZoneList::getFromName(MRFName_);
-            vector offset = dict.getOrDefault("originOffset", vector::zero);
-            origin = offset + mrf.origin();
+
+            dict.readIfPresent("originOffset", origin);
+            origin += mrf.origin();
             axis = mrf.axis();
 
-            // Convert rad/s to revolutions per second
+            // Convert rad/s to rev/s
             n_ = (mrf.Omega() & axis)/constant::mathematical::twoPi;
             break;
         }
@@ -106,31 +116,22 @@ void Foam::functionObjects::propellerInfo::setCoordinateSystem
         }
     }
 
+
+    // Optional orientation axis for cylindrical coordinate system
     vector alphaAxis;
-    if (!dict.readIfPresent("alphaAxis", alphaAxis))
+    if (dict.readIfPresent("alphaAxis", alphaAxis))
     {
-        // Value has not been set - find vector orthogonal to axis
-
-        vector cand(Zero);
-        scalar minDot = GREAT;
-        for (direction d = 0; d < 3; ++d)
-        {
-            vector test(Zero);
-            test[d] = 1;
-            scalar dotp = mag(test & axis);
-            if (dotp < minDot)
-            {
-                minDot = dotp;
-                cand = test;
-            }
-        }
-
-        alphaAxis = axis ^ cand;
+        alphaAxis.normalise();
+        coordSysPtr_.reset
+        (
+            new coordSystem::cylindrical(origin, axis, alphaAxis)
+        );
     }
-
-    alphaAxis.normalise();
-
-    coordSysPtr_.reset(new coordSystem::cylindrical(origin, axis, alphaAxis));
+    else
+    {
+        // Use best-guess for an orthogonal second axis
+        coordSysPtr_.reset(new coordSystem::cylindrical(origin, axis));
+    }
 }
 
 
@@ -222,6 +223,8 @@ const Foam::volVectorField& Foam::functionObjects::propellerInfo::U() const
             << " . Available vector fields are: "
             << flatOutput(mesh_.sortedNames<volVectorField>())
             << exit(FatalError);
+
+        return volVectorField::null();
     }
 
     return *UPtr;
@@ -250,8 +253,8 @@ void Foam::functionObjects::propellerInfo::setSampleDiskGeometry
     }
     const label nFace = nRadius*nTheta;
 
-    points.setSize(nPoint);
-    faces.setSize(nFace);
+    points.resize_nocopy(nPoint);
+    faces.resize_nocopy(nFace);
 
     const point& origin = coordSys.origin();
     const scalar zCoord = 0;
@@ -495,10 +498,9 @@ Foam::scalar Foam::functionObjects::propellerInfo::meanSampleDiskField
 
     scalar sumArea = 0;
     scalar sumFieldArea = 0;
-    forAll(faces_, facei)
-    {
-        const face& f = faces_[facei];
 
+    for (const face& f : faces_)
+    {
         bool valid = true;
         scalar faceValue = 0;
         for (const label pti : f)

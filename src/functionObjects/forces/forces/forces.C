@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -205,11 +205,10 @@ void Foam::functionObjects::forces::reset()
     }
     else
     {
-        constexpr bool updateAccessTime = false;
         for (const label patchi : patchIDs_)
         {
-            force.boundaryFieldRef(updateAccessTime)[patchi] = Zero;
-            moment.boundaryFieldRef(updateAccessTime)[patchi] = Zero;
+            force.boundaryField().constCast()[patchi] = Zero;
+            moment.boundaryField().constCast()[patchi] = Zero;
         }
     }
 }
@@ -222,88 +221,82 @@ Foam::functionObjects::forces::devRhoReff
     const label patchi
 ) const
 {
-    typedef incompressible::turbulenceModel icoTurbModel;
-    typedef compressible::turbulenceModel cmpTurbModel;
+    typedef incompressible::turbulenceModel icoModel;
+    typedef compressible::turbulenceModel cmpModel;
 
-    if (foundObject<icoTurbModel>(icoTurbModel::propertiesName))
+    if (const auto* turbp = cfindObject<icoModel>(icoModel::propertiesName))
     {
-        const auto& turb =
-            lookupObject<icoTurbModel>(icoTurbModel::propertiesName);
+        const auto& turb = *turbp;
 
         return -rho(patchi)*turb.nuEff(patchi)*devTwoSymm(gradUp);
     }
-    else if (foundObject<cmpTurbModel>(cmpTurbModel::propertiesName))
+
+    if (const auto* turbp = cfindObject<cmpModel>(cmpModel::propertiesName))
     {
-        const auto& turb =
-            lookupObject<cmpTurbModel>(cmpTurbModel::propertiesName);
+        const auto& turb = *turbp;
 
         return -turb.muEff(patchi)*devTwoSymm(gradUp);
     }
-    else if (foundObject<fluidThermo>(fluidThermo::dictName))
+
+    if (const auto* thermop = cfindObject<fluidThermo>(fluidThermo::dictName))
     {
-        const auto& thermo = lookupObject<fluidThermo>(fluidThermo::dictName);
+        const auto& thermo = *thermop;
 
         return -thermo.mu(patchi)*devTwoSymm(gradUp);
     }
-    else if (foundObject<transportModel>("transportProperties"))
+
+    if (const auto* props = cfindObject<transportModel>("transportProperties"))
     {
-        const auto& laminarT =
-            lookupObject<transportModel>("transportProperties");
+        const auto& laminarT = *props;
 
         return -rho(patchi)*laminarT.nu(patchi)*devTwoSymm(gradUp);
     }
-    else if (foundObject<dictionary>("transportProperties"))
-    {
-        const auto& transportProperties =
-            lookupObject<dictionary>("transportProperties");
 
-        const dimensionedScalar nu("nu", dimViscosity, transportProperties);
+    if (const auto* props = cfindObject<dictionary>("transportProperties"))
+    {
+        const dimensionedScalar nu("nu", dimViscosity, *props);
 
         return -rho(patchi)*nu.value()*devTwoSymm(gradUp);
     }
-    else
-    {
-        FatalErrorInFunction
-            << "No valid model for viscous stress calculation"
-            << exit(FatalError);
 
-        return volSymmTensorField::null();
-    }
+    // Failed to resolve any model
+    FatalErrorInFunction
+        << "No valid model for viscous stress calculation"
+        << exit(FatalError);
+
+    return nullptr;
 }
 
 
 Foam::tmp<Foam::volScalarField> Foam::functionObjects::forces::mu() const
 {
-    if (foundObject<fluidThermo>(basicThermo::dictName))
+    if (const auto* thermop = cfindObject<fluidThermo>(basicThermo::dictName))
     {
-        const auto& thermo = lookupObject<fluidThermo>(basicThermo::dictName);
+        const auto& thermo = *thermop;
 
         return thermo.mu();
     }
-    else if (foundObject<transportModel>("transportProperties"))
+
+    if (const auto* props = cfindObject<transportModel>("transportProperties"))
     {
-        const auto& laminarT =
-            lookupObject<transportModel>("transportProperties");
+        const auto& laminarT = *props;
 
         return rho()*laminarT.nu();
     }
-    else if (foundObject<dictionary>("transportProperties"))
-    {
-        const auto& transportProperties =
-             lookupObject<dictionary>("transportProperties");
 
-        const dimensionedScalar nu("nu", dimViscosity, transportProperties);
+    if (const auto* props = cfindObject<dictionary>("transportProperties"))
+    {
+        const dimensionedScalar nu("nu", dimViscosity, *props);
 
         return rho()*nu;
     }
-    else
-    {
-        FatalErrorInFunction
-            << "No valid model for dynamic viscosity calculation"
-            << exit(FatalError);
 
-        return volScalarField::null();
-    }
+    // Failed to resolve any model
+    FatalErrorInFunction
+        << "No valid model for dynamic viscosity calculation"
+        << exit(FatalError);
+
+    return nullptr;
 }
 
 
@@ -320,7 +313,7 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::forces::rho() const
         );
     }
 
-    return (lookupObject<volScalarField>(rhoName_));
+    return lookupObject<volScalarField>(rhoName_);
 }
 
 
@@ -367,18 +360,16 @@ void Foam::functionObjects::forces::addToPatchFields
     const vectorField& fV
 )
 {
-    constexpr bool updateAccessTime = false;
-
     sumPatchForcesP_ += sum(fP);
     sumPatchForcesV_ += sum(fV);
-    force().boundaryFieldRef(updateAccessTime)[patchi] += fP + fV;
+    force().boundaryField().constCast()[patchi] += fP + fV;
 
     const vectorField mP(Md^fP);
     const vectorField mV(Md^fV);
 
     sumPatchMomentsP_ += sum(mP);
     sumPatchMomentsV_ += sum(mV);
-    moment().boundaryFieldRef(updateAccessTime)[patchi] += mP + mV;
+    moment().boundaryField().constCast()[patchi] += mP + mV;
 }
 
 

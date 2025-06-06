@@ -114,7 +114,7 @@ Usage
       type       | Type name: rotorDiskSource           | word  | yes  | -
       fields     | Names of operand fields              | wordList | yes | -
       rhoRef     | Reference density for incompressible case | scalar | yes | -
-      rpm        | Rotational speed [rad/s]             | scalar | yes | -
+      rpm        | Rotational speed [rev/min]           | scalar | yes | -
       nBlades    | Number of rotor blades               | label | yes  | -
       tipEffect  | Ratio of blade radius beyond which lift=0 | scalar | yes | -
       refDirection | Reference direction used as reference <!--
