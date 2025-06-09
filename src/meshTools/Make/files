@@ -112,6 +112,7 @@ searchableSurfaces/searchableSurfacesQueries/searchableSurfacesQueries.C
 searchableSurfaces/searchableSurfaceWithGaps/searchableSurfaceWithGaps.C
 searchableSurfaces/subTriSurfaceMesh/subTriSurfaceMesh.C
 searchableSurfaces/triSurfaceMesh/triSurfaceMesh.C
+searchableSurfaces/triSurfaceMesh/smoothTriSurfaceMesh.C
 
 coordSet/coordSet.C
 
