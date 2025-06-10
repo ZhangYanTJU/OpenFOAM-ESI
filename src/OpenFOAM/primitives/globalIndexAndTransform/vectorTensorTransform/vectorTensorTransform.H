@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,12 +34,12 @@ Description
 SourceFiles
     vectorTensorTransformI.H
     vectorTensorTransform.C
-    vectorTensorTransformTemplates.C
+    vectorTensorTransform.txx
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef vectorTensorTransform_H
-#define vectorTensorTransform_H
+#ifndef Foam_vectorTensorTransform_H
+#define Foam_vectorTensorTransform_H
 
 #include "tensor.H"
 #include "word.H"
@@ -126,39 +126,57 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            inline const vector& t() const;
+        //- True if it has a non-identity rotation tensor
+        bool hasR() const noexcept { return hasR_; }
 
-            inline const tensor& R() const;
+        //- The translation vector
+        const vector& t() const noexcept { return t_; }
 
-            inline bool hasR() const;
-
-
-        // Edit
-
-            inline vector& t();
-
-            inline tensor& R();
+        //- The (forward) rotation tensor
+        const tensor& R() const noexcept { return R_; }
 
 
-        // Transform
+    // Edit
 
-            //- Transform the given position
-            inline vector transformPosition(const vector& v) const;
+        //- Non-const access to the translation vector
+        vector& t() noexcept { return t_; }
 
-            //- Transform the given pointField
-            inline pointField transformPosition(const pointField& pts) const;
+        //- Non-const access to the rotation tensor. Sets hasR = true
+        inline tensor& R() noexcept;
 
-            //- Inverse transform the given position
-            inline vector invTransformPosition(const vector& v) const;
+        //- Test for identity rotation and set hasR accordingly
+        void checkRotation(const scalar tol = ROOTVSMALL);
 
-            //- Inverse transform the given pointField
-            inline pointField invTransformPosition(const pointField& pts) const;
 
-            //- Transform the given field
-            template<class Type>
-            tmp<Field<Type>> transform(const Field<Type>&) const;
+    // Transform
+
+        //- Transform the given position
+        inline vector transformPosition(const vector& v) const;
+
+        //- Transform the given field of points
+        inline pointField transformPosition(const pointField& pts) const;
+
+        //- Inplace transform the given points
+        inline void transformPositionList(UList<point>& pts) const;
+
+        //- Inverse transform the given position
+        inline vector invTransformPosition(const vector& v) const;
+
+        //- Inverse transform the given field of points
+        inline pointField invTransformPosition(const pointField& pts) const;
+
+        //- Inplace inverse transform the given points
+        inline void invTransformPositionList(UList<point>& pts) const;
+
+        //- Transform the given field
+        template<class Type>
+        tmp<Field<Type>> transform(const Field<Type>& fld) const;
+
+        //- Inplace transform the given field
+        template<class Type>
+        void transformList(UList<Type>& fld) const;
 
 
     // Member Operators
@@ -195,18 +213,6 @@ inline vectorTensorTransform inv(const vectorTensorTransform& tr);
 
 //- Return a string representation of a vectorTensorTransform
 word name(const vectorTensorTransform&);
-
-//- Template specialisations
-template<>
-tmp<Field<bool>> vectorTensorTransform::transform(const Field<bool>&) const;
-
-template<>
-tmp<Field<label>> vectorTensorTransform::transform(const Field<label>&) const;
-
-template<>
-tmp<Field<scalar>> vectorTensorTransform::transform(const Field<scalar>&)
-const;
-
 
 // * * * * * * * * * * * * * * * Global Operators  * * * * * * * * * * * * * //
 
@@ -262,7 +268,7 @@ inline vectorTensorTransform operator&
 #include "vectorTensorTransformI.H"
 
 #ifdef NoRepository
-    #include "vectorTensorTransformTemplates.C"
+    #include "vectorTensorTransform.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

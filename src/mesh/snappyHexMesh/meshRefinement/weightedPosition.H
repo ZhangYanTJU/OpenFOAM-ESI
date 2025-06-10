@@ -125,7 +125,7 @@ public:
             static void setPoints
             (
                 const UList<point>& in,
-                List<weightedPosition>& out
+                UList<weightedPosition>& out  // [in,out]
             );
 
 
@@ -133,13 +133,13 @@ public:
         static void plusEqOp(weightedPosition& x, const weightedPosition& y);
 
 
-        // Transformation operators
+        // Transformation Operators
 
             void operator()
             (
                 const vectorTensorTransform& vt,
                 const bool forward,
-                List<weightedPosition>& fld
+                UList<weightedPosition>& fld
             ) const;
 
             void operator()

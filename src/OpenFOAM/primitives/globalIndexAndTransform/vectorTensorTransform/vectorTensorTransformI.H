@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,35 +67,10 @@ inline Foam::vectorTensorTransform::vectorTensorTransform(const tensor& R)
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline const Foam::vector& Foam::vectorTensorTransform::t() const
-{
-    return t_;
-}
-
-
-inline const Foam::tensor& Foam::vectorTensorTransform::R() const
-{
-    return R_;
-}
-
-
-inline bool Foam::vectorTensorTransform::hasR() const
-{
-    return hasR_;
-}
-
-
-inline Foam::vector& Foam::vectorTensorTransform::t()
-{
-    return t_;
-}
-
-
-inline Foam::tensor& Foam::vectorTensorTransform::R()
+inline Foam::tensor& Foam::vectorTensorTransform::R() noexcept
 {
     // Assume that non-const access to R changes it from I, so set
     // hasR to true
-
     hasR_ = true;
 
     return R_;
@@ -136,6 +112,28 @@ inline Foam::pointField Foam::vectorTensorTransform::transformPosition
 }
 
 
+inline void Foam::vectorTensorTransform::transformPositionList
+(
+    UList<point>& pts
+) const
+{
+    if (hasR_)
+    {
+        for (auto& p : pts)
+        {
+            p = t() + (R() & p);
+        }
+    }
+    else
+    {
+        for (auto& p : pts)
+        {
+            p += t();
+        }
+    }
+}
+
+
 inline Foam::vector Foam::vectorTensorTransform::invTransformPosition
 (
     const vector& v
@@ -168,6 +166,30 @@ inline Foam::pointField Foam::vectorTensorTransform::invTransformPosition
         tfld = pts - t();
     }
     return tfld();
+}
+
+
+inline void Foam::vectorTensorTransform::invTransformPositionList
+(
+    UList<point>& pts
+) const
+{
+    if (hasR_)
+    {
+        const auto rot = R().T();
+
+        for (auto& p : pts)
+        {
+            p = (rot & (p - t()));
+        }
+    }
+    else
+    {
+        for (auto& p : pts)
+        {
+            p -= t();
+        }
+    }
 }
 
 

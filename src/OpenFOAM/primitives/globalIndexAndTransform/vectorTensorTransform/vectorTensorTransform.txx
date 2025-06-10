@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,13 +34,39 @@ Foam::tmp<Foam::Field<Type>> Foam::vectorTensorTransform::transform
     const Field<Type>& fld
 ) const
 {
-    if (hasR_)
+    if constexpr (is_rotational_vectorspace_v<Type>)
     {
-        return R() & fld;
+        if (hasR_)
+        {
+            return (R() & fld);
+        }
+        else
+        {
+            return fld;
+        }
     }
     else
     {
         return fld;
+    }
+}
+
+
+template<class Type>
+void Foam::vectorTensorTransform::transformList
+(
+    UList<Type>& fld
+) const
+{
+    if constexpr (is_rotational_vectorspace_v<Type>)
+    {
+        if (hasR_)
+        {
+            for (auto& val : fld)
+            {
+                val = (R() & val);
+            }
+        }
     }
 }
 
