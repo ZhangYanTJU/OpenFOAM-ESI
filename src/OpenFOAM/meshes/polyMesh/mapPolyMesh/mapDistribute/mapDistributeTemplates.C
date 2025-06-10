@@ -35,7 +35,7 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class T>
-void Foam::mapDistribute::applyDummyTransforms(List<T>& field) const
+void Foam::mapDistribute::applyDummyTransforms(UList<T>& field) const
 {
     forAll(transformElements_, trafoI)
     {
@@ -51,7 +51,7 @@ void Foam::mapDistribute::applyDummyTransforms(List<T>& field) const
 
 
 template<class T>
-void Foam::mapDistribute::applyDummyInverseTransforms(List<T>& field) const
+void Foam::mapDistribute::applyDummyInverseTransforms(UList<T>& field) const
 {
     forAll(transformElements_, trafoI)
     {
@@ -70,7 +70,7 @@ template<class T, class TransformOp>   //, class CombineOp>
 void Foam::mapDistribute::applyTransforms
 (
     const globalIndexAndTransform& globalTransforms,
-    List<T>& field,
+    UList<T>& field,
     const TransformOp& top
 ) const
 {
@@ -100,7 +100,7 @@ template<class T, class TransformOp>   //, class CombineOp>
 void Foam::mapDistribute::applyInverseTransforms
 (
     const globalIndexAndTransform& globalTransforms,
-    List<T>& field,
+    UList<T>& field,
     const TransformOp& top
 ) const
 {
@@ -193,13 +193,11 @@ void Foam::mapDistribute::distribute
     const int tag
 ) const
 {
-    fld.shrink();
+    List<T> work(std::move(fld));
 
-    List<T>& list = static_cast<List<T>&>(fld);
+    distribute(commsType, work, dummyTransform, tag);
 
-    distribute(commsType, list, dummyTransform, tag);
-
-    fld.setCapacity(list.size());
+    fld = std::move(work);
 }
 
 

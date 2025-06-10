@@ -331,7 +331,7 @@ template<class Type, class TrackingData>
 void Foam::FaceCellWave<Type, TrackingData>::setFaceInfo
 (
     const labelUList& changedFaces,
-    const List<Type>& changedFacesInfo
+    const UList<Type>& changedFacesInfo
 )
 {
     forAll(changedFaces, changedFacei)
@@ -362,7 +362,7 @@ void Foam::FaceCellWave<Type, TrackingData>::mergeFaceInfo
     const polyPatch& patch,
     const label nFaces,
     const labelUList& changedFaces,
-    const List<Type>& changedFacesInfo
+    const UList<Type>& changedFacesInfo
 )
 {
     // Merge face information into member data
@@ -396,8 +396,8 @@ Foam::label Foam::FaceCellWave<Type, TrackingData>::getChangedPatchFaces
     const polyPatch& patch,
     const label startFacei,
     const label nFaces,
-    labelList& changedPatchFaces,
-    List<Type>& changedPatchFacesInfo
+    labelUList& changedPatchFaces,
+    UList<Type>& changedPatchFacesInfo
 ) const
 {
     // Construct compact patchFace change arrays for a (slice of a) single
@@ -428,7 +428,7 @@ void Foam::FaceCellWave<Type, TrackingData>::leaveDomain
     const polyPatch& patch,
     const label nFaces,
     const labelUList& faceLabels,
-    List<Type>& faceInfo
+    UList<Type>& faceInfo
 ) const
 {
     // Handle leaving domain. Implementation referred to Type
@@ -451,7 +451,7 @@ void Foam::FaceCellWave<Type, TrackingData>::enterDomain
     const polyPatch& patch,
     const label nFaces,
     const labelUList& faceLabels,
-    List<Type>& faceInfo
+    UList<Type>& faceInfo
 ) const
 {
     // Handle entering domain. Implementation referred to Type
@@ -473,7 +473,7 @@ void Foam::FaceCellWave<Type, TrackingData>::transform
 (
     const tensorField& rotTensor,
     const label nFaces,
-    List<Type>& faceInfo
+    UList<Type>& faceInfo
 )
 {
     // Transform. Implementation referred to Type
@@ -503,7 +503,7 @@ void Foam::FaceCellWave<Type, TrackingData>::offset
     const polyPatch&,
     const label cycOffset,
     const label nFaces,
-    labelList& faces
+    labelUList& faces
 )
 {
     // Offset mesh face.
@@ -951,7 +951,7 @@ Foam::FaceCellWave<Type, TrackingData>::FaceCellWave
 (
     const polyMesh& mesh,
     const labelUList& changedFaces,
-    const List<Type>& changedFacesInfo,
+    const UList<Type>& changedFacesInfo,
     UList<Type>& allFaceInfo,
     UList<Type>& allCellInfo,
     const label maxIter,
@@ -1009,10 +1009,10 @@ template<class Type, class TrackingData>
 Foam::FaceCellWave<Type, TrackingData>::FaceCellWave
 (
     const polyMesh& mesh,
-    const labelPairList& explicitConnections,
+    const UList<labelPair>& explicitConnections,
     const bool handleCyclicAMI,
     const labelUList& changedFaces,
-    const List<Type>& changedFacesInfo,
+    const UList<Type>& changedFacesInfo,
     UList<Type>& allFaceInfo,
     UList<Type>& allCellInfo,
     const label maxIter,

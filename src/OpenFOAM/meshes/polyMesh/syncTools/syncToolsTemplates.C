@@ -1135,11 +1135,7 @@ void Foam::syncTools::syncBoundaryFaceList
                         pp.start()-boundaryOffset
                     );
 
-                    auto& fakeList = const_cast<List<T>&>
-                    (
-                        static_cast<const List<T>&>(recvFld)
-                    );
-                    top(procPatch, fakeList);
+                    top(procPatch, recvFld);
 
                     SubList<T> patchValues
                     (

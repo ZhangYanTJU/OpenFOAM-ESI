@@ -93,8 +93,8 @@ public:
         MeshWave
         (
             const polyMesh& mesh,
-            const labelList& initialChangedFaces,
-            const List<Type>& changedFacesInfo,
+            const labelUList& initialChangedFaces,
+            const UList<Type>& changedFacesInfo,
             const label maxIter,
             TrackingData& td = FaceCellWaveBase::dummyTrackData_
         );
@@ -106,9 +106,9 @@ public:
         MeshWave
         (
             const polyMesh& mesh,
-            const labelList& initialChangedFaces,
-            const List<Type>& changedFacesInfo,
-            const List<Type>& allCellInfo,
+            const labelUList& initialChangedFaces,
+            const UList<Type>& changedFacesInfo,
+            const UList<Type>& allCellInfo,
             const label maxIter,
             TrackingData& td = FaceCellWaveBase::dummyTrackData_
         );

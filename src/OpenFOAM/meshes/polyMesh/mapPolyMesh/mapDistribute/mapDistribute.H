@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -176,25 +176,25 @@ class mapDistribute
 
         //- Helper function: copy transformElements without transformation
         template<class T>
-        void applyDummyTransforms(List<T>& field) const;
+        void applyDummyTransforms(UList<T>& field) const;
 
         template<class T, class TransformOp>
         void applyTransforms
         (
             const globalIndexAndTransform& globalTransforms,
-            List<T>& field,
+            UList<T>& field,
             const TransformOp& top
         ) const;
 
         //- Helper function: copy transformElements without transformation
         template<class T>
-        void applyDummyInverseTransforms(List<T>& field) const;
+        void applyDummyInverseTransforms(UList<T>& field) const;
 
         template<class T, class TransformOp>
         void applyInverseTransforms
         (
             const globalIndexAndTransform& globalTransforms,
-            List<T>& field,
+            UList<T>& field,
             const TransformOp& top
         ) const;
 

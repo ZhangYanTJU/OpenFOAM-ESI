@@ -50,10 +50,9 @@ defineTypeNameAndDebug(removePoints, 0);
 template<class T, template<class> class CombineOp>
 class faceEqOp
 {
-
 public:
 
-    void operator()(List<T>& x, const List<T>& y) const
+    void operator()(List<T>& x, const UList<T>& y) const
     {
         if (y.size() > 0)
         {

@@ -208,16 +208,16 @@ class PointEdgeWave
         void leaveDomain
         (
             const polyPatch&,
-            const List<label>& patchPointLabels,
-            List<Type>& pointInfo
+            const labelUList& patchPointLabels,
+            UList<Type>& pointInfo
         ) const;
 
         //- Adapt pointInfo for entering domain
         void enterDomain
         (
             const polyPatch&,
-            const List<label>& patchPointLabels,
-            List<Type>& pointInfo
+            const labelUList& patchPointLabels,
+            UList<Type>& pointInfo
         ) const;
 
         //- Transform. Implementation referred to Type
@@ -225,7 +225,7 @@ class PointEdgeWave
         (
             const polyPatch& patch,
             const tensorField& rotTensor,
-            List<Type>& pointInfo
+            UList<Type>& pointInfo
         ) const;
 
         //- Updates pointInfo with information from neighbour.
@@ -293,8 +293,8 @@ public:
         PointEdgeWave
         (
             const polyMesh& mesh,
-            const labelList& initialPoints,
-            const List<Type>& initialPointsInfo,
+            const labelUList& initialPoints,
+            const UList<Type>& initialPointsInfo,
             UList<Type>& allPointInfo,
             UList<Type>& allEdgeInfo,
             const label maxIter,
@@ -340,7 +340,7 @@ public:
         void setPointInfo
         (
             const labelList& changedPoints,
-            const List<Type>& changedPointsInfo
+            const UList<Type>& changedPointsInfo
         );
 
         //- Propagate from point to edge. Returns total number of edges
@@ -381,7 +381,7 @@ public:
         td_(td)
     {}
 
-    void operator()(List<Type>& x, const List<Type>& y) const
+    void operator()(UList<Type>& x, const UList<Type>& y) const
     {
         forAll(x, i)
         {

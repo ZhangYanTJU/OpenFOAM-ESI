@@ -235,7 +235,7 @@ protected:
         static void flipAndCombine
         (
             //! [in,out] The left of binary combine operation
-            List<T>& lhs,
+            UList<T>& lhs,
             //! The right of binary combine operation
             const UList<T>& rhs,
             //! The mapping indices
@@ -254,8 +254,8 @@ protected:
         static void accessAndFlip
         (
             //! [out] The result values
-            List<T>& output,
-            //! [out] The input values
+            UList<T>& output,
+            //! The input values
             const UList<T>& values,
             //! The mapping indices
             const labelUList& map,
@@ -270,7 +270,7 @@ protected:
         template<class T, class NegateOp>
         static List<T> accessAndFlip
         (
-            //! [out] The input values
+            //! The input values
             const UList<T>& values,
             //! The mapping indices
             const labelUList& map,
@@ -895,7 +895,7 @@ public:
         static void distribute
         (
             const UPstream::commsTypes commsType,
-            const List<labelPair>& schedule,
+            const UList<labelPair>& schedule,
             const label constructSize,
             const labelListList& subMap,
             const bool subHasFlip,
@@ -918,7 +918,7 @@ public:
         static void distribute
         (
             const UPstream::commsTypes commsType,
-            const List<labelPair>& schedule,
+            const UList<labelPair>& schedule,
             const label constructSize,
             const labelListList& subMap,
             const bool subHasFlip,
@@ -1078,7 +1078,7 @@ public:
 
             //- Do all sends using PstreamBuffers
             template<class T>
-            void send(PstreamBuffers& pBufs, const List<T>& field) const;
+            void send(PstreamBuffers& pBufs, const UList<T>& field) const;
 
             //- Do all receives using PstreamBuffers
             template<class T>

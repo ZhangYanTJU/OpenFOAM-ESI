@@ -260,7 +260,7 @@ protected:
                 const polyPatch& patch,
                 const label nFaces,
                 const labelUList& changedFaces,
-                const List<Type>& changedFacesInfo
+                const UList<Type>& changedFacesInfo
             );
 
             //- Extract info for single patch only
@@ -269,8 +269,8 @@ protected:
                 const polyPatch& patch,
                 const label startFacei,
                 const label nFaces,
-                labelList& changedPatchFaces,
-                List<Type>& changedPatchFacesInfo
+                labelUList& changedPatchFaces,
+                UList<Type>& changedPatchFacesInfo
             ) const;
 
             //- Handle leaving domain. Implementation referred to Type
@@ -279,7 +279,7 @@ protected:
                 const polyPatch& patch,
                 const label nFaces,
                 const labelUList& faceLabels,
-                List<Type>& faceInfo
+                UList<Type>& faceInfo
             ) const;
 
             //- Handle leaving domain. Implementation referred to Type
@@ -288,7 +288,7 @@ protected:
                 const polyPatch& patch,
                 const label nFaces,
                 const labelUList& faceLabels,
-                List<Type>& faceInfo
+                UList<Type>& faceInfo
             ) const;
 
             //- Offset face labels by constant value
@@ -297,7 +297,7 @@ protected:
                 const polyPatch& patch,
                 const label off,
                 const label nFaces,
-                labelList& faces
+                labelUList& faces
             );
 
             //- Apply transformation to Type
@@ -305,7 +305,7 @@ protected:
             (
                 const tensorField& rotTensor,
                 const label nFaces,
-                List<Type>& faceInfo
+                UList<Type>& faceInfo
             );
 
             //- Merge data from across processor boundaries
@@ -352,7 +352,7 @@ public:
         (
             const polyMesh& mesh,
             const labelUList& initialChangedFaces,
-            const List<Type>& changedFacesInfo,
+            const UList<Type>& changedFacesInfo,
             UList<Type>& allFaceInfo,
             UList<Type>& allCellInfo,
             const label maxIter,
@@ -366,10 +366,10 @@ public:
         FaceCellWave
         (
             const polyMesh& mesh,
-            const labelPairList& explicitConnections,
+            const UList<labelPair>& explicitConnections,
             const bool handleCyclicAMI,
             const labelUList& initialChangedFaces,
-            const List<Type>& changedFacesInfo,
+            const UList<Type>& changedFacesInfo,
             UList<Type>& allFaceInfo,
             UList<Type>& allCellInfo,
             const label maxIter,
@@ -414,7 +414,7 @@ public:
         void setFaceInfo
         (
             const labelUList& changedFaces,
-            const List<Type>& changedFacesInfo
+            const UList<Type>& changedFacesInfo
         );
 
         //- Propagate from face to cell.
