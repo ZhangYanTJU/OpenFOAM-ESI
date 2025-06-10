@@ -179,7 +179,7 @@ public:
         //  \return the previous value for maxErrors
         int maxErrors(int nErrors) noexcept
         {
-            int old = maxErrors_;
+            int old(maxErrors_);
             maxErrors_ = nErrors;
             return old;
         }
@@ -191,12 +191,15 @@ public:
         OSstream& stream
         (
             //! An alternative output stream (serial-only)
-            OSstream* alternative = nullptr
+            OSstream* alternative = nullptr,
+            //! Communicator. Negative is treated like UPstream::worldComm
+            int communicator = -1
         );
 
         //- Return OSstream for output operations on the master process only,
         //- Snull on other processes.
-        OSstream& masterStream(const int communicator);
+        //  A negative communicator is treated like UPstream::worldComm
+        OSstream& masterStream(int communicator);
 
         //- Return std::ostream for output operations.
         std::ostream& stdStream();

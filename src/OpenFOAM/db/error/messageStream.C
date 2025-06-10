@@ -32,7 +32,7 @@ Note
 #include "error.H"
 #include "dictionary.H"
 #include "foamVersion.H"
-#include "Pstream.H"
+#include "UPstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -106,22 +106,34 @@ Foam::messageStream::messageStream(const dictionary& dict)
 
 Foam::OSstream& Foam::messageStream::stream
 (
-    OSstream* alternative
+    OSstream* alternative,
+    int communicator
 )
 {
+    if (communicator < 0)
+    {
+        communicator = UPstream::worldComm;
+    }
+
     if (level)
     {
-        // Serlal (master only) output?
-        const bool serialOnly
+        // Master-only output?
+        const bool masterOnly
         (
             !UPstream::parRun()
          || ((severity_ & ~errorSeverity::USE_STDERR) == errorSeverity::INFO)
          || ((severity_ & ~errorSeverity::USE_STDERR) == errorSeverity::WARNING)
         );
 
-        if (serialOnly && (UPstream::parRun() && !UPstream::master()))
+        if
+        (
+            masterOnly
+         && (UPstream::parRun() && !UPstream::master(communicator))
+        )
         {
-            return Snull;  // Non-serial, non-master: exit early
+            // Requested master-only output but is non-master (in parallel)
+            // -> early exit
+            return Snull;
         }
 
 
@@ -139,10 +151,9 @@ Foam::OSstream& Foam::messageStream::stream
 
         OSstream* osptr;
 
-        if (serialOnly)
+        if (masterOnly)
         {
-            // Use supplied alternative? Valid for serial only
-
+            // Use supplied alternative? Valid for master-only output
             osptr =
             (
                 alternative
@@ -152,7 +163,6 @@ Foam::OSstream& Foam::messageStream::stream
         }
         else
         {
-            // Non-serial
             osptr = (use_stderr ? &Perr : &Pout);
         }
 
@@ -175,8 +185,13 @@ Foam::OSstream& Foam::messageStream::stream
 }
 
 
-Foam::OSstream& Foam::messageStream::masterStream(const int communicator)
+Foam::OSstream& Foam::messageStream::masterStream(int communicator)
 {
+    if (communicator < 0)
+    {
+        communicator = UPstream::worldComm;
+    }
+
     if (UPstream::warnComm >= 0 && communicator != UPstream::warnComm)
     {
         Perr<< "** messageStream with comm:" << communicator << endl;
@@ -185,7 +200,7 @@ Foam::OSstream& Foam::messageStream::masterStream(const int communicator)
 
     if (communicator == UPstream::worldComm || UPstream::master(communicator))
     {
-        return this->stream();
+        return this->stream(nullptr, communicator);
     }
 
     return Snull;
@@ -194,6 +209,7 @@ Foam::OSstream& Foam::messageStream::masterStream(const int communicator)
 
 std::ostream& Foam::messageStream::stdStream()
 {
+    // Currently do not need communicator != worldComm
     return this->stream().stdStream();
 }
 
@@ -400,13 +416,13 @@ Foam::OSstream& Foam::messageStream::operator()
 
 Foam::messageStream Foam::Info
 (
-    "",  // No title
+    // No title
     Foam::messageStream::INFO
 );
 
 Foam::messageStream Foam::InfoErr
 (
-    "",  // No title
+    // No title
     Foam::messageStream::INFO,
     0,
     true  // use_stderr = true
