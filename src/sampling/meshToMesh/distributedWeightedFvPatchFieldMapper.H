@@ -51,8 +51,6 @@ class distributedWeightedFvPatchFieldMapper
 :
     public fvPatchFieldMapper
 {
-    const label singlePatchProc_;
-
     const mapDistributeBase* distMapPtr_;
 
     const labelListList& addressing_;
@@ -68,13 +66,14 @@ public:
         //- Construct given addressing
         distributedWeightedFvPatchFieldMapper
         (
-            const label singlePatchProc,
-            const mapDistributeBase* distMapPtr,
+            const label singlePatchProc,            // global consistent
+            const label comm,                       // only on processors with
+                                                    // patch faces
+            const mapDistributeBase* distMapPtr,    //       ,,
             const labelListList& addressing,
             const scalarListList& weights
         )
         :
-            singlePatchProc_(singlePatchProc),
             distMapPtr_(distMapPtr),
             addressing_(addressing),
             weights_(weights),
@@ -89,12 +88,35 @@ public:
                 }
             }
 
-            if ((singlePatchProc_ == -1) != (distMapPtr_ != nullptr))
+
+            // singlePatchProc : >= 0
+            //  - comm not relevant
+            //  - distMap should not be set
+            // singlePatchProc : -1
+            //  - if (comm != -1) we need a distMap
+            bool error = false;
+            if (singlePatchProc >= 0)
+            {
+                error = distMapPtr_;
+            }
+            else
+            {
+                // Need map (unless I don't have communicator)
+                if (comm >= 0)
+                {
+                    error = !distMapPtr_;
+                }
+                else
+                {
+                    error = distMapPtr_;
+                }
+            }
+            if (error)
             {
                 FatalErrorInFunction
                     << "Supply a mapDistributeBase if and only if "
                     << "singlePatchProc is -1"
-                    << " singlePatchProc_:" << singlePatchProc_
+                    << " singlePatchProc:" << singlePatchProc
                     << " distMapPtr_:" << (distMapPtr_ != nullptr)
                     << exit(FatalError);
             }
@@ -125,7 +147,7 @@ public:
 
         virtual bool distributed() const
         {
-            return singlePatchProc_ == -1;
+            return distMapPtr_;
         }
 
         virtual const mapDistributeBase& distributeMap() const

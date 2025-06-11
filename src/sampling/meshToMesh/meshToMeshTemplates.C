@@ -536,11 +536,8 @@ void Foam::meshToMesh::mapSrcToTgt
                 distributedWeightedFvPatchFieldMapper
                 (
                     AMIList[i].singlePatchProc(),
-                    (
-                        (AMIList[i].distributed() && AMIList[i].comm() != -1)
-                      ? AMIList[i].hasSrcMap()  // pointer to map
-                      : nullptr
-                    ),
+                    AMIList[i].comm(),      // for testing only
+                    AMIList[i].hasSrcMap(), // pointer to map
                     AMIList[i].tgtAddress(),
                     AMIList[i].tgtWeights()
                 )
@@ -756,7 +753,6 @@ void Foam::meshToMesh::mapTgtToSrc
         fvPatchField<Type>& srcField = result.boundaryFieldRef()[srcPatchi];
         const fvPatchField<Type>& tgtField = field.boundaryField()[tgtPatchi];
 
-
         // Clone and map (since rmap does not do general mapping)
         tmp<fvPatchField<Type>> tnewSrc
         (
@@ -768,11 +764,8 @@ void Foam::meshToMesh::mapTgtToSrc
                 distributedWeightedFvPatchFieldMapper
                 (
                     AMIList[i].singlePatchProc(),
-                    (
-                        (AMIList[i].distributed() && AMIList[i].comm() != -1)
-                      ? AMIList[i].hasTgtMap()  // pointer to map
-                      : nullptr
-                    ),
+                    AMIList[i].comm(),      // only used for testing
+                    AMIList[i].hasTgtMap(), // pointer to map
                     AMIList[i].srcAddress(),
                     AMIList[i].srcWeights()
                 )
