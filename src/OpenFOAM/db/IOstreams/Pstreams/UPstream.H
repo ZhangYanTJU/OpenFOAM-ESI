@@ -179,6 +179,9 @@ public:
 
     // Public Classes
 
+        //- Wrapper for OpenFOAM internal communicator index
+        class communicator;  // Forward Declaration
+
         //- Wrapper for MPI_Comm
         class Communicator;  // Forward Declaration
 
@@ -378,6 +381,25 @@ public:
 
                 //- Print un-directed graph in graphviz dot format
                 void printGraph(Ostream& os, int proci = 0) const;
+
+                //- Write the communication tree
+                Ostream& writeList(Ostream& os) const
+                {
+                    return tree_.writeList(os);
+                }
+
+
+            // Member / Friend Operators
+
+                //- Write the communication tree
+                friend Ostream& operator<<
+                (
+                    Ostream& os,
+                    const commsStructList& rhs
+                )
+                {
+                    return rhs.writeList(os);
+                }
         };
 
 
@@ -895,126 +917,6 @@ public:
             const label communicator,
             const bool withComponents = true
         );
-
-        //- Wrapper class for allocating/freeing communicators. Always invokes
-        //- allocateCommunicatorComponents() and freeCommunicatorComponents()
-        class communicator
-        {
-            label comm_;
-
-        public:
-
-            //- No copy construct
-            communicator(const communicator&) = delete;
-
-            //- No copy assignment
-            void operator=(const communicator&) = delete;
-
-            //- Default construct (a placeholder communicator)
-            communicator() noexcept : comm_(-1) {}
-
-            //- Move construct, takes ownership
-            communicator(communicator&& c) : comm_(c.comm_) { c.comm_ = -1; }
-
-            //- Allocate communicator for contiguous sub-ranks on given parent
-            communicator
-            (
-                //! The parent communicator
-                const label parentComm,
-                //! The contiguous sub-ranks of parent to use
-                const labelRange& subRanks
-            )
-            :
-                comm_(UPstream::newCommunicator(parentComm, subRanks))
-            {}
-
-            //- Allocate communicator for sub-ranks on given parent
-            communicator
-            (
-                //! The parent communicator
-                const label parentComm,
-                //! The sub-ranks of parent to use (negative values ignored)
-                const labelUList& subRanks
-            )
-            :
-                comm_(UPstream::newCommunicator(parentComm, subRanks))
-            {}
-
-            //- Factory Method :
-            //- Duplicate the given communicator
-            static communicator duplicate(const label parentComm)
-            {
-                communicator c;
-                c.comm_ = UPstream::dupCommunicator(parentComm);
-                return c;
-            }
-
-            //- Factory Method :
-            //- Split the communicator on the given \em colour.
-            static communicator split
-            (
-                //! The parent communicator
-                const label parentComm,
-                //! The colouring to select which ranks to include.
-                //! Negative values correspond to 'ignore'
-                const int colour,
-                //! Use MPI_Allgather+MPI_Comm_create_group vs MPI_Comm_split
-                const bool two_step = true
-            )
-            {
-                communicator c;
-                c.comm_ =
-                    UPstream::splitCommunicator(parentComm, colour, two_step);
-                return c;
-            }
-
-            //- Free allocated communicator
-            ~communicator() { UPstream::freeCommunicator(comm_); }
-
-            //- True if communicator is non-negative (ie, was allocated)
-            bool good() const noexcept { return (comm_ >= 0); }
-
-            //- The communicator label
-            label comm() const noexcept { return comm_; }
-
-            //- Release ownership of the communicator, return old value.
-            //  Leave further management to the caller
-            label release() noexcept { label c(comm_); comm_ = -1; return c; }
-
-            //- Free allocated communicator
-            void reset() { UPstream::freeCommunicator(comm_); comm_ = -1; }
-
-            //- Allocate with contiguous sub-ranks of parent communicator
-            void reset(label parent, const labelRange& subRanks)
-            {
-                UPstream::freeCommunicator(comm_);
-                comm_ = UPstream::newCommunicator(parent, subRanks);
-            }
-
-            //- Allocate with sub-ranks of parent communicator
-            void reset(label parent, const labelUList& subRanks)
-            {
-                UPstream::freeCommunicator(comm_);
-                comm_ = UPstream::newCommunicator(parent, subRanks);
-            }
-
-            //- Take ownership, free allocated communicator
-            //  \caution do not call as self-assignment
-            void reset(communicator&& c)
-            {
-                if (comm_ != c.comm_) UPstream::freeCommunicator(comm_);
-                comm_ = c.comm_;
-                c.comm_ = -1;
-            }
-
-            //- Move assignment, takes ownership
-            //  \caution do not call as self-assignment
-            void operator=(communicator&& c) { reset(std::move(c)); }
-
-            //- Cast to label - the same as comm()
-            operator label() const noexcept { return comm_; }
-        };
-
 
         //- Return physical processor number (i.e. processor number in
         //- worldComm) given communicator and processor
@@ -1836,6 +1738,168 @@ public:
         )
         {
             UPstream::mpiScatterv(send, counts, offsets, recv, count, comm);
+        }
+};
+
+/*---------------------------------------------------------------------------*\
+                   Class UPstream::communicator Declaration
+\*---------------------------------------------------------------------------*/
+
+//- Wrapper for internally indexed communicator label.
+//- Always invokes UPstream::allocateCommunicatorComponents()
+//- and UPstream::freeCommunicatorComponents()
+class UPstream::communicator
+{
+    // Private Data
+
+        //- The communicator label
+        label comm_;
+
+public:
+
+    // Generated Methods
+
+        //- No copy construct
+        communicator(const communicator&) = delete;
+
+        //- No copy assignment
+        void operator=(const communicator&) = delete;
+
+
+    // Constructors
+
+        //- Default construct (a placeholder communicator)
+        communicator() noexcept : comm_(-1) {}
+
+        //- Move construct, takes ownership
+        communicator(communicator&& c) : comm_(c.comm_) { c.comm_ = -1; }
+
+        //- Allocate communicator for contiguous sub-ranks on given parent
+        communicator
+        (
+            //! The parent communicator
+            const label parentComm,
+            //! The contiguous sub-ranks of parent to use
+            const labelRange& subRanks
+        )
+        :
+            comm_(UPstream::newCommunicator(parentComm, subRanks))
+        {}
+
+        //- Allocate communicator for sub-ranks on given parent
+        communicator
+        (
+            //! The parent communicator
+            const label parentComm,
+            //! The sub-ranks of parent to use (negative values ignored)
+            const labelUList& subRanks
+        )
+        :
+            comm_(UPstream::newCommunicator(parentComm, subRanks))
+        {}
+
+
+    // Destructor
+
+        //- Free allocated communicator
+        ~communicator() { UPstream::freeCommunicator(comm_); }
+
+
+    // Factory Methods
+
+        //- Duplicate the given communicator
+        static communicator duplicate(const label parentComm)
+        {
+            communicator c;
+            c.comm_ = UPstream::dupCommunicator(parentComm);
+            return c;
+        }
+
+        //- Factory Method :
+        //- Split the communicator on the given \em colour.
+        static communicator split
+        (
+            //! The parent communicator
+            const label parentComm,
+            //! The colouring to select which ranks to include.
+            //! Negative values correspond to 'ignore'
+            const int colour,
+            //! Use MPI_Allgather+MPI_Comm_create_group vs MPI_Comm_split
+            const bool two_step = true
+        )
+        {
+            communicator c;
+            c.comm_ = UPstream::splitCommunicator(parentComm, colour, two_step);
+            return c;
+        }
+
+
+    // Member Functions
+
+        //- True if communicator is non-negative (ie, was allocated)
+        bool good() const noexcept { return (comm_ >= 0); }
+
+        //- The communicator label
+        label comm() const noexcept { return comm_; }
+
+        //- Return non-const reference to this
+        communicator& constCast() const noexcept
+        {
+            return const_cast<communicator&>(*this);
+        }
+
+        //- Release ownership of the communicator, return old value.
+        //  Leave further management to the caller
+        label release() noexcept { label c(comm_); comm_ = -1; return c; }
+
+        //- Free allocated communicator
+        void reset() { UPstream::freeCommunicator(comm_); comm_ = -1; }
+
+        //- Allocate with contiguous sub-ranks of parent communicator
+        void reset(label parent, const labelRange& subRanks)
+        {
+            UPstream::freeCommunicator(comm_);
+            comm_ = UPstream::newCommunicator(parent, subRanks);
+        }
+
+        //- Allocate with sub-ranks of parent communicator
+        void reset(label parent, const labelUList& subRanks)
+        {
+            UPstream::freeCommunicator(comm_);
+            comm_ = UPstream::newCommunicator(parent, subRanks);
+        }
+
+        //- Take ownership, free managed communicator
+        void reset(communicator&& c)
+        {
+            if (this == &c) return;  // No self-assignment
+            if (comm_ != c.comm_) UPstream::freeCommunicator(comm_);
+            comm_ = c.comm_;
+            c.comm_ = -1;
+        }
+
+        //- Swap communicator labels
+        void swap(communicator& c) { std::swap(comm_, c.comm_); }
+
+
+    // Member Operators
+
+        //- Implicit cast to label - the same as comm()
+        operator label() const noexcept { return comm_; }
+
+        //- Move assignment, takes ownership
+        void operator=(communicator&& c) { reset(std::move(c)); }
+
+        //- Test for equality
+        bool operator==(const communicator& c) const noexcept
+        {
+            return (comm_ == c.comm_);
+        }
+
+        //- Test for inequality
+        bool operator!=(const communicator& c) const noexcept
+        {
+            return (comm_ != c.comm_);
         }
 };
 
