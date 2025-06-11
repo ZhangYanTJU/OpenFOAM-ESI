@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -485,7 +485,6 @@ labelPair findMinMax(const ListType& input, label start=0);
 //  <code> (list[i] < val) </code> for the test.
 //
 //  \tparam ListType  The input list type
-//  \tparam T  The value type (should normally be ListType::value_type)
 //
 //  \param input The sorted list to search
 //  \param val   The value for searching/comparing
@@ -508,7 +507,7 @@ label findSortedIndex
 //  <code> lessOp<T>(list[i], val) </code> for the test.
 //
 //  \tparam ListType  The input list type
-//  \tparam T  The value type (is often the same as ListType::value_type)
+//  \tparam T  The value type (usually the same as ListType::value_type)
 //  \tparam ComparePredicate  The type of the comparison functor that
 //      returns true for sorting below.
 //
@@ -585,21 +584,31 @@ namespace ListOps
 template<class T>
 struct appendEqOp
 {
-    void operator()(List<T>& x, const List<T>& y) const;
+    void operator()(List<T>& x, const UList<T>& y) const;
 };
 
 //- List helper to append y unique elements onto the end of x
 template<class T>
 struct uniqueEqOp
 {
-    void operator()(List<T>& x, const List<T>& y) const;
+    void operator()(List<T>& x, const UList<T>& y) const;
 };
 
 //- List helper to add y unique elements to x
 struct unionEqOp
 {
-    void operator()(labelList& x, const labelList& y) const;
+    void operator()(labelList& x, const labelUList& y) const;
 };
+
+
+//- Test for list equality with different but compatible data types.
+//- Eg, int32 and int64
+template<class Type1, class Type2>
+bool equal(const UList<Type1>& a, const UList<Type2>& b);
+
+//- Test for list equality with different but compatible data types.
+template<class Type1, class Type2, class BinaryPredicate>
+bool equal(const UList<Type1>& a, const UList<Type2>& b, BinaryPredicate pred);
 
 
 // Public classes

@@ -1081,7 +1081,7 @@ template<class T>
 void Foam::ListOps::appendEqOp<T>::operator()
 (
     List<T>& x,
-    const List<T>& y
+    const UList<T>& y
 ) const
 {
     if (y.size())
@@ -1102,7 +1102,7 @@ template<class T>
 void Foam::ListOps::uniqueEqOp<T>::operator()
 (
     List<T>& x,
-    const List<T>& y
+    const UList<T>& y
 ) const
 {
     if (y.size())
@@ -1111,6 +1111,7 @@ void Foam::ListOps::uniqueEqOp<T>::operator()
         {
             for (const T& val : y)
             {
+                // Not very efficient
                 x.push_uniq(val);
             }
         }
@@ -1119,6 +1120,37 @@ void Foam::ListOps::uniqueEqOp<T>::operator()
             x = y;
         }
     }
+}
+
+
+template<class Type1, class Type2>
+bool Foam::ListOps::equal
+(
+    const UList<Type1>& a,
+    const UList<Type2>& b
+)
+{
+    return
+    (
+        (a.size() == b.size())
+     && std::equal(a.cbegin(), a.cend(), b.cbegin())
+    );
+}
+
+
+template<class Type1, class Type2, class BinaryPredicate>
+bool Foam::ListOps::equal
+(
+    const UList<Type1>& a,
+    const UList<Type2>& b,
+    BinaryPredicate pred
+)
+{
+    return
+    (
+        (a.size() == b.size())
+     && std::equal(a.cbegin(), a.cend(), b.cbegin(), pred)
+    );
 }
 
 

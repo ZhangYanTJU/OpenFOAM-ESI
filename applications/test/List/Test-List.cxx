@@ -51,6 +51,7 @@ See also
 #include "IndirectList.H"
 #include "SubList.H"
 #include "SliceList.H"
+#include "SubField.H"
 #include "ListPolicy.H"
 
 #include <list>
@@ -280,6 +281,33 @@ int main(int argc, char *argv[])
         vector(6, 7, 8)
     };
     Info<< "list4: " << list4 << endl;
+
+    {
+        List<scalar> list4Mag = ListOps::create<scalar>
+        (
+            list4,
+            [](const auto& a){ return a.mag(); }
+        );
+
+        const auto equalMag = [](const auto& a, const auto& b)
+        {
+            return (Foam::mag(a) == Foam::mag(b));
+        };
+
+        Info<< "list4 (mag): " << list4Mag << endl;
+
+        bool same = ListOps::equal(list4, list4Mag, equalMag);
+        Info<< "mag(list4) == list4(mag): " << same << nl;
+
+        SubField<scalar>(list4Mag) *= -1;
+        same = ListOps::equal(list4, list4Mag, equalMag);
+        Info<< "mag(list4) == list4(mag): " << same << nl;
+
+        SubField<scalar>(list4Mag) *= 1.1;
+        same = ListOps::equal(list4, list4Mag, equalMag);
+        Info<< "mag(list4) == list4(mag): " << same << nl;
+    }
+
 
     List<vector> list5
     {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,8 +28,6 @@ License
 
 #include "ListOps.H"
 #include "CompactListList.H"
-#include "HashSet.H"
-#include <numeric>
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
@@ -115,7 +113,8 @@ Foam::Map<Foam::label> Foam::invertToMap(const labelUList& values)
 {
     const label len = values.size();
 
-    Map<label> inverse(2*len);
+    Map<label> inverse;
+    inverse.reserve(len);
 
     for (label i = 0 ; i < len; ++i)
     {
@@ -280,13 +279,14 @@ void Foam::inplaceReorder
 void Foam::ListOps::unionEqOp::operator()
 (
     labelList& x,
-    const labelList& y
+    const labelUList& y
 ) const
 {
     if (y.size())
     {
         if (x.size())
         {
+            // Using HashSet will likely change the order of list
             labelHashSet set(x);
             set.insert(y);
             x = set.toc();
