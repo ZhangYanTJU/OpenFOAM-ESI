@@ -233,6 +233,11 @@ class ensightWrite
         //- Update meshes, subMeshes etc.
         bool update();
 
+        //- Return the set of names of available patches and patch groups
+        //- corresponding to the given names
+        //  A convenience wrapper for \c polyBoundaryMesh::patchSet
+        wordRes patchNameSet(const UList<wordRe>& select) const;
+
 
     // Write
 

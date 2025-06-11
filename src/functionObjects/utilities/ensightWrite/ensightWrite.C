@@ -122,6 +122,29 @@ Foam::functionObjects::ensightWrite::ensightWrite
 }
 
 
+Foam::wordRes Foam::functionObjects::ensightWrite::patchNameSet
+(
+    const UList<wordRe>& select
+) const
+{
+    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+
+    const labelList patchIDs
+    (
+        pbm.patchSet(select).sortedToc()
+    );
+
+    wordRes names(patchIDs.size());
+
+    for (const label patchi : patchIDs)
+    {
+        names[patchi] = mesh_.boundary()[patchi].name();
+    }
+
+    return names;
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::functionObjects::ensightWrite::read(const dictionary& dict)
@@ -152,22 +175,27 @@ bool Foam::functionObjects::ensightWrite::read(const dictionary& dict)
             << "conversion of the boundaries" << endl;
     }
 
-    wordRes list;
-    if (dict.readIfPresent("patches", list))
-    {
-        list.uniq();
-        writeOpts_.patchSelection(list);
-    }
-    if (dict.readIfPresent("excludePatches", list))
-    {
-        list.uniq();
-        writeOpts_.patchExclude(list);
-    }
 
-    if (dict.readIfPresent("faceZones", list))
+    if (dict.found("patches"))
     {
-        list.uniq();
-        writeOpts_.faceZoneSelection(list);
+        writeOpts_.patchSelection
+        (
+            wordRes::uniq(patchNameSet(dict.get<wordRes>("patches")))
+        );
+    }
+    if (dict.found("excludePatches"))
+    {
+        writeOpts_.patchExclude
+        (
+            wordRes::uniq(patchNameSet(dict.get<wordRes>("excludePatches")))
+        );
+    }
+    if (dict.found("faceZones"))
+    {
+        writeOpts_.faceZoneSelection
+        (
+            wordRes::uniq(dict.get<wordRes>("faceZones"))
+        );
     }
 
 
