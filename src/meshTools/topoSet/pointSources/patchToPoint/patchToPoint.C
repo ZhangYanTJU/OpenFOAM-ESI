@@ -71,15 +71,10 @@ void Foam::patchToPoint::combine(topoSet& set, const bool add) const
     const pointMesh& pMesh = pointMesh::New(mesh_, IOobject::READ_IF_PRESENT);
     const pointBoundaryMesh& pbm = pMesh.boundary();
 
-    labelList patchIDs
+    const labelList patchIDs
     (
-        pbm.indices
-        (
-            selectedPatches_,
-            true        // useGroups
-        )
+        pbm.indices(selectedPatches_, true)  // useGroups = true
     );
-
 
     for (const label patchi : patchIDs)
     {
@@ -102,7 +97,7 @@ void Foam::patchToPoint::combine(topoSet& set, const bool add) const
         WarningInFunction
             << "Cannot find any patches matching "
             << flatOutput(selectedPatches_) << nl
-            //<< "Valid names: " << flatOutput(mesh_.boundaryMesh().names())
+            //<< "Valid names: " << flatOutput(pbm.names())
             << endl;
     }
 }

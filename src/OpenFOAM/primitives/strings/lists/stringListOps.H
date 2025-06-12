@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -370,12 +370,12 @@ labelList findMatching
     AccessOp aop = identityOp()
 );
 
-//- Return ids for items with matching names.
-//  Uses a combination of allow and deny lists
+//- Return ids for items with matching names,
+//- using a combination of allow and deny lists as per wordRes::filter
 //
-//  An empty 'allow' accepts everything not in 'deny'.
-//  A literal 'allow' match has higher priority than any 'deny'.
-//  A regex 'allow' match has lower priority than any 'deny'.
+//  An empty \em allow accepts everything not in \em deny.
+//  A literal \em allow match has higher priority than any \em deny.
+//  A regex \em allow match has lower priority than any \em deny.
 //
 //  Example (when applied to a list of words),
 //  \verbatim
@@ -386,7 +386,7 @@ labelList findMatching
 //     result:  (abc other val val1 wall1 wall2)
 //  \endverbatim
 //
-//  \return List indices for matches
+//  \returns identity list when allow/deny are both empty.
 template<class StringListType, class AccessOp = identityOp>
 labelList findMatching
 (

@@ -143,7 +143,7 @@ Foam::labelList Foam::stringListOps::findMatching
 
     if (pred.empty())
     {
-        // Accept all
+        // Fast-path: select all
         return identity(len);
     }
 
@@ -177,11 +177,10 @@ Foam::labelList Foam::stringListOps::findMatching
 {
     if (allow.empty() && deny.empty())
     {
-        // Accept all
+        // Fast-path: select all
         return identity(input.size());
     }
 
-    // Use combined accept/reject filter
     const wordRes::filter pred(allow, deny);
 
     return stringListOps::findMatching(input, pred, aop);

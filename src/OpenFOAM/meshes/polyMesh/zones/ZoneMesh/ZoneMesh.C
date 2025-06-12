@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -205,7 +205,11 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcGroupIDs() const
     // Remove groups that clash with zone names
     forAll(zones, zonei)
     {
-        if (groupLookup.erase(zones[zonei].name()))
+        if (groupLookup.empty())
+        {
+            break;  // Early termination
+        }
+        else if (groupLookup.erase(zones[zonei].name()))
         {
             WarningInFunction
                 << "Removed group '" << zones[zonei].name()
@@ -541,7 +545,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
     // Only check groups if requested and they exist
     const bool checkGroups = (useGroups && this->hasGroupIDs());
 
-    labelHashSet ids(0);
+    labelHashSet ids;
 
     if (checkGroups)
     {
@@ -557,7 +561,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
             {
                 if (matcher(iter.key()))
                 {
-                    // Hash ids associated with the group
+                    // Add ids associated with the group
                     ids.insert(iter.val());
                 }
             }
@@ -589,7 +593,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
 
             if (iter.good())
             {
-                // Hash ids associated with the group
+                // Add ids associated with the group
                 ids.insert(iter.val());
             }
         }
@@ -615,7 +619,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
         return this->indices(matcher.front(), useGroups);
     }
 
-    labelHashSet ids(0);
+    labelHashSet ids;
 
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
@@ -627,7 +631,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
         {
             if (matcher(iter.key()))
             {
-                // Hash the ids associated with the group
+                // Add ids associated with the group
                 ids.insert(iter.val());
             }
         }
@@ -649,19 +653,20 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
 template<class ZoneType, class MeshType>
 Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
 (
-    const wordRes& select,
-    const wordRes& ignore,
+    const wordRes& allow,
+    const wordRes& deny,
     const bool useGroups
 ) const
 {
-    if (ignore.empty())
+    if (allow.empty() && deny.empty())
     {
-        return this->indices(select, useGroups);
+        // Fast-path: select all
+        return identity(this->size());
     }
 
-    const wordRes::filter matcher(select, ignore);
+    const wordRes::filter matcher(allow, deny);
 
-    labelHashSet ids(0);
+    labelHashSet ids;
 
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
@@ -673,7 +678,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
         {
             if (matcher(iter.key()))
             {
-                // Add patch ids associated with the group
+                // Add ids associated with the group
                 ids.insert(iter.val());
             }
         }
