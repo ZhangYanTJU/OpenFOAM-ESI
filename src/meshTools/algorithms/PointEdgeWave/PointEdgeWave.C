@@ -72,8 +72,8 @@ template<class Type, class TrackingData>
 void Foam::PointEdgeWave<Type, TrackingData>::leaveDomain
 (
     const polyPatch& patch,
-    const labelList& patchPointLabels,
-    List<Type>& pointInfo
+    const labelUList& patchPointLabels,
+    UList<Type>& pointInfo
 ) const
 {
     const labelList& meshPoints = patch.meshPoints();
@@ -94,8 +94,8 @@ template<class Type, class TrackingData>
 void Foam::PointEdgeWave<Type, TrackingData>::enterDomain
 (
     const polyPatch& patch,
-    const labelList& patchPointLabels,
-    List<Type>& pointInfo
+    const labelUList& patchPointLabels,
+    UList<Type>& pointInfo
 ) const
 {
     const labelList& meshPoints = patch.meshPoints();
@@ -117,7 +117,7 @@ void Foam::PointEdgeWave<Type, TrackingData>::transform
 (
     const polyPatch& patch,
     const tensorField& rotTensor,
-    List<Type>& pointInfo
+    UList<Type>& pointInfo
 ) const
 {
     if (rotTensor.size() == 1)
@@ -630,8 +630,8 @@ template<class Type, class TrackingData>
 Foam::PointEdgeWave<Type, TrackingData>::PointEdgeWave
 (
     const polyMesh& mesh,
-    const labelList& changedPoints,
-    const List<Type>& changedPointsInfo,
+    const labelUList& changedPoints,
+    const UList<Type>& changedPointsInfo,
 
     UList<Type>& allPointInfo,
     UList<Type>& allEdgeInfo,
@@ -718,7 +718,7 @@ template<class Type, class TrackingData>
 void Foam::PointEdgeWave<Type, TrackingData>::setPointInfo
 (
     const labelList& changedPoints,
-    const List<Type>& changedPointsInfo
+    const UList<Type>& changedPointsInfo
 )
 {
     forAll(changedPoints, changedPointi)

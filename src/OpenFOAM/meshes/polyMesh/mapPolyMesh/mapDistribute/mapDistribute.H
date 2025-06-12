@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -176,25 +176,25 @@ class mapDistribute
 
         //- Helper function: copy transformElements without transformation
         template<class T>
-        void applyDummyTransforms(List<T>& field) const;
+        void applyDummyTransforms(UList<T>& field) const;
 
         template<class T, class TransformOp>
         void applyTransforms
         (
             const globalIndexAndTransform& globalTransforms,
-            List<T>& field,
+            UList<T>& field,
             const TransformOp& top
         ) const;
 
         //- Helper function: copy transformElements without transformation
         template<class T>
-        void applyDummyInverseTransforms(List<T>& field) const;
+        void applyDummyInverseTransforms(UList<T>& field) const;
 
         template<class T, class TransformOp>
         void applyInverseTransforms
         (
             const globalIndexAndTransform& globalTransforms,
-            List<T>& field,
+            UList<T>& field,
             const TransformOp& top
         ) const;
 
@@ -219,11 +219,14 @@ public:
             (
                 const vectorTensorTransform& vt,
                 const bool forward,
-                List<Type>& fld
+                UList<Type>& fld
             ) const
             {
-                const tensor T(forward ? vt.R() : vt.R().T());
-                transformList(T, fld);
+                if constexpr (is_rotational_vectorspace_v<Type>)
+                {
+                    const tensor rot(forward ? vt.R() : vt.R().T());
+                    transformList(rot, fld);
+                }
             }
 
             template<class Type>
@@ -234,9 +237,13 @@ public:
                 List<List<Type>>& flds
             ) const
             {
-                for (List<Type>& fld : flds)
+                if constexpr (is_rotational_vectorspace_v<Type>)
                 {
-                    operator()(vt, forward, fld);
+                    const tensor rot(forward ? vt.R() : vt.R().T());
+                    for (auto& fld : flds)
+                    {
+                        transformList(rot, fld);
+                    }
                 }
             }
 
@@ -244,9 +251,12 @@ public:
             template<class Type>
             void operator()(const coupledPolyPatch& cpp, UList<Type>& fld) const
             {
-                if (!cpp.parallel())
+                if constexpr (is_rotational_vectorspace_v<Type>)
                 {
-                    transformList(cpp.forwardT(), fld);
+                    if (!cpp.parallel())
+                    {
+                        transformList(cpp.forwardT(), fld);
+                    }
                 }
             }
 
@@ -255,9 +265,12 @@ public:
             void operator()(const coupledPolyPatch& cpp, Container<Type>& map)
             const
             {
-                if (!cpp.parallel())
+                if constexpr (is_rotational_vectorspace_v<Type>)
                 {
-                    transformList(cpp.forwardT(), map);
+                    if (!cpp.parallel())
+                    {
+                        transformList(cpp.forwardT(), map);
+                    }
                 }
             }
         };
@@ -271,17 +284,16 @@ public:
             (
                 const vectorTensorTransform& vt,
                 const bool forward,
-                List<point>& fld
+                UList<point>& fld
             ) const
             {
-                pointField pfld(std::move(fld));
                 if (forward)
                 {
-                    fld = vt.transformPosition(pfld);
+                    vt.transformPositionList(fld);
                 }
                 else
                 {
-                    fld = vt.invTransformPosition(pfld);
+                    vt.invTransformPositionList(fld);
                 }
             }
 
@@ -292,9 +304,19 @@ public:
                 List<List<point>>& flds
             ) const
             {
-                for (List<point>& fld : flds)
+                if (forward)
                 {
-                    operator()(vt, forward, fld);
+                    for (auto& fld : flds)
+                    {
+                        vt.transformPositionList(fld);
+                    }
+                }
+                else
+                {
+                    for (auto& fld : flds)
+                    {
+                        vt.invTransformPositionList(fld);
+                    }
                 }
             }
 
@@ -680,86 +702,6 @@ public:
             NotImplemented;
         }
 };
-
-
-// Template specialisation for primitives that do not need transform
-template<>
-void mapDistribute::transform::operator()
-(
-    const vectorTensorTransform&,
-    const bool,
-    List<label>&
-) const;
-template<>
-void mapDistribute::transform::operator()
-(
-    const coupledPolyPatch&,
-    UList<label>&
-) const;
-template<>
-void mapDistribute::transform::operator()
-(
-    const coupledPolyPatch&,
-    Map<label>&
-) const;
-template<>
-void mapDistribute::transform::operator()
-(
-    const coupledPolyPatch&,
-    EdgeMap<label>&
-) const;
-
-template<>
-void mapDistribute::transform::operator()
-(
-    const coupledPolyPatch&,
-    UList<scalar>&
-) const;
-template<>
-void mapDistribute::transform::operator()
-(
-    const vectorTensorTransform&,
-    const bool,
-    List<scalar>&
-) const;
-template<>
-void mapDistribute::transform::operator()
-(
-    const coupledPolyPatch&,
-    Map<scalar>&
-) const;
-template<>
-void mapDistribute::transform::operator()
-(
-    const coupledPolyPatch&,
-    EdgeMap<scalar>&
-) const;
-
-template<>
-void mapDistribute::transform::operator()
-(
-    const coupledPolyPatch& cpp,
-    UList<bool>& fld
-) const;
-template<>
-void mapDistribute::transform::operator()
-(
-    const vectorTensorTransform&,
-    const bool,
-    List<bool>&
-) const;
-template<>
-void mapDistribute::transform::operator()
-(
-    const coupledPolyPatch&,
-    Map<bool>&
-) const;
-template<>
-void mapDistribute::transform::operator()
-(
-    const coupledPolyPatch&,
-    EdgeMap<bool>&
-) const;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

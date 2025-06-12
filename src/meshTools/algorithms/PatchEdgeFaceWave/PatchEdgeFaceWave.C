@@ -390,8 +390,8 @@ template
 void Foam::PatchEdgeFaceWave<PrimitivePatchType, Type, TrackingData>::
 setEdgeInfo
 (
-    const labelList& changedEdges,
-    const List<Type>& changedEdgesInfo
+    const labelUList& changedEdges,
+    const UList<Type>& changedEdgesInfo
 )
 {
     forAll(changedEdges, changedEdgeI)

@@ -525,6 +525,7 @@ public:
         }
     }
 };
+
 class edgePointTransformOp
 {
 public:
@@ -543,25 +544,24 @@ public:
             points1[i] = fld[i].second();
         }
 
-        pointField points0New;
-        pointField points1New;
         if (forward)
         {
-            points0New = vt.transformPosition(points0);
-            points1New = vt.transformPosition(points1);
+            vt.transformPositionList(points0);
+            vt.transformPositionList(points1);
         }
         else
         {
-            points0New = vt.invTransformPosition(points0);
-            points1New = vt.invTransformPosition(points1);
+            vt.invTransformPositionList(points0);
+            vt.invTransformPositionList(points1);
         }
 
         forAll(fld, i)
         {
-            fld[i] = PointPair(points0New[i], points1New[i]);
+            fld[i] = PointPair(points0[i], points1[i]);
         }
     }
 };
+
 class edgePointFlipOp
 {
 public:
@@ -572,6 +572,7 @@ public:
         return newVal;
     }
 };
+
 void testEdgeFlip2(const polyMesh& mesh, Random& rndGen)
 {
     Info<< nl << "Testing edge-wise (oriented) data synchronisation." << endl;
@@ -759,13 +760,11 @@ class pointListOps
 {
 public:
 
-    void operator()(pointList& lhs, const pointList& rhs) const
+    void operator()(UList<point>& lhs, const UList<point>& rhs) const
     {
         forAll(lhs, i)
         {
-            point& l = lhs[i];
-            const point& r = rhs[i];
-            maxMagSqrEqOp<vector>()(l, r);
+            maxMagSqrEqOp<vector>()(lhs[i], rhs[i]);
         }
     }
 
@@ -773,38 +772,31 @@ public:
     (
         const vectorTensorTransform& vt,
         const bool forward,
-        List<pointList>& fld
+        UList<pointList>& fld
     ) const
     {
         if (forward)
         {
-            for (auto& elems : fld)
+            for (auto& pts : fld)
             {
-                for (auto& elem : elems)
-                {
-                    elem = vt.transformPosition(elem);
-                }
+                vt.transformPositionList(pts);
             }
         }
         else
         {
-            for (auto& elems : fld)
+            for (auto& pts : fld)
             {
-                for (auto& elem : elems)
-                {
-                    elem = vt.invTransformPosition(elem);
-                }
+                vt.invTransformPositionList(pts);
             }
         }
     }
 
     //- Transform patch-based field
-    void operator()(const coupledPolyPatch& cpp, List<pointList>& fld) const
+    void operator()(const coupledPolyPatch& cpp, UList<pointList>& fld) const
     {
         forAll(fld, facei)
         {
-            pointList& pts = fld[facei];
-            for (auto& pt : pts)
+            for (auto& pt : fld[facei])
             {
                 cpp.transformPosition(pt, facei);
             }

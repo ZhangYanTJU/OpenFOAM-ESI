@@ -35,7 +35,7 @@ License
 template<class T, class CombineOp, class NegateOp>
 void Foam::mapDistributeBase::flipAndCombine
 (
-    List<T>& lhs,
+    UList<T>& lhs,
     const UList<T>& rhs,
 
     const labelUList& map,
@@ -45,6 +45,9 @@ void Foam::mapDistributeBase::flipAndCombine
 )
 {
     const label len = map.size();
+
+    // FULLDEBUG: if (lhs.size() < max(map))  FatalError ...;
+    // FULLDEBUG: if (rhs.size() < len)  FatalError ...;
 
     if (hasFlip)
     {
@@ -82,7 +85,7 @@ void Foam::mapDistributeBase::flipAndCombine
 template<class T, class NegateOp>
 void Foam::mapDistributeBase::accessAndFlip
 (
-    List<T>& output,
+    UList<T>& output,
     const UList<T>& values,
     const labelUList& map,
     const bool hasFlip,
@@ -91,6 +94,7 @@ void Foam::mapDistributeBase::accessAndFlip
 {
     const label len = map.size();
 
+    // FULLDEBUG: if (values.size() < max(map))  FatalError ...;
     // FULLDEBUG: if (output.size() < len)  FatalError ...;
 
     if (hasFlip)
@@ -447,7 +451,7 @@ template<class T, class CombineOp, class NegateOp>
 void Foam::mapDistributeBase::distribute
 (
     const UPstream::commsTypes commsType,
-    const List<labelPair>& schedule,
+    const UList<labelPair>& schedule,
     const label constructSize,
     const labelListList& subMap,
     const bool subHasFlip,
@@ -894,7 +898,7 @@ template<class T, class NegateOp>
 void Foam::mapDistributeBase::distribute
 (
     const UPstream::commsTypes commsType,
-    const List<labelPair>& schedule,
+    const UList<labelPair>& schedule,
     const label constructSize,
     const labelListList& subMap,
     const bool subHasFlip,
@@ -1332,7 +1336,7 @@ template<class T>
 void Foam::mapDistributeBase::send
 (
     PstreamBuffers& pBufs,
-    const List<T>& field
+    const UList<T>& field
 ) const
 {
     // Stream data into buffer
@@ -1482,13 +1486,11 @@ void Foam::mapDistributeBase::distribute
     const int tag
 ) const
 {
-    values.shrink();
+    List<T> work(std::move(values));
 
-    List<T>& list = static_cast<List<T>&>(values);
+    distribute(commsType, work, tag);
 
-    distribute(commsType, list, tag);
-
-    values.setCapacity(list.size());
+    values = std::move(work);
 }
 
 

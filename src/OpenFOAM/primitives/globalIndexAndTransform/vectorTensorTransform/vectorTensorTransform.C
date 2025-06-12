@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,6 +61,13 @@ Foam::vectorTensorTransform::vectorTensorTransform(Istream& is)
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::vectorTensorTransform::checkRotation(const scalar tol)
+{
+    // Detect identity and zero rotations
+    hasR_ = !(R_.is_identity(tol) || Foam::mag(R_) < tol);
+}
+
+
 Foam::word Foam::name(const vectorTensorTransform& s)
 {
     OStringStream buf;
@@ -67,32 +75,6 @@ Foam::word Foam::name(const vectorTensorTransform& s)
     buf << '(' << s.t() << ',' << s.R() << ')';
 
     return buf.str();
-}
-
-
-template<>
-Foam::tmp<Foam::Field<bool>> Foam::vectorTensorTransform::transform
-(
-    const Field<bool>& fld
-) const
-{
-    return fld;
-}
-template<>
-Foam::tmp<Foam::Field<Foam::label>> Foam::vectorTensorTransform::transform
-(
-    const Field<label>& fld
-) const
-{
-    return fld;
-}
-template<>
-Foam::tmp<Foam::Field<Foam::scalar>> Foam::vectorTensorTransform::transform
-(
-    const Field<scalar>& fld
-) const
-{
-    return fld;
 }
 
 

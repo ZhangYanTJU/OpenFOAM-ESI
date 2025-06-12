@@ -281,8 +281,8 @@ public:
         //- Copy initial data into allEdgeInfo_
         void setEdgeInfo
         (
-            const labelList& changedEdges,
-            const List<Type>& changedEdgesInfo
+            const labelUList& changedEdges,
+            const UList<Type>& changedEdgesInfo
         );
 
         //- Propagate from edge to face.
@@ -377,22 +377,14 @@ public:
     (
         const vectorTensorTransform& vt,
         const bool forward,
-        List<Type>& fld
+        UList<Type>& fld
     ) const
     {
-        if (forward)
+        const tensor rot(forward ? vt.R() : vt.R().T());
+
+        for (auto& val : fld)
         {
-            forAll(fld, i)
-            {
-                fld[i].transform(mesh_, patch_, vt.R(), tol_, td_);
-            }
-        }
-        else
-        {
-            forAll(fld, i)
-            {
-                fld[i].transform(mesh_, patch_, vt.R().T(), tol_, td_);
-            }
+            val.transform(mesh_, patch_, rot, tol_, td_);
         }
     }
 };

@@ -294,9 +294,9 @@ void Foam::tetDecomposer::splitBoundaryFaces
     (
         mesh_,
         boundaryTris,
-        [](faceList& result, const faceList& input)
+        [](faceList& result, const UList<face>& input)
         {
-            if (!result.size())
+            if (result.empty())
             {
                 result = input;
             }
@@ -307,9 +307,9 @@ void Foam::tetDecomposer::splitBoundaryFaces
     (
         mesh_,
         boundaryQuads,
-        [](faceList& result, const faceList& input)
+        [](faceList& result, const UList<face>& input)
         {
-            if (!result.size())
+            if (result.empty())
             {
                 result = input;
             }

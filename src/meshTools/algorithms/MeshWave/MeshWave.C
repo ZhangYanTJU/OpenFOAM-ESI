@@ -36,8 +36,8 @@ template<class Type, class TrackingData>
 Foam::MeshWave<Type, TrackingData>::MeshWave
 (
     const polyMesh& mesh,
-    const labelList& changedFaces,
-    const List<Type>& changedFacesInfo,
+    const labelUList& changedFaces,
+    const UList<Type>& changedFacesInfo,
     const label maxIter,
     TrackingData& td
 )
@@ -63,9 +63,9 @@ template<class Type, class TrackingData>
 Foam::MeshWave<Type, TrackingData>::MeshWave
 (
     const polyMesh& mesh,
-    const labelList& changedFaces,
-    const List<Type>& changedFacesInfo,
-    const List<Type>& allCellInfo,
+    const labelUList& changedFaces,
+    const UList<Type>& changedFacesInfo,
+    const UList<Type>& allCellInfo,
     const label maxIter,
     TrackingData& td
 )

@@ -62,7 +62,7 @@ void Foam::weightedPosition::getPoints
     List<point>& out
 )
 {
-    out.setSize(in.size());
+    out.resize_nocopy(in.size());
     forAll(in, i)
     {
         out[i] = in[i].second();
@@ -78,11 +78,24 @@ void Foam::weightedPosition::getPoints
 void Foam::weightedPosition::setPoints
 (
     const UList<point>& in,
-    List<weightedPosition>& out
+    UList<weightedPosition>& out
 )
 {
-    out.setSize(in.size());
-    forAll(in, i)
+    #ifdef FULLDEBUG
+    if (in.size() != out.size())
+    {
+        FatalErrorInFunction
+            << "Mismatch in size. Number of points:" << in.size()
+            << " != number of weighted positions:" << out.size()
+            << exit(FatalError);
+    }
+
+    const label len = out.size();
+    #else
+    const label len = Foam::min(in.size(), out.size());
+    #endif
+
+    for (label i = 0; i < len; ++i)
     {
         out[i].second() = out[i].first()*in[i];
     }
@@ -104,7 +117,7 @@ void Foam::weightedPosition::operator()
 (
     const vectorTensorTransform& vt,
     const bool forward,
-    List<weightedPosition>& fld
+    UList<weightedPosition>& fld
 ) const
 {
     pointField pfld;
@@ -112,11 +125,11 @@ void Foam::weightedPosition::operator()
 
     if (forward)
     {
-        pfld = vt.transformPosition(pfld);
+        vt.transformPositionList(pfld);
     }
     else
     {
-        pfld = vt.invTransformPosition(pfld);
+        vt.invTransformPositionList(pfld);
     }
 
     setPoints(pfld, fld);
@@ -130,7 +143,7 @@ void Foam::weightedPosition::operator()
     List<List<weightedPosition>>& flds
 ) const
 {
-    for (List<weightedPosition>& fld : flds)
+    for (auto& fld : flds)
     {
         operator()(vt, forward, fld);
     }

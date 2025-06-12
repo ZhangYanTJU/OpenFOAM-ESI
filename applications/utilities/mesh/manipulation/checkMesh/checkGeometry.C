@@ -39,8 +39,7 @@ Foam::label Foam::findOppositeWedge
          && isA<wedgePolyPatch>(patches[patchi])
         )
         {
-            const wedgePolyPatch& pp =
-                refCast<const wedgePolyPatch>(patches[patchi]);
+            const auto& pp = refCast<const wedgePolyPatch>(patches[patchi]);
 
             // Calculate (cos of) angle to wpp (not pp!) centre normal
             scalar ppCosAngle = wpp.centreNormal() & pp.n();
@@ -80,8 +79,7 @@ bool Foam::checkWedges
     {
         if (patches[patchi].size() && isA<wedgePolyPatch>(patches[patchi]))
         {
-            const wedgePolyPatch& pp =
-                refCast<const wedgePolyPatch>(patches[patchi]);
+            const auto& pp = refCast<const wedgePolyPatch>(patches[patchi]);
 
             scalar wedgeAngle = acos(pp.cosAngle());
 
@@ -105,7 +103,7 @@ bool Foam::checkWedges
                 return true;
             }
 
-            const wedgePolyPatch& opp =
+            const auto& opp =
                 refCast<const wedgePolyPatch>(patches[oppositePatchi]);
 
 
@@ -275,17 +273,19 @@ namespace Foam
         void operator()
         (
             const coupledPolyPatch& cpp,
-            List<pointField>& pts
+            UList<pointField>& pts
         ) const
         {
-            // Each element of pts is all the points in the face. Convert into
-            // lists of size cpp to transform.
+            // Each element of pts is all the points in the face.
+            // Convert into lists of size cpp to transform.
 
             List<pointField> newPts(pts.size());
             forAll(pts, facei)
             {
-                newPts[facei].setSize(pts[facei].size());
+                newPts[facei].resize(pts[facei].size());
             }
+
+            pointField ptsAtIndex(pts.size());
 
             label index = 0;
             while (true)
@@ -293,7 +293,7 @@ namespace Foam
                 label n = 0;
 
                 // Extract for every face the i'th position
-                pointField ptsAtIndex(pts.size(), Zero);
+                ptsAtIndex = Zero;
                 forAll(cpp, facei)
                 {
                     const pointField& facePts = pts[facei];
@@ -326,7 +326,8 @@ namespace Foam
                 index++;
             }
 
-            pts.transfer(newPts);
+            // Transfer newPts -> pts
+            std::move(newPts.begin(), newPts.end(), pts.begin());
         }
     };
 }
@@ -352,10 +353,7 @@ bool Foam::checkCoupledPoints
     {
         if (patches[patchi].coupled())
         {
-            const coupledPolyPatch& cpp = refCast<const coupledPolyPatch>
-            (
-                patches[patchi]
-            );
+            const auto& cpp = refCast<const coupledPolyPatch>(patches[patchi]);
 
             forAll(cpp, i)
             {
@@ -387,8 +385,7 @@ bool Foam::checkCoupledPoints
     {
         if (patches[patchi].coupled())
         {
-            const coupledPolyPatch& cpp =
-                refCast<const coupledPolyPatch>(patches[patchi]);
+            const auto& cpp = refCast<const coupledPolyPatch>(patches[patchi]);
 
             if (cpp.owner())
             {
@@ -1023,7 +1020,7 @@ Foam::label Foam::checkGeometry
         {
             if (isA<cyclicAMIPolyPatch>(pbm[patchi]))
             {
-                const cyclicAMIPolyPatch& cpp =
+                const auto& cpp =
                     refCast<const cyclicAMIPolyPatch>(pbm[patchi]);
 
                 if (cpp.owner())
@@ -1058,7 +1055,7 @@ Foam::label Foam::checkGeometry
 
                         if (isA<cyclicACMIPolyPatch>(pbm[patchi]))
                         {
-                            const cyclicACMIPolyPatch& pp =
+                            const auto& pp =
                                 refCast<const cyclicACMIPolyPatch>(pbm[patchi]);
 
                             scalarField mergedMask;
@@ -1108,8 +1105,9 @@ Foam::label Foam::checkGeometry
 
                         if (isA<cyclicACMIPolyPatch>(pbm[patchi]))
                         {
-                            const cyclicACMIPolyPatch& pp =
+                            const auto& pp =
                                 refCast<const cyclicACMIPolyPatch>(pbm[patchi]);
+
                             scalarField mergedMask;
                             globalFaces().gather
                             (

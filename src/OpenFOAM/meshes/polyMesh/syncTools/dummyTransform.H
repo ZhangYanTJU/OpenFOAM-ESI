@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,17 +47,27 @@ namespace Foam
 class dummyTransform
 {
 public:
+
     template<class T>
     void operator()
     (
         const vectorTensorTransform& vt,
         const bool forward,
-        List<T>& fld
+        UList<T>& fld
+    ) const
+    {}
+
+    template<class Type>
+    void operator()
+    (
+        const vectorTensorTransform& vt,
+        const bool forward,
+        List<List<Type>>& flds
     ) const
     {}
 
     template<class T>
-    void operator()(const coupledPolyPatch& cpp, Field<T>& fld) const
+    void operator()(const coupledPolyPatch& cpp, UList<T>& fld) const
     {}
 
     template<class T, template<class> class Container>
