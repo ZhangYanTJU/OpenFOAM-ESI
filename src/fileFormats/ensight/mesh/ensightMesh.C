@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,34 +31,11 @@ License
 #include "polyMesh.H"
 #include "emptyPolyPatch.H"
 #include "processorPolyPatch.H"
-#include "stringListOps.H"   // For stringListOps::findMatching()
+#include "ListOps.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 const Foam::label Foam::ensightMesh::internalZone = -1;
-
-
-// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
-// Patch names without processor patches
-static wordList nonProcessorPatchNames(const polyBoundaryMesh& bmesh)
-{
-    #ifdef FULLDEBUG
-    // Patches are output. Check that they are synced.
-    bmesh.checkParallelSync(true);
-    #endif
-
-    wordList patchNames(bmesh.names());
-    patchNames.resize(bmesh.nNonProcessor());
-
-    return patchNames;
-}
-
-
-} // End namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -141,63 +118,69 @@ void Foam::ensightMesh::correct()
 {
     clear();
 
-    const wordRes& czMatcher = option().cellZoneSelection();
-    const wordRes& fzMatcher = option().faceZoneSelection();
+    const auto& pbm = mesh_.boundaryMesh();
 
-    // Possible cellZones
-    const wordList czNames =
-    (
+    // Selected patch indices
+    labelList patchIds;
+
+    if (option().useBoundaryMesh())
+    {
+        patchIds = pbm.indices
         (
-            option().useCellZones()
-         && (!czMatcher.empty() || option().useInternalMesh())
-        )
-      ? mesh_.cellZones().names()
-      : wordList()
-    );
-
-    const labelList czoneIds =
-    (
-        czMatcher.empty()
-      ? identity(czNames.size())        // All
-      : czMatcher.matching(czNames)     // Selected names
-    );
-
-
-    // Possible faceZones
-    const wordList fzNames =
-    (
-        option().useFaceZones()
-      ? mesh_.faceZones().names()
-      : wordList()
-    );
-
-    const labelList fzoneIds =
-    (
-        fzMatcher.empty()
-      ? identity(fzNames.size())        // All
-      : fzMatcher.matching(fzNames)     // Selected names
-    );
-
-
-    // Possible patchNames
-    const wordList patchNames =
-    (
-        option().useBoundaryMesh()
-      ? nonProcessorPatchNames(mesh_.boundaryMesh())
-      : wordList()
-    );
-
-    const labelList patchIds =
-    (
-        option().useBoundaryMesh()
-      ? stringListOps::findMatching
-        (
-            patchNames,
             option().patchSelection(),
             option().patchExclude()
-        )
-      : labelList()
-    );
+        );
+
+        // Prune undesirable patches - empty and processor patches
+        label count = 0;
+        for (const label patchi : patchIds)
+        {
+            const auto& pp = pbm[patchi];
+
+            if (isType<emptyPolyPatch>(pp))
+            {
+                continue;
+            }
+            else if (isA<processorPolyPatch>(pp))
+            {
+                break;  // No processor patches
+            }
+
+            patchIds[count] = patchi;
+            ++count;
+        }
+        patchIds.resize(count);
+    }
+
+
+    // Selection of cellZones
+    const auto& czMatcher = option().cellZoneSelection();
+
+    // Selected cell zone indices
+    labelList czoneIds;
+
+    if (option().useCellZones())
+    {
+        // Use allow/deny to have desired behaviour with empty selection
+        czoneIds = mesh_.cellZones().indices
+        (
+            option().cellZoneSelection(),
+            option().cellZoneExclude()
+        );
+    }
+
+    // Selected face zone indices
+    labelList fzoneIds;
+
+    if (option().useFaceZones())
+    {
+        // Use allow/deny to have desired behaviour with empty selection
+        fzoneIds = mesh_.faceZones().indices
+        (
+            option().faceZoneSelection(),
+            option().faceZoneExclude()
+        );
+    }
 
 
     // Track which cells are in a zone or not
@@ -210,8 +193,8 @@ void Foam::ensightMesh::correct()
     // cellZones first
     for (const label zoneId : czoneIds)
     {
-        const word& zoneName = czNames[zoneId];
-        const cellZone& zn = mesh_.cellZones()[zoneId];
+        const auto& zn = mesh_.cellZones()[zoneId];
+        const auto& zoneName = zn.name();
 
         if (returnReduceOr(!zn.empty()))
         {
@@ -323,7 +306,7 @@ void Foam::ensightMesh::correct()
         // Ensure full mesh coverage
         excludeFace.resize(mesh_.nFaces());
 
-        for (const polyPatch& p : mesh_.boundaryMesh())
+        for (const polyPatch& p : pbm)
         {
             const auto* cpp = isA<coupledPolyPatch>(p);
 
@@ -344,8 +327,8 @@ void Foam::ensightMesh::correct()
     // Patches
     for (const label patchId : patchIds)
     {
-        const word& patchName = patchNames[patchId];
-        const polyPatch& p = mesh_.boundaryMesh()[patchId];
+        const auto& p = pbm[patchId];
+        const auto& patchName = p.name();
 
         if (isA<emptyPolyPatch>(p))
         {
@@ -386,11 +369,10 @@ void Foam::ensightMesh::correct()
 
 
     // Face zones
-
     for (const label zoneId : fzoneIds)
     {
-        const word& zoneName = fzNames[zoneId];
-        const faceZone& zn = mesh_.faceZones()[zoneId];
+        const auto& zn = mesh_.faceZones()[zoneId];
+        const auto& zoneName = zn.name();
 
         ensightFaces& part = faceZoneParts_(zoneId);
 
