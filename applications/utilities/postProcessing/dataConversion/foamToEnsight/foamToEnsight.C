@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -406,33 +406,26 @@ int main(int argc, char *argv[])
 
     // Field selection/deselection
     wordRes includedFields, excludedFields;
-    autoPtr<wordRes::filter> fieldSelector(nullptr);
     const bool doConvertFields = !args.found("no-fields");
     if (doConvertFields)
     {
-        bool resetFilter = false;
         if (args.readListIfPresent<wordRe>("fields", includedFields))
         {
-            resetFilter = true;
             Info<< "Including fields "
                 << flatOutput(includedFields) << nl << endl;
         }
         if (args.readListIfPresent<wordRe>("exclude-fields", excludedFields))
         {
-            resetFilter = true;
             Info<< "Excluding fields "
                 << flatOutput(excludedFields) << nl << endl;
         }
-        if (resetFilter)
-        {
-            fieldSelector =
-                autoPtr<wordRes::filter>::New(includedFields, excludedFields);
-        }
     }
-    else if (doConvertFields)
+    else
     {
         Info<< "Field conversion disabled with the '-no-fields' option" << nl;
     }
+
+    const wordRes::filter fieldSelector(includedFields, excludedFields);
 
     // ------------------------------------------------------------------------
 
