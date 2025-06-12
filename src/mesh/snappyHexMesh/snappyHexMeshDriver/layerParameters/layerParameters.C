@@ -344,7 +344,7 @@ Foam::layerParameters::layerParameters
 )
 :
     dict_(dict),
-    dryRun_(dryRun),
+    //dryRun_(dryRun),
     numLayers_(boundaryMesh.size(), -1),
     relativeSizes_
     (

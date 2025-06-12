@@ -95,7 +95,7 @@ private:
         const dictionary dict_;
 
         //- In dry-run mode?
-        const bool dryRun_;
+        //const bool dryRun_;
 
 
         // Per patch (not region!) information

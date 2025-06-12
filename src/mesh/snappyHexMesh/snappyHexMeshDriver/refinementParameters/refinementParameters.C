@@ -101,8 +101,8 @@ Foam::refinementParameters::refinementParameters
     balanceAtEnd_
     (
         dict.getOrDefault("balanceAtEnd", false)
-    ),
-    dryRun_(dryRun)
+    )
+    //dryRun_(dryRun)
 {
     point locationInMesh;
     List<Tuple2<point, word>> pointsToZone;

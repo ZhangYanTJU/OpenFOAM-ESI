@@ -126,7 +126,7 @@ class refinementParameters
         //- Force final balancing after castellation
         const bool balanceAtEnd_;
 
-        const bool dryRun_;
+        //const bool dryRun_;
 
 
     // Private Member Functions

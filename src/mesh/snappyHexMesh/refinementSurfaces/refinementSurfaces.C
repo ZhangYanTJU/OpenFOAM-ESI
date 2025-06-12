@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022,2024 OpenCFD Ltd.
+    Copyright (C) 2015-2022,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -355,12 +355,17 @@ Foam::refinementSurfaces::refinementSurfaces
             if (dict.found("regions"))
             {
                 const dictionary& regionsDict = dict.subDict("regions");
+                wordHashSet unmatchedRegionKeys(regionsDict.toc());
                 const wordList& regionNames = surface.regions();
-
                 forAll(regionNames, regionI)
                 {
-                    if (regionsDict.found(regionNames[regionI]))
+                    const entry* erPtr =
+                        regionsDict.findEntry(regionNames[regionI], keyType::REGEX);
+                    if (erPtr)
                     {
+                        const dictionary& dict = erPtr->dict();
+                        unmatchedRegionKeys.erase(erPtr->keyword());
+
                         // Get the dictionary for region
                         const dictionary& regionDict = regionsDict.subDict
                         (
@@ -512,6 +517,15 @@ Foam::refinementSurfaces::refinementSurfaces
                             regionBufferLayers[surfI].insert(regionI, s);
                         }
                     }
+                }
+                if (unmatchedRegionKeys.size() > 0)
+                {
+                    IOWarningInFunction(surfacesDict)
+                        << "Not all entries in refinementSurfaces.regions"
+                        << " dictionary for surface " << names_[surfI]
+                        << " were used. The following entries were not used : "
+                        << unmatchedRegionKeys.sortedToc()
+                        << endl;
                 }
             }
             surfI++;

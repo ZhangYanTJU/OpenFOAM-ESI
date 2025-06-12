@@ -76,8 +76,8 @@ Foam::snapParameters::snapParameters(const dictionary& dict, const bool dryRun)
         dict.getOrDefault("nFaceSplitInterval", labelMin)
     ),
     concaveAngle_(dict.getOrDefault<scalar>("concaveAngle", 45)),
-    minAreaRatio_(dict.getOrDefault<scalar>("minAreaRatio", 0.3)),
-    dryRun_(dryRun)
+    minAreaRatio_(dict.getOrDefault<scalar>("minAreaRatio", 0.3))
+    //dryRun_(dryRun)
 {}
 
 

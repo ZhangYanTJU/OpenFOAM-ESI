@@ -97,7 +97,7 @@ class snapParameters
         const scalar minAreaRatio_;
 
         //- in dry-run mode
-        const bool dryRun_;
+        //const bool dryRun_;
 
 
     // Private Member Functions
