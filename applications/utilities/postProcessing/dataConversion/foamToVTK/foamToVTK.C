@@ -166,56 +166,54 @@ Note
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-labelList getSelectedPatches
-(
-    const polyBoundaryMesh& patches,
-    const autoPtr<wordRes::filter>& patchSelector
-)
+namespace Foam
 {
-    labelList indices;
 
-    if (patchSelector && !patchSelector().empty())
+// Simple wrapper for polyBoundaryMesh::indices() with some additional logic
+struct polyBoundaryPatchSelector
+{
+    wordRes allow_;
+    wordRes deny_;
+
+    void clear()
     {
-        // Name-based selection
-        indices =
-        (
-            stringListOps::findMatching
-            (
-                patches,
-                patchSelector(),
-                nameOp<polyPatch>()
-            )
-        );
-    }
-    else
-    {
-        indices = identity(patches.size());
+        allow_.clear();
+        deny_.clear();
     }
 
-    // Remove undesirable patches
-
-    label count = 0;
-    for (const label patchi : indices)
+    //- Forward to polyBoundaryMesh::indices() with additional handling.
+    //  Prune emptyPolyPatch (always) and processorPolyPatch (in parallel)
+    labelList indices(const polyBoundaryMesh& pbm) const
     {
-        const polyPatch& pp = patches[patchi];
+        labelList ids = pbm.indices(allow_, deny_);
 
-        if (isType<emptyPolyPatch>(pp))
+        const bool excludeProcPatches = UPstream::parRun();
+
+        // Prune undesirable patches
+        label count = 0;
+        for (const label patchi : ids)
         {
-            continue;
-        }
-        else if (UPstream::parRun() && bool(isA<processorPolyPatch>(pp)))
-        {
-            break; // No processor patches for parallel output
+            const auto& pp = pbm[patchi];
+
+            if (isType<emptyPolyPatch>(pp))
+            {
+                continue;
+            }
+            else if (excludeProcPatches && bool(isA<processorPolyPatch>(pp)))
+            {
+                break;  // No processor patches for parallel output
+            }
+
+            ids[count] = patchi;
+            ++count;
         }
 
-        indices[count] = patchi;
-        ++count;
+        ids.resize(count);
+        return ids;
     }
+};
 
-    indices.resize(count);
-
-    return indices;
-}
+} // End namespace Foam
 
 
 //
@@ -552,44 +550,37 @@ int main(int argc, char *argv[])
     }
 
     // Patch selection/deselection
-    wordRes includedPatches, excludedPatches;
-    autoPtr<wordRes::filter> patchSelector(nullptr);
+    polyBoundaryPatchSelector patchSelector;
+
     if (doBoundary)
     {
-        bool resetFilter = false;
-        if (args.readListIfPresent<wordRe>("patches", includedPatches))
+        if
+        (
+            auto& slot = patchSelector.allow_;
+            args.readListIfPresent<wordRe>("patches", slot)
+        )
         {
-            resetFilter = true;
-            Info<< "Including patches "
-                << flatOutput(includedPatches) << nl << endl;
+            Info<< "Including patches " << flatOutput(slot) << nl << endl;
         }
-        if (args.readListIfPresent<wordRe>("exclude-patches", excludedPatches))
+        if
+        (
+            auto& slot = patchSelector.deny_;
+            args.readListIfPresent<wordRe>("exclude-patches", slot)
+        )
         {
-            resetFilter = true;
-            Info<< "Excluding patches "
-                << flatOutput(excludedPatches) << nl << endl;
-        }
-
-        if (resetFilter)
-        {
-            patchSelector =
-                autoPtr<wordRes::filter>::New(includedPatches, excludedPatches);
+            Info<< "Excluding patches " << flatOutput(slot) << nl << endl;
         }
     }
 
     // Field selection/deselection
     wordRes includedFields, excludedFields;
-    autoPtr<wordRes::filter> fieldSelector(nullptr);
     bool doConvertFields = !args.found("no-fields");
     if (doConvertFields)
     {
-        bool resetFilter = false;
         if (args.readListIfPresent<wordRe>("fields", includedFields))
         {
             Info<< "Including fields "
                 << flatOutput(includedFields) << nl << endl;
-
-            resetFilter = !includedFields.empty();
 
             if (includedFields.empty())
             {
@@ -603,22 +594,22 @@ int main(int argc, char *argv[])
         }
         if (args.readListIfPresent<wordRe>("exclude-fields", excludedFields))
         {
-            resetFilter = true;
             Info<< "Excluding fields "
                 << flatOutput(excludedFields) << nl << endl;
         }
 
-        if (resetFilter && doConvertFields)
+        if (!doConvertFields)
         {
-            fieldSelector =
-                autoPtr<wordRes::filter>::New(includedFields, excludedFields);
+            includedFields.clear();
+            excludedFields.clear();
         }
     }
-    else if (doConvertFields)
+    else
     {
         Info<< "Field conversion disabled with the '-no-fields' option" << nl;
     }
 
+    const wordRes::filter fieldSelector(includedFields, excludedFields);
 
     // Non-mandatory
     const wordRes selectedFaceZones(args.getList<wordRe>("faceZones", false));
@@ -799,10 +790,10 @@ int main(int argc, char *argv[])
                         IOobjectOption::NO_REGISTER
                     );
 
-                if (fieldSelector && !fieldSelector().empty())
+                if (fieldSelector)
                 {
-                    objects.filterObjects(fieldSelector());
-                    faObjects.filterObjects(fieldSelector());
+                    objects.filterObjects(fieldSelector);
+                    faObjects.filterObjects(fieldSelector);
                 }
 
                 // Remove "*_0" restart fields

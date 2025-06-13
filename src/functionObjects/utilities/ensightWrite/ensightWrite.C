@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -122,29 +122,6 @@ Foam::functionObjects::ensightWrite::ensightWrite
 }
 
 
-Foam::wordRes Foam::functionObjects::ensightWrite::patchNameSet
-(
-    const UList<wordRe>& select
-) const
-{
-    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
-
-    const labelList patchIDs
-    (
-        pbm.patchSet(select).sortedToc()
-    );
-
-    wordRes names(patchIDs.size());
-
-    for (const label patchi : patchIDs)
-    {
-        names[patchi] = mesh_.boundary()[patchi].name();
-    }
-
-    return names;
-}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::functionObjects::ensightWrite::read(const dictionary& dict)
@@ -175,27 +152,21 @@ bool Foam::functionObjects::ensightWrite::read(const dictionary& dict)
             << "conversion of the boundaries" << endl;
     }
 
+    if (wordRes list; dict.readIfPresent("patches", list))
+    {
+        list.uniq();  // usually a no-op
+        writeOpts_.patchSelection(std::move(list));
+    }
+    if (wordRes list; dict.readIfPresent("excludePatches", list))
+    {
+        list.uniq();  // usually a no-op
+        writeOpts_.patchExclude(std::move(list));
+    }
 
-    if (dict.found("patches"))
+    if (wordRes list; dict.readIfPresent("faceZones", list))
     {
-        writeOpts_.patchSelection
-        (
-            wordRes::uniq(patchNameSet(dict.get<wordRes>("patches")))
-        );
-    }
-    if (dict.found("excludePatches"))
-    {
-        writeOpts_.patchExclude
-        (
-            wordRes::uniq(patchNameSet(dict.get<wordRes>("excludePatches")))
-        );
-    }
-    if (dict.found("faceZones"))
-    {
-        writeOpts_.faceZoneSelection
-        (
-            wordRes::uniq(dict.get<wordRes>("faceZones"))
-        );
+        list.uniq();  // usually a no-op
+        writeOpts_.faceZoneSelection(std::move(list));
     }
 
 

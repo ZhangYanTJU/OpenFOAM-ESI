@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -292,11 +292,11 @@ public:
         //- Using boundary?
         bool useBoundaryMesh() const noexcept;
 
-        //- Using faceZones?
-        bool useFaceZones() const noexcept;
-
         //- Using cellZones?
         bool useCellZones() const noexcept;
+
+        //- Using faceZones?
+        bool useFaceZones() const noexcept;
 
         //- Selection of patches. Empty if unspecified.
         const wordRes& patchSelection() const noexcept
@@ -304,22 +304,34 @@ public:
             return patchInclude_;
         }
 
-        //- Selection of black listed patches. Empty if unspecified.
+        //- Excluded patches. Empty if unspecified.
         const wordRes& patchExclude() const noexcept
         {
             return patchExclude_;
         }
 
-        //- Selection of faceZones. Empty if unspecified.
+        //- Selection of cell zones. Empty if unspecified.
+        const wordRes& cellZoneSelection() const noexcept
+        {
+            return cellZoneInclude_;
+        }
+
+        //- Excluded cell zones. Future use
+        const wordRes& cellZoneExclude() const noexcept
+        {
+            return wordRes::null();
+        }
+
+        //- Selection of face zones. Empty if unspecified.
         const wordRes& faceZoneSelection() const noexcept
         {
             return faceZoneInclude_;
         }
 
-        //- Selection of faceZones. Empty if unspecified.
-        const wordRes& cellZoneSelection() const noexcept
+        //- Excluded face zones. Future use
+        const wordRes& faceZoneExclude() const noexcept
         {
-            return cellZoneInclude_;
+            return wordRes::null();
         }
 
 
@@ -356,17 +368,17 @@ public:
         //- Define patch selection to exclude
         void patchExclude(List<wordRe>&& patterns);
 
-        //- Define faceZone selection matcher
-        void faceZoneSelection(const UList<wordRe>& patterns);
-
-        //- Define faceZone selection matcher
-        void faceZoneSelection(List<wordRe>&& patterns);
-
         //- Define cellZone selection matcher
         void cellZoneSelection(const UList<wordRe>& patterns);
 
         //- Define cellZone selection matcher
         void cellZoneSelection(List<wordRe>&& patterns);
+
+        //- Define faceZone selection matcher
+        void faceZoneSelection(const UList<wordRe>& patterns);
+
+        //- Define faceZone selection matcher
+        void faceZoneSelection(List<wordRe>&& patterns);
 
 
     // Output

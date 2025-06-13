@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -44,10 +44,10 @@ forAll(meshes, regioni)
             IOobjectOption::NO_REGISTER
         );
 
-        if (fieldSelector && !fieldSelector().empty())
+        if (fieldSelector)
         {
-            objects.filterObjects(fieldSelector());
-            faObjects.filterObjects(fieldSelector());
+            objects.filterObjects(fieldSelector);
+            faObjects.filterObjects(fieldSelector);
         }
 
         // Remove "*_0" restart fields

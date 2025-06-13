@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,7 +99,10 @@ public:
         //  No distinction made between literals and regular expressions.
         static wordRes uniq(const UList<wordRe>& input);
 
-        //- Test for a match
+        //- Test for a match of any selectors against the text.
+        //
+        //  \return \c false if no selectors are specified
+        //  \return \c true  if text matches \em any of the selectors
         inline static bool match
         (
             const UList<wordRe>& selectors,
@@ -197,9 +200,10 @@ public:
             //- No selectors defined
             inline bool empty() const noexcept;
 
-            //- True if text matches ANY of the selectors.
-            //- Always false if entries are empty.
-            //  Allows use as a predicate.
+            //- Apply matcher predicate
+            //
+            //  \return \c false if no selectors are specified
+            //  \return \c true  if text matches \em any of the selectors
             inline bool operator()(const std::string& text) const;
 
         private:
@@ -209,9 +213,10 @@ public:
 
         //- Functor wrapper of allow/deny lists of wordRe for filtering
         //
-        //  An empty 'allow' accepts everything not in 'deny'.
-        //  A literal 'allow' match has higher priority than any 'deny'.
-        //  A regex 'allow' match has lower priority than any 'deny'.
+        //  An empty filter accepts everything.
+        //  An empty \em allow accepts everything not in \em deny.
+        //  A literal \em allow match has higher priority than any \em deny.
+        //  A regex \em allow match has lower priority than any \em deny.
         //
         //  Example (when applied to a list of words),
         //  \verbatim
@@ -223,17 +228,23 @@ public:
         //  \endverbatim
         struct filter
         {
-            //- Construct with 'allow' and 'deny' matchers
+            //- Construct with \em allow and \em deny matchers
             inline filter
             (
                 const UList<wordRe>& allow,
                 const UList<wordRe>& deny
             ) noexcept;
 
-            //- Nothing defined
+            //- No filtering defined
             inline bool empty() const noexcept;
 
-            //- True if matched but not blocked
+            //- True if filtering is defined
+            explicit operator bool() const noexcept { return !empty(); }
+
+            //- Apply filter against specified text
+            //
+            //  \return \c true if no filtering has been defined
+            //  \return \c true if matched but not blocked
             inline bool operator()(const std::string& text) const;
 
         private:

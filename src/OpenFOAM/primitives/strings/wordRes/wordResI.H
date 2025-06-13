@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -225,6 +225,7 @@ inline bool Foam::wordRes::matcher::empty() const noexcept
     return select_.empty();
 }
 
+
 inline bool Foam::wordRes::filter::empty() const noexcept
 {
     return (allow_.empty() && deny_.empty());
@@ -241,12 +242,14 @@ inline bool Foam::wordRes::filter::operator()(const std::string& text) const
 {
     if (allow_.empty())
     {
-        // No allow specified, so accept everything that is NOT blocked
+        // Did not specify allow
+        // => accept everything that is NOT blocked
         return (deny_.empty() || !wordRes::match(deny_, text));
     }
     else if (deny_.empty())
     {
-        // Nothing blocked, apply accept filter
+        // Specified allow but did not specify blocked
+        // => select with accept filter
         return wordRes::match(allow_, text);
     }
     else

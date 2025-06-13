@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2024 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -155,50 +155,39 @@ void writeOBJ
     }
 }
 
-
+// Simple wrapper for polyBoundaryMesh::indices() with some additional logic
+// - prune emptyPolyPatch (always) and (maybe) processorPolyPatch
 labelList getSelectedPatches
 (
-    const polyBoundaryMesh& patches,
+    const polyBoundaryMesh& pbm,
     const wordRes& allow,
-    const wordRes& deny
+    const wordRes& deny,
+    const bool excludeProcPatches
 )
 {
-    // Name-based selection
-    labelList indices
-    (
-        stringListOps::findMatching
-        (
-            patches,
-            allow,
-            deny,
-            nameOp<polyPatch>()
-        )
-    );
-
+    labelList ids = pbm.indices(allow, deny);
 
     // Remove undesirable patches
-
     label count = 0;
-    for (const label patchi : indices)
+    for (const label patchi : ids)
     {
-        const polyPatch& pp = patches[patchi];
+        const polyPatch& pp = pbm[patchi];
 
         if (isType<emptyPolyPatch>(pp))
         {
             continue;
         }
-        else if (Pstream::parRun() && bool(isA<processorPolyPatch>(pp)))
+        else if (excludeProcPatches && bool(isA<processorPolyPatch>(pp)))
         {
-            break; // No processor patches for parallel output
+            break;  // No processor patches for parallel output
         }
 
-        indices[count] = patchi;
+        ids[count] = patchi;
         ++count;
     }
 
-    indices.resize(count);
-
-    return indices;
+    ids.resize(count);
+    return ids;
 }
 
 
@@ -668,11 +657,14 @@ int main(int argc, char *argv[])
 
         const labelList patchIds =
         (
-            (includePatches.size() || excludePatches.size())
-          ? getSelectedPatches(bMesh, includePatches, excludePatches)
-          : includeProcPatches
-          ? identity(bMesh.size())
-          : identity(bMesh.nNonProcessor())
+            getSelectedPatches
+            (
+                bMesh,
+                includePatches,
+                excludePatches,
+                // No processor patches? (parallel output or excluded)
+                (UPstream::parRun() || !includeProcPatches)
+            )
         );
 
         labelList faceZoneIds;

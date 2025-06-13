@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -136,7 +136,7 @@ Description
     labelList patchIds;
     if (doBoundary)
     {
-        patchIds = getSelectedPatches(patches, patchSelector);
+        patchIds = patchSelector.indices(patches);
     }
 
     if (oneBoundary && patchIds.size())

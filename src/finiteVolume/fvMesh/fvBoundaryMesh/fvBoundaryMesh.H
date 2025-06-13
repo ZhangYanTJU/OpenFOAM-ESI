@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,9 @@ Class
     Foam::fvBoundaryMesh
 
 Description
-    Foam::fvBoundaryMesh
+    A fvBoundaryMesh is a fvPatch list with
+    a reference to the associated fvMesh,
+    with additional search methods etc.
 
 SourceFiles
     fvBoundaryMesh.C
@@ -112,24 +114,29 @@ public:
         //- with only those pointing to interfaces being set
         lduInterfacePtrsList interfaces() const;
 
-        //- Return (sorted) patch indices for all matches.
-        //  A no-op (returns empty list) for an empty matcher
+        //- The (sorted) patch indices for all matches,
+        //- optionally matching patch groups.
+        //  \returns an empty list for an empty matcher
         labelList indices(const wordRe& matcher, const bool useGroups) const;
 
-        //- Return (sorted) patch indices for all matches.
-        //  A no-op (returns empty list) for an empty matcher
+        //- The (sorted) patch indices for all matches,
+        //- optionally matching patch groups.
+        //  \returns an empty list for an empty matcher
         labelList indices(const wordRes& matcher, const bool useGroups) const;
 
-        //- Return (sorted) patch indices for all selected matches that
-        //- are not ignored.
-        //- The selection logic as per Foam::wordRes::filter.
-        //  Optionally matches patch groups.
-        //  A no-op (returns empty list) for an empty select matcher
+        //- The (sorted) patch indices: logic as per Foam::wordRes::filter,
+        //- optionally matching patch groups.
+        //
+        //  An empty \em allow accepts everything not in \em deny.
+        //  A literal \em allow match has higher priority than any \em deny.
+        //  A regex \em allow match has lower priority than any \em deny.
+        //
+        //  \returns identity list when allow/deny are both empty.
         labelList indices
         (
-            const wordRes& select,
-            const wordRes& ignore,
-            const bool useGroups
+            const wordRes& allow,
+            const wordRes& deny,
+            const bool useGroups  //!< Match patch groups
         ) const;
 
         //- Find patch index given a name

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,7 +89,11 @@ void Foam::pointBoundaryMesh::calcGroupIDs() const
     // Remove groups that clash with patch names
     forAll(patches, patchi)
     {
-        if (groupLookup.erase(patches[patchi].name()))
+        if (groupLookup.empty())
+        {
+            break;  // Early termination
+        }
+        else if (groupLookup.erase(patches[patchi].name()))
         {
             WarningInFunction
                 << "Removed group '" << patches[patchi].name()
@@ -370,7 +374,7 @@ Foam::labelList Foam::pointBoundaryMesh::indices
     // Only check groups if requested and they exist
     const bool checkGroups = (useGroups && this->hasGroupIDs());
 
-    labelHashSet ids(0);
+    labelHashSet ids;
 
     if (matcher.isPattern())
     {
@@ -381,7 +385,7 @@ Foam::labelList Foam::pointBoundaryMesh::indices
             {
                 if (matcher(iter.key()))
                 {
-                    // Add patch ids associated with the group
+                    // Add ids associated with the group
                     ids.insert(iter.val());
                 }
             }
@@ -413,7 +417,7 @@ Foam::labelList Foam::pointBoundaryMesh::indices
 
             if (iter.good())
             {
-                // Hash ids associated with the group
+                // Add ids associated with the group
                 ids.insert(iter.val());
             }
         }
@@ -438,7 +442,7 @@ Foam::labelList Foam::pointBoundaryMesh::indices
         return this->indices(matcher.front(), useGroups);
     }
 
-    labelHashSet ids(0);
+    labelHashSet ids;
 
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
@@ -450,7 +454,7 @@ Foam::labelList Foam::pointBoundaryMesh::indices
         {
             if (matcher(iter.key()))
             {
-                // Add patch ids associated with the group
+                // Add ids associated with the group
                 ids.insert(iter.val());
             }
         }
@@ -471,20 +475,20 @@ Foam::labelList Foam::pointBoundaryMesh::indices
 
 Foam::labelList Foam::pointBoundaryMesh::indices
 (
-    const wordRes& select,
-    const wordRes& ignore,
+    const wordRes& allow,
+    const wordRes& deny,
     const bool useGroups
 ) const
 {
-    //return mesh().boundaryMesh().indices(select, ignore, useGroups);
-    if (ignore.empty())
+    if (allow.empty() && deny.empty())
     {
-        return this->indices(select, useGroups);
+        // Fast-path: select all
+        return identity(this->size());
     }
 
-    const wordRes::filter matcher(select, ignore);
+    const wordRes::filter matcher(allow, deny);
 
-    labelHashSet ids(0);
+    labelHashSet ids;
 
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
@@ -496,7 +500,7 @@ Foam::labelList Foam::pointBoundaryMesh::indices
         {
             if (matcher(iter.key()))
             {
-                // Add patch ids associated with the group
+                // Add ids associated with the group
                 ids.insert(iter.val());
             }
         }

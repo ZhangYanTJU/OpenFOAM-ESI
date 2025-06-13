@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,7 @@ License
 
 #include "vtkWrite.H"
 #include "cellBitSet.H"
+#include "emptyPolyPatch.H"
 #include "processorPolyPatch.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -54,31 +55,32 @@ bool Foam::functionObjects::vtkWrite::updateSubset
 
 Foam::labelList Foam::functionObjects::vtkWrite::getSelectedPatches
 (
-    const polyBoundaryMesh& patches
+    const polyBoundaryMesh& pbm
 ) const
 {
-    DynamicList<label> patchIDs(patches.size());
+    labelList ids = pbm.indices(selectPatches_, blockPatches_);
 
-    wordRes::filter patchFilter(selectPatches_, blockPatches_);
-
-    for (const polyPatch& pp : patches)
+    // Prune undesirable patches
+    label count = 0;
+    for (const label patchi : ids)
     {
+        const auto& pp = pbm[patchi];
+
         if (isType<emptyPolyPatch>(pp))
         {
             continue;
         }
         else if (isA<processorPolyPatch>(pp))
         {
-            break; // No processor patches
+            break;  // No processor patches
         }
 
-        if (patchFilter(pp.name()))
-        {
-            patchIDs.append(pp.index());
-        }
+        ids[count] = patchi;
+        ++count;
     }
 
-    return labelList(std::move(patchIDs));
+    ids.resize(count);
+    return ids;
 }
 
 

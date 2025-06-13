@@ -95,12 +95,12 @@ Foam::labelList Foam::fvBoundaryMesh::indices
 
 Foam::labelList Foam::fvBoundaryMesh::indices
 (
-    const wordRes& select,
-    const wordRes& ignore,
+    const wordRes& allow,
+    const wordRes& deny,
     const bool useGroups
 ) const
 {
-    return mesh().boundaryMesh().indices(select, ignore, useGroups);
+    return mesh().boundaryMesh().indices(allow, deny, useGroups);
 }
 
 
