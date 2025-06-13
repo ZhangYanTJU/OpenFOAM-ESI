@@ -1,0 +1,22 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+if notTest "$@"
+then
+
+    ./Allrun.pre
+
+    # Already decomposed:
+    restore0Dir -processor
+
+    # Already decomposed:
+    ## runApplication decomposePar
+
+    runParallel $(getApplication)
+
+    runApplication reconstructPar
+fi
+
+#------------------------------------------------------------------------------

@@ -1,0 +1,88 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2506                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+// Common settings
+_bladeForces
+{
+    type    bladeForces;
+    libs    (forces);
+
+    writeControl    timeStep;
+    writeInterval   1;
+
+    writeFields     true;
+    fieldsInteval   1;
+
+    // All blades
+    patches     ("propeller.*");
+
+    // Base name for output
+    outputName  blades;
+    lefthand    true;       // left-hand blade
+
+    rho         rhoInf;     // Indicates incompressible
+    log         true;
+    rhoInf      1;          // Redundant for compressible
+
+    origin      (0 0 0);    // Rotation around centre line
+    axis        (1 0 0);
+
+    radius      0.5;        // Reference radius size
+    nRadial     10;         // Number of radial bins
+
+    n           25;         // rotation speed [rev/sec]
+    Uref        5;          // axial speed    [m/s]
+    pRef        0;
+
+    nearCellValue   true;   // extrapolate cell value
+    // geometricVelocity true;
+}
+
+
+blade0
+{
+    ${../_bladeForces};
+
+    // Single blade
+    patches     ("propeller.*blade0");
+    outputName  blade0;
+}
+
+
+blade1
+{
+    ${../_bladeForces};
+
+    // Single blade
+    patches     ("propeller.*blade1");
+    outputName  blade1;
+}
+
+blade2
+{
+    ${../blade0};
+
+    // Single blade
+    patches     ("propeller.*blade2");
+    outputName  blade2;
+}
+
+
+blade3
+{
+    ${../blade0};
+
+    // Single blade
+    patches     ("propeller.*blade3");
+    outputName  blade3;
+}
+
+// Cleanup
+#remove _bladeForces
+
+// ************************************************************************* //
