@@ -157,6 +157,7 @@ public:
         return elems_.size();
     }
 
+    typedef typename List<T>::const_iterator const_iterator;
     auto cbegin() const
     {
         return elems_.cbegin();
@@ -164,6 +165,16 @@ public:
     auto cend() const
     {
         return elems_.cend();
+    }
+
+    typedef typename List<T>::iterator iterator;
+    auto begin()
+    {
+        return elems_.begin();
+    }
+    auto end()
+    {
+        return elems_.end();
     }
 };
 
@@ -267,7 +278,7 @@ public:
     {
         return elems_.begin();
     }
-    auto cend()
+    auto end()
     {
         return elems_.end();
     }
@@ -520,7 +531,7 @@ public:
     {
         return elems_().begin();
     }
-    auto cend()
+    auto end()
     {
         return elems_().end();
     }
