@@ -86,7 +86,15 @@ Foam::transformFaPatchField<Type>::valueInternalCoeffs
     const tmp<scalarField>&
 ) const
 {
-    return pTraits<Type>::one - snGradTransformDiag();
+    // OR (!is_rotational_vectorspace_v<Type>)
+    if constexpr (std::is_arithmetic_v<Type>)
+    {
+        return tmp<Field<Type>>::New(this->size(), pTraits<Type>::one);
+    }
+    else
+    {
+        return pTraits<Type>::one - snGradTransformDiag();
+    }
 }
 
 
@@ -111,7 +119,15 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::transformFaPatchField<Type>::gradientInternalCoeffs() const
 {
-    return -this->patch().deltaCoeffs()*snGradTransformDiag();
+    // OR (!is_rotational_vectorspace_v<Type>)
+    if constexpr (std::is_arithmetic_v<Type>)
+    {
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        return -this->patch().deltaCoeffs()*snGradTransformDiag();
+    }
 }
 
 
