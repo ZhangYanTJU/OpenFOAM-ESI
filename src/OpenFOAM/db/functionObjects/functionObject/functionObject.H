@@ -29,7 +29,9 @@ Namespace
 
 Description
     Function objects are OpenFOAM utilities to ease workflow configurations and
-    enhance workflows by producing additional user-requested data both during
+    enhance workflows.
+
+    Function objects produce additional user-requested data both during
     runtime and postprocessing calculations, typically in the form of
     additional logging to the screen, or generating text, image and field files.
 
@@ -134,6 +136,18 @@ Description
         clockTime         | Trigger every 'Interval' clock time period
         cpuTime           | Trigger every 'Interval' CPU time period
         onEnd             | Trigger on end of simulation run
+    \endtable
+
+    The optional \c errors entry controls how FatalError is caught
+    during construction and execute/write. FatalIOError is unaffected.
+    <br>
+    Behaviour for \c errors enumerations:
+    \table
+        Option  | Error on construction | Runtime error
+        default | warn      | fatal
+        warn    | warn      | warn
+        ignore  | silent    | silent
+        strict  | fatal     | fatal
     \endtable
 
     The sub-dictionary name \c \<userDefinedSubDictName\> is chosen by the user,

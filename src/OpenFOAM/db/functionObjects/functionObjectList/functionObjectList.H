@@ -63,11 +63,15 @@ Description
 
     The optional \c errors entry controls how FatalError is caught
     during construction and execute/write. FatalIOError is unaffected.
-    - \c default : warn on construction errors, fatal on runtime errors
-    - \c warn : warn on construction and runtime errors
-    - \c ignore : ignore construction and runtime errors
-    - \c strict : fatal on construction and runtime errors
-    .
+    <br>
+    Behaviour for \c errors enumerations:
+    \table
+        Enum    | Error on construction | Runtime error
+        default | warn      | fatal
+        warn    | warn      | warn
+        ignore  | silent    | silent
+        strict  | fatal     | fatal
+    \endtable
 
 See also
     Foam::functionObject
