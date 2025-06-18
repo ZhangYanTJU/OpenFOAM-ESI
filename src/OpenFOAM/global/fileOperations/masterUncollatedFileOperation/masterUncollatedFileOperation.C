@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -867,7 +867,7 @@ off_t Foam::fileOperations::masterUncollatedFileOperation::fileSize
     const bool followLink
 ) const
 {
-    return masterOp<off_t>
+    return masterOp<fileSizeOp::value_type>
     (
         fName,
         fileSizeOp(followLink),

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -222,14 +222,26 @@ protected:
         {
             const bool followLink_;
         public:
-            fileSizeOp(const bool followLink)
+
+            #ifdef _WIN32
+            // off_t is 'long int' for windows (missing pTraits)
+            typedef int64_t value_type;
+            #else
+            typedef off_t value_type;
+            #endif
+
+            fileSizeOp(bool followLink) noexcept
             :
                 followLink_(followLink)
             {}
 
-            off_t operator()(const fileName& f) const
+            auto operator()(const fileName& f) const
             {
+                #ifdef _WIN32
+                return value_type(Foam::fileSize(f, followLink_));
+                #else
                 return Foam::fileSize(f, followLink_);
+                #endif
             }
         };
 
