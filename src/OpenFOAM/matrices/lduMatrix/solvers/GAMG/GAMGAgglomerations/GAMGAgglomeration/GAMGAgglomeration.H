@@ -40,6 +40,8 @@ Description
         cacheAgglomeration  yes;
         // Optionally update every updateInterval mesh motion. Default is 1.
         updateInterval      10;
+        // Optional name (default is GAMGAgglomeration)
+        //name            pAgglomeration;
 
         // Optionally agglomerate coarsest-level across processors
         processorAgglomerator   masterCoarsest;
