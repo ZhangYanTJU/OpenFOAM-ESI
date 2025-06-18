@@ -159,13 +159,13 @@ public:
 
         // Coupled and adjust flux
 
-            //- Return neighbour field.  Dummy (treat like zero-gradient)
+            //- Return neighbour field.  Dummy value
             virtual tmp<Field<Type>> patchNeighbourField() const
             {
                 return tmp<Field<Type>>::New(this->size(), Foam::zero{});
             }
 
-            //- Retrieve neighbour field.  Dummy (treat like zero-gradient)
+            //- Retrieve neighbour field.  Dummy value
             virtual void patchNeighbourField(UList<Type>& pnf) const
             {
                 pnf = Foam::zero{};
