@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -243,7 +243,15 @@ Foam::GAMGAgglomeration::GAMGAgglomeration
     const dictionary& controlDict
 )
 :
-    MeshObject_type(mesh),
+    MeshObject_type
+    (
+        controlDict.getOrDefault<word>
+        (
+            "name",
+            GAMGAgglomeration::typeName
+        ),
+        mesh
+    ),
 
     maxLevels_(50),
 
@@ -308,10 +316,17 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
     const dictionary& controlDict
 )
 {
+
+
+
     const GAMGAgglomeration* agglomPtr =
         mesh.thisDb().cfindObject<GAMGAgglomeration>
         (
-            GAMGAgglomeration::typeName
+            controlDict.getOrDefault<word>
+            (
+                "name",
+                GAMGAgglomeration::typeName
+            )
         );
 
     if (agglomPtr)
@@ -373,7 +388,11 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
     const GAMGAgglomeration* agglomPtr =
         mesh.thisDb().cfindObject<GAMGAgglomeration>
         (
-            GAMGAgglomeration::typeName
+            controlDict.getOrDefault<word>
+            (
+                "name",
+                GAMGAgglomeration::typeName
+            )
         );
 
     if (agglomPtr)
@@ -431,7 +450,11 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
     const GAMGAgglomeration* agglomPtr =
         mesh.thisDb().cfindObject<GAMGAgglomeration>
         (
-            GAMGAgglomeration::typeName
+            controlDict.getOrDefault<word>
+            (
+                "name",
+                GAMGAgglomeration::typeName
+            )
         );
 
     if (agglomPtr)
