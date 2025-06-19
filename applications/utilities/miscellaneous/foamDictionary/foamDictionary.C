@@ -251,18 +251,31 @@ const dictionary& lookupScopedDict
         return dict;
     }
 
-    const entry* eptr = dict.findScoped(subDictName, keyType::LITERAL);
+    const auto finder = dict.csearchScoped(subDictName, keyType::LITERAL);
 
-    if (!eptr || !eptr->isDict())
+    if (!finder.good() || !finder.isDict())
     {
+        // Not found or not a dictionary
         FatalIOErrorInFunction(dict)
-            << "'" << subDictName << "' not found in dictionary "
-            << dict.name() << " or is not a dictionary" << nl
-            << "Known entries are " << dict.keys()
+            << '"' << subDictName << '"' << nl;
+
+        if (!finder.good())
+        {
+            FatalIOError << "Not found in dictionary";
+        }
+        else
+        {
+            FatalIOError << "Not a dictionary entry";
+        }
+
+        FatalIOError
+            << nl << nl
+            << "Known entries of " << finder.context().name() << " : " << nl
+            << finder.context().keys()
             << exit(FatalIOError);
     }
 
-    return eptr->dict();
+    return finder.dict();
 }
 
 
