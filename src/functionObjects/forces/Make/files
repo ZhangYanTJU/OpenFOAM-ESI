@@ -1,5 +1,6 @@
 forces/forces.C
 forceCoeffs/forceCoeffs.C
+bladeForces/bladeForces.cxx
 propellerInfo/propellerInfo.C
 
 LIB = $(FOAM_LIBBIN)/libforces

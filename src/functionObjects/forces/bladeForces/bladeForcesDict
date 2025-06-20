@@ -1,0 +1,69 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2506                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+_bladeForces
+{
+    type        bladeForces;
+    libs        (bladeForces);
+
+    // timeStart   10;
+
+    executeControl  timeStep;
+    executeInterval 1;
+
+    writeControl    timeStep;
+    writeInterval   1;
+
+    writeFields     true;
+    //fieldsInterval   3;
+
+    // All blades
+    patches     ("propeller.*");
+
+    // Single blade
+    patches     ("propeller.*blade0");
+
+    // Base name for VTP output and surface storage
+    // outputName  blade;
+
+    rho         rhoInf;     // Indicates incompressible
+    log         true;
+    rhoInf      1;          // Redundant for compressible
+
+    origin      (0 0 0);    // Rotation around centre line
+    axis        (1 0 0);
+
+    radius      0.5;
+    nRadial     10;
+
+    n           100;        // rotation speed [rev/sec]
+    Uref        10;         // axial speed    [m/s]
+    pRef        0;
+
+    nearCellValue   true;   // output: use cell velocity near surfaces
+
+    // geometricVelocity true;  // output: experimental
+}
+
+
+blade0
+{
+    ${../_bladeForces};
+
+    // Single blade
+    patches     ("propeller.*blade0");
+
+    // Base name for VTP output and surface storage
+    // outputName  blade;
+}
+
+
+// Cleanup
+#remove _bladeForces
+
+// ************************************************************************* //
