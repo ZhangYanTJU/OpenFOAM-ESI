@@ -203,7 +203,7 @@ public:
 
         //- Change the value for the list capacity directly (ADVANCED, UNSAFE)
         //- Does not perform any memory management or resizing.
-        void setCapacity_unsafe(const label len) noexcept { capacity_ = len; }
+        void setCapacity_unsafe(label len) noexcept { capacity_ = len; }
 
         //- Reserve allocation space for at least this size, allocating new
         //- space if required and \em retaining old content.
@@ -250,11 +250,6 @@ public:
 
         //- Shrink the allocated space to the number of elements used.
         inline void shrink_to_fit();
-
-        //- Shrink the internal bookkeeping of the allocated space to the
-        //- number of addressed elements without affecting allocation.
-        //  \note when empty() it will delete any allocated memory.
-        inline void shrink_unsafe();
 
 
     // Edit

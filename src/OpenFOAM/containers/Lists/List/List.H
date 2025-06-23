@@ -236,13 +236,6 @@ public:
         //  Otherwise the contents will be uninitialized.
         inline void resize_nocopy(const label len);
 
-        //- Change the addressed list size directly without affecting
-        //- any memory management (advanced usage).
-        //
-        //  It is left to the caller to avoid \em unsafe lengthening beyond
-        //  the allocated memory region.
-        inline void resize_unsafe(const label len) noexcept;
-
         //- Alias for resize()
         void setSize(const label n) { this->resize(n); }
 

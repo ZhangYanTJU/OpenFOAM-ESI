@@ -66,7 +66,9 @@ inline void Foam::DynamicField<T, SizeMin>::doCapacity
     // Addressable length, possibly truncated by new capacity
     const label currLen = Foam::min(List<T>::size(), newCapacity);
 
+    // Consistent allocated sizing
     List<T>::setAddressableSize(capacity_);
+
     if (nocopy)
     {
         List<T>::resize_nocopy(newCapacity);
@@ -93,6 +95,9 @@ inline void Foam::DynamicField<T, SizeMin>::doReserve
         // Preserve addressed size
         const label currLen = List<T>::size();
 
+        // Consistent allocated sizing
+        List<T>::setAddressableSize(capacity_);
+
         // Increase capacity (eg, doubling)
         capacity_ =
             Foam::ListPolicy::reserve_size<SizeMin, 2>(len, capacity_);
@@ -103,8 +108,10 @@ inline void Foam::DynamicField<T, SizeMin>::doReserve
         }
         else
         {
-            List<T>::resize(capacity_);
+            List<T>::resize_copy(currLen, capacity_);
         }
+
+        capacity_ = List<T>::size();
         List<T>::setAddressableSize(currLen);
     }
 }
@@ -246,7 +253,7 @@ inline Foam::DynamicField<T, SizeMin>::DynamicField
     Field<T>(std::move(static_cast<List<T>&>(content))),
     capacity_(content.capacity())
 {
-    content.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
+    content.setCapacity_unsafe(0);  // All contents moved
 }
 
 
@@ -259,7 +266,7 @@ inline Foam::DynamicField<T, SizeMin>::DynamicField
     Field<T>(std::move(static_cast<List<T>&>(content))),
     capacity_(content.capacity())
 {
-    content.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
+    content.setCapacity_unsafe(0);  // All contents moved
 }
 
 
@@ -273,7 +280,7 @@ inline Foam::DynamicField<T, SizeMin>::DynamicField
     Field<T>(std::move(static_cast<List<T>&>(content))),
     capacity_(content.capacity())
 {
-    content.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
+    content.setCapacity_unsafe(0);  // All contents moved
 }
 
 
@@ -292,7 +299,7 @@ inline Foam::DynamicField<T, SizeMin>::DynamicField
     {
         Field<T>::transfer(static_cast<List<T>&>(content));
         capacity_ = content.capacity();
-        content.setCapacity_unsafe(0);
+        content.setCapacity_unsafe(0);  // All contents moved
     }
     else
     {
@@ -317,7 +324,7 @@ inline Foam::DynamicField<T, SizeMin>::DynamicField
     {
         Field<T>::transfer(static_cast<List<T>&>(content));
         capacity_ = content.capacity();
-        content.setCapacity_unsafe(0);
+        content.setCapacity_unsafe(0);  // All contents moved
     }
     else
     {
@@ -462,8 +469,15 @@ inline void Foam::DynamicField<T, SizeMin>::reserve_exact
         // Preserve addressed size
         const label currLen = List<T>::size();
 
-        capacity_ = len;
-        List<T>::resize(capacity_);
+        // Consistent allocated sizing
+        List<T>::setAddressableSize(capacity_);
+
+        // if (!nocopy)
+        {
+            List<T>::resize_copy(currLen, len);
+        }
+
+        capacity_ = List<T>::size();
         List<T>::setAddressableSize(currLen);
     }
 }
@@ -548,18 +562,6 @@ inline void Foam::DynamicField<T, SizeMin>::shrink_to_fit()
         List<T>::resize(currLen);
         capacity_ = List<T>::size();
     }
-}
-
-
-template<class T, int SizeMin>
-inline void Foam::DynamicField<T, SizeMin>::shrink_unsafe()
-{
-    if (List<T>::empty())
-    {
-        // Delete storage if empty
-        List<T>::clear();
-    }
-    capacity_ = List<T>::size();
 }
 
 

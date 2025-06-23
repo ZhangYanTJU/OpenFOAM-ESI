@@ -82,10 +82,7 @@ inline Foam::PtrDynList<T, SizeMin>::PtrDynList
     PtrList<T>(std::move(list)),
     capacity_(list.capacity())
 {
-    // FUTURE:
-    // list.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
-
-    list.clearStorage();  // capacity=0 etc.
+    list.setCapacity_unsafe(0);  // All contents moved
 }
 
 
@@ -99,10 +96,7 @@ inline Foam::PtrDynList<T, SizeMin>::PtrDynList
     PtrList<T>(std::move(list)),
     capacity_(list.capacity())
 {
-    // FUTURE:
-    // list.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
-
-    list.clearStorage();  // capacity=0 etc.
+    list.setCapacity_unsafe(0);  // All contents moved
 }
 
 
@@ -135,11 +129,17 @@ inline void Foam::PtrDynList<T, SizeMin>::reserve(const label len)
         // Preserve addressed size
         const label currLen = PtrList<T>::size();
 
+        // Consistent allocated sizing
+        PtrList<T>::setAddressableSize(capacity_);
+
         // Increase capacity (eg, doubling)
         capacity_ =
             Foam::ListPolicy::reserve_size<SizeMin, 2>(len, capacity_);
 
+        // No PtrList<T>::resize_copy(...) -> copying nullptr is cheap
         PtrList<T>::resize(capacity_);
+
+        capacity_ = PtrList<T>::size();
         PtrList<T>::setAddressableSize(currLen);
     }
 }
@@ -153,8 +153,13 @@ inline void Foam::PtrDynList<T, SizeMin>::reserve_exact(const label len)
         // Preserve addressed size
         const label currLen = PtrList<T>::size();
 
-        capacity_ = len;
-        PtrList<T>::resize(capacity_);
+        // Consistent allocated sizing
+        PtrList<T>::setAddressableSize(capacity_);
+
+        // No PtrList<T>::resize_copy(...) -> copying nullptr is cheap
+        PtrList<T>::resize(len);
+
+        capacity_ = PtrList<T>::size();
         PtrList<T>::setAddressableSize(currLen);
     }
 }
@@ -164,16 +169,12 @@ template<class T, int SizeMin>
 inline void Foam::PtrDynList<T, SizeMin>::resize(const label newLen)
 {
     auto& ptrs = this->ptrs_;
-
     const label oldLen = ptrs.size();
 
     if (capacity_ < newLen)
     {
-        // Increase capacity (eg, doubling)
-        capacity_ =
-            Foam::ListPolicy::reserve_size<SizeMin, 2>(newLen, capacity_);
-
-        PtrList<T>::resize(capacity_);
+        // Extend list
+        this->reserve(newLen);
     }
     else if (newLen != oldLen)
     {
@@ -191,13 +192,16 @@ inline void Foam::PtrDynList<T, SizeMin>::resize(const label newLen)
 
 
 template<class T, int SizeMin>
-inline void Foam::PtrDynList<T, SizeMin>::resize_null(const label newLen)
+inline void Foam::PtrDynList<T, SizeMin>::resize_null(const label len)
 {
-    if (capacity_ < newLen)
+    if (capacity_ < len)
     {
+        // Consistent allocated sizing
+        PtrList<T>::setAddressableSize(capacity_);
+
         // Increase capacity (eg, doubling)
         capacity_ =
-            Foam::ListPolicy::reserve_size<SizeMin, 2>(newLen, capacity_);
+            Foam::ListPolicy::reserve_size<SizeMin, 2>(len, capacity_);
 
         PtrList<T>::resize_null(capacity_);
     }
@@ -207,7 +211,7 @@ inline void Foam::PtrDynList<T, SizeMin>::resize_null(const label newLen)
     }
 
     // Adjust addressed size
-    PtrList<T>::setAddressableSize(newLen);
+    PtrList<T>::setAddressableSize(len);
 }
 
 
@@ -237,18 +241,6 @@ inline void Foam::PtrDynList<T, SizeMin>::shrink_to_fit()
         PtrList<T>::resize(currLen);
         capacity_ = PtrList<T>::size();
     }
-}
-
-
-template<class T, int SizeMin>
-inline void Foam::PtrDynList<T, SizeMin>::shrink_unsafe()
-{
-    if (PtrList<T>::empty())
-    {
-        // Delete empty list
-        PtrList<T>::clear();
-    }
-    capacity_ = PtrList<T>::size();
 }
 
 

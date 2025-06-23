@@ -112,23 +112,26 @@ public:
 
         //- Change the value for the list capacity directly (ADVANCED, UNSAFE)
         //- Does not perform any memory management or resizing.
-        void setCapacity_unsafe(const label len) noexcept { capacity_ = len; }
+        void setCapacity_unsafe(label len) noexcept { capacity_ = len; }
 
         //- Reserve allocation space for at least this size.
+        //  New entries are initialized to nullptr.
         inline void reserve(const label len);
 
         //- Reserve allocation space for at least this size.
         //- If allocation is required, uses the specified size
         //- without any other resizing logic.
+        //  New entries are initialized to nullptr.
         inline void reserve_exact(const label len);
 
         //- Alter the addressed list size.
-        inline void resize(const label newLen);
+        //  New entries are initialized to nullptr.
+        inline void resize(const label len);
 
         //- Set the addressed list to the given size,
         //- deleting all existing entries.
         //- Afterwards the list contains all \c nullptr entries.
-        inline void resize_null(const label newLen);
+        inline void resize_null(const label len);
 
         //- Clear the addressed list, i.e. set the size to zero.
         //  Allocated size does not change
@@ -139,11 +142,6 @@ public:
 
         //- Shrink the allocated space to the number of elements used.
         inline void shrink_to_fit();
-
-        //- Shrink the internal bookkeeping of the allocated space to the
-        //- number of addressed elements without affecting allocation.
-        //  \note when empty() it will delete any allocated memory.
-        inline void shrink_unsafe();
 
         //- Alias for shrink_to_fit()
         void shrink() { this->shrink_to_fit(); }

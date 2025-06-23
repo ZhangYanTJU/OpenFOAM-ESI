@@ -204,16 +204,6 @@ int main(int argc, char *argv[])
             Info<<" " << *iter;
         }
         Info<< nl;
-
-        Info<< "data:" << Foam::name(ident.cdata())
-            << " size:" << ident.size() << nl;
-
-
-        Info<< "resize_unsafe(10)" << nl;
-        ident.resize_unsafe(10);
-
-        Info<< "data:" << Foam::name(ident.cdata())
-            << " size:" << ident.size() << nl;
     }
 
     if (false)
