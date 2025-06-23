@@ -102,6 +102,28 @@ class cyclicACMIFvPatchField
             //- Scalar receive buffers
             mutable PtrList<List<solveScalar>> scalarRecvBufs_;
 
+
+            // Only used for AMI caching
+
+                //- Current range of send requests (non-blocking)
+                mutable labelRange sendRequests1_;
+
+                //- Current range of recv requests (non-blocking)
+                mutable labelRange recvRequests1_;
+
+                //- Send buffers
+                mutable PtrList<List<Type>> sendBufs1_;
+
+                //- Receive buffers_
+                mutable PtrList<List<Type>> recvBufs1_;
+
+                //- Scalar send buffers
+                mutable PtrList<List<solveScalar>> scalarSendBufs1_;
+
+                //- Scalar receive buffers
+                mutable PtrList<List<solveScalar>> scalarRecvBufs1_;
+
+
             //- Neighbour coupled internal cell data
             mutable autoPtr<Field<Type>> patchNeighbourFieldPtr_;
 

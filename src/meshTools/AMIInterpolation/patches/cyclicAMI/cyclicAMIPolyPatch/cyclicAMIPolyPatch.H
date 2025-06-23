@@ -523,9 +523,14 @@ public:
                 (
                     const Field<Type>& fld,
                     labelRange& sendRequests,
-                    PtrList<List<Type>>& sendBuffers,
                     labelRange& recvRequests,
-                    PtrList<List<Type>>& recvBuffers
+                    PtrList<List<Type>>& sendBuffers,
+                    PtrList<List<Type>>& recvBuffers,
+
+                    labelRange& sendRequests1,
+                    labelRange& recvRequests1,
+                    PtrList<List<Type>>& sendBuffers1,
+                    PtrList<List<Type>>& recvBuffers1
                 ) const;
 
                 template<class Type>
@@ -533,9 +538,14 @@ public:
                 (
                     const Field<Type>& fld,
                     labelRange& sendRequests,
-                    PtrList<List<Type>>& sendBuffers,
                     labelRange& recvRequests,
-                    PtrList<List<Type>>& recvBuffers
+                    PtrList<List<Type>>& sendBuffers,
+                    PtrList<List<Type>>& recvBuffers,
+
+                    labelRange& sendRequests1,
+                    labelRange& recvRequests1,
+                    PtrList<List<Type>>& sendBuffers1,
+                    PtrList<List<Type>>& recvBuffers1
                 ) const;
 
                 template<class Type>
@@ -544,6 +554,8 @@ public:
                     const Field<Type>& localFld,
                     const labelRange& requests,  // The receive requests
                     const PtrList<List<Type>>& recvBuffers,
+                    const labelRange& requests1,  // The receive requests
+                    const PtrList<List<Type>>& recvBuffers1,
                     const UList<Type>& defaultValues
                 ) const;
 

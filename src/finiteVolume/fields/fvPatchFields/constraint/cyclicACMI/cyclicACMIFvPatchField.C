@@ -227,9 +227,15 @@ bool Foam::cyclicACMIFvPatchField<Type>::all_ready() const
             recvRequests_.start(),
             recvRequests_.size()
         )
+     && UPstream::finishedRequests
+        (
+            recvRequests1_.start(),
+            recvRequests1_.size()
+        )
     )
     {
         recvRequests_.clear();
+        recvRequests1_.clear();
         ++done;
     }
 
@@ -240,9 +246,15 @@ bool Foam::cyclicACMIFvPatchField<Type>::all_ready() const
             sendRequests_.start(),
             sendRequests_.size()
         )
+     && UPstream::finishedRequests
+        (
+            sendRequests1_.start(),
+            sendRequests1_.size()
+        )
     )
     {
         sendRequests_.clear();
+        sendRequests1_.clear();
         ++done;
     }
 
@@ -260,9 +272,15 @@ bool Foam::cyclicACMIFvPatchField<Type>::ready() const
             recvRequests_.start(),
             recvRequests_.size()
         )
+     && UPstream::finishedRequests
+        (
+            recvRequests1_.start(),
+            recvRequests1_.size()
+        )
     )
     {
         recvRequests_.clear();
+        recvRequests1_.clear();
 
         if
         (
@@ -271,9 +289,15 @@ bool Foam::cyclicACMIFvPatchField<Type>::ready() const
                 sendRequests_.start(),
                 sendRequests_.size()
             )
+         && UPstream::finishedRequests
+            (
+                sendRequests1_.start(),
+                sendRequests1_.size()
+            )
         )
         {
             sendRequests_.clear();
+            sendRequests1_.clear();
         }
 
         return true;
@@ -483,7 +507,7 @@ void Foam::cyclicACMIFvPatchField<Type>::initEvaluate
         const Field<Type> pnf(this->primitiveField(), nbrFaceCells);
 
         // Assert that all receives are known to have finished
-        if (!recvRequests_.empty())
+        if (!recvRequests_.empty() || !recvRequests1_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -494,14 +518,20 @@ void Foam::cyclicACMIFvPatchField<Type>::initEvaluate
 
         // Assume that sends are also OK
         sendRequests_.clear();
+        sendRequests1_.clear();
 
         cyclicACMIPatch_.initInterpolate
         (
             pnf,
             sendRequests_,
-            sendBufs_,
             recvRequests_,
-            recvBufs_
+            sendBufs_,
+            recvBufs_,
+
+            sendRequests1_,
+            recvRequests1_,
+            sendBufs1_,
+            recvBufs1_
         );
     }
 }
@@ -547,12 +577,15 @@ void Foam::cyclicACMIFvPatchField<Type>::evaluate
             (
                 Field<Type>::null(),    // Not used for distributed
                 recvRequests_,
-                recvBufs_
+                recvBufs_,
+                recvRequests1_,
+                recvBufs1_
             ).ptr()
         );
 
         // Receive requests all handled by last function call
         recvRequests_.clear();
+        recvRequests1_.clear();
 
         if (doTransform())
         {
@@ -608,7 +641,7 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
         transformCoupleField(pnf, cmpt);
 
         // Assert that all receives are known to have finished
-        if (!recvRequests_.empty())
+        if (!recvRequests_.empty() || !recvRequests1_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -619,14 +652,20 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
 
         // Assume that sends are also OK
         sendRequests_.clear();
+        sendRequests1_.clear();
 
         cyclicACMIPatch_.initInterpolate
         (
             pnf,
             sendRequests_,
-            scalarSendBufs_,
             recvRequests_,
-            scalarRecvBufs_
+            scalarSendBufs_,
+            scalarRecvBufs_,
+
+            sendRequests1_,
+            recvRequests1_,
+            scalarSendBufs1_,
+            scalarRecvBufs1_
         );
     }
 
@@ -681,11 +720,14 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
             (
                 solveScalarField::null(),    // Not used for distributed
                 recvRequests_,
-                scalarRecvBufs_
+                scalarRecvBufs_,
+                recvRequests1_,
+                scalarRecvBufs1_
             );
 
         // Receive requests all handled by last function call
         recvRequests_.clear();
+        recvRequests1_.clear();
     }
     else
     {
@@ -738,7 +780,7 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
         transformCoupleField(pnf);
 
         // Assert that all receives are known to have finished
-        if (!recvRequests_.empty())
+        if (!recvRequests_.empty() || !recvRequests1_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -749,14 +791,20 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
 
         // Assume that sends are also OK
         sendRequests_.clear();
+        sendRequests1_.clear();
 
         cyclicACMIPatch_.initInterpolate
         (
             pnf,
             sendRequests_,
-            sendBufs_,
             recvRequests_,
-            recvBufs_
+            sendBufs_,
+            recvBufs_,
+
+            sendRequests1_,
+            recvRequests1_,
+            sendBufs1_,
+            recvBufs1_
         );
     }
 
@@ -798,11 +846,14 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
             (
                 Field<Type>::null(),    // Not used for distributed
                 recvRequests_,
-                recvBufs_
+                recvBufs_,
+                recvRequests1_,
+                recvBufs1_
             );
 
         // Receive requests all handled by last function call
         recvRequests_.clear();
+        recvRequests1_.clear();
     }
     else
     {
