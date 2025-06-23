@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2016-2024 OpenCFD Ltd.
+#     Copyright (C) 2016-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -55,7 +55,7 @@
 
 # [WM_PROJECT_VERSION] - A human-readable version name
 # A development version is often named 'com' - as in www.openfoam.com
-export WM_PROJECT_VERSION=v2412
+export WM_PROJECT_VERSION=v2506
 
 #------------------------------------------------------------------------------
 # Configuration environment variables.

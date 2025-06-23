@@ -40,9 +40,9 @@ Violations of the Trademark are monitored, and will be duly prosecuted.
 
 If OpenFOAM has already been compiled on your system, simply source
 the appropriate `etc/bashrc` or `etc/cshrc` file and get started.
-For example, for the OpenFOAM-v2412 version:
+For example, for the OpenFOAM-v2506 version:
 ```
-source /installation/path/OpenFOAM-v2412/etc/bashrc
+source /installation/path/OpenFOAM-v2506/etc/bashrc
 ```
 
 ## Compiling OpenFOAM
@@ -127,8 +127,8 @@ These 3rd-party sources are normally located in a directory parallel
 to the OpenFOAM directory. For example,
 ```
 /path/parent
-|-- OpenFOAM-v2412
-\-- ThirdParty-v2412
+|-- OpenFOAM-v2506
+\-- ThirdParty-v2506
 ```
 There are, however, many cases where this simple convention is inadequate:
 
@@ -156,9 +156,9 @@ when locating the ThirdParty directory with the following precedence:
 2. PREFIX/ThirdParty-VERSION
    * this corresponds to the traditional approach
 3. PREFIX/ThirdParty-vAPI
-   * allows for an updated value of VERSION, *eg*, `v2412-myCustom`,
+   * allows for an updated value of VERSION, *eg*, `v2506-myCustom`,
      without requiring a renamed ThirdParty. The API value would still
-     be `2412` and the original `ThirdParty-v2412/` would be found.
+     be `2412` and the original `ThirdParty-v2506/` would be found.
 4. PREFIX/ThirdParty-API
    * same as the previous example, but using an unadorned API value.
 5. PREFIX/ThirdParty-common
