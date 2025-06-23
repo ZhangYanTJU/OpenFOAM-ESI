@@ -67,9 +67,7 @@ Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
     GAMGInterfaceField(GAMGCp, fineInterface),
     cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
     doTransform_(false),
-    rank_(0),
-    sendRequests_(),
-    recvRequests_()
+    rank_(0)
 {
     const cyclicAMILduInterfaceField& p =
         refCast<const cyclicAMILduInterfaceField>(fineInterface);
@@ -89,9 +87,7 @@ Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
     GAMGInterfaceField(GAMGCp, doTransform, rank),
     cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
     doTransform_(doTransform),
-    rank_(rank),
-    sendRequests_(),
-    recvRequests_()
+    rank_(rank)
 {}
 
 
@@ -104,9 +100,7 @@ Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
     GAMGInterfaceField(GAMGCp, is),
     cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
     doTransform_(readBool(is)),
-    rank_(readLabel(is)),
-    sendRequests_(),
-    recvRequests_()
+    rank_(readLabel(is))
 {}
 
 
@@ -120,9 +114,7 @@ Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
     GAMGInterfaceField(GAMGCp, local),
     cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
     doTransform_(false),
-    rank_(0),
-    sendRequests_(),    // assume no requests in flight for input field
-    recvRequests_()
+    rank_(0)
 {
     const auto& p = refCast<const cyclicAMILduInterfaceField>(local);
 
@@ -142,9 +134,15 @@ bool Foam::cyclicAMIGAMGInterfaceField::ready() const
             recvRequests_.start(),
             recvRequests_.size()
         )
+     && UPstream::finishedRequests
+        (
+            recvRequests1_.start(),
+            recvRequests1_.size()
+        )
     )
     {
         recvRequests_.clear();
+        recvRequests1_.clear();
 
         if
         (
@@ -153,9 +151,15 @@ bool Foam::cyclicAMIGAMGInterfaceField::ready() const
                 sendRequests_.start(),
                 sendRequests_.size()
             )
+         && UPstream::finishedRequests
+            (
+                sendRequests1_.start(),
+                sendRequests1_.size()
+            )
         )
         {
             sendRequests_.clear();
+            sendRequests1_.clear();
         }
 
         return true;
@@ -183,7 +187,6 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
       ? cyclicAMIInterface_.AMI()
       : cyclicAMIInterface_.neighbPatch().AMI()
     );
-
     if (AMI.distributed() && AMI.comm() != -1)
     {
         //DebugPout<< "cyclicAMIFvPatchField::initInterfaceMatrixUpdate() :"
@@ -211,15 +214,8 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
         // Transform according to the transformation tensors
         transformCoupleField(pnf, cmpt);
 
-        const auto& map =
-        (
-            cyclicAMIInterface_.owner()
-          ? AMI.tgtMap()
-          : AMI.srcMap()
-        );
-
         // Assert that all receives are known to have finished
-        if (!recvRequests_.empty())
+        if (!recvRequests_.empty() || !recvRequests1_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -227,22 +223,63 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
                 << abort(FatalError);
         }
 
-        // Assume that sends are also OK
-        sendRequests_.clear();
+        const auto& cache = AMI.cache();
 
-        // Insert send/receive requests (non-blocking). See e.g.
-        // cyclicAMIPolyPatchTemplates.C
-        const label oldWarnComm = UPstream::commWarn(AMI.comm());
-        map.send
-        (
-            pnf,
-            sendRequests_,
-            scalarSendBufs_,
-            recvRequests_,
-            scalarRecvBufs_,
-            19462+cyclicAMIInterface_.index()   // unique offset + patch index
-        );
-        UPstream::commWarn(oldWarnComm);
+        if (cache.index0() == -1 && cache.index1() == -1)
+        {
+            const auto& map =
+            (
+                cyclicAMIInterface_.owner()
+              ? AMI.tgtMap()
+              : AMI.srcMap()
+            );
+
+            // Insert send/receive requests (non-blocking). See e.g.
+            // cyclicAMIPolyPatchTemplates.C
+            const label oldWarnComm = UPstream::commWarn(AMI.comm());
+            map.send
+            (
+                pnf,
+                sendRequests_,
+                scalarSendBufs_,
+                recvRequests_,
+                scalarRecvBufs_,
+                19462+cyclicAMIInterface_.index()   // unique offset + patch index
+            );
+            UPstream::commWarn(oldWarnComm);
+        }
+        else
+        {
+            cache.setDirection(cyclicAMIInterface_.owner());
+
+            if (cache.index0() != -1)
+            {
+                const auto& map0 = cache.cTgtMapPtr0()();
+                map0.send
+                (
+                    pnf,
+                    sendRequests_,
+                    scalarSendBufs_,
+                    recvRequests_,
+                    scalarRecvBufs_,
+                    19462+cyclicAMIInterface_.index()   // unique offset + patch index
+                );
+            }
+
+            if (cache.index1() != -1)
+            {
+                const auto& map1 = cache.cTgtMapPtr1()();
+                map1.send
+                (
+                    pnf,
+                    sendRequests1_,
+                    scalarSendBufs1_,
+                    recvRequests1_,
+                    scalarRecvBufs1_,
+                    19463+cyclicAMIInterface_.index()   // unique offset + patch index
+                );
+            }
+        }
     }
 
     this->updatedMatrix(false);
@@ -261,6 +298,8 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
     const Pstream::commsTypes commsType
 ) const
 {
+    typedef multiplyWeightedOp<scalar, plusEqOp<scalar>> opType;
+
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
     const auto& AMI =
@@ -284,6 +323,8 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
     //    << " AMI low-weight:" << AMI.applyLowWeightCorrection()
     //    << endl;
 
+    const auto& cache = AMI.cache();
+
     if (AMI.distributed() && AMI.comm() != -1)
     {
         if (commsType != UPstream::commsTypes::nonBlocking)
@@ -293,38 +334,118 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
                 << exit(FatalError);
         }
 
-        const auto& map =
-        (
-            cyclicAMIInterface_.owner()
-          ? AMI.tgtMap()
-          : AMI.srcMap()
-        );
+        if (cache.index0() == -1 && cache.index1() == -1)
+        {
+            const auto& map =
+            (
+                cyclicAMIInterface_.owner()
+              ? AMI.tgtMap()
+              : AMI.srcMap()
+            );
 
-        // Receive (= copy) data from buffers into work. TBD: receive directly
-        // into slices of work.
-        solveScalarField work;
-        map.receive
-        (
-            recvRequests_,
-            scalarRecvBufs_,
-            work,
-            19462+cyclicAMIInterface_.index()   // unique offset + patch index
-        );
+            // Receive (= copy) data from buffers into work. TBD: receive directly
+            // into slices of work.
+            solveScalarField work;
+            map.receive
+            (
+                recvRequests_,
+                scalarRecvBufs_,
+                work,
+                19462+cyclicAMIInterface_.index()   // unique offset + patch index
+            );
 
-        // Receive requests all handled by last function call
-        recvRequests_.clear();
+            // Receive requests all handled by last function call
+            recvRequests_.clear();
 
-        solveScalarField pnf(faceCells.size(), Zero);
-        AMI.weightedSum
-        (
-            cyclicAMIInterface_.owner(),
-            work,
-            pnf,                // result
-            defaultValues
-        );
+            solveScalarField pnf(faceCells.size(), Zero);
+            AMI.weightedSum
+            (
+                cyclicAMIInterface_.owner(),
+                work,
+                pnf,                // result
+                defaultValues
+            );
 
-        // Add result using coefficients
-        this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+            // Add result using coefficients
+            this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+        }
+        else
+        {
+            cache.setDirection(cyclicAMIInterface_.owner());
+
+            solveScalarField pnf(faceCells.size());
+            solveScalarField work(faceCells.size());
+
+            if (cache.index0() != -1)
+            {
+                // Receive (= copy) data from buffers into work. TBD: receive directly
+                // into slices of work.
+                work = Zero;
+                cache.cTgtMapPtr0()().receive
+                (
+                    recvRequests_,
+                    scalarRecvBufs_,
+                    work,
+                    19462+cyclicAMIInterface_.index()   // unique offset + patch index
+                );
+
+                // Receive requests all handled by last function call
+                recvRequests_.clear();
+
+                pnf = Zero;
+                AMIInterpolation::weightedSum
+                (
+                    AMI.lowWeightCorrection(),
+                    cache.cSrcAddress0(),
+                    cache.cSrcWeights0(),
+                    cache.cSrcWeightsSum0(),
+                    work,
+                    opType(plusEqOp<scalar>()),
+                    pnf,
+                    defaultValues
+                );
+
+                pnf *= (1-cache.weight());
+
+                // Add result using coefficients
+                this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+            }
+
+            if (cache.index1() != -1)
+            {
+                // Receive (= copy) data from buffers into work. TBD: receive directly
+                // into slices of work.
+                work = Zero;
+                cache.cTgtMapPtr1()().receive
+                (
+                    recvRequests1_,
+                    scalarRecvBufs1_,
+                    work,
+                    19463+cyclicAMIInterface_.index()   // unique offset + patch index
+                );
+
+                // Receive requests all handled by last function call
+                recvRequests1_.clear();
+
+                pnf = Zero;
+                AMIInterpolation::weightedSum
+                (
+                    AMI.lowWeightCorrection(),
+                    cache.cSrcAddress1(),
+                    cache.cSrcWeights1(),
+                    cache.cSrcWeightsSum1(),
+                    work,
+                    opType(plusEqOp<scalar>()),
+                    pnf,
+                    defaultValues
+                );
+
+                pnf *= cache.weight();
+
+                // Add result using coefficients
+                this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+            }
+        }
     }
     else
     {
@@ -337,17 +458,68 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
         // Transform according to the transformation tensors
         transformCoupleField(work, cmpt);
 
-        solveScalarField pnf(faceCells.size(), Zero);
-        AMI.weightedSum
-        (
-            cyclicAMIInterface_.owner(),
-            work,
-            pnf,                // result
-            defaultValues
-        );
+        solveScalarField pnf(faceCells.size());
 
-        // Add result using coefficients
-        this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+        if (cache.index0() == -1 && cache.index1() == -1)
+        {
+            pnf = Zero;
+            AMI.weightedSum
+            (
+                cyclicAMIInterface_.owner(),
+                work,
+                pnf,                // result
+                defaultValues
+            );
+
+            // Add result using coefficients
+            this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+        }
+        else
+        {
+            cache.setDirection(cyclicAMIInterface_.owner());
+
+            if (cache.index0() != -1)
+            {
+                pnf = Zero;
+                AMIInterpolation::weightedSum
+                (
+                    AMI.lowWeightCorrection(),
+                    cache.cSrcAddress0(),
+                    cache.cSrcWeights0(),
+                    cache.cSrcWeightsSum0(),
+                    work,
+                    opType(plusEqOp<scalar>()),
+                    pnf,
+                    defaultValues
+                );
+
+                pnf *= (1 - cache.weight());
+
+                // Add result using coefficients
+                this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+            }
+
+            if (cache.index1() != -1)
+            {
+                pnf = Zero;
+                AMIInterpolation::weightedSum
+                (
+                    AMI.lowWeightCorrection(),
+                    cache.cSrcAddress1(),
+                    cache.cSrcWeights1(),
+                    cache.cSrcWeightsSum1(),
+                    work,
+                    opType(plusEqOp<scalar>()),
+                    pnf,
+                    defaultValues
+                );
+
+                pnf *= cache.weight();
+
+                // Add result using coefficients
+                this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+            }
+        }
     }
 
     this->updatedMatrix(true);

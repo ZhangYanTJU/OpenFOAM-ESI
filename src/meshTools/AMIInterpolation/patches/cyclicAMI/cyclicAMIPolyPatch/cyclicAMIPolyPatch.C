@@ -415,6 +415,8 @@ void Foam::cyclicAMIPolyPatch::resetAMI(const UList<point>& points) const
         if (returnReduceOr(restoredFromCache, comm))
         {
             // Restored AMI weight and addressing from cache - all done
+            Info<< "AMI: weights and addresses restored from cache" << endl;
+
             return;
         }
     }

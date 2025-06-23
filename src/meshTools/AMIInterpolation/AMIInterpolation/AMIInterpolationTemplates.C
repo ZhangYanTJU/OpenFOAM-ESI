@@ -89,37 +89,18 @@ void Foam::AMIInterpolation::weightedSum
     const UList<Type>& defaultValues
 ) const
 {
-    cache_.setDirection(toSource);
-
-    const auto wsum = [&](List<Type>& res, const label i){
-        weightedSum
-        (
-            lowWeightCorrection_,
-            cache_.cSrcAddress(i),
-            cache_.cSrcWeights(i),
-            cache_.cSrcWeightsSum(i),
-            fld,
-            multiplyWeightedOp<Type, plusEqOp<Type>>(plusEqOp<Type>()),
-            res,
-            defaultValues
-        );
-    };
-
-    if (!cache_.apply(result, wsum))
-    {
-        // Both -1 => equates to non-caching
-        weightedSum
-        (
-            lowWeightCorrection_,
-            (toSource ? srcAddress_ : tgtAddress_),
-            (toSource ? srcWeights_ : tgtWeights_),
-            (toSource ? srcWeightsSum_ : tgtWeightsSum_),
-            fld,
-            multiplyWeightedOp<Type, plusEqOp<Type>>(plusEqOp<Type>()),
-            result,
-            defaultValues
-        );
-    }
+    // Note: using non-caching AMI
+    weightedSum
+    (
+        lowWeightCorrection_,
+        (toSource ? srcAddress_ : tgtAddress_),
+        (toSource ? srcWeights_ : tgtWeights_),
+        (toSource ? srcWeightsSum_ : tgtWeightsSum_),
+        fld,
+        multiplyWeightedOp<Type, plusEqOp<Type>>(plusEqOp<Type>()),
+        result,
+        defaultValues
+    );
 }
 
 
@@ -208,7 +189,11 @@ void Foam::AMIInterpolation::interpolate
             map.distribute(work);
         }
 
-        result0.resize_nocopy(srcAddress.size());
+        if constexpr (is_contiguous_scalar<Type>::value)
+        {
+            result0 = Zero;
+        }
+
         weightedSum
         (
             lowWeightCorrection_,
@@ -248,7 +233,11 @@ void Foam::AMIInterpolation::interpolate
             map.distribute(work);
         }
 
-        result1.resize_nocopy(srcAddress.size());
+        if constexpr (is_contiguous_scalar<Type>::value)
+        {
+            result1 = Zero;
+        }
+
         weightedSum
         (
             lowWeightCorrection_,
@@ -309,6 +298,12 @@ void Foam::AMIInterpolation::interpolate
         }
 
         result.resize_nocopy(srcAddress.size());
+
+        if constexpr (is_contiguous_scalar<Type>::value)
+        {
+            result = Zero;
+        }
+
         weightedSum
         (
             lowWeightCorrection_,

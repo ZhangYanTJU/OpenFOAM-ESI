@@ -207,9 +207,15 @@ bool Foam::cyclicAMIFvPatchField<Type>::all_ready() const
             recvRequests_.start(),
             recvRequests_.size()
         )
+    &&  UPstream::finishedRequests
+        (
+            recvRequests1_.start(),
+            recvRequests1_.size()
+        )
     )
     {
         recvRequests_.clear();
+        recvRequests1_.clear();
         ++done;
     }
 
@@ -220,9 +226,15 @@ bool Foam::cyclicAMIFvPatchField<Type>::all_ready() const
             sendRequests_.start(),
             sendRequests_.size()
         )
+    &&  UPstream::finishedRequests
+        (
+            sendRequests1_.start(),
+            sendRequests1_.size()
+        )
     )
     {
         sendRequests_.clear();
+        sendRequests1_.clear();
         ++done;
     }
 
@@ -240,9 +252,15 @@ bool Foam::cyclicAMIFvPatchField<Type>::ready() const
             recvRequests_.start(),
             recvRequests_.size()
         )
+     && UPstream::finishedRequests
+        (
+            recvRequests1_.start(),
+            recvRequests1_.size()
+        )
     )
     {
         recvRequests_.clear();
+        recvRequests1_.clear();
 
         if
         (
@@ -251,9 +269,15 @@ bool Foam::cyclicAMIFvPatchField<Type>::ready() const
                 sendRequests_.start(),
                 sendRequests_.size()
             )
+         && UPstream::finishedRequests
+            (
+                sendRequests1_.start(),
+                sendRequests1_.size()
+            )
         )
         {
             sendRequests_.clear();
+            sendRequests1_.clear();
         }
 
         return true;
@@ -319,8 +343,9 @@ Foam::cyclicAMIFvPatchField<Type>::getNeighbourField
 
 
 template<class Type>
-bool Foam::cyclicAMIFvPatchField<Type>::cacheNeighbourField()
+bool Foam::cyclicAMIFvPatchField<Type>::cacheNeighbourField() const
 {
+    return false;
     return (FieldBase::localBoundaryConsistency() != 0);
 }
 
@@ -491,7 +516,7 @@ void Foam::cyclicAMIFvPatchField<Type>::initEvaluate
         const cyclicAMIPolyPatch& cpp = cyclicAMIPatch_.cyclicAMIPatch();
 
         // Assert that all receives are known to have finished
-        if (!recvRequests_.empty())
+        if (!recvRequests_.empty() || !recvRequests1_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -502,14 +527,20 @@ void Foam::cyclicAMIFvPatchField<Type>::initEvaluate
 
         // Assume that sends are also OK
         sendRequests_.clear();
+        sendRequests1_.clear();
 
         cpp.initInterpolate
         (
             pnf,
             sendRequests_,
-            sendBufs_,
             recvRequests_,
-            recvBufs_
+            sendBufs_,
+            recvBufs_,
+
+            sendRequests1_,
+            recvRequests1_,
+            sendBufs1_,
+            recvBufs1_
         );
     }
 }
@@ -562,12 +593,15 @@ void Foam::cyclicAMIFvPatchField<Type>::evaluate
                 Field<Type>::null(),    // Not used for distributed
                 recvRequests_,
                 recvBufs_,
+                recvRequests1_,
+                recvBufs1_,
                 defaultValues
             ).ptr()
         );
 
         // Receive requests all handled by last function call
         recvRequests_.clear();
+        recvRequests1_.clear();
 
         if (doTransform())
         {
@@ -618,7 +652,7 @@ void Foam::cyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
         const cyclicAMIPolyPatch& cpp = cyclicAMIPatch_.cyclicAMIPatch();
 
         // Assert that all receives are known to have finished
-        if (!recvRequests_.empty())
+        if (!recvRequests_.empty() || !recvRequests1_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -629,14 +663,20 @@ void Foam::cyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
 
         // Assume that sends are also OK
         sendRequests_.clear();
+        sendRequests1_.clear();
 
         cpp.initInterpolate
         (
             pnf,
             sendRequests_,
-            scalarSendBufs_,
             recvRequests_,
-            scalarRecvBufs_
+            scalarSendBufs_,
+            scalarRecvBufs_,
+
+            sendRequests1_,
+            recvRequests1_,
+            scalarSendBufs1_,
+            scalarRecvBufs1_
         );
     }
 
@@ -691,11 +731,14 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
                 solveScalarField::null(),   // Not used for distributed
                 recvRequests_,
                 scalarRecvBufs_,
+                recvRequests1_,
+                scalarRecvBufs1_,
                 defaultValues
             );
 
         // Receive requests all handled by last function call
         recvRequests_.clear();
+        recvRequests1_.clear();
     }
     else
     {
@@ -757,7 +800,7 @@ void Foam::cyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
         const cyclicAMIPolyPatch& cpp = cyclicAMIPatch_.cyclicAMIPatch();
 
         // Assert that all receives are known to have finished
-        if (!recvRequests_.empty())
+        if (!recvRequests_.empty() || !recvRequests1_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -768,14 +811,20 @@ void Foam::cyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
 
         // Assume that sends are also OK
         sendRequests_.clear();
+        sendRequests1_.clear();
 
         cpp.initInterpolate
         (
             pnf,
             sendRequests_,
-            sendBufs_,
             recvRequests_,
-            recvBufs_
+            sendBufs_,
+            recvBufs_,
+
+            sendRequests1_,
+            recvRequests1_,
+            sendBufs1_,
+            recvBufs1_
         );
     }
 
@@ -829,11 +878,14 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
                 Field<Type>::null(),  // Not used for distributed
                 recvRequests_,
                 recvBufs_,
+                recvRequests1_,
+                recvBufs1_,
                 defaultValues
             );
 
         // Receive requests all handled by last function call
         recvRequests_.clear();
+        recvRequests1_.clear();
     }
     else
     {
@@ -918,7 +970,7 @@ void Foam::cyclicAMIFvPatchField<Type>::manipulateMatrix
         }
 
         // Set internalCoeffs and boundaryCoeffs in the assembly matrix
-        // on clyclicAMI patches to be used in the individual matrix by
+        // on cyclicAMI patches to be used in the individual matrix by
         // matrix.flux()
         if (matrix.psi(mat).mesh().fluxRequired(this->internalField().name()))
         {
