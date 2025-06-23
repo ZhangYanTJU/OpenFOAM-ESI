@@ -83,6 +83,21 @@ class cyclicAMIGAMGInterfaceField
             mutable PtrList<List<solveScalar>> scalarRecvBufs_;
 
 
+            // Only used for AMI caching
+
+                //- Current range of send requests (non-blocking)
+                mutable labelRange sendRequests1_;
+
+                //- Current range of recv requests (non-blocking)
+                mutable labelRange recvRequests1_;
+
+                //- Scalar send buffers
+                mutable PtrList<List<solveScalar>> scalarSendBufs1_;
+
+                //- Scalar receive buffers
+                mutable PtrList<List<solveScalar>> scalarRecvBufs1_;
+
+
     // Private Member Functions
 
         //- No copy construct
