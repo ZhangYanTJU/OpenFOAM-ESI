@@ -106,7 +106,7 @@ void printMyString(const UList<string>& lst)
 {
     MyStrings slist2(lst);
 
-    Info<<slist2 << nl;
+    Info<< slist2 << nl;
 }
 
 
@@ -204,16 +204,6 @@ int main(int argc, char *argv[])
             Info<<" " << *iter;
         }
         Info<< nl;
-
-        Info<< "data:" << Foam::name(ident.cdata())
-            << " size:" << ident.size() << nl;
-
-
-        Info<< "resize_unsafe(10)" << nl;
-        ident.resize_unsafe(10);
-
-        Info<< "data:" << Foam::name(ident.cdata())
-            << " size:" << ident.size() << nl;
     }
 
     if (false)
@@ -370,7 +360,7 @@ int main(int argc, char *argv[])
         auto shrtList = ListOps::create<short>
         (
             longLabelList,
-            [](const label& val){ return val; }
+            [](label val){ return val; }
         );
 
         printListOutputType<short>("short") << nl;
@@ -567,7 +557,7 @@ int main(int argc, char *argv[])
             auto scalars = ListOps::create<scalar>
             (
                 labels,
-                [](const label& val){ return scalar(1.5*val); }
+                [](label val){ return scalar(1.5*val); }
             );
             Info<< "scalars: " << flatOutput(scalars) << endl;
         }
@@ -576,7 +566,7 @@ int main(int argc, char *argv[])
             auto vectors = ListOps::create<vector>
             (
                 labels,
-                [](const label& val){ return vector(1.2*val, -1.2*val, 0); }
+                [](label val){ return vector(1.2*val, -1.2*val, 0); }
             );
             Info<< "vectors: " << flatOutput(vectors) << endl;
         }
@@ -585,7 +575,7 @@ int main(int argc, char *argv[])
             auto longs = ListOps::create<long>
             (
                 labels,
-                [](const label& val){ return val; }
+                [](label val){ return val; }
             );
             Info<< "longs: " << flatOutput(longs) << endl;
         }
@@ -603,7 +593,7 @@ int main(int argc, char *argv[])
             (
                 labelRange().cbegin(),
                 labelRange(15).cend(),
-                [](const label& val){ return scalar(-1.125*val); }
+                [](label val){ return scalar(-1.125*val); }
             );
             Info<< "scalars: " << flatOutput(scalars) << endl;
         }
