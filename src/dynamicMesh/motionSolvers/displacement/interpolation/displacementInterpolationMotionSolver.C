@@ -135,9 +135,6 @@ void Foam::displacementInterpolationMotionSolver::calcInterpolation()
             const word& zoneName = faceZoneToTable[i][0];
             const faceZone& fz = fZones[zoneName];
 
-            scalar minCoord = VGREAT;
-            scalar maxCoord = -VGREAT;
-
             scalarMinMax limits;
 
             for (const label pointi : fz().meshPoints())
