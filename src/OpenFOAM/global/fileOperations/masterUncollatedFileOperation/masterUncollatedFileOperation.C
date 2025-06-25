@@ -867,12 +867,18 @@ off_t Foam::fileOperations::masterUncollatedFileOperation::fileSize
     const bool followLink
 ) const
 {
-    return masterOp<fileSizeOp::value_type>
+    // Reduce as int64_t instead of off_t to avoid missing
+    // pTraits<long int> (or other ambiguities) on Mingw and Linux i586
+
+    return off_t
     (
-        fName,
-        fileSizeOp(followLink),
-        UPstream::msgType(),
-        comm_
+        masterOp<int64_t>
+        (
+            fName,
+            fileSizeOp(followLink),
+            UPstream::msgType(),
+            comm_
+        )
     );
 }
 

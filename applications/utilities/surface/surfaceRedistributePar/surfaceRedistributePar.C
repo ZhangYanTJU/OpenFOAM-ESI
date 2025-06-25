@@ -49,33 +49,45 @@ Note
 #include "distributedTriSurfaceMesh.H"
 #include "mapDistribute.H"
 #include "decompositionModel.H"
+#include <tuple>
 
 using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Print on master all the per-processor surface stats.
+// Determine surface bounding boxes, faces, points
 void writeProcStats
 (
     const triSurface& s,
-    const List<List<treeBoundBox>>& meshBb
+    const UList<List<treeBoundBox>>& meshBb
 )
 {
-    // Determine surface bounding boxes, faces, points
-    List<treeBoundBox> surfBb
-    (
-        UPstream::listGatherValues<treeBoundBox>(treeBoundBox(s.points()))
-    );
-    labelList nPoints(UPstream::listGatherValues<label>(s.points().size()));
-    labelList nFaces(UPstream::listGatherValues<label>(s.size()));
+    // listGatherValues with treeBoundBox makes gcc-15 unhappy
+    // (complains about non-trivial copy for memmove),
+    // so just collect as a std::tuple in a single MPI call
 
-    if (Pstream::master())
+    typedef std::tuple<label, label, point, point> surfTuple;
+
+    List<surfTuple> surfaceInfo;
     {
-        forAll(surfBb, proci)
+        treeBoundBox bb(s.points());
+
+        surfaceInfo = UPstream::listGatherValues<surfTuple>
+        (
+            surfTuple(s.points().size(), s.size(), bb.min(), bb.max())
+        );
+    }
+
+    if (UPstream::master())
+    {
+        forAll(surfaceInfo, proci)
         {
             Info<< "processor" << proci << nl;
 
-            const List<treeBoundBox>& bbs = meshBb[proci];
+            const auto& [nPoints, nFaces, smin, smax] = surfaceInfo[proci];
+            const auto& bbs = meshBb[proci];
+
             forAll(bbs, i)
             {
                 if (!i)
@@ -88,10 +100,9 @@ void writeProcStats
                 }
                 Info<< bbs[i] << nl;
             }
-            Info<< "\tSurface bounding box : " << surfBb[proci] << nl
-                << "\tTriangles            : " << nFaces[proci] << nl
-                << "\tVertices             : " << nPoints[proci]
-                << endl;
+            Info<< "\tSurface bounding box : " << smin << ' ' << smax << nl
+                << "\tTriangles            : " << nFaces << nl
+                << "\tVertices             : " << nPoints << endl;
         }
         Info<< endl;
     }
