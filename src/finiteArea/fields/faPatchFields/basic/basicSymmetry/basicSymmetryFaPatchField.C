@@ -141,9 +141,20 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::basicSymmetryFaPatchField<Type>::snGradTransformDiag() const
 {
-    tmp<vectorField> diag(cmptMag(this->patch().edgeNormals()));
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type
+        // FatalErrorInFunction
+        //     << "Should not be called for this type"
+        //     << ::Foam::abort(FatalError);
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        tmp<vectorField> diag(cmptMag(this->patch().edgeNormals()));
 
-    return transformFieldMask<Type>(pow<vector, pTraits<Type>::rank>(diag));
+        return transformFieldMask<Type>(pow<vector, pTraits<Type>::rank>(diag));
+    }
 }
 
 

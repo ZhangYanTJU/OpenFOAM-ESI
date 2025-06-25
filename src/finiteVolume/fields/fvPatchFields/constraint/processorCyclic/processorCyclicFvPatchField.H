@@ -151,19 +151,21 @@ public:
 
     // Member Functions
 
-        // Access
+        //- Does the patch field perform the transformation
+        virtual bool doTransform() const
+        {
+            return
+            (
+                is_rotational_vectorspace_v<Type>
+             && !procPatch_.parallel()
+            );
+        }
 
-            //- Does the patch field perform the transformation
-            virtual bool doTransform() const
-            {
-                return (pTraits<Type>::rank && !procPatch_.parallel());
-            }
-
-            //- Return face transformation tensor
-            virtual const tensorField& forwardT() const
-            {
-                return procPatch_.forwardT();
-            }
+        //- Return face transformation tensor
+        virtual const tensorField& forwardT() const
+        {
+            return procPatch_.forwardT();
+        }
 };
 
 

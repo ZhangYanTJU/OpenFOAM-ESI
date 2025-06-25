@@ -114,22 +114,19 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
-        // Evaluation functions
+        //- Return gradient at boundary
+        virtual tmp<Field<Type>> snGrad() const;
 
-            //- Return gradient at boundary
-            virtual tmp<Field<Type>> snGrad() const;
+        //- Evaluate the patch field
+        virtual void evaluate
+        (
+            const Pstream::commsTypes commsType=Pstream::commsTypes::buffered
+        );
 
-            //- Evaluate the patch field
-            virtual void evaluate
-            (
-                const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
-            );
-
-
-            //- Return face-gradient transform diagonal
-            virtual tmp<Field<Type>> snGradTransformDiag() const;
+        //- Return face-gradient transform diagonal
+        virtual tmp<Field<Type>> snGradTransformDiag() const;
 };
 
 

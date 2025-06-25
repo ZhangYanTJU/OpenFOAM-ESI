@@ -135,6 +135,12 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::fixedNormalSlipFvPatchField<Type>::snGrad() const
 {
+    static_assert
+    (
+        is_rotational_vectorspace_v<Type>,
+        "normal-slip with vector, tensor only!"
+    );
+
     const vectorField nHat(this->patch().nf());
     const Field<Type> pif(this->patchInternalField());
 
@@ -172,9 +178,22 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::fixedNormalSlipFvPatchField<Type>::snGradTransformDiag() const
 {
-    tmp<vectorField> diag(cmptMag(this->patch().nf()));
+    static_assert
+    (
+        is_rotational_vectorspace_v<Type>,
+        "normal-slip with vector, tensor only!"
+    );
+    // if constexpr (!is_rotational_vectorspace_v<Type>)
+    // {
+    //     // Rotational-invariant type
+    //     return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    // }
 
-    return transformFieldMask<Type>(pow<vector, pTraits<Type>::rank>(diag));
+    {
+        tmp<vectorField> diag(cmptMag(this->patch().nf()));
+
+        return transformFieldMask<Type>(pow<vector, pTraits<Type>::rank>(diag));
+    }
 }
 
 

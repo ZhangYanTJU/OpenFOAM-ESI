@@ -333,7 +333,11 @@ public:
             //- Does the patch field perform the transformation
             virtual bool doTransform() const
             {
-                return (pTraits<Type>::rank && !cyclicACMIPatch_.parallel());
+                return
+                (
+                    is_rotational_vectorspace_v<Type>
+                 && !cyclicACMIPatch_.parallel()
+                );
             }
 
             //- Return face transformation tensor

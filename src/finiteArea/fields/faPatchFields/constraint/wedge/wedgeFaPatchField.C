@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -155,25 +156,36 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::wedgeFaPatchField<Type>::snGradTransformDiag() const
 {
-    const auto& rot = refCast<const wedgeFaPatch>(this->patch()).faceT();
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type
+        // FatalErrorInFunction
+        //     << "Should not be called for this type"
+        //     << ::Foam::abort(FatalError);
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        const auto& rot = refCast<const wedgeFaPatch>(this->patch()).faceT();
 
-    const vector diagV = 0.5*(I - rot).diag();
+        const vector diag = 0.5*(I - rot).diag();
 
-    return tmp<Field<Type>>::New
-    (
-        this->size(),
-        transformMask<Type>
+        return tmp<Field<Type>>::New
         (
-            pow
+            this->size(),
+            transformMask<Type>
             (
-                diagV,
-                pTraits
-                <
-                    typename powProduct<vector, pTraits<Type>::rank>::type
-                >::zero
+                pow
+                (
+                    diag,
+                    pTraits
+                    <
+                        typename powProduct<vector, pTraits<Type>::rank>::type
+                    >::zero
+                )
             )
-        )
-    );
+        );
+    }
 }
 
 

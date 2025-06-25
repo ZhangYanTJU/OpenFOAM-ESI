@@ -179,25 +179,33 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::directionMixedFvPatchField<Type>::snGradTransformDiag() const
 {
-    vectorField diag(valueFraction_.size());
+    // static_assert(!std::is_arithmetic_v<T>, "direction-mixed with scalar??");
+    // if constexpr (!is_rotational_vectorspace_v<Type>)
+    // {
+    //     // Rotational-invariant type
+    //     return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    // }
 
-    diag.replace
-    (
-        vector::X,
-        sqrt(mag(valueFraction_.component(symmTensor::XX)))
-    );
-    diag.replace
-    (
-        vector::Y,
-        sqrt(mag(valueFraction_.component(symmTensor::YY)))
-    );
-    diag.replace
-    (
-        vector::Z,
-        sqrt(mag(valueFraction_.component(symmTensor::ZZ)))
-    );
+    {
+        vectorField diag(valueFraction_.size());
 
-    return transformFieldMask<Type>(pow<vector, pTraits<Type>::rank>(diag));
+        std::transform
+        (
+            valueFraction_.cbegin(),
+            valueFraction_.cend(),
+            diag.begin(),
+
+            [](const symmTensor& t)
+            {
+                return vector
+                (
+                    sqrt(mag(t.xx())), sqrt(mag(t.yy())), sqrt(mag(t.zz()))
+                );
+            }
+        );
+
+        return transformFieldMask<Type>(pow<vector, pTraits<Type>::rank>(diag));
+    }
 }
 
 

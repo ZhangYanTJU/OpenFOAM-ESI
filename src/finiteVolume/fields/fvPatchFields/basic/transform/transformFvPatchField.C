@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -97,9 +98,9 @@ Foam::transformFvPatchField<Type>::valueInternalCoeffs
     const tmp<scalarField>&
 ) const
 {
-    // OR (!is_rotational_vectorspace_v<Type>)
-    if constexpr (std::is_arithmetic_v<Type>)
+    if constexpr (!is_rotational_vectorspace_v<Type>)
     {
+        // Rotational-invariant type
         return tmp<Field<Type>>::New(this->size(), pTraits<Type>::one);
     }
     else
@@ -130,9 +131,9 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::transformFvPatchField<Type>::gradientInternalCoeffs() const
 {
-    // OR (!is_rotational_vectorspace_v<Type>)
-    if constexpr (std::is_arithmetic_v<Type>)
+    if constexpr (!is_rotational_vectorspace_v<Type>)
     {
+        // Rotational-invariant type
         return tmp<Field<Type>>::New(this->size(), Foam::zero{});
     }
     else

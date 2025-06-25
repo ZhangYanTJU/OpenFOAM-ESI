@@ -231,6 +231,9 @@ public:
                 const Pstream::commsTypes commsType
             ) const = 0;
 
+
+    // Other
+
         //- Write
         virtual void write(Ostream&) const;
 };

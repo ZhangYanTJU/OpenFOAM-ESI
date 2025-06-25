@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -142,17 +142,24 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::partialSlipFvPatchField<Type>::snGrad() const
 {
-    tmp<vectorField> nHat = this->patch().nf();
     const Field<Type> pif(this->patchInternalField());
+
+    tmp<Field<Type>> rotated;
+
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type
+        rotated.cref(pif);
+    }
+    else
+    {
+        tmp<vectorField> nHat(this->patch().nf());
+        rotated = transform(I - sqr(nHat), pif);
+    }
 
     return
     (
-        lerp
-        (
-            transform(I - sqr(nHat), pif),
-            refValue_,
-            valueFraction_
-        ) - pif
+        lerp(rotated, refValue_, valueFraction_) - pif
     )*this->patch().deltaCoeffs();
 }
 
@@ -168,16 +175,23 @@ void Foam::partialSlipFvPatchField<Type>::evaluate
         this->updateCoeffs();
     }
 
-    tmp<vectorField> nHat = this->patch().nf();
+    tmp<Field<Type>> rotated;
+
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type
+        rotated = this->patchInternalField();
+    }
+    else
+    {
+        tmp<vectorField> nHat(this->patch().nf());
+        rotated = transform(I - sqr(nHat), this->patchInternalField());
+    }
+
 
     Field<Type>::operator=
     (
-        lerp
-        (
-            transform(I - sqr(nHat), this->patchInternalField()),
-            refValue_,
-            valueFraction_
-        )
+        lerp(rotated, refValue_, valueFraction_)
     );
 
     parent_bctype::evaluate();
@@ -188,12 +202,23 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::partialSlipFvPatchField<Type>::snGradTransformDiag() const
 {
-    tmp<vectorField> diag(cmptMag(this->patch().nf()));
+    // static_assert(!std::is_arithmetic_v<T>, "partial-slip with scalar??");
+    // if constexpr (!is_rotational_vectorspace_v<Type>)
+    // {
+    //     // Rotational-invariant type
+    //     return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    // }
 
-    return
-        valueFraction_*pTraits<Type>::one
-      + (1.0 - valueFraction_)
-       *transformFieldMask<Type>(pow<vector, pTraits<Type>::rank>(diag));
+    {
+        tmp<vectorField> diag(cmptMag(this->patch().nf()));
+
+        return
+        (
+            valueFraction_*pTraits<Type>::one
+          + (1.0 - valueFraction_)
+          * transformFieldMask<Type>(pow<vector, pTraits<Type>::rank>(diag))
+        );
+    }
 }
 
 

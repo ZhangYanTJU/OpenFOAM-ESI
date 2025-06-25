@@ -170,25 +170,36 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::wedgeFvPatchField<Type>::snGradTransformDiag() const
 {
-    const auto& rot = refCast<const wedgeFvPatch>(this->patch()).cellT();
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type
+        // FatalErrorInFunction
+        //     << "Should not be called for this type"
+        //     << ::Foam::abort(FatalError);
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        const auto& rot = refCast<const wedgeFvPatch>(this->patch()).cellT();
 
-    const vector diagV = 0.5*(I - rot).diag();
+        const vector diag = 0.5*(I - rot).diag();
 
-    return tmp<Field<Type>>::New
-    (
-        this->size(),
-        transformMask<Type>
+        return tmp<Field<Type>>::New
         (
-            pow
-            (
-                diagV,
-                pTraits
-                <
-                    typename powProduct<vector, pTraits<Type>::rank>::type
-                >::zero
-            )
-        )
-    );
+             this->size(),
+             transformMask<Type>
+             (
+                 pow
+                 (
+                     diag,
+                     pTraits
+                     <
+                         typename powProduct<vector, pTraits<Type>::rank>::type
+                     >::zero
+                 )
+             )
+        );
+    }
 }
 
 

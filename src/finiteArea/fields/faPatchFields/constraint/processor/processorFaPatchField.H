@@ -287,7 +287,11 @@ public:
         //- Does the patch field perform the transformation
         virtual bool doTransform() const
         {
-            return (pTraits<Type>::rank && !procPatch_.parallel());
+            return
+            (
+                is_rotational_vectorspace_v<Type>
+             && !procPatch_.parallel()
+            );
         }
 
         //- Return face transformation tensor

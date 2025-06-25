@@ -172,24 +172,35 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::symmetryPlaneFvPatchField<Type>::snGradTransformDiag() const
 {
-    const vector diag(cmptMag(symmetryPlanePatch_.n()));
+    if constexpr (!is_rotational_vectorspace_v<Type>)
+    {
+        // Rotational-invariant type
+        // FatalErrorInFunction
+        //     << "Should not be called for this type"
+        //     << ::Foam::abort(FatalError);
+        return tmp<Field<Type>>::New(this->size(), Foam::zero{});
+    }
+    else
+    {
+        const vector diag(cmptMag(symmetryPlanePatch_.n()));
 
-    return tmp<Field<Type>>::New
-    (
-        this->size(),
-        transformMask<Type>
+        return tmp<Field<Type>>::New
         (
-            //pow<vector, pTraits<Type>::rank>(diag)
-            pow
+            this->size(),
+            transformMask<Type>
             (
-                diag,
-                pTraits
-                <
-                    typename powProduct<vector, pTraits<Type>::rank>::type
-                >::zero
+                //pow<vector, pTraits<Type>::rank>(diag)
+                pow
+                (
+                    diag,
+                    pTraits
+                    <
+                        typename powProduct<vector, pTraits<Type>::rank>::type
+                    >::zero
+                )
             )
-        )
-    );
+        );
+    }
 }
 
 

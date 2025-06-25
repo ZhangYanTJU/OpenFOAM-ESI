@@ -161,7 +161,7 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
         // Constraint handling
 
@@ -177,7 +177,11 @@ public:
             //- Does the patch field perform the transformation
             virtual bool doTransform() const
             {
-                return (pTraits<Type>::rank && !cyclicAMIPatch_.parallel());
+                return
+                (
+                    is_rotational_vectorspace_v<Type>
+                 && !cyclicAMIPatch_.parallel()
+                );
             }
 
             //- Return face transformation tensor

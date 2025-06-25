@@ -125,7 +125,7 @@ public:
             //- Return true if running parallel
             virtual bool coupled() const
             {
-                return Pstream::parRun();
+                return UPstream::parRun();
             }
 
             //- Does the patch field perform the transformation
@@ -133,7 +133,7 @@ public:
             {
                 return
                 (
-                    pTraits<Type>::rank
+                    is_rotational_vectorspace_v<Type>
                  && !procPatch_.procPolyPatch().parallel()
                 );
             }
