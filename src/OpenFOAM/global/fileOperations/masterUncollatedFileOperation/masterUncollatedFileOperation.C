@@ -867,12 +867,18 @@ off_t Foam::fileOperations::masterUncollatedFileOperation::fileSize
     const bool followLink
 ) const
 {
-    return masterOp<fileSizeOp::value_type>
+    // Reduce as int64_t instead of off_t to avoid missing
+    // pTraits<long int> (or other ambiguities) on Mingw and Linux i586
+
+    return off_t
     (
-        fName,
-        fileSizeOp(followLink),
-        UPstream::msgType(),
-        comm_
+        masterOp<int64_t>
+        (
+            fName,
+            fileSizeOp(followLink),
+            UPstream::msgType(),
+            comm_
+        )
     );
 }
 
@@ -883,13 +889,34 @@ time_t Foam::fileOperations::masterUncollatedFileOperation::lastModified
     const bool followLink
 ) const
 {
-    return masterOp<time_t>
-    (
-        fName,
-        lastModifiedOp(followLink),
-        UPstream::msgType(),
-        UPstream::worldComm
-    );
+    // time_t is invariably an integer type, but verify that anyhow
+    // before doing the following:
+
+    if constexpr (std::is_integral_v<time_t>)
+    {
+        // Reduce as int64_t instead of time_t to avoid missing
+        // pTraits<long int> (or other ambiguities) on Linux i586
+        return time_t
+        (
+            masterOp<int64_t>
+            (
+                fName,
+                lastModifiedOp(followLink),
+                UPstream::msgType(),
+                UPstream::worldComm
+            )
+        );
+    }
+    else
+    {
+        return masterOp<time_t>
+        (
+            fName,
+            lastModifiedOp(followLink),
+            UPstream::msgType(),
+            UPstream::worldComm
+        );
+    }
 }
 
 
