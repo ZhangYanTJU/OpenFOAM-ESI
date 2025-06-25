@@ -47,12 +47,14 @@ Foam::scalar Foam::triSurfaceTools::vertexNormalWeight
     const UList<point>& points
 )
 {
-    label index = f.find(pI);
+    const label index = f.find(pI);
 
     if (index == -1)
     {
         FatalErrorInFunction
             << "Point not in face" << abort(FatalError);
+
+        return 0;  // make gcc-15 happy by avoiding triFace[-1]
     }
 
     const vector e1 = points[f[index]] - points[f[f.fcIndex(index)]];

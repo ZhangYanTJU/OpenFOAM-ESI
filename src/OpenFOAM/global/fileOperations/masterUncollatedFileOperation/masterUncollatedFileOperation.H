@@ -222,26 +222,14 @@ protected:
         {
             const bool followLink_;
         public:
-
-            #ifdef _WIN32
-            // off_t is 'long int' for windows (missing pTraits)
-            typedef int64_t value_type;
-            #else
-            typedef off_t value_type;
-            #endif
-
             fileSizeOp(bool followLink) noexcept
             :
                 followLink_(followLink)
             {}
 
-            auto operator()(const fileName& f) const
+            off_t operator()(const fileName& f) const
             {
-                #ifdef _WIN32
-                return value_type(Foam::fileSize(f, followLink_));
-                #else
                 return Foam::fileSize(f, followLink_);
-                #endif
             }
         };
 

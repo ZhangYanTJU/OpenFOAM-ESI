@@ -102,7 +102,7 @@ Foam::solidBodyMotionFunctions::tabulated6DoFMotion::transformation() const
             << exit(FatalError);
     }
 
-    translationRotationVectors TRV;
+    translationRotationVectors TRV(Zero, Zero);
     switch (interpolator_)
     {
         case interpolationType::SPLINE:

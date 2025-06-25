@@ -1198,10 +1198,11 @@ void Foam::hexRef8::createInternalFaces
     const cell& cFaces = mesh_.cells()[celli];
     const label cLevel = cellLevel_[celli];
 
-    // From edge mid to anchor points
-    Map<edge> midPointToAnchors(24);
-    // From edge mid to face mids
-    Map<edge> midPointToFaceMids(24);
+    Map<edge> midPointToAnchors;    // From edge mid to anchor points
+    Map<edge> midPointToFaceMids;   // From edge mid to face mids
+
+    midPointToAnchors.reserve(12);
+    midPointToFaceMids.reserve(12);
 
     // Storage for on-the-fly addressing
     DynamicList<label> storage;
@@ -1210,10 +1211,8 @@ void Foam::hexRef8::createInternalFaces
     // Running count of number of internal faces added so far.
     label nFacesAdded = 0;
 
-    forAll(cFaces, i)
+    for (const label facei : cFaces)
     {
-        label facei = cFaces[i];
-
         const face& f = mesh_.faces()[facei];
         const labelList& fEdges = mesh_.faceEdges(facei, storage);
 
