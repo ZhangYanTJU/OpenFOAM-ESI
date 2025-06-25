@@ -155,8 +155,8 @@ void Foam::displacementInterpolationMotionSolver::calcInterpolation()
             {
                 Pout<< "direction " << dir << " : "
                     << "zone " << zoneName
-                    << " ranges from coordinate " << zoneCoordinates[2*i]
-                    << " to " << zoneCoordinates[2*i+1]
+                    << " ranges from coordinate "
+                    << limits.min() << " to " << limits.max()
                     << endl;
             }
         }
@@ -180,8 +180,9 @@ void Foam::displacementInterpolationMotionSolver::calcInterpolation()
         if (debug)
         {
             Pout<< "direction " << dir << " : "
-                << "mesh ranges from coordinate " << minCoord << " to "
-                << maxCoord << endl;
+                << "mesh ranges from coordinate "
+                << minCoord << " to " << maxCoord
+                << endl;
         }
 
         // Make copy of zoneCoordinates; include min and max of mesh
