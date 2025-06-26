@@ -177,7 +177,7 @@ bool Foam::mappedPatchFieldBase<Type>::retrieveField
                 // Store dummy value so the database has something on it.
                 // Note that size 0 should never occur naturally so we can
                 // detect it if necessary.
-                const Field<T> dummyFld(0);
+                const Field<T> dummyFld;
 
                 mappedPatchBase::storeField(subObr, fieldName, dummyFld);
 
@@ -210,7 +210,7 @@ void Foam::mappedPatchFieldBase<Type>::initRetrieveField
     // Old code. Likely not quite correct...
 
     // Store my data onto database
-    const label nProcs = Pstream::nProcs(0);    // comm_
+    const label nProcs = UPstream::nProcs(UPstream::worldComm);
 
     for (label domain = 0; domain < nProcs; domain++)
     {
