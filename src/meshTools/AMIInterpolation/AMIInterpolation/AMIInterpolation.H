@@ -80,10 +80,11 @@ public:
 
         static bool cacheIntersections_;
 
-        //- localComm : 0 : all processors (backwards compatible)
-        //- localComm : 1 : only processors with patch faces
-        //- localComm : 2 : like 1 but add master processor always
-        static int localComm_;
+        //- Control use of local communicator for AMI communication
+        //  localComm : 0 : all processors (backwards compatible)
+        //  localComm : 1 : only processors with patch faces
+        //  localComm : 2 : like 1 but always include master (for messages)
+        static int useLocalComm_;
 
 
 protected:
@@ -403,12 +404,12 @@ public:
             //- or -1 if distributed
             inline label singlePatchProc() const noexcept;
 
-            //- Communicator to use for parallel operations
-            inline label comm() const;
+            //- Communicator (local or otherwise) for parallel operations
+            inline label comm() const noexcept;
 
-            //- Set communicator to use for parallel operations. Return
-            //  old value
-            inline label comm(const label newComm);
+            //- Set (non-local) communicator for parallel operations.
+            //  \returns old value
+            inline label comm(label communicator) noexcept;
 
 
             // Source patch
