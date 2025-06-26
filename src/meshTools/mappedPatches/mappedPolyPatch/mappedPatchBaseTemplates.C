@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,8 +36,6 @@ void Foam::mappedPatchBase::distribute(List<Type>& lst) const
         case NEARESTPATCHFACEAMI:
         {
             const auto& interp = AMI();
-            const label oldWarnComm = UPstream::commWarn(myComm);
-            const label oldWorldComm = UPstream::commWorld(myComm);
 
             if (sameWorld())
             {
@@ -46,6 +44,9 @@ void Foam::mappedPatchBase::distribute(List<Type>& lst) const
             }
             else
             {
+                const label oldWarnComm = UPstream::commWarn(myComm);
+                const label oldWorldComm = UPstream::commWorld(myComm);
+
                 // lst is my local data. Now the mapping in the AMI is
                 // from my side to other side. Each processor contains either
                 // faces from one side or from the other side.
@@ -83,11 +84,11 @@ void Foam::mappedPatchBase::distribute(List<Type>& lst) const
                     // contribution from the other side
                     lst = tmasterFld;
                 }
-            }
 
-            // Restore communicator settings
-            UPstream::commWarn(oldWarnComm);
-            UPstream::commWorld(oldWorldComm);
+                // Restore communicator settings
+                UPstream::commWarn(oldWarnComm);
+                UPstream::commWorld(oldWorldComm);
+            }
             break;
         }
         default:
@@ -117,8 +118,14 @@ void Foam::mappedPatchBase::distribute
         case NEARESTPATCHFACEAMI:
         {
             const auto& interp = AMI();
-            const label oldWarnComm = UPstream::commWarn(myComm);
-            const label oldWorldComm = UPstream::commWorld(myComm);
+
+            label oldWarnComm(-1);
+            label oldWorldComm(-1);
+            if (!sameWorld())
+            {
+                oldWarnComm = UPstream::commWarn(myComm);
+                oldWorldComm = UPstream::commWorld(myComm);
+            }
 
             lst = interp.interpolateToSource(Field<Type>(std::move(lst)), cop);
 
@@ -132,7 +139,12 @@ void Foam::mappedPatchBase::distribute
             (void)patch_.boundaryMesh().mesh().tetBasePtIs();
             const auto& m = map();
 
-            const label oldWarnComm = UPstream::commWarn(myComm);
+            label oldWarnComm(-1);
+            if (!sameWorld())
+            {
+                oldWarnComm = UPstream::commWarn(myComm);
+            }
+
             mapDistributeBase::distribute
             (
                 Pstream::defaultCommsType,
@@ -165,8 +177,14 @@ void Foam::mappedPatchBase::reverseDistribute(List<Type>& lst) const
         case NEARESTPATCHFACEAMI:
         {
             const auto& interp = AMI();
-            const label oldWarnComm = UPstream::commWarn(myComm);
-            const label oldWorldComm = UPstream::commWorld(myComm);
+
+            label oldWarnComm(-1);
+            label oldWorldComm(-1);
+            if (!sameWorld())
+            {
+                oldWarnComm = UPstream::commWarn(myComm);
+                oldWorldComm = UPstream::commWorld(myComm);
+            }
 
             lst = interp.interpolateToTarget(Field<Type>(std::move(lst)));
 
@@ -203,8 +221,14 @@ void Foam::mappedPatchBase::reverseDistribute
         case NEARESTPATCHFACEAMI:
         {
             const auto& interp = AMI();
-            const label oldWarnComm = UPstream::commWarn(myComm);
-            const label oldWorldComm = UPstream::commWorld(myComm);
+
+            label oldWarnComm(-1);
+            label oldWorldComm(-1);
+            if (!sameWorld())
+            {
+                oldWarnComm = UPstream::commWarn(myComm);
+                oldWorldComm = UPstream::commWorld(myComm);
+            }
 
             lst = interp.interpolateToTarget(Field<Type>(std::move(lst)), cop);
 
@@ -218,7 +242,11 @@ void Foam::mappedPatchBase::reverseDistribute
             const auto& m = map();
             const label cSize = sampleSize();
 
-            const label oldWarnComm = UPstream::commWarn(myComm);
+            label oldWarnComm(-1);
+            if (!sameWorld())
+            {
+                oldWarnComm = UPstream::commWarn(myComm);
+            }
 
             mapDistributeBase::distribute
             (
