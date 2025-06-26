@@ -1023,8 +1023,7 @@ Foam::cyclicAMIGAMGInterface::cyclicAMIGAMGInterface
     {
         const auto& AMI = amiPtr_();
 
-        const auto oldWarnComm = UPstream::warnComm;
-        UPstream::warnComm = AMI.comm();
+        const auto oldWarnComm = UPstream::commWarn(AMI.comm());
 
         const label myRank = UPstream::myProcNo(AMI.comm());
         Pout<< "PROCAGGLOMERATED :"
@@ -1134,7 +1133,7 @@ Foam::cyclicAMIGAMGInterface::cyclicAMIGAMGInterface
             }
         }
         Pout<< "DONE PROCAGGLOMERATED" << endl;
-        UPstream::warnComm = oldWarnComm;
+        UPstream::commWarn(oldWarnComm);
     }
 }
 

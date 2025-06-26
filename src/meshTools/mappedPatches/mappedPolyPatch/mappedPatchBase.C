@@ -1144,8 +1144,13 @@ void Foam::mappedPatchBase::calcAMI() const
         // weights.
 
         // Change to use inter-world communicator
-        const label oldWarnComm = UPstream::commWarn(myComm);
-        const label oldWorldComm = UPstream::commWorld(myComm);
+        label oldWarnComm(-1);
+        label oldWorldComm(-1);
+        if (!sameWorld())
+        {
+            oldWarnComm = UPstream::commWarn(myComm);
+            oldWorldComm = UPstream::commWorld(myComm);
+        }
 
         AMIPtr_->calculate(patch_, nbrPatch0, surf);
 
