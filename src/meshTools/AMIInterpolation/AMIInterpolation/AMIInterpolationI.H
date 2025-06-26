@@ -102,7 +102,7 @@ inline Foam::label Foam::AMIInterpolation::singlePatchProc() const noexcept
 }
 
 
-inline Foam::label Foam::AMIInterpolation::comm() const
+inline Foam::label Foam::AMIInterpolation::comm() const noexcept
 {
     if (const auto* ptr = geomComm_.get())
     {
@@ -115,10 +115,10 @@ inline Foam::label Foam::AMIInterpolation::comm() const
 }
 
 
-inline Foam::label Foam::AMIInterpolation::comm(const label newComm)
+inline Foam::label Foam::AMIInterpolation::comm(label communicator) noexcept
 {
     label old(comm_);
-    comm_ = newComm;
+    comm_ = communicator;
     return old;
 }
 

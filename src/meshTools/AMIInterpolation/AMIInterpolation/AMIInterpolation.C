@@ -47,7 +47,7 @@ namespace Foam
 
 bool Foam::AMIInterpolation::cacheIntersections_ = false;
 
-int Foam::AMIInterpolation::localComm_
+int Foam::AMIInterpolation::useLocalComm_
 (
     debug::optimisationSwitch("localAMIComm", 1)
 );
@@ -55,7 +55,7 @@ registerOptSwitch
 (
     "localAMIComm",
     int,
-    Foam::AMIInterpolation::localComm_
+    Foam::AMIInterpolation::useLocalComm_
 );
 
 
@@ -99,19 +99,27 @@ Foam::label Foam::AMIInterpolation::calcDistribution
 
     if (UPstream::parRun())
     {
-        bool hasLocalFaces = (srcPatch.size() > 0 || tgtPatch.size() > 0);
+        // Involved in communication pattern?
+        bool inCommGroup = (srcPatch.size() > 0 || tgtPatch.size() > 0);
 
-        if (localComm_ == 0)
+        // Track which procs are involved
+        const List<bool> hasFaces
+        (
+            UPstream::allGatherValues<bool>(inCommGroup, comm)
+        );
+
+        // Always include master (0) in comm-group?
+        // - so messages come from master
+        if (useLocalComm_ > 1 && UPstream::master(comm))
         {
-            // Backwards compatible : all processors involved
-            hasLocalFaces = true;
-        }
-        else if (localComm_ > 1 && UPstream::master(comm))
-        {
-            // Include master (so messages always come from master)
-            hasLocalFaces = true;
+            inCommGroup = true;
         }
 
+        // Number of communicating procs (ie, they have local faces)
+        label nCommProcs(0);
+
+        // First proc with local faces (when nCommProcs == 1)
+        label whichProci(-1);
 
         // Could use UPstream::splitCommunicator(), but that also incurs
         // global communication to determine who belongs to the same set.
@@ -119,59 +127,86 @@ Foam::label Foam::AMIInterpolation::calcDistribution
         // existing communicator to decide if a new communicator is
         // required.
 
-        const List<bool> hasFaces
-        (
-            UPstream::allGatherValues<bool>(hasLocalFaces, comm)
-        );
-
-        DynamicList<label> newProcIDs(hasFaces.size());
+        DynamicList<label> subProcs(hasFaces.size());
         forAll(hasFaces, i)
         {
             if (hasFaces.test(i))
             {
-                newProcIDs.push_back(i);
+                whichProci = i;
+                ++nCommProcs;
+                subProcs.push_back(i);
+            }
+            else if
+            (
+                inCommGroup
+             && (useLocalComm_ > 1) && (i == UPstream::masterNo())
+            )
+            {
+                // Also include master (0) in comm-group?
+                // - so messages come from master
+                subProcs.push_back(UPstream::masterNo());
             }
         }
 
-        if (newProcIDs.size() == 1)
+        //
+        // Define the AMI communication style
+        //
+
+        if (nCommProcs == 0)
         {
-            // Release any previously allocated communicator
+            // Probably does not happen. No AMI faces? => no communicator
             geomComm.reset();
-            proci = newProcIDs.front();
+        }
+        else if (nCommProcs == 1)
+        {
+            proci = whichProci;
+
+            // No local communicator needed
+            geomComm.reset();
+
             DebugInFunction
                 << "AMI local to processor" << proci << endl;
         }
-        else if (newProcIDs.size() > 1)
+        else  // (nCommProcs > 1)
         {
+            proci = -1;
+
             const label currComm = (geomComm.good() ? geomComm().comm() : -1);
 
-            if (hasLocalFaces)
+            if (useLocalComm_ == 0)
+            {
+                // Backwards compatible : no local communicator
+                geomComm.reset();
+            }
+            else if (nCommProcs == subProcs.size())
+            {
+                // Everyone is involved : no local communicator
+                geomComm.reset();
+            }
+            else if (inCommGroup)
             {
                 if
                 (
                     currComm >= 0
-                 && ListOps::equal(newProcIDs, UPstream::procID(currComm))
+                 && ListOps::equal(subProcs, UPstream::procID(currComm))
                 )
                 {
                     // Keep geomComm
                     if (debug)
                     {
                         Pout<< "Retained geomComm:" << currComm
-                            << " with " << newProcIDs.size()
+                            << " with " << subProcs.size()
                             << " processors out of " << UPstream::nProcs(comm)
                             << endl;
                     }
                 }
                 else
                 {
-                    geomComm.reset
-                    (
-                        new UPstream::communicator(comm, newProcIDs)
-                    );
+                    geomComm.reset(new UPstream::communicator(comm, subProcs));
                     if (debug)
                     {
                         Pout<< "Allocated geomComm:" << geomComm().comm()
-                            << " from " << newProcIDs.size()
+                            << " from " << subProcs.size()
                             << " processors out of " << UPstream::nProcs(comm)
                             << endl;
                     }
@@ -179,20 +214,20 @@ Foam::label Foam::AMIInterpolation::calcDistribution
             }
             else
             {
+                // Not inCommGroup, but with local communicator elsewhere
                 geomComm.reset(new UPstream::communicator());
                 if (debug & 2)
                 {
                     Pout<< "Allocated dummy geomComm:" << geomComm().comm()
-                        << " since no src:" << srcPatch.size()
-                        << " and no tgt:" << tgtPatch.size() << endl;
+                        << " src-size:" << srcPatch.size()
+                        << " tgt-size:" << tgtPatch.size() << endl;
                 }
             }
-
-            proci = -1;
-            DebugInFunction
-                << "AMI split across multiple processors "
-                << flatOutput(newProcIDs) << endl;
         }
+
+        DebugInFunction
+            << "AMI split across multiple processors "
+            << flatOutput(subProcs) << endl;
     }
 
     return proci;
