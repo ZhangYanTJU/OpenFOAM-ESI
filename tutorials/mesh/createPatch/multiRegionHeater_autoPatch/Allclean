@@ -4,9 +4,9 @@ cd "${0%/*}" || exit                                # Run from this directory
 #------------------------------------------------------------------------------
 
 cleanCase0
-rm -r constant/bottomSolid/polyMesh
-rm -r constant/leftSolid/polyMesh
-rm -r constant/rightSolid/polyMesh
-rm -r constant/topAir/polyMesh
+rm -rf constant/bottomSolid/polyMesh
+rm -rf constant/leftSolid/polyMesh
+rm -rf constant/rightSolid/polyMesh
+rm -rf constant/topAir/polyMesh
 
 #------------------------------------------------------------------------------
