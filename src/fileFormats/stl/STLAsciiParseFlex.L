@@ -44,6 +44,9 @@ Description
 
 // Flex may use register, which is deprecated and incompatible with C++17
 #pragma clang diagnostic ignored "-Wdeprecated-register"
+// A 'nothing' define to effectively remove from code as well (issue #3337)
+#undef  register
+#define register
 
 using namespace Foam;
 
