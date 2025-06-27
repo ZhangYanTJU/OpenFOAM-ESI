@@ -1443,11 +1443,11 @@ EXPRESSION_OPERATOR(&, List_dot)
 // E2 : expression to get value of element i
 // E3 : expression to get interpolation weight
 template<typename E1, typename E2, typename E3>
-class List_lerp
+class List_interpolate
 :
     public ListExpression
     <
-        List_lerp<E1, E2, E3>,
+        List_interpolate<E1, E2, E3>,
         typename E1::value_type
     >
 {
@@ -1469,7 +1469,7 @@ public:
     typedef typename E1::value_type value_type;
 
     // construct from components
-    List_lerp(const E1& u, const E2& v, const E3& weight)
+    List_interpolate(const E1& u, const E2& v, const E3& weight)
     :
         u_(u),
         v_(v),

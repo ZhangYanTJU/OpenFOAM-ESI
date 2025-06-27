@@ -32,6 +32,11 @@ Application
 #include "argList.H"
 #include "fvMesh.H"
 #include "fvCFD.H"
+//#include "ListExpression.H"
+//#include "GeometricFieldExpression.H"
+#include "fvMatrixExpression.H"
+#include <ratio>
+#include <chrono>
 
 using namespace Foam;
 
@@ -63,7 +68,7 @@ void fusedGaussFvmLaplacian
 
     // Expression for gamma_face * magSf
     const auto gammaMagSf =
-        Expression::lerp(gamma.expr(), weights, mesh)
+        Expression::interpolate(gamma.expr(), weights, mesh)
       * mesh.magSf().expr();
 
     // Expression for deltaCoeffs
@@ -142,6 +147,8 @@ void fusedGaussFvmLaplacian
 }
 
 
+using namespace std::chrono;
+
 int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
@@ -162,7 +169,132 @@ int main(int argc, char *argv[])
         mesh
     );
 
+    {
+        //DebugVar(linearInterpolate(p));
+        //auto tweights = linear<scalar>(mesh).weights(p);
+        //DebugVar(tweights);
+
+        surfaceScalarField result
+        (
+            IOobject
+            (
+                "result",
+                runTime.timeName(),
+                mesh.thisDb(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            mesh,
+            dimensionedScalar(p.dimensions(), 0)
+        );
+        //result = Expression::interpolate
+        //(
+        //    p.expr(),
+        //    tweights().expr(),
+        //    mesh
+        //);
+
+        result = Expression::linearInterpolate(p.expr(), mesh);
+
+
+        DebugVar(result);
+
+        return 0;
+    }
+
+
+
+    volScalarField p2
+    (
+        IOobject
+        (
+            "p",
+            runTime.timeName(),
+            mesh.thisDb(),
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        mesh
+    );
+
     // Expresions of volFields
+    {
+        volScalarField result
+        (
+            IOobject
+            (
+                "result",
+                runTime.timeName(),
+                mesh.thisDb(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            mesh,
+            dimensionedScalar(p.dimensions(), 0)
+        );
+
+        {
+            Pout<< "No expression templates:" << endl;
+            const high_resolution_clock::time_point t1 =
+                high_resolution_clock::now();
+            result = p + p2;
+            const high_resolution_clock::time_point t2 =
+                high_resolution_clock::now();
+            const duration<double> time_span = t2 - t1;
+            Pout<< "Operation time:" << time_span.count() << endl;
+        }
+        {
+            Pout<< "With expression templates:" << endl;
+            const high_resolution_clock::time_point t1 =
+                high_resolution_clock::now();
+            result = p.expr() + p2.expr();
+            const high_resolution_clock::time_point t2 =
+                high_resolution_clock::now();
+            const duration<double> time_span = t2 - t1;
+            Pout<< "Operation time:" << time_span.count() << endl;
+        }
+
+//        const auto oldDimensions = p.dimensions();
+//        p.dimensions().reset(dimless);
+//        p2.dimensions().reset(dimless);
+//        result.dimensions().reset(dimless);
+//        {
+//
+//            Pout<< "Complex expression : No expression templates:" << endl;
+//            const high_resolution_clock::time_point t1 =
+//                high_resolution_clock::now();
+//            result = cos(p + 0.5*sqrt(p2-sin(p)));
+//            const high_resolution_clock::time_point t2 =
+//                high_resolution_clock::now();
+//            const duration<double> time_span = t2 - t1;
+//            Pout<< "Operation time:" << time_span.count() << endl;
+//        }
+//        {
+//            Pout<< "Complex expression : With expression templates:" << endl;
+//            const high_resolution_clock::time_point t1 =
+//                high_resolution_clock::now();
+//            const auto zeroDotFive
+//            (
+//                dimensionedScalar(dimless, 0.5).expr(p)
+//            );
+//            result = cos(p.expr() + zeroDotFive*sqrt(p2.expr()-sin(p.expr())));
+//            const high_resolution_clock::time_point t2 =
+//                high_resolution_clock::now();
+//            const duration<double> time_span = t2 - t1;
+//            Pout<< "Operation time:" << time_span.count() << endl;
+//        }
+//        p.dimensions().reset(oldDimensions);
+//        p2.dimensions().reset(oldDimensions);
+//        result.dimensions().reset(oldDimensions);
+
+        return 0;
+//        auto expression = someFunction(p).expr() + someFunction(p).expr();
+//        result = expression;
+//        DebugVar(result);
+    }
     {
         volScalarField result
         (
@@ -206,7 +338,7 @@ int main(int argc, char *argv[])
         (
             "result",
             mesh,
-            Expression::lerp    //<volExpr, surfaceExpr>
+            Expression::interpolate    //<volExpr, surfaceExpr>
             (
                 p.expr(),
                 mesh.surfaceInterpolation::weights().expr(),

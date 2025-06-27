@@ -42,9 +42,10 @@ SourceFiles
 #define Foam_fvMatrixExpression_H
 
 #include "ListExpression.H"
-#include <boost/core/demangle.hpp>
-#include <typeinfo>
-#include <iostream>
+#include "GeometricFieldExpression.H"
+//#include <boost/core/demangle.hpp>
+//#include <typeinfo>
+//#include <iostream>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -1464,14 +1465,14 @@ void SuSp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 template<typename E1, typename E2>
-class lerp
+class interpolate
 :
     public GeometricFieldExpression
     <
-        lerp<E1, E2>,
+        interpolate<E1, E2>,
 
         //- Type to return for internal field
-        List_lerp
+        List_interpolate
         <
             IndirectConstWrap<typename E1::IntExpr>,
             IndirectConstWrap<typename E1::IntExpr>,
@@ -1482,7 +1483,7 @@ class lerp
         typename E1::UncoupledPatchExpr,
 
         //- Type to return for coupled patch field
-        List_lerp
+        List_interpolate
         <
             IndirectConstWrap<typename E1::IntExpr>,
             typename E1::CoupledPatchExpr,
@@ -1517,7 +1518,7 @@ public:
     static constexpr bool is_leaf = false;
 
     //- Type to return for internal field
-    typedef List_lerp
+    typedef List_interpolate
     <
         IndirectConstWrap<typename E1::IntExpr>,
         IndirectConstWrap<typename E1::IntExpr>,
@@ -1528,7 +1529,7 @@ public:
     typedef typename E1::UncoupledPatchExpr UncoupledPatchExpr;
 
     //- Type to return for coupled patch field
-    typedef List_lerp
+    typedef List_interpolate
     <
         IndirectConstWrap<typename E1::IntExpr>,
         typename E1::CoupledPatchExpr,
@@ -1540,7 +1541,7 @@ public:
 
 
     // Construct from components
-    lerp
+    interpolate
     (
         const E1& cellVals,
         const E2& faceWeights,
@@ -1549,7 +1550,7 @@ public:
     :
         GeometricFieldExpression
         <
-            lerp<E1, E2>,
+            interpolate<E1, E2>,
             IntExpr,
             UncoupledPatchExpr,
             CoupledPatchExpr,
@@ -1622,6 +1623,38 @@ public:
             faceWeights_.coupledPatchField(i)
         );
     }
+};
+
+
+template<typename E1>
+class linearInterpolate
+:
+    public interpolate
+    <
+        E1,
+        GeometricFieldConstRefWrap<surfaceScalarField>
+    >
+{
+public:
+
+    // Construct from components
+    linearInterpolate
+    (
+        const E1& cellVals,
+        const fvMesh& mesh
+    )
+    :
+        interpolate
+        <
+            E1,
+            GeometricFieldConstRefWrap<surfaceScalarField>
+        >
+        (
+            cellVals,
+            mesh.surfaceInterpolation::weights().expr(),
+            mesh
+        )
+    {}
 };
 
 

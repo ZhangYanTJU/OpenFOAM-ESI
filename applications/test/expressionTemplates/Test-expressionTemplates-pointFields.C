@@ -45,6 +45,19 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createPolyMesh.H"
 
+    {
+        scalarField vals0({1.0, 2.0, 3.0});
+        const Expression::ListConstRefWrap<scalar> wvals0(vals0);
+
+        scalarField vals1;
+        Expression::ListRefWrap<scalar> wvals1(vals1.size(), vals1);
+        wvals1 = wvals0;
+        return 0;
+    }
+
+
+
+
     const pointMesh& pMesh = pointMesh::New(mesh);
 
     // Field, dimensionedScalar as List expression

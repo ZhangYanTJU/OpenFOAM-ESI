@@ -52,7 +52,7 @@ fvmLaplacian                                                                   \
                                                                                \
     const auto weights = this->tinterpGammaScheme_().weights(gamma).expr();    \
     const auto gammaMagSf =                                                    \
-        Expression::lerp(gamma.expr(), weights, mesh)                          \
+        Expression::interpolate(gamma.expr(), weights, mesh)                   \
       * mesh.magSf().expr();                                                   \
     /* For compatibility with linearInterpolate : avoid orientation. TBD. */   \
     const_cast<orientedType&>(gammaMagSf.oriented()).setOriented(false);       \
