@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,9 @@ Description
 
         // Whether to cache the agglomeration
         cacheAgglomeration  yes;
-        // Optionally update every updateInterval mesh motion. Default is 1.
+        // Optionally update every updateInterval time steps. Default is 1.
+        // - only applies if cacheAgglomeration
+        // - applies also for static mesh cases
         updateInterval      10;
         // Optional name (default is GAMGAgglomeration)
         //name            pAgglomeration;
@@ -190,7 +192,7 @@ protected:
     // Protected Member Functions
 
         //- Does the agglomeration need to be fully updated?
-        bool requiresUpdate() const;
+        virtual bool requiresUpdate() const;
 
         //- Assemble coarse mesh addressing
         void agglomerateLduAddressing(const label fineLevelIndex);

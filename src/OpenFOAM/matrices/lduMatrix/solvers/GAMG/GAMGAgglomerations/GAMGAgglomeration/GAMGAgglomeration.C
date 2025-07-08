@@ -397,7 +397,7 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
 
     if (agglomPtr)
     {
-        if (agglomPtr->requireUpdate_)
+        if (agglomPtr->requireUpdate_ || agglomPtr->requiresUpdate())
         {
             mesh.thisDb().checkOut(const_cast<GAMGAgglomeration*>(agglomPtr));
             return GAMGAgglomeration::New(matrix, controlDict);
@@ -459,7 +459,7 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
 
     if (agglomPtr)
     {
-        if (agglomPtr->requireUpdate_)
+        if (agglomPtr->requireUpdate_ || agglomPtr->requiresUpdate())
         {
             mesh.thisDb().checkOut(const_cast<GAMGAgglomeration*>(agglomPtr));
             return GAMGAgglomeration::New(mesh, controlDict);
