@@ -1003,7 +1003,6 @@ Foam::argList::argList
                 if (argi < argc-1)
                 {
                     ++argi;
-                    DetailInfo << "info-switch ";
                     debug::infoObjects()
                         .setNamedValue(argv[argi], 1);  // silent
                 }
@@ -1019,7 +1018,6 @@ Foam::argList::argList
                 if (argi < argc-1)
                 {
                     ++argi;
-                    DetailInfo << "opt-switch ";
                     debug::optimisationObjects()
                         .setNamedValue(argv[argi], 1);  // silent
                 }
