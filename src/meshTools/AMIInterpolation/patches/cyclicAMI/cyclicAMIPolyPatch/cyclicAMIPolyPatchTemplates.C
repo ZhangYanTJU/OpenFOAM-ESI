@@ -333,9 +333,10 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     const UList<Type>& defaultValues
 ) const
 {
-    auto tresult = tmp<Field<Type>>::New(this->size(), Zero);
+    auto tresult = tmp<Field<Type>>::New(localFld.size(), Zero);
 
     const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());
+
     const auto& cache = AMI.cache();
     cache.setDirection(owner());
 
@@ -426,7 +427,7 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     }
 
     const auto& localDefaultValues =
-        transform_supported ? localDeflt : defaultValues;
+        localDeflt.size() ? localDeflt : defaultValues;
 
     if (cache.index0() == -1 && cache.index1() == -1)
     {

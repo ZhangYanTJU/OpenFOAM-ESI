@@ -345,13 +345,13 @@ Foam::cyclicAMIFvPatchField<Type>::getNeighbourField
 template<class Type>
 bool Foam::cyclicAMIFvPatchField<Type>::cacheNeighbourField() const
 {
-    const auto& AMI = this->ownerAMI();
+    // const auto& AMI = this->ownerAMI();
 
-    if (AMI.cacheActive())
-    {
-        return false;
-    }
-    else
+    // if (AMI.cacheActive())
+    // {
+    //     return false;
+    // }
+    // else
     {
         return (FieldBase::localBoundaryConsistency() != 0);
     }

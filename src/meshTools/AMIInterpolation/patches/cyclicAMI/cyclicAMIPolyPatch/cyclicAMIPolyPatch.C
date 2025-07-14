@@ -393,11 +393,11 @@ void Foam::cyclicAMIPolyPatch::resetAMI(const UList<point>& points) const
             label refProci = -1;
             if (size() > 0)
             {
-                refProci = UPstream::myProcNo();
+                refProci = UPstream::myProcNo(comm);
             }
             reduce(refProci, maxOp<label>(), UPstream::msgType(), comm);
 
-            if (refProci == UPstream::myProcNo())
+            if (refProci == UPstream::myProcNo(comm))
             {
                 refPt = points[meshPoints()[0]];
             }
