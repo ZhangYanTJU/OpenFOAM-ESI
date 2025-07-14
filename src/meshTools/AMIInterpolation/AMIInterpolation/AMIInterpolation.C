@@ -178,7 +178,7 @@ Foam::label Foam::AMIInterpolation::calcDistribution
                 // Backwards compatible : no local communicator
                 geomComm.reset();
             }
-            else if (nCommProcs == subProcs.size())
+            else if (nCommProcs == UPstream::nProcs(comm))
             {
                 // Everyone is involved : no local communicator
                 geomComm.reset();
