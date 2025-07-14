@@ -440,18 +440,19 @@ void Foam::cyclicACMIGAMGInterfaceField::updateInterfaceMatrix
 
         if (cache.index0() == -1 && cache.index1() == -1)
         {
-            if (cyclicACMIInterface_.owner())
-            {
-                work = AMI.interpolateToSource(work);
-            }
-            else
-            {
-                work = AMI.interpolateToTarget(work);
-            }
+            solveScalarField pnf(faceCells.size(), Zero);
+
+            AMI.weightedSum
+            (
+                cyclicACMIInterface_.owner(),
+                work,
+                pnf,                // result
+                solveScalarField::null()
+            );
 
             const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
-            this->addToInternalField(result, !add, faceCells, coeffs, work);
+            this->addToInternalField(result, !add, faceCells, coeffs, pnf);
         }
         else
         {

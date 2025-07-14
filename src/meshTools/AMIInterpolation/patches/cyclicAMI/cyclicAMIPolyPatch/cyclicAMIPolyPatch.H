@@ -99,7 +99,7 @@ protected:
         //- Index of other half
         mutable label nbrPatchID_;
 
-        //- Particle displacement fraction accross AMI
+        //- Particle displacement fraction across AMI
         const scalar fraction_;
 
 

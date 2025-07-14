@@ -345,13 +345,13 @@ Foam::cyclicAMIFvPatchField<Type>::getNeighbourField
 template<class Type>
 bool Foam::cyclicAMIFvPatchField<Type>::cacheNeighbourField() const
 {
-    const auto& AMI = this->ownerAMI();
+    // const auto& AMI = this->ownerAMI();
 
-    if (AMI.cacheActive())
-    {
-        return false;
-    }
-    else
+    // if (AMI.cacheActive())
+    // {
+    //     return false;
+    // }
+    // else
     {
         return (FieldBase::localBoundaryConsistency() != 0);
     }
@@ -383,11 +383,12 @@ Foam::cyclicAMIFvPatchField<Type>::getPatchNeighbourField
         }
 
         const auto& fvp = this->patch();
+        const auto& mesh = fvp.boundaryMesh().mesh();
 
         if
         (
             patchNeighbourFieldPtr_
-        && !fvp.boundaryMesh().mesh().upToDatePoints(this->internalField())
+        && !mesh.upToDatePoints(this->internalField())
         )
         {
             //DebugPout
@@ -451,7 +452,8 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
 {
-    return this->getPatchNeighbourField(true);  // checkCommunicator = true
+    // checkCommunicator = true
+    return this->getPatchNeighbourField(true);
 }
 
 

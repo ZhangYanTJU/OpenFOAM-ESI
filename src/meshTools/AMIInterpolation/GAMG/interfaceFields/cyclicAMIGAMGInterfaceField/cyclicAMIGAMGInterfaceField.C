@@ -325,6 +325,10 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
 
     const auto& cache = AMI.cache();
 
+    // Assume that sends are also OK
+    sendRequests_.clear();
+    sendRequests1_.clear();
+
     if (AMI.distributed() && AMI.comm() != -1)
     {
         if (commsType != UPstream::commsTypes::nonBlocking)
