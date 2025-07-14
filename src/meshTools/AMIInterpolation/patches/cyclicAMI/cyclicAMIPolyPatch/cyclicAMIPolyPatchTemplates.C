@@ -131,7 +131,7 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
         const tensorField ownT(cs().R(this->faceCentres()));
 
         Field<Type> localDeflt(defaultValues.size());
-        if (defaultValues.size() == size())
+        if (defaultValues.size() != 0 && defaultValues.size() == size())
         {
             // Transform default values into cylindrical coords (using
             // *this faceCentres)
@@ -275,50 +275,48 @@ void Foam::cyclicAMIPolyPatch::initInterpolate
 
     if constexpr (transform_supported)
     {
-        const cyclicAMIPolyPatch& nbrPp = this->neighbPatch();
-
-        Field<Type> localFld(fld.size());
-
         // Only creates the co-ord system if using periodic AMI
         // - convert to cylindrical coordinate system
         auto cs = cylindricalCS();
 
         if (cs)
         {
+            Field<Type> localFld(fld.size());
+            const cyclicAMIPolyPatch& nbrPp = this->neighbPatch();
             const tensorField nbrT(cs().R(nbrPp.faceCentres()));
             Foam::invTransform(localFld, nbrT, fld);
+
+            initInterpolateUntransformed
+            (
+                localFld,
+                sendRequests,
+                recvRequests,
+                sendBuffers,
+                recvBuffers,
+
+                sendRequests1,
+                recvRequests1,
+                sendBuffers1,
+                recvBuffers1
+            );
+
+            return;
         }
-
-        initInterpolateUntransformed
-        (
-            localFld,
-            sendRequests,
-            recvRequests,
-            sendBuffers,
-            recvBuffers,
-
-            sendRequests1,
-            recvRequests1,
-            sendBuffers1,
-            recvBuffers1
-        );
     }
-    else
-    {
-        initInterpolateUntransformed
-        (
-            fld,
-            sendRequests,
-            recvRequests,
-            sendBuffers,
-            recvBuffers,
 
-            sendRequests1,
-            recvRequests1,
-            sendBuffers1,
-            recvBuffers1
-        );
-    }
+    initInterpolateUntransformed
+    (
+        fld,
+        sendRequests,
+        recvRequests,
+        sendBuffers,
+        recvBuffers,
+
+        sendRequests1,
+        recvRequests1,
+        sendBuffers1,
+        recvBuffers1
+    );
 }
 
 
@@ -333,9 +331,11 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     const UList<Type>& defaultValues
 ) const
 {
+    // Note: cannot be localFld.size() -> might have been set to null
     auto tresult = tmp<Field<Type>>::New(this->size(), Zero);
 
     const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());
+
     const auto& cache = AMI.cache();
     cache.setDirection(owner());
 
@@ -426,7 +426,7 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     }
 
     const auto& localDefaultValues =
-        transform_supported ? localDeflt : defaultValues;
+        localDeflt.size() ? localDeflt : defaultValues;
 
     if (cache.index0() == -1 && cache.index1() == -1)
     {
