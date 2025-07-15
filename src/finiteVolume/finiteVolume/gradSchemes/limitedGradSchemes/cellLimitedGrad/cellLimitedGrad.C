@@ -62,40 +62,25 @@ void Foam::fv::cellLimitedGrad<Type, Limiter>::limitGradient
 
 
 template<class Type, class Limiter>
-Foam::tmp
-<
-    Foam::GeometricField
-    <
-        typename Foam::outerProduct<Foam::vector, Type>::type,
-        Foam::fvPatchField,
-        Foam::volMesh
-    >
->
-Foam::fv::cellLimitedGrad<Type, Limiter>::calcGrad
+void Foam::fv::cellLimitedGrad<Type, Limiter>::calcGrad
 (
-    const GeometricField<Type, fvPatchField, volMesh>& vsf,
-    const word& name
-) const
-{
-    const fvMesh& mesh = vsf.mesh();
-
-    tmp
-    <
-        GeometricField
-        <typename outerProduct<vector, Type>::type, fvPatchField, volMesh>
-    > tGrad = basicGradScheme_().calcGrad(vsf, name);
-
-    if (k_ < SMALL)
-    {
-        return tGrad;
-    }
-
     GeometricField
     <
         typename outerProduct<vector, Type>::type,
         fvPatchField,
         volMesh
-    >& g = tGrad.ref();
+    >& g,
+    const GeometricField<Type, fvPatchField, volMesh>& vsf
+) const
+{
+    const fvMesh& mesh = vsf.mesh();
+
+    basicGradScheme_().calcGrad(g, vsf);
+
+    if (k_ < SMALL)
+    {
+        return;
+    }
 
     const labelUList& owner = mesh.owner();
     const labelUList& neighbour = mesh.neighbour();
@@ -227,6 +212,49 @@ Foam::fv::cellLimitedGrad<Type, Limiter>::calcGrad
     limitGradient(limiter, g);
     g.correctBoundaryConditions();
     gaussGrad<Type>::correctBoundaryConditions(vsf, g);
+}
+
+
+template<class Type, class Limiter>
+Foam::tmp
+<
+    Foam::GeometricField
+    <
+        typename Foam::outerProduct<Foam::vector, Type>::type,
+        Foam::fvPatchField,
+        Foam::volMesh
+    >
+>
+Foam::fv::cellLimitedGrad<Type, Limiter>::calcGrad
+(
+    const GeometricField<Type, fvPatchField, volMesh>& vsf,
+    const word& name
+) const
+{
+    typedef typename outerProduct<vector, Type>::type GradType;
+    typedef GeometricField<GradType, fvPatchField, volMesh> GradFieldType;
+
+    const fvMesh& mesh = vsf.mesh();
+
+    tmp<GradFieldType> tGrad
+    (
+        new GradFieldType
+        (
+            IOobject
+            (
+                name,
+                vsf.instance(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh,
+            vsf.dimensions()/dimLength,
+            fvPatchFieldBase::extrapolatedCalculatedType()
+        )
+    );
+    
+    calcGrad(tGrad.ref(), vsf);
 
     return tGrad;
 }

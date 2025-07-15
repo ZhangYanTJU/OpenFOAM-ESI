@@ -141,6 +141,67 @@ Foam::fv::gaussGrad<Type>::calcGrad
 
 
 template<class Type>
+void Foam::fv::gaussGrad<Type>::calcGrad
+(
+    GeometricField
+    <
+        typename outerProduct<vector, Type>::type,
+        fvPatchField,
+        volMesh
+    >& gGrad,
+    const GeometricField<Type, fvPatchField, volMesh>& vsf
+) const
+{
+    typedef typename outerProduct<vector, Type>::type GradType;
+
+    DebugPout<< "gaussGrad<Type>::calcGrad on " << vsf.name()
+        << " into " << gGrad.name() << endl;
+
+    const fvMesh& mesh = vsf.mesh();
+    const labelUList& owner = mesh.owner();
+    const labelUList& neighbour = mesh.neighbour();
+    const vectorField& Sf = mesh.Sf();
+
+    const auto tssf(tinterpScheme_().interpolate(vsf));
+    const auto& ssf = tssf();
+
+    gGrad = dimensioned<GradType>(vsf.dimensions()/dimLength, Zero);
+
+    Field<GradType>& igGrad = gGrad;
+    const Field<Type>& issf = ssf;
+
+    forAll(owner, facei)
+    {
+        const GradType Sfssf = Sf[facei]*issf[facei];
+
+        igGrad[owner[facei]] += Sfssf;
+        igGrad[neighbour[facei]] -= Sfssf;
+    }
+
+    forAll(mesh.boundary(), patchi)
+    {
+        const labelUList& pFaceCells =
+            mesh.boundary()[patchi].faceCells();
+
+        const vectorField& pSf = mesh.Sf().boundaryField()[patchi];
+
+        const fvsPatchField<Type>& pssf = ssf.boundaryField()[patchi];
+
+        forAll(mesh.boundary()[patchi], facei)
+        {
+            igGrad[pFaceCells[facei]] += pSf[facei]*pssf[facei];
+        }
+    }
+
+    igGrad /= mesh.V();
+
+    gGrad.correctBoundaryConditions();
+
+    correctBoundaryConditions(vsf, gGrad);
+}
+
+
+template<class Type>
 void Foam::fv::gaussGrad<Type>::correctBoundaryConditions
 (
     const GeometricField<Type, fvPatchField, volMesh>& vsf,

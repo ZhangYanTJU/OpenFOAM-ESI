@@ -38,19 +38,21 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::tmp
-<
-    Foam::GeometricField
-    <
-        typename Foam::outerProduct<Foam::vector, Type>::type,
-        Foam::fvPatchField,
-        Foam::volMesh
-    >
->
-Foam::fv::fourthGrad<Type>::calcGrad
+void Foam::fv::fourthGrad<Type>::calcGrad
 (
+    GeometricField
+    <
+        typename outerProduct<vector, Type>::type,
+        fvPatchField,
+        volMesh
+    >& fGrad,
     const GeometricField<Type, fvPatchField, volMesh>& vsf,
-    const word& name
+    const GeometricField
+    <
+        typename outerProduct<vector, Type>::type,
+        fvPatchField,
+        volMesh
+    >& secondfGrad
 ) const
 {
     // The fourth-order gradient is calculated in two passes.  First,
@@ -59,37 +61,11 @@ Foam::fv::fourthGrad<Type>::calcGrad
     // gradient to complete the accuracy.
 
     typedef typename outerProduct<vector, Type>::type GradType;
-    typedef GeometricField<GradType, fvPatchField, volMesh> GradFieldType;
 
     const fvMesh& mesh = vsf.mesh();
 
-    // Assemble the second-order least-square gradient
-    // Calculate the second-order least-square gradient
-    tmp<GradFieldType> tsecondfGrad
-      = leastSquaresGrad<Type>(mesh).grad
-        (
-            vsf,
-            "leastSquaresGrad(" + vsf.name() + ")"
-        );
-    const GradFieldType& secondfGrad =
-        tsecondfGrad();
-
-    tmp<GradFieldType> tfGrad
-    (
-        new GradFieldType
-        (
-            IOobject
-            (
-                name,
-                vsf.instance(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            secondfGrad
-        )
-    );
-    GradFieldType& fGrad = tfGrad.ref();
+    // Initialise to gradient
+    fGrad = secondfGrad;
 
     const vectorField& C = mesh.C();
 
@@ -158,8 +134,101 @@ Foam::fv::fourthGrad<Type>::calcGrad
 
     fGrad.correctBoundaryConditions();
     gaussGrad<Type>::correctBoundaryConditions(vsf, fGrad);
+}
+
+
+template<class Type>
+Foam::tmp
+<
+    Foam::GeometricField
+    <
+        typename Foam::outerProduct<Foam::vector, Type>::type,
+        Foam::fvPatchField,
+        Foam::volMesh
+    >
+>
+Foam::fv::fourthGrad<Type>::calcGrad
+(
+    const GeometricField<Type, fvPatchField, volMesh>& vsf,
+    const word& name
+) const
+{
+    // The fourth-order gradient is calculated in two passes.  First,
+    // the standard least-square gradient is assembled.  Then, the
+    // fourth-order correction is added to the second-order accurate
+    // gradient to complete the accuracy.
+
+    typedef typename outerProduct<vector, Type>::type GradType;
+    typedef GeometricField<GradType, fvPatchField, volMesh> GradFieldType;
+
+    const fvMesh& mesh = vsf.mesh();
+
+    // Assemble the second-order least-square gradient
+    // Calculate the second-order least-square gradient
+    tmp<GradFieldType> tsecondfGrad
+      = leastSquaresGrad<Type>(mesh).grad
+        (
+            vsf,
+            "leastSquaresGrad(" + vsf.name() + ")"
+        );
+    const GradFieldType& secondfGrad = tsecondfGrad();
+
+    tmp<GradFieldType> tfGrad
+    (
+        new GradFieldType
+        (
+            IOobject
+            (
+                name,
+                vsf.instance(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh,
+            vsf.dimensions()/dimLength,
+            fvPatchFieldBase::extrapolatedCalculatedType()
+        )
+    );
+
+    calcGrad(tfGrad.ref(), vsf, secondfGrad);
 
     return tfGrad;
+}
+
+
+template<class Type>
+void Foam::fv::fourthGrad<Type>::calcGrad
+(
+    GeometricField
+    <
+        typename outerProduct<vector, Type>::type,
+        fvPatchField,
+        volMesh
+    >& fGrad,
+    const GeometricField<Type, fvPatchField, volMesh>& vsf
+) const
+{
+    // The fourth-order gradient is calculated in two passes.  First,
+    // the standard least-square gradient is assembled.  Then, the
+    // fourth-order correction is added to the second-order accurate
+    // gradient to complete the accuracy.
+
+    typedef typename outerProduct<vector, Type>::type GradType;
+    typedef GeometricField<GradType, fvPatchField, volMesh> GradFieldType;
+
+    const fvMesh& mesh = vsf.mesh();
+
+    // Assemble the second-order least-square gradient
+    // Calculate the second-order least-square gradient
+    tmp<GradFieldType> tsecondfGrad
+      = leastSquaresGrad<Type>(mesh).grad
+        (
+            vsf,
+            "leastSquaresGrad(" + vsf.name() + ")"
+        );
+
+    calcGrad(fGrad, vsf, tsecondfGrad());
 }
 
 

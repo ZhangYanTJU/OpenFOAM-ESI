@@ -227,6 +227,94 @@ Foam::fv::fusedGaussGrad<Type>::calcGrad
 
 
 template<class Type>
+void Foam::fv::fusedGaussGrad<Type>::calcGrad
+(
+    GeometricField
+    <
+        typename outerProduct<vector, Type>::type,
+        fvPatchField,
+        volMesh
+    >& gGrad,
+    const GeometricField<Type, fvPatchField, volMesh>& vf
+) const
+{
+    typedef typename outerProduct<vector, Type>::type GradType;
+
+    const fvMesh& mesh = vf.mesh();
+
+    DebugPout<< "fusedGaussGrad<Type>::calcGrad on " << vf.name()
+        << " into " << gGrad.name() << endl;
+
+    gGrad = dimensioned<GradType>(vf.dimensions()/dimLength, Zero);
+
+    if (this->tinterpScheme_().corrected())
+    {
+        const auto tfaceCorr(this->tinterpScheme_().correction(vf));
+        auto& faceCorr = tfaceCorr();
+
+        DebugPout<< "fusedGaussGrad<Type>::calcGrad corrected interpScheme "
+            << this->tinterpScheme_().type() << endl;
+
+        const auto interpolate = [&]
+        (
+            const vector& area,
+            const scalar lambda,
+
+            const Type& ownVal,
+            const Type& neiVal,
+
+            const Type& correction
+
+        ) -> GradType
+        {
+            return area*((lambda*(ownVal - neiVal) + neiVal) + correction);
+        };
+
+        fvc::surfaceSum
+        (
+            this->tinterpScheme_().weights(vf),
+            vf,
+            faceCorr,
+            interpolate,
+            gGrad,
+            false
+        );
+    }
+    else
+    {
+        DebugPout<< "fusedGaussGrad<Type>::calcGrad uncorrected interpScheme "
+            << this->tinterpScheme_().type() << endl;
+
+        const auto interpolate = [&]
+        (
+            const vector& area,
+            const scalar lambda,
+            const Type& ownVal,
+            const Type& neiVal
+        ) -> GradType
+        {
+            return area*(lambda*(ownVal - neiVal) + neiVal);
+        };
+
+        fvc::surfaceSum
+        (
+            tinterpScheme_().weights(vf),
+            vf,
+            interpolate,
+            gGrad,
+            false
+        );
+    }
+
+    gGrad.primitiveFieldRef() /= mesh.V();
+
+    gGrad.correctBoundaryConditions();
+
+    correctBoundaryConditions(vf, gGrad);
+}
+
+
+template<class Type>
 template<class GradType>
 void Foam::fv::fusedGaussGrad<Type>::correctBoundaryConditions
 (

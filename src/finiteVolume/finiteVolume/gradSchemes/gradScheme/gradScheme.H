@@ -142,6 +142,14 @@ public:
             const word& name
         ) const = 0;
 
+        //- Calculate the grad of the given field into supplied field
+        virtual void calcGrad
+        (
+            GeometricField
+            <typename outerProduct<vector, Type>::type, fvPatchField, volMesh>& res,
+            const GeometricField<Type, fvPatchField, volMesh>&
+        ) const;
+
         //- Calculate and return the grad of the given field
         //- which may have been cached
         tmp

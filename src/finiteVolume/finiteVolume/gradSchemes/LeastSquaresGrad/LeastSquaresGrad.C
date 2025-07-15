@@ -1,4 +1,4 @@
-/*---------------------------------------------------------------------------*\
+  /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
@@ -36,23 +36,18 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type, class Stencil>
-Foam::tmp
-<
-    Foam::GeometricField
-    <
-        typename Foam::outerProduct<Foam::vector, Type>::type,
-        Foam::fvPatchField,
-    Foam::volMesh
-    >
->
-Foam::fv::LeastSquaresGrad<Type, Stencil>::calcGrad
+void Foam::fv::LeastSquaresGrad<Type, Stencil>::calcGrad
 (
-    const GeometricField<Type, fvPatchField, volMesh>& vtf,
-    const word& name
+    GeometricField
+    <
+        typename outerProduct<vector, Type>::type,
+        fvPatchField,
+        volMesh
+    >& lsGrad,
+    const GeometricField<Type, fvPatchField, volMesh>& vtf
 ) const
 {
     typedef typename outerProduct<vector, Type>::type GradType;
-    typedef GeometricField<GradType, fvPatchField, volMesh> GradFieldType;
 
     const fvMesh& mesh = vtf.mesh();
 
@@ -62,24 +57,7 @@ Foam::fv::LeastSquaresGrad<Type, Stencil>::calcGrad
         mesh
     );
 
-    tmp<GradFieldType> tlsGrad
-    (
-        new GradFieldType
-        (
-            IOobject
-            (
-                name,
-                vtf.instance(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            dimensioned<GradType>(vtf.dimensions()/dimLength, Zero),
-            fvPatchFieldBase::extrapolatedCalculatedType()
-        )
-    );
-    GradFieldType& lsGrad = tlsGrad.ref();
+    lsGrad = dimensioned<GradType>(vtf.dimensions()/dimLength, Zero);
     Field<GradType>& lsGradIf = lsGrad;
 
     const extendedCentredCellToCellStencil& stencil = lsv.stencil();
@@ -131,6 +109,50 @@ Foam::fv::LeastSquaresGrad<Type, Stencil>::calcGrad
     // Correct the boundary conditions
     lsGrad.correctBoundaryConditions();
     gaussGrad<Type>::correctBoundaryConditions(vtf, lsGrad);
+}
+
+
+template<class Type, class Stencil>
+Foam::tmp
+<
+    Foam::GeometricField
+    <
+        typename Foam::outerProduct<Foam::vector, Type>::type,
+        Foam::fvPatchField,
+    Foam::volMesh
+    >
+>
+Foam::fv::LeastSquaresGrad<Type, Stencil>::calcGrad
+(
+    const GeometricField<Type, fvPatchField, volMesh>& vtf,
+    const word& name
+) const
+{
+    typedef typename outerProduct<vector, Type>::type GradType;
+    typedef GeometricField<GradType, fvPatchField, volMesh> GradFieldType;
+
+    const fvMesh& mesh = vtf.mesh();
+
+    tmp<GradFieldType> tlsGrad
+    (
+        new GradFieldType
+        (
+            IOobject
+            (
+                name,
+                vtf.instance(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh,
+            vtf.dimensions()/dimLength,
+            fvPatchFieldBase::extrapolatedCalculatedType()
+        )
+    );
+    GradFieldType& lsGrad = tlsGrad.ref();
+
+    calcGrad(lsGrad, vtf);
 
     return tlsGrad;
 }
