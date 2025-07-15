@@ -16,6 +16,15 @@ FoamFile
 
 libs            (fusedFiniteVolume);
 
+/*
+DebugSwitches
+{
+    fusedGauss  1;
+    Gauss       1;
+    solution    1;
+}
+*/
+
 application     simpleFoam;
 
 startFrom       startTime;

@@ -145,6 +145,14 @@ public:
             const word& name
         ) const;
 
+        //- Calculate the grad of the given field into supplied field
+        virtual void calcGrad
+        (
+            GeometricField
+            <typename outerProduct<vector, Type>::type, fvPatchField, volMesh>& res,
+            const GeometricField<Type, fvPatchField, volMesh>&
+        ) const;
+
         //- Correct the boundary values of the gradient using the patchField
         //- snGrad functions
         template<class GradType>

@@ -150,6 +150,14 @@ public:
             const GeometricField<Type, fvPatchField, volMesh>& vsf,
             const word& name
         ) const;
+
+        //- Calculate the grad of the given field into supplied field
+        virtual void calcGrad
+        (
+            GeometricField
+            <typename outerProduct<vector, Type>::type, fvPatchField, volMesh>& res,
+            const GeometricField<Type, fvPatchField, volMesh>&
+        ) const;
 };
 
 
