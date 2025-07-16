@@ -119,17 +119,13 @@ Foam::fv::gradScheme<Type>::grad
     }
     else
     {
-        if (pgGrad->upToDate(vsf))
+        if (pgGrad->upToDate(vsf) && this->mesh().upToDatePoints(*pgGrad))
         {
             solution::cachePrintMessage("Reusing", name, vsf);
         }
         else
         {
             solution::cachePrintMessage("Updating", name, vsf);
-            // delete pgGrad;
-
-            // pgGrad = calcGrad(vsf, name).ptr();
-            // regIOobject::store(pgGrad);
             calcGrad(*pgGrad, vsf);
         }
     }
