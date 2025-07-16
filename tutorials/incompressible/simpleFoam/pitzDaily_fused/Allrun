@@ -19,4 +19,12 @@ sed "s/GAUSS/fusedGauss/g" system/fvSchemes.template > system/fvSchemes
 runParallel -s fusedGauss $(getApplication)
 
 
+echo "Updating fvSolution to cache gradients"
+sed 's/GRADIENT/"grad(.*)"/g' system/fvSolution.template > system/fvSolution
+
+runParallel -s fusedGaussCached $(getApplication)
+
+# Restore
+cp system/fvSolution.template system/fvSolution
+
 #------------------------------------------------------------------------------
