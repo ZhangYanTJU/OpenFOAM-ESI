@@ -218,7 +218,7 @@ public:
             void operator()
             (
                 const vectorTensorTransform& vt,
-                const bool forward,
+                [[maybe_unused]] const bool forward,
                 UList<Type>& fld
             ) const
             {
@@ -233,7 +233,7 @@ public:
             void operator()
             (
                 const vectorTensorTransform& vt,
-                const bool forward,
+                [[maybe_unused]] const bool forward,
                 List<List<Type>>& flds
             ) const
             {

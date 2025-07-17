@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -905,6 +905,36 @@ public:
             const T& nullValue,
             const CombineOp& cop,
             const NegateOp& negOp,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm
+        );
+
+        //- Distribute combine data with specified combine operation
+        //- and negate operator (for flips).
+        //
+        //  If multiple processors write to same position,
+        //  contributions are added using the combine cop.
+        //
+        //  \note schedule only used for UPstream::commsTypes::scheduled,
+        //        others just use send-to-all, receive-from-all.
+        template<class T, class CombineOp, class NegateOp>
+        static void distribute
+        (
+            const UPstream::commsTypes commsType,
+            const UList<labelPair>& schedule,
+
+            const UList<T>& inField,         // input field
+            const labelListList& subMap,
+            const bool subHasFlip,
+
+            List<T>& field,                 // output field
+            const label constructSize,
+            const labelListList& constructMap,
+            const bool constructHasFlip,
+            const T& nullValue,
+            const CombineOp& cop,
+            const NegateOp& negOp,
+
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
         );

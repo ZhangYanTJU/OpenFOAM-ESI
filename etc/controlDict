@@ -262,6 +262,7 @@ OptimisationSwitches
     //localAMIComm 0;   // old behaviour : all ranks included
     //localAMIComm 1;   // (default) only ranks that have patch faces
     //localAMIComm 2;   // like 1 but always include rank 0 for messages
+    localAMIComm    1;  // only ranks that have patch faces
 }
 
 

@@ -894,6 +894,275 @@ void Foam::mapDistributeBase::distribute
 }
 
 
+template<class T, class CombineOp, class NegateOp>
+void Foam::mapDistributeBase::distribute
+(
+    const UPstream::commsTypes commsType,
+    const UList<labelPair>& schedule,
+
+    const UList<T>& inField,         // input field
+    const labelListList& subMap,
+    const bool subHasFlip,
+
+    List<T>& field,
+    const label constructSize,
+    const labelListList& constructMap,
+    const bool constructHasFlip,
+    const T& nullValue,
+    const CombineOp& cop,
+    const NegateOp& negOp,
+
+    const int tag,
+    const label comm
+)
+{
+    const auto myRank = UPstream::myProcNo(comm);
+    const auto nProcs = UPstream::nProcs(comm);
+
+    if (!UPstream::parRun())
+    {
+        // Do only me to me.
+
+        List<T> subField
+        (
+            accessAndFlip(inField, subMap[myRank], subHasFlip, negOp)
+        );
+
+        // Receive sub field from myself (subField)
+        const labelList& map = constructMap[myRank];
+
+        // Combining bits - can now reuse field storage
+        field.resize_nocopy(constructSize);
+        field = nullValue;
+
+        flipAndCombine
+        (
+            field,
+            subField,
+            map,
+            constructHasFlip,
+            cop,
+            negOp
+        );
+
+        return;
+    }
+
+    if (commsType != UPstream::commsTypes::nonBlocking)
+    {
+        FatalErrorInFunction
+            << "Unsupport communication type " << int(commsType)
+            << abort(FatalError);
+    }
+
+    const label startOfRequests = UPstream::nRequests();
+
+    if (!is_contiguous<T>::value)
+    {
+        PstreamBuffers pBufs(comm, tag);
+
+        // Stream data into buffer
+        for (const int proci : UPstream::allProcs(comm))
+        {
+            const labelList& map = subMap[proci];
+
+            if (proci != myRank && map.size())
+            {
+                List<T> subField
+                (
+                    accessAndFlip(inField, map, subHasFlip, negOp)
+                );
+
+                UOPstream os(proci, pBufs);
+                os  << subField;
+            }
+        }
+
+        // Initiate receiving - do yet not block
+        pBufs.finishedSends(false);
+
+        {
+            // Set up 'send' to myself
+            List<T> subField
+            (
+                accessAndFlip(inField, subMap[myRank], subHasFlip, negOp)
+            );
+
+            // Combining bits - can now reuse field storage
+            field.resize_nocopy(constructSize);
+            field = nullValue;
+
+            // Receive sub field from myself
+            const labelList& map = constructMap[myRank];
+
+            flipAndCombine
+            (
+                field,
+                subField,
+                map,
+                constructHasFlip,
+                cop,
+                negOp
+            );
+        }
+
+        // Wait for receive requests (and the send requests too)
+        UPstream::waitRequests(startOfRequests);
+
+        // Receive and process neighbour fields
+        for (const int proci : UPstream::allProcs(comm))
+        {
+            const labelList& map = constructMap[proci];
+
+            if (proci != myRank && map.size())
+            {
+                UIPstream is(proci, pBufs);
+                List<T> subField(is);
+
+                checkReceivedSize(proci, map.size(), subField.size());
+
+                flipAndCombine
+                (
+                    field,
+                    subField,
+                    map,
+                    constructHasFlip,
+                    cop,
+                    negOp
+                );
+            }
+        }
+    }
+    else
+    {
+        // Set up receives from neighbours
+
+        List<List<T>> recvFields(nProcs);
+        DynamicList<int> recvProcs(nProcs);
+
+        for (const int proci : UPstream::allProcs(comm))
+        {
+            const labelList& map = constructMap[proci];
+
+            if (proci != myRank && map.size())
+            {
+                recvProcs.push_back(proci);
+                List<T>& subField = recvFields[proci];
+                subField.resize_nocopy(map.size());
+
+                UIPstream::read
+                (
+                    UPstream::commsTypes::nonBlocking,
+                    proci,
+                    subField.data_bytes(),
+                    subField.size_bytes(),
+                    tag,
+                    comm
+                );
+            }
+        }
+
+
+        // Set up sends to neighbours
+
+        List<List<T>> sendFields(nProcs);
+
+        for (const int proci : UPstream::allProcs(comm))
+        {
+            const labelList& map = subMap[proci];
+
+            if (proci != myRank && map.size())
+            {
+                List<T>& subField = sendFields[proci];
+                subField.resize_nocopy(map.size());
+
+                accessAndFlip(subField, inField, map, subHasFlip, negOp);
+
+                UOPstream::write
+                (
+                    UPstream::commsTypes::nonBlocking,
+                    proci,
+                    subField.cdata_bytes(),
+                    subField.size_bytes(),
+                    tag,
+                    comm
+                );
+            }
+        }
+
+        // Set up 'send' to myself - copy directly into recvFields
+        {
+            const labelList& map = subMap[myRank];
+            List<T>& subField = recvFields[myRank];
+            subField.resize_nocopy(map.size());
+
+            accessAndFlip(subField, inField, map, subHasFlip, negOp);
+        }
+
+
+        // Combining bits - can now reuse field storage
+        field.resize_nocopy(constructSize);
+        field = nullValue;
+
+        // Receive sub field from myself : recvFields[myRank]
+        {
+            const labelList& map = constructMap[myRank];
+            const List<T>& subField = recvFields[myRank];
+
+            // Probably don't need a size check
+            // checkReceivedSize(myRank, map.size(), subField.size());
+
+            flipAndCombine
+            (
+                field,
+                subField,
+                map,
+                constructHasFlip,
+                cop,
+                negOp
+            );
+        }
+
+
+        // Poll for completed receive requests and dispatch
+        DynamicList<int> indices(recvProcs.size());
+        while
+        (
+            UPstream::waitSomeRequests
+            (
+                startOfRequests,
+                recvProcs.size(),
+                &indices
+            )
+        )
+        {
+            for (const int idx : indices)
+            {
+                const int proci = recvProcs[idx];
+                const labelList& map = constructMap[proci];
+                const List<T>& subField = recvFields[proci];
+
+                // No size check - was dimensioned above
+                // checkReceivedSize(proci, map.size(), subField.size());
+
+                flipAndCombine
+                (
+                    field,
+                    subField,
+                    map,
+                    constructHasFlip,
+                    cop,
+                    negOp
+                );
+            }
+        }
+
+        // Wait for any remaining requests
+        UPstream::waitRequests(startOfRequests);
+    }
+}
+
+
 template<class T, class NegateOp>
 void Foam::mapDistributeBase::distribute
 (
