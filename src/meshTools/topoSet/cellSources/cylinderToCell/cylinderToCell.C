@@ -85,7 +85,7 @@ void Foam::cylinderToCell::combine(topoSet& set, const bool add) const
 
         if ((magD > 0) && (magD < magAxis2))
         {
-            const scalar d2 = (d & d) - sqr(magD)/magAxis2;
+            const scalar d2 = magSqr(d^axis)/magAxis2;
             if ((d2 < orad2) && (d2 > irad2))
             {
                 addOrDelete(set, elemi, add);
