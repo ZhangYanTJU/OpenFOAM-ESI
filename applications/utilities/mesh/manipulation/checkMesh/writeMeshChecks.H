@@ -13,27 +13,33 @@ const Enum<writeChecksFormatType> writeChecksFormatTypeNames
 
 writeChecksFormatType writeChecksFormat(writeChecksFormatType::none);
 
-auto writeMeshChecks = [](const fvMesh& mesh, const writeChecksFormatType fmt)
+auto writeMeshChecks = [&](const fvMesh& mesh, const writeChecksFormatType fmt)
 {
     if (UPstream::master())
     {
+        fileName path(mesh.time().globalPath()/"checkMesh");
+        if (mesh.name() != polyMesh::defaultRegion)
+        {
+            path += "_" + mesh.name();
+        }
+
+        OFstream os(path.ext(writeChecksFormatTypeNames[fmt]));
+
+        Info<< "Writing mesh data to " << os.name() << nl << endl;
+
         switch (fmt)
         {
             case writeChecksFormatType::dictionary:
             {
-                OFstream os(mesh.time().globalPath()/"checkMesh.dict");
-
                 IOdictionary data
                 (
                     IOobject
                     (
-                        mesh.time().globalPath()/"checkMesh.dict",
+                        os.name(),
                         mesh,
                         IOobject::NO_READ
                     )
                 );
-
-                Info<< "Writing mesh data to " << os.name() << nl << endl;
 
                 data.writeHeader(os);
 
@@ -45,13 +51,9 @@ auto writeMeshChecks = [](const fvMesh& mesh, const writeChecksFormatType fmt)
             }
             case writeChecksFormatType::JSON:
             {
-                OFstream os(mesh.time().globalPath()/"checkMesh.json");
-
-                Info<< "Writing mesh data to " << os.name() << nl << endl;
-
                 JSONformatter json(os);
-
                 json.writeDict(mesh.data().meshDict());
+
                 break;
             }
             default:
