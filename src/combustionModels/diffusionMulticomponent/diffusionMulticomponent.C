@@ -216,15 +216,13 @@ diffusionMulticomponent<ReactionThermo, ThermoType>::correct()
             forAll(lhs, l)
             {
                 const label lIndex = lhs[l].index;
-                this->chemistryPtr_->RR(lIndex) =
-                    dimensionedScalar(dimMass/dimTime/dimVolume, Zero);
+                this->chemistryPtr_->RR(lIndex) = Zero;
             }
 
             forAll(rhs, l)
             {
                 const label rIndex = rhs[l].index;
-                this->chemistryPtr_->RR(rIndex) =
-                    dimensionedScalar(dimMass/dimTime/dimVolume, Zero);
+                this->chemistryPtr_->RR(rIndex) = Zero;
             }
         }
 

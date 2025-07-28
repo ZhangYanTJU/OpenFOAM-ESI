@@ -266,8 +266,8 @@ void adjointEikonalSolver::solve()
 
 void adjointEikonalSolver::reset()
 {
-    source_ == dimensionedScalar(source_.dimensions(), Zero);
-    distanceSensPtr_() = vector::zero;
+    source_ == Zero;
+    distanceSensPtr_() = Zero;
 }
 
 

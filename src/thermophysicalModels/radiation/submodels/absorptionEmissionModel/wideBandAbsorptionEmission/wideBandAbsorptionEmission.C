@@ -328,7 +328,7 @@ void Foam::radiation::wideBandAbsorptionEmission::correct
     PtrList<volScalarField>& aLambda
 ) const
 {
-    a = dimensionedScalar(dimless/dimLength, Zero);
+    a = Zero;
 
     for (label j=0; j<nBands_; j++)
     {

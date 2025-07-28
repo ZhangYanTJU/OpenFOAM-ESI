@@ -868,7 +868,7 @@ void Foam::radiation::solarLoad::calculate()
     if (firstIter_ || facesChanged || timeDependentLoad)
     {
         // Reset Ru
-        Ru_ = dimensionedScalar("Ru", dimMass/dimLength/pow3(dimTime), Zero);
+        Ru_ = Zero;
 
         solarCalc_.correctDirectSolarRad();
         solarCalc_.correctDiffuseSolarRad();

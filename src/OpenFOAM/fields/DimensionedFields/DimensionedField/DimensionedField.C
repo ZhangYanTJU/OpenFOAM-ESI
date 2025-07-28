@@ -560,6 +560,13 @@ void Foam::DimensionedField<Type, GeoMesh>::operator=
 }
 
 
+template<class Type, class GeoMesh>
+void Foam::DimensionedField<Type, GeoMesh>::operator=(Foam::zero)
+{
+    Field<Type>::operator=(Foam::zero{});
+}
+
+
 #define COMPUTED_ASSIGNMENT(TYPE, op)                                          \
                                                                                \
 template<class Type, class GeoMesh>                                            \

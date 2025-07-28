@@ -952,6 +952,16 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::operator=
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::operator=
+(
+    Foam::zero
+)
+{
+    FieldField<PatchField, Type>::operator=(Foam::zero{});
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::operator==
 (
     const GeometricBoundaryField<Type, PatchField, GeoMesh>& bf
@@ -983,9 +993,9 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::operator==
     const Type& val
 )
 {
-    forAll(*this, patchi)
+    for (auto& pfld : *this)
     {
-        this->operator[](patchi) == val;
+        pfld == val;
     }
 }
 

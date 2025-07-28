@@ -195,7 +195,7 @@ Foam::functionObjects::scalarTransport::scalarTransport
 
     if (resetOnStartUp_)
     {
-        s == dimensionedScalar(dimless, Zero);
+        s == Zero;
     }
 }
 

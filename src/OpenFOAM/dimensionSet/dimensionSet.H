@@ -329,17 +329,26 @@ public:
         scalar operator[](const dimensionType) const;
         scalar& operator[](const dimensionType);
 
-        scalar operator[](const label) const;
-        scalar& operator[](const label);
+        scalar operator[](const int) const;
+        scalar& operator[](const int);
 
         bool operator==(const dimensionSet&) const;
         bool operator!=(const dimensionSet&) const;
 
+        //- Assignment operation, checks for identical dimensions.
+        //- Use reset() to change the dimensions.
         bool operator=(const dimensionSet&) const;
 
+        //- Addition operation, checks for identical dimensions.
         bool operator+=(const dimensionSet&) const;
+
+        //- Subtraction operation, checks for identical dimensions.
         bool operator-=(const dimensionSet&) const;
+
+        //- Multiplication, modifies the exponents.
         bool operator*=(const dimensionSet&);
+
+        //- Division, modifies the exponents.
         bool operator/=(const dimensionSet&);
 };
 
@@ -414,7 +423,7 @@ dimensionSet invTransform(const dimensionSet& ds);
 //- The dimensionSet inverted
 dimensionSet operator~(const dimensionSet& ds);
 
-//- Unary negation.
+//- Unary negation; does not change the dimensions
 dimensionSet operator-(const dimensionSet& ds);
 
 dimensionSet operator+(const dimensionSet& ds1, const dimensionSet& ds2);

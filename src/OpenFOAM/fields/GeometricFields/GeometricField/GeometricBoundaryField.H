@@ -260,6 +260,9 @@ public:
         //- Assignment to uniform value
         void operator=(const Type& val);
 
+        //- Assignment to zero
+        void operator=(Foam::zero);
+
         //- Forced assignment from GeometricBoundaryField
         void operator==(const GeometricBoundaryField& bf);
 
@@ -269,10 +272,14 @@ public:
         //- Forced assignment to uniform value
         void operator==(const Type& val);
 
+        //- Forced assignment to zero
+        void operator==(Foam::zero) { *this == Type(Foam::zero{}); }
+
         // Prevent automatic comparison rewriting (c++20)
         bool operator!=(const GeometricBoundaryField&) = delete;
         bool operator!=(const FieldField<PatchField, Type>&) = delete;
         bool operator!=(const Type&) = delete;
+        bool operator!=(Foam::zero) = delete;
 };
 
 

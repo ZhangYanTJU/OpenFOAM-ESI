@@ -81,7 +81,7 @@ eddyDissipationModelBase<ReactionThermo, ThermoType>::rtTurb() const
 template<class ReactionThermo, class ThermoType>
 void eddyDissipationModelBase<ReactionThermo, ThermoType>::correct()
 {
-    this->wFuel_ == dimensionedScalar(dimMass/dimVolume/dimTime, Zero);
+    this->wFuel_ == Zero;
 
     if (this->active())
     {

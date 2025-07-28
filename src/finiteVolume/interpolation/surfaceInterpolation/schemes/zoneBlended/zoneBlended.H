@@ -310,7 +310,7 @@ public:
             auto tcorr =
                 SurfaceField::New("correction", vf.mesh(), vf.dimensions());
             auto& corr = tcorr.ref();
-            corr = dimensioned<Type>(vf.dimensions(), Zero);
+            corr = Zero;
 
             // Set default scheme correction
             const auto& scheme0 = this->scheme(0);

@@ -693,8 +693,8 @@ public:
         void operator+=(const dimensioned<Type>&);
         void operator-=(const dimensioned<Type>&);
 
-        void operator+=(const Foam::zero) {}
-        void operator-=(const Foam::zero) {}
+        void operator+=(Foam::zero) {}
+        void operator-=(Foam::zero) {}
 
         void operator*=(const volScalarField::Internal&);
         void operator*=(const tmp<volScalarField::Internal>&);

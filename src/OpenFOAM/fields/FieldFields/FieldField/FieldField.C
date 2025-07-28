@@ -450,9 +450,9 @@ void FieldField<Field, Type>::operator=(const tmp<FieldField>& tf)
 template<template<class> class Field, class Type>
 void FieldField<Field, Type>::operator=(const Type& val)
 {
-    forAll(*this, i)
+    for (auto& pfld : *this)
     {
-        this->operator[](i) = val;
+        pfld = val;
     }
 }
 
@@ -460,9 +460,9 @@ void FieldField<Field, Type>::operator=(const Type& val)
 template<template<class> class Field, class Type>
 void FieldField<Field, Type>::operator=(Foam::zero)
 {
-    forAll(*this, i)
+    for (auto& pfld : *this)
     {
-        this->operator[](i) = Foam::zero{};
+        pfld = Foam::zero{};
     }
 }
 
@@ -489,11 +489,11 @@ void FieldField<Field, Type>::operator op                                      \
 }                                                                              \
                                                                                \
 template<template<class> class Field, class Type>                              \
-void FieldField<Field, Type>::operator op(const TYPE& t)                       \
+void FieldField<Field, Type>::operator op(const TYPE& val)                     \
 {                                                                              \
-    forAll(*this, i)                                                           \
+    for (auto& pfld : *this)                                                   \
     {                                                                          \
-        this->operator[](i) op t;                                              \
+        pfld op val;                                                           \
     }                                                                          \
 }
 

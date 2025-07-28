@@ -631,8 +631,11 @@ public:
         void operator=(const DimensionedField<Type, GeoMesh>& df);
         void operator=(const tmp<DimensionedField<Type, GeoMesh>>& tdf);
 
-        //- Assign dimensions and value.
+        //- Assign value (with dimension check)
         void operator=(const dimensioned<Type>& dt);
+
+        //- Assign value zero (no dimension checks)
+        void operator=(Foam::zero);
 
         void operator+=(const DimensionedField<Type, GeoMesh>& df);
         void operator+=(const tmp<DimensionedField<Type, GeoMesh>>& tdf);

@@ -1086,7 +1086,7 @@ void Foam::multiphaseMixtureThermo::solveAlphas
 
     MULES::limitSum(alphaPhiCorrs);
 
-    rhoPhi_ = dimensionedScalar(dimensionSet(1, 0, -1, 0, 0), Zero);
+    rhoPhi_ = Zero;
 
     volScalarField sumAlpha
     (

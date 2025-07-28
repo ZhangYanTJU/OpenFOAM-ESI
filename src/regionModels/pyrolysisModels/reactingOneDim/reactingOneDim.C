@@ -92,7 +92,7 @@ bool reactingOneDim::read(const dictionary& dict)
 void reactingOneDim::updateqr()
 {
     // Update local qr from coupled qr field
-    qr_ == dimensionedScalar(qr_.dimensions(), Zero);
+    qr_ == Zero;
 
     // Retrieve field from coupled region using mapped boundary conditions
     qr_.correctBoundaryConditions();
@@ -143,8 +143,8 @@ void reactingOneDim::updateqr()
 
 void reactingOneDim::updatePhiGas()
 {
-    phiHsGas_ == dimensionedScalar(phiHsGas_.dimensions(), Zero);
-    phiGas_ == dimensionedScalar(phiGas_.dimensions(), Zero);
+    phiHsGas_ == Zero;
+    phiGas_ == Zero;
 
     const speciesTable& gasTable = solidChemistry_->gasTable();
 

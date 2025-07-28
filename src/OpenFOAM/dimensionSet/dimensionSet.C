@@ -70,7 +70,7 @@ static inline bool checkDims
 
 Foam::dimensionSet::dimensionSet()
 :
-    exponents_(Zero)
+    exponents_(Foam::zero{})
 {}
 
 
@@ -142,7 +142,7 @@ Foam::dimensionSet::values() noexcept
 
 void Foam::dimensionSet::clear()
 {
-    exponents_ = Zero;
+    exponents_ = Foam::zero{};
 }
 
 
@@ -166,13 +166,13 @@ Foam::scalar& Foam::dimensionSet::operator[](const dimensionType type)
 }
 
 
-Foam::scalar Foam::dimensionSet::operator[](const label type) const
+Foam::scalar Foam::dimensionSet::operator[](const int type) const
 {
     return exponents_[type];
 }
 
 
-Foam::scalar& Foam::dimensionSet::operator[](const label type)
+Foam::scalar& Foam::dimensionSet::operator[](const int type)
 {
     return exponents_[type];
 }

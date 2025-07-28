@@ -188,7 +188,7 @@ void fusedGaussLaplacianScheme<Type, GType>::gradComponent
     GeometricField<Type, fvPatchField, volMesh>& gGrad
 )
 {
-    gGrad = dimensioned<Type>(vf.dimensions()/dimLength, Zero);
+    gGrad = Zero;
 
     // Calculate grad of vf.component(cmpt)
     fvc::GaussOp

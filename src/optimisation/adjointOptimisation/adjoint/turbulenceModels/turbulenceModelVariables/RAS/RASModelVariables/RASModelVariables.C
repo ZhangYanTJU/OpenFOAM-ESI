@@ -363,18 +363,15 @@ void RASModelVariables::resetMeanFields()
         // Reset fields to zero
         if (TMVar1MeanPtr_)
         {
-            TMVar1MeanPtr_.ref() ==
-                dimensionedScalar(TMVar1Inst().dimensions(), Zero);
+            TMVar1MeanPtr_.ref() == Zero;
         }
         if (TMVar2MeanPtr_)
         {
-            TMVar2MeanPtr_.ref() ==
-                dimensionedScalar(TMVar2Inst().dimensions(), Zero);
+            TMVar2MeanPtr_.ref() == Zero;
         }
         if (nutMeanPtr_)
         {
-            nutMeanPtr_.ref() ==
-                dimensionedScalar(nutRefInst().dimensions(), Zero);
+            nutMeanPtr_.ref() == Zero;
         }
     }
 }

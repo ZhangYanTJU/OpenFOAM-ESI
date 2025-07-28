@@ -122,8 +122,8 @@ void Foam::functionObjects::forceCoeffs::reset()
     Cf_.reset();
     Cm_.reset();
 
-    forceCoeff() == dimensionedVector(dimless, Zero);
-    momentCoeff() == dimensionedVector(dimless, Zero);
+    forceCoeff() == Zero;
+    momentCoeff() == Zero;
 }
 
 

@@ -266,8 +266,8 @@ void liquidFilmModel::preEvolveRegion()
     liquidFilmBase::preEvolveRegion();
 
 
-    cloudMassTrans_ == dimensionedScalar(dimMass, Zero);
-    cloudDiameterTrans_ == dimensionedScalar(dimLength, Zero);
+    cloudMassTrans_ == Zero;
+    cloudDiameterTrans_ == Zero;
 
     const scalar deltaT = primaryMesh().time().deltaTValue();
     const scalarField rAreaDeltaT(scalar(1)/deltaT/regionMesh().S().field());

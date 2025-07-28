@@ -72,9 +72,9 @@ void incompressibleAdjointVars::restoreInitValues()
     if (solverControl_.storeInitValues())
     {
         Info<< "Restoring adjoint field to initial ones" << endl;
-        paInst() == dimensionedScalar(paInst().dimensions(), Zero);
-        UaInst() == dimensionedVector(UaInst().dimensions(), Zero);
-        phiaInst() == dimensionedScalar(phiaInst().dimensions(), Zero);
+        paInst() == Zero;
+        UaInst() == Zero;
+        phiaInst() == Zero;
         adjointTurbulence_().restoreInitValues();
     }
 }
@@ -87,9 +87,9 @@ void incompressibleAdjointVars::resetMeanFields()
         Info<< "Resetting adjoint mean fields to zero" << endl;
 
         // Reset fields to zero
-        paMeanPtr_() == dimensionedScalar(paPtr_().dimensions(), Zero);
-        UaMeanPtr_() == dimensionedVector(UaPtr_().dimensions(), Zero);
-        phiaMeanPtr_() == dimensionedScalar(phiaPtr_().dimensions(), Zero);
+        paMeanPtr_() == Zero;
+        UaMeanPtr_() == Zero;
+        phiaMeanPtr_() == Zero;
         adjointTurbulence_().resetMeanFields();
 
         // Reset averaging iteration index to 0

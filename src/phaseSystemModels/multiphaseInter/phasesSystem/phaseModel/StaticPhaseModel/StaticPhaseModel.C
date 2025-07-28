@@ -101,7 +101,7 @@ template<class BasePhaseModel>
 const Foam::surfaceScalarField&
 Foam::StaticPhaseModel<BasePhaseModel>::phi()
 {
-    phi_ = dimensionedScalar(dimensionSet(0, 3, -1, 0, 0), Zero);
+    phi_ = Zero;
     return phi_;
 }
 
@@ -128,7 +128,7 @@ template<class BasePhaseModel>
 Foam::surfaceScalarField&
 Foam::StaticPhaseModel<BasePhaseModel>::alphaPhi()
 {
-    alphaPhi_ = dimensionedScalar(dimensionSet(0, 3, -1, 0, 0), Zero);
+    alphaPhi_ = Zero;
     return alphaPhi_;
 }
 

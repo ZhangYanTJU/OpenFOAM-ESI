@@ -187,7 +187,7 @@ void adjointMeshMovementSolver::solve()
 
 void adjointMeshMovementSolver::reset()
 {
-    source_ == dimensionedVector(source_.dimensions(), Zero);
+    source_ == Zero;
     meshMovementSensPtr_() = Zero;
 }
 

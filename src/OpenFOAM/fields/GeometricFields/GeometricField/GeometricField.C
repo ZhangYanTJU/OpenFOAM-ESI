@@ -1479,6 +1479,21 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::operator=(Foam::zero)
+{
+    // No dimension checking
+    primitiveFieldRef() = Foam::zero{};
+    boundaryFieldRef() = Foam::zero{};
+
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) { return pfld.constraintOverride(); }
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
 (
     const tmp<GeometricField<Type, PatchField, GeoMesh>>& tgf
@@ -1511,6 +1526,21 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==
 {
     internalFieldRef() = dt;
     boundaryFieldRef() == dt.value();
+
+    // Make sure any e.g. jump-cyclic are updated.
+    boundaryFieldRef().evaluate_if
+    (
+        [](const auto& pfld) { return pfld.constraintOverride(); }
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::operator==(Foam::zero)
+{
+    // No dimension checking
+    primitiveFieldRef() = Foam::zero{};
+    boundaryFieldRef() == Foam::zero{};
 
     // Make sure any e.g. jump-cyclic are updated.
     boundaryFieldRef().evaluate_if
