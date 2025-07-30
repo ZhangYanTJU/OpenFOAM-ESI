@@ -39,7 +39,6 @@ SourceFiles
 #define Foam_HashTableCore_H
 
 #include "label.H"
-#include "uLabel.H"
 #include "className.H"
 #include "nullObject.H"
 
@@ -55,11 +54,13 @@ namespace Foam
 //- Bits that are independent of HashTable template parameters.
 struct HashTableCore
 {
-    //- Maximum allowable internal table size. Approximately labelMax/4
-    static const label maxTableSize;
+    //- Maximum allowable internal table size (must be a power of two!).
+    // - approximately (INT32_MAX/4) => 0x20000000
+    // - don't need an int64 version
+    static constexpr int32_t maxTableSize = (1 << (32-3));
 
     //- Return a canonical (power-of-two) of the requested size.
-    static label canonicalSize(const label requested_size);
+    static label canonicalSize(const label size) noexcept;
 
     //- Declare type-name (with debug switch)
     ClassName("HashTable");

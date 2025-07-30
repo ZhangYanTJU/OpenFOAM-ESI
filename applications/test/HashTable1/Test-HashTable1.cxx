@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,11 +37,30 @@ License
 
 using namespace Foam;
 
+void checkCanonicalSize(label size)
+{
+    const auto n = HashTableCore::canonicalSize(size);
+
+    std::ostringstream buf;
+    buf.setf(std::ios_base::hex, std::ios_base::basefield);
+    buf << n;
+
+    Info<< "hash-table size of " << size
+        << " = " << n << " (0x" << buf.str().c_str() << ')' << nl;
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //  Main program:
 
 int main()
 {
+    for (label size : { -1, 0, 1, 7, 500, 1024, 1025, 10000, (labelMax-1)} )
+    {
+        checkCanonicalSize(size);
+    }
+    Info<< nl;
+
     HashTable<scalar> table1
     {
         {"aaa", 1.0},
