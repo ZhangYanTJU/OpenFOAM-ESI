@@ -50,7 +50,7 @@ tmp<scalarField> sumNeighbours
 {
     const fvMesh& mesh = field.mesh();
 
-    result == dimensioned<Type>(field.dimensions(), Zero);
+    result == Zero;
 
     auto tscaling = tmp<scalarField>::New(mesh.nCells(), Zero);
     auto& scaling = tscaling.ref();

@@ -42,7 +42,7 @@ SourceFiles
 #define Foam_DimensionedField_H
 
 #include "regIOobject.H"
-#include "Field.H"
+#include "DynamicField.H"
 #include "dimensionedType.H"
 #include "orientedType.H"
 
@@ -77,7 +77,7 @@ template<class Type, class GeoMesh>
 class DimensionedField
 :
     public regIOobject,
-    public Field<Type>
+    public DynamicField<Type>
 {
 public:
 
@@ -93,6 +93,7 @@ public:
         typedef DimensionedField<Type, GeoMesh> Internal;
 
         //- Type of the field from which this DimensionedField is derived
+        //  Use Field (not DynamicField) here.
         typedef Field<Type> FieldType;
 
         //- Component type of the field elements
@@ -197,7 +198,10 @@ public:
             const IOobject& io,
             const Mesh& mesh,
             const dimensionSet& dims,
-            const bool checkIOFlags = true
+            //! Handle mandatory/optional reading?
+            const bool checkIOFlags = true,
+            //! Additional space for geometric boundary size?
+            const bool extraCapacity = false
         );
 
         //- Construct from components, setting dimensions and initial
@@ -208,7 +212,10 @@ public:
             const Mesh& mesh,
             const Type& value,
             const dimensionSet& dims,
-            const bool checkIOFlags = true
+            //! Handle mandatory/optional reading?
+            const bool checkIOFlags = true,
+            //! Additional space for geometric boundary size?
+            const bool extraCapacity = false
         );
 
         //- Construct from components, setting dimensions and initial
@@ -219,15 +226,20 @@ public:
             const IOobject& io,
             const Mesh& mesh,
             const dimensioned<Type>& dt,
-            const bool checkIOFlags = true
+            //! Handle mandatory/optional reading?
+            const bool checkIOFlags = true,
+            //! Additional space for geometric boundary size?
+            const bool extraCapacity = false
         );
 
-        //- Construct from Istream.
+        //- Construct from Istream (uses an intermediate dictionary)
         DimensionedField
         (
             const IOobject& io,
             const Mesh& mesh,
-            const word& fieldDictEntry = "value"
+            const word& fieldDictEntry = "value",
+            //! Additional space for geometric boundary size?
+            const bool extraCapacity = false
         );
 
         //- Construct from dictionary
@@ -236,7 +248,9 @@ public:
             const IOobject& io,
             const Mesh& mesh,
             const dictionary& fieldDict,
-            const word& fieldDictEntry = "value"
+            const word& fieldDictEntry = "value",
+            //! Additional space for geometric boundary size?
+            const bool extraCapacity = false
         );
 
         //- Copy construct
@@ -572,6 +586,15 @@ public:
         //- Return reference to the primitive field values
         Field<Type>& field() noexcept { return *this; }
 
+        //- Return const-reference to the primitive field storage.
+        //- Use sparingly.
+        const DynamicField<Type>& dyn_field() const noexcept { return *this; }
+
+        //- Return reference to the primitive field storage.
+        //- Use sparingly.
+        DynamicField<Type>& dyn_field() noexcept { return *this; }
+
+
         //- Return a component field of the field
         tmp<DimensionedField<cmptType, GeoMesh>> component
         (
@@ -631,8 +654,11 @@ public:
         void operator=(const DimensionedField<Type, GeoMesh>& df);
         void operator=(const tmp<DimensionedField<Type, GeoMesh>>& tdf);
 
-        //- Assign dimensions and value.
+        //- Assign value (with dimension check)
         void operator=(const dimensioned<Type>& dt);
+
+        //- Assign value zero (no dimension checks)
+        void operator=(Foam::zero);
 
         void operator+=(const DimensionedField<Type, GeoMesh>& df);
         void operator+=(const tmp<DimensionedField<Type, GeoMesh>>& tdf);

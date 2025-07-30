@@ -200,8 +200,8 @@ void Foam::functionObjects::forces::reset()
 
     if (porosity_)
     {
-        force == dimensionedVector(force.dimensions(), Zero);
-        moment == dimensionedVector(moment.dimensions(), Zero);
+        force == Zero;
+        moment == Zero;
     }
     else
     {

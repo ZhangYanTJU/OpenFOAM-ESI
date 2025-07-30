@@ -557,7 +557,7 @@ void Foam::radiation::laserDTRM::calculate()
 
 
     // Reset the field
-    Q_ == dimensionedScalar(Q_.dimensions(), Zero);
+    Q_ == Zero;
 
     a_ = absorptionEmission_->a();
     e_ = absorptionEmission_->e();

@@ -237,7 +237,7 @@ void Foam::ShapeSensitivitiesBase::allocateMultipliers()
 
 void Foam::ShapeSensitivitiesBase::clearMultipliers()
 {
-    gradDxDbMult_() = dimensionedTensor(gradDxDbMult_().dimensions(), Zero);
+    gradDxDbMult_() = Zero;
     if (divDxDbMult_)
     {
         divDxDbMult_() = Zero;

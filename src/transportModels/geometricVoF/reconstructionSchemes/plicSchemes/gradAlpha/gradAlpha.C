@@ -151,8 +151,8 @@ void Foam::reconstruction::gradAlpha::reconstruct(bool forceUpdate)
         }
     }
     interfaceNormal_.resize(interfaceLabels_.size());
-    centre_ = dimensionedVector("centre", dimLength, Zero);
-    normal_ = dimensionedVector("normal", dimArea, Zero);
+    centre_ = Zero;
+    normal_ = Zero;
 
     gradSurf(alpha1_);
 

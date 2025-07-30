@@ -68,14 +68,12 @@ void adjointRASModel::restoreInitValues()
     {
         if (adjointTMVariable1Ptr_)
         {
-            volScalarField& var1 = adjointTMVariable1Ptr_.ref();
-            var1 == dimensionedScalar(var1.dimensions(), Zero);
+            adjointTMVariable1Ptr_.ref() == Zero;
         }
 
         if (adjointTMVariable2Ptr_)
         {
-            volScalarField& var2 = adjointTMVariable2Ptr_.ref();
-            var2 == dimensionedScalar(var2.dimensions(), Zero);
+            adjointTMVariable2Ptr_.ref() == Zero;
         }
     }
 }
@@ -465,13 +463,11 @@ void adjointRASModel::resetMeanFields()
     {
         if (adjointTMVariable1MeanPtr_)
         {
-            adjointTMVariable1MeanPtr_() ==
-                dimensionedScalar(adjointTMVariable1Ptr_().dimensions(), Zero);
+            adjointTMVariable1MeanPtr_.ref() == Zero;
         }
         if (adjointTMVariable2MeanPtr_)
         {
-            adjointTMVariable2MeanPtr_() ==
-                dimensionedScalar(adjointTMVariable2Ptr_().dimensions(), Zero);
+            adjointTMVariable2MeanPtr_.ref() == Zero;
         }
     }
 }

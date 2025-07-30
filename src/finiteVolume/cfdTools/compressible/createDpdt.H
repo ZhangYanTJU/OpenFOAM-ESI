@@ -27,6 +27,6 @@ volScalarField dpdt(dpdtHeader, fvc::ddt(p));
 
 if (!thermo.dpdt())
 {
-    dpdt == dimensionedScalar(dpdt.dimensions(), Zero);
+    dpdt == Zero;
     dpdt.writeOpt(IOobject::NO_WRITE);
 }

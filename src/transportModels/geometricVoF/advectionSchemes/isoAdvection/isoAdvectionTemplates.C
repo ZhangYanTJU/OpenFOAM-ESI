@@ -150,7 +150,7 @@ void Foam::isoAdvection::limitFluxes
             DebugInfo << "boundAlpha... " << endl;
 
             DynamicList<label> correctedFaces(3*nOvershoots);
-            dVfcorrectionValues = dimensionedScalar("0",dimVolume,0.0);
+            dVfcorrectionValues = Zero;
             boundFlux(needBounding, dVfcorrectionValues, correctedFaces,Sp,Su);
 
             correctedFaces.append

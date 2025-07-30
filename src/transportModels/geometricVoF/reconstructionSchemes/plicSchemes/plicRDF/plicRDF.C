@@ -372,8 +372,8 @@ Foam::reconstruction::plicRDF::plicRDF
 {
     setInitNormals(false);
 
-    centre_ = dimensionedVector("centre", dimLength, Zero);
-    normal_ = dimensionedVector("normal", dimArea, Zero);
+    centre_ = Zero;
+    normal_ = Zero;
 
     forAll(interfaceLabels_, i)
     {
@@ -436,8 +436,8 @@ void Foam::reconstruction::plicRDF::reconstruct(bool forceUpdate)
     // Sets interfaceCell_ and interfaceNormal
     setInitNormals(interpolateNormal_);
 
-    centre_ = dimensionedVector("centre", dimLength, Zero);
-    normal_ = dimensionedVector("normal", dimArea, Zero);
+    centre_ = Zero;
+    normal_ = Zero;
 
     // nextToInterface is update on setInitNormals
     const boolList& nextToInterface_ = RDF_.nextToInterface();

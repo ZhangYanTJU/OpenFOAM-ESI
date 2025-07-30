@@ -67,7 +67,7 @@ infinitelyFastChemistry<ReactionThermo, ThermoType>::~infinitelyFastChemistry()
 template<class ReactionThermo, class ThermoType>
 void infinitelyFastChemistry<ReactionThermo, ThermoType>::correct()
 {
-    this->wFuel_ == dimensionedScalar(dimMass/dimVolume/dimTime, Zero);
+    this->wFuel_ == Zero;
 
     if (this->active())
     {

@@ -66,7 +66,7 @@ Foam::RASModels::phasePressureModel::phasePressureModel
     expMax_(coeffDict_.get<scalar>("expMax")),
     g0_("g0", dimPressure, coeffDict_)
 {
-    nut_ == dimensionedScalar(nut_.dimensions(), Zero);
+    nut_ == Zero;
 
     if (type == typeName)
     {
@@ -213,10 +213,8 @@ Foam::RASModels::phasePressureModel::devRhoReff
         IOobject::groupName("devRhoReff", U.group()),
         IOobject::NO_REGISTER,
         mesh_,
-        dimensioned<symmTensor>
-        (
-            rho_.dimensions()*dimensionSet(0, 2, -2, 0, 0), Zero
-        )
+        Zero,
+        rho_.dimensions()*dimensionSet(0, 2, -2, 0, 0)
     );
 }
 

@@ -348,11 +348,10 @@ void variablesSet::nullifyField
     GeometricField<Type, PatchField, GeoMesh>& field
 )
 {
-    typedef GeometricField<Type, PatchField, GeoMesh> fieldType;
-    field == dimensioned<Type>(field.dimensions(), Zero);
+    field == Zero;
     if (field.nOldTimes())
     {
-        fieldType& oldTime = field.oldTime();
+        auto& oldTime = field.oldTime();
         variablesSet::nullifyField(oldTime);
     }
 }

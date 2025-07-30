@@ -232,7 +232,7 @@
             surfaceScalarField mSfGradp("mSfGradp", pEqnIncomp.flux()/rAUf);
 
             phasei = 0;
-            phi = dimensionedScalar("phi", phi.dimensions(), Zero);
+            phi = Zero;
 
             for (phaseModel& phase : fluid.phases())
             {
@@ -261,7 +261,7 @@
 
             mSfGradp = pEqnIncomp.flux()/rAUf;
 
-            U = dimensionedVector("U", dimVelocity, Zero);
+            U = Zero;
 
             phasei = 0;
             for (phaseModel& phase : fluid.phases())

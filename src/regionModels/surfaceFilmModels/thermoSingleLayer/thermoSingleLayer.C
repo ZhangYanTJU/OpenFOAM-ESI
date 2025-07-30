@@ -98,7 +98,7 @@ void thermoSingleLayer::resetPrimaryRegionSourceTerms()
 
     kinematicSingleLayer::resetPrimaryRegionSourceTerms();
 
-    hsSpPrimary_ == dimensionedScalar(hsSp_.dimensions(), Zero);
+    hsSpPrimary_ == Zero;
 }
 
 
@@ -607,7 +607,7 @@ void thermoSingleLayer::preEvolveRegion()
     DebugInFunction << endl;
 
     kinematicSingleLayer::preEvolveRegion();
-    primaryEnergyTrans_ == dimensionedScalar(dimEnergy, Zero);
+    primaryEnergyTrans_ == Zero;
 }
 
 

@@ -60,7 +60,7 @@ Foam::fv::skewCorrectedSnGrad<Type>::fullGradCorrection
     auto& ssf = tssf.ref();
 
     ssf.setOriented();
-    ssf = dimensioned<Type>(ssf.dimensions(), Zero);
+    ssf = Zero;
 
 
     typedef typename

@@ -725,10 +725,10 @@ void Foam::radiation::fvDOM::updateBlackBodyEmission()
 
 void Foam::radiation::fvDOM::updateG()
 {
-    G_ = dimensionedScalar(dimMass/pow3(dimTime), Zero);
-    qr_ = dimensionedScalar(dimMass/pow3(dimTime), Zero);
-    qem_ = dimensionedScalar(dimMass/pow3(dimTime), Zero);
-    qin_ = dimensionedScalar(dimMass/pow3(dimTime), Zero);
+    G_ = Zero;
+    qr_ = Zero;
+    qem_ = Zero;
+    qin_ = Zero;
 
     forAll(IRay_, rayI)
     {

@@ -300,7 +300,7 @@ Foam::scalar Foam::radiation::radiativeIntensityRay::correct()
 
 void Foam::radiation::radiativeIntensityRay::addIntensity()
 {
-    I_ = dimensionedScalar(dimMass/pow3(dimTime), Zero);
+    I_ = Zero;
 
     forAll(ILambda_, lambdaI)
     {

@@ -77,7 +77,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(io),
-    Field<Type>(field),
+    DynamicField<Type>(field),
     mesh_(mesh),
     dimensions_(dims)
 {
@@ -95,7 +95,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(io),
-    Field<Type>(std::move(field)),
+    DynamicField<Type>(std::move(field)),
     mesh_(mesh),
     dimensions_(dims)
 {
@@ -113,7 +113,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(io),
-    Field<Type>(std::move(field)),
+    DynamicField<Type>(std::move(field)),
     mesh_(mesh),
     dimensions_(dims)
 {
@@ -131,7 +131,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(io),
-    Field<Type>(tfield.constCast(), tfield.movable()),
+    DynamicField<Type>(tfield.constCast(), tfield.movable()),
     mesh_(mesh),
     dimensions_(dims)
 {
@@ -146,11 +146,21 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
     const IOobject& io,
     const Mesh& mesh,
     const dimensionSet& dims,
-    const bool checkIOFlags
+    const bool checkIOFlags,
+    const bool extraCapacity
 )
 :
     regIOobject(io),
-    Field<Type>(GeoMesh::size(mesh)),
+    DynamicField<Type>
+    (
+        // (size,capacity)
+        std::pair<label,label>
+        (
+            GeoMesh::size(mesh),
+            GeoMesh::size(mesh)
+          + (extraCapacity ? GeoMesh::boundary_size(mesh) : label(0))
+        )
+    ),
     mesh_(mesh),
     dimensions_(dims)
 {
@@ -168,11 +178,21 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
     const Mesh& mesh,
     const Type& value,
     const dimensionSet& dims,
-    const bool checkIOFlags
+    const bool checkIOFlags,
+    const bool extraCapacity
 )
 :
     regIOobject(io),
-    Field<Type>(GeoMesh::size(mesh)),
+    DynamicField<Type>
+    (
+        // (size,capacity)
+        std::pair<label,label>
+        (
+            GeoMesh::size(mesh),
+            GeoMesh::size(mesh)
+          + (extraCapacity ? GeoMesh::boundary_size(mesh) : label(0))
+        )
+    ),
     mesh_(mesh),
     dimensions_(dims)
 {
@@ -190,7 +210,8 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
     const IOobject& io,
     const Mesh& mesh,
     const dimensioned<Type>& dt,
-    const bool checkIOFlags
+    const bool checkIOFlags,
+    const bool extraCapacity
 )
 :
     DimensionedField<Type, GeoMesh>
@@ -199,7 +220,8 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
         mesh,
         dt.value(),
         dt.dimensions(),
-        checkIOFlags
+        checkIOFlags,
+        extraCapacity
     )
 {}
 
@@ -211,7 +233,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(df),
-    Field<Type>(df),
+    DynamicField<Type>(df),
     mesh_(df.mesh_),
     dimensions_(df.dimensions_),
     oriented_(df.oriented_)
@@ -236,7 +258,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(df, reuse),
-    Field<Type>(df, reuse),
+    DynamicField<Type>(df, reuse),
     mesh_(df.mesh_),
     dimensions_(df.dimensions_),
     oriented_(df.oriented_)
@@ -263,7 +285,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(io),
-    Field<Type>(df),
+    DynamicField<Type>(df),
     mesh_(df.mesh_),
     dimensions_(df.dimensions_),
     oriented_(df.oriented_)
@@ -290,7 +312,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(io, df),
-    Field<Type>(df, reuse),
+    DynamicField<Type>(df, reuse),
     mesh_(df.mesh_),
     dimensions_(df.dimensions_),
     oriented_(df.oriented_)
@@ -318,7 +340,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(newName, df, newName != df.name()),
-    Field<Type>(df),
+    DynamicField<Type>(df),
     mesh_(df.mesh_),
     dimensions_(df.dimensions_),
     oriented_(df.oriented_)
@@ -345,7 +367,7 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 )
 :
     regIOobject(newName, df, true),
-    Field<Type>(df, reuse),
+    DynamicField<Type>(df, reuse),
     mesh_(df.mesh_),
     dimensions_(df.dimensions_),
     oriented_(df.oriented_)
@@ -421,7 +443,7 @@ void Foam::DimensionedField<Type, GeoMesh>::replace
     >& df
 )
 {
-    Field<Type>::replace(d, df);
+    DynamicField<Type>::replace(d, df);
 }
 
 
@@ -523,7 +545,7 @@ void Foam::DimensionedField<Type, GeoMesh>::operator=
 
     dimensions_ = df.dimensions();
     oriented_ = df.oriented();
-    Field<Type>::operator=(df);
+    DynamicField<Type>::operator=(df);
 }
 
 
@@ -556,7 +578,14 @@ void Foam::DimensionedField<Type, GeoMesh>::operator=
 )
 {
     dimensions_ = dt.dimensions();
-    Field<Type>::operator=(dt.value());
+    DynamicField<Type>::operator=(dt.value());
+}
+
+
+template<class Type, class GeoMesh>
+void Foam::DimensionedField<Type, GeoMesh>::operator=(Foam::zero)
+{
+    DynamicField<Type>::operator=(Foam::zero{});
 }
 
 
@@ -572,7 +601,7 @@ void Foam::DimensionedField<Type, GeoMesh>::operator op                        \
                                                                                \
     dimensions_ op df.dimensions();                                            \
     oriented_ op df.oriented();                                                \
-    Field<Type>::operator op(df);                                              \
+    DynamicField<Type>::operator op(df);                                       \
 }                                                                              \
                                                                                \
 template<class Type, class GeoMesh>                                            \
@@ -592,7 +621,7 @@ void Foam::DimensionedField<Type, GeoMesh>::operator op                        \
 )                                                                              \
 {                                                                              \
     dimensions_ op dt.dimensions();                                            \
-    Field<Type>::operator op(dt.value());                                      \
+    DynamicField<Type>::operator op(dt.value());                               \
 }
 
 COMPUTED_ASSIGNMENT(Type, +=)

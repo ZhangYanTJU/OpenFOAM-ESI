@@ -61,7 +61,7 @@ Foam::diameterModels::IATEsources::dummy::R
             iate_.phase().mesh()
         ),
         iate_.phase().mesh(),
-        dimensionedScalar(kappai.dimensions()/dimTime, 0)
+        dimensionedScalar(kappai.dimensions()/dimTime, Zero)
     );
 
     return fvm::Su(R, kappai);

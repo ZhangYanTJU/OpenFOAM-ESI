@@ -240,29 +240,27 @@ void objectiveIncompressible::nullify()
     {
         if (hasdJdv())
         {
-            dJdvPtr_() == dimensionedVector(dJdvPtr_().dimensions(), Zero);
+            dJdvPtr_() == Zero;
         }
         if (hasdJdp())
         {
-            dJdpPtr_() == dimensionedScalar(dJdpPtr_().dimensions(), Zero);
+            dJdpPtr_() == Zero;
         }
         if (hasdJdT())
         {
-            dJdTPtr_() == dimensionedScalar(dJdTPtr_().dimensions(), Zero);
+            dJdTPtr_() == Zero;
         }
         if (hasdJdTMVar1())
         {
-            dJdTMvar1Ptr_() ==
-                dimensionedScalar(dJdTMvar1Ptr_().dimensions(), Zero);
+            dJdTMvar1Ptr_() == Zero;
         }
         if (hasdJdTMVar2())
         {
-            dJdTMvar2Ptr_() ==
-                dimensionedScalar(dJdTMvar2Ptr_().dimensions(), Zero);
+            dJdTMvar2Ptr_() == Zero;
         }
         if (hasBoundarydJdv())
         {
-            bdJdvPtr_() == vector::zero;
+            bdJdvPtr_() == Zero;
         }
         if (hasBoundarydJdvn())
         {
@@ -270,11 +268,11 @@ void objectiveIncompressible::nullify()
         }
         if (hasBoundarydJdvt())
         {
-            bdJdvtPtr_() == vector::zero;
+            bdJdvtPtr_() == Zero;
         }
         if (hasBoundarydJdp())
         {
-            bdJdpPtr_() == vector::zero;
+            bdJdpPtr_() == Zero;
         }
         if (hasBoundarydJdT())
         {
@@ -294,7 +292,7 @@ void objectiveIncompressible::nullify()
         }
         if (hasBoundarydJdGradU())
         {
-            bdJdGradUPtr_() == tensor::zero;
+            bdJdGradUPtr_() == Zero;
         }
 
         // Nullify geometric fields and sets nullified_ to true

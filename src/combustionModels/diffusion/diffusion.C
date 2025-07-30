@@ -69,7 +69,7 @@ diffusion<ReactionThermo, ThermoType>::~diffusion()
 template<class ReactionThermo, class ThermoType>
 void diffusion<ReactionThermo, ThermoType>::correct()
 {
-    this->wFuel_ == dimensionedScalar(dimMass/dimVolume/dimTime, Zero);
+    this->wFuel_ == Zero;
 
     if (this->active())
     {

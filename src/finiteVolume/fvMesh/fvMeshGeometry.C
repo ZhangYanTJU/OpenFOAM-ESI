@@ -427,7 +427,7 @@ const Foam::surfaceScalarField& Foam::fvMesh::phi() const
     // mesh motion fluxes if the time has been incremented
     if (!time().subCycling() && phiPtr_->timeIndex() != time().timeIndex())
     {
-        (*phiPtr_) = dimensionedScalar(dimVolume/dimTime, Foam::zero{});
+        (*phiPtr_) = Zero;
     }
 
     phiPtr_->setOriented();

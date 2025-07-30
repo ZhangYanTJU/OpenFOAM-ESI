@@ -923,6 +923,14 @@ public:
         //  Is dummy for processor boundary conditions etc
         void correctLocalBoundaryConditions();
 
+        //- Evaluate boundary functions using the field storage:
+        //  - extends the internal field storage
+        //  - applies passed-in operator to fill in the slots
+        //  .
+        //  \returns The nominal geometric field size
+        template<class Cop>
+        label boundaryEvaluate(const Cop& cop);
+
         //- Does the field need a reference level for solution
         bool needReference() const;
 
@@ -1028,10 +1036,20 @@ public:
 
         void operator=(const GeometricField<Type, PatchField, GeoMesh>&);
         void operator=(const tmp<GeometricField<Type, PatchField, GeoMesh>>&);
-        void operator=(const dimensioned<Type>&);
+
+        //- Assign value (with dimension check)
+        void operator=(const dimensioned<Type>& dt);
+
+        //- Assign value zero (no dimension checks)
+        void operator=(Foam::zero);
 
         void operator==(const tmp<GeometricField<Type, PatchField, GeoMesh>>&);
+
+        //- Assign value (with dimension check). Force assign for boundary.
         void operator==(const dimensioned<Type>&);
+
+        //- Assign value zero (no dimension checks). Force assign for boundary.
+        void operator==(Foam::zero);
 
         void operator+=(const GeometricField<Type, PatchField, GeoMesh>&);
         void operator+=(const tmp<GeometricField<Type, PatchField, GeoMesh>>&);
@@ -1061,6 +1079,7 @@ public:
             const tmp<GeometricField<Type, PatchField, GeoMesh>>&
         ) = delete;
         bool operator!=(const dimensioned<Type>&) = delete;
+        bool operator!=(Foam::zero) = delete;
 
 
     // Write

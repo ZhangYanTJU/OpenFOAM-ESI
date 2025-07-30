@@ -85,9 +85,9 @@ void kinematicSingleLayer::resetPrimaryRegionSourceTerms()
 {
     DebugInFunction << endl;
 
-    rhoSpPrimary_ == dimensionedScalar(rhoSp_.dimensions(), Zero);
-    USpPrimary_ == dimensionedVector(USp_.dimensions(), Zero);
-    pSpPrimary_ == dimensionedScalar(pSp_.dimensions(), Zero);
+    rhoSpPrimary_ == Zero;
+    USpPrimary_ == Zero;
+    pSpPrimary_ == Zero;
 }
 
 
@@ -849,9 +849,9 @@ void kinematicSingleLayer::preEvolveRegion()
 
     // Reset transfer fields
     availableMass_ = mass();
-    cloudMassTrans_ == dimensionedScalar(dimMass, Zero);
-    cloudDiameterTrans_ == dimensionedScalar(dimLength, Zero);
-    primaryMassTrans_ == dimensionedScalar(dimMass, Zero);
+    cloudMassTrans_ == Zero;
+    cloudDiameterTrans_ == Zero;
+    primaryMassTrans_ == Zero;
 }
 
 

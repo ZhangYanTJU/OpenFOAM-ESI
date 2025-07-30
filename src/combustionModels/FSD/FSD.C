@@ -307,7 +307,7 @@ void FSD<ReactionThermo, ThermoType>::calculateSourceNorm()
 template<class ReactionThermo, class ThermoType>
 void FSD<ReactionThermo, ThermoType>::correct()
 {
-    this->wFuel_ == dimensionedScalar(dimMass/dimTime/dimVolume, Zero);
+    this->wFuel_ == Zero;
 
     if (this->active())
     {

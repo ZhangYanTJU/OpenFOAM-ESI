@@ -109,7 +109,7 @@ void Foam::patchCorrectedInterpolation::interpolateDataFromPatchGroups
         dimensionedScalar(dimless, Zero),
         pointPatchFieldBase::zeroGradientType()
     );
-    data = dimensioned<Type>(data.dimensions(), Zero);
+    data = Zero;
 
     forAll(patchGroups_, patchGroupI)
     {

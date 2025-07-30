@@ -50,12 +50,19 @@ void Foam::DimensionedField<Type, GeoMesh>::readField
         oriented_.read(fieldDict);  // The "oriented" entry (if present)
     }
 
+    const label meshSize = GeoMesh::size(mesh_);
 
-    // The primitive field
-    auto& fld = static_cast<Field<Type>&>(*this);
+    // The primitive field : dyn_field()
+    auto& fld = static_cast<DynamicField<Type>&>(*this);
 
-    fld.resize_nocopy(GeoMesh::size(mesh_));
-    fld.assign(fieldDictEntry, fieldDict, fld.size());  // <- MUST_READ
+    // Resize primitive field to make space for the internal field
+    // - avoid size doubling
+    // - without copying any existing content
+
+    fld.clear();  // ie, ignore any existing content
+    fld.reserve_exact(meshSize);
+    fld.resize_nocopy(meshSize);
+    fld.assign(fieldDictEntry, fieldDict, meshSize);  // <- MUST_READ
 }
 
 
@@ -116,12 +123,20 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
 (
     const IOobject& io,
     const Mesh& mesh,
-    const word& fieldDictEntry
+    const word& fieldDictEntry,
+    const bool extraCapacity
 )
 :
     regIOobject(io),
     mesh_(mesh)
 {
+    if (extraCapacity)
+    {
+        DynamicField<Type>::reserve_exact
+        (
+            GeoMesh::size(mesh) + GeoMesh::boundary_size(mesh)
+        );
+    }
     readField(fieldDictEntry);
 }
 
@@ -132,12 +147,20 @@ Foam::DimensionedField<Type, GeoMesh>::DimensionedField
     const IOobject& io,
     const Mesh& mesh,
     const dictionary& fieldDict,
-    const word& fieldDictEntry
+    const word& fieldDictEntry,
+    const bool extraCapacity
 )
 :
     regIOobject(io),
     mesh_(mesh)
 {
+    if (extraCapacity)
+    {
+        DynamicField<Type>::reserve_exact
+        (
+            GeoMesh::size(mesh) + GeoMesh::boundary_size(mesh)
+        );
+    }
     readField(fieldDict, fieldDictEntry);
 }
 
@@ -159,7 +182,7 @@ bool Foam::DimensionedField<Type, GeoMesh>::writeData
         os << nl;
     }
 
-    Field<Type>::writeEntry(fieldDictEntry, os);
+    DynamicField<Type>::writeEntry(fieldDictEntry, os);
 
     os.check(FUNCTION_NAME);
     return os.good();

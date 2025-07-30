@@ -418,7 +418,7 @@ Foam::ThermalPhaseChangePhaseSystem<BasePhaseSystem>::correctInterfaceThermo()
         }
         else
         {
-            iDmdtNew == dimensionedScalar(iDmdt.dimensions());
+            iDmdtNew == Zero;
         }
 
         volScalarField H1(heatTransferModelIter().first()->K());

@@ -262,8 +262,8 @@ void Foam::multiphaseInter::multiphaseSystem::solveAlphas()
         // Set Su and Sp to zero
         for (const multiphaseInter::phaseModel& phase : phases_)
         {
-            Su_[phase.name()] = dimensionedScalar("Su", dimless/dimTime, Zero);
-            Sp_[phase.name()] = dimensionedScalar("Sp", dimless/dimTime, Zero);
+            Su_[phase.name()] = Zero;
+            Sp_[phase.name()] = Zero;
 
             // Add alpha*div(U)
             //const volScalarField& alpha = phase;
@@ -368,7 +368,7 @@ void Foam::multiphaseInter::multiphaseSystem::solveAlphas()
             );
 
             // Reset rhoPhi
-            rhoPhi_ = dimensionedScalar("rhoPhi", dimMass/dimTime, Zero);
+            rhoPhi_ = Zero;
 
             for (multiphaseInter::phaseModel& phase : phases_)
             {

@@ -402,9 +402,9 @@ void incompressibleVars::resetMeanFields()
         Info<< "Resetting mean fields to zero" << endl;
 
         // Reset fields to zero
-        pMeanPtr_() == dimensionedScalar(pInst().dimensions(), Zero);
-        UMeanPtr_() == dimensionedVector(UInst().dimensions(), Zero);
-        phiMeanPtr_() == dimensionedScalar(phiInst().dimensions(), Zero);
+        pMeanPtr_() == Zero;
+        UMeanPtr_() == Zero;
+        phiMeanPtr_() == Zero;
         RASModelVariables_().resetMeanFields();
 
         // Reset averaging iteration index to 0
