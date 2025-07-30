@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -433,7 +433,7 @@ inline complex pow(const complex& x, const complex& y)
 
 powFuncs(int)
 powFuncs(long)
-#if defined(__APPLE__) && WM_LABEL_SIZE == 64
+#if (WM_LABEL_SIZE == 64) && (defined(__APPLE__) || defined(_WIN32))
 powFuncs(int64_t)
 #endif
 powFuncs(float)

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "HashTableCore.H"
-#include "uLabel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -36,51 +35,66 @@ namespace Foam
     defineTypeNameAndDebug(HashTableCore, 0);
 }
 
-// Approximately labelMax/4
-const Foam::label Foam::HashTableCore::maxTableSize(1L << (sizeof(label)*8-3));
+
+// file-scope:
+// Minimum internal table size (must be a power of two!)
+constexpr int32_t minTableSize = 8;
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-Foam::label Foam::HashTableCore::canonicalSize(const label requested_size)
+Foam::label Foam::HashTableCore::canonicalSize(const label size) noexcept
 {
-    if (requested_size < 1)
-    {
-        return 0;
-    }
-    else if (requested_size >= maxTableSize)
-    {
-        return maxTableSize;
-    }
-
     // Enforce power of two for fast modulus in hash index calculations.
     // Use unsigned for these calculations.
     //
     // - The lower limit (8) is somewhat arbitrary, but if the hash table
     //   is too small, there will be many direct table collisions.
-    // - The upper limit (approx. labelMax/4) must be a power of two,
+    // - The upper limit (approx. INT32_MAX/4) must be a power of two,
     //   need not be extremely large for hashing.
 
-    uLabel powerOfTwo = 8u; // lower-limit
-
-    const uLabel size = requested_size;
-    if (size <= powerOfTwo)
+    if (size <= minTableSize)
     {
-        return powerOfTwo;
+        return (size < 1 ? 0 : minTableSize);
+    }
+    else if (size > maxTableSize/2)
+    {
+        return maxTableSize;
     }
 
-    if (size & (size-1))  // <- Modulus of i^2
-    {
-        // Determine power-of-two. Brute-force is fast enough.
-        while (powerOfTwo < size)
-        {
-            powerOfTwo <<= 1;
-        }
+    // Determine power-of-two with glibc (may or may not be faster):
+    //
+    // return (1 << (32-__builtin_clz(int32_t(size-1))));
 
-        return powerOfTwo;
+    if (!(size & (size-1)))
+    {
+        // Already a power-of-two...
+        return size;
     }
 
-    return size;
+    // Non-branching for 32-bit
+    // [https://graphics.stanford.edu/~seander/bithacks.html]
+    {
+        uint32_t n(size);
+        --n;
+        n |= n >> 1;
+        n |= n >> 2;
+        n |= n >> 4;
+        n |= n >> 8;
+        n |= n >> 16;
+        ++n;
+        return n;
+    }
+
+    // OLD:
+    // Brute-force method
+    //
+    // uint32_t n(minTableSize);
+    // while (n < uint32_t(size))
+    // {
+    //     n <<= 1;
+    // }
+    // return n;
 }
 
 
