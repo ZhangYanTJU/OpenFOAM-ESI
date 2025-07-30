@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,11 +28,19 @@ License
 
 #include "memInfo.H"
 #include "IOstreams.H"
-#include "OSspecific.H"  // For pid()
+// #include "OSspecific.H"  // For pid()
+
+#undef DebugInfo        // Windows name clash with OpenFOAM messageStream
 
 #include <cstdlib>
 #include <fstream>
 #include <string>
+
+#define WIN32_LEAN_AND_MEAN
+#ifdef FOAM_USE_WINDOWS_PSAPI
+#include <windows.h>
+#include <psapi.h>
+#endif
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -63,15 +71,47 @@ void Foam::memInfo::clear() noexcept
 
 void Foam::memInfo::populate()
 {
-    // Not yet supported under Windows
+    #ifdef FOAM_USE_WINDOWS_PSAPI
+    HANDLE proc = ::OpenProcess
+    (
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+        FALSE,
+        ::GetCurrentProcessId()  // This is Foam::pid()
+    );
+
+    if (proc)
+    {
+        if
+        (
+            PROCESS_MEMORY_COUNTERS pmc;
+            ::GetProcessMemoryInfo(proc, &pmc, sizeof(pmc))
+        )
+        {
+            // Convert from bytes -> kibi-bytes (1024)
+            peak_ = int64_t(pmc.PeakWorkingSetSize) / 1024;
+            size_ = int64_t(pmc.WorkingSetSize) / 1024;
+            rss_ = int64_t(pmc.WorkingSetSize - pmc.PagefileUsage) / 1024;
+        }
+        CloseHandle(proc);
+
+        if
+        (
+            PERFORMANCE_INFORMATION pinfo;
+            ::GetPerformanceInfo(&pinfo, sizeof(pinfo))
+        )
+        {
+            // Convert from pages -> bytes -> kibi-bytes (1024)
+            free_ = int64_t(pinfo.PhysicalAvailable*pinfo.PageSize) / 1024;
+        }
+    }
+    #endif  /* FOAM_USE_WINDOWS_PSAPI */
 }
 
 
 const Foam::memInfo& Foam::memInfo::update()
 {
-    // Not yet supported under Windows
-    // clear();
-    // populate();
+    clear();
+    populate();
     return *this;
 }
 
@@ -82,7 +122,7 @@ void Foam::memInfo::writeEntries(Ostream& os) const
     os.writeEntry("peak", peak_);
     os.writeEntry("rss", rss_);
     os.writeEntry("free", free_);
-    os.writeEntry("units", "kB");  // kibi-btyes (1024)
+    os.writeEntry("units", "kB");  // kibi-bytes (1024)
 }
 
 

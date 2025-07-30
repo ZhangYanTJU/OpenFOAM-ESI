@@ -16,7 +16,9 @@ then
     fi
 fi
 
-unset COMP_FLAGS LINK_FLAGS
+# Enable psapi to obtain memory information (for example)
+COMP_FLAGS="-DFOAM_USE_WINDOWS_PSAPI"
+LINK_FLAGS="-lpsapi"
 
 # Make object (non-shared by default)
 # Never want/need openmp, especially for static objects
