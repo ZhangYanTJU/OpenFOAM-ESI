@@ -26,12 +26,19 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "pointConstraint.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     const char* const pTraits<pointConstraint>::typeName = "pointConstraint";
+    defineCompoundTypeName(List<pointConstraint>, pointConstraintList);
+    addCompoundToRunTimeSelectionTable
+    (
+        List<pointConstraint>,
+        pointConstraintList
+    );
 }
 
 // ************************************************************************* //
