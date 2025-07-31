@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +33,7 @@ License
 namespace Foam
 {
     const char* const pTraits<pointConstraint>::typeName = "pointConstraint";
+
     defineCompoundTypeName(List<pointConstraint>, pointConstraintList);
     addCompoundToRunTimeSelectionTable
     (
@@ -40,5 +41,41 @@ namespace Foam
         pointConstraintList
     );
 }
+
+
+// * * * * * * * * * * * * * * * Specializations * * * * * * * * * * * * * * //
+
+template<>
+void Foam::Detail::readContiguous<Foam::pointConstraint>
+(
+    Istream& is,
+    char* byteData,
+    std::streamsize byteCount
+)
+{
+    if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
+    {
+        // Non-native label or scalar size
+        is.beginRawRead();
+
+        auto* data = reinterpret_cast<pointConstraint*>(byteData);
+        const auto nElem = (byteCount/sizeof(pointConstraint));
+
+        for (const pointConstraint* last = data + nElem; data != last; ++data)
+        {
+            // (label, 3*scalar)
+            readRawLabel(is, data->first());
+            readRawScalar(is, data->second().data(), vector::nComponents);
+        }
+
+        is.endRawRead();
+    }
+    else
+    {
+        // Native label/scalar sizes
+        is.read(byteData, byteCount);
+    }
+}
+
 
 // ************************************************************************* //
