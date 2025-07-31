@@ -47,7 +47,9 @@ Description
     - wedgePlane : -1 or component to knock out of intersection normal
     - frozenPointsZone : empty or name of pointZone containing points
                          that do not move
-    - scale : optional scaling factor as PatchFunction1
+    - scale : optional scaling factor as PatchFunction1. Note that this
+              is only supported for polyPatch-derived pointPatches
+              ('facePointPatch') and not for stand-alone pointPatches.
 
 
 SourceFiles

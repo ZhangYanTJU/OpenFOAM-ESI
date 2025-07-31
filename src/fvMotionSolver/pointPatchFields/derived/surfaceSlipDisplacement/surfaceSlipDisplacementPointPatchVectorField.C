@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022,2024 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -333,13 +333,15 @@ surfaceSlipDisplacementPointPatchVectorField
     frozenPointsZone_(dict.getOrDefault("frozenPointsZone", word::null)),
     scalePtr_
     (
-        PatchFunction1<scalar>::NewIfPresent
+        isA<facePointPatch>(p)
+      ? PatchFunction1<scalar>::NewIfPresent
         (
             refCast<const facePointPatch>(p).patch(),
             "scale",
             dict,
             false           // point values
         )
+      : nullptr
     )
 {}
 
@@ -359,7 +361,12 @@ surfaceSlipDisplacementPointPatchVectorField
     projectDir_(ppf.projectDir_),
     wedgePlane_(ppf.wedgePlane_),
     frozenPointsZone_(ppf.frozenPointsZone_),
-    scalePtr_(ppf.scalePtr_.clone(refCast<const facePointPatch>(p).patch()))
+    scalePtr_
+    (
+        isA<facePointPatch>(p)
+      ? ppf.scalePtr_.clone(refCast<const facePointPatch>(p).patch())
+      : nullptr
+    )
 {}
 
 
@@ -377,10 +384,12 @@ surfaceSlipDisplacementPointPatchVectorField
     frozenPointsZone_(ppf.frozenPointsZone_),
     scalePtr_
     (
-        ppf.scalePtr_.clone
+        isA<facePointPatch>(ppf.patch())
+      ? ppf.scalePtr_.clone
         (
             refCast<const facePointPatch>(ppf.patch()).patch()
         )
+      : nullptr
     )
 {}
 
@@ -400,10 +409,12 @@ surfaceSlipDisplacementPointPatchVectorField
     frozenPointsZone_(ppf.frozenPointsZone_),
     scalePtr_
     (
-        ppf.scalePtr_.clone
+        isA<facePointPatch>(ppf.patch())
+      ? ppf.scalePtr_.clone
         (
             refCast<const facePointPatch>(ppf.patch()).patch()
         )
+      : nullptr
     )
 {}
 
