@@ -76,9 +76,9 @@ Foam::injectedParticle::injectedParticle
             // Non-native label or scalar size
             is.beginRawRead();
 
-            readRawLabel(is, &tag_);
-            readRawScalar(is, &soi_);
-            readRawScalar(is, &d_);
+            readRawLabel(is, tag_);
+            readRawScalar(is, soi_);
+            readRawScalar(is, d_);
             readRawScalar(is, U_.data(), vector::nComponents);
 
             is.endRawRead();

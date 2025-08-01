@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -100,15 +100,28 @@ inline label readLabel(Istream& is)
     return INT_SIZE(readInt,) (is);
 }
 
-//- Read raw label from binary stream.
-//  \note No internal check for binary vs ascii,
-//        the caller knows what they are doing
-label readRawLabel(Istream& is);
-
 //- Read raw label(s) from binary stream.
 //  \note No internal check for binary vs ascii,
 //        the caller knows what they are doing
 void readRawLabel(Istream& is, label* data, size_t nElem = 1);
+
+//- Read raw label from binary stream.
+//  \note No internal check for binary vs ascii,
+//        the caller knows what they are doing
+inline void readRawLabel(Istream& is, label& val)
+{
+    readRawLabel(is, &val, 1);
+}
+
+//- Read raw label from binary stream and return value.
+//  \note No internal check for binary vs ascii,
+//        the caller knows what they are doing
+inline label readRawLabel(Istream& is)
+{
+    label val(0);
+    readRawLabel(is, &val, 1);
+    return val;
+}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

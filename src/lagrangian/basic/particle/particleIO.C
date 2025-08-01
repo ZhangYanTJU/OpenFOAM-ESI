@@ -98,16 +98,16 @@ void Foam::particle::readData
             is.beginRawRead();
 
             readRawScalar(is, coordinates_.data(), barycentric::nComponents);
-            readRawLabel(is, &celli_);
-            readRawLabel(is, &tetFacei_);
-            readRawLabel(is, &tetPti_);
+            readRawLabel(is, celli_);
+            readRawLabel(is, tetFacei_);
+            readRawLabel(is, tetPti_);
 
             if (readFields)
             {
-                readRawLabel(is, &facei_);
-                readRawScalar(is, &stepFraction_);
-                readRawLabel(is, &origProc_);
-                readRawLabel(is, &origId_);
+                readRawLabel(is, facei_);
+                readRawScalar(is, stepFraction_);
+                readRawLabel(is, origProc_);
+                readRawLabel(is, origId_);
             }
 
             is.endRawRead();
@@ -149,16 +149,16 @@ void Foam::particle::readData
             is.beginRawRead();
 
             readRawScalar(is, p.position.data(), vector::nComponents);
-            readRawLabel(is, &p.celli);
+            readRawLabel(is, p.celli);
 
             if (readFields)
             {
-                readRawLabel(is, &p.facei);
-                readRawScalar(is, &p.stepFraction);
-                readRawLabel(is, &p.tetFacei);
-                readRawLabel(is, &p.tetPti);
-                readRawLabel(is, &p.origProc);
-                readRawLabel(is, &p.origId);
+                readRawLabel(is, p.facei);
+                readRawScalar(is, p.stepFraction);
+                readRawLabel(is, p.tetFacei);
+                readRawLabel(is, p.tetPti);
+                readRawLabel(is, p.origProc);
+                readRawLabel(is, p.origId);
             }
 
             is.endRawRead();

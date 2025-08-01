@@ -69,8 +69,8 @@ Foam::DSMCParcel<ParcelType>::DSMCParcel
             is.beginRawRead();
 
             readRawScalar(is, U_.data(), vector::nComponents);
-            readRawScalar(is, &Ei_);
-            readRawLabel(is, &typeId_);
+            readRawScalar(is, Ei_);
+            readRawLabel(is, typeId_);
 
             is.endRawRead();
         }

@@ -71,10 +71,10 @@ Foam::DTRMParticle::DTRMParticle
 
             readRawScalar(is, p0_.data(), vector::nComponents);
             readRawScalar(is, p1_.data(), vector::nComponents);
-            readRawScalar(is, &I0_);
-            readRawScalar(is, &I_);
-            readRawScalar(is, &dA_);
-            readRawLabel(is, &transmissiveId_);
+            readRawScalar(is, I0_);
+            readRawScalar(is, I_);
+            readRawScalar(is, dA_);
+            readRawLabel(is, transmissiveId_);
 
             is.endRawRead();
         }

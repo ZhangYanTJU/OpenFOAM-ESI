@@ -92,15 +92,15 @@ Foam::KinematicParcel<ParcelType>::KinematicParcel
 
             is.beginRawRead();
 
-            readRawLabel(is, &active_);
-            readRawLabel(is, &typeId_);
-            readRawScalar(is, &nParticle_);
-            readRawScalar(is, &d_);
-            readRawScalar(is, &dTarget_);
+            readRawLabel(is, active_);
+            readRawLabel(is, typeId_);
+            readRawScalar(is, nParticle_);
+            readRawScalar(is, d_);
+            readRawScalar(is, dTarget_);
             readRawScalar(is, U_.data(), vector::nComponents);
-            readRawScalar(is, &rho_);
-            readRawScalar(is, &age_);
-            readRawScalar(is, &tTurb_);
+            readRawScalar(is, rho_);
+            readRawScalar(is, age_);
+            readRawScalar(is, tTurb_);
             readRawScalar(is, UTurb_.data(), vector::nComponents);
             readRawScalar(is, UCorrect_.data(), vector::nComponents);
 

@@ -231,37 +231,38 @@ inline Istream& operator>>(Istream& is, IOstreamManip f)
 
 namespace Detail
 {
-    //- Read binary block of contiguous data, possibly with conversion
-    template<class T>
-    void readContiguous(Istream& is, char* data, std::streamsize byteCount)
+
+//- Read binary block of contiguous data, possibly with conversion
+template<class T>
+void readContiguous(Istream& is, char* data, std::streamsize byteCount)
+{
+    if constexpr (is_contiguous_label<T>::value)
     {
         is.beginRawRead();
-
-        if constexpr (is_contiguous_label<T>::value)
-        {
-            readRawLabel
-            (
-                is,
-                reinterpret_cast<label*>(data),
-                byteCount/sizeof(label)
-            );
-        }
-        else if constexpr (is_contiguous_scalar<T>::value)
-        {
-            readRawScalar
-            (
-                is,
-                reinterpret_cast<scalar*>(data),
-                byteCount/sizeof(scalar)
-            );
-        }
-        else
-        {
-            is.readRaw(data, byteCount);
-        }
-
+        readRawLabel
+        (
+            is,
+            reinterpret_cast<label*>(data),
+            byteCount/sizeof(label)
+        );
         is.endRawRead();
     }
+    else if constexpr (is_contiguous_scalar<T>::value)
+    {
+        is.beginRawRead();
+        readRawScalar
+        (
+            is,
+            reinterpret_cast<scalar*>(data),
+            byteCount/sizeof(scalar)
+        );
+        is.endRawRead();
+    }
+    else
+    {
+        is.read(data, byteCount);
+    }
+}
 
 } // End namespace Detail
 

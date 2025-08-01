@@ -71,8 +71,8 @@ Foam::ThermoParcel<ParcelType>::ThermoParcel
 
             is.beginRawRead();
 
-            readRawScalar(is, &T_);
-            readRawScalar(is, &Cp_);
+            readRawScalar(is, T_);
+            readRawScalar(is, Cp_);
 
             is.endRawRead();
         }

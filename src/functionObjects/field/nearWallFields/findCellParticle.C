@@ -87,7 +87,7 @@ Foam::findCellParticle::findCellParticle
 
             readRawScalar(is, start_.data(), vector::nComponents);
             readRawScalar(is, end_.data(), vector::nComponents);
-            readRawLabel(is, &data_);
+            readRawLabel(is, data_);
 
             is.endRawRead();
         }

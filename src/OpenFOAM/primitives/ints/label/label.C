@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,81 +41,97 @@ const char* const Foam::pTraits<int64_t>::typeName = "label";
 #endif
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
-Foam::label Foam::readRawLabel(Istream& is)
+namespace
 {
-    label val(0);
-    readRawLabel(is, &val, 1);
-    return val;
+
+// Type narrowing
+// Overflow: fix silently, or raise error?
+//
+// template<class readType, class dataType>
+// inline constexpr dataType
+// narrowing(readType val, dataType minValue, dataType maxValue) noexcept
+// {
+//     return
+//     (
+//         (val <= minValue) ? minValue
+//       : (val >= maxValue) ? maxValue
+//       : dataType(val)
+//     );
+// }
+
+
+// Binary reading with narrowing/widening
+template<class readType, class dataType>
+void reading(Foam::Istream& is, dataType* data, size_t nElem)
+{
+    if constexpr (sizeof(dataType) == sizeof(readType))
+    {
+        // Read uses the native data size
+        is.readRaw(reinterpret_cast<char*>(data), nElem*sizeof(dataType));
+    }
+    else
+    {
+        for (const dataType* last = data + nElem; data != last; ++data)
+        {
+            readType val;
+            is.readRaw(reinterpret_cast<char*>(&val), sizeof(readType));
+
+            if constexpr (sizeof(dataType) < sizeof(readType))
+            {
+                // Type narrowing
+                // Overflow: fix silently.
+                //
+                // NB: not fully general - it uses labelMin/labelMax
+                // use pTraits<dataType>::(min|max) instead?
+
+                *data =
+                (
+                    (val <= Foam::labelMin) ? Foam::labelMin
+                  : (val >= Foam::labelMax) ? Foam::labelMax
+                  : dataType(val)
+                );
+            }
+            else
+            {
+                // Type widening
+                *data = dataType(val);
+            }
+        }
+    }
 }
 
+} // End anonymous namespace
+
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
 void Foam::readRawLabel(Istream& is, label* data, size_t nElem)
 {
     // No check for binary vs ascii, the caller knows what they are doing
 
-    #if WM_LABEL_SIZE == 32
-
-    // Defined label as int32, non-native type is int64
-    // Handle type narrowing limits
-
-    typedef int64_t nonNative;
-
-    if (is.checkLabelSize<nonNative>())
+    switch (is.labelByteSize())
     {
-        nonNative parsed;
-
-        for (const label* endData = data + nElem; data != endData; ++data)
+        case sizeof(int32_t):
         {
-            is.readRaw(reinterpret_cast<char*>(&parsed), sizeof(nonNative));
-
-            // Type narrowing
-            // Overflow: silently fix, or raise error?
-            if (parsed < labelMin)
-            {
-                *data = labelMin;
-            }
-            else if (parsed > labelMax)
-            {
-                *data = labelMax;
-            }
-            else
-            {
-                *data = label(parsed);
-            }
+            reading<int32_t, label>(is, data, nElem);
+            break;
+        }
+        case sizeof(int64_t):
+        {
+            reading<int64_t, label>(is, data, nElem);
+            break;
+        }
+        default:
+        {
+            // Cannot recover from this
+            FatalIOErrorInFunction(is)
+                << "Currently no code to read int" << (8*is.labelByteSize())
+                << " as int" << (8*sizeof(label)) << nl
+                << abort(FatalIOError);
         }
     }
-    else
-    {
-        // Read with native size
-        is.readRaw(reinterpret_cast<char*>(data), nElem*sizeof(label));
-    }
-
-    #elif WM_LABEL_SIZE == 64
-
-    // Defined label as int64, non-native type is int32
-
-    typedef int32_t nonNative;
-
-    if (is.checkLabelSize<nonNative>())
-    {
-        nonNative parsed;
-
-        for (const label* endData = data + nElem; data != endData; ++data)
-        {
-            is.readRaw(reinterpret_cast<char*>(&parsed), sizeof(nonNative));
-
-            *data = label(parsed);
-        }
-    }
-    else
-    {
-        // Read with native size
-        is.readRaw(reinterpret_cast<char*>(data), nElem*sizeof(label));
-    }
-
-    #endif
 }
 
 

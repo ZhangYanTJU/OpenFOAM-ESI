@@ -241,7 +241,7 @@ Foam::Istream& Foam::operator>>
         // Non-native label or scalar size
         is.beginRawRead();
 
-        readRawLabel(is, &rhs.index_);
+        readRawLabel(is, rhs.index_);
         readRawScalar(is, rhs.n_.data(), vector::nComponents);
 
         is.endRawRead();

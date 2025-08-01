@@ -72,7 +72,7 @@ Foam::ReactingParcel<ParcelType>::ReactingParcel
 
             is.beginRawRead();
 
-            readRawScalar(is, &mass0_);
+            readRawScalar(is, mass0_);
 
             is.endRawRead();
         }

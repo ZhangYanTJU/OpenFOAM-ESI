@@ -89,10 +89,10 @@ Foam::molecule::molecule
             readRawScalar(is, pi_.data(), vector::nComponents);
             readRawScalar(is, tau_.data(), vector::nComponents);
             readRawScalar(is, specialPosition_.data(), vector::nComponents);
-            readRawScalar(is, &potentialEnergy_);
+            readRawScalar(is, potentialEnergy_);
             readRawScalar(is, rf_.data(), tensor::nComponents);
-            readRawLabel(is, &special_);
-            readRawLabel(is, &id_);
+            readRawLabel(is, special_);
+            readRawLabel(is, id_);
 
             is.endRawRead();
         }

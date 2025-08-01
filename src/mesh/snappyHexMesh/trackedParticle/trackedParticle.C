@@ -107,10 +107,10 @@ Foam::trackedParticle::trackedParticle
 
             readRawScalar(is, start_.data(), vector::nComponents);
             readRawScalar(is, end_.data(), vector::nComponents);
-            readRawLabel(is, &level_);
-            readRawLabel(is, &i_);
-            readRawLabel(is, &j_);
-            readRawLabel(is, &k_);
+            readRawLabel(is, level_);
+            readRawLabel(is, i_);
+            readRawLabel(is, j_);
+            readRawLabel(is, k_);
 
             is.endRawRead();
         }

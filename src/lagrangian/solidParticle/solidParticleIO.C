@@ -61,7 +61,7 @@ Foam::solidParticle::solidParticle
 
             is.beginRawRead();
 
-            readRawScalar(is, &d_);
+            readRawScalar(is, d_);
             readRawScalar(is, U_.data(), vector::nComponents);
 
             is.endRawRead();
