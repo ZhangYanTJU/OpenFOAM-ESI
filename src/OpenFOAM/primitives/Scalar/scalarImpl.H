@@ -100,6 +100,13 @@ public:
         static constexpr direction nComponents = 1;
 
 
+    // Limits
+
+        static constexpr Scalar min_ = -ScalarVGREAT;
+        static constexpr Scalar max_ = ScalarVGREAT;
+        static constexpr Scalar vsmall_ = ScalarVSMALL;
+
+
     // Static Data Members
 
         static const char* const typeName;
@@ -118,7 +125,7 @@ public:
         //- Copy construct from primitive
         explicit pTraits(Scalar val) noexcept : p_(val) {}
 
-        //- Read construct from Istream
+        //- Read construct from Istream (uses tokenizer)
         explicit pTraits(Istream& is);
 
 
@@ -173,6 +180,7 @@ inline bool ScalarRead(const std::string& str, Scalar& val)
 }
 
 
+//- Read from Istream (uses tokenizer)
 Scalar ScalarRead(Istream& is);
 Istream& operator>>(Istream& is, Scalar& val);
 Ostream& operator<<(Ostream& os, const Scalar val);

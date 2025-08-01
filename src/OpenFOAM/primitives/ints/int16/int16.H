@@ -103,6 +103,12 @@ public:
         static constexpr direction nComponents = 1;
 
 
+    // Limits
+
+        static constexpr int16_t min_ = INT16_MIN;
+        static constexpr int16_t max_ = INT16_MAX;
+
+
     // Static Data Members
 
         static const char* const typeName;

@@ -121,6 +121,12 @@ public:
         static const int8_t rootMin;
 
 
+    // Limits
+
+        static constexpr int8_t min_ = INT8_MIN;
+        static constexpr int8_t max_ = INT8_MAX;
+
+
     // Constructors
 
         //- Copy construct from primitive

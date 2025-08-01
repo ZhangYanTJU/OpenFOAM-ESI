@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,24 +31,18 @@ License
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
-Foam::scalar Foam::readScalar(Istream& is)
-{
-    scalar val(0);
-    is >> val;
-
-    return val;
-}
-
-
 Foam::scalar Foam::readScalarOrDefault(Istream& is, const scalar defaultValue)
 {
     if (is.good())
     {
         token tok(is);
 
+        // NB: does not handle separated '-' (or '+') prefixes
+        // like operator>>(Istream&, scalar&) does
+
         if (tok.isNumber())
         {
-            return tok.scalarToken();
+            return tok.number();
         }
 
         is.putBack(tok);
@@ -58,85 +52,71 @@ Foam::scalar Foam::readScalarOrDefault(Istream& is, const scalar defaultValue)
 }
 
 
-Foam::scalar Foam::readRawScalar(Istream& is)
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace
 {
-    scalar val(0);
-    readRawScalar(is, &val, 1);
-    return val;
+
+// Binary reading with narrowing/widening
+template<class readType, class dataType>
+static void reading(Foam::Istream& is, dataType* data, size_t nElem)
+{
+    if constexpr (sizeof(dataType) == sizeof(readType))
+    {
+        // Read uses the native data size
+        is.readRaw(reinterpret_cast<char*>(data), nElem*sizeof(dataType));
+    }
+    else
+    {
+        for (const dataType* last = data + nElem; data != last; ++data)
+        {
+            readType val;
+            is.readRaw(reinterpret_cast<char*>(&val), sizeof(readType));
+
+            if constexpr (sizeof(dataType) < sizeof(readType))
+            {
+                // Narrowing: currently only need (float <- double)
+                *data = Foam::narrowFloat(val);
+            }
+            else
+            {
+                // Type widening
+                *data = dataType(val);
+            }
+        }
+    }
 }
 
+} // End anonymous namespace
+
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
 void Foam::readRawScalar(Istream& is, scalar* data, size_t nElem)
 {
     // No check for binary vs ascii, the caller knows what they are doing
 
-    #if defined(WM_SP) || defined(WM_SPDP)
-
-    // Defined scalar as a float, non-native type is double
-    // Handle type narrowing limits
-
-    typedef double nonNative;
-
-    if (is.checkScalarSize<nonNative>())
+    switch (is.scalarByteSize())
     {
-        nonNative other;
-
-        for (const scalar* endData = data + nElem; data != endData; ++data)
+        case sizeof(float):
         {
-            is.readRaw(reinterpret_cast<char*>(&other), sizeof(nonNative));
-
-            // Type narrowing
-            // Overflow: silently fix, or raise error?
-
-            if (other < -VGREAT)
-            {
-                *data = -VGREAT;
-            }
-            else if (other > VGREAT)
-            {
-                *data = VGREAT;
-            }
-            else if (other > -VSMALL && other < VSMALL)
-            {
-                // Underflow: round to zero
-                *data = 0;
-            }
-            else
-            {
-                *data = scalar(other);
-            }
+            reading<float, scalar>(is, data, nElem);
+            break;
+        }
+        case sizeof(double):
+        {
+            reading<double, scalar>(is, data, nElem);
+            break;
+        }
+        default:
+        {
+            // Cannot recover from this
+            FatalIOErrorInFunction(is)
+                << "Currently no code to read float" << (8*is.scalarByteSize())
+                << " as float" << (8*sizeof(scalar)) << nl
+                << abort(FatalIOError);
         }
     }
-    else
-    {
-        // Read with native size
-        is.readRaw(reinterpret_cast<char*>(data), nElem*sizeof(scalar));
-    }
-
-    #elif defined(WM_DP)
-
-    // Defined scalar as a double, non-native type is float
-
-    typedef float nonNative;
-
-    if (is.checkScalarSize<nonNative>())
-    {
-        nonNative other;
-
-        for (const scalar* endData = data + nElem; data != endData; ++data)
-        {
-            is.readRaw(reinterpret_cast<char*>(&other), sizeof(nonNative));
-
-            *data = scalar(other);
-        }
-    }
-    else
-    {
-        // Read with native size
-        is.readRaw(reinterpret_cast<char*>(data), nElem*sizeof(scalar));
-    }
-
-    #endif
 }
 
 

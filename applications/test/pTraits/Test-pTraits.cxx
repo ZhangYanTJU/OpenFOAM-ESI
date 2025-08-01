@@ -186,9 +186,9 @@ int main()
 
     Info<< nl << "some interesting label limits:" << nl;
     std::cout<< "sizeof = " << sizeof(label) << nl;
-    std::cout<< "min = " << pTraits<label>::min << nl;
-    std::cout<< "max = " << pTraits<label>::max << nl;
-    std::cout<< "umax = " << pTraits<uLabel>::max << nl;
+    std::cout<< "min = " << pTraits<label>::min_ << nl;
+    std::cout<< "max = " << pTraits<label>::max_ << nl;
+    std::cout<< "umax = " << pTraits<uLabel>::max_ << nl;
 
     std::cout<< "max_2 = " << pTraits<label>::max/2 << " <=> "
         << (1L << (sizeof(label)*8-2)) << nl;

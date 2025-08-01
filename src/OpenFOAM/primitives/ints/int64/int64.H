@@ -165,6 +165,12 @@ public:
         static constexpr direction nComponents = 1;
 
 
+    // Limits
+
+        static constexpr int64_t min_ = INT64_MIN;
+        static constexpr int64_t max_ = INT64_MAX;
+
+
     // Static Data Members
 
         static const char* const typeName;

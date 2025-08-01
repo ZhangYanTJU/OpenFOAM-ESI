@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef scalar_H
-#define scalar_H
+#ifndef Foam_scalar_H
+#define Foam_scalar_H
 
 #include "floatScalar.H"
 #include "doubleScalar.H"
@@ -100,21 +100,37 @@ namespace Foam
         return readFloat(str, val);
     }
 
-    //- Read scalar from stream.
-    scalar readScalar(Istream& is);
+    //- Read scalar from stream and return value
+    inline scalar readScalar(Istream& is)
+    {
+        return readFloat(is);
+    }
 
     //- Read scalar from stream if present or return default value
     scalar readScalarOrDefault(Istream& is, const scalar defaultValue);
-
-    //- Read raw scalar from binary stream.
-    //  \note No internal check for binary vs ascii,
-    //        the caller knows what they are doing
-    scalar readRawScalar(Istream& is);
 
     //- Read raw scalar(s) from binary stream.
     //  \note No internal check for binary vs ascii,
     //        the caller knows what they are doing
     void readRawScalar(Istream& is, scalar* data, size_t nElem = 1);
+
+    //- Read raw scalar from binary stream.
+    //  \note No internal check for binary vs ascii,
+    //        the caller knows what they are doing
+    inline void readRawScalar(Istream& is, scalar& val)
+    {
+        readRawScalar(is, &val, 1);
+    }
+
+    //- Read raw scalar from binary stream and return value.
+    //  \note No internal check for binary vs ascii,
+    //        the caller knows what they are doing
+    inline scalar readRawScalar(Istream& is)
+    {
+        scalar val(0);
+        readRawScalar(is, &val, 1);
+        return val;
+    }
 }
 
 #elif defined(WM_DP)
@@ -171,22 +187,37 @@ namespace Foam
         return readDouble(str, val);
     }
 
-
-    //- Read scalar from stream.
-    scalar readScalar(Istream& is);
+    //- Read scalar from stream and return value
+    inline scalar readScalar(Istream& is)
+    {
+        return readDouble(is);
+    }
 
     //- Read scalar from stream if present or return default value
     scalar readScalarOrDefault(Istream& is, const scalar defaultValue);
-
-    //- Read raw scalar from binary stream.
-    //  \note No internal check for binary vs ascii,
-    //        the caller knows what they are doing
-    scalar readRawScalar(Istream& is);
 
     //- Read raw scalar(s) from binary stream.
     //  \note No internal check for binary vs ascii,
     //        the caller knows what they are doing
     void readRawScalar(Istream& is, scalar* data, size_t nElem = 1);
+
+    //- Read raw scalar from binary stream.
+    //  \note No internal check for binary vs ascii,
+    //        the caller knows what they are doing
+    inline void readRawScalar(Istream& is, scalar& val)
+    {
+        readRawScalar(is, &val, 1);
+    }
+
+    //- Read raw scalar from binary stream and return value.
+    //  \note No internal check for binary vs ascii,
+    //        the caller knows what they are doing
+    inline scalar readRawScalar(Istream& is)
+    {
+        scalar val(0);
+        readRawScalar(is, &val, 1);
+        return val;
+    }
 }
 
 #else
@@ -201,16 +232,15 @@ namespace Foam
 {
 
 //- Type narrowing from double to float
-//  Overflow: silently fix, or raise error?
-inline float narrowFloat(const double val)
+//  Underflow: round to zero.
+//  Overflow: fix silently.
+inline constexpr float narrowFloat(const double val) noexcept
 {
-    // Single statement - future constexpr?
     return
     (
         (val <= -floatScalarVGREAT) ? -floatScalarVGREAT
       : (val >=  floatScalarVGREAT) ?  floatScalarVGREAT
-      : (val > -floatScalarVSMALL && val < floatScalarVSMALL) // underflow
-      ? 0
+      : (val > -floatScalarVSMALL && val < floatScalarVSMALL) ? 0
       : static_cast<float>(val)
     );
 }
