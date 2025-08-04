@@ -297,7 +297,7 @@ public:
         }
 
 
-        //- Check if the label byte-size associated with the stream
+        //- Test if the label byte-size associated with the stream
         //- is the same as the given type
         template<class T = label>
         std::enable_if_t<std::is_integral_v<T>, bool>
@@ -306,7 +306,7 @@ public:
             return sizeofLabel_ == sizeof(T);
         }
 
-        //- Check if the scalar byte-size associated with the stream
+        //- Test if the scalar byte-size associated with the stream
         //- is the same as the given type
         template<class T = scalar>
         std::enable_if_t<std::is_floating_point_v<T>, bool>
@@ -314,6 +314,22 @@ public:
         {
             return sizeofScalar_ == sizeof(T);
         }
+
+        //- Test if the label/scalar byte-size associated with the stream
+        //- are the native label/scalar sizes
+        bool checkNativeSizes() const noexcept
+        {
+            return
+            (
+                sizeofLabel_ == sizeof(label)
+             && sizeofScalar_ == sizeof(scalar)
+            );
+        }
+
+        //- Assert that the label/scalar byte-size associated with the stream
+        //- are the native label/scalar sizes.
+        //  Generate a FatalIOError for any mismatch.
+        bool fatalCheckNativeSizes(const char* operation) const;
 
 
     // Stream State Functions

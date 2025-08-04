@@ -5,7 +5,7 @@
     \  /    A nd           | www.openfoam.com
      \/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -124,15 +124,15 @@ bool Foam::substitutionModels::fileRegEx::apply
 
     Info<< "Cached " << lines.size() << " lines" << endl;
 
-    OStringStream oss;
-    regExp re(entries_[key].c_str());
+    OCharStream oss;
+    const regExp re(entries_[key].c_str());
 
     for (const string& data : lines)
     {
         regExp::results_type match;
         if (re.match(data, match))
         {
-            oss.reset();
+            oss.rewind();
 
             for (size_t i = 1; i < match.size(); ++i)
             {

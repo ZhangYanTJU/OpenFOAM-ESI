@@ -5,7 +5,7 @@
     \  /    A nd           | www.openfoam.com
      \/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,7 +53,7 @@ bool Foam::substitutionModels::dictionaryValue::processDict
 {
     const string& lookup = entries_[key];
 
-    OStringStream oss;
+    OCharStream oss;
     if (lookup.empty())
     {
         // Add complete dictionary

@@ -71,6 +71,26 @@ bool Foam::IOstream::fatalCheck(const char* operation) const
 }
 
 
+bool Foam::IOstream::fatalCheckNativeSizes(const char* operation) const
+{
+    const bool ok = this->checkNativeSizes();
+
+    if (!ok)
+    {
+        FatalIOErrorInFunction(*this)
+            << "Error in stream: " << relativeName()
+            << " for operation " << operation << nl
+            << "Expecting (label=" << (8*sizeof(label))
+            << ";scalar=" << (8*sizeof(scalar))
+            << ") found (label=" << (8*this->labelByteSize())
+            << ";scalar=" << (8*this->scalarByteSize()) << ')' << nl
+            << exit(FatalIOError);
+    }
+
+    return ok;
+}
+
+
 void Foam::IOstream::print(Ostream& os) const
 {
     os  << "IOstream: " << "Version "  << version() << ", format "

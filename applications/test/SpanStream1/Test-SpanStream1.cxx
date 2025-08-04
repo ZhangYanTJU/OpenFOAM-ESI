@@ -91,12 +91,6 @@ Ostream& printView(Ostream& os, std::string_view s)
 }
 
 
-Ostream& printView(Ostream& os, stdFoam::span<char> s)
-{
-    return printView(os, s.begin(), s.end());
-}
-
-
 Ostream& printView(Ostream& os, const UList<char>& list)
 {
     return printView(os, list.begin(), list.end());

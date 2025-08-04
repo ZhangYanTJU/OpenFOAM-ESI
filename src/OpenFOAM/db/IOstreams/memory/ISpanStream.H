@@ -169,8 +169,8 @@ public:
             );
         }
 
-        //- A string_view (c++17) or span view (older c++) of buffer contents
-        auto view() const -> decltype(buffer_type::view())
+        //- A string_view of buffer contents
+        auto view() const
         {
             return buffer_type::view();
         }
@@ -351,15 +351,15 @@ public:
         //- Span of the current input characters (is modifiable!)
         UList<char> list() const { return stream_.list(); }
 
-        //- A string_view (c++17) or span view (older c++) of buffer contents
-        auto view() const -> decltype(stream_.view())
+        //- A string_view of buffer contents
+        auto view() const
         {
             return stream_.view();
         }
 
         //- For IStringStream compatibility, return the buffer as string copy.
         //  Use sparingly - it creates a full copy!!
-        auto str() const -> decltype(stream_.str())
+        auto str() const
         {
             return stream_.str();
         }

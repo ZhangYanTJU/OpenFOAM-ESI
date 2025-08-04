@@ -64,9 +64,9 @@ Foam::Istream& Foam::operator>>
     {
         is >> rhs.normal_;
     }
-    else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
+    else if (!is.checkScalarSize<>())
     {
-        // Non-native label or scalar size
+        // Non-native scalar size
         is.beginRawRead();
 
         readRawScalar(is, rhs.normal_.data(), vector::nComponents);
