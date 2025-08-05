@@ -784,6 +784,23 @@ Foam::label Foam::faBoundaryMesh::findPatchID
 }
 
 
+const Foam::faPatch* Foam::faBoundaryMesh::cfindPatch
+(
+    const word& patchName
+) const
+{
+    const faPatchList& patches = *this;
+
+    if (!patchName.empty())
+    {
+        // Note: get() handles out-of-range access properly
+        return patches.get(PtrListOps::firstMatching(patches, patchName));
+    }
+
+    return nullptr;
+}
+
+
 Foam::label Foam::faBoundaryMesh::whichPatch(const label edgeIndex) const
 {
     if (edgeIndex < mesh().nInternalEdges())

@@ -455,7 +455,7 @@ public:
     // Access
 
         //- Return the patch size
-        label size() const
+        label size() const noexcept
         {
             return patch().size();
         }

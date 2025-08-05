@@ -57,8 +57,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef surfaceSlipDisplacementPointPatchVectorField_H
-#define surfaceSlipDisplacementPointPatchVectorField_H
+#ifndef Foam_surfaceSlipDisplacementPointPatchVectorField_H
+#define Foam_surfaceSlipDisplacementPointPatchVectorField_H
 
 #include "pointPatchFields.H"
 #include "searchableSurfaces.H"
@@ -77,10 +77,9 @@ class surfaceSlipDisplacementPointPatchVectorField
 :
     public pointPatchVectorField
 {
-
 public:
 
-    // Public data types
+    // Public Data Types
 
         enum projectMode
         {
@@ -162,18 +161,26 @@ public:
             const pointPatchFieldMapper&
         );
 
-        //- Construct as copy
-        surfaceSlipDisplacementPointPatchVectorField
-        (
-            const surfaceSlipDisplacementPointPatchVectorField&
-        );
-
-        //- Construct as copy setting internal field reference
+        //- Copy construct with internal field reference
         surfaceSlipDisplacementPointPatchVectorField
         (
             const surfaceSlipDisplacementPointPatchVectorField&,
             const DimensionedField<vector, pointMesh>&
         );
+
+        //- Copy construct
+        surfaceSlipDisplacementPointPatchVectorField
+        (
+            const surfaceSlipDisplacementPointPatchVectorField& pfld
+        )
+        :
+            surfaceSlipDisplacementPointPatchVectorField
+            (
+                pfld,
+                pfld.internalField()
+            )
+        {}
+
 
         //- Return a clone
         virtual autoPtr<pointPatchField<vector>> clone() const

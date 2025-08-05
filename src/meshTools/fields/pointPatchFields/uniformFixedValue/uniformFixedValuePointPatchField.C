@@ -33,23 +33,23 @@ License
 // * * * * * * * * * * * * * Private Member Functions * * * * * * * * * * * * //
 
 // Alternative
-// refCast<const facePointPatch>(p).patch()
+// {
+//     if (const auto* fpp = isA<facePointPatch>(p).patch())
+//     {
+//         return fpp->patch();
+//     }
+//     else
+//     {
+//         return nullptr;
+//     }
+// }
 
 template<class Type>
 const Foam::polyPatch*
-Foam::uniformFixedValuePointPatchField<Type>::getPatch(const pointPatch& p)
+Foam::uniformFixedValuePointPatchField<Type>::getPolyPatch(const pointPatch& p)
 {
     const polyMesh& mesh = p.boundaryMesh().mesh()();
-    label patchi = mesh.boundaryMesh().findPatchID(p.name());
-
-    if (patchi == -1)
-    {
-        return nullptr;
-    }
-    else
-    {
-        return &mesh.boundaryMesh()[patchi];
-    }
+    return mesh.boundaryMesh().cfindPatch(p.name());
 }
 
 
@@ -63,9 +63,7 @@ uniformFixedValuePointPatchField
     const DimensionedField<Type, pointMesh>& iF
 )
 :
-    fixedValuePointPatchField<Type>(p, iF),
-    refValueFunc_(nullptr),
-    refPointValueFunc_(nullptr)
+    fixedValuePointPatchField<Type>(p, iF)
 {}
 
 
@@ -78,31 +76,26 @@ uniformFixedValuePointPatchField
     const dictionary& dict
 )
 :
-    fixedValuePointPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ),
-    refValueFunc_
-    (
-        this->getPatch(p)
-      ? PatchFunction1<Type>::New
-        (
-            *(this->getPatch(p)),
-            "uniformValue",
-            dict,
-            false           // generate point values
-        )
-      : nullptr
-    ),
-    refPointValueFunc_
-    (
-        this->getPatch(p)
-      ? nullptr
-      : Function1<Type>::New
-        (
-            "uniformValue",
-            dict,
-            &this->internalField().db()
-        )
-    )
+    fixedValuePointPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ)
 {
+    if (const polyPatch* pp = this->getPolyPatch(this->patch()))
+    {
+        refValueFunc_ = PatchFunction1<Type>::New
+        (
+           *pp,
+            "uniformValue",
+            dict,
+            false  // point values (faceValues = false)
+        );
+    }
+    // Fallback
+    refPointValueFunc_ = Function1<Type>::New
+    (
+        "uniformValue",
+        dict,
+       &this->internalField().db()
+    );
+
     if (!this->readValueEntry(dict))
     {
         // Ensure field has reasonable initial values
@@ -124,10 +117,15 @@ uniformFixedValuePointPatchField
     const pointPatchFieldMapper& mapper
 )
 :
-    fixedValuePointPatchField<Type>(ptf, p, iF, mapper),
-    refValueFunc_(ptf.refValueFunc_.clone(*(this->getPatch(p)))),
-    refPointValueFunc_(ptf.refPointValueFunc_.clone())
+    fixedValuePointPatchField<Type>(ptf, p, iF, mapper)
 {
+    if (const polyPatch* pp = this->getPolyPatch(this->patch()))
+    {
+        refValueFunc_ = ptf.refValueFunc_.clone(*pp);
+    }
+    // Fallback
+    refPointValueFunc_ = ptf.refPointValueFunc_.clone();
+
     if (mapper.direct() && !mapper.hasUnmapped())
     {
         // Use mapping instead of re-evaluation
@@ -145,27 +143,19 @@ template<class Type>
 Foam::uniformFixedValuePointPatchField<Type>::
 uniformFixedValuePointPatchField
 (
-    const uniformFixedValuePointPatchField<Type>& ptf
-)
-:
-    fixedValuePointPatchField<Type>(ptf),
-    refValueFunc_(ptf.refValueFunc_.clone(*(this->getPatch(this->patch())))),
-    refPointValueFunc_(ptf.refPointValueFunc_.clone())
-{}
-
-
-template<class Type>
-Foam::uniformFixedValuePointPatchField<Type>::
-uniformFixedValuePointPatchField
-(
-    const uniformFixedValuePointPatchField<Type>& ptf,
+    const uniformFixedValuePointPatchField<Type>& pfld,
     const DimensionedField<Type, pointMesh>& iF
 )
 :
-    fixedValuePointPatchField<Type>(ptf, iF),
-    refValueFunc_(ptf.refValueFunc_.clone(*(this->getPatch(this->patch())))),
-    refPointValueFunc_(ptf.refPointValueFunc_.clone())
-{}
+    fixedValuePointPatchField<Type>(pfld, iF)
+{
+    if (const polyPatch* pp = this->getPolyPatch(this->patch()))
+    {
+        refValueFunc_ = pfld.refValueFunc_.clone(*pp);
+    }
+    // Fallback
+    refPointValueFunc_ = pfld.refPointValueFunc_.clone();
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -178,23 +168,30 @@ void Foam::uniformFixedValuePointPatchField<Type>::autoMap
 {
     fixedValuePointPatchField<Type>::autoMap(mapper);
 
+    bool canEvaluate(false);
+
     if (refValueFunc_)
     {
         refValueFunc_().autoMap(mapper);
 
-        if (refValueFunc_().constant())
+        // If mapper is not dependent on time we're ok to evaluate
+        if (refValueFunc_->constant())
         {
-            // If mapper is not dependent on time we're ok to evaluate
-            this->evaluate();
+            canEvaluate = true;
         }
     }
     if (refPointValueFunc_)
     {
-        if (refPointValueFunc_().constant())
+        // If mapper is not dependent on time we're ok to evaluate
+        if (refPointValueFunc_->constant())
         {
-            // If mapper is not dependent on time we're ok to evaluate
-            this->evaluate();
+            canEvaluate = true;
         }
+    }
+
+    if (canEvaluate)
+    {
+        this->evaluate();
     }
 }
 
@@ -208,8 +205,7 @@ void Foam::uniformFixedValuePointPatchField<Type>::rmap
 {
     fixedValuePointPatchField<Type>::rmap(ptf, addr);
 
-    const uniformFixedValuePointPatchField& tiptf =
-        refCast<const uniformFixedValuePointPatchField>(ptf);
+    const auto& tiptf = refCast<const uniformFixedValuePointPatchField>(ptf);
 
     if (refValueFunc_ && tiptf.refValueFunc_)
     {
@@ -249,7 +245,7 @@ write(Ostream& os) const
     {
         refValueFunc_->writeData(os);
     }
-    if (refPointValueFunc_)
+    else if (refPointValueFunc_)
     {
         refPointValueFunc_->writeData(os);
     }

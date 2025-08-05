@@ -327,7 +327,8 @@ public:
         //- This patch slice from the complete list of values, which has
         //- size mesh::nEdges(), using the virtual patch size.
         template<class T>
-        const typename List<T>::subList patchSlice(const List<T>& values) const
+        const typename List<T>::subList
+        patchSlice(const UList<T>& values) const
         {
             return typename List<T>::subList(values, size(), start());
         }
@@ -336,14 +337,9 @@ public:
         //- size mesh::nBoundaryEdges(), using the virtual patch size.
         template<class T>
         const typename List<T>::subList
-        boundarySlice(const List<T>& values) const
+        boundarySlice(const UList<T>& values) const
         {
-            return typename List<T>::subList
-            (
-                values,
-                size(),
-                offset()
-            );
+            return typename List<T>::subList(values, size(), offset());
         }
 
 

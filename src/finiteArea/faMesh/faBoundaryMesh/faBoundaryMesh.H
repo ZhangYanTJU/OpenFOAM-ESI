@@ -269,6 +269,10 @@ public:
             const bool allowNotFound = true
         ) const;
 
+        //- Find patch by name and return const pointer.
+        //- \returns nullptr if not found or for an empty patchName
+        const faPatch* cfindPatch(const word& patchName) const;
+
         //- Return patch index for a given edge label
         label whichPatch(const label edgeIndex) const;
 

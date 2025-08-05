@@ -176,6 +176,10 @@ public:
             const bool allowNotFound = true
         ) const;
 
+        //- Find patch by name and return const pointer.
+        //- \returns nullptr if not found or for an empty patchName
+        const pointPatch* cfindPatch(const word& patchName) const;
+
         //- The patch indices per patch group
         const HashTable<labelList>& groupPatchIDs() const;
 

@@ -76,17 +76,19 @@ void Foam::surfaceSlipDisplacementPointPatchVectorField::calcProjection
 
 
     // Get fixed points (bit of a hack)
-    const pointZone* zonePtr = nullptr;
+    const pointZone* zonePtr = mesh.pointZones().cfindZone(frozenPointsZone_);
 
-    if (frozenPointsZone_.size() > 0)
+    if (zonePtr)
     {
-        const pointZoneMesh& pZones = mesh.pointZones();
-
-        zonePtr = &pZones[frozenPointsZone_];
-
         Pout<< "surfaceSlipDisplacementPointPatchVectorField : Fixing all "
             << zonePtr->size() << " points in pointZone " << zonePtr->name()
             << endl;
+    }
+    else if (!frozenPointsZone_.empty())
+    {
+        FatalErrorInFunction
+            << "Cannot find frozen point zone: " << frozenPointsZone_ << nl
+            << exit(FatalError);
     }
 
     // Get the starting locations from the motionSolver
@@ -331,19 +333,20 @@ surfaceSlipDisplacementPointPatchVectorField
     ),
     wedgePlane_(dict.getOrDefault("wedgePlane", -1)),
     frozenPointsZone_(dict.getOrDefault("frozenPointsZone", word::null)),
-    scalePtr_
-    (
-        isA<facePointPatch>(p)
-      ? PatchFunction1<scalar>::NewIfPresent
-        (
-            refCast<const facePointPatch>(p).patch(),
-            "scale",
-            dict,
-            false           // point values
-        )
-      : nullptr
-    )
-{}
+    scalePtr_(nullptr)
+{
+    if (const auto* fpp = isA<facePointPatch>(this->patch()))
+    {
+        scalePtr_ =
+            PatchFunction1<scalar>::NewIfPresent
+            (
+                fpp->patch(),
+                "scale",
+                dict,
+                false  // point values (faceValues = false)
+            );
+    }
+}
 
 
 Foam::surfaceSlipDisplacementPointPatchVectorField::
@@ -361,37 +364,13 @@ surfaceSlipDisplacementPointPatchVectorField
     projectDir_(ppf.projectDir_),
     wedgePlane_(ppf.wedgePlane_),
     frozenPointsZone_(ppf.frozenPointsZone_),
-    scalePtr_
-    (
-        isA<facePointPatch>(p)
-      ? ppf.scalePtr_.clone(refCast<const facePointPatch>(p).patch())
-      : nullptr
-    )
-{}
-
-
-Foam::surfaceSlipDisplacementPointPatchVectorField::
-surfaceSlipDisplacementPointPatchVectorField
-(
-    const surfaceSlipDisplacementPointPatchVectorField& ppf
-)
-:
-    pointPatchVectorField(ppf),
-    surfacesDict_(ppf.surfacesDict_),
-    projectMode_(ppf.projectMode_),
-    projectDir_(ppf.projectDir_),
-    wedgePlane_(ppf.wedgePlane_),
-    frozenPointsZone_(ppf.frozenPointsZone_),
-    scalePtr_
-    (
-        isA<facePointPatch>(ppf.patch())
-      ? ppf.scalePtr_.clone
-        (
-            refCast<const facePointPatch>(ppf.patch()).patch()
-        )
-      : nullptr
-    )
-{}
+    scalePtr_(nullptr)
+{
+    if (const auto* fpp = isA<facePointPatch>(this->patch()))
+    {
+        scalePtr_ = ppf.scalePtr_.clone(fpp->patch());
+    }
+}
 
 
 Foam::surfaceSlipDisplacementPointPatchVectorField::
@@ -407,16 +386,13 @@ surfaceSlipDisplacementPointPatchVectorField
     projectDir_(ppf.projectDir_),
     wedgePlane_(ppf.wedgePlane_),
     frozenPointsZone_(ppf.frozenPointsZone_),
-    scalePtr_
-    (
-        isA<facePointPatch>(ppf.patch())
-      ? ppf.scalePtr_.clone
-        (
-            refCast<const facePointPatch>(ppf.patch()).patch()
-        )
-      : nullptr
-    )
-{}
+    scalePtr_(nullptr)
+{
+    if (const auto* fpp = isA<facePointPatch>(this->patch()))
+    {
+        scalePtr_ = ppf.scalePtr_.clone(fpp->patch());
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

@@ -143,6 +143,10 @@ public:
         //  A no-op (returns -1) for an empty patchName
         label findPatchID(const word& patchName) const;
 
+        //- Find patch by name and return const pointer.
+        //- \returns nullptr if not found or for an empty patchName
+        const fvPatch* cfindPatch(const word& patchName) const;
+
         //- Correct patches after moving points
         void movePoints();
 

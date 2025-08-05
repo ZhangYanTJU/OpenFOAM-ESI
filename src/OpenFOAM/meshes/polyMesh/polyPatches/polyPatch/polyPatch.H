@@ -411,21 +411,21 @@ public:
             return typename List<T>::subList(values, this->size(), start_);
         }
 
-        //- This patch slice from the list of boundary values, which has size
-        //- mesh::nBoundaryFaces(), using the number of patch faces.
-        template<class T>
-        const typename List<T>::subList
-        boundarySlice(const List<T>& values) const
-        {
-            return typename List<T>::subList(values, this->size(), offset());
-        }
-
         //- Slice Field to patch, using the number of patch faces.
         template<class T>
         const typename Field<T>::subField
         patchSlice(const Field<T>& values) const
         {
             return typename Field<T>::subField(values, this->size(), start_);
+        }
+
+        //- This patch slice from the list of boundary values, which has size
+        //- mesh::nBoundaryFaces(), using the number of patch faces.
+        template<class T>
+        const typename List<T>::subList
+        boundarySlice(const UList<T>& values) const
+        {
+            return typename List<T>::subList(values, this->size(), offset());
         }
 
 

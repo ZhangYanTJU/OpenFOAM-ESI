@@ -295,18 +295,12 @@ bool Foam::movingConeTopoFvMesh::init(const bool doInit)
 
     curLeft_ = average
     (
-        faceZones()
-        [
-            faceZones().findZoneID("leftExtrusionFaces")
-        ]().localPoints()
+        faceZones()["leftExtrusionFaces"].patch().localPoints()
     ).x() - SMALL;
 
     curRight_ = average
     (
-        faceZones()
-        [
-            faceZones().findZoneID("rightExtrusionFaces")
-        ]().localPoints()
+        faceZones()["rightExtrusionFaces"].patch().localPoints()
     ).x() + SMALL;
 
     motionMask_ = vertexMarkup
@@ -407,18 +401,12 @@ bool Foam::movingConeTopoFvMesh::update()
 
     curLeft_ = average
     (
-        faceZones()
-        [
-            faceZones().findZoneID("leftExtrusionFaces")
-        ]().localPoints()
+        faceZones()["leftExtrusionFaces"].patch().localPoints()
     ).x() - SMALL;
 
     curRight_ = average
     (
-        faceZones()
-        [
-            faceZones().findZoneID("rightExtrusionFaces")
-        ]().localPoints()
+        faceZones()["rightExtrusionFaces"].patch().localPoints()
     ).x() + SMALL;
 
     return true;

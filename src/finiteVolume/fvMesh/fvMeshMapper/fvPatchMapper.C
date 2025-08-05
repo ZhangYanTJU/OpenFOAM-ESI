@@ -64,10 +64,7 @@ void Foam::fvPatchMapper::calcAddressing() const
         // Direct mapping - slice to size
         directAddrPtr_ = std::make_unique<labelList>
         (
-            patch_.patchSlice
-            (
-                static_cast<const labelList&>(faceMap_.directAddressing())
-            )
+            patch_.patchSlice(faceMap_.directAddressing())
         );
         auto& addr = *directAddrPtr_;
 

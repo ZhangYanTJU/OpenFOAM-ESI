@@ -178,8 +178,8 @@ public:
 
         // Access
 
-            //- Return size
-            label size() const
+            //- Return the field size
+            label size() const noexcept
             {
                 return Field<Type>::size();
             }

@@ -989,6 +989,21 @@ Foam::label Foam::polyBoundaryMesh::findPatchID
 }
 
 
+const Foam::polyPatch*
+Foam::polyBoundaryMesh::cfindPatch(const word& patchName) const
+{
+    const polyPatchList& patches = *this;
+
+    if (!patchName.empty())
+    {
+        // Note: get() handles out-of-range access properly
+        return patches.get(PtrListOps::firstMatching(patches, patchName));
+    }
+
+    return nullptr;
+}
+
+
 Foam::labelPair
 Foam::polyBoundaryMesh::whichPatchFace(const label meshFacei) const
 {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -111,6 +111,21 @@ Foam::label Foam::fvBoundaryMesh::findPatchID(const word& patchName) const
         return -1;
     }
     return PtrListOps::firstMatching(*this, patchName);
+}
+
+
+const Foam::fvPatch*
+Foam::fvBoundaryMesh::cfindPatch(const word& patchName) const
+{
+    const fvPatchList& patches = *this;
+
+    if (!patchName.empty())
+    {
+        // Note: get() handles out-of-range access properly
+        return patches.get(PtrListOps::firstMatching(patches, patchName));
+    }
+
+    return nullptr;
 }
 
 

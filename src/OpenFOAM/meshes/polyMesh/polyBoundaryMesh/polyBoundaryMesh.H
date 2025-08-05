@@ -316,6 +316,10 @@ public:
             const bool allowNotFound = true
         ) const;
 
+        //- Find patch by name and return const pointer.
+        //- \returns nullptr on error or for an empty patchName
+        const polyPatch* cfindPatch(const word& patchName) const;
+
         //- Find patch indices for a given polyPatch type (uses \c isA test).
         template<class PatchType>
         labelHashSet findPatchIDs() const;

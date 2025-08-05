@@ -224,7 +224,7 @@ public:
         //- mesh::nFaces(), using the virtual patch size.
         template<class T>
         const typename List<T>::subList
-        patchSlice(const List<T>& values) const
+        patchSlice(const UList<T>& values) const
         {
             return typename List<T>::subList(values, size(), start());
         }
@@ -233,14 +233,9 @@ public:
         //- mesh::nBoundaryFaces(), using the virtual patch size.
         template<class T>
         const typename List<T>::subList
-        boundarySlice(const List<T>& values) const
+        boundarySlice(const UList<T>& values) const
         {
-            return typename List<T>::subList
-            (
-                values,
-                size(),
-                polyPatch_.offset()
-            );
+            return typename List<T>::subList(values, size(), offset());
         }
 
         //- Return faceCells

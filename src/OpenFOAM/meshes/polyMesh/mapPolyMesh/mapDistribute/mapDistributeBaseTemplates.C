@@ -957,7 +957,7 @@ void Foam::mapDistributeBase::distribute
 
     const label startOfRequests = UPstream::nRequests();
 
-    if (!is_contiguous<T>::value)
+    if constexpr (!is_contiguous_v<T>)
     {
         PstreamBuffers pBufs(comm, tag);
 

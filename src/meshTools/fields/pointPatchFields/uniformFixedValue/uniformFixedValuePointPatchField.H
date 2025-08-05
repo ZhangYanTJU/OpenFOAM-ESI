@@ -92,7 +92,8 @@ class uniformFixedValuePointPatchField
 
     // Private Member Functions
 
-        static const polyPatch* getPatch(const pointPatch&);
+        //- Find polyPatch with the same name as the pointPatch
+        static const polyPatch* getPolyPatch(const pointPatch& p);
 
 
 public:
@@ -127,18 +128,21 @@ public:
             const pointPatchFieldMapper&
         );
 
-        //- Construct as copy
-        uniformFixedValuePointPatchField
-        (
-            const uniformFixedValuePointPatchField<Type>&
-        );
-
-        //- Construct as copy setting internal field reference
+        //- Copy construct with internal field reference
         uniformFixedValuePointPatchField
         (
             const uniformFixedValuePointPatchField<Type>&,
             const DimensionedField<Type, pointMesh>&
         );
+
+        //- Copy construct
+        uniformFixedValuePointPatchField
+        (
+            const uniformFixedValuePointPatchField<Type>& pfld
+        )
+        :
+            uniformFixedValuePointPatchField<Type>(pfld, pfld.internalField())
+        {}
 
 
         //- Return a clone

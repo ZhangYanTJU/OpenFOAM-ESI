@@ -568,6 +568,21 @@ Foam::label Foam::pointBoundaryMesh::findPatchID
 }
 
 
+const Foam::pointPatch*
+Foam::pointBoundaryMesh::cfindPatch(const word& patchName) const
+{
+    const pointPatchList& patches = *this;
+
+    if (!patchName.empty())
+    {
+        // Note: get() handles out-of-range access properly
+        return patches.get(PtrListOps::firstMatching(patches, patchName));
+    }
+
+    return nullptr;
+}
+
+
 void Foam::pointBoundaryMesh::calcGeometry()
 {
     PstreamBuffers pBufs(Pstream::defaultCommsType);
