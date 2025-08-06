@@ -1069,21 +1069,6 @@ inline int Foam::triangle<Point, PointRef>::sign
 
 
 template<class Point, class PointRef>
-inline void Foam::triangle<Point, PointRef>::dummyOp::operator()
-(
-    const triPoints&
-)
-{}
-
-
-template<class Point, class PointRef>
-inline Foam::triangle<Point, PointRef>::sumAreaOp::sumAreaOp()
-:
-    area_(0.0)
-{}
-
-
-template<class Point, class PointRef>
 inline void Foam::triangle<Point, PointRef>::sumAreaOp::operator()
 (
     const triPoints& tri

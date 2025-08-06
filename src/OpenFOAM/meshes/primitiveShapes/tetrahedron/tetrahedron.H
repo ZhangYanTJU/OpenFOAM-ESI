@@ -182,34 +182,34 @@ public:
         typedef FixedList<tetPoints, 200> tetIntersectionList;
 
 
-        // Classes for use in sliceWithPlane. What to do with decomposition
-        // of tet.
+        // Classes for use in sliceWithPlane.
+        // What to do with decomposition of tetrahedron.
 
             //- Dummy
-            class dummyOp
+            struct dummyOp
             {
-            public:
-                inline void operator()(const tetPoints&);
+                void operator()(const tetPoints&) const noexcept
+                {}
             };
 
             //- Sum resulting volumes
-            class sumVolOp
+            struct sumVolOp
             {
-            public:
                 scalar vol_;
 
-                inline sumVolOp();
+                constexpr sumVolOp() noexcept : vol_(0) {}
+
+                scalar total() const noexcept { return vol_; }
 
                 inline void operator()(const tetPoints&);
             };
 
             //- Store resulting tets
-            class storeOp
+            struct storeOp
             {
                 tetIntersectionList& tets_;
                 label& nTets_;
 
-            public:
                 inline storeOp(tetIntersectionList&, label&);
 
                 inline void operator()(const tetPoints&);

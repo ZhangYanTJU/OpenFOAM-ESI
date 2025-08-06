@@ -97,7 +97,7 @@ public:
     // Constructors
 
         //- Construct initialized to zero
-        inline Vector(const Foam::zero);
+        inline Vector(Foam::zero);
 
         //- Copy construct from VectorSpace of the same rank
         template<class Cmpt2>
@@ -115,22 +115,22 @@ public:
     // Component Access
 
         //- Access to the vector x component
-        const Cmpt& x() const noexcept { return this->v_[X]; }
+        const Cmpt& x() const noexcept { return this->v_[components::X]; }
 
         //- Access to the vector y component
-        const Cmpt& y() const noexcept { return this->v_[Y]; }
+        const Cmpt& y() const noexcept { return this->v_[components::Y]; }
 
         //- Access to the vector z component
-        const Cmpt& z() const noexcept { return this->v_[Z]; }
+        const Cmpt& z() const noexcept { return this->v_[components::Z]; }
 
         //- Access to the vector x component
-        Cmpt& x() noexcept { return this->v_[X]; }
+        Cmpt& x() noexcept { return this->v_[components::X]; }
 
         //- Access to the vector y component
-        Cmpt& y() noexcept { return this->v_[Y]; }
+        Cmpt& y() noexcept { return this->v_[components::Y]; }
 
         //- Access to the vector z component
-        Cmpt& z() noexcept { return this->v_[Z]; }
+        Cmpt& z() noexcept { return this->v_[components::Z]; }
 
 
     // Vector Operations
@@ -193,6 +193,35 @@ public:
             const Vector<Cmpt>& a,
             const Vector<Cmpt>& b
         );
+
+
+    // Member Operators
+
+        //- Inherit VectorSpace += operations
+        using Vector::vsType::operator+=;
+
+        //- Inherit VectorSpace -= operations
+        using Vector::vsType::operator-=;
+
+        //- Add compatible vector to this
+        template<class Cmpt2>
+        std::enable_if_t<std::is_convertible_v<Cmpt2, Cmpt>, void>
+        inline operator+=(const Vector<Cmpt2>& b)
+        {
+            this->x() += b.x();
+            this->y() += b.y();
+            this->z() += b.z();
+        }
+
+        //- Subtract compatible vector from this
+        template<class Cmpt2>
+        std::enable_if_t<std::is_convertible_v<Cmpt2, Cmpt>, void>
+        inline operator-=(const Vector<Cmpt2>& b)
+        {
+            this->x() -= b.x();
+            this->y() -= b.y();
+            this->z() -= b.z();
+        }
 };
 
 

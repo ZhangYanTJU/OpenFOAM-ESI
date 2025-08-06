@@ -3001,7 +3001,7 @@ void Foam::addPatchCellLayer::setRefinement
     //
     //        forAll(own, facei)
     //        {
-    //            cEst[own[facei]] += solveVector(fCtrs[facei]);
+    //            cEst[own[facei]] += fCtrs[facei];
     //            ++nCellFaces[own[facei]];
     //        }
     //
@@ -3011,7 +3011,7 @@ void Foam::addPatchCellLayer::setRefinement
     //            {
     //                continue;
     //            }
-    //            cEst[nei[facei]] += solveVector(fCtrs[facei]);
+    //            cEst[nei[facei]] += fCtrs[facei];
     //            ++nCellFaces[nei[facei]];
     //        }
     //

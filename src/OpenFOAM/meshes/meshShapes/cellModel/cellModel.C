@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017,2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,34 +29,61 @@ License
 #include "cellModel.H"
 #include "pyramid.H"
 
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Average of points
+// Note: use double precision to avoid overflows when summing
+static inline Foam::doubleVector pointsAverage
+(
+    const UList<point>& points,
+    const labelUList& pointLabels
+)
+{
+    doubleVector avg(Zero);
+
+    if (const auto n = pointLabels.size(); n)
+    {
+        for (const auto pointi : pointLabels)
+        {
+            avg += points[pointi];
+        }
+        avg /= n;
+    }
+
+    return avg;
+}
+
+} // End namespace Foam
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::vector Foam::cellModel::centre
 (
-    const labelList& pointLabels,
+    const labelUList& pointLabels,
     const UList<point>& points
 ) const
 {
-    // Estimate cell centre by averaging the cell points
-    vector cEst = Zero;
-    for (const label pointi : pointLabels)
-    {
-        cEst += points[pointi];
-    }
-    cEst /= scalar(pointLabels.size());
+    // Note: use double precision to avoid overflows when summing
+
+    // Estimated centre by averaging the cell points
+    const point centrePoint(pointsAverage(points, pointLabels));
 
 
     // Calculate the centre by breaking the cell into pyramids and
     // volume-weighted averaging their centres
 
-    scalar sumV = 0;
-    vector sumVc = Zero;
+    doubleScalar sumV(0);
+    doubleVector sumVc(Zero);
 
     forAll(faces_, facei)
     {
         const Foam::face f(pointLabels, faces_[facei]);
 
-        const scalar pyrVol = pyramidPointFaceRef(f, cEst).mag(points);
+        const scalar pyrVol = pyramidPointFaceRef(f, centrePoint).mag(points);
 
         if (pyrVol > SMALL)
         {
@@ -67,7 +94,7 @@ Foam::vector Foam::cellModel::centre
         }
 
         sumV -= pyrVol;
-        sumVc -= pyrVol * pyramidPointFaceRef(f, cEst).centre(points);
+        sumVc -= pyrVol * pyramidPointFaceRef(f, centrePoint).centre(points);
     }
 
     return sumVc/(sumV + VSMALL);
@@ -76,17 +103,14 @@ Foam::vector Foam::cellModel::centre
 
 Foam::scalar Foam::cellModel::mag
 (
-    const labelList& pointLabels,
+    const labelUList& pointLabels,
     const UList<point>& points
 ) const
 {
-    // Estimate cell centre by averaging the cell points
-    vector cEst = Zero;
-    for (const label pointi : pointLabels)
-    {
-        cEst += points[pointi];
-    }
-    cEst /= scalar(pointLabels.size());
+    // Note: use double precision to avoid overflows when summing
+
+    // Estimated centre by averaging the cell points
+    const point centrePoint(pointsAverage(points, pointLabels));
 
 
     // Calculate the magnitude by summing the -mags of the pyramids
@@ -94,13 +118,13 @@ Foam::scalar Foam::cellModel::mag
     // and a pyramid is constructed from an inward pointing face
     // and the base centre-apex vector
 
-    scalar sumV = 0;
+    scalar sumV(0);
 
     forAll(faces_, facei)
     {
         const Foam::face f(pointLabels, faces_[facei]);
 
-        const scalar pyrVol = pyramidPointFaceRef(f, cEst).mag(points);
+        const scalar pyrVol = pyramidPointFaceRef(f, centrePoint).mag(points);
 
         if (pyrVol > SMALL)
         {

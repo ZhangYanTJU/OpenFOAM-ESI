@@ -29,9 +29,9 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Cmpt>
-inline Foam::Vector<Cmpt>::Vector(const Foam::zero)
+inline Foam::Vector<Cmpt>::Vector(Foam::zero)
 :
-    Vector::vsType(Zero)
+    Vector::vsType(Foam::zero{})
 {}
 
 
@@ -54,9 +54,9 @@ inline Foam::Vector<Cmpt>::Vector
     const Cmpt& vz
 )
 {
-    this->v_[X] = vx;
-    this->v_[Y] = vy;
-    this->v_[Z] = vz;
+    this->x() = vx;
+    this->y() = vy;
+    this->z() = vz;
 }
 
 

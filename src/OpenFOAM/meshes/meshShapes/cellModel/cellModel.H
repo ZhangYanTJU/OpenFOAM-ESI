@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -221,14 +221,14 @@ public:
         //- Centroid of the cell
         vector centre
         (
-            const labelList& pointLabels,
+            const labelUList& pointLabels,
             const UList<point>& points
         ) const;
 
         //- Cell volume
         scalar mag
         (
-            const labelList& pointLabels,
+            const labelUList& pointLabels,
             const UList<point>& points
         ) const;
 

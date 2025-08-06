@@ -96,7 +96,7 @@ public:
     // Constructors
 
         //- Construct initialized to zero
-        inline Tensor2D(const Foam::zero);
+        inline Tensor2D(Foam::zero);
 
         //- Construct given VectorSpace
         inline Tensor2D(const VectorSpace<Tensor2D<Cmpt>, Cmpt, 4>& vs);
@@ -241,6 +241,7 @@ public:
 
         //- Deprecated(2018-12) Return vector for given row (0,1)
         //  \deprecated(2018-12) use row() method
+        FOAM_DEPRECATED_FOR(2018-12, "row()")
         Vector2D<Cmpt> vectorComponent(const direction cmpt) const
         {
             return row(cmpt);

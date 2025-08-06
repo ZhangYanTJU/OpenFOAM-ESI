@@ -47,6 +47,37 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Average of points
+// Note: use double precision to avoid overflows when summing
+static inline Foam::doubleVector pointsAverage
+(
+    const UList<point>& points,
+    const labelUList& pointLabels
+)
+{
+    doubleVector avg(Zero);
+
+    if (const auto n = pointLabels.size(); n)
+    {
+        for (const auto pointi : pointLabels)
+        {
+            avg += points[pointi];
+        }
+        avg /= n;
+    }
+
+    return avg;
+}
+
+} // End namespace Foam
+
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::stabilisedFvGeometryScheme::makeFaceCentresAndAreas
@@ -61,32 +92,28 @@ void Foam::stabilisedFvGeometryScheme::makeFaceCentresAndAreas
 
     forAll(fs, facei)
     {
-        const labelList& f = fs[facei];
-        label nPoints = f.size();
+        const auto& f = fs[facei];
+        const label nPoints = f.size();
 
         // If the face is a triangle, do a direct calculation for efficiency
         // and to avoid round-off error-related problems
         if (nPoints == 3)
         {
-            fCtrs[facei] = triPointRef::centre(p[f[0]], p[f[1]], p[f[2]]);
-            fAreas[facei] = triPointRef::areaNormal(p[f[0]], p[f[1]], p[f[2]]);
+            const triPointRef tri(p, f[0], f[1], f[2]);
+            fCtrs[facei] = tri.centre();
+            fAreas[facei] = tri.areaNormal();
         }
 
         // For more complex faces, decompose into triangles
         else
         {
-            // Compute an estimate of the centre as the average of the points
-            solveVector fCentre = p[f[0]];
-            for (label pi = 1; pi < nPoints; pi++)
-            {
-                fCentre += solveVector(p[f[pi]]);
-            }
-            fCentre /= nPoints;
+            // Estimated centre by averaging the face points
+            const solveVector fCentre(pointsAverage(p, f));
 
             // Compute the face area normal and unit normal by summing up the
             // normals of the triangles formed by connecting each edge to the
             // point average.
-            solveVector sumA = Zero;
+            solveVector sumA(Zero);
             for (label pi = 0; pi < nPoints; pi++)
             {
                 const label nextPi(pi == nPoints-1 ? 0 : pi+1);
@@ -104,8 +131,8 @@ void Foam::stabilisedFvGeometryScheme::makeFaceCentresAndAreas
             // the triangle area projected in the direction of the face normal
             // as the weight, *not* the triangle area magnitude. Only the
             // former makes the calculation independent of the initial estimate.
-            solveScalar sumAn = 0.0;
-            solveVector sumAnc = Zero;
+            solveScalar sumAn(0);
+            solveVector sumAnc(Zero);
             for (label pi = 0; pi < nPoints; pi++)
             {
                 const label nextPi(pi == nPoints-1 ? 0 : pi+1);

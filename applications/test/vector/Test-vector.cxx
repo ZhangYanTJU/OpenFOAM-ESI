@@ -33,6 +33,7 @@ Description
 
 #include "vectorField.H"
 #include "boolVector.H"
+#include "complexVector.H"
 #include "labelVector.H"
 #include "IOstreams.H"
 #include "FixedList.H"
@@ -164,6 +165,30 @@ void testTranscribe(Type& input)
 }
 
 
+// Test of adding to vectors, possible of dissimilar types
+template<class Target, class Source>
+void testAdding(const Target& a, const Source& b)
+{
+    typedef typename Target::cmptType cmptType1;
+    typedef typename Source::cmptType cmptType2;
+
+    Info<< "    "
+        << pTraits<Target>::typeName << " += "
+        << pTraits<Source>::typeName << " : ";
+
+    if constexpr (std::is_convertible_v<cmptType2, cmptType1>)
+    {
+        Target res(a);
+        res += b;
+        Info<< a << " += " << b << " == " << res << nl;
+    }
+    else
+    {
+        Info<< "unsupported" << nl;
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //  Main program:
 
@@ -172,6 +197,37 @@ int main(int argc, char *argv[])
     Info<<"normalised: " << vector(1,2,3).normalise() << nl;
     Info<<"normalised: " << vector::uniform(VSMALL).normalise() << nl;
     Info<<"normalised: " << vector::uniform(ROOTVSMALL).normalise() << nl;
+
+    {
+        complexVector cvec(complex(1), complex(0), complex(0));
+        doubleVector dvec(1, 0, 0);
+        floatVector  fvec(1, 0, 0);
+        labelVector  lvec(1, 0, 0);
+
+        Info<< nl << "additions:" << nl;
+
+        testAdding(cvec, cvec);
+        testAdding(cvec, dvec);
+        testAdding(cvec, fvec);
+        testAdding(cvec, lvec);
+
+        testAdding(dvec, cvec);
+        testAdding(dvec, dvec);
+        testAdding(dvec, fvec);
+        testAdding(dvec, lvec);
+
+        testAdding(fvec, cvec);
+        testAdding(fvec, dvec);
+        testAdding(fvec, fvec);
+        testAdding(fvec, lvec);
+
+        testAdding(lvec, cvec);
+        testAdding(lvec, dvec);
+        testAdding(lvec, fvec);
+        testAdding(lvec, lvec);
+
+        Info<< nl;
+    }
 
     {
         vector vec1(0.5, 0.5, 0.5);

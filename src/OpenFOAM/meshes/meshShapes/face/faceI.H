@@ -136,6 +136,25 @@ Foam::face::box(const UList<point>& pts) const
 }
 
 
+inline Foam::point
+Foam::face::average(const UList<point>& points) const
+{
+    // Note: use double precision to avoid overflows when summing
+    doubleVector avg(Zero);
+
+    if (const auto n = size(); n)
+    {
+        for (const auto pointi : *this)
+        {
+            avg += points[pointi];
+        }
+        avg /= n;
+    }
+
+    return avg;
+}
+
+
 inline Foam::label Foam::face::nEdges() const noexcept
 {
     // for a closed polygon a number of edges is the same as number of points

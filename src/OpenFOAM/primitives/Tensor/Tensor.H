@@ -101,7 +101,7 @@ public:
     // Constructors
 
         //- Construct initialized to zero
-        inline Tensor(const Foam::zero);
+        inline Tensor(Foam::zero);
 
         //- Construct given MatrixSpace of the same rank
         template<class Cmpt2>
@@ -338,6 +338,7 @@ public:
 
         //- Deprecated(2018-12) Return vector for given row (0,1)
         //  \deprecated(2018-12) use row() method
+        FOAM_DEPRECATED_FOR(2018-12, "row()")
         Vector<Cmpt> vectorComponent(const direction cmpt) const
         {
             return row(cmpt);

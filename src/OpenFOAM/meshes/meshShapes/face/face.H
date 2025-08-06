@@ -182,6 +182,9 @@ public:
         //- Centre point of face
         point centre(const UList<point>& points) const;
 
+        //- Average of face points: a quick estimate of the face centre.
+        inline point average(const UList<point>& points) const;
+
         //- Calculate average value at centroid of face
         template<class Type>
         Type average

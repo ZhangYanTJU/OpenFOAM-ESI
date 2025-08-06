@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,7 +92,7 @@ Foam::label Foam::face::mostConcaveAngle
             angle = constant::mathematical::pi - edgeAngle;
         }
 
-        if (angle > maxAngle)
+        if (maxAngle < angle)
         {
             maxAngle = angle;
             index = i;
@@ -527,34 +527,34 @@ Foam::point Foam::face::centre(const UList<point>& points) const
             points[operator[](2)]
         );
     }
+    // else if (nPoints == 0)
+    // {
+    //     // Should not happen
+    //     return Zero;
+    // }
 
 
-    point centrePoint = Zero;
-    for (label pI=0; pI<nPoints; ++pI)
+    // Note: use double precision to avoid overflows when summing
+
+    // Estimated centre by averaging the face points
+    const point centrePoint(this->average(points));
+
+    doubleScalar sumA(0);
+    doubleVector sumAc(Zero);
+
+    for (label pI = 0; pI < nPoints; ++pI)
     {
-        centrePoint += points[operator[](pI)];
-    }
-    centrePoint /= nPoints;
-
-    scalar sumA = 0;
-    vector sumAc = Zero;
-
-    for (label pI=0; pI<nPoints; ++pI)
-    {
-        const point& nextPoint = points[operator[]((pI + 1) % nPoints)];
+        const label nextPti(pI == nPoints-1 ? 0 : pI+1);
+        const auto& thisPoint = points[operator[](pI)];
+        const auto& nextPoint = points[operator[](nextPti)];
 
         // Calculate 3*triangle centre
-        const vector ttc
-        (
-            points[operator[](pI)]
-          + nextPoint
-          + centrePoint
-        );
+        const vector ttc(thisPoint + nextPoint + centrePoint);
 
         // Calculate 2*triangle area
         const scalar ta = Foam::mag
         (
-            (points[operator[](pI)] - centrePoint)
+            (thisPoint - centrePoint)
           ^ (nextPoint - centrePoint)
         );
 
@@ -573,58 +573,43 @@ Foam::point Foam::face::centre(const UList<point>& points) const
 }
 
 
-Foam::vector Foam::face::areaNormal(const UList<point>& p) const
+Foam::vector Foam::face::areaNormal(const UList<point>& points) const
 {
     const label nPoints = size();
 
     // Calculate the area normal by summing the face triangle area normals.
     // Changed to deal with small concavity by using a central decomposition
 
-    // If the face is a triangle, do a direct calculation to avoid round-off
-    // error-related problems
-
+    // If the face is a triangle, do a direct calculation
     if (nPoints == 3)
     {
         return triPointRef::areaNormal
         (
-            p[operator[](0)],
-            p[operator[](1)],
-            p[operator[](2)]
+            points[operator[](0)],
+            points[operator[](1)],
+            points[operator[](2)]
         );
     }
+    // else if (nPoints == 0)
+    // {
+    //     // Should not happen
+    //     return Zero;
+    // }
 
-    label pI;
+    // Estimated centre by averaging the face points
+    const point centrePoint(this->average(points));
 
-    point centrePoint = Zero;
-    for (pI = 0; pI < nPoints; ++pI)
+    vector n(Zero);
+
+    for (label pI = 0; pI < nPoints; ++pI)
     {
-        centrePoint += p[operator[](pI)];
-    }
-    centrePoint /= nPoints;
-
-    vector n = Zero;
-
-    point nextPoint = centrePoint;
-
-    for (pI = 0; pI < nPoints; ++pI)
-    {
-        if (pI < nPoints - 1)
-        {
-            nextPoint = p[operator[](pI + 1)];
-        }
-        else
-        {
-            nextPoint = p[operator[](0)];
-        }
+        const label nextPti(pI == nPoints-1 ? 0 : pI+1);
+        const auto& thisPoint = points[operator[](pI)];
+        const auto& nextPoint = points[operator[](nextPti)];
 
         // Note: for best accuracy, centre point always comes last
-        //
-        n += triPointRef::areaNormal
-        (
-            p[operator[](pI)],
-            nextPoint,
-            centrePoint
-        );
+
+        n += triPointRef::areaNormal(thisPoint, nextPoint, centrePoint);
     }
 
     return n;
@@ -689,10 +674,10 @@ Foam::scalar Foam::face::sweptVol
     // summing their swept volumes.
     // Changed to deal with small concavity by using a central decomposition
 
-    point centreOldPoint = centre(oldPoints);
-    point centreNewPoint = centre(newPoints);
+    const point centreOldPoint = centre(oldPoints);
+    const point centreNewPoint = centre(newPoints);
 
-    label nPoints = size();
+    const label nPoints = size();
 
     for (label pi=0; pi<nPoints-1; ++pi)
     {

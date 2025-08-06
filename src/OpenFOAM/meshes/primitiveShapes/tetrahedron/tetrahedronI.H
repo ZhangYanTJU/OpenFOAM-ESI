@@ -581,21 +581,6 @@ bool Foam::tetrahedron<Point, PointRef>::inside(const point& p) const
 
 
 template<class Point, class PointRef>
-inline void Foam::tetrahedron<Point, PointRef>::dummyOp::operator()
-(
-    const tetPoints&
-)
-{}
-
-
-template<class Point, class PointRef>
-inline Foam::tetrahedron<Point, PointRef>::sumVolOp::sumVolOp()
-:
-    vol_(0.0)
-{}
-
-
-template<class Point, class PointRef>
 inline void Foam::tetrahedron<Point, PointRef>::sumVolOp::operator()
 (
     const tetPoints& tet

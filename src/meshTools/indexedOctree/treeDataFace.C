@@ -557,7 +557,7 @@ bool Foam::treeDataFace::overlaps
 
     if (f.size() == 3)
     {
-        const triPointRef tri(points[f[0]], points[f[1]], points[f[2]]);
+        const triPointRef tri(points, f[0], f[1], f[2]);
 
         return searchBox.intersects(tri);
     }

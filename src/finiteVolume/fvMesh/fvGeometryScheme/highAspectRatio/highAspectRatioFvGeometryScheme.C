@@ -246,7 +246,7 @@ void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
 
     forAll(fs, facei)
     {
-        const labelList& f = fs[facei];
+        const auto& f = fs[facei];
         const label nPoints = f.size();
 
         if (nPoints == 3)
@@ -255,8 +255,8 @@ void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
         }
         else
         {
-            solveScalar sumA = 0.0;
-            solveVector sumAc = Zero;
+            solveScalar sumA(0);
+            solveVector sumAc(Zero);
 
             for (label pi = 0; pi < nPoints; pi++)
             {
@@ -282,7 +282,7 @@ void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
                 sumAc = Zero;
                 for (label pi = 0; pi < nPoints; pi++)
                 {
-                    sumAc += static_cast<solveVector>(p[f[pi]]);
+                    sumAc += p[f[pi]];
                 }
                 faceCentres[facei] = sumAc/nPoints;
             }

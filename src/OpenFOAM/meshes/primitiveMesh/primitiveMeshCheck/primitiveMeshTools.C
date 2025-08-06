@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +33,36 @@ License
 #include "tetrahedron.H"
 #include "PrecisionAdaptor.H"
 
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Average of points
+// Note: use double precision to avoid overflows when summing
+static inline Foam::doubleVector pointsAverage
+(
+    const UList<point>& points,
+    const labelUList& pointLabels
+)
+{
+    doubleVector avg(Zero);
+
+    if (const auto n = pointLabels.size(); n)
+    {
+        for (const auto pointi : pointLabels)
+        {
+            avg += points[pointi];
+        }
+        avg /= n;
+    }
+
+    return avg;
+}
+
+} // End namespace Foam
+
+
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
 void Foam::primitiveMeshTools::updateFaceCentresAndAreas
@@ -48,31 +78,25 @@ void Foam::primitiveMeshTools::updateFaceCentresAndAreas
 
     for (const label facei : faceIDs)
     {
-        const labelList& f = fs[facei];
+        const auto& f = fs[facei];
         const label nPoints = f.size();
 
         // If the face is a triangle, do a direct calculation for efficiency
         // and to avoid round-off error-related problems
         if (nPoints == 3)
         {
-            fCtrs[facei] = triPointRef::centre(p[f[0]], p[f[1]], p[f[2]]);
-            fAreas[facei] = triPointRef::areaNormal(p[f[0]], p[f[1]], p[f[2]]);
+            const triPointRef tri(p, f[0], f[1], f[2]);
+            fCtrs[facei] = tri.centre();
+            fAreas[facei] = tri.areaNormal();
         }
         else
         {
-            typedef Vector<solveScalar> solveVector;
+            solveVector sumN(Zero);
+            solveScalar sumA(0);
+            solveVector sumAc(Zero);
 
-            solveVector sumN = Zero;
-            solveScalar sumA = 0.0;
-            solveVector sumAc = Zero;
-
-            solveVector fCentre = p[f[0]];
-            for (label pi = 1; pi < nPoints; ++pi)
-            {
-                fCentre += solveVector(p[f[pi]]);
-            }
-
-            fCentre /= nPoints;
+            // Estimated centre by averaging the face points
+            const solveVector fCentre(pointsAverage(p, f));
 
             for (label pi = 0; pi < nPoints; ++pi)
             {
@@ -116,12 +140,10 @@ void Foam::primitiveMeshTools::updateCellCentresAndVols
     scalarField& cellVols_s
 )
 {
-    typedef Vector<solveScalar> solveVector;
-
     PrecisionAdaptor<solveVector, vector> tcellCtrs(cellCtrs_s, false);
     PrecisionAdaptor<solveScalar, scalar> tcellVols(cellVols_s, false);
-    Field<solveVector>& cellCtrs = tcellCtrs.ref();
-    Field<solveScalar>& cellVols = tcellVols.ref();
+    auto& cellCtrs = tcellCtrs.ref();
+    auto& cellVols = tcellVols.ref();
 
 
     // Use current cell centres as estimates for the new cell centres
@@ -222,21 +244,18 @@ void Foam::primitiveMeshTools::makeFaceCentresAndAreas
         // and to avoid round-off error-related problems
         if (nPoints == 3)
         {
-            fCtrs[facei] = triPointRef::centre(p[f[0]], p[f[1]], p[f[2]]);
-            fAreas[facei] = triPointRef::areaNormal(p[f[0]], p[f[1]], p[f[2]]);
+            const triPointRef tri(p, f[0], f[1], f[2]);
+            fCtrs[facei] = tri.centre();
+            fAreas[facei] = tri.areaNormal();
         }
         else
         {
-            solveVector sumN = Zero;
-            solveScalar sumA = Zero;
-            solveVector sumAc = Zero;
+            solveVector sumN(Zero);
+            solveScalar sumA(0);
+            solveVector sumAc(Zero);
 
-            solveVector fCentre = p[f[0]];
-            for (label pi = 1; pi < nPoints; ++pi)
-            {
-                fCentre += solveVector(p[f[pi]]);
-            }
-            fCentre /= nPoints;
+            // Estimated centre by averaging the face points
+            const solveVector fCentre(pointsAverage(p, f));
 
             for (label pi = 0; pi < nPoints; ++pi)
             {
@@ -292,8 +311,8 @@ void Foam::primitiveMeshTools::makeCellCentresAndVols
 {
     PrecisionAdaptor<solveVector, vector> tcellCtrs(cellCtrs_s, false);
     PrecisionAdaptor<solveScalar, scalar> tcellVols(cellVols_s, false);
-    Field<solveVector>& cellCtrs = tcellCtrs.ref();
-    Field<solveScalar>& cellVols = tcellVols.ref();
+    auto& cellCtrs = tcellCtrs.ref();
+    auto& cellVols = tcellVols.ref();
 
     // Clear the fields for accumulation
     cellCtrs = Zero;
@@ -310,13 +329,13 @@ void Foam::primitiveMeshTools::makeCellCentresAndVols
 
     forAll(own, facei)
     {
-        cEst[own[facei]] += solveVector(fCtrs[facei]);
+        cEst[own[facei]] += fCtrs[facei];
         ++nCellFaces[own[facei]];
     }
 
     forAll(nei, facei)
     {
-        cEst[nei[facei]] += solveVector(fCtrs[facei]);
+        cEst[nei[facei]] += fCtrs[facei];
         ++nCellFaces[nei[facei]];
     }
 

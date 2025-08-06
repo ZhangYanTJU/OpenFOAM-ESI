@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,39 +96,39 @@ void Foam::block::createPoints()
                 scalar wx2 = (1 - w1)*w4*(1 - w11)      + w1*w5*(1 - w10);
                 scalar wx3 = (1 - w2)*w7*w11            + w2*w6*w10;
                 scalar wx4 = (1 - w3)*(1 - w7)*w8       + w3*(1 - w6)*w9;
-
-                const scalar sumWx = wx1 + wx2 + wx3 + wx4;
-                wx1 /= sumWx;
-                wx2 /= sumWx;
-                wx3 /= sumWx;
-                wx4 /= sumWx;
-
+                {
+                    const scalar sum(wx1 + wx2 + wx3 + wx4);
+                    wx1 /= sum;
+                    wx2 /= sum;
+                    wx3 /= sum;
+                    wx4 /= sum;
+                }
 
                 // y-direction
                 scalar wy1 = (1 - w4)*(1 - w0)*(1 - w8) + w4*(1 - w1)*(1 - w11);
                 scalar wy2 = (1 - w5)*w0*(1 - w9)       + w5*w1*(1 - w10);
                 scalar wy3 = (1 - w6)*w3*w9             + w6*w2*w10;
                 scalar wy4 = (1 - w7)*(1 - w3)*w8       + w7*(1 - w2)*w11;
-
-                const scalar sumWy = wy1 + wy2 + wy3 + wy4;
-                wy1 /= sumWy;
-                wy2 /= sumWy;
-                wy3 /= sumWy;
-                wy4 /= sumWy;
-
+                {
+                    const scalar sum(wy1 + wy2 + wy3 + wy4);
+                    wy1 /= sum;
+                    wy2 /= sum;
+                    wy3 /= sum;
+                    wy4 /= sum;
+                }
 
                 // z-direction
                 scalar wz1 = (1 - w8)*(1 - w0)*(1 - w4) + w8*(1 - w3)*(1 - w7);
                 scalar wz2 = (1 - w9)*w0*(1 - w5)       + w9*w3*(1 - w6);
                 scalar wz3 = (1 - w10)*w1*w5            + w10*w2*w6;
                 scalar wz4 = (1 - w11)*(1 - w1)*w4      + w11*(1 - w2)*w7;
-
-                const scalar sumWz = wz1 + wz2 + wz3 + wz4;
-                wz1 /= sumWz;
-                wz2 /= sumWz;
-                wz3 /= sumWz;
-                wz4 /= sumWz;
-
+                {
+                    const scalar sum(wz1 + wz2 + wz3 + wz4);
+                    wz1 /= sum;
+                    wz2 /= sum;
+                    wz3 /= sum;
+                    wz4 /= sum;
+                }
 
                 // Points on straight edges
                 const vector edgex1 = p000 + (p100 - p000)*w0;
@@ -147,40 +147,47 @@ void Foam::block::createPoints()
                 const vector edgez4 = p010 + (p011 - p010)*w11;
 
                 // Add the contributions
-                points_[vijk] =
-                (
-                    wx1*edgex1 + wx2*edgex2 + wx3*edgex3 + wx4*edgex4
-                  + wy1*edgey1 + wy2*edgey2 + wy3*edgey3 + wy4*edgey4
-                  + wz1*edgez1 + wz2*edgez2 + wz3*edgez3 + wz4*edgez4
-                )/3;
+                // Note: use double precision to avoid overflows when summing
 
+                doubleVector sumVector(Zero);
+
+                sumVector += wx1*edgex1;
+                sumVector += wx2*edgex2;
+                sumVector += wx3*edgex3;
+                sumVector += wx4*edgex4;
+
+                sumVector += wy1*edgey1;
+                sumVector += wy2*edgey2;
+                sumVector += wy3*edgey3;
+                sumVector += wy4*edgey4;
+
+                sumVector += wz1*edgez1;
+                sumVector += wz2*edgez2;
+                sumVector += wz3*edgez3;
+                sumVector += wz4*edgez4;
+                sumVector /= 3;
 
                 // Apply curved-edge correction if block has curved edges
                 if (nCurvedEdges)
                 {
                     // Calculate the correction vectors
-                    const vector corx1 = wx1*(p[0][i] - edgex1);
-                    const vector corx2 = wx2*(p[1][i] - edgex2);
-                    const vector corx3 = wx3*(p[2][i] - edgex3);
-                    const vector corx4 = wx4*(p[3][i] - edgex4);
+                    sumVector += wx1*(p[0][i] - edgex1);    // corx1
+                    sumVector += wx2*(p[1][i] - edgex2);    // corx2
+                    sumVector += wx3*(p[2][i] - edgex3);    // corx3
+                    sumVector += wx4*(p[3][i] - edgex4);    // corx4
 
-                    const vector cory1 = wy1*(p[4][j] - edgey1);
-                    const vector cory2 = wy2*(p[5][j] - edgey2);
-                    const vector cory3 = wy3*(p[6][j] - edgey3);
-                    const vector cory4 = wy4*(p[7][j] - edgey4);
+                    sumVector += wy1*(p[4][j] - edgey1);    // cory1
+                    sumVector += wy2*(p[5][j] - edgey2);    // cory2
+                    sumVector += wy3*(p[6][j] - edgey3);    // cory3
+                    sumVector += wy4*(p[7][j] - edgey4);    // cory4
 
-                    const vector corz1 = wz1*(p[8][k] - edgez1);
-                    const vector corz2 = wz2*(p[9][k] - edgez2);
-                    const vector corz3 = wz3*(p[10][k] - edgez3);
-                    const vector corz4 = wz4*(p[11][k] - edgez4);
-
-                    points_[vijk] +=
-                    (
-                        corx1 + corx2 + corx3 + corx4
-                      + cory1 + cory2 + cory3 + cory4
-                      + corz1 + corz2 + corz3 + corz4
-                    );
+                    sumVector += wz1*(p[8][k] - edgez1);    // corz1
+                    sumVector += wz2*(p[9][k] - edgez2);    // corz2
+                    sumVector += wz3*(p[10][k] - edgez3);   // corz3
+                    sumVector += wz4*(p[11][k] - edgez4);   // corz4
                 }
+
+                points_[vijk] = sumVector;
             }
         }
     }
@@ -326,9 +333,11 @@ void Foam::block::createPoints()
                   + w11*(1 - w2)*w7
                 );
 
-                const scalar sumWf = wf4 + wf5;
-                wf4 /= sumWf;
-                wf5 /= sumWf;
+                {
+                    const scalar sum(wf4 + wf5);
+                    wf4 /= sum;
+                    wf5 /= sum;
+                }
 
                 points_[vijk] +=
                 (

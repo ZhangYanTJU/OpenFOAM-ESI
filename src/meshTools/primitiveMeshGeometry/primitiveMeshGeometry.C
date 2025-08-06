@@ -51,8 +51,8 @@ void Foam::primitiveMeshGeometry::updateFaceCentresAndAreas
 
     for (label facei : changedFaces)
     {
-        const labelList& f = fs[facei];
-        label nPoints = f.size();
+        const auto& f = fs[facei];
+        const label nPoints = f.size();
 
         // If the face is a triangle, do a direct calculation for efficiency
         // and to avoid round-off error-related problems

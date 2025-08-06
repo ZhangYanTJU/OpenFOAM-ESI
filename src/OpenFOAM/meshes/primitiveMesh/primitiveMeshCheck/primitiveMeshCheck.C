@@ -57,22 +57,22 @@ bool Foam::primitiveMesh::checkClosedBoundary
     // Loop through all boundary faces and sum up the face area vectors.
     // For a closed boundary, this should be zero in all vector components
 
-    Vector<solveScalar> sumClosed(Zero);
-    solveScalar sumMagClosedBoundary = 0;
+    solveVector sumClosed(Zero);
+    solveScalar sumMagClosedBoundary(0);
 
     for (label facei = nInternalFaces(); facei < areas.size(); facei++)
     {
         if (!internalOrCoupledFaces.size() || !internalOrCoupledFaces[facei])
         {
-            sumClosed += Vector<solveScalar>(areas[facei]);
+            sumClosed += areas[facei];
             sumMagClosedBoundary += mag(areas[facei]);
         }
     }
 
-    reduce(sumClosed, sumOp<Vector<solveScalar>>());
+    reduce(sumClosed, sumOp<solveVector>());
     reduce(sumMagClosedBoundary, sumOp<solveScalar>());
 
-    Vector<solveScalar> openness = sumClosed/(sumMagClosedBoundary + VSMALL);
+    solveVector openness = sumClosed/(sumMagClosedBoundary + VSMALL);
 
     if (cmptMax(cmptMag(openness)) > closedThreshold_)
     {

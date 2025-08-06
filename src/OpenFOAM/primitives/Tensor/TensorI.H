@@ -33,9 +33,9 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Cmpt>
-inline Foam::Tensor<Cmpt>::Tensor(const Foam::zero)
+inline Foam::Tensor<Cmpt>::Tensor(Foam::zero)
 :
-    Tensor::msType(Zero)
+    Tensor::msType(Foam::zero{})
 {}
 
 

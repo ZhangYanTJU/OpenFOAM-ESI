@@ -58,8 +58,10 @@ Type Foam::face::average
     // Calculate the average by breaking the face into triangles and
     // area-weighted averaging their averages
 
+    const label nPoints = size();
+
     // If the face is a triangle, do a direct calculation
-    if (size() == 3)
+    if (nPoints == 3)
     {
         return
             (1.0/3.0)
@@ -70,18 +72,14 @@ Type Foam::face::average
             );
     }
 
-    label nPoints = size();
+    const point centrePoint(this->average(meshPoints));
 
-    point centrePoint = Zero;
     Type cf = Zero;
-
     for (label pI=0; pI<nPoints; pI++)
     {
-        centrePoint += meshPoints[operator[](pI)];
         cf += fld[operator[](pI)];
     }
 
-    centrePoint /= nPoints;
     cf /= nPoints;
 
     scalar sumA = 0;
@@ -89,19 +87,21 @@ Type Foam::face::average
 
     for (label pI=0; pI<nPoints; pI++)
     {
+        const label nextPti(pI == nPoints-1 ? 0 : pI+1);
+
         // Calculate 3*triangle centre field value
         Type ttcf  =
         (
             fld[operator[](pI)]
-          + fld[operator[]((pI + 1) % nPoints)]
+          + fld[operator[](nextPti)]
           + cf
         );
 
         // Calculate 2*triangle area
-        scalar ta = Foam::mag
+        const scalar ta = Foam::mag
         (
             (meshPoints[operator[](pI)] - centrePoint)
-          ^ (meshPoints[operator[]((pI + 1) % nPoints)] - centrePoint)
+          ^ (meshPoints[operator[](nextPti)] - centrePoint)
         );
 
         sumA += ta;

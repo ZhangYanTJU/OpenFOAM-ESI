@@ -41,6 +41,35 @@ namespace Foam
     defineTypeNameAndDebug(polyMeshGeometry, 0);
 }
 
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Average of points
+// Note: use double precision to avoid overflows when summing
+static inline Foam::doubleVector pointsAverage
+(
+    const UList<point>& points,
+    const labelUList& pointLabels
+)
+{
+    doubleVector avg(Zero);
+
+    if (const auto n = pointLabels.size(); n)
+    {
+        for (const auto pointi : pointLabels)
+        {
+            avg += points[pointi];
+        }
+        avg /= n;
+    }
+
+    return avg;
+}
+
+} // End namespace Foam
+
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -61,23 +90,18 @@ void Foam::polyMeshGeometry::updateFaceCentresAndAreas
         // and to avoid round-off error-related problems
         if (nPoints == 3)
         {
-            faceCentres_[facei] =
-                triPointRef::centre(p[f[0]], p[f[1]], p[f[2]]);
-            faceAreas_[facei] =
-                triPointRef::areaNormal(p[f[0]], p[f[1]], p[f[2]]);
+            const triPointRef tri(p, f[0], f[1], f[2]);
+            faceCentres_[facei] = tri.centre();
+            faceAreas_[facei] = tri.areaNormal();
         }
         else
         {
-            solveVector sumN = Zero;
-            solveScalar sumA = Zero;
-            solveVector sumAc = Zero;
+            solveVector sumN(Zero);
+            solveScalar sumA(0);
+            solveVector sumAc(Zero);
 
-            solveVector fCentre = p[f[0]];
-            for (label pi = 1; pi < nPoints; ++pi)
-            {
-                fCentre += solveVector(p[f[pi]]);
-            }
-            fCentre /= nPoints;
+            // Estimated centre by averaging the face points
+            const solveVector fCentre(pointsAverage(p, f));
 
             for (label pi = 0; pi < nPoints; ++pi)
             {

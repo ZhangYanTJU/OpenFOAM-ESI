@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -90,7 +90,7 @@ public:
     // Constructors
 
         //- Construct initialized to zero
-        inline Vector2D(const Foam::zero);
+        inline Vector2D(Foam::zero);
 
         //- Copy construct from VectorSpace of the same rank
         inline Vector2D(const VectorSpace<Vector2D<Cmpt>, Cmpt, 2>& vs);
@@ -107,16 +107,16 @@ public:
     // Component Access
 
         //- Access to the vector x component
-        const Cmpt& x() const noexcept { return this->v_[X]; }
+        const Cmpt& x() const noexcept { return this->v_[components::X]; }
 
         //- Access to the vector y component
-        const Cmpt& y() const noexcept { return this->v_[Y]; }
+        const Cmpt& y() const noexcept { return this->v_[components::Y]; }
 
         //- Access to the vector x component
-        Cmpt& x() noexcept { return this->v_[X]; }
+        Cmpt& x() noexcept { return this->v_[components::X]; }
 
         //- Access to the vector y component
-        Cmpt& y() noexcept { return this->v_[Y]; }
+        Cmpt& y() noexcept { return this->v_[components::Y]; }
 
 
     // Vector Operations
@@ -170,6 +170,33 @@ public:
             const Vector2D<Cmpt>& a,
             const Vector2D<Cmpt>& b
         );
+
+
+    // Member Operators
+
+        //- Inherit VectorSpace += operations
+        using Vector2D::vsType::operator+=;
+
+        //- Inherit VectorSpace -= operations
+        using Vector2D::vsType::operator-=;
+
+        //- Add compatible 2D vector to this
+        template<class Cmpt2>
+        std::enable_if_t<std::is_convertible_v<Cmpt2, Cmpt>, void>
+        inline operator+=(const Vector2D<Cmpt2>& b)
+        {
+            this->x() += b.x();
+            this->y() += b.y();
+        }
+
+        //- Subtract compatible 2D vector from this
+        template<class Cmpt2>
+        std::enable_if_t<std::is_convertible_v<Cmpt2, Cmpt>, void>
+        inline operator-=(const Vector2D<Cmpt2>& b)
+        {
+            this->x() -= b.x();
+            this->y() -= b.y();
+        }
 };
 
 

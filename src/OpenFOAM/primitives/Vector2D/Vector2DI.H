@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,9 +29,9 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Cmpt>
-inline Foam::Vector2D<Cmpt>::Vector2D(const Foam::zero)
+inline Foam::Vector2D<Cmpt>::Vector2D(Foam::zero)
 :
-    Vector2D::vsType(Zero)
+    Vector2D::vsType(Foam::zero{})
 {}
 
 
@@ -48,8 +48,8 @@ inline Foam::Vector2D<Cmpt>::Vector2D
 template<class Cmpt>
 inline Foam::Vector2D<Cmpt>::Vector2D(const Cmpt& vx, const Cmpt& vy)
 {
-    this->v_[X] = vx;
-    this->v_[Y] = vy;
+    this->x() = vx;
+    this->y() = vy;
 }
 
 
