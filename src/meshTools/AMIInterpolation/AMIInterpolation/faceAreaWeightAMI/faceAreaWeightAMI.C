@@ -705,6 +705,8 @@ bool Foam::faceAreaWeightAMI::calculate
         srcCentroids_[i].transfer(srcCtr[i]);
     }
 
+    tgtAddress_.setSize(tgtAddr.size());
+    tgtWeights_.setSize(tgtWght.size());
     forAll(tgtAddr, i)
     {
         tgtAddress_[i].transfer(tgtAddr[i]);
