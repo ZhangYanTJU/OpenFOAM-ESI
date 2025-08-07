@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,11 +37,12 @@ Description
 
 SourceFiles
     pointConstraintI.H
+    pointConstraint.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pointConstraint_H
-#define pointConstraint_H
+#ifndef Foam_pointConstraint_H
+#define Foam_pointConstraint_H
 
 #include "label.H"
 #include "vector.H"
@@ -54,20 +55,25 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
+class pointConstraint;
+
+//! List of pointConstraint
+typedef List<pointConstraint> pointConstraintList;
+
 /*---------------------------------------------------------------------------*\
-                           Class pointConstraint Declaration
+                       Class pointConstraint Declaration
 \*---------------------------------------------------------------------------*/
 
 class pointConstraint
 :
     public Tuple2<label, vector>
 {
-
 public:
 
     // Constructors
 
-        //- Construct null
+        //- Default construct zero-initialized
         inline pointConstraint();
 
         //- Construct from components
@@ -76,8 +82,9 @@ public:
         //- Construct from components
         inline pointConstraint(const label count, const vector& n);
 
-        //- Construct from Istream
-        inline pointConstraint(Istream&);
+        //- Construct from Istream.
+        //- Handles ASCII only, since that is what Tuple2 does.
+        inline explicit pointConstraint(Istream&);
 
 
     // Member Functions
@@ -91,8 +98,8 @@ public:
         //- Return the accumulated constraint transformation tensor
         inline tensor constraintTransformation() const;
 
-        //- Return the accumulated unconstrained directions. Directions
-        //  coded as first n rows of tensor.
+        //- Return the accumulated unconstrained directions.
+        //- Directions coded as first n rows of tensor.
         inline void unconstrainedDirections(label& n, tensor& vecs) const;
 
         //- Constrain a displacement
@@ -100,11 +107,9 @@ public:
 };
 
 
-//! List of pointConstraint
-typedef List<pointConstraint> pointConstraintList;
+// * * * * * * * * * * * * * * * Specializations * * * * * * * * * * * * * * //
 
-
-// * * * * * * * * * * * * * * * * * Traits  * * * * * * * * * * * * * * * * //
+// NB: specialized readContiguous<pointConstraint> declared in Istream.H
 
 //- Template specialisation for pTraits\<pointConstraint\> to enable IO
 template<>
@@ -118,10 +123,12 @@ template<> struct is_contiguous<pointConstraint> : std::true_type {};
 
 
 //- Reduce operator
-class combineConstraintsEqOp
+struct combineConstraintsEqOp
 {
-public:
-    inline void operator()(pointConstraint&, const pointConstraint&) const;
+    void operator()(pointConstraint& x, const pointConstraint& y) const
+    {
+        x.combine(y);
+    }
 };
 
 

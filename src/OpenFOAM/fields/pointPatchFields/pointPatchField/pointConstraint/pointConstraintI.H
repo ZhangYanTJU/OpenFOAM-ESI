@@ -29,7 +29,7 @@ License
 
 inline Foam::pointConstraint::pointConstraint()
 :
-    Tuple2<label, vector>(0, Zero)
+    Tuple2<label, vector>(0, vector::zero)
 {}
 
 
@@ -223,26 +223,13 @@ inline Foam::vector Foam::pointConstraint::constrainDisplacement
 }
 
 
-inline void Foam::combineConstraintsEqOp::operator()
-(
-    pointConstraint& x,
-    const pointConstraint& y
-) const
-{
-    x.combine(y);
-}
-
-
 inline Foam::pointConstraint Foam::transform
 (
     const tensor& tt,
     const pointConstraint& v
 )
 {
-    return pointConstraint
-    (
-        Tuple2<label, vector>(v.first(), transform(tt, v.second()))
-    );
+    return pointConstraint(v.first(), transform(tt, v.second()));
 }
 
 

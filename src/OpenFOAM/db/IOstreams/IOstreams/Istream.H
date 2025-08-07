@@ -231,45 +231,70 @@ inline Istream& operator>>(Istream& is, IOstreamManip f)
 
 namespace Detail
 {
-    //- Read binary block of contiguous data, possibly with conversion
-    template<class T>
-    void readContiguous(Istream& is, char* data, std::streamsize byteCount)
+
+//- Read binary block of contiguous data, possibly with conversion
+template<class T>
+void readContiguous(Istream& is, char* data, std::streamsize byteCount)
+{
+    if constexpr (is_contiguous_label<T>::value)
     {
         is.beginRawRead();
-
-        if constexpr (is_contiguous_label<T>::value)
-        {
-            readRawLabel
-            (
-                is,
-                reinterpret_cast<label*>(data),
-                byteCount/sizeof(label)
-            );
-        }
-        else if constexpr (is_contiguous_scalar<T>::value)
-        {
-            readRawScalar
-            (
-                is,
-                reinterpret_cast<scalar*>(data),
-                byteCount/sizeof(scalar)
-            );
-        }
-        else
-        {
-            is.readRaw(data, byteCount);
-        }
-
+        readRawLabel
+        (
+            is,
+            reinterpret_cast<label*>(data),
+            byteCount/sizeof(label)
+        );
         is.endRawRead();
     }
+    else if constexpr (is_contiguous_scalar<T>::value)
+    {
+        is.beginRawRead();
+        readRawScalar
+        (
+            is,
+            reinterpret_cast<scalar*>(data),
+            byteCount/sizeof(scalar)
+        );
+        is.endRawRead();
+    }
+    else
+    {
+        is.read(data, byteCount);
+    }
+}
 
 } // End namespace Detail
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 } // End namespace Foam
 
+
+// * * * * * * * * * * * * * * * Specializations * * * * * * * * * * * * * * //
+
+// Contiguous classes with mixed internal representations require specialized
+// versions of readContiguous.
+//
+// The declarations must be known when reading files, so declare them here.
+// This approach obviously does not scale well, but fortunately there
+// are not too many of these classes.
+
+namespace Foam
+{
+
+// Forward Declarations
+class pointConstraint;
+
+namespace Detail
+{
+
+//- Read binary block of pointConstraint data (possibly with conversion)
+template<>
+void readContiguous<pointConstraint>
+(
+    Istream& is, char* data, std::streamsize byteCount
+);
+
+} // End namespace Detail
+} // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

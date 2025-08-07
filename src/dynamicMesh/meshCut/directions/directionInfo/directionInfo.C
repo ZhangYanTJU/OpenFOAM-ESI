@@ -236,18 +236,12 @@ Foam::Istream& Foam::operator>>
     {
         is >> rhs.index_ >> rhs.n_;
     }
-    else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-    {
-        // Non-native label or scalar size
-        is.beginRawRead();
-
-        readRawLabel(is, &rhs.index_);
-        readRawScalar(is, rhs.n_.data(), vector::nComponents);
-
-        is.endRawRead();
-    }
     else
     {
+        // Packing of (label, vector) makes handling of non-native
+        // label/scalar non-trivial (#3412)
+        is.fatalCheckNativeSizes(FUNCTION_NAME);
+
         is.read
         (
             reinterpret_cast<char*>(&rhs.index_),
