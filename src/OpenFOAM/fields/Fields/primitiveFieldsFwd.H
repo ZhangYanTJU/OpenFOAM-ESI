@@ -33,8 +33,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef primitiveFieldsFwd_H
-#define primitiveFieldsFwd_H
+#ifndef Foam_primitiveFieldsFwd_H
+#define Foam_primitiveFieldsFwd_H
 
 #include "fieldTypes.H"
 

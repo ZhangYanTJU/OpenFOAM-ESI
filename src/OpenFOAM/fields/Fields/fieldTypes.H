@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -80,6 +80,9 @@ namespace fieldTypes
 //- Standard basic field types (label, scalar, vector, tensor, etc)
 //  These also correspond to cloud output fields.
 extern const wordList basic;
+
+//- Test if the class name appears to be a basic field
+bool is_basic(const word& clsName);
 
 
 // Commonly used patch field types

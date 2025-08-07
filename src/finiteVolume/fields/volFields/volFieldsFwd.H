@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,11 +92,15 @@ typedef
 
 namespace fieldTypes
 {
-    //- Standard dimensioned field types (scalar, vector, tensor, etc)
-    extern const wordList internal;
 
-    //- Standard volume field types (scalar, vector, tensor, etc)
-    extern const wordList volume;
+//- Standard dimensioned field types (scalar, vector, tensor, etc)
+extern const wordList internal;
+
+//- Standard volume field types (scalar, vector, tensor, etc)
+extern const wordList volume;
+
+//- Test if the class name appears to be a volume field
+bool is_volume(const word& clsName);
 
 } // End namespace fieldTypes
 

@@ -156,4 +156,16 @@ const Foam::wordList Foam::fieldTypes::area_internal
 });
 
 
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+bool Foam::fieldTypes::is_area(const word& clsName)
+{
+    return
+    (
+        clsName.starts_with("area")  // && clsName.ends_with("Field")
+     && fieldTypes::area.contains(clsName)
+    );
+}
+
+
 // ************************************************************************* //

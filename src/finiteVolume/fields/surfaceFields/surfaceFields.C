@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -94,4 +94,16 @@ const Foam::wordList Foam::fieldTypes::surface
 });
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+bool Foam::fieldTypes::is_surface(const word& clsName)
+{
+    return
+    (
+        clsName.starts_with("surface")  // && clsName.ends_with("Field")
+     && fieldTypes::surface.contains(clsName)
+    );
+}
+
+
+// ************************************************************************* //

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,14 +92,17 @@ typedef
 
 namespace fieldTypes
 {
-    //- Standard area field types (scalar, vector, tensor, etc)
-    extern const wordList area;
 
-    //- Standard dimensioned field types (scalar, vector, tensor, etc)
-    extern const wordList area_internal;
+//- Standard area field types (scalar, vector, tensor, etc)
+extern const wordList area;
+
+//- Standard dimensioned field types (scalar, vector, tensor, etc)
+extern const wordList area_internal;
+
+//- Test if the class name appears to be an area field
+bool is_area(const word& clsName);
 
 } // End namespace fieldTypes
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

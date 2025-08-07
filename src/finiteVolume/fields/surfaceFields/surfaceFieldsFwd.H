@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,8 +86,12 @@ typedef
 
 namespace fieldTypes
 {
-    //- Standard surface field types (scalar, vector, tensor, etc)
-    extern const wordList surface;
+
+//- Standard surface field types (scalar, vector, tensor, etc)
+extern const wordList surface;
+
+//- Test if the class name appears to be an surface field
+bool is_surface(const word& clsName);
 
 } // End namespace fieldTypes
 

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -93,6 +94,18 @@ const Foam::wordList Foam::fieldTypes::point
     "pointSymmTensorField",
     "pointTensorField"
 });
+
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+bool Foam::fieldTypes::is_point(const word& clsName)
+{
+    return
+    (
+        clsName.starts_with("point")  // && clsName.ends_with("Field")
+     && fieldTypes::point.contains(clsName)
+    );
+}
 
 
 // ************************************************************************* //

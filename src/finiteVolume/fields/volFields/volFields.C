@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018,2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -157,4 +157,16 @@ const Foam::wordList Foam::fieldTypes::volume
 });
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+bool Foam::fieldTypes::is_volume(const word& clsName)
+{
+    return
+    (
+        clsName.starts_with("vol")  // && clsName.ends_with("Field")
+     && fieldTypes::volume.contains(clsName)
+    );
+}
+
+
+// ************************************************************************* //
