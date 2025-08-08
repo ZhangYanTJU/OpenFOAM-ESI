@@ -125,7 +125,7 @@ Foam::heatTransferCoeffModel::q() const
 
         for (const label patchi : patchIDs_)
         {
-            q[patchi] += qrbf[patchi];
+            q[patchi] -= qrbf[patchi];
         }
     }
 
