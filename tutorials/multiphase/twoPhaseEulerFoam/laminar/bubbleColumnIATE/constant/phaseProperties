@@ -34,7 +34,7 @@ air
             }
             randomCoalescence
             {
-                Crc         0.04;
+                Crc         0.004;
                 C           3;
                 alphaMax    0.75;
             }
