@@ -246,7 +246,7 @@ bool Foam::UPstream::Window::put
     else
     {
         // Use element or component type (or byte-wise) for data type
-        return this-put_data
+        return this->put_data
         (
             buffer,  // The data or cmpt pointer
             UPstream_dataType<Type>::size(count),
@@ -354,10 +354,10 @@ bool Foam::UPstream::Window::get
 {
     return this->get
     (
-         buffer.data(), buffer.size(),
-         fromProcNo,
-         target_disp
-     );
+        buffer.data(), buffer.size(),
+        fromProcNo,
+        target_disp
+    );
 }
 
 

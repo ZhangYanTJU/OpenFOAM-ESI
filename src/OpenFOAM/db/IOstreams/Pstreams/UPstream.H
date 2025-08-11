@@ -185,6 +185,9 @@ public:
         //- Wrapper for MPI_Comm
         class Communicator;  // Forward Declaration
 
+        //- Wrapper for MPI_File routines
+        class File;  // Forward Declaration
+
         //- Wrapper for MPI_Request
         class Request;  // Forward Declaration
 
