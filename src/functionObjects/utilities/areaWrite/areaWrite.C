@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -315,8 +315,8 @@ bool Foam::areaWrite::write()
 
             if
             (
-                fieldTypes::area.contains(clsName)
-             || fieldTypes::area_internal.contains(clsName)
+                Foam::fieldTypes::is_area(clsName)
+             || Foam::fieldTypes::is_area_internal(clsName)
             )
             {
                 nAreaFields += n;

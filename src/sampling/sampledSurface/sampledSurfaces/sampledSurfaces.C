@@ -127,11 +127,11 @@ Foam::IOobjectList Foam::sampledSurfaces::preCheckFields()
         const word& clsName = iter.key();
         const label n = iter.val().size();
 
-        if (fieldTypes::volume.contains(clsName))
+        if (Foam::fieldTypes::is_volume(clsName))
         {
             nVolumeFields += n;
         }
-        else if (fieldTypes::surface.contains(clsName))
+        else if (Foam::fieldTypes::is_surface(clsName))
         {
             nSurfaceFields += n;
         }

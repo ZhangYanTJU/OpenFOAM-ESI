@@ -86,7 +86,7 @@ void constructVolFields(fvMesh& mesh, const vtkUnstructuredReader& reader)
         );
         auto& fld = tfld.ref();
         fld.instance() = mesh.time().timeName();
-        fld.writeOpt() = IOobject::AUTO_WRITE;
+        fld.writeOpt(IOobject::AUTO_WRITE);
 
         // Fill cell values
         fld.internalFieldRef().field() =

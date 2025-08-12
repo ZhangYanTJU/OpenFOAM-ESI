@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -383,29 +383,10 @@ int main(int argc, char *argv[])
 
             if
             (
-                io.isHeaderClass<volScalarField>()
-             || io.isHeaderClass<volVectorField>()
-             || io.isHeaderClass<volSphericalTensorField>()
-             || io.isHeaderClass<volSymmTensorField>()
-             || io.isHeaderClass<volTensorField>()
-
-             || io.isHeaderClass<surfaceScalarField>()
-             || io.isHeaderClass<surfaceVectorField>()
-             || io.isHeaderClass<surfaceSphericalTensorField>()
-             || io.isHeaderClass<surfaceSymmTensorField>()
-             || io.isHeaderClass<surfaceTensorField>()
-
-             || io.isHeaderClass<pointScalarField>()
-             || io.isHeaderClass<pointVectorField>()
-             || io.isHeaderClass<pointSphericalTensorField>()
-             || io.isHeaderClass<pointSymmTensorField>()
-             || io.isHeaderClass<pointTensorField>()
-
-             || io.isHeaderClass<volScalarField::Internal>()
-             || io.isHeaderClass<volVectorField::Internal>()
-             || io.isHeaderClass<volSphericalTensorField::Internal>()
-             || io.isHeaderClass<volSymmTensorField::Internal>()
-             || io.isHeaderClass<volTensorField::Internal>()
+                Foam::fieldTypes::is_volume(io.headerClassName())
+             || Foam::fieldTypes::is_internal(io.headerClassName())
+             || Foam::fieldTypes::is_surface(io.headerClassName())
+             || Foam::fieldTypes::is_point(io.headerClassName())
             )
             {
                 Info<< "        Reading " << io.headerClassName()

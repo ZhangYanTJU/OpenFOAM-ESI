@@ -90,7 +90,7 @@ namespace fieldTypes
 //- Standard surface field types (scalar, vector, tensor, etc)
 extern const wordList surface;
 
-//- Test if the class name appears to be an surface field
+//- Test if the class name appears to be a surface field
 bool is_surface(const word& clsName);
 
 } // End namespace fieldTypes

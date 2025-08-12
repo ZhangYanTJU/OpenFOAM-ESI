@@ -104,16 +104,7 @@ IOobjectList preFilterFields
 
             const IOobject& io = *(iter.val());
 
-            if
-            (
-                //OR: fieldTypes::basic.found(io.headerClassName())
-                io.isHeaderClass<IOField<label>>()
-             || io.isHeaderClass<IOField<scalar>>()
-             || io.isHeaderClass<IOField<vector>>()
-             || io.isHeaderClass<IOField<sphericalTensor>>()
-             || io.isHeaderClass<IOField<symmTensor>>()
-             || io.isHeaderClass<IOField<tensor>>()
-            )
+            if (Foam::fieldTypes::is_basic(io.headerClassName()))
             {
                 // Transfer from cloudObjects -> filteredObjects
                 filteredObjects.add(cloudObjects.remove(fldName));

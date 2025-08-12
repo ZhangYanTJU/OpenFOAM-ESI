@@ -102,8 +102,8 @@ bool Foam::fieldTypes::is_point(const word& clsName)
 {
     return
     (
-        clsName.starts_with("point")  // && clsName.ends_with("Field")
-     && fieldTypes::point.contains(clsName)
+        clsName.starts_with("point") && clsName.ends_with("Field")
+     && Foam::fieldTypes::point.contains(clsName)
     );
 }
 

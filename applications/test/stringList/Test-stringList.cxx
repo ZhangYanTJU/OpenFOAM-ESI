@@ -42,7 +42,7 @@ using namespace Foam;
 int main(int argc, char *argv[])
 {
     stringList strings
-    {
+    ({
         "hello",
         "heello",
         "heeello",
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
         "okey",
         "okkey",
         "okkkey",
-    };
+    });
     labelList matches;
 
     wordRes matcher1(ICharStream("( okey \"[hy]e+.*\" )")());
@@ -72,12 +72,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    Info<< "Match found using ListOps = "
-        << ListOps::found(strings, regExp(".*ee.*")) << nl;
+    {
+        regExp matcher(".*ee.*");
 
-    Info<< "First index = "
-        << ListOps::find(strings, regExp(".*ee.*")) << nl;
-
+        Info<< "Match found using ListOps = "
+            << ListOps::found_if(strings, matcher) << nl
+            << "First index = "
+            << ListOps::find_if(strings, matcher) << nl;
+    }
     Info<< endl;
 
     matches = findMatchingStrings(matcher1, strings);

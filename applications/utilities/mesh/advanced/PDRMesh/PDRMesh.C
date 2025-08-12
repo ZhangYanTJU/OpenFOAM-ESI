@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -857,16 +857,8 @@ int main(int argc, char *argv[])
 
             if
             (
-                obj.isHeaderClass<volScalarField>()
-             || obj.isHeaderClass<volVectorField>()
-             || obj.isHeaderClass<volSphericalTensorField>()
-             || obj.isHeaderClass<volTensorField>()
-             || obj.isHeaderClass<volSymmTensorField>()
-             || obj.isHeaderClass<surfaceScalarField>()
-             || obj.isHeaderClass<surfaceVectorField>()
-             || obj.isHeaderClass<surfaceSphericalTensorField>()
-             || obj.isHeaderClass<surfaceSymmTensorField>()
-             || obj.isHeaderClass<surfaceTensorField>()
+                Foam::fieldTypes::is_volume(obj.headerClassName())
+             || Foam::fieldTypes::is_surface(obj.headerClassName())
             )
             {
                 objects.add(objPtr);

@@ -100,8 +100,8 @@ bool Foam::fieldTypes::is_surface(const word& clsName)
 {
     return
     (
-        clsName.starts_with("surface")  // && clsName.ends_with("Field")
-     && fieldTypes::surface.contains(clsName)
+        clsName.starts_with("surface") && clsName.ends_with("Field")
+     && Foam::fieldTypes::surface.contains(clsName)
     );
 }
 

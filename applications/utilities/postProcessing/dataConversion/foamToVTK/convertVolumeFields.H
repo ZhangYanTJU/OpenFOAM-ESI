@@ -24,21 +24,21 @@ Description
     const label nVolFields =
     (
         (doInternal || doBoundary)
-      ? objects.count(stringListOps::foundOp<word>(fieldTypes::volume))
+      ? objects.count(Foam::fieldTypes::is_volume)
       : 0
     );
 
     const label nDimFields =
     (
         (doInternal || doBoundary)
-      ? objects.count(stringListOps::foundOp<word>(fieldTypes::internal))
+      ? objects.count(Foam::fieldTypes::is_internal)
       : 0
     );
 
     label nPointFields =
     (
         doPointValues
-      ? objects.count(stringListOps::foundOp<word>(fieldTypes::point))
+      ? objects.count(Foam::fieldTypes::is_point)
       : 0
     );
 

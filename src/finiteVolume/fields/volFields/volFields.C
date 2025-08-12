@@ -159,12 +159,22 @@ const Foam::wordList Foam::fieldTypes::volume
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
+bool Foam::fieldTypes::is_internal(const word& clsName)
+{
+    return
+    (
+        clsName.starts_with("vol") && clsName.ends_with("::Internal")
+     && Foam::fieldTypes::internal.contains(clsName)
+    );
+}
+
+
 bool Foam::fieldTypes::is_volume(const word& clsName)
 {
     return
     (
-        clsName.starts_with("vol")  // && clsName.ends_with("Field")
-     && fieldTypes::volume.contains(clsName)
+        clsName.starts_with("vol") && clsName.ends_with("Field")
+     && Foam::fieldTypes::volume.contains(clsName)
     );
 }
 

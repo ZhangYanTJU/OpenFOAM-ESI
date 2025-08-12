@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -23,10 +23,7 @@ Description
 {
     using reportFields = foamToVtkReportFields;
 
-    const label nVolFields =
-    (
-        objects.count(stringListOps::foundOp<word>(fieldTypes::volume))
-    );
+    const label nVolFields = objects.count(Foam::fieldTypes::is_volume);
 
     reportFields::volume(Info, objects);
 

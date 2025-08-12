@@ -162,8 +162,18 @@ bool Foam::fieldTypes::is_area(const word& clsName)
 {
     return
     (
-        clsName.starts_with("area")  // && clsName.ends_with("Field")
-     && fieldTypes::area.contains(clsName)
+        clsName.starts_with("area") && clsName.ends_with("Field")
+     && Foam::fieldTypes::area.contains(clsName)
+    );
+}
+
+
+bool Foam::fieldTypes::is_area_internal(const word& clsName)
+{
+    return
+    (
+        clsName.starts_with("area") && clsName.ends_with("::Internal")
+     && Foam::fieldTypes::area_internal.contains(clsName)
     );
 }
 

@@ -803,14 +803,7 @@ int main(int argc, char *argv[])
                 if (!doPointValues)
                 {
                     // Prune point fields if disabled
-                    objects.filterClasses
-                    (
-                        [](const word& clsName)
-                        {
-                            return fieldTypes::point.found(clsName);
-                        },
-                        true // prune
-                    );
+                    objects.filterClasses(Foam::fieldTypes::is_point, true);
                 }
             }
 

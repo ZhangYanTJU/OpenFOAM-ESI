@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -505,7 +505,7 @@ public:
         //- Return name of the class name read from header
         inline const word& headerClassName() const noexcept;
 
-        //- Return non-constant access to the class name read from header
+        //- Modifiable access to the class name read from header
         inline word& headerClassName() noexcept;
 
         //- Return the optional note
@@ -572,11 +572,14 @@ public:
         //- Read access to instance path component
         inline const fileName& instance() const noexcept;
 
-        //- Write access to instance path component
+        //- Modifiable access to instance path component
         inline fileName& instance() noexcept;
 
         //- Read access to local path component
         inline const fileName& local() const noexcept;
+
+        //- Modifiable access to the local path component
+        inline fileName& local() noexcept;
 
         //- The complete path for the object (with instance, local,...).
         fileName path() const;

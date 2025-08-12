@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -53,10 +53,7 @@ if (doLagrangian)
         }
 
         // Limited to basic IOField types
-        cloudObjs.filterClasses
-        (
-            stringListOps::foundOp<word>(fieldTypes::basic)
-        );
+        cloudObjs.filterClasses(Foam::fieldTypes::is_basic);
 
         // Are there cloud fields (globally)?
         if (returnReduceAnd(cloudObjs.empty()))

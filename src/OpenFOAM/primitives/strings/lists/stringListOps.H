@@ -335,25 +335,20 @@ namespace Foam
 namespace stringListOps
 {
 
-//- Functor to determine if a string is exists in a list of strings.
-//  For example,
-//
-//  \code
-//  reduce(text, stringListOps::foundOp<word>(myNames));
-//  \endcode
+//- Functor to determine if a string exists in a list of strings.
 template<class StringType>
 struct foundOp
 {
     const UList<StringType>& values;
 
-    foundOp(const UList<StringType>& list)
+    foundOp(const UList<StringType>& list) noexcept
     :
         values(list)
     {}
 
     bool operator()(const std::string& text) const
     {
-        return values.found(text);
+        return values.contains(text);
     }
 };
 

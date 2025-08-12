@@ -77,7 +77,7 @@ bool Foam::fieldTypes::is_basic(const word& clsName)
     return
     (
         clsName.ends_with("Field")
-     && fieldTypes::basic.contains(clsName)
+     && Foam::fieldTypes::basic.contains(clsName)
     );
 }
 

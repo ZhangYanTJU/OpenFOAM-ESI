@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -283,6 +283,12 @@ inline Foam::fileName& Foam::IOobject::instance() noexcept
 
 
 inline const Foam::fileName& Foam::IOobject::local() const noexcept
+{
+    return local_;
+}
+
+
+inline Foam::fileName& Foam::IOobject::local() noexcept
 {
     return local_;
 }

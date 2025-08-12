@@ -96,11 +96,14 @@ namespace fieldTypes
 //- Standard area field types (scalar, vector, tensor, etc)
 extern const wordList area;
 
-//- Standard dimensioned field types (scalar, vector, tensor, etc)
+//- Standard area internal field types (scalar, vector, tensor, etc)
 extern const wordList area_internal;
 
 //- Test if the class name appears to be an area field
 bool is_area(const word& clsName);
+
+//- Test if the class name appears to be an area internal field
+bool is_area_internal(const word& clsName);
 
 } // End namespace fieldTypes
 

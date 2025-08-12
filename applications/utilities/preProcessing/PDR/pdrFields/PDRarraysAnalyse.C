@@ -647,10 +647,10 @@ void Foam::PDRarrays::addBlockage
 
         const word patchName = word::validate(identifier.substr(0, spc));
 
-        patchNum = ListOps::find
+        patchNum = ListOps::find_if
         (
             patches,
-            [=](const PDRpatchDef& p){ return patchName == p.patchName; },
+            [&](const PDRpatchDef& p){ return patchName == p.patchName; },
             1  // skip 0 (blocked face)
         );
 

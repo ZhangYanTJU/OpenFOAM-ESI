@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,7 +29,7 @@ License
 #include "dictionary.H"
 #include "Time.H"
 #include "areaFields.H"
-#include "stringListOps.H"   // For stringListOps::foundOp()
+#include "volFields.H"
 #include "foamVtkInternalWriter.H"
 #include "foamVtkPatchWriter.H"
 #include "foamVtkSeriesWriter.H"
@@ -332,11 +332,7 @@ bool Foam::functionObjects::vtkWrite::write()
         const label nVolFields =
         (
             (doInternal_ || doBoundary_)
-          ? baseMesh.count
-            (
-                stringListOps::foundOp<word>(fieldTypes::volume),
-                candidateNames
-            )
+          ? baseMesh.count(Foam::fieldTypes::is_volume, candidateNames)
           : 0
         );
 
@@ -345,11 +341,7 @@ bool Foam::functionObjects::vtkWrite::write()
         const label nDimFields = 0;
         // (
         //     (doInternal_ || doBoundary_)
-        //   ? baseMesh.count
-        //     (
-        //         stringListOps::foundOp<word>(fieldTypes::internal),
-        //         candidateNames
-        //     )
+        //   ? baseMesh.count(Foam::fieldTypes::is_internal, candidateNames)
         //   : 0
         // );
 

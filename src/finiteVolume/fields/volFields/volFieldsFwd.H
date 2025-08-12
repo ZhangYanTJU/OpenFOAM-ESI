@@ -93,11 +93,14 @@ typedef
 namespace fieldTypes
 {
 
-//- Standard dimensioned field types (scalar, vector, tensor, etc)
+//- Standard volume internal field types (scalar, vector, tensor, etc)
 extern const wordList internal;
 
 //- Standard volume field types (scalar, vector, tensor, etc)
 extern const wordList volume;
+
+//- Test if the class name appears to be a volume internal field
+bool is_internal(const word& clsName);
 
 //- Test if the class name appears to be a volume field
 bool is_volume(const word& clsName);

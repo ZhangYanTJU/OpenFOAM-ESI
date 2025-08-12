@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -28,8 +28,7 @@ if (doFiniteArea)
 
     autoPtr<faMesh> faMeshPtr;
 
-    const label nAreaFields =
-        faObjects.count(stringListOps::foundOp<word>(fieldTypes::area));
+    const label nAreaFields = faObjects.count(Foam::fieldTypes::is_area);
 
     if (nAreaFields || withMeshIds)
     {
