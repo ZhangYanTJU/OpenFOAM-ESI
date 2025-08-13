@@ -62,7 +62,7 @@ Foam::volScalarField& Foam::functionObjects::energyTransport::transportedField()
                 mesh_.time().timeName(),
                 mesh_,
                 IOobject::MUST_READ,
-                IOobject::AUTO_WRITE,
+                IOobject::NO_WRITE,
                 IOobject::REGISTER
             ),
             mesh_
@@ -437,6 +437,14 @@ bool Foam::functionObjects::energyTransport::execute()
 
 bool Foam::functionObjects::energyTransport::write()
 {
+    Log << type() << " write: " << name() << nl
+        << tab << fieldName_ << nl
+        << endl;
+
+    volScalarField& s = transportedField();
+
+    s.write();
+
     return true;
 }
 
