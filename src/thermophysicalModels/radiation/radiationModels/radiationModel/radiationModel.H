@@ -240,6 +240,9 @@ public:
                 return radiation_;
             }
 
+            //- Return the radiation solver frequency
+            label solverFreq() const noexcept { return solverFreq_; }
+
             //- Source term component (for power of T^4)
             virtual tmp<volScalarField> Rp() const = 0;
 
