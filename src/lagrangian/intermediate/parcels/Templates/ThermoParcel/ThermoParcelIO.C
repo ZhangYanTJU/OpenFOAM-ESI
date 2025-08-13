@@ -65,19 +65,11 @@ Foam::ThermoParcel<ParcelType>::ThermoParcel
         {
             is  >> T_ >> Cp_;
         }
-        else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-
-            is.beginRawRead();
-
-            readRawScalar(is, &T_);
-            readRawScalar(is, &Cp_);
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             is.read(reinterpret_cast<char*>(&T_), sizeofFields);
         }
     }

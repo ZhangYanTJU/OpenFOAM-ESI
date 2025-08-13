@@ -86,28 +86,11 @@ Foam::KinematicParcel<ParcelType>::KinematicParcel
                 >> UTurb_
                 >> UCorrect_;
         }
-        else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-
-            is.beginRawRead();
-
-            readRawLabel(is, &active_);
-            readRawLabel(is, &typeId_);
-            readRawScalar(is, &nParticle_);
-            readRawScalar(is, &d_);
-            readRawScalar(is, &dTarget_);
-            readRawScalar(is, U_.data(), vector::nComponents);
-            readRawScalar(is, &rho_);
-            readRawScalar(is, &age_);
-            readRawScalar(is, &tTurb_);
-            readRawScalar(is, UTurb_.data(), vector::nComponents);
-            readRawScalar(is, UCorrect_.data(), vector::nComponents);
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             is.read(reinterpret_cast<char*>(&active_), sizeofFields);
         }
     }

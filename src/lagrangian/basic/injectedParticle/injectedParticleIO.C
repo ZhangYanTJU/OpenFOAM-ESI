@@ -71,20 +71,11 @@ Foam::injectedParticle::injectedParticle
         {
             is  >> tag_ >> soi_ >> d_ >> U_;
         }
-        else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-            is.beginRawRead();
-
-            readRawLabel(is, &tag_);
-            readRawScalar(is, &soi_);
-            readRawScalar(is, &d_);
-            readRawScalar(is, U_.data(), vector::nComponents);
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             is.read(reinterpret_cast<char*>(&tag_), sizeofFields);
         }
     }

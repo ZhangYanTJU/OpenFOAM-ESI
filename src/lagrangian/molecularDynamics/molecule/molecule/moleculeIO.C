@@ -77,27 +77,11 @@ Foam::molecule::molecule
                 >> special_
                 >> id_;
         }
-        else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-
-            is.beginRawRead();
-
-            readRawScalar(is, Q_.data(), tensor::nComponents);
-            readRawScalar(is, v_.data(), vector::nComponents);
-            readRawScalar(is, a_.data(), vector::nComponents);
-            readRawScalar(is, pi_.data(), vector::nComponents);
-            readRawScalar(is, tau_.data(), vector::nComponents);
-            readRawScalar(is, specialPosition_.data(), vector::nComponents);
-            readRawScalar(is, &potentialEnergy_);
-            readRawScalar(is, rf_.data(), tensor::nComponents);
-            readRawLabel(is, &special_);
-            readRawLabel(is, &id_);
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             is.read(reinterpret_cast<char*>(&Q_), sizeofFields);
         }
 

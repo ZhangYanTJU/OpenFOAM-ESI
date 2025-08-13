@@ -63,23 +63,11 @@ Foam::DTRMParticle::DTRMParticle
         {
             is >> p0_ >> p1_ >> I0_ >> I_ >> dA_ >> transmissiveId_;
         }
-        else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-
-            is.beginRawRead();
-
-            readRawScalar(is, p0_.data(), vector::nComponents);
-            readRawScalar(is, p1_.data(), vector::nComponents);
-            readRawScalar(is, &I0_);
-            readRawScalar(is, &I_);
-            readRawScalar(is, &dA_);
-            readRawLabel(is, &transmissiveId_);
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             is.read(reinterpret_cast<char*>(&p0_), sizeofFields_);
         }
     }
