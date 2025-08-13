@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,52 +28,71 @@ Class
     Foam::patchProbes
 
 Description
-    Set of locations to sample at patches
+    Probes the specified points on specified patches. The points get snapped
+    onto the nearest point on the nearest face of the specified patch, and the
+    sampling is actioned on the snapped locations.
 
-    Call write() to sample and write files.
-    - find nearest location on nearest face
-    - update *this with location (so header contains 'snapped' locations
-    - use *this as the sampling location
-
-    Example of function object specification:
+Usage
+    Minimal example by using \c system/controlDict.functions:
     \verbatim
     patchProbes
     {
+        // Mandatory entries
         type            patchProbes;
         libs            (sampling);
 
-        // Name of the directory for probe data
-        name            patchProbes;
+        fields          (<wordRes>);
+        probeLocations  (<vectorList>);
+        patches         (<wordRes>);    // or patch  <word>;
 
-        // Patches to sample (wildcards allowed)
-        patches         (".*inl.*");
+        // Optional entries
+        verbose         <bool>;
+        sampleOnExecute <bool>;
+        fixedLocations  <bool>;
+        includeOutOfBounds <bool>;
+        interpolationScheme <word>;
 
-        // Write at same frequency as fields
-        writeControl    writeTime;
-        writeInterval   1;
-
-        // Fields to be probed
-        fields          (p U);
-
-        // Locations to probe. These get snapped onto the nearest point
-        // on the selected patches
-        probeLocations
-        (
-            ( -100 0 0.01 )      // at inlet
-        );
+        ...
     }
     \endverbatim
 
+    where the entries mean:
+    \table
+      Property     | Description                        | Type | Reqd | Deflt
+      type         | Type name: patchProbes             | word | yes  | -
+      libs         | Library name: sampling             | word | yes  | -
+      fields       | Names of the fields to be probed   | wordRes | yes | -
+      probeLocations | Locations of the probes          | vectorField | yes | -
+      patches      | Patches to sample (wildcards allowed) | wordRes | yes | -
+      verbose      | Enable/disable verbose output         | bool | no | false
+      sampleOnExecute | Sample on execution and store results | bool | no <!--
+                   -->                                               | false
+      fixedLocations | Do not recalculate cells if mesh moves | bool | no | true
+      includeOutOfBounds | Include out-of-bounds locations | bool | no | true
+      interpolationScheme | Scheme to obtain values at the points | word <!--
+                   -->                                            | no | cell
+    \endtable
+
+    The inherited entries are elaborated in:
+     - \link fvMeshFunctionObject.H \endlink
+     - \link ProbesBase.H \endlink
+     - \link patchPointProber.H \endlink
+     - \link pointProberBase.H \endlink
+
+Note
+  - The \c includeOutOfBounds filters out points that haven't been found.
+    Default is to include them (with value \c -VGREAT).
+
 SourceFiles
     patchProbes.C
-    patchProbesTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef Foam_patchProbes_H
 #define Foam_patchProbes_H
 
-#include "probes.H"
+#include "ProbesBase.H"
+#include "patchPointProber.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -81,57 +100,17 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class patchProbes Declaration
+                        Class patchProbes Declaration
 \*---------------------------------------------------------------------------*/
 
 class patchProbes
 :
-    public probes
+    public ProbesBase<patchPointProber>
 {
-protected:
+    // Private Data
 
-    // Protected Data
-
-        //- Patches to sample
-        wordRes patchNames_;
-
-
-    // Protected Member Functions
-
-        //- Find elements containing patchProbes
-        virtual void findElements(const fvMesh& mesh);  // override
-
-
-private:
-
-    // Private Member Functions
-
-        //- Write field values
-        template<class Type>
-        void writeValues
-        (
-            const word& fieldName,
-            const Field<Type>& values,
-            const scalar timeValue
-        );
-
-        //- Sample and store/write applicable volume/surface fields
-        template<class GeoField>
-        void performAction
-        (
-            const fieldGroup<GeoField>& fieldNames,  /* must be sorted */
-            unsigned request
-        );
-
-        //- Perform sampling action with store/write
-        bool performAction(unsigned request);
-
-
-        //- No copy construct
-        patchProbes(const patchProbes&) = delete;
-
-        //- No copy assignment
-        void operator=(const patchProbes&) = delete;
+        //- Use simpler synonym for the base type
+        using Base = ProbesBase<patchPointProber>;
 
 
 public:
@@ -142,7 +121,7 @@ public:
 
     // Constructors
 
-        //- Construct from Time and dictionary
+        //- Construct from name, Time and dictionary
         patchProbes
         (
             const word& name,
@@ -152,51 +131,23 @@ public:
             const bool readFields = true
         );
 
+
     //- Destructor
     virtual ~patchProbes() = default;
 
 
     // Member Functions
 
-        //- Sample and store result if the sampleOnExecute is enabled.
-        virtual bool execute();
+        //- Bring Base::prober into this class's public scope.
+        using Base::prober;
 
-        //- Sample and write
-        virtual bool write();
-
-        //- Read
+        //- Read the settings from the dictionary
         virtual bool read(const dictionary&);
-
-
-    // Sampling
-
-        //- Sample a volume field at all locations
-        template<class Type>
-        tmp<Field<Type>> sample(const VolumeField<Type>&) const;
-
-        //- Sample a surface field at all locations
-        template<class Type>
-        tmp<Field<Type>> sample(const SurfaceField<Type>&) const;
-
-        //- Sample a single field on all sample locations
-        template<class Type>
-        tmp<Field<Type>> sample(const word& fieldName) const;
-
-        //- Sample a surface field at all locations
-        template<class Type>
-        tmp<Field<Type>> sampleSurfaceField(const word& fieldName) const;
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "patchProbesTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

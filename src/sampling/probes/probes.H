@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,90 +31,74 @@ Group
     grpUtilitiesFunctionObjects
 
 Description
-    Set of locations to sample.
+    Function object to sample fields at specified internal-mesh locations and
+    write to file.
 
-    Call write() to sample and write files.
-
-    Example of function object specification:
+Usage
+    Minimal example by using \c system/controlDict.functions:
     \verbatim
     probes
     {
+        // Mandatory entries
         type            probes;
         libs            (sampling);
 
-        // Name of the directory for probe data
-        name            probes;
+        fields          (<wordRes>);
+        probeLocations  (<vectorList>);
 
-        // Write at same frequency as fields
-        writeControl    outputTime;
-        writeInterval   1;
+        // Optional entries
+        verbose         <bool>;
+        sampleOnExecute <bool>;
+        fixedLocations  <bool>;
+        includeOutOfBounds <bool>;
+        interpolationScheme <word>;
 
-        // Fields to be probed
-        fields          (U "p.*");
-
-        // Optional: do not recalculate cells if mesh moves
-        fixedLocations  false;
-
-        // Optional: interpolation scheme to use (default is cell)
-        interpolationScheme cellPoint;
-
-        probeLocations
-        (
-            ( 1e-06 0 0.01 )      // at inlet
-            (0.21 -0.20999 0.01)  // at outlet1
-            (0.21 0.20999 0.01)   // at outlet2
-            (0.21 0 0.01)         // at central block
-        );
-
-        // Optional: filter out points that haven't been found. Default
-        //           is to include them (with value -VGREAT)
-        includeOutOfBounds  true;
+        // Inherited entries
+        ...
     }
     \endverbatim
 
-    Entries:
+    where the entries mean:
     \table
-        Property | Description                              | Required | Default
-        type     | Type-name: probes                        | yes |
-        probeLocations | Probe locations                    | yes |
-        fields   | word/regex list of fields to sample      | yes |
-        interpolationScheme | scheme to obtain values       | no  | cell
-        fixedLocations | Do not recalculate cells if mesh moves | no | true
-        includeOutOfBounds | Include out-of-bounds locations | no | true
-        sampleOnExecute | Sample on execution and store results | no | false
+      Property     | Description                           | Type | Reqd | Deflt
+      type         | Type name: probes                     | word |  yes  | -
+      libs         | Library name: sampling                | word |  yes  | -
+      fields       | Names of fields to probe              | wordRes | yes | -
+      probeLocations | Locations of probes              | vectorList | yes | -
+      verbose      | Enable/disable verbose output         | bool | no | false
+      sampleOnExecute | Sample on execution and store results | bool | no <!--
+                   -->                                               | false
+      fixedLocations | Do not recalculate cells if mesh moves | bool | no | true
+      includeOutOfBounds | Include out-of-bounds locations | bool | no | true
+      interpolationScheme | Scheme to obtain values at the points | word <!--
+                   -->                                            | no | cell
     \endtable
+
+    The inherited entries are elaborated in:
+     - \link fvMeshFunctionObject.H \endlink
+     - \link ProbesBase.H \endlink
+     - \link internalPointProber.H \endlink
+     - \link pointProberBase.H \endlink
+
+Note
+  - The \c includeOutOfBounds filters out points that haven't been found.
+    Default is to include them (with value \c -VGREAT).
 
 SourceFiles
     probes.C
-    probesTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef Foam_probes_H
 #define Foam_probes_H
 
-#include "fvMeshFunctionObject.H"
-#include "HashPtrTable.H"
-#include "OFstream.H"
-#include "polyMesh.H"
-#include "pointField.H"
-#include "volFieldsFwd.H"
-#include "surfaceFieldsFwd.H"
-#include "surfaceMesh.H"
-#include "wordRes.H"
-#include "IOobjectList.H"
+#include "ProbesBase.H"
+#include "internalPointProber.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// Forward Declarations
-class Time;
-class objectRegistry;
-class dictionary;
-class fvMesh;
-class mapPolyMesh;
 
 /*---------------------------------------------------------------------------*\
                           Class probes Declaration
@@ -122,146 +106,13 @@ class mapPolyMesh;
 
 class probes
 :
-    public functionObjects::fvMeshFunctionObject,
-    public pointField
+    public ProbesBase<internalPointProber>
 {
-protected:
+    // Private Data
 
-    // Protected Classes
+        //- Use simpler synonym for the base type
+        using Base = ProbesBase<internalPointProber>;
 
-        //- Grouping of field names by GeometricField type
-        template<class GeoField>
-        struct fieldGroup : public DynamicList<word> {};
-
-
-    // Data Types
-
-        //- Local control for sampling actions
-        enum sampleActionType : unsigned
-        {
-            ACTION_NONE  = 0,
-            ACTION_WRITE = 0x1,
-            ACTION_STORE = 0x2,
-            ACTION_ALL = 0xF
-        };
-
-
-    // Protected Data
-
-        //- Load fields from files (not from objectRegistry)
-        bool loadFromFiles_;
-
-        //- Fixed locations (default: true)
-        //  Note: set to false for moving mesh calculations where locations
-        //        should move with the mesh
-        bool fixedLocations_;
-
-        //- Include probes that were not found (default: true)
-        bool includeOutOfBounds_;
-
-        //- Output verbosity
-        bool verbose_;
-
-        //- Perform sample actions on execute as well
-        bool onExecute_;
-
-        //- Requested names of fields to probe
-        wordRes fieldSelection_;
-
-        //- Interpolation/sample scheme to obtain values at the points
-        //  Note: only possible when fixedLocations_ is true
-        word samplePointScheme_;
-
-
-    // Calculated
-
-        //- Current list of field names selected for sampling
-        DynamicList<word> selectedFieldNames_;
-
-        //- Categorized scalar/vector/tensor volume fields
-        fieldGroup<volScalarField> scalarFields_;
-        fieldGroup<volVectorField> vectorFields_;
-        fieldGroup<volSphericalTensorField> sphericalTensorFields_;
-        fieldGroup<volSymmTensorField> symmTensorFields_;
-        fieldGroup<volTensorField> tensorFields_;
-
-        //- Categorized scalar/vector/tensor surface fields
-        fieldGroup<surfaceScalarField> surfaceScalarFields_;
-        fieldGroup<surfaceVectorField> surfaceVectorFields_;
-        fieldGroup<surfaceSphericalTensorField> surfaceSphericalTensorFields_;
-        fieldGroup<surfaceSymmTensorField> surfaceSymmTensorFields_;
-        fieldGroup<surfaceTensorField> surfaceTensorFields_;
-
-        //- Cells to be probed (obtained from the locations)
-        labelList elementList_;
-
-        //- Faces to be probed
-        labelList faceList_;
-
-        //- Processor holding the cell or face (-1 if point not found
-        //  on any processor)
-        labelList processor_;
-
-        //- Current open files (non-empty on master only)
-        HashPtrTable<OFstream> probeFilePtrs_;
-
-        //- Patch IDs on which the new probes are located (for patchProbes)
-        labelList patchIDList_;
-
-        //- Original probes location (only used for patchProbes)
-        pointField oldPoints_;
-
-
-    // Protected Member Functions
-
-        //- Find cells and faces containing probes
-        virtual void findElements(const fvMesh& mesh);
-
-        //- Classify field types, close/open file streams
-        //  \return number of fields to sample
-        label prepare(unsigned request);
-
-        //- Get from registry or load from disk
-        template<class GeoField>
-        tmp<GeoField> getOrLoadField(const word& fieldName) const;
-
-        //- Store results: min/max/average/size
-        template<class Type>
-        void storeResults(const word& fieldName, const Field<Type>& values);
-
-
-private:
-
-    // Private Member Functions
-
-        //- Create new streams as required
-        void createProbeFiles(const wordList& fieldNames);
-
-        //- Write field values
-        template<class Type>
-        void writeValues
-        (
-            const word& fieldName,
-            const Field<Type>& values,
-            const scalar timeValue
-        );
-
-        //- Sample and store/write all applicable sampled fields
-        template<class GeoField>
-        void performAction
-        (
-            const fieldGroup<GeoField>& fieldNames,  /* must be sorted */
-            unsigned request
-        );
-
-        //- Perform sampling action with store/write
-        bool performAction(unsigned request);
-
-        //- No copy construct
-        probes(const probes&) = delete;
-
-        //- No copy assignment
-        void operator=(const probes&) = delete;
 
 public:
 
@@ -288,83 +139,16 @@ public:
 
     // Member Functions
 
-        //- Enable/disable verbose output
-        //  \return old value
-        bool verbose(const bool on) noexcept;
+        //- Bring Base::prober into this class's public scope.
+        using Base::prober;
 
-        //- Return names of fields to probe
-        virtual const wordRes& fieldNames() const noexcept
-        {
-            return fieldSelection_;
-        }
-
-        //- Return locations to probe
-        virtual const pointField& probeLocations() const noexcept
-        {
-            return *this;
-        }
-
-        //- Return location for probe i
-        virtual const point& probe(const label i) const
-        {
-            return operator[](i);
-        }
-
-        //- Cells to be probed (obtained from the locations)
-        const labelList& elements() const noexcept
-        {
-            return elementList_;
-        }
-
-        //- Read the probes
+        //- Read the settings from the dictionary
         virtual bool read(const dictionary&);
-
-        //- Sample and store result if the sampleOnExecute is enabled.
-        virtual bool execute();
-
-        //- Sample and write
-        virtual bool write();
-
-        //- Update for changes of mesh
-        virtual void updateMesh(const mapPolyMesh&);
-
-        //- Update for changes of mesh
-        virtual void movePoints(const polyMesh&);
-
-        //- Update for changes of mesh due to readUpdate
-        virtual void readUpdate(const polyMesh::readUpdateState state)
-        {}
-
-
-    // Sampling
-
-        //- Sample a volume field at all locations
-        template<class Type>
-        tmp<Field<Type>> sample(const VolumeField<Type>&) const;
-
-        //- Sample a surface field at all locations
-        template<class Type>
-        tmp<Field<Type>> sample(const SurfaceField<Type>&) const;
-
-        //- Sample a volume field at all locations
-        template<class Type>
-        tmp<Field<Type>> sample(const word& fieldName) const;
-
-        //- Sample a surface field at all locations
-        template<class Type>
-        tmp<Field<Type>> sampleSurfaceField(const word& fieldName) const;
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "probesTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

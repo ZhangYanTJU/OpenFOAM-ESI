@@ -1,3 +1,6 @@
+probes/pointProbers/pointProberBase.C
+probes/pointProbers/internalPointProber.C
+probes/pointProbers/patchPointProber.C
 probes/probes.C
 probes/patchProbes.C
 

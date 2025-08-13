@@ -42,7 +42,8 @@ void Foam::functionObjects::thermoCoupleProbes::writeValues
 
         os  << setw(w) << timeValue;
 
-        forAll(*this, probei)
+        const pointField& probes = prober().probeLocations();
+        forAll(probes, probei)
         {
             // if (includeOutOfBounds_ || processor_[probei] != -1)
             {
