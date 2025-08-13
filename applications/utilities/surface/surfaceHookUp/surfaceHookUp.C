@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -268,6 +268,12 @@ int main(int argc, char *argv[])
     argList::noParallel();
     argList::addArgument("hookTolerance", "The point merge tolerance");
     argList::addOption("dict", "file", "Alternative surfaceHookUpDict");
+    argList::addOption
+    (
+        "maxIters",
+        "number",
+        "Maximum number of iterations (default: 100)"
+    );
 
     #include "setRootCase.H"
     #include "createTime.H"
@@ -281,9 +287,10 @@ int main(int argc, char *argv[])
 
     const scalar dist(args.get<scalar>(1));
     const scalar matchTolerance(Foam::max(1e-6*dist, SMALL));
-    const label maxIters = 100;
+    const label maxIters = args.getOrDefault<label>("maxIters", 100);
 
-    Info<< "Hooking distance = " << dist << endl;
+    Info<< "Hooking distance = " << dist << nl
+        << "Maximum iterations = " << maxIters << endl;
 
     searchableSurfaces surfs
     (
