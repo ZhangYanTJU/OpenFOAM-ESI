@@ -34,7 +34,8 @@ Description
 
 SourceFiles
     foamVtkFormatter.C
-    foamVtkFormatterTemplates.C
+    foamVtkFormatter.txx
+    foamVtkFormatterI.H
 
 \*---------------------------------------------------------------------------*/
 
@@ -560,7 +561,7 @@ inline uint64_t sizeofData(label count)
 #include "foamVtkFormatterI.H"
 
 #ifdef NoRepository
-    #include "foamVtkFormatterTemplates.C"
+    #include "foamVtkFormatter.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

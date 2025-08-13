@@ -38,7 +38,8 @@ Description
 
 SourceFiles
     foamVtkOutput.C
-    foamVtkOutputTemplates.C
+    foamVtkOutput.txx
+    foamVtkOutputI.H
 
 \*---------------------------------------------------------------------------*/
 
@@ -352,7 +353,7 @@ namespace legacy
 #include "foamVtkOutputI.H"
 
 #ifdef NoRepository
-    #include "foamVtkOutputTemplates.C"
+    #include "foamVtkOutput.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

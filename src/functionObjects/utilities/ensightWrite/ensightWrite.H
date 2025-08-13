@@ -135,8 +135,8 @@ See also
 
 SourceFiles
     ensightWrite.C
-    ensightWriteImpl.C
-    ensightWriteUpdate.C
+    ensightWriteImpl.cxx
+    ensightWriteUpdate.cxx
 
 \*---------------------------------------------------------------------------*/
 
@@ -158,10 +158,6 @@ SourceFiles
 
 namespace Foam
 {
-
-// Forward Declarations
-class dictionary;
-
 namespace functionObjects
 {
 
@@ -173,7 +169,7 @@ class ensightWrite
 :
     public fvMeshFunctionObject
 {
-    // Private data
+    // Private Data
 
         //- Ensight writer options
         ensightMesh::options writeOpts_;
@@ -188,7 +184,7 @@ class ensightWrite
         bool consecutive_;
 
         //- Track changes in mesh geometry
-        enum polyMesh::readUpdateState meshState_;
+        polyMesh::readUpdateState meshState_;
 
         //- Requested selection of fields to process
         wordRes selectFields_;
@@ -212,16 +208,10 @@ class ensightWrite
     // Private Member Functions
 
         //- Ensight case handler
-        ensightCase& ensCase()
-        {
-            return *ensCase_;
-        }
+        ensightCase& ensCase() { return *ensCase_; }
 
         //- Ensight mesh handler
-        ensightMesh& ensMesh()
-        {
-            return *ensMesh_;
-        }
+        ensightMesh& ensMesh() { return *ensMesh_; }
 
 
         //- Update mesh subset according to zones, geometry, bounds
@@ -252,13 +242,6 @@ class ensightWrite
             const wordHashSet& candidateNames
         );
 
-        //- No copy construct
-        ensightWrite(const ensightWrite&) = delete;
-
-        //- No copy assignment
-        void operator=(const ensightWrite&) = delete;
-
-
 public:
 
     //- Runtime type information
@@ -274,6 +257,12 @@ public:
             const Time& runTime,
             const dictionary& dict
         );
+
+        //- No copy construct
+        ensightWrite(const ensightWrite&) = delete;
+
+        //- No copy assignment
+        void operator=(const ensightWrite&) = delete;
 
 
     //- Destructor

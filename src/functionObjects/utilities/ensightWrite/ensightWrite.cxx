@@ -49,7 +49,7 @@ namespace functionObjects
 }
 
 // Implementation
-#include "ensightWriteImpl.C"
+#include "ensightWriteImpl.cxx"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -96,17 +96,10 @@ Foam::functionObjects::ensightWrite::ensightWrite
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
-    writeOpts_(),
     caseOpts_("format", dict, IOstreamOption::BINARY),
-    outputDir_(),
     consecutive_(false),
     meshState_(polyMesh::TOPO_CHANGE),
-    selectFields_(),
-    blockFields_(),
-    selection_(),
-    meshSubset_(mesh_),
-    ensCase_(nullptr),
-    ensMesh_(nullptr)
+    meshSubset_(mesh_)
 {
     // May still want this? (OCT-2018)
     // if (postProcess)

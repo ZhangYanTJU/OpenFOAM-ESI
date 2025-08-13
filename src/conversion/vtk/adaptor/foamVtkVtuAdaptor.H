@@ -39,7 +39,7 @@ Note
 
 SourceFiles
     foamVtkVtuAdaptorI.H
-    foamVtkVtuAdaptorTemplates.C
+    foamVtkVtuAdaptor.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -156,7 +156,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "foamVtkVtuAdaptorTemplates.C"
+    #include "foamVtkVtuAdaptor.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

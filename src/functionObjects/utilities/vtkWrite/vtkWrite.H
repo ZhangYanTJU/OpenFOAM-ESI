@@ -130,8 +130,9 @@ See also
     Foam::cellBitSet::select
 
 SourceFiles
-    vtkWrite.C
-    vtkWriteImpl.C
+    vtkWrite.cxx
+    vtkWriteImpl.cxx
+    vtkWriteUpdate.cxx
 
 \*---------------------------------------------------------------------------*/
 
@@ -193,7 +194,7 @@ class vtkWrite
         bool writeIds_;
 
         //- Track changes in mesh geometry
-        enum polyMesh::readUpdateState meshState_;
+        polyMesh::readUpdateState meshState_;
 
         //- Requested names of regions to process
         wordRes selectRegions_;
@@ -294,13 +295,6 @@ class vtkWrite
         ) const;
 
 
-        //- No copy construct
-        vtkWrite(const vtkWrite&) = delete;
-
-        //- No copy assignment
-        void operator=(const vtkWrite&) = delete;
-
-
 public:
 
     //- Runtime type information
@@ -316,6 +310,12 @@ public:
             const Time& runTime,
             const dictionary& dict
         );
+
+        //- No copy construct
+        vtkWrite(const vtkWrite&) = delete;
+
+        //- No copy assignment
+        void operator=(const vtkWrite&) = delete;
 
 
     //- Destructor

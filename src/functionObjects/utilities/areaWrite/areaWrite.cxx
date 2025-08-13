@@ -28,11 +28,13 @@ License
 #include "areaWrite.H"
 #include "polySurface.H"
 
+#include "faMesh.H"
 #include "fvMesh.H"
 #include "mapPolyMesh.H"
 #include "areaFields.H"
 #include "HashOps.H"
 #include "ListOps.H"
+#include "IOobjectList.H"
 #include "Time.H"
 #include "IndirectList.H"
 #include "addToRunTimeSelectionTable.H"
@@ -55,7 +57,7 @@ Foam::scalar Foam::areaWrite::mergeTol_ = 1e-10;
 
 
 // Implementation
-#include "areaWriteImpl.C"
+#include "areaWriteImpl.cxx"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -72,12 +74,7 @@ Foam::areaWrite::areaWrite
     outputPath_
     (
         time_.globalPath()/functionObject::outputPrefix/name
-    ),
-    selectAreas_(),
-    fieldSelection_(),
-    meshes_(),
-    surfaces_(nullptr),
-    writers_()
+    )
 {
     outputPath_.clean();  // Remove unneeded ".."
 
@@ -99,12 +96,7 @@ Foam::areaWrite::areaWrite
     outputPath_
     (
         time_.globalPath()/functionObject::outputPrefix/name
-    ),
-    selectAreas_(),
-    fieldSelection_(),
-    meshes_(),
-    surfaces_(nullptr),
-    writers_()
+    )
 {
     outputPath_.clean();  // Remove unneeded ".."
 
@@ -112,9 +104,15 @@ Foam::areaWrite::areaWrite
 }
 
 
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::areaWrite::~areaWrite()
+{}  // Define here: header had forward declared classes
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::areaWrite::verbose(const bool on) noexcept
+bool Foam::areaWrite::verbose(bool on) noexcept
 {
     bool old(verbose_);
     verbose_ = on;
@@ -393,6 +391,7 @@ bool Foam::areaWrite::write()
 
 void Foam::areaWrite::expire()
 {
+    // Clear the registry contents
     surfaces_->clear();
 
     // Dimension as fraction of mesh bounding box
@@ -434,13 +433,15 @@ void Foam::areaWrite::readUpdate(const polyMesh::readUpdateState state)
 }
 
 
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
 Foam::scalar Foam::areaWrite::mergeTol() noexcept
 {
     return mergeTol_;
 }
 
 
-Foam::scalar Foam::areaWrite::mergeTol(const scalar tol) noexcept
+Foam::scalar Foam::areaWrite::mergeTol(scalar tol) noexcept
 {
     scalar old(mergeTol_);
     mergeTol_ = tol;

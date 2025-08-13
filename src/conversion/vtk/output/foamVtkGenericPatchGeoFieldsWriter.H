@@ -32,7 +32,7 @@ Description
     Caution, currently only works properly for indirect patches.
 
 SourceFiles
-    foamVtkGenericPatchGeoFieldsWriter.C
+    foamVtkGenericPatchGeoFieldsWriter.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -117,7 +117,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "foamVtkGenericPatchGeoFieldsWriter.C"
+    #include "foamVtkGenericPatchGeoFieldsWriter.txx"
 #endif
 
 

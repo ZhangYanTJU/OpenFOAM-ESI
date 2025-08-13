@@ -72,8 +72,8 @@ Usage
       libs     | Library name: utilityFunctionObjects | word | yes | -
       fields   | Name of operand fields             | wordRes | yes | -
       surfaceFormat | Output surface format         | word | yes | -
-      areas   | Names of multiple areas             | wordRes | no  | -
-      area    | Name of the selected area           | word | no  | -
+      areas   | Names of finite-area regions        | wordRes | no  | -
+      area    | Name of finite-area region          | word | no  | -
       formatOptions | Dictionary of format options  | dict | no  | -
     \endtable
 
@@ -82,8 +82,8 @@ Usage
       - \link surfaceWriter.H \endlink
 
 SourceFiles
-    areaWrite.C
-    areaWriteTemplates.C
+    areaWrite.cxx
+    areaWriteImpl.cxx
 
 \*---------------------------------------------------------------------------*/
 
@@ -95,7 +95,6 @@ SourceFiles
 #include "areaFieldsFwd.H"
 #include "surfaceWriter.H"
 #include "HashPtrTable.H"
-#include "IOobjectList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -105,6 +104,7 @@ namespace Foam
 // Forward Declarations
 class faMesh;
 class polySurface;
+class IOobjectList;
 
 /*---------------------------------------------------------------------------*\
                           Class areaWrite Declaration
@@ -145,7 +145,7 @@ class areaWrite
 
         //- Hold intermediate surfaces.
         //  The faMesh has an indirect face list but we require real ones.
-        autoPtr<objectRegistry> surfaces_;
+        std::unique_ptr<objectRegistry> surfaces_;
 
 
     // Output control
@@ -155,6 +155,9 @@ class areaWrite
 
 
     // Private Member Functions
+
+        //- Mark intermediate surfaces and writers as needing an update.
+        void expire();
 
         //- Write fieldName on surface and on outputDir path.
         //  Can have a field nullptr for partially missing fields,
@@ -177,20 +180,19 @@ class areaWrite
             const IOobjectList& objects
         );
 
-        //- Mark intermediate surfaces and writers as needing an update.
-        void expire();
+public:
+
+    //- Runtime type information
+    TypeName("areaWrite");
+
+
+    // Generated Methods
 
         //- No copy construct
         areaWrite(const areaWrite&) = delete;
 
         //- No copy assignment
         void operator=(const areaWrite&) = delete;
-
-
-public:
-
-    //- Runtime type information
-    TypeName("areaWrite");
 
 
     // Constructors
@@ -215,14 +217,14 @@ public:
 
 
     //- Destructor
-    virtual ~areaWrite() = default;
+    virtual ~areaWrite();
 
 
     // Member Functions
 
         //- Enable/disable verbose output
         //  \return old value
-        bool verbose(const bool on) noexcept;
+        bool verbose(bool on) noexcept;
 
         //- Read the function-object dictionary
         virtual bool read(const dictionary& dict);
@@ -246,7 +248,7 @@ public:
         static scalar mergeTol() noexcept;
 
         //- Set merge tolerance and return old value
-        static scalar mergeTol(const scalar tol) noexcept;
+        static scalar mergeTol(scalar tol) noexcept;
 };
 
 

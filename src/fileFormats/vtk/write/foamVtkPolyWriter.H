@@ -42,7 +42,7 @@ Note
 
 SourceFiles
     foamVtkPolyWriter.C
-    foamVtkPolyWriterTemplates.C
+    foamVtkPolyWriter.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -253,7 +253,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "foamVtkPolyWriterTemplates.C"
+    #include "foamVtkPolyWriter.txx"
 #endif
 
 

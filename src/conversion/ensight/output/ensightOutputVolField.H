@@ -177,7 +177,7 @@ bool writePointField
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "ensightOutputVolFieldTemplates.C"
+    #include "ensightOutputVolField.txx"
 #endif
 
 #endif

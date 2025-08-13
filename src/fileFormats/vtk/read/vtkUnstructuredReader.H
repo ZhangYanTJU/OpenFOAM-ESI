@@ -358,7 +358,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "vtkUnstructuredReaderTemplates.C"
+    #include "vtkUnstructuredReader.txx"
 #endif
 
 

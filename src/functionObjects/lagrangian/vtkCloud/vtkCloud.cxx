@@ -47,6 +47,12 @@ namespace functionObjects
 }
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Implementation
+#include "vtkCloudImpl.cxx"
+
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::functionObjects::vtkCloud::writeVerts

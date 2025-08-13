@@ -49,7 +49,7 @@ Description
 
 SourceFiles
     ensightSurfaceReader.C
-    ensightSurfaceReaderTemplates.C
+    ensightSurfaceReader.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -285,7 +285,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "ensightSurfaceReaderTemplates.C"
+    #include "ensightSurfaceReader.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

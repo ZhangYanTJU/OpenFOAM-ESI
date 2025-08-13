@@ -49,7 +49,7 @@ namespace functionObjects
 
 
 // Implementation
-#include "vtkWriteImpl.C"
+#include "vtkWriteImpl.cxx"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -134,8 +134,6 @@ Foam::functionObjects::vtkWrite::vtkWrite
 )
 :
     timeFunctionObject(name, runTime),
-    outputDir_(),
-    printf_(),
     writeOpts_(vtk::formatType::INLINE_BASE64),
     verbose_(true),
     doInternal_(true),
@@ -144,17 +142,7 @@ Foam::functionObjects::vtkWrite::vtkWrite
     interpolate_(false),
     decompose_(false),
     writeIds_(false),
-    meshState_(polyMesh::TOPO_CHANGE),
-    selectRegions_(),
-    selectPatches_(),
-    blockPatches_(),
-    selectFields_(),
-    blockFields_(),
-    selection_(),
-    meshes_(),
-    meshSubsets_(),
-    vtuMappings_(),
-    series_()
+    meshState_(polyMesh::TOPO_CHANGE)
 {
     // May still want this? (OCT-2018)
     // if (postProcess)

@@ -129,8 +129,8 @@ See also
     Foam::functionObjects::timeControl
 
 SourceFiles
-    vtkCloud.C
-    vtkCloudTemplates.C
+    vtkCloud.cxx
+    vtkCloudImpl.cxx
 
 \*---------------------------------------------------------------------------*/
 
@@ -259,12 +259,6 @@ public:
 
 } // End namespace functionObjects
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "vtkCloudTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

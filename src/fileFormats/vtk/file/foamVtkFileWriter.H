@@ -42,8 +42,8 @@ Description
 
 SourceFiles
     foamVtkFileWriter.C
+    foamVtkFileWriter.txx
     foamVtkFileWriterI.H
-    foamVtkFileWriterTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -350,7 +350,7 @@ public:
 #include "foamVtkFileWriterI.H"
 
 #ifdef NoRepository
-    #include "foamVtkFileWriterTemplates.C"
+    #include "foamVtkFileWriter.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

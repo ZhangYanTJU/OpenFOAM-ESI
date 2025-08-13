@@ -30,8 +30,8 @@ Description
     A collection of functions for writing clouds as ensight file content.
 
 SourceFiles
-    ensightOutputCloud.C
-    ensightOutputCloudTemplates.C
+    ensightOutputCloud.cxx
+    ensightOutputCloud.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -181,7 +181,7 @@ label writeCloudFieldContent
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "ensightOutputCloudTemplates.C"
+    #include "ensightOutputCloud.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

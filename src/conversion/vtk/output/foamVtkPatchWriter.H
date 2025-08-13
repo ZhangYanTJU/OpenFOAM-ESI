@@ -43,7 +43,7 @@ See Also
     Foam::vtk::patchMeshWriter
 
 SourceFiles
-    foamVtkPatchWriterTemplates.C
+    foamVtkPatchWriter.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -202,7 +202,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "foamVtkPatchWriterTemplates.C"
+    #include "foamVtkPatchWriter.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

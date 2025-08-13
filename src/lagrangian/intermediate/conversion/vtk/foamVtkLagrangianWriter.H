@@ -40,8 +40,8 @@ Note
     must be decided at construction time.
 
 SourceFiles
-    lagrangianWriter.C
-    lagrangianWriterTemplates.C
+    foamVtkLagrangianWriter.cxx
+    foamVtkLagrangianWriter.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -229,7 +229,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "foamVtkLagrangianWriterTemplates.C"
+    #include "foamVtkLagrangianWriter.txx"
 #endif
 
 

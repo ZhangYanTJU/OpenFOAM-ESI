@@ -126,8 +126,8 @@ submodels/CloudFunctionObjects/CloudFunctionObject/cloudFunctionObjectTools.C
 submodels/MPPIC/AveragingMethods/makeAveragingMethods.C
 
 /* conversion methods */
-conversion/ensight/ensightOutputCloud.C
-conversion/vtk/foamVtkLagrangianWriter.C
+conversion/ensight/ensightOutputCloud.cxx
+conversion/vtk/foamVtkLagrangianWriter.cxx
 
 
 LIB = $(FOAM_LIBBIN)/liblagrangianIntermediate

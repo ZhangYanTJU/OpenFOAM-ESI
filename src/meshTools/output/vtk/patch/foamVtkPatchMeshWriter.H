@@ -43,8 +43,8 @@ See Also
     Foam::vtk::patchWriter
 
 SourceFiles
-    foamVtkPatchMeshWriter.C
-    foamVtkPatchMeshWriterTemplates.C
+    foamVtkPatchMeshWriter.cxx
+    foamVtkPatchMeshWriter.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -234,7 +234,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "foamVtkPatchMeshWriterTemplates.C"
+    #include "foamVtkPatchMeshWriter.txx"
 #endif
 
 

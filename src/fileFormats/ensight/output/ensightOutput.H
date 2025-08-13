@@ -31,7 +31,7 @@ Description
 
 SourceFiles
     ensightOutput.C
-    ensightOutputTemplates.C
+    ensightOutput.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -557,7 +557,7 @@ bool writeFaceLocalField
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "ensightOutputTemplates.C"
+    #include "ensightOutput.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

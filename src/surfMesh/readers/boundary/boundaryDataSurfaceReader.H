@@ -55,7 +55,7 @@ Description
 
 SourceFiles
     boundaryDataSurfaceReader.C
-    boundaryDataSurfaceReaderTemplates.C
+    boundaryDataSurfaceReader.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -242,7 +242,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "boundaryDataSurfaceReaderTemplates.C"
+    #include "boundaryDataSurfaceReader.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

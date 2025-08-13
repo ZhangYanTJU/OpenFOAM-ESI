@@ -4,10 +4,10 @@ caseInfo/caseInfo.C
 
 codedFunctionObject/codedFunctionObject.C
 
-areaWrite/areaWrite.C
+areaWrite/areaWrite.cxx
 
-ensightWrite/ensightWrite.C
-ensightWrite/ensightWriteUpdate.C
+ensightWrite/ensightWrite.cxx
+ensightWrite/ensightWriteUpdate.cxx
 
 foamReport/foamReport.C
 foamReport/substitutionModels/substitutionModel/substitutionModel.C
@@ -20,8 +20,8 @@ foamReport/substitutionModels/userValue/userValue.C
 
 graphFunctionObject/graphFunctionObject.C
 
-vtkWrite/vtkWrite.C
-vtkWrite/vtkWriteUpdate.C
+vtkWrite/vtkWrite.cxx
+vtkWrite/vtkWriteUpdate.cxx
 
 multiRegion/multiRegion.C
 

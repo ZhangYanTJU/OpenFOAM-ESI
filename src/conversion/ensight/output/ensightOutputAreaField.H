@@ -98,7 +98,7 @@ bool writeAreaField
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "ensightOutputAreaFieldTemplates.C"
+    #include "ensightOutputAreaField.txx"
 #endif
 
 #endif

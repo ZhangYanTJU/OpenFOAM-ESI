@@ -47,7 +47,7 @@ Note
     may be addressed using ghost points.
 
 SourceFiles
-    surfaceFieldWriter.C
+    foamVtkSurfaceFieldWriter.cxx
 
 \*---------------------------------------------------------------------------*/
 

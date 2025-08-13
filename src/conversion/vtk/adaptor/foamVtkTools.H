@@ -39,7 +39,7 @@ Note
 
 SourceFiles
     foamVtkToolsI.H
-    foamVtkToolsTemplates.C
+    foamVtkTools.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -358,7 +358,7 @@ void Foam::vtk::Tools::remapTuple<Foam::symmTensor>(double data[])
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "foamVtkToolsTemplates.C"
+    #include "foamVtkTools.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

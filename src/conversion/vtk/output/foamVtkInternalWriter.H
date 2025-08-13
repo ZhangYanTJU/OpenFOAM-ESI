@@ -44,7 +44,7 @@ See Also
     Foam::vtk::internalMeshWriter
 
 SourceFiles
-    foamVtkInternalWriterTemplates.C
+    foamVtkInternalWriter.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -183,7 +183,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "foamVtkInternalWriterTemplates.C"
+    #include "foamVtkInternalWriter.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

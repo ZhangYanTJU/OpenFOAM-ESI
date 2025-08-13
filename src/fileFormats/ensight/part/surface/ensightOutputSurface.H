@@ -38,7 +38,7 @@ Note
 
 SourceFiles
     ensightOutputSurface.C
-    ensightOutputSurfaceTemplates.C
+    ensightOutputSurface.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -136,7 +136,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "ensightOutputSurfaceTemplates.C"
+    #include "ensightOutputSurface.txx"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

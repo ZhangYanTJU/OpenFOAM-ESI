@@ -34,7 +34,7 @@ SourceFiles
     ensightCase.C
     ensightCaseI.H
     ensightCaseOptions.C
-    ensightCaseTemplates.C
+    ensightCase.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -548,7 +548,7 @@ public:
 #include "ensightCaseI.H"
 
 #ifdef NoRepository
-    #include "ensightCaseTemplates.C"
+    #include "ensightCase.txx"
 #endif
 
 #endif
