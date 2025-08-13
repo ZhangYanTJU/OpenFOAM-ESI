@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2015-2024 OpenCFD Ltd.
+#     Copyright (C) 2015-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -233,7 +233,7 @@ getApplication()
 #
 runApplication()
 {
-    local appName appRun optValue logFile logMode
+    local appRun optValue logDir logMode prefix suffix
 
     # Any additional parsed arguments (eg, decomposeParDict)
     local appArgs
@@ -250,8 +250,16 @@ runApplication()
         (-o | -overwrite)
             logMode=overwrite
             ;;
+        (-d | -directory)
+            logDir="${2%/}/"
+            shift
+            ;;
+        (-p | -prefix)
+            prefix="$2"
+            shift
+            ;;
         (-s | -suffix)
-            logFile=".$2"
+            suffix=".${2#.}"
             shift
             ;;
 
@@ -279,10 +287,10 @@ runApplication()
         shift
     done
 
-    appName="${appRun##*/}"
-    logFile="log.$appName$logFile"
+    local appName="${appRun##*/}"
+    local logFile="$logDir${prefix:-log.}$appName$suffix"
 
-    if [ -f "$logFile" ] && [ -z "$logMode" ]
+    if [ -z "$logMode" ] && [ -f "$logFile" ]
     then
         echo "$appName already run on $PWD:" \
              "remove log file '$logFile' to re-run"
@@ -290,9 +298,9 @@ runApplication()
         echo "Running $appRun on $PWD"
         if [ "$logMode" = append ]
         then
-            $appRun $appArgs "$@" >> $logFile 2>&1
+            $appRun $appArgs "$@" >> "$logFile" 2>&1
         else
-            $appRun $appArgs "$@" > $logFile 2>&1
+            $appRun $appArgs "$@" > "$logFile" 2>&1
         fi
     fi
 }
@@ -304,7 +312,7 @@ runApplication()
 #
 runParallel()
 {
-    local appName appRun optValue logFile logMode
+    local appRun optValue logDir logMode prefix suffix
     local mpiopts nProcs
 
     # Any additional parsed arguments (eg, decomposeParDict)
@@ -332,8 +340,16 @@ runParallel()
         (-o | -overwrite)
             logMode=overwrite
             ;;
+        (-d | -directory)
+            logDir="${2%/}/"
+            shift
+            ;;
+        (-p | -prefix)
+            prefix="$2"
+            shift
+            ;;
         (-s | -suffix)
-            logFile=".$2"
+            suffix=".${2#.}"
             shift
             ;;
         (-n | -np)
@@ -370,10 +386,10 @@ runParallel()
 
     [ -n "$nProcs" ] || nProcs=$(getNumberOfProcessors system/decomposeParDict)
 
-    appName="${appRun##*/}"
-    logFile="log.$appName$logFile"
+    local appName="${appRun##*/}"
+    local logFile="$logDir${prefix:-log.}$appName$suffix"
 
-    if [ -f "$logFile" ] && [ -z "$logMode" ]
+    if [ -z "$logMode" ] && [ -f "$logFile" ]
     then
         echo "$appName already run on $PWD:" \
              "remove log file '$logFile' to re-run"
@@ -383,11 +399,11 @@ runParallel()
         if [ "$logMode" = append ]
         then
         (
-            "$mpirun" $mpiopts -n "${nProcs:?}" $appRun $appArgs "$@" </dev/null >> $logFile 2>&1
+            "$mpirun" $mpiopts -n "${nProcs:?}" $appRun $appArgs "$@" </dev/null >> "$logFile" 2>&1
         )
         else
         (
-            "$mpirun" $mpiopts -n "${nProcs:?}" $appRun $appArgs "$@" </dev/null > $logFile 2>&1
+            "$mpirun" $mpiopts -n "${nProcs:?}" $appRun $appArgs "$@" </dev/null > "$logFile" 2>&1
         )
         fi
     fi
