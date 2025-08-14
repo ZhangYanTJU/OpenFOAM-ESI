@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -263,6 +263,9 @@ void Foam::processorMeshes::reconstructPoints(fvMesh& mesh)
 
 void Foam::processorMeshes::removeFiles(const polyMesh& mesh)
 {
+    // polyMesh
+    // ~~~~~~~~
+
     IOobject io
     (
         "procAddressing",
@@ -291,24 +294,18 @@ void Foam::processorMeshes::removeFiles(const polyMesh& mesh)
     fileHandler().rm(fileHandler().filePath(io.objectPath()));
 
 
-
     // pointMesh
     // ~~~~~~~~~
 
-    IOobject pointIO
-    (
-        "boundary",
-        mesh.facesInstance(),
-        polyMesh::meshSubDir/pointMesh::meshSubDir,
-        mesh.thisDb()
-    );
+    io.local() = (polyMesh::meshSubDir/pointMesh::meshSubDir);
 
     // pointMesh/boundary
-    fileHandler().rm(fileHandler().filePath(pointIO.objectPath()));
+    io.rename("boundary");
+    fileHandler().rm(fileHandler().filePath(io.objectPath()));
 
-    // boundaryProcAddressing
+    // pointMesh/boundaryProcAddressing
     io.rename("boundaryProcAddressing");
-    fileHandler().rm(fileHandler().filePath(pointIO.objectPath()));
+    fileHandler().rm(fileHandler().filePath(io.objectPath()));
 }
 
 
