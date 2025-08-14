@@ -306,8 +306,8 @@ void Foam::processorMeshes::removeFiles(const polyMesh& mesh)
     // pointMesh/boundary
     fileHandler().rm(fileHandler().filePath(pointIO.objectPath()));
 
-    // boundaryProcAddressing
-    io.rename("boundaryProcAddressing");
+    // pointMesh/boundaryProcAddressing
+    pointIO.rename("boundaryProcAddressing");
     fileHandler().rm(fileHandler().filePath(pointIO.objectPath()));
 }
 
