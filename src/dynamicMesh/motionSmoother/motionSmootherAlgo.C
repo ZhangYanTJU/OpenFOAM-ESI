@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -409,44 +409,46 @@ void Foam::motionSmootherAlgo::setDisplacementPatchFields
     pointVectorField::Boundary& displacementBf =
         displacement.boundaryFieldRef();
 
-    // Adapt the fixedValue bc's (i.e. copy internal point data to
-    // boundaryField for all affected patches)
-    for (const label patchi : patchIDs)
-    {
-        displacementBf[patchi] ==
-            displacementBf[patchi].patchInternalField();
-    }
-
     // Make consistent with non-adapted bc's by evaluating those now and
     // resetting the displacement from the values.
     // Note that we're just doing a correctBoundaryConditions with
     // fixedValue bc's first.
-    labelHashSet adaptPatchSet(patchIDs);
-
-    const lduSchedule& patchSchedule =
-        displacement.mesh().globalData().patchSchedule();
-
-    for (const auto& schedEval : patchSchedule)
     {
-        const label patchi = schedEval.patch;
-
-        if (!adaptPatchSet.found(patchi))
+        const labelHashSet adaptPatchSet(patchIDs);
+        const label startOfRequests = UPstream::nRequests();
+        for (auto& pfld : displacementBf)
         {
-            if (schedEval.init)
+            if (!adaptPatchSet.found(pfld.patch().index()))
             {
-                displacementBf[patchi]
-                    .initEvaluate(Pstream::commsTypes::scheduled);
+                pfld.initEvaluate(UPstream::commsTypes::nonBlocking);
             }
-            else
+        }
+        // Wait for outstanding requests (non-blocking)
+        UPstream::waitRequests(startOfRequests);
+
+        for (auto& pfld : displacementBf)
+        {
+            const label patchi = pfld.patch().index();
+            if (!adaptPatchSet.found(patchi))
             {
-                displacementBf[patchi]
-                    .evaluate(Pstream::commsTypes::scheduled);
+                pfld.evaluate(UPstream::commsTypes::nonBlocking);
             }
         }
     }
 
-    // Multi-patch constraints
+    // Multi-patch constraints. Takes priority over any bc.
     pointConstraints::New(displacement.mesh()).constrainCorners(displacement);
+
+    // Combine any coupled points. This makes sure that the ppMeshPoint
+    // value gets taken over to any coupled points. Note use of min to
+    // make sure zeroFixedValue 'wins'.
+    syncTools::syncPointList
+    (
+        displacement.mesh()(),
+        displacement,
+        minMagSqrEqOp<vector>(),    // combine op
+        vector::uniform(GREAT)      // null value
+    );
 
     // Adapt the fixedValue bc's (i.e. copy internal point data to
     // boundaryField for all affected patches) to take the changes caused
@@ -469,10 +471,10 @@ void Foam::motionSmootherAlgo::setDisplacement
     const labelList& patchIDs,
     const indirectPrimitivePatch& pp,
     pointField& patchDisp,
-    pointVectorField& displacement
+    pointVectorField& displacementFld
 )
 {
-    const polyMesh& mesh = displacement.mesh()();
+    const polyMesh& mesh = displacementFld.mesh()();
 
     // See comment in .H file about shared points.
     // We want to disallow effect of loose coupled points - we only
@@ -483,11 +485,22 @@ void Foam::motionSmootherAlgo::setDisplacement
 
     const labelList& ppMeshPoints = pp.meshPoints();
 
-    // Knock out displacement on points which are not on pp but are coupled
+    pointField& displacement = displacementFld.internalFieldRef();
+
+    // - zero out patch points ('master') or points coupled to them ('slave')
+    // - assign master values
+    // - sync so the master values get transferred to the slaves
+    // - take over these values onto the fixedValue bcs. This removes
+    //   any inconsistencies (since all bcs get copied from a single, internal
+    //   value)
+
+    // Knock out displacement on points which are on pp or coupled
     // to them since we want 'proper' values from displacement to take
     // precedence.
+    bitSet isPatchPoint(mesh.nPoints(), ppMeshPoints);
+    const bitSet oldPatchPoint(isPatchPoint);
     {
-        bitSet isPatchPoint(mesh.nPoints(), ppMeshPoints);
+        // Expand patch points to include points coupled to them
         syncTools::syncPointList
         (
             mesh,
@@ -500,11 +513,10 @@ void Foam::motionSmootherAlgo::setDisplacement
         {
             if (isPatchPoint.test(pointi))
             {
-                displacement[pointi] = Zero;
+                displacement[pointi] = vector::uniform(GREAT);
             }
         }
     }
-
 
     // Set internal point data from displacement on combined patch points.
     forAll(ppMeshPoints, patchPointi)
@@ -513,19 +525,16 @@ void Foam::motionSmootherAlgo::setDisplacement
     }
 
 
-    // Combine any coupled points
-    syncTools::syncPointList
-    (
-        mesh,
-        displacement,
-        maxMagEqOp(),           // combine op
-        vector::zero            // null value
-    );
-
-
     // Adapt the fixedValue bc's (i.e. copy internal point data to
     // boundaryField for all affected patches)
-    setDisplacementPatchFields(patchIDs, displacement);
+    setDisplacementPatchFields(patchIDs, displacementFld);
+
+    pointVectorField::Boundary& displacementBf =
+        displacementFld.boundaryFieldRef();
+    for (const label patchi : patchIDs)
+    {
+        displacementBf[patchi] == displacementBf[patchi].patchInternalField();
+    }
 
 
     if (debug)
@@ -542,9 +551,9 @@ void Foam::motionSmootherAlgo::setDisplacement
 
                 meshTools::writeOBJ(str, pt);
                 nVerts++;
-                //Pout<< "Point:" << pt
-                //    << " oldDisp:" << patchDisp[patchPointi]
-                //    << " newDisp:" << newDisp << endl;
+                // Pout<< "Point:" << pt
+                //     << " oldDisp:" << patchDisp[patchPointi]
+                //     << " newDisp:" << newDisp << endl;
             }
         }
         Pout<< "Written " << nVerts << " points that are changed to file "
@@ -571,49 +580,51 @@ void Foam::motionSmootherAlgo::correctBoundaryConditions
     pointVectorField& displacement
 ) const
 {
-    labelHashSet adaptPatchSet(adaptPatchIDs_);
+    const labelHashSet adaptPatchSet(adaptPatchIDs_);
 
-    const lduSchedule& patchSchedule = mesh_.globalData().patchSchedule();
+    //const lduSchedule& patchSchedule = mesh_.globalData().patchSchedule();
 
     auto& displacementBf = displacement.boundaryFieldRef();
 
     // 1. evaluate on adaptPatches
-    for (const auto& schedEval : patchSchedule)
     {
-        const label patchi = schedEval.patch;
-
-        if (adaptPatchSet.found(patchi))
+        const label startOfRequests = UPstream::nRequests();
+        for (const label patchi : adaptPatchIDs_)
         {
-            if (schedEval.init)
-            {
-                displacementBf[patchi]
-                    .initEvaluate(Pstream::commsTypes::buffered);
-            }
-            else
-            {
-                displacementBf[patchi]
-                    .evaluate(Pstream::commsTypes::buffered);
-            }
+            displacementBf[patchi].initEvaluate
+            (
+                UPstream::commsTypes::nonBlocking
+            );
+        }
+        // Wait for outstanding requests (non-blocking)
+        UPstream::waitRequests(startOfRequests);
+
+        for (const label patchi : adaptPatchIDs_)
+        {
+            displacementBf[patchi].evaluate(UPstream::commsTypes::nonBlocking);
         }
     }
 
-
     // 2. evaluate on non-AdaptPatches
-    for (const auto& schedEval : patchSchedule)
     {
-        const label patchi = schedEval.patch;
-
-        if (!adaptPatchSet.found(patchi))
+        const label startOfRequests = UPstream::nRequests();
+        for (auto& pfld : displacementBf)
         {
-            if (schedEval.init)
+            const label patchi = pfld.patch().index();
+            if (!adaptPatchSet.found(patchi))
             {
-                displacementBf[patchi]
-                    .initEvaluate(Pstream::commsTypes::buffered);
+                pfld.initEvaluate(UPstream::commsTypes::nonBlocking);
             }
-            else
+        }
+        // Wait for outstanding requests (non-blocking)
+        UPstream::waitRequests(startOfRequests);
+
+        for (auto& pfld : displacementBf)
+        {
+            const label patchi = pfld.patch().index();
+            if (!adaptPatchSet.found(patchi))
             {
-                displacementBf[patchi]
-                    .evaluate(Pstream::commsTypes::buffered);
+                pfld.evaluate(UPstream::commsTypes::nonBlocking);
             }
         }
     }
@@ -626,11 +637,10 @@ void Foam::motionSmootherAlgo::correctBoundaryConditions
     (
         mesh_,
         displacement,
-        maxMagEqOp(),           // combine op
-        vector::zero            // null value
+        maxMagSqrEqOp<vector>(),    // combine op
+        vector::zero                // null value
     );
 }
-
 
 
 void Foam::motionSmootherAlgo::modifyMotionPoints(pointField& newPoints) const
@@ -803,7 +813,7 @@ Foam::tmp<Foam::pointField> Foam::motionSmootherAlgo::curPoints() const
         testSyncField
         (
             totalDisplacement,
-            maxMagEqOp(),
+            maxMagSqrEqOp<vector>(),
             vector::zero,   // null value
             1e-6*mesh_.bounds().mag()
         );
@@ -875,7 +885,7 @@ bool Foam::motionSmootherAlgo::scaleMesh
     (
         mesh_,
         displacement_,
-        maxMagEqOp(),
+        maxMagSqrEqOp<vector>(),
         vector::zero    // null value
     );
 
@@ -893,7 +903,6 @@ bool Foam::motionSmootherAlgo::scaleMesh
     // Move. No need to do 2D correction since curPoints already done that.
     mesh_.movePoints(newPoints);
     movePoints();
-
 
     // Check. Returns parallel number of incorrect faces.
     faceSet wrongFaces(mesh_, "wrongFaces", mesh_.nFaces()/100+100);

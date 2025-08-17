@@ -3105,11 +3105,11 @@ void Foam::snappyLayerDriver::printLayerData
         }
 
         // Thickness
-        scalarField::subField patchWanted = pbm[patchi].patchSlice
+        const scalarField::subField patchWanted = pbm[patchi].patchSlice
         (
             faceWantedThickness
         );
-        scalarField::subField patchReal = pbm[patchi].patchSlice
+        const scalarField::subField patchReal = pbm[patchi].patchSlice
         (
             faceRealThickness
         );

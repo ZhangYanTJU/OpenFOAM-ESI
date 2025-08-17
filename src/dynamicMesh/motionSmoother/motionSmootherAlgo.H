@@ -100,38 +100,6 @@ class faceSet;
 
 class motionSmootherAlgo
 {
-    // Private class
-
-        //- To synchronise displacements. We want max displacement since
-        //  this is what is specified on pp and internal mesh will have
-        //  zero displacement.
-        class maxMagEqOp
-        {
-        public:
-
-            void operator()(vector& x, const vector& y) const
-            {
-                for (direction i = 0; i < vector::nComponents; i++)
-                {
-                    scalar magX = mag(x[i]);
-                    scalar magY = mag(y[i]);
-
-                    if (magX < magY)
-                    {
-                        x[i] = y[i];
-                    }
-                    else if (magX == magY)
-                    {
-                        if (y[i] > x[i])
-                        {
-                            x[i] = y[i];
-                        }
-                    }
-                }
-            }
-        };
-
-
     // Private data
 
         //- Reference to polyMesh. Non-const since we move mesh.
