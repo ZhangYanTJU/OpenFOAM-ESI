@@ -40,7 +40,8 @@ Foam::HashTable<Foam::wordHashSet> Foam::objectRegistry::classesImpl
     const MatchPredicate& matchName
 )
 {
-    HashTable<wordHashSet> summary(2*list.size());
+    HashTable<wordHashSet> summary;
+    summary.reserve(16);  // Relatively few types
 
     // Summary (key,val) = (class-name, object-names)
     forAllConstIters(list, iter)
@@ -601,9 +602,7 @@ const Type& Foam::objectRegistry::lookupObject
     const bool recursive
 ) const
 {
-    const_iterator iter = cfind(name);
-
-    if (iter.good())
+    if (auto iter = cfind(name); iter.good())
     {
         const Type* ptr = dynamic_cast<const Type*>(iter.val());
 

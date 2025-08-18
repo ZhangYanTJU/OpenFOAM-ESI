@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2019 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -513,9 +513,11 @@ const Foam::regIOobject* Foam::objectRegistry::cfindIOobject
     const bool recursive
 ) const
 {
-    const_iterator iter = cfind(name);
-
-    if (iter.good())
+    if (name.empty())
+    {
+        return nullptr;
+    }
+    else if (auto iter = cfind(name); iter.good())
     {
         return iter.val();
     }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,8 +101,6 @@ Foam::IOobjectList::IOobjectList
     const fileName& local,
     IOobjectOption ioOpt
 )
-:
-    HashPtrTable<IOobject>()
 {
     word newInstance;
     fileNameList objNames = fileHandler().readObjects
@@ -112,6 +110,8 @@ Foam::IOobjectList::IOobjectList
         local,
         newInstance
     );
+
+    HashPtrTable<IOobject>::reserve(objNames.size());
 
     for (const auto& objName : objNames)
     {
@@ -141,7 +141,7 @@ Foam::IOobjectList::IOobjectList
 
         if (ok)
         {
-            insert(objectPtr->name(), objectPtr);
+            insert(objectPtr->name(), std::move(objectPtr));
         }
     }
 }
@@ -157,8 +157,11 @@ const Foam::IOobject* Foam::IOobjectList::cfindObject
     // Like HashPtrTable::get(), or lookup() with a nullptr
     const IOobject* io = nullptr;
 
-    const const_iterator iter(cfind(objName));
-    if (iter.good())
+    if (objName.empty())
+    {
+        return nullptr;
+    }
+    else if (auto iter = cfind(objName); iter.good())
     {
         io = iter.val();
     }

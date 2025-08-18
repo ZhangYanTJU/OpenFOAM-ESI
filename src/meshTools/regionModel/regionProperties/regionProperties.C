@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,15 +32,10 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::regionProperties::regionProperties(const Time& runTime)
-:
-    regionProperties(runTime, IOobject::MUST_READ_IF_MODIFIED)
-{}
-
-
 Foam::regionProperties::regionProperties
 (
     const Time& runTime,
+    const fileName& local,
     IOobjectOption::readOption rOpt
 )
 {
@@ -52,17 +47,26 @@ Foam::regionProperties::regionProperties
         (
             "regionProperties",
             runTime.time().constant(),
+            local,
             runTime.db(),
             rOpt,
-            IOobjectOption::NO_WRITE
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         )
     );
 
-    if (IOobjectOption::isReadRequired(rOpt) || iodict.size())
-    {
-        iodict.readEntry("regions", props);
-    }
+    iodict.readEntry("regions", props, keyType::LITERAL, rOpt);
 }
+
+
+Foam::regionProperties::regionProperties
+(
+    const Time& runTime,
+    IOobjectOption::readOption rOpt
+)
+:
+    regionProperties(runTime, fileName::null, rOpt)
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -90,9 +94,9 @@ Foam::wordList Foam::regionProperties::names() const
 
     const HashTable<wordList>& props = *this;
 
-    for (const word& grp : props.sortedToc())
+    for (const auto& iter : props.csorted())
     {
-        for (const word& name : props[grp])
+        for (const word& name : iter.val())
         {
             list[n] = name;
             ++n;

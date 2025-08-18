@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,8 @@ Foam::HashTable<Foam::wordHashSet> Foam::IOobjectList::classesImpl
     const MatchPredicate& matchName
 )
 {
-    HashTable<wordHashSet> summary(2*list.size());
+    HashTable<wordHashSet> summary;
+    summary.reserve(16);  // Relatively few types
 
     // Summary (key,val) = (class-name, object-names)
     forAllConstIters(list, iter)
@@ -315,8 +316,11 @@ const Foam::IOobject* Foam::IOobjectList::cfindObject
     // Like HashPtrTable::get(), or lookup() with a nullptr
     const IOobject* io = nullptr;
 
-    const const_iterator iter(cfind(objName));
-    if (iter.good())
+    if (objName.empty())
+    {
+        return nullptr;
+    }
+    else if (auto iter = cfind(objName); iter.good())
     {
         io = iter.val();
     }

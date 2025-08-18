@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -172,7 +172,7 @@ public:
         IOobjectList() noexcept = default;
 
         //- Construct empty without allocation (capacity=0)
-        inline explicit IOobjectList(const Foam::zero) noexcept;
+        explicit IOobjectList(Foam::zero) noexcept {}
 
         //- Construct empty with initial table capacity
         inline explicit IOobjectList(const label initialCapacity);
@@ -181,7 +181,7 @@ public:
         inline IOobjectList(const IOobjectList& list);
 
         //- Move construct
-        inline IOobjectList(IOobjectList&& list);
+        inline IOobjectList(IOobjectList&& list) noexcept;
 
         //- Construct from registry, instance, io options
         inline IOobjectList

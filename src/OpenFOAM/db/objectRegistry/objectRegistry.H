@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2019 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -457,14 +457,11 @@ public:
     // Lookup
 
         //- Lookup and return a const sub-objectRegistry.
-        //
-        //  \param forceCreate create it if it does not exist.
-        //  \param recursive search parent registries.
         const objectRegistry& subRegistry
         (
             const word& name,
-            const bool forceCreate = false,
-            const bool recursive = false
+            const bool forceCreate = false, //!< Create if it does not exist
+            const bool recursive = false    //!< Search parent registries
         ) const;
 
 
@@ -492,101 +489,90 @@ public:
 
         //- Return const pointer to the regIOobject.
         //
-        //  \param recursive search parent registries
-        //
-        //  \return nullptr if the object was not found.
+        //  \return nullptr if the object was not found (or name == "")
         const regIOobject* cfindIOobject
         (
-            const word& name,
-            const bool recursive = false
+            const word& name,               //!< The object name
+            const bool recursive = false    //!< Search parent registries
         ) const;
 
         //- Does the registry contain the regIOobject object (by name).
-        //
-        //  \param name the object name
-        //  \param recursive search parent registries
-        bool contains(const word& name, const bool recursive = false) const;
+        //  \return false if the object was not found (or name == "")
+        bool contains
+        (
+            const word& name,               //!< The object name
+            const bool recursive = false    //!< Search parent registries
+        ) const;
 
-        //- Is the named Type found?
+        //- Contains the named Type?
         //
-        //  \param recursive search parent registries
+        //  \return false if the object was not found (or name == "")
+        //  or had incorrect type.
         template<class Type>
         bool foundObject
         (
-            const word& name,
-            const bool recursive = false
+            const word& name,               //!< The object name
+            const bool recursive = false    //!< Search parent registries
         ) const;
 
         //- Return const pointer to the object of the given Type.
-        //
-        //  \param recursive search parent registries
         //
         //  \return nullptr if the object was not found or had incorrect type.
         template<class Type>
         const Type* cfindObject
         (
-            const word& name,
-            const bool recursive = false
+            const word& name,               //!< The object name
+            const bool recursive = false    //!< Search parent registries
         ) const;
 
         //- Return const pointer to the object of the given Type.
-        //
-        //  \param recursive search parent registries
         //
         //  \return nullptr if the object was not found or had incorrect type.
         template<class Type>
         const Type* findObject
         (
-            const word& name,
-            const bool recursive = false
+            const word& name,               //!< The object name
+            const bool recursive = false    //!< Search parent registries
         ) const;
 
         //- Return non-const pointer to the object of the given Type.
-        //
-        //  \param recursive search parent registries
         //
         //  \return nullptr if the object was not found or had incorrect type.
         template<class Type>
         Type* findObject
         (
-            const word& name,
-            const bool recursive = false
+            const word& name,               //!< The object name
+            const bool recursive = false    //!< Search parent registries
         );
 
         //- Return non-const pointer to the object of the given Type,
         //- using a const-cast to have it behave like a mutable.
         //  Exercise caution when using.
         //
-        //  \param recursive search parent registries.
-        //
         //  \return nullptr if the object was not found or had incorrect type.
         template<class Type>
         Type* getObjectPtr
         (
-            const word& name,
-            const bool recursive = false
+            const word& name,               //!< The object name
+            const bool recursive = false    //!< Search parent registries
         ) const;
 
         //- Lookup and return const reference to the object
         //- of the given Type. Fatal if not found or the wrong type.
-        //
-        //  \param recursive search parent registries.
         template<class Type>
         const Type& lookupObject
         (
-            const word& name,
-            const bool recursive = false
+            const word& name,               //!< The object name
+            const bool recursive = false    //!< Search parent registries
         ) const;
 
         //- Lookup and return non-const reference to the object
         //- of the given Type. Fatal if not found or the wrong type.
-        //
-        //  \param recursive search parent registries.
         template<class Type>
         Type& lookupObjectRef
         (
-            const word& name,
-            const bool recursive = false
+            const word& name,               //!< The object name
+            const bool recursive = false    //!< Search parent registries
         ) const;
 
 

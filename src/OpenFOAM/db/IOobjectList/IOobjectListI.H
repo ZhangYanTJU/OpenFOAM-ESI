@@ -27,12 +27,6 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-inline Foam::IOobjectList::IOobjectList(const Foam::zero) noexcept
-:
-    HashPtrTable<IOobject>(Foam::zero{})
-{}
-
-
 inline Foam::IOobjectList::IOobjectList(const label initialCapacity)
 :
     HashPtrTable<IOobject>(initialCapacity)
@@ -45,7 +39,7 @@ inline Foam::IOobjectList::IOobjectList(const IOobjectList& list)
 {}
 
 
-inline Foam::IOobjectList::IOobjectList(IOobjectList&& list)
+inline Foam::IOobjectList::IOobjectList(IOobjectList&& list) noexcept
 :
     HashPtrTable<IOobject>(std::move(list))
 {}
