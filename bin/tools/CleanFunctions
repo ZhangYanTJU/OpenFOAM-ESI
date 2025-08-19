@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2015-2023 OpenCFD Ltd.
+#     Copyright (C) 2015-2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -32,10 +32,13 @@ cleanTimeDirectories()
 }
 
 
-# Various files (logs, paraview, etc)
+# Various files (logs, paraview, some mpirunDebug, etc)
+# Note: leave mpirun.log/ files untouched, since they may still be useful
+# for later diagnosis
 cleanAuxiliary()
 {
     rm -rf \
+        ./mpirun.files \
         ./log ./log.* ./log-* ./logSummary.* \
         ./.fxLock ./*.xml ./ParaView* ./paraFoam* \
         ./*.blockMesh ./*.foam ./*.OpenFOAM \

@@ -16,8 +16,7 @@
 #     mpirunDebug
 #
 # Description
-#     Invoke mpirun with separate per-processor log files
-#     or running in separate XTerms.
+#     Invoke mpirun with separate per-processor log files etc.
 #     Requires bash on all processors.
 #
 #------------------------------------------------------------------------------
@@ -99,15 +98,6 @@ methodNumberToName()
 
 #-------------------------------------------------------------------------------
 # Basic settings
-
-case "$(uname -s)" in
-Linux)
-    ECHO='echo -e'
-    ;;
-*)
-    ECHO='echo'
-    ;;
-esac
 
 unset appName appArgs nProcs
 unset method spawn optClean optValue opt_nocore
@@ -250,7 +240,7 @@ then
     echo "Cleanup old mpirunDebug files..."
     rm -f gdbCommands mpirun.schema vgcore.*
     rm -f processor*.log processor*.sh
-    rm -rf mpirun.log mpirun.files
+    rm -rf mpirun.files mpirun.log
     echo "    gdbCommands mpirun.schema vgcore.*"
     echo "    processor*.{log,sh}"
     echo "    mpirun.{files,log}/"
@@ -289,7 +279,7 @@ exec=$(command -v $appName)
 if [ -z "$method" ]
 then
     echo "Choose running method: ${methodPrompt}"
-    $ECHO "[normal] > \c"
+    echo -e "[normal] > \c"
     read input
     : "${input:=0}"  # Default (0) normal
 
@@ -301,7 +291,7 @@ fi
 if [ -z "$spawn" ]
 then
     echo "Run all processes local or distributed? 1)local  2)remote"
-    $ECHO "[local] > \c"
+    echo -e "[local] > \c"
     read input
     : "${input:=1}"  # Default (1) local
 
@@ -478,7 +468,7 @@ unset cmd
 
 case "$WM_MPLIB" in
 *OPENMPI*)
-    cmd="mpirun --oversubscribe -app "$schema_file" </dev/null"
+    cmd="mpirun --oversubscribe -app "$schema_file""
     ;;
 MPICH)
     cmd="mpiexec"
@@ -511,13 +501,14 @@ echo 1>&2
 if [ -n "$optConfirm" ]
 then
     # Pause before running
-    $ECHO "Press return to execute.\c"
+    echo -e "Press return to execute, or ^C to abort...\c"
     read input
-else
-    echo "starting: $(date '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null)" 1>&2
     echo 1>&2
 fi
+echo "starting: $(date '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null)" 1>&2
+echo 1>&2
 
+exec </dev/null
 exec $cmd
 
 #------------------------------------------------------------------------------
