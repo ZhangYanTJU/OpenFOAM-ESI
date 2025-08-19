@@ -442,20 +442,11 @@ Foam::wallBoundedParticle::wallBoundedParticle
         {
             is  >> localPosition_ >> meshEdgeStart_ >> diagEdge_;
         }
-        if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-
-            is.beginRawRead();
-
-            readRawScalar(is, localPosition_.data(), vector::nComponents);
-            readRawLabel(is, &meshEdgeStart_);
-            readRawLabel(is, &diagEdge_);
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             is.read(reinterpret_cast<char*>(&localPosition_), sizeofFields_);
         }
     }

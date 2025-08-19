@@ -66,18 +66,11 @@ Foam::ReactingParcel<ParcelType>::ReactingParcel
         {
             is >> mass0_;
         }
-        else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-
-            is.beginRawRead();
-
-            readRawScalar(is, &mass0_);
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             is.read(reinterpret_cast<char*>(&mass0_), sizeofFields);
         }
 

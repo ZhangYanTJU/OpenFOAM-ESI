@@ -62,20 +62,11 @@ Foam::DSMCParcel<ParcelType>::DSMCParcel
         {
             is  >> U_ >> Ei_ >> typeId_;
         }
-        else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-
-            is.beginRawRead();
-
-            readRawScalar(is, U_.data(), vector::nComponents);
-            readRawScalar(is, &Ei_);
-            readRawLabel(is, &typeId_);
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             is.read(reinterpret_cast<char*>(&U_), sizeofFields);
         }
     }

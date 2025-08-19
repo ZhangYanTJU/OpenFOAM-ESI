@@ -91,29 +91,11 @@ void Foam::particle::readData
                 is  >> facei_ >> stepFraction_ >> origProc_ >> origId_;
             }
         }
-        else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-
-            is.beginRawRead();
-
-            readRawScalar(is, coordinates_.data(), barycentric::nComponents);
-            readRawLabel(is, &celli_);
-            readRawLabel(is, &tetFacei_);
-            readRawLabel(is, &tetPti_);
-
-            if (readFields)
-            {
-                readRawLabel(is, &facei_);
-                readRawScalar(is, &stepFraction_);
-                readRawLabel(is, &origProc_);
-                readRawLabel(is, &origId_);
-            }
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             if (readFields)
             {
                 is.read(reinterpret_cast<char*>(&coordinates_), sizeofFields);
@@ -142,29 +124,11 @@ void Foam::particle::readData
                     >> p.origId;
             }
         }
-        else if (!is.checkLabelSize<>() || !is.checkScalarSize<>())
-        {
-            // Non-native label or scalar size
-
-            is.beginRawRead();
-
-            readRawScalar(is, p.position.data(), vector::nComponents);
-            readRawLabel(is, &p.celli);
-
-            if (readFields)
-            {
-                readRawLabel(is, &p.facei);
-                readRawScalar(is, &p.stepFraction);
-                readRawLabel(is, &p.tetFacei);
-                readRawLabel(is, &p.tetPti);
-                readRawLabel(is, &p.origProc);
-                readRawLabel(is, &p.origId);
-            }
-
-            is.endRawRead();
-        }
         else
         {
+            // No non-native streaming
+            is.fatalCheckNativeSizes(FUNCTION_NAME);
+
             if (readFields)
             {
                 // Read whole struct
