@@ -156,6 +156,14 @@ public:
     //  to old patches
     static labelList removeEmptyPatches(fvMesh&, const bool validBoundary);
 
+    //- Remove zero sized patches unless explicitly forced to preserve.
+    //  See above.
+    static labelList removeEmptyPatches
+    (
+        fvMesh&,
+        const wordList& keepPatches,
+        const bool validBoundary
+    );
 
     //- Set the fvGeometryScheme to basic (to avoid parallel communication)
     static void setBasicGeometry(fvMesh& mesh);

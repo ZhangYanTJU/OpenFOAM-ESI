@@ -369,6 +369,7 @@ void Foam::fvMeshTools::reorderPatches
 Foam::labelList Foam::fvMeshTools::removeEmptyPatches
 (
     fvMesh& mesh,
+    const wordList& keepPatches,
     const bool validBoundary
 )
 {
@@ -386,16 +387,24 @@ Foam::labelList Foam::fvMeshTools::removeEmptyPatches
 
         if (!isA<processorPolyPatch>(pp))
         {
-            label nFaces = pp.size();
-            if (validBoundary)
-            {
-                reduce(nFaces, sumOp<label>());
-            }
-
-            if (nFaces > 0)
+            if (keepPatches.found(pp.name()))
             {
                 newToOld[newI] = patchI;
-                oldToNew[patchI] = newI++;
+                oldToNew[patchI] = newI++;                
+            }
+            else
+            {
+                label nFaces = pp.size();
+                if (validBoundary)
+                {
+                    reduce(nFaces, sumOp<label>());
+                }
+
+                if (nFaces > 0)
+                {
+                    newToOld[newI] = patchI;
+                    oldToNew[patchI] = newI++;
+                }
             }
         }
     }
@@ -405,7 +414,14 @@ Foam::labelList Foam::fvMeshTools::removeEmptyPatches
     {
         const polyPatch& pp = pbm[patchI];
 
-        if (isA<processorPolyPatch>(pp) && pp.size())
+        if
+        (
+            isA<processorPolyPatch>(pp)
+         && (
+                pp.size()
+             || keepPatches.found(pp.name())
+            )
+        )
         {
             newToOld[newI] = patchI;
             oldToNew[patchI] = newI++;
@@ -426,6 +442,16 @@ Foam::labelList Foam::fvMeshTools::removeEmptyPatches
     reorderPatches(mesh, oldToNew, newToOld.size(), validBoundary);
 
     return newToOld;
+}
+
+
+Foam::labelList Foam::fvMeshTools::removeEmptyPatches
+(
+    fvMesh& mesh,
+    const bool validBoundary
+)
+{
+    return removeEmptyPatches(mesh, wordList::null(), validBoundary);
 }
 
 

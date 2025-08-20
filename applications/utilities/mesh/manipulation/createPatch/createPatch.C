@@ -42,14 +42,14 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "cyclicPolyPatch.H"
-#include "syncTools.H"
 #include "argList.H"
 #include "Time.H"
 #include "OFstream.H"
 #include "meshTools.H"
 #include "faceSet.H"
 #include "IOPtrList.H"
+#include "cyclicPolyPatch.H"
+#include "syncTools.H"
 #include "polyTopoChange.H"
 #include "polyModifyFace.H"
 #include "polyAddFace.H"
@@ -942,6 +942,9 @@ int main(int argc, char *argv[])
     }
 
 
+    // Maintain list of added patches so we exclude them from filtering
+    // later on
+    List<DynamicList<word>> allAddedPatches(meshes.size());
 
     // Loop over all regions
 
@@ -1036,6 +1039,7 @@ int main(int argc, char *argv[])
                                 fvPatchFieldBase::calculatedType(),
                                 true
                             );
+                            allAddedPatches[meshi].append(ppPtr->name());
                         }
                     }
                 }
@@ -1087,6 +1091,7 @@ int main(int argc, char *argv[])
                                 fvPatchFieldBase::calculatedType(),
                                 true
                             );
+                            allAddedPatches[meshi].append(ppPtr->name());
                         }
                     }
                 }
@@ -1116,6 +1121,7 @@ int main(int argc, char *argv[])
                         fvPatchFieldBase::calculatedType(),
                         true
                     );
+                    allAddedPatches[meshi].append(ppPtr->name());
                 }
             }
         }
@@ -1453,7 +1459,7 @@ int main(int argc, char *argv[])
         Info<< "Removing patches with no faces in them." << nl << endl;
         const wordList oldPatchNames(mesh.boundaryMesh().names());
         const wordList oldPatchTypes(mesh.boundaryMesh().types());
-        fvMeshTools::removeEmptyPatches(mesh, true);
+        fvMeshTools::removeEmptyPatches(mesh, allAddedPatches[meshi], true);
         forAll(oldPatchNames, patchi)
         {
             const word& pName = oldPatchNames[patchi];
