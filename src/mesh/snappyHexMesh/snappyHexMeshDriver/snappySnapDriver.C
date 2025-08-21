@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -2652,16 +2652,8 @@ void Foam::snappySnapDriver::doSnap
         {
             if (addLayers[globalRegioni])
             {
-                const label masterP =
-                    globalToMasterPatch_[globalRegioni];
-                const label slaveP =
-                    globalToSlavePatch_[globalRegioni];
-
-                bufPatchIDs.append(masterP);
-                if (slaveP != masterP)
-                {
-                    bufPatchIDs.append(slaveP);
-                }
+                bufPatchIDs.push_uniq(globalToMasterPatch_[globalRegioni]);
+                bufPatchIDs.push_uniq(globalToSlavePatch_[globalRegioni]);
             }
         }
 

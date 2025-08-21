@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022,2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -179,7 +179,7 @@ Foam::labelPair Foam::addPatchCellLayer::getEdgeString
     // Get edge that hasn't been done yet but needs extrusion
     forAll(fEdges, fp)
     {
-        label edgei = fEdges[fp];
+        const label edgei = fEdges[fp];
         const edge& e = pp.edges()[edgei];
 
         if
@@ -197,7 +197,7 @@ Foam::labelPair Foam::addPatchCellLayer::getEdgeString
     {
         // We found an edge that needs extruding but hasn't been done yet.
         // Now find the face on the other side
-        label nbrGlobalFacei = nbrFace
+        const label nbrGlobalFacei = nbrFace
         (
             globalEdgeFaces,
             fEdges[startFp],
