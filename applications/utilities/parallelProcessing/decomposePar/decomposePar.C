@@ -334,6 +334,7 @@ int main(int argc, char *argv[])
     );
 
     #include "addAllRegionOptions.H"
+    #include "addAllFaRegionOptions.H"
 
     argList::addDryRunOption
     (
@@ -442,7 +443,6 @@ int main(int argc, char *argv[])
     bool decomposeFieldsOnly = args.found("fields");
     bool forceOverwrite      = args.found("force");
 
-
     // Set time from database
     #include "createTime.H"
 
@@ -491,8 +491,16 @@ int main(int argc, char *argv[])
         decompDictFile = runTime.globalPath()/decompDictFile;
     }
 
-    // Get region names
+    // Handle -allRegions, -regions, -region
     #include "getAllRegionOptions.H"
+
+    // Handle -all-area-regions, -area-regions, -area-region
+    #include "getAllFaRegionOptions.H"
+
+    if (!doFiniteArea)
+    {
+        areaRegionNames.clear();  // For consistency
+    }
 
     const bool optRegions =
         (regionNames.size() != 1 || regionNames[0] != polyMesh::defaultRegion);
@@ -813,56 +821,76 @@ int main(int argc, char *argv[])
 
                 // Field objects at this time
                 IOobjectList objects;
-                IOobjectList faObjects;
+
+                // faMesh fields - can have multiple finite-area per volume
+                HashTable<IOobjectList> faObjects;
 
                 if (doDecompFields)
                 {
                     // List of volume mesh objects for this instance
                     objects = IOobjectList(mesh, runTime.timeName());
 
-                    // List of area mesh objects (assuming single region)
-                    faObjects = IOobjectList
-                    (
-                        mesh.time(),
-                        runTime.timeName(),
-                        faMesh::dbDir(mesh, word::null),
-                        IOobjectOption::NO_REGISTER
-                    );
-
                     // Ignore generated fields: (cellDist)
                     objects.remove("cellDist");
+
+                    // Lists of finite-area fields
+                    faObjects.reserve(areaRegionNames.size());
+
+                    for (const word& areaName : areaRegionNames)
+                    {
+                        // The finite-area objects for this area region
+                        IOobjectList objs
+                        (
+                            faMesh::Registry(mesh),
+                            runTime.timeName(),
+                            polyMesh::regionName(areaName),
+                            IOobjectOption::NO_REGISTER
+                        );
+
+                        if (!objs.empty())
+                        {
+                            faObjects.emplace_set(areaName, std::move(objs));
+                        }
+                    }
                 }
 
                 // Finite area handling
-                autoPtr<faMeshDecomposition> faMeshDecompPtr;
+                // - all area regions use the same volume decomposition
+
+                HashPtrTable<faMeshDecomposition> faMeshDecompHashes;
                 if (doFiniteArea)
                 {
                     const word boundaryInst =
                         mesh.time().findInstance(mesh.meshDir(), "boundary");
 
-                    IOobject io
-                    (
-                        "faBoundary",
-                        boundaryInst,
-                        faMesh::meshDir(mesh, word::null),
-                        mesh.time(),
-                        IOobject::READ_IF_PRESENT,
-                        IOobject::NO_WRITE,
-                        IOobject::NO_REGISTER
-                    );
-
-                    if (io.typeHeaderOk<faBoundaryMesh>(true))
+                    for (const word& areaName : areaRegionNames)
                     {
-                        // Always based on the volume decomposition!
-                        faMeshDecompPtr.reset
+                        IOobject io
                         (
-                            new faMeshDecomposition
-                            (
-                                mesh,
-                                mesh.nProcs(),
-                                mesh.model()
-                            )
+                            "faBoundary",
+                            boundaryInst,
+                            faMesh::meshDir(mesh, areaName),
+                            mesh.time(),
+                            IOobject::READ_IF_PRESENT,
+                            IOobject::NO_WRITE,
+                            IOobject::NO_REGISTER
                         );
+
+                        if (io.typeHeaderOk<faBoundaryMesh>(true))
+                        {
+                            // Always based on the volume decomposition!
+                            faMeshDecompHashes.set
+                            (
+                                areaName,
+                                autoPtr<faMeshDecomposition>::New
+                                (
+                                    areaName,
+                                    mesh,
+                                    mesh.nProcs(),
+                                    mesh.model()
+                                )
+                            );
+                        }
                     }
                 }
 
@@ -1066,7 +1094,7 @@ int main(int argc, char *argv[])
 
                     processorDb.setTime(runTime);
 
-                    // read the mesh
+                    // Read the mesh
                     if (!procMeshList.set(proci))
                     {
                         procMeshList.set
@@ -1273,12 +1301,15 @@ int main(int argc, char *argv[])
                 }
 
 
-                // Finite area mesh and field decomposition
-                if (faMeshDecompPtr)
+                // Finite-area mesh and field decomposition
+                for (auto& iter : faMeshDecompHashes.sorted())
                 {
-                    Info<< "\nFinite area mesh decomposition" << endl;
+                    const word& areaName = iter.key();
 
-                    faMeshDecomposition& aMesh = faMeshDecompPtr();
+                    faMeshDecomposition& aMesh = *(iter.val());
+
+                    Info<< "\nFinite area mesh decomposition: "
+                        << areaName << endl;
 
                     aMesh.decomposeMesh();
                     aMesh.writeDecomposition();
@@ -1289,9 +1320,13 @@ int main(int argc, char *argv[])
 
                     faFieldDecomposer::fieldsCache areaFieldCache;
 
-                    if (doDecompFields)
+                    if
+                    (
+                        const auto objs = faObjects.cfind(areaName);
+                        doDecompFields && objs.good()
+                    )
                     {
-                        areaFieldCache.readAllFields(aMesh, faObjects);
+                        areaFieldCache.readAllFields(aMesh, objs.val());
                     }
 
                     const label nAreaFields = areaFieldCache.size();
@@ -1322,7 +1357,7 @@ int main(int argc, char *argv[])
 
                         processorDb.setTime(runTime);
 
-                        // Read the mesh
+                        // Read the volume mesh
                         fvMesh procFvMesh
                         (
                             IOobject
@@ -1333,7 +1368,7 @@ int main(int argc, char *argv[])
                             )
                         );
 
-                        faMesh procMesh(procFvMesh);
+                        faMesh procMesh(areaName, procFvMesh);
 
                         // // Does not work.  HJ, 15/Aug/2017
                         // const labelIOList& faceProcAddressing =
@@ -1392,7 +1427,11 @@ int main(int argc, char *argv[])
                             boundaryProcAddressing
                         );
 
-                        areaFieldCache.decomposeAllFields(fieldDecomposer);
+                        areaFieldCache.decomposeAllFields
+                        (
+                            fieldDecomposer,
+                            args.verbose()  // report
+                        );
                     }
                 }
             }

@@ -119,17 +119,10 @@ autoPtr<faceCoupleInfo> determineCoupledFaces
         const polyBoundaryMesh& masterPatches = masterMesh.boundaryMesh();
 
 
-        DynamicList<label> masterFaces
-        (
-            masterMesh.nFaces()
-          - masterMesh.nInternalFaces()
-        );
+        DynamicList<label> masterFaces(masterMesh.nBoundaryFaces());
 
-
-        forAll(masterPatches, patchi)
+        for (const polyPatch& pp : masterPatches)
         {
-            const polyPatch& pp = masterPatches[patchi];
-
             if (isA<processorPolyPatch>(pp))
             {
                 for
@@ -139,11 +132,8 @@ autoPtr<faceCoupleInfo> determineCoupledFaces
                     proci++
                 )
                 {
-                    const string toProcString("to" + name(proci));
-                    if (
-                        pp.name().rfind(toProcString)
-                     == (pp.name().size()-toProcString.size())
-                    )
+                    const string toProcString("to" + Foam::name(proci));
+                    if (pp.name().ends_with(toProcString))
                     {
                         label meshFacei = pp.start();
                         forAll(pp, i)
@@ -156,7 +146,6 @@ autoPtr<faceCoupleInfo> determineCoupledFaces
 
             }
         }
-        masterFaces.shrink();
 
 
         // Pick up all patches on meshToAdd ending in "procBoundaryDDDtoYYY"
@@ -164,16 +153,10 @@ autoPtr<faceCoupleInfo> determineCoupledFaces
 
         const polyBoundaryMesh& addPatches = meshToAdd.boundaryMesh();
 
-        DynamicList<label> addFaces
-        (
-            meshToAdd.nFaces()
-          - meshToAdd.nInternalFaces()
-        );
+        DynamicList<label> addFaces(meshToAdd.nBoundaryFaces());
 
-        forAll(addPatches, patchi)
+        for (const polyPatch& pp : addPatches)
         {
-            const polyPatch& pp = addPatches[patchi];
-
             if (isA<processorPolyPatch>(pp))
             {
                 bool isConnected = false;
@@ -215,7 +198,6 @@ autoPtr<faceCoupleInfo> determineCoupledFaces
                 }
             }
         }
-        addFaces.shrink();
 
         return autoPtr<faceCoupleInfo>::New
         (
@@ -502,15 +484,14 @@ void writeMaps
 
     Info<< "    pointProcAddressing" << endl;
     ioAddr.rename("pointProcAddressing");
-    IOList<label>::writeContents(ioAddr, pointProcAddressing);
+    labelIOList::writeContents(ioAddr, pointProcAddressing);
 
     // From processor face to reconstructed mesh face
-    Info<< "    faceProcAddressing" << endl;
-    ioAddr.rename("faceProcAddressing");
-    labelIOList faceProcAddr(ioAddr, faceProcAddressing);
+    // - add turning index to faceProcAddressing.
+    //   See reconstructPar for meaning of turning index.
 
-    // Now add turning index to faceProcAddressing.
-    // See reconstructPar for meaning of turning index.
+    labelList faceProcAddr(faceProcAddressing);
+
     forAll(faceProcAddr, procFacei)
     {
         const label masterFacei = faceProcAddr[procFacei];
@@ -545,19 +526,21 @@ void writeMaps
         }
     }
 
-    faceProcAddr.write();
-
+    Info<< "    faceProcAddressing" << endl;
+    ioAddr.rename("faceProcAddressing");
+    labelIOList::writeContents(ioAddr, faceProcAddr);
+    faceProcAddr.clear();
 
     // From processor cell to reconstructed mesh cell
     Info<< "    cellProcAddressing" << endl;
     ioAddr.rename("cellProcAddressing");
-    IOList<label>::writeContents(ioAddr, cellProcAddressing);
+    labelIOList::writeContents(ioAddr, cellProcAddressing);
 
 
     // From processor patch to reconstructed mesh patch
     Info<< "    boundaryProcAddressing" << endl;
     ioAddr.rename("boundaryProcAddressing");
-    IOList<label>::writeContents(ioAddr, boundProcAddressing);
+    labelIOList::writeContents(ioAddr, boundProcAddressing);
 
     Info<< endl;
 }
@@ -645,7 +628,8 @@ void sortFaEdgeMapping
 {
     // From faMeshReconstructor.C - edge shuffling on patches
 
-    Map<label> remapGlobal(2*onePatch.nEdges());
+    Map<label> remapGlobal;
+    remapGlobal.reserve(onePatch.nEdges());
     for (label edgei = 0; edgei < onePatch.nInternalEdges(); ++edgei)
     {
         remapGlobal.insert(edgei, remapGlobal.size());
@@ -779,6 +763,11 @@ int main(int argc, char *argv[])
     );
 
     #include "addAllRegionOptions.H"
+    #include "addAllFaRegionOptions.H"
+
+    // Prevent volume fields [with regionFaModels] from incidental
+    // triggering finite-area
+    regionModels::allowFaModels(false);
 
     // Prevent volume BCs from triggering finite-area
     regionModels::allowFaModels(false);
@@ -841,8 +830,16 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Get region names
+    // Handle -allRegions, -regions, -region
     #include "getAllRegionOptions.H"
+
+    // Handle -all-area-regions, -area-regions, -area-region
+    #include "getAllFaRegionOptions.H"
+
+    if (!doFiniteArea)
+    {
+        areaRegionNames.clear();  // For consistency
+    }
 
     // Determine the processor count
     label nProcs{0};
@@ -935,7 +932,8 @@ int main(int argc, char *argv[])
                 polyMesh::meshDir(regionName),
                 databases[0],
                 IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             );
 
             // Problem: faceCompactIOList recognises both 'faceList' and
@@ -1405,8 +1403,12 @@ int main(int argc, char *argv[])
 
 
             // Read finite-area
-            PtrList<faMesh> procFaMeshes(databases.size());
+            // For each named area region that exists create a HashTable
+            // entry that will contain the PtrList for all processors
+
             PtrList<polyMesh> procMeshes(databases.size());
+            HashTable<PtrList<faMesh>> procAreaRegionMeshes;
+            procAreaRegionMeshes.reserve(areaRegionNames.size());
 
             forAll(databases, proci)
             {
@@ -1414,20 +1416,16 @@ int main(int argc, char *argv[])
                     << "Read processor mesh: "
                     << (databases[proci].caseName()/regionDir) << endl;
 
-                procMeshes.set
+                const polyMesh& procMesh = procMeshes.emplace
                 (
                     proci,
-                    new polyMesh
+                    IOobject
                     (
-                        IOobject
-                        (
-                            regionName,
-                            databases[proci].timeName(),
-                            databases[proci]
-                        )
+                        regionName,
+                        databases[proci].timeName(),
+                        databases[proci]
                     )
                 );
-                const polyMesh& procMesh = procMeshes[proci];
 
                 writeMaps
                 (
@@ -1450,38 +1448,67 @@ int main(int argc, char *argv[])
                             "boundary"
                         );
 
-                    IOobject io
-                    (
-                        "faBoundary",
-                        boundaryInst,
-                        faMesh::meshDir(procMesh, word::null),
-                        procMesh.time(),
-                        IOobject::READ_IF_PRESENT,
-                        IOobject::NO_WRITE,
-                        IOobject::NO_REGISTER
-                    );
-
-                    if (io.typeHeaderOk<faBoundaryMesh>(true))
+                    for (const word& areaName : areaRegionNames)
                     {
-                        // Always based on the volume decomposition!
-                        procFaMeshes.set(proci, new faMesh(procMesh));
+                        IOobject io
+                        (
+                            "faBoundary",
+                            boundaryInst,
+                            faMesh::meshDir(procMesh, areaName),
+                            procMesh.time(),
+                            IOobject::READ_IF_PRESENT,
+                            IOobject::NO_WRITE,
+                            IOobject::NO_REGISTER
+                        );
+
+                        if (io.typeHeaderOk<faBoundaryMesh>(true))
+                        {
+                            // Always based on the volume decomposition!
+                            auto& procFaMeshes = procAreaRegionMeshes(areaName);
+                            procFaMeshes.resize(databases.size());
+
+                            procFaMeshes.set
+                            (
+                                proci,
+                                new faMesh(areaName, procMesh)
+                            );
+                        }
                     }
                 }
             }
 
 
-            // Finite-area mapping
-            doFiniteArea = false;
-            forAll(procFaMeshes, proci)
+            // A finite-area mapping exists if procFaMeshes was filled
+
+            // Re-read reconstructed polyMesh. Note: could probably be avoided
+            // by merging into loops above.
+            refPtr<polyMesh> masterPolyMeshPtr;
+
+            if (!procAreaRegionMeshes.empty())
             {
-                if (procFaMeshes.set(proci))
-                {
-                    doFiniteArea = true;
-                }
+                masterPolyMeshPtr.reset
+                (
+                    new polyMesh
+                    (
+                        IOobject
+                        (
+                            regionName,
+                            runTime.timeName(),
+                            runTime
+                        ),
+                        true
+                    )
+                );
             }
 
-            if (doFiniteArea)
+            // Process any finite-area meshes
+            for (const auto& iter : procAreaRegionMeshes.csorted())
             {
+                const auto& areaName = iter.key();
+                const auto& procFaMeshes = iter.val();
+
+                const polyMesh& masterMesh = masterPolyMeshPtr();
+
                 // Addressing from processor to reconstructed case
                 labelListList faFaceProcAddressing(nProcs);
                 labelListList faEdgeProcAddressing(nProcs);
@@ -1499,30 +1526,8 @@ int main(int argc, char *argv[])
 
                     faBoundProcAddressing[proci] = identity(bm.size());
                     // Mark processor patches
-                    for
-                    (
-                        label patchi = bm.nNonProcessor();
-                        patchi < bm.size();
-                        ++patchi
-                    )
-                    {
-                        faBoundProcAddressing[proci][patchi] = -1;
-                    }
+                    faBoundProcAddressing[proci].slice(bm.nNonProcessor()) = -1;
                 }
-
-
-                // Re-read reconstructed polyMesh. Note: could probably be avoided
-                // by merging into loops above.
-                const polyMesh masterMesh
-                (
-                    IOobject
-                    (
-                        regionName,
-                        runTime.timeName(),
-                        runTime
-                    ),
-                    true
-                );
 
 
                 // faceProcAddressing
@@ -1559,13 +1564,13 @@ int main(int argc, char *argv[])
                 // Construct without patches
                 faMesh masterFaMesh
                 (
+                    areaName,
                     masterMesh,
                     std::move(masterFaceLabels),
                     io
                 );
 
-                const uindirectPrimitivePatch& masterPatch =
-                    masterFaMesh.patch();
+                const auto& masterPatch = masterFaMesh.patch();
 
 
                 // pointProcAddressing
@@ -1577,7 +1582,7 @@ int main(int argc, char *argv[])
                     const auto& procPatch = procFaMeshes[proci].patch();
                     const auto& mp = procPatch.meshPoints();
 
-                    labelList& pointAddr = faPointProcAddressing[proci];
+                    auto& pointAddr = faPointProcAddressing[proci];
                     pointAddr.resize_nocopy(mp.size());
 
                     forAll(mp, i)
@@ -1626,8 +1631,7 @@ int main(int argc, char *argv[])
                 label nPatches = 0;
                 forAll(completePatches, patchi)
                 {
-                    const labelList& patchEdgeLabels =
-                        singlePatchEdgeLabels[patchi];
+                    const auto& patchEdgeLabels = singlePatchEdgeLabels[patchi];
 
                     const faPatch& fap = procMesh0.boundary()[patchi];
 
@@ -1658,11 +1662,11 @@ int main(int argc, char *argv[])
 
                 // Serial mesh - no parallel communication
 
-                const bool oldParRun = Pstream::parRun(false);
+                const bool oldParRun = UPstream::parRun(false);
 
                 masterFaMesh.addFaPatches(completePatches);
 
-                Pstream::parRun(oldParRun);  // Restore parallel state
+                UPstream::parRun(oldParRun);  // Restore parallel state
 
 
                 // Write mesh & individual addressing

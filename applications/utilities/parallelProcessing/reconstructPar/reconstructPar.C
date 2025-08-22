@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
     argList::noParallel();
 
     #include "addAllRegionOptions.H"
+    #include "addAllFaRegionOptions.H"
 
     argList::addVerboseOption();
     argList::addOption
@@ -201,8 +202,16 @@ int main(int argc, char *argv[])
 
     const bool newTimes = args.found("newTimes");
 
-    // Get region names
+    // Handle -allRegions, -regions, -region
     #include "getAllRegionOptions.H"
+
+    // Handle -all-area-regions, -area-regions, -area-region
+    #include "getAllFaRegionOptions.H"
+
+    if (!doFiniteArea)
+    {
+        areaRegionNames.clear();  // For consistency
+    }
 
     // Determine the processor count
     label nProcs{0};
@@ -391,19 +400,30 @@ int main(int argc, char *argv[])
                 IOobjectOption::NO_REGISTER
             );
 
-            IOobjectList faObjects;
+            // The finite-area fields (multiple finite-area per volume)
+            HashTable<IOobjectList> faObjects;
 
             if (doFiniteArea && doFields)
             {
-                // List of area mesh objects (assuming single region)
-                // - scan on processor0
-                faObjects = IOobjectList
-                (
-                    procMeshes.meshes()[0],
-                    databases[0].timeName(),
-                    faMesh::dbDir(word::null),  // local relative to mesh
-                    IOobjectOption::NO_REGISTER
-                );
+                // Lists of finite-area fields - scan on processor0
+                faObjects.reserve(areaRegionNames.size());
+
+                for (const word& areaName : areaRegionNames)
+                {
+                    // The finite-area objects for this area region
+                    IOobjectList objs
+                    (
+                        procMeshes.meshes()[0],
+                        databases[0].timeName(),
+                        faMesh::dbDir(areaName),  // local relative to mesh
+                        IOobjectOption::NO_REGISTER
+                    );
+
+                    if (!objs.empty())
+                    {
+                        faObjects.emplace_set(areaName, std::move(objs));
+                    }
+                }
             }
 
             if (doFields)
@@ -553,42 +573,60 @@ int main(int argc, char *argv[])
             }
 
 
-            // If there are any FA fields, reconstruct them
-
-            if (!doFiniteArea)
+            // Reconstruct any finite-area fields
+            if (doFiniteArea)
             {
+                bool hadFaFields = false;
+                for (const word& areaName : areaRegionNames)
+                {
+                    const auto objs = faObjects.cfind(areaName);
+                    if (!objs.good())
+                    {
+                        continue;
+                    }
+                    const auto& faObjs = objs.val();
+
+                    if
+                    (
+                        !faObjs.count(fieldTypes::is_area)
+                     && !faObjs.count<edgeScalarField>()
+                    )
+                    {
+                        continue;
+                    }
+
+                    hadFaFields = true;
+
+                    Info<< "Reconstructing finite-area fields ["
+                        << polyMesh::regionName(areaName)
+                        << "]" << nl << endl;
+
+                    const faMesh aMesh(areaName, mesh);
+
+                    processorFaMeshes procFaMeshes
+                    (
+                        procMeshes.meshes(),
+                        areaName
+                    );
+
+                    faFieldReconstructor reconstructor
+                    (
+                        aMesh,
+                        procFaMeshes.meshes(),
+                        procFaMeshes.edgeProcAddressing(),
+                        procFaMeshes.faceProcAddressing(),
+                        procFaMeshes.boundaryProcAddressing()
+                    );
+
+                    reconstructor.reconstructAllFields(faObjs);
+                }
+
+                if (!hadFaFields)
+                {
+                    Info << "No finite-area fields" << nl << endl;
+                }
             }
-            else if
-            (
-                faObjects.count<areaScalarField>()
-             || faObjects.count<areaVectorField>()
-             || faObjects.count<areaSphericalTensorField>()
-             || faObjects.count<areaSymmTensorField>()
-             || faObjects.count<areaTensorField>()
-             || faObjects.count<edgeScalarField>()
-            )
-            {
-                Info << "Reconstructing FA fields" << nl << endl;
 
-                faMesh aMesh(mesh);
-
-                processorFaMeshes procFaMeshes(procMeshes.meshes());
-
-                faFieldReconstructor reconstructor
-                (
-                    aMesh,
-                    procFaMeshes.meshes(),
-                    procFaMeshes.edgeProcAddressing(),
-                    procFaMeshes.faceProcAddressing(),
-                    procFaMeshes.boundaryProcAddressing()
-                );
-
-                reconstructor.reconstructAllFields(faObjects);
-            }
-            else
-            {
-                Info << "No FA fields" << nl << endl;
-            }
 
             if (doReconstructSets)
             {
