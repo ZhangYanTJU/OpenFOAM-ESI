@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2506                                 |
+|  \\    /   O peration     | Version:  v2512                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -16,7 +16,7 @@ FoamFile
 
 solvers
 {
-    ws_vibrationShell
+    "(ws|ws_.*)"
     {
         solver          diagonal;
         preconditioner  DILU;

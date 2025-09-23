@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,11 +144,23 @@ KirchhoffShell::KirchhoffShell
 )
 :
     vibrationShellModel(modelType, mesh, dict),
+    h_
+    (
+        IOobject
+        (
+            dict.getOrDefault<word>("h", suffixed("hs")),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        regionMesh()
+    ),
     ps_
     (
         IOobject
         (
-            "ps_" + regionName_,
+            dict.getOrDefault<word>("ps", suffixed("ps")),
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
@@ -157,23 +169,11 @@ KirchhoffShell::KirchhoffShell
         regionMesh(),
         dimensionedScalar(dimPressure, Zero)
     ),
-    h_
-    (
-        IOobject
-        (
-            "h_" + regionName_,
-            regionMesh().time().timeName(),
-            regionMesh().thisDb(),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        regionMesh()
-    ),
     laplaceW_
     (
         IOobject
         (
-            "laplaceW_" + regionName_,
+            suffixed("laplaceW"),
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::NO_READ,
@@ -186,7 +186,7 @@ KirchhoffShell::KirchhoffShell
     (
         IOobject
         (
-            "laplace2W_" + regionName_,
+            suffixed("laplace2W"),
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::NO_READ,
@@ -199,7 +199,7 @@ KirchhoffShell::KirchhoffShell
     (
         IOobject
         (
-            "w0_" + regionName_,
+            suffixed("w0"),
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::NO_READ,
@@ -212,7 +212,7 @@ KirchhoffShell::KirchhoffShell
     (
         IOobject
         (
-            "w00_" + regionName_,
+            suffixed("w00"),
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::NO_READ,
@@ -225,7 +225,7 @@ KirchhoffShell::KirchhoffShell
     (
         IOobject
         (
-            "laplaceW0_" + regionName_,
+            suffixed("laplaceW0"),
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::NO_READ,
@@ -238,7 +238,7 @@ KirchhoffShell::KirchhoffShell
     (
         IOobject
         (
-            "laplace2W0_" + regionName_,
+            suffixed("laplace2W0"),
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::NO_READ,
@@ -255,6 +255,7 @@ KirchhoffShell::KirchhoffShell
 {
     init(dict);
 }
+
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 

@@ -41,7 +41,7 @@ boundaryField
             nu      0.22;
         }
 
-        region                vibrationShell;
+        region                vibration;
         vibrationShellModel   KirchhoffShell;
 
         f0             0.04;

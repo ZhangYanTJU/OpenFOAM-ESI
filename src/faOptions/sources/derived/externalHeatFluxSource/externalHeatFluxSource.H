@@ -103,7 +103,7 @@ Usage
     \verbatim
       power       | Use fixed power (supply Q)
       flux        | Use fixed heat flux (supply q)
-      coefficient | Use fixes heat transfer coefficient (supply h and T)
+      coefficient | Use fixes heat transfer coefficient (supply h and Ta)
     \endverbatim
 
 See also
@@ -159,7 +159,7 @@ private:
         //- Operation mode
         operationMode mode_;
 
-        //- Name of temperature field
+        //- Name of shell temperature field (default: "T")
         word TName_;
 
         //- Heat power [W]
@@ -174,7 +174,7 @@ private:
         //- Ambient temperature [K]
         autoPtr<Function1<scalar>> Ta_;
 
-        //- Optional surface emissivity for radiative transfer to ambient
+        //- Surface emissivity for radiative transfer to ambient (default: 0)
         scalar emissivity_;
 
 

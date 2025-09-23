@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::regionFaModels::KirchhoffShell
+    Foam::regionModels::KirchhoffShell (Foam::regionFaModels)
 
 Description
     Vibration-shell finite-area model.
@@ -51,9 +51,25 @@ Usage
     \table
       Property   | Description                         | Type  | Reqd | Deflt
       vibrationShellModel | Type name: KirchhoffShell  | word  | yes  | -
-      f0         | Damping coefficient [1/s]           | scalar | yes | -
-      f1         | Damping coefficient [1/s]           | scalar | yes | -
-      f2         | Damping coefficient [1/s]           | scalar | yes | -
+      f0         | Damping coefficient [1/s]       | scalar | yes | -
+      f1         | Damping coefficient [1/s]       | scalar | yes | -
+      f2         | Damping coefficient [1/s]       | scalar | yes | -
+      h          | Name of thickness field         | word  | no   | hs (suffix)
+      ps         | Name of pressure field          | word  | no   | ps (suffix)
+    \endtable
+
+    Fields/variables used:
+    \table
+      Property  | Description               | Type  | Deflt
+      h         | Thickness                 | shell | hs (suffix)
+      ps        | Pressure on shell         | shell | ps (suffix)
+    \endtable
+
+    Naming changes from 2056 and earlier:
+    \table
+      Keyword  | Description               | Keyword (old) | Deflt (old)
+      h        | Thickness (shell)         | -   | "h_" + regionName
+      ps       | Pressure (shell)          | -   | "ps_" + regionName
     \endtable
 
     The inherited entries are elaborated in:
@@ -90,11 +106,11 @@ class KirchhoffShell
 
         // Source term fields
 
+        //- Shell thickness [m]
+        areaScalarField h_;
+
         //- External surface source [Pa]
         const areaScalarField ps_;
-
-        //- Thickness [m]
-        areaScalarField h_;
 
         //- Laplace of the displacement
         areaScalarField laplaceW_;

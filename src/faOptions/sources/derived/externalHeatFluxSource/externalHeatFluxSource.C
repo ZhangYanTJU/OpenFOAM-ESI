@@ -72,10 +72,6 @@ Foam::fa::externalHeatFluxSource::externalHeatFluxSource
     fa::faceSetOption(sourceName, modelType, dict, m, defaultAreaName),
     mode_(operationModeNames.get("mode", dict)),
     TName_(dict.getOrDefault<word>("T", "T")),
-    Q_(nullptr),
-    q_(nullptr),
-    h_(nullptr),
-    Ta_(nullptr),
     emissivity_(dict.getOrDefault<scalar>("emissivity", 0))
 {
     fieldNames_.resize(1, TName_);
@@ -204,6 +200,11 @@ bool Foam::fa::externalHeatFluxSource::read(const dictionary& dict)
         dict.readIfPresent("emissivity", emissivity_);
 
         mode_ = operationModeNames.get("mode", dict);
+
+        Q_.reset(nullptr);
+        q_.reset(nullptr);
+        h_.reset(nullptr);
+        Ta_.reset(nullptr);
 
         switch (mode_)
         {

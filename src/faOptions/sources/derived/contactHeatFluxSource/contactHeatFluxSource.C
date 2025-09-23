@@ -30,7 +30,6 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 #include "famSup.H"
-#include "zeroGradientFaPatchFields.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -57,13 +56,10 @@ Foam::fa::contactHeatFluxSource::contactHeatFluxSource
 :
     fa::faceSetOption(sourceName, modelType, dict, mesh, defaultAreaName),
     TName_(dict.getOrDefault<word>("T", "T")),
-    TprimaryName_(dict.get<word>("Tprimary")),
+    TprimaryName_(dict.getOrDefault<word>("Tprimary", "T")),
     Tprimary_(mesh_.lookupObject<volScalarField>(TprimaryName_)),
-    thicknessLayers_(),
-    kappaLayers_(),
     contactRes_(0),
-    curTimeIndex_(-1),
-    coupling_()
+    curTimeIndex_(-1)
 {
     fieldNames_.resize(1, TName_);
 
@@ -131,30 +127,30 @@ void Foam::fa::contactHeatFluxSource::addSup
     const label fieldi
 )
 {
-    if (isActive())
+    if (!isActive())
     {
-        DebugInfo
-            << name() << ": applying source to "
-            << eqn.psi().name() << endl;
+        return;
+    }
 
-        if (curTimeIndex_ != mesh().time().timeIndex())
-        {
-            tmp<DimensionedField<scalar, areaMesh>> htcw(htc());
+    DebugInfo<< name() << ": applying source to " << eqn.psi().name() << endl;
 
-            // Wall temperature - mapped from primary field to finite-area
-            auto Twall = DimensionedField<scalar, areaMesh>::New
-            (
-                "Tw_" + option::name(),
-                regionMesh(),
-                dimensionedScalar(dimTemperature, Zero)
-            );
+    if (curTimeIndex_ != mesh().time().timeIndex())
+    {
+        tmp<DimensionedField<scalar, areaMesh>> htcw(htc());
 
-            vsm().mapInternalToSurface<scalar>(Tprimary_, Twall.ref().field());
+        // Wall temperature - mapped from primary field to finite-area
+        auto Twall = DimensionedField<scalar, areaMesh>::New
+        (
+            "Tw_" + option::name(),
+            regionMesh(),
+            dimensionedScalar(dimTemperature, Zero)
+        );
 
-            eqn += -fam::Sp(htcw(), eqn.psi()) + htcw()*Twall;
+        vsm().mapInternalToSurface<scalar>(Tprimary_, Twall.ref().field());
 
-            curTimeIndex_ = mesh().time().timeIndex();
-        }
+        eqn += -fam::Sp(htcw(), eqn.psi()) + htcw()*Twall;
+
+        curTimeIndex_ = mesh().time().timeIndex();
     }
 }
 
@@ -190,8 +186,14 @@ bool Foam::fa::contactHeatFluxSource::read(const dictionary& dict)
 
         const labelList& patches = regionMesh().whichPolyPatches();
 
-        coupling_.clear();
-        coupling_.resize(patches.empty() ? 0 : (patches.last()+1));
+        if (patches.empty())
+        {
+            coupling_.clear();
+        }
+        else
+        {
+            coupling_.resize_null(patches.back()+1);
+        }
 
         for (const label patchi : patches)
         {

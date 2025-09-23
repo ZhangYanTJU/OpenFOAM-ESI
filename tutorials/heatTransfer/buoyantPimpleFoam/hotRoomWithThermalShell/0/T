@@ -30,7 +30,9 @@ boundaryField
     {
         type                compressible::thermalShell;
         active              true;
-        T                   T;
+
+        region              upper;
+        thermalShellModel   thermalShell;
 
         thermo
         {
@@ -41,11 +43,17 @@ boundaryField
             emissivity      0;
         }
 
-        region              ceilingShell;
-        thermalShellModel   thermalShell;
-
-        qr                  qr;
         thickness           1e-3;
+
+        //suffixing       default; //
+        //suffixing       _shell;  //
+
+        // Primary field
+        // Tprimary            T;
+
+        //default: T       Ts;
+        //default: h       hs;
+        //default: qr      qr;
 
         value               uniform 300;
     }

@@ -40,6 +40,8 @@ Usage
     {
         // Mandatory entries (unmodifiable)
         type                contactHeatFluxSource;
+
+        // Optional entries (unmodifiable)
         Tprimary            <TprimaryFieldName>;
 
         // Optional entries (runtime modifiable)
@@ -60,10 +62,17 @@ Usage
     \table
       Property  | Description                       | Type  | Reqd | Dflt
       type      | Type name: contactHeatFluxSource  | word  | yes  | -
-      Tprimary  | Name of primary temperature field | word  | yes  | -
       T         | Name of operand temperature field | word  | no   | T
+      Tprimary  | Name of primary temperature field | word  | no   | T
       thicknessLayers | List of thicknesses of layers | scalarList | no | -
       kappaLayers | List of conductivities of layers | scalarList | cndtnl | -
+    \endtable
+
+    Fields/variables used:
+    \table
+      Property  | Description               | Type   | Deflt
+      T         | Temperature               | shell  | T
+      Tprimary  | Temperature               | volume | T
     \endtable
 
     The inherited entries are elaborated in:
@@ -124,13 +133,13 @@ class contactHeatFluxSource
 
     // Private Data
 
-        //- Name of temperature field
+        //- Name of shell temperature field (default: "T")
         word TName_;
 
-        //- Name of primary temperature field
-        word TprimaryName_;
+        //- Name of volume temperature field (default: "T")
+        const word TprimaryName_;
 
-        //- Primary region temperature
+        //- Primary (volume) region temperature
         const volScalarField& Tprimary_;
 
         //- Thickness of layers

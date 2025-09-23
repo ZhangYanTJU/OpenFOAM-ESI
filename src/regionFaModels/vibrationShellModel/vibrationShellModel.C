@@ -53,7 +53,7 @@ vibrationShellModel::vibrationShellModel
     (
         IOobject
         (
-            "ws_" + regionName_,
+            dict.getOrDefault<word>("ws", suffixed("ws")),
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::MUST_READ,
@@ -65,7 +65,7 @@ vibrationShellModel::vibrationShellModel
     (
         IOobject
         (
-            "as_" + regionName_,
+            dict.getOrDefault<word>("as", suffixed("as")),
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::NO_READ,

@@ -17,12 +17,13 @@ FoamFile
 pressure
 {
     type            externalFileSource;
-    fieldName       ws_vibrationShell;
+    //fieldName       ws_shell;
+    fieldName       ws;
     tableName       p;
     active          true;
     timeStart       0.001;
     duration        0.03;
-    region          vibrationShell;
+    region          vibration;
     selectionMode   all;
 
     sampleFormat    ensight;

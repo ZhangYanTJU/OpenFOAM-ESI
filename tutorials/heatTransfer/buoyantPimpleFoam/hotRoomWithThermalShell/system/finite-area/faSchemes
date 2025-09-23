@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2506                                 |
+|  \\    /   O peration     | Version:  v2512                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -22,7 +22,7 @@ ddtSchemes
 gradSchemes
 {
     default         Gauss linear;
-    grad(jouleHeatingSource:V_ceilingShell) Gauss linear;
+    grad(jouleHeatingSource:V) Gauss linear;
 }
 
 divSchemes
@@ -33,8 +33,12 @@ divSchemes
 laplacianSchemes
 {
     default         none;
-    laplacian((h_ceilingShell*jouleHeatingSource:sigma_ceilingShell),jouleHeatingSource:V_ceilingShell) Gauss linear corrected;
-    laplacian((kappas*h_ceilingShell),Ts_ceilingShell) Gauss linear corrected;
+    laplacian((kappas*hs),Ts) Gauss linear corrected;
+    laplacian((hs*jouleHeatingSource:sigma),jouleHeatingSource:V) Gauss linear corrected;
+
+    // Same but with longer names
+    laplacian((kappas*hs_shell),Ts_shell) Gauss linear corrected;
+    laplacian((hs_shell*jouleHeatingSource:sigma),jouleHeatingSource:V) Gauss linear corrected;
 }
 
 interpolationSchemes

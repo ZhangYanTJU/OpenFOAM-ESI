@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,11 +56,28 @@ Usage
 
     where the entries mean:
     \table
-      Property   | Description                      | Type  | Reqd   | Deflt
-      thermalShellModel | Type name: thermalShell   | word  | yes    | -
-      thermo     | Solid thermal properties         | dictionary | yes | -
-      qr         | Name of radiative heat flux field | word | no     | none
-      thickness  | Uniform film thickness [m]       | scalar | choice | -
+      Property   | Description                    | Type  | Reqd   | Deflt
+      thermalShellModel | Type name: thermalShell | word  | yes    | -
+      h          | Name of thickness field        | word  | no     | hs (suffix)
+      qs         | Name of source field           | word  | no     | qs (suffix)
+      qr         | Name of radiative heat flux field | word | no   | none
+      thermo     | Solid thermal properties       | dict | yes | -
+      thickness  | Uniform shell thickness [m]    | scalar | choice | -
+    \endtable
+
+    Fields/variables used:
+    \table
+      Property  | Description               | Type  | Deflt
+      h         | Thickness                 | shell | hs (suffix)
+      qs        | Source field              | shell | qs (suffix)
+      qr        | Radiative heat flux field | volume | none
+    \endtable
+
+    Note the following naming changes from 2056 and earlier:
+    \table
+      Keyword  | Description               | Keyword (old) | Deflt (old)
+      h        | Temperature (volume)      | h    | "h_" + regionName
+      qs       | Temperature (shell)       | qs   | "qs_" + regionName
     \endtable
 
     The inherited entries are elaborated in:
@@ -68,7 +85,6 @@ Usage
 
 SourceFiles
     thermalShell.C
-    thermalShellI.H
 
 \*---------------------------------------------------------------------------*/
 
@@ -108,31 +124,38 @@ protected:
 
     // Protected Data
 
-        // Solution parameters
+        //- Name of shell thickness [height] field (default: "hs" + suffix)
+        const word hName_;
 
-            //- Number of non orthogonal correctors
-            label nNonOrthCorr_;
+        //- Name of surface energy source (default: "qs" + suffix)
+        const word qsName_;
 
-
-        // Thermo properties
-
-            //- Solid properties
-            solidProperties thermo_;
+        //- Name of (volume) radiative flux field (default: none)
+        const word qrName_;
 
 
-        // Source term fields
+    // Solution Parameters
 
-            //- External surface energy source [J/m2/s]
-            areaScalarField qs_;
+        //- Number of non orthogonal correctors
+        label nNonOrthCorr_;
 
-            //- Film thickness [m]
-            areaScalarField h_;
 
-            //- Name of the primary region radiative flux
-            const word qrName_;
+    // Thermo properties
 
-            //- Uniform film thickness [m]
-            scalar thickness_;
+        //- Solid properties
+        solidProperties thermo_;
+
+
+    // Source term fields
+
+        //- Shell thickness field [m]
+        areaScalarField h_;
+
+        //- External surface energy source [J/m2/s]
+        areaScalarField qs_;
+
+        //- Uniform shell thickness [m]
+        scalar thickness_;
 
 
     // Protected Member Functions
@@ -174,7 +197,7 @@ public:
 
         // Fields
 
-            //- Return the film specific heat capacity [J/kg/K]
+            //- Return the shell specific heat capacity [J/kg/K]
             const tmp<areaScalarField> Cp() const;
 
             //- Return density [kg/m3]

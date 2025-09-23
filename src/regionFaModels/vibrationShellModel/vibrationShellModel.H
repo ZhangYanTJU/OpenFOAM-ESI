@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::regionModels::thermalShellModels::vibrationShellModel
+    Foam::regionModels::vibrationShellModel
 
 Description
     Intermediate class for vibration-shell finite-area models.
@@ -52,9 +52,19 @@ Usage
     \table
       Property   | Description                            | Type  | Reqd | Deflt
       vibrationShellModel | Name of vibration-shell model | word | yes | -
-      p          | Name of the coupled field in the primary <!--
-                 --> region                               | word | yes | -
-      solid      | Solid properties                 | dictionary | yes | -
+      p          | Name of primary pressure field         | word | yes | -
+      solid      | Solid properties                       | dict | yes | -
+      as         | Name of shell acceleration field    | word | no | as (suffix)
+      ps         | Name of pressure (source) on shell  | word | no | ps (suffix)
+      ws         | Name of shell displacement field    | word | no | ws (suffix)
+    \endtable
+
+    Naming changes from 2056 and earlier:
+    \table
+      Keyword  | Description               | Keyword (old) | Deflt (old)
+      as       | Acceleration (shell)      | - | "as_" + regionName
+      ps       | Pressure on shell         | - | "ps_" + regionName
+      ws       | Displacement (shell)      | - | "ws_" + regionName
     \endtable
 
     The inherited entries are elaborated in:
@@ -93,19 +103,19 @@ protected:
 
     // Protected Data
 
-        //- Shell displacement
+        //- Shell displacement [m]
         areaScalarField w_;
 
-        //- Shell acceleration
+        //- Shell acceleration [m/s2]
         areaScalarField a_;
 
         //- Solid properties
         solidProperties solid_;
 
-        //- Name of the coupled field in the primary region
+        //- Name of primary region acoustic pressure field
         word pName_;
 
-        //- Primary region acoustic pressure
+        //- Primary region acoustic pressure [Pa]
         const volScalarField& pa_;
 
         //- Reference to faOptions
@@ -167,26 +177,26 @@ public:
 
     // Member Functions
 
-       //- Return primary region pa
-       const volScalarField& pa() const noexcept { return pa_; }
+        //- Return the primary region presssure
+        const volScalarField& pa() const noexcept { return pa_; }
 
-       //- Return shell displacement
-       const areaScalarField& w() const noexcept { return w_; }
+        //- Return the shell displacement
+        const areaScalarField& w() const noexcept { return w_; }
 
-       //- Return shell acceleration
-       const areaScalarField& a() const noexcept { return a_; }
+        //- Return the shell acceleration
+        const areaScalarField& a() const noexcept { return a_; }
 
-       //- Return faOptions
-       Foam::fa::options& faOptions() noexcept { return faOptions_; }
+        //- Return faOptions
+        Foam::fa::options& faOptions() noexcept { return faOptions_; }
 
-       //- Return solid properties
-       const solidProperties& solid() const noexcept { return solid_; }
+        //- Return solid properties
+        const solidProperties& solid() const noexcept { return solid_; }
 
 
    // Evolution
 
-       //- Pre-evolve region
-       virtual void preEvolveRegion();
+        //- Pre-evolve region
+        virtual void preEvolveRegion();
 };
 
 

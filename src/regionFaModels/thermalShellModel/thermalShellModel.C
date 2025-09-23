@@ -50,13 +50,14 @@ thermalShellModel::thermalShellModel
 )
 :
     regionFaModel(mesh, "thermalShell", modelType, dict, true),
-    TName_(dict.get<word>("T")),
-    Tp_(mesh.lookupObject<volScalarField>(TName_)),
+    TName_(dict.getOrDefault<word>("T", suffixed("Ts"))),
+    TprimaryName_(dict.getOrDefault<word>("Tprimary", "T")),
+    Tp_(mesh.lookupObject<volScalarField>(TprimaryName_)),
     T_
     (
         IOobject
         (
-            "Ts_" + regionName_,
+            TName_,
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::MUST_READ,
@@ -71,8 +72,8 @@ thermalShellModel::thermalShellModel
 {
     if (faOptions_.optionList::empty())
     {
-        Info<< "No finite area options present for area : "
-            << polyMesh::regionName(regionFaModel::areaName()) << endl;
+        Info<< "No finite-area options present for area:"
+            << regionFaModel::areaName() << endl;
     }
 }
 

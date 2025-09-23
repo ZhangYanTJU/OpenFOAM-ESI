@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2506                                 |
+|  \\    /   O peration     | Version:  v2512                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -26,8 +26,9 @@ d2dt2Schemes
 
 gradSchemes
 {
-    default                  leastSquares;
-    grad(ws_vibrationShell)  leastSquares;
+    default         leastSquares;
+    grad(ws)        leastSquares;
+    grad(ws_shell)  leastSquares;
 }
 
 divSchemes
