@@ -95,10 +95,12 @@ Foam::tokenList Foam::ITstream::parse_chars
     IOstreamOption streamOpt
 )
 {
-    ISpanStream is(s, nbytes, streamOpt);
-
     tokenList tokens;
-    parseStream(is, tokens);
+    if (s && nbytes > 0)  // extra safety
+    {
+        ISpanStream is(s, nbytes, streamOpt);
+        parseStream(is, tokens);
+    }
     return tokens;
 }
 
@@ -107,10 +109,19 @@ Foam::tokenList Foam::ITstream::parse_chars
 
 void Foam::ITstream::reset(const char* input, size_t nbytes)
 {
-    ISpanStream is(input, nbytes, static_cast<IOstreamOption>(*this));
+    tokenList tokens;
+    if (input && nbytes > 0)  // extra safety
+    {
+        ISpanStream is(input, nbytes, static_cast<IOstreamOption>(*this));
 
-    parseStream(is, static_cast<tokenList&>(*this));
-    ITstream::seek(0);  // rewind() bypassing virtual
+        parseStream(is, static_cast<tokenList&>(*this));
+        ITstream::seek(0);  // rewind() bypassing virtual
+    }
+    else
+    {
+        ITstream::seek(0);  // rewind() bypassing virtual
+        tokenList::clear();
+    }
 }
 
 
@@ -248,7 +259,10 @@ Foam::ITstream::ITstream
 :
     ITstream(streamOpt, name)
 {
-    reset(input, strlen(input));
+    if (input)
+    {
+        reset(input, strlen(input));
+    }
 }
 
 

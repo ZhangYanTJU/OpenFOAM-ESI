@@ -341,22 +341,6 @@ inline Ostream& operator<<(Ostream& os, std::string_view s)
     return os;
 }
 
-//- Write operator for character span. Output like string data
-inline Ostream& operator<<(Ostream& os, stdFoam::span<char> s)
-{
-    os.writeQuoted(s.data(), s.size(), true);  // quoted
-    os.check("Foam::operator<<(Ostream&, stdFoam::span<char>)");
-    return os;
-}
-
-//- Write operator for const character span. Output like string data
-inline Ostream& operator<<(Ostream& os, stdFoam::span<const char> s)
-{
-    os.writeQuoted(s.data(), s.size(), true);  // quoted
-    os.check("Foam::operator<<(Ostream&, stdFoam::span<const char>)");
-    return os;
-}
-
 
 /*---------------------------------------------------------------------------*\
                        Manipulators (without arguments)

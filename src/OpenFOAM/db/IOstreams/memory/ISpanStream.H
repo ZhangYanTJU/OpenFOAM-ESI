@@ -123,20 +123,6 @@ public:
             stream_type(static_cast<buffer_type*>(this))
         {}
 
-        //- Construct (shallow copy) from span character content
-        explicit ispanstream(stdFoam::span<char> s)
-        :
-            buffer_type(const_cast<char*>(s.data()), s.size()),
-            stream_type(static_cast<buffer_type*>(this))
-        {}
-
-        //- Construct (shallow copy) from span character content
-        explicit ispanstream(stdFoam::span<const char> s)
-        :
-            buffer_type(const_cast<char*>(s.data()), s.size()),
-            stream_type(static_cast<buffer_type*>(this))
-        {}
-
 
     // Member Functions
 
@@ -325,26 +311,6 @@ public:
             ISpanStream(buffer.cdata(), buffer.size(), streamOpt)
         {}
 
-        //- Construct (shallow copy) from span character content
-        explicit ISpanStream
-        (
-            stdFoam::span<const char> s,
-            IOstreamOption streamOpt = IOstreamOption()
-        )
-        :
-            ISpanStream(s.data(), s.size(), streamOpt)
-        {}
-
-        //- Construct (shallow copy) from span character content
-        explicit ISpanStream
-        (
-            stdFoam::span<char> s,
-            IOstreamOption streamOpt = IOstreamOption()
-        )
-        :
-            ISpanStream(s.data(), s.size(), streamOpt)
-        {}
-
 
     // Member Functions
 
@@ -397,20 +363,6 @@ public:
 
         //- Reset input area to use data from a std::string_view
         void reset(std::string_view s)
-        {
-            stream_.reset(s.data(), s.size());
-            syncState();
-        }
-
-        //- Reset input area to use data from span character content
-        void reset(stdFoam::span<char> s)
-        {
-            stream_.reset(s.data(), s.size());
-            syncState();
-        }
-
-        //- Reset input area to use data from span character content
-        void reset(stdFoam::span<const char> s)
         {
             stream_.reset(s.data(), s.size());
             syncState();

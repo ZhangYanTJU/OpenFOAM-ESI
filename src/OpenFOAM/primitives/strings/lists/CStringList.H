@@ -58,6 +58,8 @@ Description
 
 #include <algorithm>  // std::copy
 #include <utility>    // std::initializer_list
+#include <vector>
+#include <string_view>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -92,6 +94,11 @@ class CStringList
         //
         //  \return location one-past end of dest (ie, the next destination)
         static inline char* stringCopy(char* dest, const char* src);
+
+        //- Copy string characters into dest as NUL-terminated string.
+        //
+        //  \return location one-past end of dest (ie, the next destination)
+        static inline char* stringCopy(char *dest, std::string_view src);
 
         //- Copy string characters into dest as NUL-terminated string.
         //  Forces conversion of std::sub_match to string form
@@ -133,9 +140,17 @@ public:
         template<class StringType>
         inline explicit CStringList(const UList<StringType>& input);
 
+        //- Copy construct from a list of string_views
+        //  Copies the input characters.
+        inline explicit CStringList(const UList<std::string_view>& input);
+
+        //- Copy construct from a list of string_views
+        //  Copies the input characters.
+        inline explicit CStringList(const std::vector<std::string_view>& input);
+
         //- Copy construct from a list of sub-string references
         //  Copies the input characters.
-        explicit CStringList(const SubStrings& input);
+        inline explicit CStringList(const SubStrings& input);
 
 
     //- Destructor. Invokes clear() to free memory.
@@ -156,6 +171,9 @@ public:
 
         //- Return the number of C-strings (ie, argc)
         int size() const noexcept { return argc_; }
+
+        //- The flattened character content, with interspersed nul-chars
+        inline std::string_view view() const;
 
         //- The flattened character content, with interspersed nul-chars
         const char* cdata_bytes() const noexcept { return data_; }

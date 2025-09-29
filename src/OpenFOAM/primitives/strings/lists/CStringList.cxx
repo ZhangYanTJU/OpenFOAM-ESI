@@ -28,16 +28,6 @@ License
 #include "CStringList.H"
 #include "Ostream.H"
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::CStringList::CStringList(const SubStrings& input)
-:
-    CStringList()
-{
-    resetContent(input);
-}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 // Largely identical to resetContent() except with 'c-string'

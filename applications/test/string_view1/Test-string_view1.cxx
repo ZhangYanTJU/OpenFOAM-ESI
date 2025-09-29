@@ -59,11 +59,6 @@ int main(int argc, char *argv[])
                 << " type: " << typeid(cstr).name() << " len:" << len << nl;
 
             Info<< "    view: " << std::string_view(cstr) << nl;
-
-            Info<< "    span: "
-                << stdFoam::span<const char>(cstr, len) << nl;
-            Info<< "    span: "
-                << stdFoam::span<char>(const_cast<char*>(cstr), len) << nl;
         }
     }
 
