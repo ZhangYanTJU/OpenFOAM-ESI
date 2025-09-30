@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2506                                 |
+|  \\    /   O peration     | Version:  v2512                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -107,6 +107,11 @@ OptimisationSwitches
     //- Parallel IO file handler
     //  uncollated (default), collated, masterUncollated etc.
     fileHandler uncollated;
+
+    //- Preferred backend for collated format. Default: 0
+    //   0: legacy writer
+    //   1: MPI/IO writer
+    collated.backend 0;
 
     //- collated: thread buffer size for queued file writes.
     //  If set to 0 or not sufficient for the file size, threading is not used.

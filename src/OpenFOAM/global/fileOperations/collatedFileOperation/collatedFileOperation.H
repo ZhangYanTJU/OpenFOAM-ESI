@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,6 +30,9 @@ Class
 Description
     Version of masterUncollatedFileOperation that collates regIOobjects
     into a container in the processors/ subdirectory.
+
+    Can use MPI/IO for the backend (when backend_ == 1),
+    which can be defined by the "collated.backend" optimisation switch.
 
     Uses threading if maxThreadFileBufferSize != 0.
         > 0 : Can use mpi inside thread to collect data if buffer is not
@@ -68,6 +71,16 @@ class collatedFileOperation
 :
     public masterUncollatedFileOperation
 {
+    // Private Enumeration
+
+        //- Preferred backend for collated format
+        enum backendType : int
+        {
+            LEGACY_BACKEND = 0,
+            MPIIO_BACKEND = 1,
+        };
+
+
     // Private Data
 
         //- Communicator allocated/managed by us
@@ -78,6 +91,26 @@ class collatedFileOperation
 
         //- Any initialisation steps after constructing
         void init(bool verbose);
+
+        //- Writes a regIOobject (so header, contents and divider).
+        //  Returns success state.
+        bool writeObject_legacy
+        (
+            const fileName& pathName,
+            const regIOobject&,
+            IOstreamOption streamOpt,
+            const bool writeOnProc
+        ) const;
+
+        //- Writes a regIOobject (so header, contents and divider).
+        //  Returns success state.
+        bool writeObject_mpiio
+        (
+            const fileName& pathName,
+            const regIOobject&,
+            IOstreamOption streamOpt,
+            const bool writeOnProc
+        ) const;
 
 
 protected:
@@ -101,7 +134,6 @@ protected:
             IOstreamOption streamOpt
         ) const;
 
-
 public:
 
     //- Runtime type information
@@ -109,6 +141,9 @@ public:
 
 
     // Static Data
+
+        //- The type of backend to be used
+        static int backend_;
 
         //- Max size of thread buffer size. This is the overall size of
         //  all files to be written. Starts blocking if not enough size.

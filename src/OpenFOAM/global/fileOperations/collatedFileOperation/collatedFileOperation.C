@@ -36,6 +36,7 @@ License
 #include "masterOFstream.H"
 #include "OFstream.H"
 #include "foamVersion.H"
+#include "UPstreamFile.H"
 
 /* * * * * * * * * * * * * * * Static Member Data  * * * * * * * * * * * * * */
 
@@ -80,6 +81,117 @@ namespace fileOperations
 }
 
 
+int Foam::fileOperations::collatedFileOperation::backend_
+(
+    Foam::debug::optimisationSwitch("collated.backend", 0)
+);
+registerOptSwitch
+(
+    "collated.backend",
+    int,
+    Foam::fileOperations::collatedFileOperation::backend_
+);
+
+
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace
+{
+
+// A fixed-width 0-padded integer
+template<class IntType>
+void zeropadded(std::ostream& os, IntType val)
+{
+    // set fill char and width
+    os.setf(std::ios_base::right, std::ios_base::adjustfield);
+    char fillch = os.fill('0');
+    os.width(std::numeric_limits<IntType>::digits10+1);
+    os  << val;
+    // restore fill char
+    os.fill(fillch);
+}
+
+// Some fancy rewriting of the header content to
+// include block.start, block.count, block.sizes
+template<class IntType>
+void rewriteBlockHeaderInfo
+(
+    Foam::OCharStream& header,
+    const Foam::UList<IntType>& blockSizes
+)
+{
+    using namespace Foam;
+
+    // An int32 (or even smaller) is large enough for the
+    // size of the header content, which is the offset to the first block
+
+    typedef int32_t headerOffsetType;
+
+    if
+    (
+        const auto paste = header.view().rfind('}');
+        paste != std::string::npos
+    )
+    {
+        // Keep everything in ASCII
+        const auto oldFmt = header.format(IOstreamOption::ASCII);
+
+        // Fixed-width label entry
+        Foam::ocharstream labelbuf;
+        labelbuf.reserve_exact(32);
+
+        // Everything trailing after the last '}' from 'FoamFile {}'
+        std::string trailing(header.view().substr(paste));
+        header.seek(paste);
+
+        // <block.start< entry
+        header.append("    block.start ");
+
+        // Position before writing the label
+        const auto labelBegin = header.tellp();
+
+        // fixed-length integer
+        {
+            labelbuf.rewind();
+            zeropadded(labelbuf, headerOffsetType(0));
+
+            header.append(labelbuf.view());
+            header.endEntry();
+        }
+
+        // block.count, block.sizes entries
+        if (!blockSizes.empty())
+        {
+            // <block.count>
+            header.append("    block.count ");
+            header << blockSizes.size();
+            header.endEntry();
+
+            // <block.sizes> : writeList for flatOutput
+            header.append("    block.sizes\n");
+            blockSizes.writeList(header);
+            header.endEntry();
+        }
+
+        // reattach old content
+        header.append(trailing);
+
+        // update block.start information
+        {
+            labelbuf.rewind();
+            zeropadded(labelbuf, headerOffsetType(header.view().size()));
+
+            header.overwrite(labelBegin, labelbuf.view());
+        }
+
+        // Restore format
+        header.format(oldFmt);
+    }
+}
+
+} // End anonymous namespace
+
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 void Foam::fileOperations::collatedFileOperation::printBanner
@@ -90,7 +202,15 @@ void Foam::fileOperations::collatedFileOperation::printBanner
     DetailInfo
         << "I/O    : " << this->type();
 
-    if (mag(maxThreadFileBufferSize) > 1)
+    if
+    (
+        collatedFileOperation::backend_ == backendType::MPIIO_BACKEND
+     && UPstream::File::supported()
+    )
+    {
+        DetailInfo<< " [mpi/io]" << nl;
+    }
+    else if (Foam::mag(maxThreadFileBufferSize) > 1)
     {
         // FUTURE: deprecate or remove threading?
         DetailInfo
@@ -107,7 +227,7 @@ void Foam::fileOperations::collatedFileOperation::printBanner
         DetailInfo
             << " [unthreaded] (maxThreadFileBufferSize = 0)." << nl;
 
-        if (mag(maxMasterFileBufferSize) < 1)
+        if (Foam::mag(maxMasterFileBufferSize) < 1)
         {
             DetailInfo
                 << "         With scheduled transfer" << nl;
@@ -350,6 +470,367 @@ Foam::fileName Foam::fileOperations::collatedFileOperation::objectPath
 }
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+bool Foam::fileOperations::collatedFileOperation::writeObject_legacy
+(
+    const fileName& pathName,
+    const regIOobject& io,
+    IOstreamOption streamOpt,
+    const bool writeOnProc
+) const
+{
+    const Time& tm = io.time();
+    const fileName& inst = io.instance();
+
+    if
+    (
+        (inst.isAbsolute() || !tm.processorCase())
+     || (io.global() || io.globalObject())
+     || (!UPstream::parRun())
+    )
+    {
+        FatalErrorInFunction
+            << "Should not have been called for any of these conditions:"
+            << " - isAbsolute" << nl
+            << " - not processorCase" << nl
+            << " - global or globalObject" << nl
+            << " - not parRun" << nl
+            << abort(FatalError);
+
+        return false;
+    }
+    else
+    {
+        // Re-check static maxThreadFileBufferSize variable to see
+        // if needs to use threading
+        const bool useThread = (Foam::mag(maxThreadFileBufferSize) > 1);
+
+        if (debug)
+        {
+            Pout<< "collatedFileOperation::writeObject :"
+                << " For object : " << io.name()
+                << " starting collating output to " << pathName
+                << " useThread:" << useThread << endl;
+        }
+
+        if (!useThread)
+        {
+            writer_.waitAll();
+        }
+
+        // Note: currently still NON_ATOMIC (Dec-2022)
+        threadedCollatedOFstream os
+        (
+            writer_,
+            pathName,
+            streamOpt,
+            useThread
+        );
+
+        bool ok = os.good();
+
+        if (UPstream::master(comm_))
+        {
+            // Suppress comment banner
+            const bool old = IOobject::bannerEnabled(false);
+
+            ok = ok && io.writeHeader(os);
+
+            IOobject::bannerEnabled(old);
+
+            // Additional header content
+            dictionary dict;
+            decomposedBlockData::writeExtraHeaderContent
+            (
+                dict,
+                streamOpt,
+                io
+            );
+            os.setHeaderEntries(dict);
+        }
+
+        ok = ok && io.writeData(os);
+        // No end divider for collated output
+
+        return ok;
+    }
+}
+
+
+bool Foam::fileOperations::collatedFileOperation::writeObject_mpiio
+(
+    const fileName& pathName,
+    const regIOobject& io,
+    IOstreamOption streamOpt,
+    const bool writeOnProc
+) const
+{
+    const Time& tm = io.time();
+    const fileName& inst = io.instance();
+
+    if
+    (
+        (inst.isAbsolute() || !tm.processorCase())
+     || (io.global() || io.globalObject())
+     || (!UPstream::parRun())
+    )
+    {
+        FatalErrorInFunction
+            << "Should not have been called for any of these conditions:"
+            << " - isAbsolute" << nl
+            << " - not processorCase" << nl
+            << " - global or globalObject" << nl
+            << " - not parRun" << nl
+            << abort(FatalError);
+
+        return false;
+    }
+    else if (!UPstream::File::supported())
+    {
+        FatalErrorInFunction
+            << "Should not have been called without MPI/IO support" << nl
+            << abort(FatalError);
+
+        return false;
+    }
+    else
+    {
+        // Stream to memory and then write with MPI/IO
+
+        // Fixed-width label entry
+        ocharstream labelbuf;
+        labelbuf.reserve_exact(32);
+
+        const label blocki = UPstream::myProcNo(comm_);
+        const label nblock = UPstream::nProcs(comm_);
+
+
+        // Overall header - most flexible to keep separate from block content
+        OCharStream header(streamOpt);
+        if (UPstream::master(comm_))
+        {
+            // Need binary for the overall content
+            const auto oldFmt = header.format(IOstreamOption::BINARY);
+
+            decomposedBlockData::writeHeader
+            (
+                header,
+                streamOpt,
+                io
+            );
+
+            header.format(oldFmt);
+        }
+
+        // Overall footer.
+        // Will be written by the last block, but format for everyone
+        // so that the size is known
+        OCharStream footer(streamOpt);
+        {
+            IOobject::writeEndDivider(footer);
+        }
+
+        // The content buffer
+        OCharStream os(streamOpt);
+
+
+        bool ok = true;
+
+        // Generate content
+        {
+            const word procName("processor" + Foam::name(blocki));
+
+            // Write as primitiveEntry or commented content
+            constexpr bool isDictFormat = false;
+
+            if constexpr (isDictFormat)
+            {
+                // Like writeKeyword()
+                os << nl << procName << nl;
+            }
+            else
+            {
+                // Human-readable comments
+                os << nl << "// " << procName << nl;
+            }
+
+
+            // Begin of block content  LABEL(...)
+
+            // Position before writing the label
+            const auto labelBegin = os.tellp();
+
+            // Replace: os << label(len) << nl;
+            // with a fixed-length version
+            {
+                labelbuf.rewind();
+                zeropadded(labelbuf, label(0));
+
+                os.append(labelbuf.view());
+                os << nl;
+            }
+
+            const auto lineNumber = os.lineNumber();
+
+            // Begin binary blob
+            {
+                const auto oldFmt = os.format(IOstreamOption::BINARY);
+
+                // count is unknown but irrelevant for serial
+                os.beginRawWrite(0);
+
+                os.format(oldFmt);
+            }
+
+            // Position of binary blob - after the '(' begin
+            const auto blobBegin = os.tellp();
+
+            // block 0 gets a FoamFile header, without comments
+            if (UPstream::master(comm_))
+            {
+                // Suppress comment banner
+                const bool old = IOobject::bannerEnabled(false);
+
+                ok = ok && io.writeHeader(os);
+
+                IOobject::bannerEnabled(old);
+            }
+
+            if (writeOnProc)
+            {
+                ok = ok && io.writeData(os);
+            }
+
+            // How many chars of binary data written?
+            const int64_t blobCount(os.tellp() - blobBegin);
+
+            // Finalize the binary blob - closing ')'
+            os.endRawWrite();
+            os.lineNumber() = lineNumber;
+            os << nl;
+
+            // Update the size information for the binary blob
+            if (blobCount > 0)
+            {
+                labelbuf.rewind();
+                zeropadded(labelbuf, label(blobCount));
+
+                os.overwrite(labelBegin, labelbuf.view());
+            }
+            else
+            {
+                // Seek with begin-1 to also overwrite newline with space
+                os.seek(int64_t(labelBegin)-1);
+
+                if constexpr (isDictFormat)
+                {
+                    os << ' ' << label(0);
+                }
+                else
+                {
+                    os << nl << label(0) << nl;
+                }
+            }
+
+            if constexpr (isDictFormat)
+            {
+                os.endEntry();
+            }
+        }
+
+
+        // All content now exists
+        // - get the offsets/sizes etc (without footer!)
+        const List<int64_t> sizes
+        (
+            UPstream::allGatherValues<int64_t>(os.view().size(), comm_)
+        );
+
+        constexpr bool withHeaderBlockStart = true;
+        constexpr bool withHeaderBlockSizes = false; // not yet?
+
+        // Update the header with block.start, block.sizes information?
+        if (withHeaderBlockStart && UPstream::master(comm_))
+        {
+            if (withHeaderBlockSizes)
+            {
+                // start+sizes
+                rewriteBlockHeaderInfo(header, sizes);
+            }
+            else
+            {
+                // start only - pass in empty size list
+                rewriteBlockHeaderInfo(header, UList<int>());
+            }
+        }
+
+        // Output starts after the header - only generated on master
+        int64_t totalSize(header.view().size());
+        Pstream::broadcast(totalSize, comm_);
+
+        for (label i = 0; i < blocki; ++i)
+        {
+            totalSize += sizes[i];
+        }
+
+        // The file offset for my block
+        const int64_t blockOffset(totalSize);
+
+        for (label i = blocki; i < nblock; ++i)
+        {
+            totalSize += sizes[i];
+        }
+
+        // Add in footer size - was generated everywhere
+        totalSize += int64_t(footer.view().size());
+
+        // The last block also gets the footer to write
+        if (blocki == nblock-1)
+        {
+            os.extend_exact(footer.view().size());
+            os.append(footer.view());
+        }
+
+
+        // Make directory, open file
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        const fileName fName
+        (
+            objectPath(io, decomposedBlockData::typeName)
+        );
+
+
+        // Using mkDir not Foam::mkDir
+        mkDir(fName.path());
+
+        // Write file contents
+        {
+            UPstream::File file;
+
+            file.open_write(comm_, fName);
+
+            // header from master
+            if (UPstream::master(comm_))
+            {
+                file.write_at(0, header.view());
+            }
+
+            // data from all - footer is already in the last block
+            file.write_at_all(blockOffset, os.view());
+
+            file.set_size(totalSize);
+            file.close();
+        }
+
+        return ok;
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 bool Foam::fileOperations::collatedFileOperation::writeObject
 (
     const regIOobject& io,
@@ -468,61 +949,34 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
         }
         else
         {
-            // Re-check static maxThreadFileBufferSize variable to see
-            // if needs to use threading
-            const bool useThread = (mag(maxThreadFileBufferSize) > 1);
-
-            if (debug)
-            {
-                Pout<< "collatedFileOperation::writeObject :"
-                    << " For object : " << io.name()
-                    << " starting collating output to " << pathName
-                    << " useThread:" << useThread << endl;
-            }
-
-            if (!useThread)
-            {
-                writer_.waitAll();
-            }
-
-            // Note: currently still NON_ATOMIC (Dec-2022)
-            threadedCollatedOFstream os
+            if
             (
-                writer_,
-                pathName,
-                streamOpt,
-                useThread
-            );
-
-            bool ok = os.good();
-
-            if (UPstream::master(comm_))
+                collatedFileOperation::backend_ == backendType::MPIIO_BACKEND
+             && UPstream::File::supported()
+            )
             {
-                // Suppress comment banner
-                const bool old = IOobject::bannerEnabled(false);
-
-                ok = ok && io.writeHeader(os);
-
-                IOobject::bannerEnabled(old);
-
-                // Additional header content
-                dictionary dict;
-                decomposedBlockData::writeExtraHeaderContent
+                return writeObject_mpiio
                 (
-                    dict,
+                    pathName,
+                    io,
                     streamOpt,
-                    io
+                    writeOnProc
                 );
-                os.setHeaderEntries(dict);
             }
-
-            ok = ok && io.writeData(os);
-            // No end divider for collated output
-
-            return ok;
+            else
+            {
+                return writeObject_legacy
+                (
+                    pathName,
+                    io,
+                    streamOpt,
+                    writeOnProc
+                );
+            }
         }
     }
 }
+
 
 void Foam::fileOperations::collatedFileOperation::flush() const
 {
