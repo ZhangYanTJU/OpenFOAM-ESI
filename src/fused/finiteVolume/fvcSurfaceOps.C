@@ -56,9 +56,6 @@ void surfaceSum
     const auto& P = mesh.owner();
     const auto& N = mesh.neighbour();
     const auto& pbm = mesh.boundaryMesh();
-    const auto& cells = mesh.cells();
-    const label nCells = cells.size();
-    const label nIntFaces = mesh.nInternalFaces();
 
     const auto& vfi = vf.primitiveField();
     auto& sfi = result.primitiveFieldRef();
@@ -79,7 +76,7 @@ void surfaceSum
             }
             else
             {
-                SubList<Type>(slice, pfld.size()) = pfld;
+                slice.deepCopy(pfld);
             }
         }
     );
@@ -88,17 +85,16 @@ void surfaceSum
     const auto& Sfi = Sf.primitiveField();
     const auto& lambda = lambdas.primitiveField();
 
-    if (fv::fusedGaussLaplacianScheme<Type, scalar>::debug)
+    #if 0
     {
-        Pout<< "Doing surfaceSum on " << vf.name()
-            << " size:" << vf.size()
-            << " capacity:" << vf.capacity() << endl;
-
+        //- Example of cell-loop instead of face-loop
+        const auto& cells = mesh.cells();
+        const label nCells = mesh.nCells();
+        const label nIntFaces = mesh.nInternalFaces();
         const auto& patchID = pbm.patchID();
         for (label celli = 0; celli < nCells; celli++)
         {
             const auto& cFaces = cells[celli];
-
             auto& res = sfi[celli];
             res = Zero;
             for (const label facei : cFaces)
@@ -125,7 +121,7 @@ void surfaceSum
                 {
                     const label patchi = patchID[facei-nIntFaces];
                     const label patchFacei = facei-pbm[patchi].start();
-                    const label offset = mesh.nCells()+pbm[patchi].offset();
+                    const label offset = nCells+pbm[patchi].offset();
                     const auto& pSf = Sf.boundaryField()[patchi];
                     const auto& pLambda = lambdas.boundaryField()[patchi];
 
@@ -163,7 +159,7 @@ void surfaceSum
             }
         }
     }
-    else
+    #else
     {
         for (label facei=0; facei<P.size(); facei++)
         {
@@ -234,6 +230,7 @@ void surfaceSum
             }
         }
     }
+    #endif
 
     // Restore original size
     vf.constCast().resize(oldSize);

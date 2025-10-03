@@ -230,7 +230,8 @@ void Foam::fvMeshDistribute::saveInternalFields
 
     forAll(fields, fieldi)
     {
-        iflds.set(fieldi, fields[fieldi].primitiveField().clone());
+        const Field<T>& primFld = fields[fieldi].primitiveField();
+        iflds.set(fieldi, primFld.clone());
     }
 }
 

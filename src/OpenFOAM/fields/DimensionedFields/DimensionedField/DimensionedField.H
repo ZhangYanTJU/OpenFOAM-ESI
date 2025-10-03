@@ -93,8 +93,7 @@ public:
         typedef DimensionedField<Type, GeoMesh> Internal;
 
         //- Type of the field from which this DimensionedField is derived
-        //  Use Field (not DynamicField) here.
-        typedef Field<Type> FieldType;
+        typedef DynamicField<Type> FieldType;
 
         //- Component type of the field elements
         typedef typename Field<Type>::cmptType cmptType;
@@ -581,18 +580,10 @@ public:
         inline void setOriented(bool on = true) noexcept;
 
         //- Return const-reference to the primitive field values
-        const Field<Type>& field() const noexcept { return *this; }
+        const DynamicField<Type>& field() const noexcept { return *this; }
 
         //- Return reference to the primitive field values
-        Field<Type>& field() noexcept { return *this; }
-
-        //- Return const-reference to the primitive field storage.
-        //- Use sparingly.
-        const DynamicField<Type>& dyn_field() const noexcept { return *this; }
-
-        //- Return reference to the primitive field storage.
-        //- Use sparingly.
-        DynamicField<Type>& dyn_field() noexcept { return *this; }
+        DynamicField<Type>& field() noexcept { return *this; }
 
 
         //- Return a component field of the field

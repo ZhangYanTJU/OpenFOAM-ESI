@@ -52,7 +52,7 @@ void Foam::DimensionedField<Type, GeoMesh>::readField
 
     const label meshSize = GeoMesh::size(mesh_);
 
-    // The primitive field : dyn_field()
+    // The primitive field
     auto& fld = static_cast<DynamicField<Type>&>(*this);
 
     // Resize primitive field to make space for the internal field

@@ -1113,7 +1113,8 @@ boundaryEvaluate(const Cop& cop)
     // - only copying the internal field without boundaries
 
     fld.reserve_exact(totalSize);
-    fld.resize_copy(meshSize, totalSize);
+    //Too pedantic: fld.resize_copy(meshSize, totalSize);
+    fld.resize(totalSize);
 
     // Populate the extra space with the flattened boundary values:
     for (const auto& pfld : this->boundaryField())
