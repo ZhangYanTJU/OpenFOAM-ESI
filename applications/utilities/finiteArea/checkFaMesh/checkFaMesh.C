@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,7 @@ Application
     makeFaMesh
 
 Description
-    Check a finiteArea mesh
+    Check a finite-area mesh
 
 Original Authors
     Zeljko Tukovic, FAMENA
@@ -39,6 +39,7 @@ Original Authors
 #include "Time.H"
 #include "argList.H"
 #include "faMesh.H"
+#include "faMeshTools.H"
 #include "polyMesh.H"
 #include "areaFaMesh.H"
 #include "edgeFaMesh.H"
@@ -47,7 +48,7 @@ Original Authors
 #include "processorFaPatch.H"
 #include "foamVtkIndPatchWriter.H"
 #include "foamVtkLineWriter.H"
-#include "faMeshTools.H"
+#include "regionProperties.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,7 +60,7 @@ int main(int argc, char *argv[])
 {
     argList::addNote
     (
-        "Check a finiteArea mesh"
+        "Check a finite-area mesh"
     );
 
     argList::addBoolOption
@@ -77,9 +78,15 @@ int main(int argc, char *argv[])
     );
 
     #include "addRegionOption.H"
-    #include "addFaRegionOption.H"
+    #include "addAllFaRegionOptions.H"
     #include "setRootCase.H"
     #include "createTime.H"
+
+    // Handle -all-area-regions, -area-regions, -area-region
+    #include "getAllFaRegionOptions.H"
+
+    // ------------------------------------------------------------------------
+
     #include "createNamedPolyMesh.H"
 
     int geometryOrder(1);
@@ -91,16 +98,41 @@ int main(int argc, char *argv[])
         faMesh::geometryOrder(geometryOrder);
     }
 
-    #include "createNamedFaMesh.H"
-
-    Info<< "Time = " << runTime.timeName() << nl << endl;
-
-    // Mesh information (verbose)
-    faMeshTools::printMeshChecks(aMesh);
-
-    if (args.found("write-vtk"))
+    for (const word& areaName : areaRegionNames)
     {
-        #include "faMeshWriteVTK.H"
+        Info<< "Create faMesh";
+        if (!polyMesh::regionName(areaName).empty())
+        {
+            Info<< " [" << areaName << "]";
+        }
+        Info<< " for time = " << runTime.timeName() << nl;
+
+        autoPtr<faMesh> faMeshPtr(faMesh::TryNew(areaName, mesh));
+
+        if (!faMeshPtr)
+        {
+            Info<< "    ...failed to create area-mesh";
+            if (!polyMesh::regionName(areaName).empty())
+            {
+                Info<< " [" << areaName << "]";
+            }
+            Info<< endl;
+            continue;
+        }
+        else
+        {
+            Info<< endl;
+        }
+
+        const auto& aMesh = faMeshPtr();
+
+        // Mesh information (verbose)
+        faMeshTools::printMeshChecks(aMesh);
+
+        if (args.found("write-vtk"))
+        {
+            #include "faMeshWriteVTK.H"
+        }
     }
 
     Info<< "\nEnd\n" << endl;

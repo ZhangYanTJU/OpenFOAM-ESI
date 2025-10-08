@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,6 +47,7 @@ Description
 #include "areaFields.H"
 #include "coupledFvPatch.H"
 #include "coupledFaPatch.H"
+#include "regionProperties.H"
 
 using namespace Foam;
 
@@ -86,17 +87,18 @@ bool consumeUnusedType(const fieldDescription& fieldDesc, Istream& is)
     //? typedef GeometricField<Type, faePatchField, areaMesh> fieldType3;
     //? typedef GeometricField<Type, fvsPatchField, volMesh>  fieldType4;
 
-    if
+    const bool isExpectedType
     (
         fieldDesc.type() == fieldType1::typeName
      || fieldDesc.type() == fieldType2::typeName
-    )
+    );
+
+    if (isExpectedType)
     {
         (void) pTraits<Type>(is);
-        return true;
     }
 
-    return false;
+    return isExpectedType;
 }
 
 
@@ -122,13 +124,18 @@ bool setCellFieldType
 (
     const fieldDescription& fieldDesc,
     const fvMesh& mesh,
-    const labelList& selectedCells,
+    const labelUList& selectedCells,
     Istream& is
 )
 {
     typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
 
-    if (fieldDesc.type() != fieldType::typeName)
+    const bool isExpectedType
+    (
+        fieldDesc.type() == fieldType::typeName
+    );
+
+    if (!isExpectedType)
     {
         return false;
     }
@@ -143,7 +150,9 @@ bool setCellFieldType
         fieldDesc.name(),
         mesh.thisDb().time().timeName(),
         mesh.thisDb(),
-        IOobject::MUST_READ
+        IOobjectOption::MUST_READ,
+        IOobjectOption::NO_WRITE,
+        IOobjectOption::NO_REGISTER
     );
 
     bool found = fieldHeader.typeHeaderOk<fieldType>(true);
@@ -151,13 +160,8 @@ bool setCellFieldType
     if (!found)
     {
         // Fallback to "constant" directory
-        fieldHeader = IOobject
-        (
-            fieldDesc.name(),
-            mesh.thisDb().time().constant(),
-            mesh.thisDb(),
-            IOobject::MUST_READ
-        );
+        fieldHeader.resetHeader();
+        fieldHeader.instance() = mesh.thisDb().time().constant();
         found = fieldHeader.typeHeaderOk<fieldType>(true);
     }
 
@@ -171,7 +175,7 @@ bool setCellFieldType
 
         fieldType field(fieldHeader, mesh, false);
 
-        if (isNull(selectedCells) || selectedCells.size() == field.size())
+        if (isNull(selectedCells) || (selectedCells.size() == field.size()))
         {
             field.primitiveFieldRef() = fieldValue;
         }
@@ -204,7 +208,7 @@ bool setCellFieldType
             << "Field " << fieldDesc.name() << " not found" << endl;
     }
 
-    return true;
+    return isExpectedType;
 }
 
 
@@ -216,13 +220,18 @@ bool setAreaFieldType
 (
     const fieldDescription& fieldDesc,
     const faMesh& mesh,
-    const labelList& selectedFaces,
+    const labelUList& selectedFaces,
     Istream& is
 )
 {
     typedef GeometricField<Type, faPatchField, areaMesh> fieldType;
 
-    if (fieldDesc.type() != fieldType::typeName)
+    const bool isExpectedType
+    (
+        fieldDesc.type() == fieldType::typeName
+    );
+
+    if (!isExpectedType)
     {
         return false;
     }
@@ -237,7 +246,9 @@ bool setAreaFieldType
         fieldDesc.name(),
         mesh.thisDb().time().timeName(),
         mesh.thisDb(),
-        IOobject::MUST_READ
+        IOobjectOption::MUST_READ,
+        IOobjectOption::NO_WRITE,
+        IOobjectOption::NO_REGISTER
     );
 
     bool found = fieldHeader.typeHeaderOk<fieldType>(true);
@@ -245,13 +256,8 @@ bool setAreaFieldType
     if (!found)
     {
         // Fallback to "constant" directory
-        fieldHeader = IOobject
-        (
-            fieldDesc.name(),
-            mesh.thisDb().time().constant(),
-            mesh.thisDb(),
-            IOobject::MUST_READ
-        );
+        fieldHeader.resetHeader();
+        fieldHeader.instance() = mesh.thisDb().time().constant(),
         found = fieldHeader.typeHeaderOk<fieldType>(true);
     }
 
@@ -292,7 +298,7 @@ bool setAreaFieldType
             << "Field " << fieldDesc.name() << " not found" << endl;
     }
 
-    return true;
+    return isExpectedType;
 }
 
 
@@ -304,13 +310,18 @@ bool setFaceFieldType
 (
     const fieldDescription& fieldDesc,
     const fvMesh& mesh,
-    const labelList& selectedFaces,
+    const labelUList& selectedFaces,
     Istream& is
 )
 {
     typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
 
-    if (fieldDesc.type() != fieldType::typeName)
+    const bool isExpectedType
+    (
+        fieldDesc.type() == fieldType::typeName
+    );
+
+    if (!isExpectedType)
     {
         return false;
     }
@@ -325,7 +336,9 @@ bool setFaceFieldType
         fieldDesc.name(),
         mesh.thisDb().time().timeName(),
         mesh.thisDb(),
-        IOobject::MUST_READ
+        IOobjectOption::MUST_READ,
+        IOobjectOption::NO_WRITE,
+        IOobjectOption::NO_REGISTER
     );
 
     bool found = fieldHeader.typeHeaderOk<fieldType>(true);
@@ -333,13 +346,8 @@ bool setFaceFieldType
     if (!found)
     {
         // Fallback to "constant" directory
-        fieldHeader = IOobject
-        (
-            fieldDesc.name(),
-            mesh.thisDb().time().constant(),
-            mesh.thisDb(),
-            IOobject::MUST_READ
-        );
+        fieldHeader.resetHeader();
+        fieldHeader.instance() = mesh.thisDb().time().constant();
         found = fieldHeader.typeHeaderOk<fieldType>(true);
     }
 
@@ -355,15 +363,14 @@ bool setFaceFieldType
 
         // Create flat list of selected faces and their value.
         Field<Type> allBoundaryValues(mesh.nBoundaryFaces());
-        forAll(field.boundaryField(), patchi)
+        for (const auto& pfld : field.boundaryField())
         {
             SubField<Type>
             (
                 allBoundaryValues,
-                field.boundaryField()[patchi].size(),
-                field.boundaryField()[patchi].patch().start()
-              - mesh.nInternalFaces()
-            ) = field.boundaryField()[patchi];
+                pfld.size(),
+                pfld.patch().offset()
+            ) = pfld;
         }
 
         // Override
@@ -424,8 +431,7 @@ bool setFaceFieldType
                 (
                     allBoundaryValues,
                     fieldBf[patchi].size(),
-                    fieldBf[patchi].patch().start()
-                  - mesh.nInternalFaces()
+                    fieldBf[patchi].patch().offset()
                 );
             }
         }
@@ -445,7 +451,7 @@ bool setFaceFieldType
             << "Field " << fieldDesc.name() << " not found" << endl;
     }
 
-    return true;
+    return isExpectedType;
 }
 
 
@@ -460,7 +466,7 @@ struct setCellField
     (
         const fieldDescription& fieldDesc,
         const fvMesh& m,
-        const labelList& selectedCells,
+        const labelUList& selectedCells,
         Istream& is
     )
     {
@@ -477,11 +483,11 @@ struct setCellField
     class iNew
     {
         const fvMesh& mesh_;
-        const labelList& selected_;
+        const labelUList& selected_;
 
     public:
 
-        iNew(const fvMesh& mesh, const labelList& selectedCells)
+        iNew(const fvMesh& mesh, const labelUList& selectedCells) noexcept
         :
             mesh_(mesh),
             selected_(selectedCells)
@@ -528,7 +534,7 @@ struct setFaceField
     (
         const fieldDescription& fieldDesc,
         const fvMesh& m,
-        const labelList& selectedFaces,
+        const labelUList& selectedFaces,
         Istream& is
     )
     {
@@ -545,11 +551,11 @@ struct setFaceField
     class iNew
     {
         const fvMesh& mesh_;
-        const labelList& selected_;
+        const labelUList& selected_;
 
     public:
 
-        iNew(const fvMesh& mesh, const labelList& selectedFaces)
+        iNew(const fvMesh& mesh, const labelUList& selectedFaces) noexcept
         :
             mesh_(mesh),
             selected_(selectedFaces)
@@ -596,7 +602,7 @@ struct setAreaField
     (
         const fieldDescription& fieldDesc,
         const faMesh& m,
-        const labelList& selectedFaces,
+        const labelUList& selectedFaces,
         Istream& is
     )
     {
@@ -613,11 +619,11 @@ struct setAreaField
     class iNew
     {
         const faMesh& mesh_;
-        const labelList& selected_;
+        const labelUList& selected_;
 
     public:
 
-        iNew(const faMesh& mesh, const labelList& selectedFaces)
+        iNew(const faMesh& mesh, const labelUList& selectedFaces) noexcept
         :
             mesh_(mesh),
             selected_(selectedFaces)
@@ -675,6 +681,7 @@ int main(int argc, char *argv[])
     );
 
     #include "addRegionOption.H"
+    #include "addAllFaRegionOptions.H"
 
     // -------------------------
 
@@ -686,15 +693,59 @@ int main(int argc, char *argv[])
 
     #include "createNamedMesh.H"
 
-    autoPtr<faMesh> faMeshPtr;
+    // Handle -all-area-regions, -area-regions, -area-region
+    #include "getAllFaRegionOptions.H"
 
-    if (!args.found("no-finite-area"))
+    if (args.found("no-finite-area"))
     {
-        faMeshPtr = faMesh::TryNew(mesh);
+        areaRegionNames.clear();  // For consistency
     }
-    if (faMeshPtr)
+
+    // ------------------------------------------------------------------------
+
+    PtrList<faMesh> faMeshes;
+
+    // Setup all area meshes on this region
+    if (!areaRegionNames.empty())  // ie, !args.found("no-finite-area")
     {
-        Info<< "Detected finite-area mesh" << nl;
+        faMeshes.resize(areaRegionNames.size());
+
+        label nGoodRegions(0);
+
+        for (const word& areaName : areaRegionNames)
+        {
+            autoPtr<faMesh> faMeshPtr = faMesh::TryNew(areaName, mesh);
+
+            if (faMeshPtr)
+            {
+                faMeshes.set(nGoodRegions++, std::move(faMeshPtr));
+            }
+        }
+
+        faMeshes.resize(nGoodRegions);
+    }
+
+    if (faMeshes.size() == 1)
+    {
+        Info<< "Using finite-area mesh";
+        if
+        (
+            const word& name = polyMesh::regionName(faMeshes[0].name());
+            !name.empty()
+        )
+        {
+            Info<< " [" << name << "]";
+        }
+        Info<< nl;
+    }
+    else if (faMeshes.size() > 1)
+    {
+        Info<< "Detected finite-area meshes:";
+        for (const faMesh& areaMesh : faMeshes)
+        {
+            Info<< " [" << areaMesh.name() << "]";
+        }
+        Info<< nl;
     }
 
     const word dictName("setFieldsDict");
@@ -712,37 +763,45 @@ int main(int argc, char *argv[])
 
 
     // Default field values
+    if
+    (
+        const auto* eptr
+      = setFieldsDict.findEntry("defaultFieldValues", keyType::LITERAL)
+    )
     {
-        const entry* eptr =
-            setFieldsDict.findEntry("defaultFieldValues", keyType::LITERAL);
+        ITstream& is = eptr->stream();
 
-        if (eptr)
+        Info<< "Setting volume field default values" << endl;
+
+        PtrList<setCellField> defaultFieldValues
+        (
+            is,
+            setCellField::iNew(mesh, labelList::null())
+        );
+
+        for (const faMesh& areaMesh : faMeshes)
         {
-            ITstream& is = eptr->stream();
+            Info<< "Setting area field default values";
 
-            Info<< "Setting volume field default values" << endl;
-
-            PtrList<setCellField> defaultFieldValues
+            if
             (
-                is,
-                setCellField::iNew(mesh, labelList::null())
-            );
-
-            if (faMeshPtr)
+                const word& name = polyMesh::regionName(areaMesh.name());
+                !name.empty()
+            )
             {
-                const faMesh& areaMesh = faMeshPtr();
-                is.rewind();
-
-                Info<< "Setting area field default values" << endl;
-
-                PtrList<setAreaField> defaultFieldValues
-                (
-                    is,
-                    setAreaField::iNew(areaMesh, labelList::null())
-                );
+                Info<< " [" << name << "]";
             }
             Info<< endl;
+
+            is.rewind();
+
+            PtrList<setAreaField> defaultAreaFieldValues
+            (
+                is,
+                setAreaField::iNew(areaMesh, labelList::null())
+            );
         }
+        Info<< endl;
     }
 
 
@@ -768,11 +827,15 @@ int main(int argc, char *argv[])
 
             labelList selectedCells(subset.sortedToc());
 
-            Info<< "    Selected "
-                << returnReduce(selectedCells.size(), sumOp<label>())
-                << '/'
-                << returnReduce(mesh.nCells(), sumOp<label>())
-                << " cells" << nl;
+            {
+                FixedList<label, 2> stats;
+                stats[0] = selectedCells.size();
+                stats[1] = mesh.nCells();
+                reduce(stats, sumOp<label>());
+
+                Info<< "    Selected " << stats[0] << '/' << stats[1]
+                    << " cells" << nl;
+            }
 
             ITstream& is = region.dict().lookup("fieldValues");
 
@@ -806,10 +869,8 @@ int main(int argc, char *argv[])
                 setFaceField::iNew(mesh, selectedFaces)
             );
 
-            if (faMeshPtr)
+            for (const faMesh& areaMesh : faMeshes)
             {
-                const faMesh& areaMesh = faMeshPtr();
-
                 const labelUList& faceLabels = areaMesh.faceLabels();
 
                 // Transcribe from mesh faces to finite-area addressing
@@ -828,11 +889,15 @@ int main(int argc, char *argv[])
                 }
                 areaFaces.resize(nUsed);
 
-                Info<< "    Selected "
-                    << returnReduce(areaFaces.size(), sumOp<label>())
-                    << '/'
-                    << returnReduce(faceLabels.size(), sumOp<label>())
-                    << " area faces" << nl;
+                {
+                    FixedList<label, 2> stats;
+                    stats[0] = areaFaces.size();
+                    stats[1] = faceLabels.size();
+                    reduce(stats, sumOp<label>());
+
+                    Info<< "    Selected " << stats[0] << '/' << stats[1]
+                        << " area faces for " << areaMesh.name() << endl;
+                }
 
                 is.rewind();
 

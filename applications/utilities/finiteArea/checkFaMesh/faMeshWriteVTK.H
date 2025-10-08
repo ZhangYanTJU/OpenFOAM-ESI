@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -15,6 +15,16 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
+// The base name for output files
+word vtkBaseFileName(aMesh.regionName());
+if (polyMesh::regionName(vtkBaseFileName).empty())
+{
+    vtkBaseFileName = "finiteArea";
+}
+
+Info<< nl;
+Info<< "Write faMesh in vtk format:" << nl;
+
 {
     // finiteArea - faces
     vtk::uindirectPatchWriter writer
@@ -23,7 +33,7 @@ Description
         // vtk::formatType::INLINE_ASCII,
         fileName
         (
-            aMesh.time().globalPath() / "finiteArea"
+            aMesh.time().globalPath() / vtkBaseFileName
         )
     );
 
@@ -32,7 +42,7 @@ Description
     globalIndex procAddr(aMesh.nFaces());
     labelList cellIDs;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         cellIDs.resize(procAddr.totalSize());
         for (const labelRange& range : procAddr.ranges())
@@ -53,8 +63,7 @@ Description
     writer.beginPointData(1);
     writer.write("normal", aMesh.pointAreaNormals());
 
-    Info<< nl
-        << "Wrote faMesh in vtk format: " << writer.output().name() << nl;
+    Info<< "    " << writer.output().name() << nl;
 }
 
 {
@@ -66,7 +75,7 @@ Description
         // vtk::formatType::INLINE_ASCII,
         fileName
         (
-            aMesh.time().globalPath() / "finiteArea-edges"
+            aMesh.time().globalPath() / (vtkBaseFileName + "-edges")
         )
     );
 
@@ -88,8 +97,7 @@ Description
     writer.beginPointData(1);
     writer.write("normal", aMesh.pointAreaNormals());
 
-    Info<< nl
-        << "Wrote faMesh in vtk format: " << writer.output().name() << nl;
+    Info<< "    " << writer.output().name() << nl;
 }
 
 {
@@ -108,7 +116,7 @@ Description
         // vtk::formatType::INLINE_ASCII,
         fileName
         (
-            aMesh.time().globalPath() / "finiteArea-edgesCentres"
+            aMesh.time().globalPath() / (vtkBaseFileName + "-edgesCentres")
         )
     );
 
@@ -134,8 +142,7 @@ Description
         writer.write("normal", fld);
     }
 
-    Info<< nl
-        << "Wrote faMesh in vtk format: " << writer.output().name() << nl;
+    Info<< "    " << writer.output().name() << nl;
 }
 
 

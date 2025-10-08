@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,7 +40,6 @@ Original Authors
 
 #include "Time.H"
 #include "argList.H"
-#include "OSspecific.H"
 #include "faMesh.H"
 #include "faMeshTools.H"
 #include "IOdictionary.H"
@@ -53,6 +52,7 @@ Original Authors
 #include "PtrListOps.H"
 #include "foamVtkLineWriter.H"
 #include "foamVtkIndPatchWriter.H"
+#include "regionProperties.H"
 #include "syncTools.H"
 #include "OBJstream.H"
 
@@ -104,12 +104,14 @@ int main(int argc, char *argv[])
     );
 
     #include "addRegionOption.H"
-    #include "addFaRegionOption.H"
+    #include "addAllFaRegionOptions.H"
+
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createNamedPolyMesh.H"
 
-    #include "getFaRegionOption.H"
+    // Handle -all-area-regions, -area-regions, -area-region
+    #include "getAllFaRegionOptions.H"
 
     const bool doDecompose = !args.found("no-decompose");
     const bool doDecompFields = !args.found("no-fields");
@@ -123,56 +125,83 @@ int main(int argc, char *argv[])
         Info<< "Skip decompose of finiteArea fields" << nl;
     }
 
-    // Reading faMeshDefinition dictionary
-    #include "findMeshDefinitionDict.H"
+    // ------------------------------------------------------------------------
 
-    // Inject/overwrite name for optional 'empty' patch
-    word patchName;
-    if (args.readIfPresent("empty-patch", patchName))
+    for (const word& areaRegionName : areaRegionNames)
     {
-        meshDefDict.add("emptyPatch", patchName, true);
-    }
+        // Reading faMeshDefinition dictionary
+        #include "findMeshDefinitionDict.H"
 
-    // Preliminary checks
-    #include "checkPatchTopology.H"
+        if (!faMeshDefinitionPtr)
+        {
+            if (args.dryRun())
+            {
+                break;
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "Did not find area-mesh definition"<< nl
+                    << exit(FatalError);
+            }
+        }
 
-    Info << "Create areaMesh";
-    if (!Foam::polyMesh::regionName(areaRegionName).empty())
-    {
-        Foam::Info << ' ' << areaRegionName;
-    }
-    Info << " for polyMesh at time = " << runTime.timeName() << nl;
+        auto& meshDefDict = (*faMeshDefinitionPtr);
 
-    // Create
-    faMesh aMesh(areaRegionName, mesh, meshDefDict);
 
-    // Mesh information (less verbose)
-    faMeshTools::printMeshChecks(aMesh, 0);
+        // Inject/overwrite name for optional 'empty' patch
+        if (word name; args.readIfPresent("empty-patch", name))
+        {
+            meshDefDict.add("emptyPatch", name, true);
+        }
 
-    if (args.found("write-edges-obj"))
-    {
-        #include "faMeshWriteEdgesOBJ.H"
-    }
+        // Preliminary checks
+        #include "checkPatchTopology.H"
 
-    if (args.found("write-vtk"))
-    {
-        #include "faMeshWriteVTK.H"
-    }
+        Info<< "Create area-mesh";
+        if (!polyMesh::regionName(areaRegionName).empty())
+        {
+            Info<< " [" << areaRegionName << "]";
+        }
+        Info<< " with polyMesh at time = " << runTime.timeName() << nl;
 
-    if (args.dryRun())
-    {
-        Info<< "\ndry-run: not writing mesh or decomposing fields\n" << nl;
-    }
-    else
-    {
-        // More precision (for points data)
-        IOstream::minPrecision(10);
+        // Create
+        faMesh aMesh(areaRegionName, mesh, meshDefDict);
 
-        Info<< nl << "Write finite area mesh." << nl;
-        aMesh.write();
+        // Mesh information (less verbose)
+        faMeshTools::printMeshChecks(aMesh, 0);
 
-        Info<< endl;
-        #include "decomposeFaFields.H"
+        if (args.found("write-edges-obj"))
+        {
+            #include "faMeshWriteEdgesOBJ.H"
+        }
+
+        if (args.found("write-vtk"))
+        {
+            #include "faMeshWriteVTK.H"
+        }
+
+        if (args.dryRun())
+        {
+            Info<< "\ndry-run: not writing mesh or decomposing fields\n" << nl;
+        }
+        else
+        {
+            // More precision (for points data)
+            IOstream::minPrecision(10);
+
+            Info<< nl << "Write finite area mesh";
+            if (const word& name = aMesh.regionName(); !name.empty())
+            {
+                Info<< " [" << name << "]";
+            }
+            Info<< nl;
+
+            aMesh.write();
+
+            Info<< endl;
+            #include "decomposeFaFields.H"
+        }
     }
 
     Info<< "\nEnd\n" << endl;

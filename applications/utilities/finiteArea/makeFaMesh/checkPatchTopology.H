@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -15,7 +15,7 @@ Description
 
 Input
     mesh (polyMesh)
-    meshDefDict (system/faMeshDefintion)
+    meshDefDict (system/finite-area/faMeshDefinition)
 
 \*---------------------------------------------------------------------------*/
 
@@ -25,13 +25,16 @@ Input
 
     const polyBoundaryMesh& pbm = mesh.boundaryMesh();
 
-    wordRes polyPatchNames;
-    meshDefDict.readIfPresent("polyMeshPatches", polyPatchNames);
+    labelList patchIDs;
 
-    const labelList patchIDs
+    if
     (
-        pbm.indices(polyPatchNames, true)  // useGroups
-    );
+        wordRes select;
+        meshDefDict.readIfPresent("polyMeshPatches", select)
+    )
+    {
+        patchIDs = pbm.indices(select, true);  // useGroups
+    }
 
     label nFaceLabels = 0;
     for (const label patchi : patchIDs)
