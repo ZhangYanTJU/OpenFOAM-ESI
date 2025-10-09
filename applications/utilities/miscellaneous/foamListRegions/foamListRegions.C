@@ -30,7 +30,8 @@ Group
     grpPostProcessingUtilities
 
 Description
-    List regions from constant/regionProperties.
+    List volume regions from constant/regionProperties
+    or area regions from constant/finite-area/regionProperties
 
 Usage
     \b foamListRegions [OPTION]
@@ -72,6 +73,12 @@ int main(int argc, char *argv[])
         "List constant/finite-area/regionProperties (if available)"
     );
 
+    argList::addBoolOption
+    (
+        "optional",
+        "A missing regionProperties is not treated as an error"
+    );
+
     argList::addDryRunOption
     (
         "Make reading optional and add verbosity"
@@ -92,14 +99,20 @@ int main(int argc, char *argv[])
         ++optVerbose;
     }
 
+    // File is optional, not an error
+    const bool isOptional = args.found("optional");
+
     // Use finite-area regions
     const bool doFiniteArea = args.found("finite-area");
 
+    // The number of optional region filters to apply
+    const label nFilters = (args.size()-1);
+
     IOobjectOption::readOption readOpt(IOobjectOption::MUST_READ);
 
-    if (dryRun || doFiniteArea)
+    if (dryRun || isOptional || doFiniteArea)
     {
-        // Always treat finite-area regionProperties as optional
+        // The finite-area regionProperties are also considered optional
         readOpt = IOobjectOption::READ_IF_PRESENT;
     }
 
@@ -116,58 +129,70 @@ int main(int argc, char *argv[])
     if (doFiniteArea)
     {
         regionProps = regionProperties(runTime, faMeshPrefix, readOpt);
-
-        if (regionProps.empty())
-        {
-            InfoErr<< "No finite-area region types" << nl;
-        }
-        else if (optVerbose)
-        {
-            InfoErr
-                << "Have " << regionProps.size()
-                << " finite-area region types, "
-                << regionProps.count() << " regions" << nl << nl;
-        }
     }
     else
     {
         regionProps = regionProperties(runTime, readOpt);
-
-        if (regionProps.empty())
-        {
-            // Probably only occurs with -dry-run option
-            InfoErr<< "No region types" << nl;
-        }
-        else if (optVerbose)
-        {
-            InfoErr
-                << "Have " << regionProps.size() << " region types, "
-                << regionProps.count() << " regions" << nl << nl;
-        }
     }
 
-    // We now handle checking args and general sanity etc.
-    wordList regionTypes;
-
-    if (args.size() > 1)
+    // Some reporting...
+    if (regionProps.empty())
     {
-        regionTypes.resize(args.size()-1);
+        if (doFiniteArea)
+        {
+            InfoErr<< "No finite-area region types" << nl;
+        }
+        else if (isOptional)
+        {
+            InfoErr<< "No region types" << nl;
+        }
+    }
+    else if (optVerbose)
+    {
+        InfoErr << "Have " << regionProps.size();
 
-        // No duplicates
+        if (doFiniteArea)
+        {
+            InfoErr<< " finite-area";
+        }
+        InfoErr
+            << " region types, "
+            << regionProps.count() << " regions" << nl << nl;
+    }
+
+
+    // We now handle checking args and general sanity etc.
+
+    DynamicList<word> regionTypes;
+
+    if (isOptional && regionProps.empty())
+    {
+        // Nothing to do...
+    }
+    else if (nFilters > 0)
+    {
+        // Apply region filters
+
+        regionTypes.reserve_exact
+        (
+            Foam::min(nFilters, regionProps.size())
+        );
+
+        // No duplicates, and no duplicate warnings
         wordHashSet uniq;
 
-        label nTypes = 0;
         for (label argi = 1; argi < args.size(); ++argi)
         {
-            regionTypes[nTypes] = args[argi];
-
-            const word& regType = regionTypes[nTypes];
+            word regType(args[argi]);
 
             if (uniq.insert(regType))
             {
                 if (regionProps.contains(regType))
                 {
-                    ++nTypes;
+                    if (!regionTypes.contains(regType))
+                    {
+                        regionTypes.push_back(std::move(regType));
+                    }
                 }
                 else
                 {
@@ -175,22 +200,22 @@ int main(int argc, char *argv[])
                 }
             }
         }
-
-        regionTypes.resize(nTypes);
     }
     else
     {
+        // Take all regions
         regionTypes = regionProps.sortedToc();
     }
 
 
     for (const word& regionType : regionTypes)
     {
-        const wordList& regionNames = regionProps[regionType];
-
-        for (const word& regionName : regionNames)
+        if (const auto iter = regionProps.cfind(regionType); iter.good())
         {
-            Info<< regionName << nl;
+            for (const word& regionName : iter.val())
+            {
+                Info<< regionName << nl;
+            }
         }
     }
 

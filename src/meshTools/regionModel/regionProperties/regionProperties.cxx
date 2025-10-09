@@ -31,6 +31,21 @@ License
 #include "Time.H"
 #include "wordRes.H"
 
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::fileName Foam::regionProperties::objectRelPath
+(
+    const Time& runTime,
+    const fileName& local
+)
+{
+    return
+    (
+        runTime.time().constant()/local/"regionProperties"
+    );
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::regionProperties::regionProperties
@@ -55,6 +70,18 @@ Foam::regionProperties::regionProperties
             IOobjectOption::NO_REGISTER
         )
     );
+
+    // For optional reading:
+    // - applies to the file and its overall contents.
+    // - if read and has content, "regions" becomes mandatory
+
+    if (IOobjectOption::isReadOptional(rOpt))
+    {
+        if (iodict.hasHeaderClass() && !iodict.empty())
+        {
+            rOpt = IOobjectOption::MUST_READ;
+        }
+    }
 
     iodict.readEntry("regions", props, keyType::LITERAL, rOpt);
 }

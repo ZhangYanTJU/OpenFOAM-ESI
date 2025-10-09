@@ -108,54 +108,116 @@ cleanPostProcessing()
 }
 
 
+# ---------------
+# Remove constant/finite-area/faMesh or constant/finite-area/{region}/faMesh
+#
+# Accepts following options:
+#   -region <name>      The region name
+#   --                  End of options
+# ---------------
 cleanFaMesh()
 {
-    if [ -e constant/finite-area/faMesh ]
+    local region
+
+    # Parse options
+    while [ "$#" -gt 0 ]
+    do
+        case "$1" in
+        ('')  ;;                # Ignore empty option
+        (--)  shift; break ;;   # Stop option parsing
+
+        (-region)   region="$2"; shift ;;
+        (*) break ;;
+        esac
+        shift
+    done
+
+    # safety
+    if [ "$region" = "--" ]; then unset region; fi
+
+    local meshDir="constant/finite-area/${region}${region:+/}faMesh"
+
+    if [ -e "$meshDir" ]
     then
-        rm -rf constant/finite-area/faMesh
+        [ -n "$region" ] && echo "Clearing $meshDir" 1>&2
+        rm -rf -- "$meshDir"
     fi
-    if [ -e constant/faMesh ]
+
+    # Legacy location <constant/faMesh>
+    # - may still have remnant <constant/faMesh/faMeshDefinition>
+
+    meshDir="constant/faMesh"
+    if [ -e "$meshDir" ] && [ -z "$region" ]
     then
-        if [ -e constant/faMesh/faMeshDefinition ]
+        if [ -e "$meshDir"/faMeshDefinition ]
         then
-            # Old constant/faMesh location for faMeshDefinition still in use:
-            # - warn but don't remove anything
+            # VERY OLD LOCATION
             echo
-            echo "Warning: not removing constant/faMesh/"
+            echo "WARNING: not removing $meshDir/"
             echo "    It contains a 'faMeshDefinition' file"
-            echo "    Please relocate file(s) to system/ !!"
+            echo "    Please relocate file(s) to system/finite-area/ !!"
             echo
         else
             # Can remove constant/faMesh/ entirely (no faMeshDefinition)
-            rm -rf constant/faMesh
+            echo "Clearing $meshDir" 1>&2
+            rm -rf -- "$meshDir"
         fi
     fi
 }
 
 
+# ---------------
+# Remove constant/polyMesh or constant/<region>/polyMesh
+#
+# Accepts following options:
+#   -region <name>      The region name
+#   --                  End of options
+# ---------------
 cleanPolyMesh()
 {
-    if [ -e constant/polyMesh ]
+    local region
+
+    # Parse options
+    while [ "$#" -gt 0 ]
+    do
+        case "$1" in
+        ('')  ;;                # Ignore empty option
+        (--)  shift; break ;;   # Stop option parsing
+
+        (-region)   region="$2"; shift ;;
+        (*) break ;;
+        esac
+        shift
+    done
+
+    # safety
+    if [ "$region" = "--" ]; then unset region; fi
+
+    local meshDir="constant/${region}${region:+/}polyMesh"
+
+    if [ -e "$meshDir" ]
     then
-        if [ -e constant/polyMesh/blockMeshDict ] \
-        || [ -e constant/polyMesh/blockMeshDict.m4 ]
+        [ -n "$region" ] && echo "Clearing $meshDir" 1>&2
+
+        if [ -e "$meshDir"/blockMeshDict ] \
+        || [ -e "$meshDir"/blockMeshDict.m4 ]
         then
-            # Old constant/polyMesh location for blockMeshDict still in use:
-            # - warn but don't remove anything
+            # VERY OLD LOCATION
             echo
-            echo "Warning: not removing constant/polyMesh/"
+            echo "WARNING: not removing $meshDir/"
             echo "    It contains a 'blockMeshDict' or 'blockMeshDict.m4' file"
             echo "    Please relocate file(s) to system/ !!"
             echo
         else
             # Can remove constant/polyMesh/ entirely (no blockMeshDict)
-            rm -rf constant/polyMesh
+            rm -rf -- "$meshDir"
         fi
     fi
 
-    if [ -e system/blockMeshDict.m4 ]
+    meshDir="system${region:+/}${region}"
+    if [ -e "$meshDir"/blockMeshDict.m4 ]
     then
-        rm -f system/blockMeshDict
+        rm -f -- "$meshDir"/blockMeshDict
     fi
 }
 
@@ -212,7 +274,7 @@ cleanCase0()
 removeCase()
 {
     echo "Removing case ${1:-unknown}"
-    [ "$#" -ge 1 ] && rm -rf "$1"
+    [ "$#" -ge 1 ] && rm -rf -- "$1"
 }
 
 

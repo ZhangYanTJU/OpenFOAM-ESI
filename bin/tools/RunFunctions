@@ -517,9 +517,11 @@ cloneParallelCase()
 }
 
 
+# ---------------
 # If 0.orig/ exists, copy (overwrite) into 0/ [ie, serial case]
 # * -processor : copy into processor directories instead
 # * -all : copy into serial and processor directories
+# ---------------
 restore0Dir()
 {
     if [ ! -d 0.orig ]
@@ -549,6 +551,63 @@ restore0Dir()
         \cp -r 0.orig 0 2>/dev/null
         ;;
     esac
+    return 0
+}
+
+
+# ---------------
+# Helper routine to remove specified fields from the 0/ directory.
+# Often used in combination with foamListRegions.
+#
+# Accepts following options:
+#   -region <name>      The region name
+#   --                  End of options
+#
+# any remaining parameters are taken to be fields names
+# ---------------
+remove0DirFields()
+{
+    local region
+
+    # Parse options
+    while [ "$#" -gt 0 ]
+    do
+        case "$1" in
+        ('')  ;;                # Ignore empty option
+        (--)  shift; break ;;   # Stop option parsing
+
+        (-region)   region="$2"; shift ;;
+        (*) break ;;
+        esac
+        shift
+    done
+
+    # safety
+    if [ "$region" = "--" ]; then unset region; fi
+
+    if [ "$#" -eq 0 ]
+    then
+        echo "No fields specified for ${region:+region=$region }" 1>&2
+        return 0
+    fi
+
+    echo "Remove 0/ fields${region:+ [$region]} : $@" 1>&2
+
+    local subdir
+    for subdir in 0/"$region" processor*/0/"$region"
+    do
+        if [ -d "$subdir" ]
+        then
+            for field in $@  ## unquoted for IFS splitting [SIC]
+            do
+                # Cautious with removal
+                if [ -f "$subdir/$field" ]
+                then
+                    rm -f -- "$subdir/$field"
+                fi
+            done
+        fi
+    done
     return 0
 }
 

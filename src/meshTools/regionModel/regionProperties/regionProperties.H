@@ -46,17 +46,38 @@ Description
     \endverbatim
 
 SourceFiles
-    regionProperties.C
+    regionProperties.cxx
+    regionModelProperties.cxx
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef Foam_regionProperties_H
 #define Foam_regionProperties_H
 
-#include "HashTable.H"
 #include "fileName.H"
 #include "wordList.H"
+#include "HashTable.H"
 #include "IOobjectOption.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// General controls
+
+namespace Foam
+{
+namespace regionModels
+{
+
+//- The enable/disable state for regionFaModel (default: true)
+bool allowFaModels() noexcept;
+
+//- Set enable/disable state for regionFaModel
+//  \return previous state
+bool allowFaModels(bool on) noexcept;
+
+} // End namespace regionModels
+} // End namespace Foam
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -117,6 +138,17 @@ public:
 
     //- Destructor
     ~regionProperties() = default;
+
+
+    // Static Member Functions
+
+        //- The expected search path (eg, constant/regionProperties).
+        //  Can be useful when generation error messages
+        static fileName objectRelPath
+        (
+            const Time& runTime,
+            const fileName& local = fileName::null
+        );
 
 
     // Member Functions

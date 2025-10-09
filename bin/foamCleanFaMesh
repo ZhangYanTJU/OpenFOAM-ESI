@@ -6,18 +6,18 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #-------------------------------------------------------------------------------
-#     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2022,2025 OpenCFD Ltd.
+#     Copyright (C) 2011 OpenFOAM Foundation
+#     Copyright (C) 2025 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
 #
 # Script
-#     foamCleanPolyMesh
+#     foamCleanFaMesh
 #
 # Description
-#    Remove the contents of the constant/polyMesh directory
-#    as per the Foam::polyMesh::removeFiles() method.
+#    Remove the contents of the constant/finite-area/faMesh directory
+#    as per the Foam::faMesh::removeFiles() method.
 #
 #------------------------------------------------------------------------------
 usage() {
@@ -28,12 +28,12 @@ usage() {
 Usage: ${0##*/} [OPTION]
 options:
   -case <dir>           case directory, default is the cwd
-  -region <name>        mesh region
+  -area-region <name>   area-mesh region
   -dry-run | -n         report actions but do not remove
   -help                 print the usage
 
-Remove the contents of the constant/polyMesh directory as per the
-Foam::polyMesh::removeFiles() method.
+Remove the contents of the constant/finite-area/faMesh directory as per the
+Foam::faMesh::removeFiles() method.
 
 USAGE
    exit 1
@@ -41,7 +41,7 @@ USAGE
 
 #------------------------------------------------------------------------------
 # Parse options
-unset caseDir regionName optDryRun
+unset caseDir areaRegion optDryRun
 
 while [ "$#" -gt 0 ]
 do
@@ -58,16 +58,15 @@ do
         ;;
 
     -case)
-        caseDir="$2"
         [ "$#" -ge 2 ] || usage "'$1' option requires an argument"
         cd "$2" 2>/dev/null || usage "directory does not exist:  '$2'"
         caseDir=$2
         shift
         ;;
 
-    -region)
+    -area-region)
         [ "$#" -ge 2 ] || usage "'$1' option requires an argument"
-        regionName="$2"
+        areaRegion=$2
         shift
         ;;
 
@@ -80,7 +79,7 @@ done
 
 #------------------------------------------------------------------------------
 
-# Remove files (mesh itself, modifiers, snappyHexMesh ones) and subdirectories
+# Remove files (mesh etc)
 # also remove .gz versions of the same files
 
 removeFiles()
@@ -88,18 +87,8 @@ removeFiles()
     local directory="$1"
 
     for i in \
-        points faces \
-        owner neighbour \
-        boundary \
-        cells \
-        cellZones faceZones pointZones \
-        meshModifiers \
-        parallelData \
-        sets \
-        cellLevel pointLevel \
-        level0Edge \
-        refinementHistory \
-        surfaceIndex \
+        faceLabels \
+        faBoundary \
     ;
     do
         if [ -n "$optDryRun" ]
@@ -113,11 +102,11 @@ removeFiles()
 
 #------------------------------------------------------------------------------
 
-meshDir="constant/${regionName}${regionName:+/}polyMesh"
+meshDir="constant/finite-area/${areaRegion}${areaRegion:+/}faMesh"
 
 if [ -d "$meshDir" ]
 then
-    # [OK] has constant/<region>/polyMesh
+    # [OK] has constant/finite-areaRegion/<region>/faMesh
     :
 
 elif [ -n "$caseDir" ]
@@ -134,9 +123,9 @@ else
     then
         # Probably already within constant/
         meshDir="$other}"
-    elif [ "${PWD##*/}" = polyMesh ] && [ -z "$regionName" ]
+    elif [ "${PWD##*/}" = faMesh ] && [ -z "$areaRegion" ]
     then
-        # Apparently already within polyMesh/
+        # Apparently already within faMesh/
         meshDir=.
     fi
 fi

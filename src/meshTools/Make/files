@@ -351,7 +351,8 @@ $(vtk)/topoSet/foamVtkWriteFaceSet.C
 $(vtk)/topoSet/foamVtkWritePointSet.C
 $(vtk)/topoSet/foamVtkWriteCellSetFaces.C
 
-regionModel/regionProperties/regionProperties.C
+regionModel/regionProperties/regionProperties.cxx
+regionModel/regionProperties/regionModelProperties.cxx
 
 tetOverlapVolume/tetOverlapVolume.C
 

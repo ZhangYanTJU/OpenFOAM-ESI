@@ -140,6 +140,11 @@ _of_complete_()
         # Could use "foamListTimes -withZero", but still doesn't address ranges
         COMPREPLY=($(compgen -d -X '![-0-9]*' -- ${cur}))
         ;;
+    -area-region)
+        # Or: $(find system/finite-area -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sed -e 's%.*/%%')
+        choices=$(\ls -d system/finite-area/*/ 2>/dev/null | sed -e 's%/$%%; s%^.*/%%')
+        COMPREPLY=($(compgen -W "$choices" -- ${cur}))
+        ;;
     -region)
         # Or: $(find system -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sed -e 's%.*/%%')
         choices=$(\ls -d system/*/ 2>/dev/null | sed -e 's%/$%%; s%^.*/%%')
