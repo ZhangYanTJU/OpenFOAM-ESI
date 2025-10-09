@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "readFields.H"
-#include "volFields.H"
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
@@ -42,26 +41,30 @@ Foam::label Foam::checkData
 
     wordHashSet goodFields;
 
+    IOobject io
+    (
+        "any-name",   // placeholder
+        "constant",   // placeholder
+        local,
+        obr,
+        IOobjectOption::NO_READ,
+        IOobjectOption::NO_WRITE,
+        IOobjectOption::NO_REGISTER
+    );
+
     for (const word& fieldName : objectNames)
     {
-        // // If prune_0() not previously used...
-        // if (objectNames.ends_with("_0")) continue;
+        // In case prune_0() not previously used...
+        if (fieldName.ends_with("_0")) continue;
 
         bool good = false;
 
         for (const instant& inst : timeDirs)
         {
-            good =
-                IOobject
-                (
-                    fieldName,
-                    inst.name(),
-                    local,
-                    obr,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ).typeHeaderOk<volScalarField>(false, false);
+            io.resetHeader(fieldName);
+            io.instance() = inst.name();
+
+            good = io.typeHeaderOk<regIOobject>(false, false);
 
             if (!good)
             {

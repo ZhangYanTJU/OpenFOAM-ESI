@@ -22,24 +22,66 @@ Description
 //
 
 // No subsetting!
-if (doFiniteArea)
+if (doFiniteArea && !areaRegionNames.empty())
 {
     using reportFields = foamToVtkReportFields;
 
-    autoPtr<faMesh> faMeshPtr;
+    // The (region) polyMesh being used. No subsetting possible
+    const auto& basePolyMesh = meshProxy.baseMesh();
 
-    const label nAreaFields = faObjects.count(Foam::fieldTypes::is_area);
-
-    if (nAreaFields || withMeshIds)
+    for (const word& areaName : areaRegionNames)
     {
-        faMeshPtr = faMesh::TryNew(meshProxy.baseMesh());
-    }
+        const bool isDefaultRegion(polyMesh::regionName(areaName).empty());
 
-    if (faMeshPtr && (nAreaFields || withMeshIds))
-    {
-        const faMesh& areaMesh = faMeshPtr();
+        // CAUTION
+        // If we want to have constant access to the HashTable:
+        //
+        // (SEGFAULT)
+        // const auto& faObjs = faObjects.lookup(areaName, IOobjectList());
+        //
+        // Use an empty fallback to avoid binding to a temporary:
+        //
+        // const IOobjectList emptyObjectList;
+        // const auto& faObjs = faObjects.lookup(areaName, emptyObjectList);
 
-        reportFields::area(Info, faObjects);
+        // Since we do not need the area fields afterwards,
+        // just move them out from the HashTable
+
+        IOobjectList faObjs;
+        if (auto iter = faObjects.find(areaName); iter.good())
+        {
+            faObjs = std::move(iter.val());
+        }
+
+        const label nAreaFields = faObjs.count(Foam::fieldTypes::is_area);
+
+        autoPtr<faMesh> faMeshPtr;
+
+        if (nAreaFields || withMeshIds)
+        {
+            faMeshPtr = faMesh::TryNew(areaName, basePolyMesh);
+        }
+
+        if (!faMeshPtr)
+        {
+            if (!isDefaultRegion)
+            {
+                // Report any area region specified but missing
+                // - silently ignore region0
+                Info<< "No area-mesh [" << polyMesh::regionName(areaName)
+                    << "] on volume-region ["
+                    << basePolyMesh.regionName() << "]" << endl;
+            }
+            continue;
+        }
+        const auto& areaMesh = faMeshPtr();
+
+        Info<< "Using area-mesh [" << polyMesh::regionName(areaName)
+            << "] on volume-region ["
+            << basePolyMesh.regionName() << "]" << endl;
+
+
+        reportFields::area(Info, faObjs);
 
         const auto& pp = faMeshPtr->patch();
 
@@ -49,7 +91,12 @@ if (doFiniteArea)
             writeOpts,
             (
                 outputDir/regionDir/"finite-area"
-              / "finiteArea" + timeDesc
+              / (
+                   isDefaultRegion
+                 ? fileName("finiteArea")
+                 : fileName(areaName/areaName)
+                )
+              + timeDesc
             ),
             UPstream::parRun()
         );
@@ -96,7 +143,7 @@ if (doFiniteArea)
         (
             writer,
             areaMesh,
-            faObjects,
+            faObjs,
             true // syncPar
         );
 

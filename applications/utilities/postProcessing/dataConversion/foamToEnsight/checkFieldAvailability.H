@@ -21,43 +21,58 @@ Requires
 
 // Initially all possible objects that are available at the final time
 List<wordHashSet> availableRegionObjectNames(meshes.size());
-List<wordHashSet> availableFaRegionObjectNames(meshes.size());
+List<HashTable<wordHashSet>> availableFaRegionObjectNames(meshes.size());
 
 forAll(meshes, regioni)
 {
     const auto& mesh = meshes[regioni];
 
     IOobjectList objects;
-    IOobjectList faObjects;
+    HashTable<IOobjectList> faObjects;
 
     if (doConvertFields && !timeDirs.empty())
     {
+        // const word& checkTimeDir = timeDirs.back().name();
+
         // List of volume mesh objects for this instance
         objects = IOobjectList(mesh, timeDirs.back().name());
-
-        // List of area mesh objects (assuming single region)
-        faObjects = IOobjectList
-        (
-            mesh.time(),
-            timeDirs.back().name(),
-            faMesh::dbDir(mesh, word::null),
-            IOobjectOption::NO_REGISTER
-        );
 
         if (fieldSelector)
         {
             objects.filterObjects(fieldSelector);
-            faObjects.filterObjects(fieldSelector);
         }
 
         // Remove "*_0" restart fields
         objects.prune_0();
-        faObjects.prune_0();
 
         if (!doPointValues)
         {
             // Prune point fields if disabled
             objects.filterClasses(Foam::fieldTypes::is_point, true);
+        }
+
+
+        // The finite-area regions and their fields for this volume region
+        // and instance
+        faObjects.reserve(areaRegionNames.size());
+        for (const word& areaName : areaRegionNames)
+        {
+            IOobjectList objs
+            (
+                faMesh::Registry(mesh),
+                timeDirs.back().name(),
+                polyMesh::regionName(areaName),
+                IOobjectOption::NO_REGISTER
+            );
+
+            if (fieldSelector)
+            {
+                objs.filterObjects(fieldSelector);
+            }
+
+            // Remove "*_0" restart fields
+            objs.prune_0();
+            faObjects(areaName) = std::move(objs);
         }
     }
 
@@ -78,20 +93,29 @@ forAll(meshes, regioni)
     }
 
     // Area fields
-    if (!faObjects.empty())
+    for (const word& areaName : areaRegionNames)
     {
-        wordList objectNames(faObjects.sortedNames());
+        wordList objectNames;
 
-        // Check availability for all times... (assuming single region)
-        checkData
+        if (const auto iter = faObjects.cfind(areaName); iter.good())
+        {
+            objectNames = iter.val().sortedNames();
+
+            // Check availability for all times...
+            checkData
+            (
+                faMesh::Registry(mesh),
+                timeDirs,
+                objectNames,
+                polyMesh::regionName(areaName)
+            );
+        }
+
+        availableFaRegionObjectNames[regioni].emplace_set
         (
-            mesh.time(),
-            timeDirs,
-            objectNames,
-            faMesh::dbDir(mesh, word::null)
+            areaName,
+            std::move(objectNames)
         );
-
-        availableFaRegionObjectNames[regioni] = objectNames;
     }
 }
 

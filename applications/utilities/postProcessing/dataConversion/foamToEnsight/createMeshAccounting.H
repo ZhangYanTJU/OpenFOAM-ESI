@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -15,12 +15,14 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
+// Cases and meshes per volume region
 PtrList<ensightCase> ensightCases(regionNames.size());
 PtrList<ensightMesh> ensightMeshes(regionNames.size());
 
-PtrList<faMesh> meshesFa(regionNames.size());
-PtrList<ensightCase> ensightCasesFa(regionNames.size());
-PtrList<ensightFaMesh> ensightMeshesFa(regionNames.size());
+// Per volume region can have multiple finite-area regions
+List<PtrDynList<faMesh>> meshesFa(regionNames.size());
+List<PtrDynList<ensightCase>> ensightCasesFa(regionNames.size());
+List<PtrDynList<ensightFaMesh>> ensightMeshesFa(regionNames.size());
 
 {
     forAll(regionNames, regioni)
@@ -45,6 +47,7 @@ PtrList<ensightFaMesh> ensightMeshesFa(regionNames.size());
             }
         }
 
+        // Volume mesh
         ensightMeshes.set
         (
             regioni,
@@ -59,32 +62,59 @@ PtrList<ensightFaMesh> ensightMeshesFa(regionNames.size());
             new ensightCase(ensCasePath, ensCaseName, caseOpts)
         );
 
-        if (doFiniteArea)
+        if (!doFiniteArea)
         {
-            autoPtr<faMesh> faMeshPtr(faMesh::TryNew(mesh));
+            continue;
+        }
+
+        // Note: not every volume region is guaranteed to have
+        // any or all area region(s)
+
+        meshesFa[regioni].reserve_exact(areaRegionNames.size());
+
+        for (const word& areaName : areaRegionNames)
+        {
+            auto faMeshPtr = faMesh::TryNew(areaName, mesh);
 
             if (faMeshPtr)
             {
-                ensightCasesFa.set
-                (
-                    regioni,
-                    new ensightCase
-                    (
-                        ensCasePath/"finite-area",
-                        "finite-area",
-                        caseOpts
-                    )
-                );
-
-                meshesFa.set(regioni, std::move(faMeshPtr));
-
-                ensightMeshesFa.set
-                (
-                    regioni,
-                    new ensightFaMesh(meshesFa[regioni])
-                );
-                ensightMeshesFa[regioni].verbose(optVerbose);
+                meshesFa[regioni].push_back(std::move(faMeshPtr));
             }
+        }
+
+        // Setup the ensight components
+        const label nAreas = meshesFa[regioni].size();
+        ensightCasesFa[regioni].reserve_exact(nAreas);
+        ensightMeshesFa[regioni].reserve_exact(nAreas);
+
+        for (const faMesh& areaMesh : meshesFa[regioni])
+        {
+            // Use regionName() - automatically filters for defaultRegion
+            const word& areaName = areaMesh.regionName();
+
+            if (areaName.empty())
+            {
+                // single-region
+                ensightCasesFa[regioni].emplace_back
+                (
+                    ensCasePath/"finite-area",
+                    "finite-area",
+                    caseOpts
+                );
+            }
+            else
+            {
+                // multi-region
+                ensightCasesFa[regioni].emplace_back
+                (
+                    ensCasePath/"finite-area"/areaName,
+                    areaName,
+                    caseOpts
+                );
+            }
+
+            auto& ensFaMesh = ensightMeshesFa[regioni].emplace_back(areaMesh);
+            ensFaMesh.verbose(optVerbose);
         }
     }
 }

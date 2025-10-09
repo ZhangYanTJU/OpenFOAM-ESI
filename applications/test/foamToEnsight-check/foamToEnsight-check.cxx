@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -203,6 +203,7 @@ int main(int argc, char *argv[])
     argList::addVerboseOption();
 
     #include "addAllRegionOptions.H"
+    #include "addAllFaRegionOptions.H"
 
     argList::addBoolOption
     (
@@ -251,6 +252,14 @@ int main(int argc, char *argv[])
     // Handle -allRegions, -regions, -region
     #include "getAllRegionOptions.H"
 
+    // Handle -all-area-regions, -area-regions, -area-region
+    #include "getAllFaRegionOptions.H"
+
+    if (!doFiniteArea)
+    {
+        areaRegionNames.clear();  // For consistency
+    }
+
     // ------------------------------------------------------------------------
 
     #include "createNamedMeshes.H"
@@ -259,8 +268,8 @@ int main(int argc, char *argv[])
     /// #include "createMeshAccounting.H"
 
     PtrList<ensightMesh> ensightMeshes(regionNames.size());
-    PtrList<faMesh> meshesFa(regionNames.size());
-    PtrList<ensightFaMesh> ensightMeshesFa(regionNames.size());
+    List<PtrList<faMesh>> meshesFa(regionNames.size());
+    List<PtrList<ensightFaMesh>> ensightMeshesFa(regionNames.size());
 
     forAll(regionNames, regioni)
     {
@@ -273,21 +282,32 @@ int main(int argc, char *argv[])
         );
         ensightMeshes[regioni].verbose(optVerbose);
 
-
-        if (doFiniteArea)
+        if (!doFiniteArea)
         {
-            autoPtr<faMesh> faMeshPtr(faMesh::TryNew(mesh));
+            continue;
+        }
+
+        meshesFa[regioni].resize_null(areaRegionNames.size());
+        ensightMeshesFa[regioni].resize_null(areaRegionNames.size());
+
+        autoPtr<faMesh> faMeshPtr(faMesh::TryNew(mesh));
+
+        forAll(areaRegionNames, areai)
+        {
+            const word& areaName = areaRegionNames[areai];
+
+            autoPtr<faMesh> faMeshPtr(faMesh::TryNew(areaName, mesh));
 
             if (faMeshPtr)
             {
-                meshesFa.set(regioni, std::move(faMeshPtr));
+                meshesFa[regioni].set(areai, std::move(faMeshPtr));
 
-                ensightMeshesFa.set
+                ensightMeshesFa[regioni].set
                 (
-                    regioni,
-                    new ensightFaMesh(meshesFa[regioni])
+                    areai,
+                    new ensightFaMesh(meshesFa[regioni][areai])
                 );
-                ensightMeshesFa[regioni].verbose(optVerbose);
+                ensightMeshesFa[regioni][areai].verbose(optVerbose);
             }
         }
     }
@@ -295,7 +315,7 @@ int main(int argc, char *argv[])
     // ------------------------------------------------------------------------
 
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         Info<< "Checking " << timeDirs.size() << " time steps" << nl;
     }
@@ -317,17 +337,20 @@ int main(int argc, char *argv[])
             auto& ensMesh = ensightMeshes[regioni];
 
             // Finite-area (can be missing)
-            auto* ensFaMeshPtr = ensightMeshesFa.get(regioni);
+            auto& ensFaMeshes = ensightMeshesFa[regioni];
 
             if (moving)
             {
                 ensMesh.expire();
                 ensMesh.correct();
 
-                if (ensFaMeshPtr)
+                forAll(areaRegionNames, areai)
                 {
-                    ensFaMeshPtr->expire();
-                    ensFaMeshPtr->correct();
+                    if (auto* ensFaMeshPtr = ensFaMeshes.get(areai))
+                    {
+                        ensFaMeshPtr->expire();
+                        ensFaMeshPtr->correct();
+                    }
                 }
             }
 
@@ -340,9 +363,15 @@ int main(int argc, char *argv[])
 
                 printInfo(ensMesh, optVerbose);
 
-                if (ensFaMeshPtr)
+                // finite-area
+                forAll(areaRegionNames, areai)
                 {
-                    printInfo(*ensFaMeshPtr, optVerbose);
+                    auto* ensFaMeshPtr = ensFaMeshes.get(areai);
+
+                    if (ensFaMeshPtr)
+                    {
+                        printInfo(*ensFaMeshPtr, optVerbose);
+                    }
                 }
             }
         }

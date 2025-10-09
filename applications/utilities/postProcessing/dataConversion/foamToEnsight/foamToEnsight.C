@@ -124,6 +124,7 @@ Usage
 #include "OFstream.H"
 #include "Pstream.H"
 #include "HashOps.H"
+#include "PtrDynList.H"
 #include "regionProperties.H"
 
 #include "fvc.H"
@@ -172,6 +173,7 @@ int main(int argc, char *argv[])
     argList::addVerboseOption();
 
     #include "addAllRegionOptions.H"
+    #include "addAllFaRegionOptions.H"
 
     argList::addBoolOption
     (
@@ -439,6 +441,14 @@ int main(int argc, char *argv[])
     // Handle -allRegions, -regions, -region
     #include "getAllRegionOptions.H"
 
+    // Handle -all-area-regions, -area-regions, -area-region
+    #include "getAllFaRegionOptions.H"
+
+    if (!doFiniteArea)
+    {
+        areaRegionNames.clear();  // For consistency
+    }
+
     // ------------------------------------------------------------------------
     // Directory management
 
@@ -518,29 +528,32 @@ int main(int argc, char *argv[])
             polyMesh::readUpdateState meshState = mesh.readUpdate();
             const bool moving = (meshState != polyMesh::UNCHANGED);
 
-            // Ensight
+            // Ensight (fvMesh)
             auto& ensCase = ensightCases[regioni];
             auto& ensMesh = ensightMeshes[regioni];
 
-            // Finite-area (can be missing)
-            auto* ensFaCasePtr = ensightCasesFa.get(regioni);
-            auto* ensFaMeshPtr = ensightMeshesFa.get(regioni);
-
             ensCase.setTime(timeDirs[timei], timeIndex);
-            if (ensFaCasePtr)
+
+            // Finite-area (optional)
+            // Accounting exists for each volume region but may be empty
+            auto& ensFaCases = ensightCasesFa[regioni];
+            auto& ensFaMeshes = ensightMeshesFa[regioni];
+
+            for (auto& ensFaCase : ensFaCases)
             {
-                ensFaCasePtr->setTime(timeDirs[timei], timeIndex);
+                ensFaCase.setTime(timeDirs[timei], timeIndex);
             }
 
+            // Movement
             if (moving)
             {
                 ensMesh.expire();
                 ensMesh.correct();
 
-                if (ensFaMeshPtr)
+                for (auto& ensFaMesh : ensFaMeshes)
                 {
-                    ensFaMeshPtr->expire();
-                    ensFaMeshPtr->correct();
+                    ensFaMesh.expire();
+                    ensFaMesh.correct();
                 }
             }
 
@@ -555,14 +568,18 @@ int main(int argc, char *argv[])
                 }
 
                 // finite-area
-                if (ensFaCasePtr && ensFaMeshPtr)
+                forAll(ensFaMeshes, areai)
                 {
-                    autoPtr<ensightGeoFile> os =
-                        ensFaCasePtr->newGeometry(hasMovingMesh);
+                    const auto& ensFaCase = ensFaCases[areai];
+                    const auto& ensFaMesh = ensFaMeshes[areai];
 
-                    ensFaMeshPtr->write(os.ref());
+                    autoPtr<ensightGeoFile> os =
+                        ensFaCase.newGeometry(hasMovingMesh);
+
+                    ensFaMesh.write(os.ref());
                 }
             }
+
 
             // Objects at this time
             IOobjectList objects(mesh, runTime.timeName());
@@ -575,22 +592,36 @@ int main(int argc, char *argv[])
             // Volume, internal, point fields
             #include "convertVolumeFields.H"
 
-            // The finite-area objects at this time
-            IOobjectList faObjects;
-
-            if (ensFaMeshPtr)
+            // finite-area
+            forAll(ensFaMeshes, areai)
             {
-                faObjects =
-                    IOobjectList(ensFaMeshPtr->mesh(), runTime.timeName());
+                auto* ensFaCasePtr = ensFaCases.get(areai);
+                auto* ensFaMeshPtr = ensFaMeshes.get(areai);
 
-                faObjects.filterObjects
-                (
-                    availableFaRegionObjectNames[regioni]
-                );
+                // The finite-area region objects at this time
+                IOobjectList faObjects;
+
+                if (ensFaMeshPtr)
+                {
+                    const word& areaName = ensFaMeshPtr->mesh().name();
+
+                    faObjects = IOobjectList
+                    (
+                        faMesh::Registry(mesh),
+                        runTime.timeName(),
+                        polyMesh::regionName(areaName),
+                        IOobjectOption::NO_REGISTER
+                    );
+
+                    faObjects.filterObjects
+                    (
+                        availableFaRegionObjectNames[regioni](areaName)
+                    );
+                }
+
+                // The finiteArea fields
+                #include "convertAreaFields.H"
             }
-
-            // The finiteArea fields
-            #include "convertAreaFields.H"
 
             // Lagrangian fields
             #include "convertLagrangian.H"
@@ -604,14 +635,13 @@ int main(int argc, char *argv[])
     // Write cases
     forAll(ensightCases, regioni)
     {
+        // finite-volume
         ensightCases[regioni].write();
-    }
 
-    forAll(ensightCasesFa, regioni)
-    {
-        if (ensightCasesFa.set(regioni))
+        // Finite-area (if any)
+        for (const auto& ensFaCase : ensightCasesFa[regioni])
         {
-            ensightCasesFa[regioni].write();
+            ensFaCase.write();
         }
     }
 
