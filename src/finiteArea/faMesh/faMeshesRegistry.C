@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023-2024 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,6 +86,8 @@ bool Foam::faMeshesRegistry::writeObject
     const bool writeOnProc
 ) const
 {
+    // Could also restrict to faMesh only...
+    //
     // for (const faMesh& m : objects_.csorted<faMesh>())
     // {
     //     m.write(writeOnProc);

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023-2024 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,12 +144,32 @@ public:
         explicit faMeshesRegistry(const polyMesh& mesh);
 
 
+    // Factory Methods
+
+        //- Return the registry of objects on the singleton.
+        //  Same as New(mesh).thisDb()
+        FOAM_NO_DANGLING_REFERENCE  //< Reference stored in registry
+        static const objectRegistry& Registry(const polyMesh& mesh)
+        {
+            return MeshObject_type::New(mesh).thisDb();
+        }
+
+
     // Database
 
-        //- Return the object registry
+        // It redirects to the private objects but uses some
+        // objectRegistry method naming
+
+        //- The registry of the objects
         const objectRegistry& thisDb() const noexcept
         {
             return objects_;
+        }
+
+        //- Local relative to time
+        const fileName& dbDir() const
+        {
+            return objects_.dbDir();
         }
 
         //- The polyMesh reference

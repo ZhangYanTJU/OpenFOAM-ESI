@@ -28,6 +28,7 @@ License
 
 #include "faMesh.H"
 #include "faMeshBoundaryHalo.H"
+#include "faMeshesRegistry.H"
 #include "faGlobalMeshData.H"
 #include "Time.H"
 #include "polyMesh.H"
@@ -158,6 +159,12 @@ const Foam::objectRegistry* Foam::faMesh::registry(const polyMesh& pMesh)
 // {
 //     return obr.cfindObject<objectRegistry>(faMesh::prefix());
 // }
+
+// Forwarding
+const Foam::objectRegistry& Foam::faMesh::Registry(const polyMesh& pMesh)
+{
+    return faMeshesRegistry::Registry(pMesh);
+}
 
 
 const Foam::faMesh& Foam::faMesh::mesh

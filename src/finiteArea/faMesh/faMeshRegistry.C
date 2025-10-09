@@ -27,8 +27,8 @@ License
 
 #include "faMesh.H"
 #include "faMeshesRegistry.H"
-#include "Time.H"
 #include "polyMesh.H"
+#include "Time.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -43,6 +43,7 @@ Foam::faMeshRegistry::faMeshRegistry
         IOobject
         (
             (areaName.empty() ? polyMesh::defaultRegion : areaName),
+            mesh.thisDb().time().timeName(),
             faMeshesRegistry::New(mesh).thisDb(),
             IOobjectOption::NO_READ,
             IOobjectOption::AUTO_WRITE,

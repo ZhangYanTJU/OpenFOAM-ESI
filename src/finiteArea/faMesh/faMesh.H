@@ -751,9 +751,13 @@ public:
 
     // Database
 
-        //- The parent registry containing all finite-area meshes
-        //- on the polyMesh.
+        //- Find the singleton parent registry (on the polyMesh)
+        //- that contains all objects related to finite-area.
         static const objectRegistry* registry(const polyMesh& pMesh);
+
+        //- Return the singleton parent registry (on the polyMesh)
+        //- that contains all objects related to finite-area.
+        static const objectRegistry& Registry(const polyMesh& pMesh);
 
         //- The single-region finite-area region on the polyMesh.
         //- Uses lookupObject semantics - Fatal if non-existent

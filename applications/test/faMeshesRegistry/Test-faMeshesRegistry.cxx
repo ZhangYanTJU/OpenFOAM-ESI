@@ -49,8 +49,7 @@ int main(int argc, char *argv[])
 
     Info<< "mesh 0: " << mesh.sortedNames() << nl;
 
-    faMeshesRegistry& reg =
-        const_cast<faMeshesRegistry&>(faMeshesRegistry::New(mesh));
+    auto& reg = const_cast<faMeshesRegistry&>(faMeshesRegistry::New(mesh));
 
     // faMeshesRegistry faReg = faMeshesRegistry(mesh);
 

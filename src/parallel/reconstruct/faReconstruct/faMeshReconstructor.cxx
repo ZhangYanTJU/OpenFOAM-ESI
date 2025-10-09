@@ -480,6 +480,7 @@ void Foam::faMeshReconstructor::createMesh()
     (
         new faMesh
         (
+            procMesh_.name(),
             *serialVolMesh_,
             identity(singlePatchFaces_.size())  // faceLabels
         )

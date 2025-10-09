@@ -101,7 +101,7 @@ class regionFaModel
     // Private Member Functions
 
         //- Construct region mesh and fields
-        void constructMeshObjects();
+        void constructMeshObjects(const dictionary&);
 
         //- Initialise the region
         void initialise();

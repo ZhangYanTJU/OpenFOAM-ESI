@@ -27,7 +27,6 @@ License
 
 #include "faOptions.H"
 #include "faMesh.H"
-#include "faMeshesRegistry.H"
 #include "Time.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -68,7 +67,7 @@ Foam::IOobject createIOobject
         lookupName,
         mesh.time().constant(),
         // located under finite-area
-        faMeshesRegistry::New(mesh).thisDb(),
+        faMesh::Registry(mesh),
         IOobjectOption::MUST_READ,
         IOobjectOption::NO_WRITE,
         IOobjectOption::REGISTER
@@ -188,11 +187,7 @@ Foam::fa::options& Foam::fa::options::New
     );
 
     // Registered under finite-area?
-    auto* ptr =
-        faMeshesRegistry::New(mesh).thisDb().getObjectPtr<fa::options>
-        (
-            lookupName
-        );
+    auto* ptr = faMesh::Registry(mesh).getObjectPtr<fa::options>(lookupName);
 
     if (!ptr && polyMesh::regionName(defaultAreaName).empty())
     {
