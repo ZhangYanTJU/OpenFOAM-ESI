@@ -200,7 +200,7 @@ void printTypeName()
 
 
 template<class Type, bool UseTypeName = true>
-void printPstreamTraits(const std::string_view name = std::string_view())
+void printPstreamTraits(std::string_view name = std::string_view())
 {
     Info<< "========" << nl;
     Info<< "type: ";
@@ -299,6 +299,9 @@ void printPstreamTraits(const std::string_view name = std::string_view())
         // Use element or component type (or byte-wise) for data type
         using base = typename UPstream_dataType<Type>::base;
 
+        // The sizing factor is constexpr
+        constexpr std::streamsize count = UPstream_dataType<Type>::size(1);
+
         Info<< " : ";
         if constexpr (UseTypeName)
         {
@@ -311,8 +314,7 @@ void printPstreamTraits(const std::string_view name = std::string_view())
 
         Info<< " cmpt-type=";
         printDataTypeId(UPstream_dataType<Type>::datatype_id);
-        Info<< " count=" << UPstream_dataType<Type>::size(1);
-        Info<< nl;
+        Info<< " count=" << count << nl;
     }
 }
 
@@ -362,6 +364,24 @@ void print_data_opType(BinaryOp bop, std::string_view name)
 }
 
 
+
+template<class Type>
+int check_simple(std::string_view name = std::string_view())
+{
+    // The sizing factor is constexpr
+    constexpr std::streamsize count = UPstream_dataType<Type>::size(1);
+
+    static_assert
+    (
+        (count == 1),
+        "Code does not (yet) work with aggregate types"
+    );
+
+    Info<< "check_simple: " << name << ": " << count << nl;
+    return count;
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 // Main program:
 
@@ -388,6 +408,8 @@ int main()
 
     printPstreamTraits<const float>();
     printPstreamTraits<floatVector>();
+
+    check_simple<floatVector>("vector<float>");
 
     printPstreamTraits<scalar>();
     printPstreamTraits<double>();

@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "globalIndex.H"
+#include <functional>
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -696,159 +697,94 @@ void Foam::globalIndex::mpiGather
     const UList<Type>& sendData,
     OutputContainer& allData,
     const label comm,
-    UPstream::commsTypes commsType,
-    const int tag
+    [[maybe_unused]] UPstream::commsTypes commsType,
+    [[maybe_unused]] const int tag
 ) const
 {
-    if (!UPstream::parRun())
+    if (!UPstream::is_parallel(comm))
     {
         // Serial: direct copy
         allData = sendData;
         return;
     }
 
-    // MPI_Gatherv requires contiguous data, but a byte-wise transfer can
-    // quickly exceed the 'int' limits used for MPI sizes/offsets.
-    // Thus gather label/scalar components when possible to increase the
-    // effective size limit.
-    //
-    // Note: cannot rely on pTraits (cmptType, nComponents) since this method
-    // needs to compile (and work) even with things like strings etc.
-
-    // Single char ad hoc "enum":
-    // - b(yte):  gather bytes
-    // - f(loat): gather scalars components
-    // - i(nt):   gather label components
-    // - 0:       gather with Pstream read/write etc.
-
-    List<int> recvCounts;
-    List<int> recvOffsets;
-
-    char dataMode(0);
-    int nCmpts(0);
-
-    if constexpr (is_contiguous_v<Type>)
+    if (UPstream::master(comm))
     {
-        if constexpr (is_contiguous_scalar<Type>::value)
-        {
-            dataMode = 'f';
-            nCmpts = static_cast<int>(sizeof(Type)/sizeof(scalar));
-        }
-        else if constexpr (is_contiguous_label<Type>::value)
-        {
-            dataMode = 'i';
-            nCmpts = static_cast<int>(sizeof(Type)/sizeof(label));
-        }
-        else
-        {
-            dataMode = 'b';
-            nCmpts = static_cast<int>(sizeof(Type));
-        }
+        allData.resize_nocopy(offsets_.back());  // == totalSize()
+    }
+    else
+    {
+        allData.clear();  // zero-size on non-master
+    }
 
-        // Offsets must fit into int
+    if constexpr (UPstream_dataType<Type>::value)
+    {
+        // Restrict to basic (or aliased) MPI types
+        // - simplifies calculating counts/offsets
+        //   and can call UPstream::mpiGatherv directly
+
+        // The sizing factor is constexpr
+        constexpr std::streamsize count = UPstream_dataType<Type>::size(1);
+
+        static_assert
+        (
+            (count == 1),
+            "Code does not (yet) work with aggregate types"
+        );
+
+        List<int> recvCounts;
+        List<int> recvOffsets;
+
         if (UPstream::master(comm))
         {
-            const globalIndex& globalAddr = *this;
+            // Must be same as Pstream::nProcs(comm), at least on master!
+            // if (UPstream::nProcs(comm) != this->nProcs()) ...
 
-            if (globalAddr.totalSize() > (INT_MAX/nCmpts))
-            {
-                // Offsets do not fit into int - revert to manual.
-                dataMode = 0;
-            }
-            else
-            {
-                // Must be same as Pstream::nProcs(comm), at least on master!
-                const label nproc = globalAddr.nProcs();
+            recvCounts.resize(offsets_.size()-1);
+            recvOffsets.resize(offsets_.size());
 
-                allData.resize_nocopy(globalAddr.totalSize());
+            // Copy offsets
+            std::copy(offsets_.begin(), offsets_.end(), recvOffsets.begin());
 
-                recvCounts.resize(nproc);
-                recvOffsets.resize(nproc+1);
+            // Calculate sizes. Currently without std::minus <functional>
+            std::transform
+            (
+                offsets_.begin()+1, offsets_.end(),
+                offsets_.begin(), recvCounts.begin(),
+                std::minus<>{}
+            );
 
-                for (label proci = 0; proci < nproc; ++proci)
-                {
-                    recvCounts[proci] = globalAddr.localSize(proci)*nCmpts;
-                    recvOffsets[proci] = globalAddr.localStart(proci)*nCmpts;
-                }
-                recvOffsets[nproc] = globalAddr.totalSize()*nCmpts;
-
-                // Assign local data directly
-
-                recvCounts[0] = 0;  // ie, ignore for MPI_Gatherv
-                SubList<Type>(allData, globalAddr.range(0)) =
-                    SubList<Type>(sendData, globalAddr.range(0));
-            }
+            // FUTURE .. fix sizes and offsets by the element factor...
+            // if constexpr (UPstream_basic_dataType<Type>::size(1) > 1)
         }
 
-        // Consistent information for everyone
-        UPstream::broadcast(&dataMode, 1, comm);
+        int sendSize = static_cast<int>(sendData.size());
+
+        // Note we let MPI_Gatherv copy back the local data as well...
+
+        UPstream::mpiGatherv
+        (
+            sendData.cdata(),
+            sendSize,
+            allData.data(),
+            recvCounts,
+            recvOffsets,
+            comm
+        );
     }
-
-    // Dispatch
-    switch (dataMode)
+    else
     {
-        case 'b':   // Byte-wise
-        {
-            UPstream::mpiGatherv
-            (
-                sendData.cdata_bytes(),
-                sendData.size_bytes(),
-                allData.data_bytes(),
-                recvCounts,
-                recvOffsets,
-                comm
-            );
-            break;
-        }
-        case 'f':   // Float (scalar) components
-        {
-            typedef scalar cmptType;
-
-            UPstream::mpiGatherv
-            (
-                reinterpret_cast<const cmptType*>(sendData.cdata()),
-                (sendData.size()*nCmpts),
-                reinterpret_cast<cmptType*>(allData.data()),
-                recvCounts,
-                recvOffsets,
-                comm
-            );
-            break;
-        }
-        case 'i':   // Int (label) components
-        {
-            typedef label cmptType;
-
-            UPstream::mpiGatherv
-            (
-                reinterpret_cast<const cmptType*>(sendData.cdata()),
-                (sendData.size()*nCmpts),
-                reinterpret_cast<cmptType*>(allData.data()),
-                recvCounts,
-                recvOffsets,
-                comm
-            );
-            break;
-        }
-        default:    // Regular (manual) gathering
-        {
-            globalIndex::gather
-            (
-                offsets_,  // needed on master only
-                comm,
-                UPstream::allProcs(comm),   // All communicator ranks
-                sendData,
-                allData,
-                tag,
-                commsType
-            );
-            break;
-        }
-    }
-
-    if (!UPstream::master(comm))
-    {
-        allData.clear();  // safety: zero-size on non-master
+        // Regular (manual) gathering
+        globalIndex::gather
+        (
+            offsets_,  // needed on master only
+            comm,
+            UPstream::allProcs(comm),   // All communicator ranks
+            sendData,
+            allData,
+            tag,
+            commsType
+        );
     }
 }
 

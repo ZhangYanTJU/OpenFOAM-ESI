@@ -49,7 +49,8 @@ __surfaceFieldValue
     {
         default
         {
-            verbose true;
+            verbose  true;
+            //gatherv  true;
         }
     }
 

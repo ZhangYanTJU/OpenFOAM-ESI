@@ -354,7 +354,7 @@ struct UPstream_basic_dataType
         UPstream_alias_dataType<base>::datatype_id;
 
     //- The size in terms of the number of underlying data elements
-    static std::streamsize size(std::streamsize n) noexcept
+    static constexpr std::streamsize size(std::streamsize n) noexcept
     {
         if constexpr (UPstream_alias_dataType<T>::value)
         {
@@ -373,7 +373,10 @@ struct UPstream_basic_dataType
 template<> struct UPstream_basic_dataType<void> : UPstream_mpi_dataType<void>
 {
     using base = void;
-    static std::streamsize size(std::streamsize n) noexcept { return n; }
+    static constexpr std::streamsize size(std::streamsize n) noexcept
+    {
+        return n;
+    }
 };
 
 
@@ -410,7 +413,7 @@ struct UPstream_dataType
         UPstream_any_dataType<base>::datatype_id;
 
     //- The size in terms of the number of base data elements
-    static std::streamsize size(std::streamsize n) noexcept
+    static constexpr std::streamsize size(std::streamsize n) noexcept
     {
         if constexpr (UPstream_any_dataType<T>::value)
         {

@@ -28,33 +28,45 @@ License
 #include "Pstream.H"
 #include "PstreamGlobals.H"
 #include "UPstreamWrapping.H"
+#include "vector.H"  // for debugging
+
+#undef STRINGIFY
+#undef STRING_QUOTE
+
+#define STRINGIFY(content) #content
+#define STRING_QUOTE(input) STRINGIFY(input)
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
-static inline bool is_basic_dataType(Foam::UPstream::dataTypes id) noexcept
+namespace
+{
+
+inline bool is_nonAggregate(Foam::UPstream::dataTypes id) noexcept
 {
     return
     (
         int(id) >= int(Foam::UPstream::dataTypes::Basic_begin)
      && int(id)  < int(Foam::UPstream::dataTypes::Basic_end)
+    )
+    ||
+    (
+        int(id) >= int(Foam::UPstream::dataTypes::User_begin)
+     && int(id)  < int(Foam::UPstream::dataTypes::User_end)
     );
 }
-
-namespace
-{
-
-using namespace Foam;
 
 // Local function to print some error information
 inline void printErrorNonIntrinsic
 (
     const char* context,
-    UPstream::dataTypes dataTypeId
+    Foam::UPstream::dataTypes dataTypeId
 )
 {
+    using namespace Foam;
+
     FatalError
         << "Bad input for " << context << ": likely a programming problem\n"
-        << "    Non-intrinsic data (" << int(dataTypeId) << ")\n"
+        << "    Non-intrinsic/non-user data (type:" << int(dataTypeId) << ")\n"
         << Foam::endl;
 }
 
@@ -214,17 +226,35 @@ void Foam::UPstream::mpi_gatherv
 {
     MPI_Datatype datatype = PstreamGlobals::getDataType(dataTypeId);
 
-    if
-    (
-        FOAM_UNLIKELY
-        (
-            !is_basic_dataType(dataTypeId)
-        )
-    )
+    // Runtime assert that we are not using aggregated data types
+    if (FOAM_UNLIKELY(!is_nonAggregate(dataTypeId)))
     {
         FatalErrorInFunction;
         printErrorNonIntrinsic("MPI_Gatherv()", dataTypeId);
         FatalError << Foam::abort(FatalError);
+    }
+
+    const label np = UPstream::nProcs(communicator);
+
+    // For total-size calculation,
+    // don't rely on recvOffsets being (np+1)
+    const int totalSize =
+    (
+        (UPstream::master(communicator) && np > 1)
+      ? (recvOffsets[np-1] + recvCounts[np-1])
+      : 0
+    );
+
+    if (FOAM_UNLIKELY(UPstream::debug))
+    {
+        Perr<< "[mpi_gatherv] :"
+            << " type:" << int(dataTypeId)
+            << " count:" << sendCount
+            << " total:" << totalSize
+            << " comm:" << communicator
+            << " recvCounts:" << flatOutput(recvCounts)
+            << " recvOffsets:" << flatOutput(recvOffsets)
+            << Foam::endl;
     }
 
     {
@@ -235,6 +265,48 @@ void Foam::UPstream::mpi_gatherv
             datatype, communicator
         );
     }
+
+    // Extended debugging. Limit to master:
+
+    #if 0
+    if (FOAM_UNLIKELY(UPstream::debug))
+    {
+        if (UPstream::master(communicator))
+        {
+            switch (dataTypeId)
+            {
+                #undef  dataPrinter
+                #define dataPrinter(enumType, nativeType)           \
+                case UPstream::dataTypes::enumType :                \
+                {                                                   \
+                    UList<nativeType> combined                      \
+                    (                                               \
+                        static_cast<nativeType*>(recvData),         \
+                        totalSize                                   \
+                    );                                              \
+                                                                    \
+                    Info<< "[mpi_gatherv] => "                      \
+                    "List<" STRING_QUOTE(nativeType) "> ";          \
+                    combined.writeList(Info) << Foam::endl;         \
+                                                                    \
+                    break;                                          \
+                }
+
+                // Some common types
+                dataPrinter(type_int32, int32_t);
+                dataPrinter(type_int64, int64_t);
+                dataPrinter(type_float, float);
+                dataPrinter(type_double, double);
+                dataPrinter(type_3float, floatVector);
+                dataPrinter(type_3double, doubleVector);
+
+                // Some other type
+                default: break;
+                #undef dataPrinter
+            }
+        }
+    }
+    #endif
 }
 
 
@@ -255,13 +327,8 @@ void Foam::UPstream::mpi_scatterv
 {
     MPI_Datatype datatype = PstreamGlobals::getDataType(dataTypeId);
 
-    if
-    (
-        FOAM_UNLIKELY
-        (
-            !is_basic_dataType(dataTypeId)
-        )
-    )
+    // Runtime assert that we are not using aggregated data types
+    if (FOAM_UNLIKELY(!is_nonAggregate(dataTypeId)))
     {
         FatalErrorInFunction;
         printErrorNonIntrinsic("MPI_Scatterv()", dataTypeId);

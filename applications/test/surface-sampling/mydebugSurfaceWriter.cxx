@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,12 +83,10 @@ template<> struct narrowType<SymmTensor<double>>
     typedef SymmTensor<float> type;
 };
 
-// FIXME: Not sure why this one seems to be broken...
-//
-// template<> struct narrowType<Tensor<double>>
-// {
-//     typedef Tensor<float> type;
-// };
+template<> struct narrowType<Tensor<double>>
+{
+    typedef Tensor<float> type;
+};
 
 } // End namespace Foam
 
@@ -104,12 +102,18 @@ Foam::surfaceWriters::mydebugWriter::mergeField
 {
     addProfiling(merge, "debugWriter::merge-field");
 
-    // This is largely identical to surfaceWriter::mergeField()
+    // Identical to surfaceWriter::mergeField()
     // but with narrowing for communication
-    if (narrowTransfer_ && parallel_ && UPstream::parRun())
+
+    if constexpr (std::is_same_v<Tensor<double>, Type>)
+    {
+        // Cannot narrow tensor. Does not compile since MatrixSpace
+        // does not (yet) allow assigments from different Cmpt types.
+    }
+    else if (narrowTransfer_ && parallel_ && UPstream::parRun())
     {
         // The narrowed type
-        typedef typename narrowType<Type>::type narrowedType;
+        using narrowedType = typename narrowType<Type>::type;
 
         // Ensure geometry is also merged
         merge();
@@ -130,14 +134,29 @@ Foam::surfaceWriters::mydebugWriter::mergeField
         ConstPrecisionAdaptor<narrowedType, Type> input(fld);
         PrecisionAdaptor<narrowedType, Type> output(allFld);
 
-        globIndex.gather
-        (
-            input.cref(),   // fld,
-            output.ref(),   // allFld,
-            UPstream::msgType(),
-            commType_,
-            UPstream::worldComm
-        );
+        if (gatherv_)
+        {
+            globIndex.mpiGather
+            (
+                input.cref(),   // fld
+                output.ref(),   // allFld
+                UPstream::worldComm,
+                // For fallback:
+                commType_,
+                UPstream::msgType()
+            );
+        }
+        else
+        {
+            globIndex.gather
+            (
+                input.cref(),   // fld
+                output.ref(),   // allFld
+                UPstream::msgType(),
+                commType_,
+                UPstream::worldComm
+            );
+        }
 
         // Commit adapted content changes
         input.commit();
@@ -193,8 +212,19 @@ Foam::surfaceWriters::mydebugWriter::mydebugWriter
 {
     Info<< "Using debug surface writer ("
         << (this->isPointData() ? "point" : "face") << " data):"
-        << " commsType=" << UPstream::commsTypeNames[commType_]
-        << " merge=" << Switch::name(enableMerge_)
+        << " commsType=";
+
+    if (UPstream::parRun())
+    {
+        if (gatherv_) Info<< "gatherv+";
+        Info<< UPstream::commsTypeNames[commType_];
+    }
+    else
+    {
+        Info<< "serial";
+    }
+
+    Info<< " merge=" << Switch::name(enableMerge_)
         << " write=" << Switch::name(enableWrite_)
         << " narrow=" << Switch::name(narrowTransfer_)
         << endl;

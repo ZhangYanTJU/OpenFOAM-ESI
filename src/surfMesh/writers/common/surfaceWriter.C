@@ -201,6 +201,7 @@ Foam::surfaceWriter::surfaceWriter()
     isPointData_(false),
     verbose_(false),
     commType_(UPstream::commsTypes::scheduled),
+    gatherv_(false),
     nFields_(0),
     currTime_(),
     outputPath_(),
@@ -218,6 +219,8 @@ Foam::surfaceWriter::surfaceWriter(const dictionary& options)
     options.readIfPresent("verbose", verbose_);
 
     UPstream::commsTypeNames.readIfPresent("commsType", options, commType_);
+    gatherv_ = false;
+    options.readIfPresent("gatherv", gatherv_);
 
     geometryScale_ = 1;
     geometryCentre_ = Zero;
@@ -244,7 +247,19 @@ Foam::surfaceWriter::surfaceWriter(const dictionary& options)
     {
         Info<< "Create surfaceWriter ("
             << (this->isPointData() ? "point" : "face") << " data):"
-            << " commsType=" << UPstream::commsTypeNames[commType_] << endl;
+            << " commsType=";
+
+        if (UPstream::parRun())
+        {
+            if (gatherv_) Info<< "gatherv+";
+            Info<< UPstream::commsTypeNames[commType_];
+        }
+        else
+        {
+            Info<< "serial";
+        }
+
+        Info<< endl;
     }
 }
 
@@ -605,14 +620,29 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::mergeFieldTemplate
           : mergedSurf_.faceGlobalIndex()
         );
 
-        globIndex.gather
-        (
-            fld,
-            allFld,
-            UPstream::msgType(),
-            commType_,
-            UPstream::worldComm
-        );
+        if (gatherv_)
+        {
+            globIndex.mpiGather
+            (
+                fld,
+                allFld,
+                UPstream::worldComm,
+                // For fallback:
+                commType_,
+                UPstream::msgType()
+            );
+        }
+        else
+        {
+            globIndex.gather
+            (
+                fld,
+                allFld,
+                UPstream::msgType(),
+                commType_,
+                UPstream::worldComm
+            );
+        }
 
         // Renumber (point data) to correspond to merged points
         if
@@ -625,6 +655,15 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::mergeFieldTemplate
             inplaceReorder(mergedSurf_.pointsMap(), allFld);
             allFld.resize(mergedSurf_.points().size());
         }
+
+        // Extended debugging. Limit to master:
+        #if 0
+        if (UPstream::master())
+        {
+            Info<< "merged List<" << pTraits<Type>::typeName << "> : ";
+            allFld.writeList(Info) << endl;
+        }
+        #endif
 
         return tfield;
     }

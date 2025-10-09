@@ -88,8 +88,11 @@ Foam::surfaceWriters::debugWriter::debugWriter
     streamOpt_(IOstreamOption::BINARY)
 {
     Info<< "Using debug surface writer ("
-        << (this->isPointData() ? "point" : "face") << " data):"
-        << " commsType=" << UPstream::commsTypeNames[commType_]
+        << (this->isPointData() ? "point" : "face") << " data):";
+
+    if (gatherv_) Info<< " <gatherv>";
+
+    Info<< " commsType=" << UPstream::commsTypeNames[commType_]
         << " merge=" << Switch::name(enableMerge_)
         << " write=" << Switch::name(enableWrite_) << endl;
 }

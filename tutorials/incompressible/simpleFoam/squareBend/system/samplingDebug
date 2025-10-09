@@ -19,6 +19,12 @@ debug
 
     formatOptions
     {
+        default
+        {
+            verbose  true;
+            //gatherv  true;
+        }
+
         ensight
         {
             collateTimes  true;

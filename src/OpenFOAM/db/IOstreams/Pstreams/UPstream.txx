@@ -343,10 +343,21 @@ void Foam::UPstream::mpiGatherv
         }
         // Nothing further to do
     }
-    else if constexpr (UPstream_basic_dataType<Type>::value)
+    else if constexpr (UPstream_dataType<Type>::value)
     {
         // Restrict to basic (or aliased) MPI types to avoid recalculating
         // the list of counts/offsets.
+
+        // The sizing factor (constexpr) must be 1 otherwise
+        // [recvCounts,recvOffsets] are likely incorrect
+
+        constexpr std::streamsize count = UPstream_dataType<Type>::size(1);
+
+        static_assert
+        (
+            (count == 1),
+            "Code does not (yet) work with aggregate types"
+        );
 
         UPstream::mpi_gatherv
         (
@@ -356,7 +367,7 @@ void Foam::UPstream::mpiGatherv
             recvCounts,
             recvOffsets,
 
-            UPstream_basic_dataType<Type>::datatype_id,
+            UPstream_dataType<Type>::datatype_id,
             communicator
         );
     }
@@ -364,7 +375,8 @@ void Foam::UPstream::mpiGatherv
     {
         static_assert
         (
-            stdFoam::dependent_false_v<Type>, "Only basic MPI data types"
+            stdFoam::dependent_false_v<Type>,
+            "Only basic and user data types"
         );
     }
 }
@@ -392,10 +404,21 @@ void Foam::UPstream::mpiScatterv
         }
         // Nothing further to do
     }
-    else if constexpr (UPstream_basic_dataType<Type>::value)
+    else if constexpr (UPstream_dataType<Type>::value)
     {
         // Restrict to basic (or aliased) MPI types to avoid recalculating
         // the list of counts/offsets.
+
+        // The sizing factor (constexpr) must be 1 otherwise
+        // [sendCounts,sendOffsets] are likely incorrect
+
+        constexpr std::streamsize count = UPstream_dataType<Type>::size(1);
+
+        static_assert
+        (
+            (count == 1),
+            "Code does not (yet) work with aggregate types"
+        );
 
         UPstream::mpi_scatterv
         (
@@ -405,7 +428,7 @@ void Foam::UPstream::mpiScatterv
             recvData,
             recvCount,
 
-            UPstream_basic_dataType<Type>::datatype_id,
+            UPstream_dataType<Type>::datatype_id,
             communicator
         );
     }
@@ -413,7 +436,8 @@ void Foam::UPstream::mpiScatterv
     {
         static_assert
         (
-            stdFoam::dependent_false_v<Type>, "Only basic MPI data types"
+            stdFoam::dependent_false_v<Type>,
+            "Only basic and user data types"
         );
     }
 }

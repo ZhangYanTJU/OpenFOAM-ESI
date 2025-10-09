@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2015-2024 OpenCFD Ltd.
+    Copyright (C) 2015-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,6 +82,7 @@ Description
         Property    | Description                           | Reqd | Default
         verbose     | Additional output verbosity           | no  | no
         commsType   | Communication type                    | no  | scheduled
+        gatherv     | Use MPI gatherv [experimental]        | no  | false
         scale       | Output geometry scaling               | no  | 1
         transform   | Output coordinate transform           | no  |
         fieldLevel  | Subtract field level before scaling   | no  | empty dict
@@ -96,6 +97,9 @@ Note
     For surface formats that require geometry in a separate file,
     it is the responsibility of the implementation (not the caller)
     to ensure that this occurs.
+
+    Using MPI gatherv [experimental] is not well tested and may change
+    or be removed in the future!
 
 SourceFiles
     surfaceWriter.C
@@ -190,6 +194,9 @@ protected:
 
         //- Communication type (for field merging)
         UPstream::commsTypes commType_;
+
+        //- Prefer MPI gatherv intrinsic (for field merging) [experimental]
+        bool gatherv_;
 
         //- The number of fields
         label nFields_;
