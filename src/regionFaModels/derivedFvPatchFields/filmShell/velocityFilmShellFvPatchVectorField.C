@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,12 +27,27 @@ License
 
 #include "velocityFilmShellFvPatchVectorField.H"
 #include "dictionaryContent.H"
+#include "regionProperties.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void velocityFilmShellFvPatchVectorField::create_baffle()
+{
+    if (!baffle_)
+    {
+        baffle_.reset
+        (
+            baffleType::New(this->patch().boundaryMesh().mesh(), dict_)
+        );
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -42,8 +57,7 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    mixedFvPatchField<vector>(p, iF),
-    baffle_(nullptr),
+    parent_bctype(p, iF),
     dict_(),
     curTimeIndex_(-1),
     zeroWallVelocity_(true)
@@ -62,14 +76,7 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const fvPatchFieldMapper& mapper
 )
 :
-    mixedFvPatchField<vector>
-    (
-        ptf,
-        p,
-        iF,
-        mapper
-    ),
-    baffle_(nullptr),
+    parent_bctype(ptf, p, iF, mapper),
     dict_(ptf.dict_),
     curTimeIndex_(-1),
     zeroWallVelocity_(true)
@@ -83,8 +90,7 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const dictionary& dict
 )
 :
-    mixedFvPatchField<vector>(p, iF),
-    baffle_(nullptr),
+    parent_bctype(p, iF),
     dict_
     (
         // Copy dictionary, but without "heavy" data chunks
@@ -116,9 +122,11 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
         valueFraction() = 1;
     }
 
-    if (!baffle_)
+    // Create baffle now.
+    // Lazy evaluation has issues with loading the finite-area fields
+    if (regionModels::allowFaModels())
     {
-        baffle_.reset(baffleType::New(p.boundaryMesh().mesh(), dict_));
+        create_baffle();
     }
 }
 
@@ -129,8 +137,7 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    mixedFvPatchField<vector>(ptf, iF),
-    baffle_(nullptr),
+    parent_bctype(ptf, iF),
     dict_(ptf.dict_),
     curTimeIndex_(-1),
     zeroWallVelocity_(true)
@@ -146,14 +153,22 @@ void velocityFilmShellFvPatchVectorField::updateCoeffs()
         return;
     }
 
+    // Create baffle if needed
+    if (!baffle_)
+    {
+        create_baffle();
+    }
+
     // Execute the change only once per time-step
     if (curTimeIndex_ != this->db().time().timeIndex())
     {
-        baffle_->evolve();
-
         vectorField& pfld = *this;
 
-        baffle_->vsm().mapToVolumePatch(baffle_->Us(), pfld, patch().index());
+        auto& baffle = baffle_();
+
+        baffle.evolve();
+
+        baffle.vsm().mapToVolumePatch(baffle.Us(), pfld, patch().index());
 
         refGrad() = Zero;
         valueFraction() = 1;
@@ -170,13 +185,13 @@ void velocityFilmShellFvPatchVectorField::updateCoeffs()
         curTimeIndex_ = this->db().time().timeIndex();
     }
 
-    mixedFvPatchField<vector>::updateCoeffs();
+    parent_bctype::updateCoeffs();
 }
 
 
 void velocityFilmShellFvPatchVectorField::write(Ostream& os) const
 {
-    mixedFvPatchField<vector>::write(os);
+    parent_bctype::write(os);
     dict_.write(os, false);
 }
 

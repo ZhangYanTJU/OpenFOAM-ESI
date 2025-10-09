@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "thermalBaffleFvPatchScalarField.H"
+#include "dictionaryContent.H"
 #include "addToRunTimeSelectionTable.H"
 #include "emptyPolyPatch.H"
 #include "mappedWallPolyPatch.H"
@@ -46,12 +47,10 @@ thermalBaffleFvPatchScalarField::thermalBaffleFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    turbulentTemperatureRadCoupledMixedFvPatchScalarField(p, iF),
+    parent_bctype(p, iF),
     owner_(false),
     internal_(true),
-    baffle_(nullptr),
-    dict_(),
-    extrudeMeshPtr_()
+    dict_()
 {}
 
 
@@ -63,18 +62,10 @@ thermalBaffleFvPatchScalarField::thermalBaffleFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-    turbulentTemperatureRadCoupledMixedFvPatchScalarField
-    (
-        ptf,
-        p,
-        iF,
-        mapper
-    ),
+    parent_bctype(ptf, p, iF, mapper),
     owner_(ptf.owner_),
     internal_(ptf.internal_),
-    baffle_(nullptr),
-    dict_(ptf.dict_),
-    extrudeMeshPtr_()
+    dict_(ptf.dict_)
 {}
 
 
@@ -85,12 +76,23 @@ thermalBaffleFvPatchScalarField::thermalBaffleFvPatchScalarField
     const dictionary& dict
 )
 :
-    turbulentTemperatureRadCoupledMixedFvPatchScalarField(p, iF, dict),
+    parent_bctype(p, iF, dict),
     owner_(false),
     internal_(true),
-    baffle_(nullptr),
-    dict_(dict),
-    extrudeMeshPtr_()
+    dict_
+    (
+        // Copy dictionary, but without "heavy" data chunks
+        dictionaryContent::copyDict
+        (
+            dict,
+            wordList(),  // allow
+            wordList     // deny
+            ({
+                "type",  // redundant
+                "value"
+            })
+        )
+    )
 {
 
     const fvMesh& thisMesh = patch().boundaryMesh().mesh();
@@ -104,8 +106,8 @@ thermalBaffleFvPatchScalarField::thermalBaffleFvPatchScalarField
 
     if
     (
-        !thisMesh.time().foundObject<fvMesh>(regionName)
-        && regionName != "none"
+        (regionName != "none")
+     && !thisMesh.time().foundObject<fvMesh>(regionName)
     )
     {
         if (!extrudeMeshPtr_)
@@ -126,12 +128,10 @@ thermalBaffleFvPatchScalarField::thermalBaffleFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    turbulentTemperatureRadCoupledMixedFvPatchScalarField(ptf, iF),
+    parent_bctype(ptf, iF),
     owner_(ptf.owner_),
     internal_(ptf.internal_),
-    baffle_(nullptr),
-    dict_(ptf.dict_),
-    extrudeMeshPtr_()
+    dict_(ptf.dict_)
 {}
 
 
@@ -309,13 +309,13 @@ void thermalBaffleFvPatchScalarField::updateCoeffs()
         baffle_->evolve();
     }
 
-    turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs();
+    parent_bctype::updateCoeffs();
 }
 
 
 void thermalBaffleFvPatchScalarField::write(Ostream& os) const
 {
-    turbulentTemperatureRadCoupledMixedFvPatchScalarField::write(os);
+    parent_bctype::write(os);
 
     if (owner_)
     {

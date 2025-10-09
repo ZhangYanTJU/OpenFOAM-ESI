@@ -323,6 +323,9 @@ int main(int argc, char *argv[])
     );
     argList::addOptionCompat("cellZones", {"cellZone", 1912});
 
+    // Prevent volume BCs from triggering finite-area
+    regionModels::allowFaModels(false);
+
     #include "setRootCase.H"
 
     // ------------------------------------------------------------------------

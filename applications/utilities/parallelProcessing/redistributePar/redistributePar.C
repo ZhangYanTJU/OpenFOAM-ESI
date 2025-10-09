@@ -1257,6 +1257,8 @@ int main(int argc, char *argv[])
         true  // Advanced option
     );
 
+    // Prevent volume BCs from triggering finite-area
+    regionModels::allowFaModels(false);
 
     //- Disable caching of times/processor dirs etc. Cause massive parallel
     //  problems when e.g decomposing.
@@ -1269,6 +1271,7 @@ int main(int argc, char *argv[])
 
     argList args(argc, argv);
 
+    // ------------------------------------------------------------------------
 
     // As much as possible avoid synchronised operation. To be looked at more
     // closely for the three scenarios:

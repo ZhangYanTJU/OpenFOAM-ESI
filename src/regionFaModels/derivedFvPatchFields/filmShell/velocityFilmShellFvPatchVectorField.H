@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -134,14 +134,14 @@ class velocityFilmShellFvPatchVectorField
 {
     // Typedefs
 
+        //- The parent boundary condition type
+        typedef mixedFvPatchField<vector> parent_bctype;
+
         //- The finite-area region model
         typedef regionModels::areaSurfaceFilmModels::liquidFilmBase baffleType;
 
 
     // Private Data
-
-        //- The liquid film model
-        autoPtr<baffleType> baffle_;
 
         //- Dictionary
         mutable dictionary dict_;
@@ -151,6 +151,15 @@ class velocityFilmShellFvPatchVectorField
 
         //- Flag to set velocity to zero or film velocity
         bool zeroWallVelocity_;
+
+        //- The liquid film model
+        autoPtr<baffleType> baffle_;
+
+
+    // Private Methods
+
+        //- Create film baffle (if required)
+        void create_baffle();
 
 
 public:
@@ -186,12 +195,22 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Construct as copy setting internal field reference
+        //- Copy construct with internal field reference
         velocityFilmShellFvPatchVectorField
         (
-            const velocityFilmShellFvPatchVectorField&,
-            const DimensionedField<vector, volMesh>&
+            const velocityFilmShellFvPatchVectorField& pfld,
+            const DimensionedField<vector, volMesh>& iF
         );
+
+        //- Copy construct
+        velocityFilmShellFvPatchVectorField
+        (
+            const velocityFilmShellFvPatchVectorField& pfld
+        )
+        :
+            velocityFilmShellFvPatchVectorField(pfld, pfld.internalField())
+        {}
+
 
         //- Return a clone
         virtual tmp<fvPatchField<vector>> clone() const

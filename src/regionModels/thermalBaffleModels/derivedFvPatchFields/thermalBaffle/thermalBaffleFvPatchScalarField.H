@@ -203,11 +203,9 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef thermalBaffleFvPatchScalarField_H
-#define thermalBaffleFvPatchScalarField_H
+#ifndef Foam_thermalBaffleFvPatchScalarField_H
+#define Foam_thermalBaffleFvPatchScalarField_H
 
-
-#include "autoPtr.H"
 #include "regionModel.H"
 #include "thermalBaffleModel.H"
 #include "extrudePatchMesh.H"
@@ -231,6 +229,11 @@ class thermalBaffleFvPatchScalarField
 {
     // Typedefs
 
+        //- The parent boundary condition type
+        typedef
+            turbulentTemperatureRadCoupledMixedFvPatchScalarField
+            parent_bctype;
+
         //- The baffle region model
         typedef
             regionModels::thermalBaffleModels::thermalBaffleModel
@@ -253,11 +256,11 @@ class thermalBaffleFvPatchScalarField
         //- Is the baffle internal
         bool internal_;
 
-        //- Thermal baffle
-        autoPtr<baffleType> baffle_;
-
         //- Dictionary
         dictionary dict_;
+
+        //- Thermal baffle
+        autoPtr<baffleType> baffle_;
 
         //- Auto pointer to extrapolated mesh from patch
         autoPtr<extrudePatchMesh> extrudeMeshPtr_;

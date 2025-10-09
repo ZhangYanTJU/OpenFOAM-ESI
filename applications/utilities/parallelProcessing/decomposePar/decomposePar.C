@@ -418,7 +418,13 @@ int main(int argc, char *argv[])
     // Allow explicit -constant, have zero from time range
     timeSelector::addOptions(true, false);  // constant(true), zero(false)
 
+    // Prevent volume BCs from triggering finite-area
+    regionModels::allowFaModels(false);
+
     #include "setRootCase.H"
+
+    // ------------------------------------------------------------------------
+    // Configuration
 
     const bool writeCellDist    = args.found("cellDist");
 

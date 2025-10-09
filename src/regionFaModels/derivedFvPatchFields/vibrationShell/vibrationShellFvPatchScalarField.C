@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,12 +27,27 @@ License
 
 #include "vibrationShellFvPatchScalarField.H"
 #include "dictionaryContent.H"
+#include "regionProperties.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void vibrationShellFvPatchScalarField::create_baffle()
+{
+    if (!baffle_)
+    {
+        baffle_.reset
+        (
+            baffleType::New(this->patch().boundaryMesh().mesh(), dict_)
+        );
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -42,8 +57,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchField<scalar>(p, iF),
-    baffle_(nullptr),
+    parent_bctype(p, iF),
     dict_()
 {
     refValue() = Zero;
@@ -60,14 +74,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-    mixedFvPatchField<scalar>
-    (
-        ptf,
-        p,
-        iF,
-        mapper
-    ),
-    baffle_(nullptr),
+    parent_bctype(ptf, p, iF, mapper),
     dict_(ptf.dict_)
 {}
 
@@ -79,8 +86,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const dictionary& dict
 )
 :
-    mixedFvPatchField<scalar>(p, iF),
-    baffle_(nullptr),
+    parent_bctype(p, iF),
     dict_
     (
         // Copy dictionary, but without "heavy" data chunks
@@ -110,9 +116,11 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
         valueFraction() = 1;
     }
 
-    if (!baffle_)
+    // Create baffle now.
+    // Lazy evaluation has issues with loading the finite-area fields
+    if (regionModels::allowFaModels())
     {
-        baffle_.reset(baffleType::New(p.boundaryMesh().mesh(), dict_));
+        create_baffle();
     }
 }
 
@@ -123,8 +131,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchField<scalar>(ptf, iF),
-    baffle_(nullptr),
+    parent_bctype(ptf, iF),
     dict_(ptf.dict_)
 {}
 
@@ -138,31 +145,38 @@ void vibrationShellFvPatchScalarField::updateCoeffs()
         return;
     }
 
+    // Create baffle if needed
+    if (!baffle_)
+    {
+        create_baffle();
+    }
+    auto& baffle = baffle_();
+
     const auto& transportProperties =
         db().lookupObject<IOdictionary>("transportProperties");
 
     dimensionedScalar rho("rho", dimDensity, transportProperties);
 
-    baffle_->evolve();
+    baffle.evolve();
 
     // rho * acceleration
 
     refGrad() = Zero;  // safety (for any unmapped values)
 
-    baffle_->vsm().mapToVolumePatch(baffle_->a(), refGrad(), patch().index());
+    baffle.vsm().mapToVolumePatch(baffle.a(), refGrad(), patch().index());
 
     refGrad() *= rho.value();
 
     refValue() = Zero;
     valueFraction() = Zero;
 
-    mixedFvPatchField<scalar>::updateCoeffs();
+    parent_bctype::updateCoeffs();
 }
 
 
 void vibrationShellFvPatchScalarField::write(Ostream& os) const
 {
-    mixedFvPatchField<scalar>::write(os);
+    parent_bctype::write(os);
     dict_.write(os, false);
 }
 

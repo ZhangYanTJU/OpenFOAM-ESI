@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,17 +82,26 @@ class vibrationShellFvPatchScalarField
 {
     // Typedefs
 
+        //- The parent boundary condition type
+        typedef mixedFvPatchField<scalar> parent_bctype;
+
         //- The finite-area region model
         typedef regionModels::vibrationShellModel baffleType;
 
 
     // Private Data
 
+        //- Dictionary
+        dictionary dict_;
+
         //- The vibration shell model
         autoPtr<baffleType> baffle_;
 
-        //- Dictionary
-        dictionary dict_;
+
+    // Private Methods
+
+        //- Create vibration baffle (if required)
+        void create_baffle();
 
 
 public:
@@ -128,12 +137,22 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Construct as copy setting internal field reference
+        //- Copy construct with internal field reference
         vibrationShellFvPatchScalarField
         (
-            const vibrationShellFvPatchScalarField&,
-            const DimensionedField<scalar, volMesh>&
+            const vibrationShellFvPatchScalarField& pfld,
+            const DimensionedField<scalar, volMesh>& iF
         );
+
+        //- Copy construct
+        vibrationShellFvPatchScalarField
+        (
+            const vibrationShellFvPatchScalarField& pfld
+        )
+        :
+            vibrationShellFvPatchScalarField(pfld, pfld.internalField())
+        {}
+
 
         //- Return a clone
         virtual tmp<fvPatchField<scalar>> clone() const

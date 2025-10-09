@@ -135,9 +135,14 @@ int main(int argc, char *argv[])
         "Only reconstruct new times (i.e. that do not exist already)"
     );
 
+    // Prevent volume BCs from triggering finite-area
+    regionModels::allowFaModels(false);
+
     #include "setRootCase.H"
     #include "createTime.H"
 
+    // ------------------------------------------------------------------------
+    // Configuration
 
     const bool doFields = !args.found("no-fields");
     wordRes selectedFields;

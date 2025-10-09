@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -91,17 +91,26 @@ class thermalShellFvPatchScalarField
 {
     // Typedefs
 
+        //- The parent boundary condition type
+        typedef fixedValueFvPatchField<scalar> parent_bctype;
+
         //- The finite-area region model
         typedef regionModels::thermalShellModel baffleType;
 
 
     // Private Data
 
+        //- Dictionary
+        dictionary dict_;
+
         //- The thermal baffle
         autoPtr<baffleType> baffle_;
 
-        //- Dictionary
-        dictionary dict_;
+
+    // Private Methods
+
+        //- Create thermal baffle (if required)
+        void create_baffle();
 
 
 public:
@@ -137,12 +146,22 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Construct as copy setting internal field reference
+        //- Copy construct with internal field reference
         thermalShellFvPatchScalarField
         (
-            const thermalShellFvPatchScalarField&,
-            const DimensionedField<scalar, volMesh>&
+            const thermalShellFvPatchScalarField& pfld,
+            const DimensionedField<scalar, volMesh>& iF
         );
+
+        //- Copy construct
+        thermalShellFvPatchScalarField
+        (
+            const thermalShellFvPatchScalarField& pfld
+        )
+        :
+            thermalShellFvPatchScalarField(pfld, pfld.internalField())
+        {}
+
 
         //- Return a clone
         virtual tmp<fvPatchField<scalar>> clone() const

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,8 +26,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "thermalShellFvPatchScalarField.H"
-#include "addToRunTimeSelectionTable.H"
 #include "dictionaryContent.H"
+#include "regionProperties.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -35,6 +36,20 @@ namespace Foam
 {
 namespace compressible
 {
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void thermalShellFvPatchScalarField::create_baffle()
+{
+    if (!baffle_)
+    {
+        baffle_.reset
+        (
+            baffleType::New(this->patch().boundaryMesh().mesh(), dict_)
+        );
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -44,8 +59,7 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    fixedValueFvPatchField<scalar>(p, iF),
-    baffle_(nullptr),
+    parent_bctype(p, iF),
     dict_()
 {}
 
@@ -58,14 +72,7 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-    fixedValueFvPatchField<scalar>
-    (
-        ptf,
-        p,
-        iF,
-        mapper
-    ),
-    baffle_(nullptr),
+    parent_bctype(ptf, p, iF, mapper),
     dict_(ptf.dict_)
 {}
 
@@ -77,8 +84,7 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     const dictionary& dict
 )
 :
-    fixedValueFvPatchField<scalar>(p, iF, dict),
-    baffle_(nullptr),
+    parent_bctype(p, iF, dict),
     dict_
     (
         // Copy dictionary, but without "heavy" data chunks
@@ -94,9 +100,11 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
         )
     )
 {
-    if (!baffle_)
+    // Create baffle now.
+    // Lazy evaluation has issues with loading the finite-area fields
+    if (regionModels::allowFaModels())
     {
-        baffle_.reset(baffleType::New(p.boundaryMesh().mesh(), dict_));
+        create_baffle();
     }
 }
 
@@ -107,8 +115,7 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    fixedValueFvPatchField<scalar>(ptf, iF),
-    baffle_(nullptr),
+    parent_bctype(ptf, iF),
     dict_(ptf.dict_)
 {}
 
@@ -122,19 +129,27 @@ void thermalShellFvPatchScalarField::updateCoeffs()
         return;
     }
 
-    baffle_->evolve();
-
     scalarField& pfld = *this;
 
-    baffle_->vsm().mapToVolumePatch(baffle_->T(), pfld, patch().index());
+    // Create baffle if needed
+    if (!baffle_)
+    {
+        create_baffle();
+    }
 
-    fixedValueFvPatchField<scalar>::updateCoeffs();
+    auto& baffle = baffle_();
+
+    baffle.evolve();
+
+    baffle.vsm().mapToVolumePatch(baffle.T(), pfld, patch().index());
+
+    parent_bctype::updateCoeffs();
 }
 
 
 void thermalShellFvPatchScalarField::write(Ostream& os) const
 {
-    fixedValueFvPatchField<scalar>::write(os);
+    parent_bctype::write(os);
     dict_.write(os, false);
 }
 

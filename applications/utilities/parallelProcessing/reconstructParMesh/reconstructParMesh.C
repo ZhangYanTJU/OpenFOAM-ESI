@@ -780,10 +780,16 @@ int main(int argc, char *argv[])
 
     #include "addAllRegionOptions.H"
 
+    // Prevent volume BCs from triggering finite-area
+    regionModels::allowFaModels(false);
+
     #include "setRootCase.H"
     #include "createTime.H"
 
     printWarning();
+
+    // ------------------------------------------------------------------------
+    // Configuration
 
     const bool fullMatch = args.found("fullMatch");
     const bool procMatch = args.found("procMatch");

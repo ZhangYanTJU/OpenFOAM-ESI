@@ -479,7 +479,13 @@ int main(int argc, char *argv[])
         "Directory name for VTK output (default: 'VTK')"
     );
 
+    // Prevent volume BCs from triggering finite-area
+    regionModels::allowFaModels(false);
+
     #include "setRootCase.H"
+
+    // ------------------------------------------------------------------------
+    // Configuration
 
     /// const int optVerbose = args.verbose();
     const bool decomposePoly = args.found("poly-decomp");
