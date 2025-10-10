@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012 OpenFOAM Foundation
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,15 +48,32 @@ namespace Foam
 // Forward Declarations
 class faMesh;
 
-//- Check for availability of given file
-bool checkFileExistence(const fileName& fName);
+//- Check for availability of specified file (on all ranks)
+bitSet haveProcessorFile
+(
+    const word& name,           // eg, "faces"
+    const fileName& instance,   // eg, "constant"
+    const fileName& local,      // eg, "polyMesh"
+    const Time& runTime,
+    const bool verbose = true
+);
 
-//- Check for availability of specified mesh file (default: "faces")
+//- Check for availability of specified file (on all ranks)
+boolList haveMeshFile
+(
+    const word& name,           // eg, "faces"
+    const fileName& instance,   // eg, "constant"
+    const fileName& local,      // eg, "polyMesh"
+    const Time& runTime,
+    const bool verbose = true
+);
+
+//- Check for availability of specified mesh file
 boolList haveMeshFile
 (
     const Time& runTime,
     const fileName& meshPath,
-    const word& meshFile = "faces",
+    const word& meshFile,
     const bool verbose = true
 );
 
@@ -75,7 +92,7 @@ void masterMeshInstance
     fileName& pointsInstance
 );
 
-}
+} // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

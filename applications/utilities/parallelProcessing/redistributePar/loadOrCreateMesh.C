@@ -33,97 +33,264 @@ License
 #include "decomposedBlockData.H"
 #include "IFstream.H"
 
-// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
-bool Foam::checkFileExistence(const fileName& fName)
+// Trimmed-down version of lookupAndCacheProcessorsPath
+// with Foam::exists() check. No caching.
+
+// Check for two conditions:
+// - file has to exist
+// - if collated the entry has to exist inside the file
+
+// Note: bypass fileOperation::filePath(IOobject&) since has problems
+//       with going to a different number of processors
+//       (in collated format). Use file-based searching instead
+
+namespace Foam
 {
-    // Trimmed-down version of lookupAndCacheProcessorsPath
-    // with Foam::exists() check. No caching.
 
-    // Check for two conditions:
-    // - file has to exist
-    // - if collated the entry has to exist inside the file
-
-    // Note: bypass fileOperation::filePath(IOobject&) since has problems
-    //       with going to a different number of processors
-    //       (in collated format). Use file-based searching instead
-
-    const auto& handler = Foam::fileHandler();
-    typedef fileOperation::procRangeType procRangeType;
-
-    fileName path, pDir, local;
-    procRangeType group;
-    label numProcs;
-    const label proci =
-        fileOperation::splitProcessorPath
-        (fName, path, pDir, local, group, numProcs);
+// If indeed collated format:
+// Collect block-number in individual filenames
+// (might differ on different processors)
+static bool checkFileExistenceCollated
+(
+    const Foam::fileOperation& handler,
+    const Foam::fileName& fName
+)
+{
+    // using namespace Foam;
 
     bool found = false;
-
-    if (proci != -1)
     {
-        // Read all directories to see any beginning with processor
-        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        const label handlerComm = handler.comm();
 
-        const fileNameList dirEntries
-        (
-            handler.readDir(path, fileName::Type::DIRECTORY)
-        );
+        const label globalProci = UPstream::myProcNo(UPstream::worldComm);
+        const label handlerProci = UPstream::myProcNo(handlerComm);
+        const label nHandlerProcs = UPstream::nProcs(handlerComm);
 
-        // Extract info from processorN or processorsNN
-        // - highest processor number
-        // - directory+offset containing data for proci
-
-        // label nProcs = 0;
-        for (const fileName& dirN : dirEntries)
+        // Determine my local block number
+        label myBlockNumber = -1;
         {
-            // Analyse directory name
-            label rNum(-1);
-            const label readProci =
-                fileOperation::detectProcessorPath(dirN, group, &rNum);
+            fileOperation::procRangeType group;
+            label proci = fileOperation::detectProcessorPath(fName, group);
 
-            if (proci == readProci)
+            if (proci == -1 && group.empty())
             {
-                // Found "processorN"
-                if (Foam::exists(path/dirN/local))
-                {
-                    found = true;
-                    break;
-                }
+                // 'processorsXXX' format so contains all ranks
+                // according to worldComm
+                myBlockNumber = globalProci;
             }
-            else if (rNum != -1)
+            else
             {
-                // "processorsNN" or "processorsNN_start-end"
-                if (group.empty())
-                {
-                    // "processorsNN"
-                    if (proci < rNum && Foam::exists(path/dirN/local))
-                    {
-                        found = true;
-                        break;
-                    }
-                }
-                else if (group.contains(proci))
-                {
-                    // "processorsNN_start-end"
-                    // - save the local proc offset
-
-                    if (Foam::exists(path/dirN/local))
-                    {
-                        found = true;
-                        break;
-                    }
-                }
+                // 'processorsXXX_n-m' format so check for relative rank
+                myBlockNumber = handlerProci;
             }
         }
-    }
 
-    if (!found)
-    {
-        found = Foam::exists(fName);
+        // Since we are streaming anyhow, could also pack as tuple:
+        // Tuple2<fileName, label>
+
+
+        // Collect file names on master of local communicator
+        const fileNameList fNames
+        (
+            Pstream::listGatherValues
+            (
+                fName,
+                handlerComm,
+                UPstream::msgType()
+            )
+        );
+
+        // Collect block numbers on master of local communicator
+        const labelList myBlockNumbers
+        (
+            Pstream::listGatherValues
+            (
+                myBlockNumber,
+                handlerComm,
+                UPstream::msgType()
+            )
+        );
+
+        // Determine for all whether the filename exists in the collated file.
+        boolList allFound;
+
+        if (UPstream::master(handlerComm))
+        {
+            allFound.resize(nHandlerProcs, false);
+
+            // Store nBlocks and index of file that was used for nBlocks
+            label nBlocks = -1;
+            label blockRanki = -1;
+            forAll(fNames, ranki)
+            {
+                if
+                (
+                    blockRanki == -1
+                 || (fNames[ranki] != fNames[blockRanki])
+                )
+                {
+                    blockRanki = ranki;
+                    IFstream is(fNames[ranki]);
+                    nBlocks = decomposedBlockData::getNumBlocks(is);
+                }
+
+                allFound[ranki] = (myBlockNumbers[ranki] < nBlocks);
+            }
+        }
+
+        // Scatter using the handler communicator
+        found = Pstream::listScatterValues
+        (
+            allFound,
+            handlerComm,
+            UPstream::msgType()
+        );
     }
 
     return found;
+}
+
+} // End namespace
+
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+Foam::bitSet Foam::haveProcessorFile
+(
+    const word& name,           // eg "faces"
+    const fileName& instance,   // eg "constant"
+    const fileName& local,      // eg, polyMesh
+    const Time& runTime,
+    const bool verbose
+)
+{
+    const auto& handler = Foam::fileHandler();
+
+    const fileName fName
+    (
+        handler.filePath(runTime.path()/instance/local/name)
+    );
+
+    bool found = handler.isFile(fName);
+
+    // Assume non-collated (as fallback value).
+    // If everyone claims to have the file, use master to verify if
+    // collated is involved.
+
+    bool isCollated = false;
+
+    if (returnReduceAnd(found, UPstream::worldComm))
+    {
+        // Test for collated format.
+        // Note: can test only world-master. Since even host-collated will have
+        // same file format type for all processors
+        if (UPstream::master(UPstream::worldComm))
+        {
+            const bool oldParRun = UPstream::parRun(false);
+
+            if (IFstream is(fName); is.good())
+            {
+                IOobject io(name, instance, local, runTime);
+                io.readHeader(is);
+
+                isCollated = decomposedBlockData::isCollatedType(io);
+            }
+
+            UPstream::parRun(oldParRun);
+        }
+        Pstream::broadcast(isCollated, UPstream::worldComm);
+    }
+
+    // For collated, check that the corresponding blocks exist
+    if (isCollated)
+    {
+        found = checkFileExistenceCollated(handler, fName);
+    }
+
+
+    // Globally consistent information about who has the file
+    bitSet haveFileOnProc = bitSet::allGather(found, UPstream::worldComm);
+
+    if (verbose)
+    {
+        Info<< "Per processor availability of \""
+            << name << "\" file in " << instance/local << nl
+            << "    " << flatOutput(haveFileOnProc) << nl << endl;
+    }
+
+    return haveFileOnProc;
+}
+
+
+Foam::boolList Foam::haveMeshFile
+(
+    const word& name,           // eg "faces"
+    const fileName& instance,   // eg "constant"
+    const fileName& local,      // eg, polyMesh
+    const Time& runTime,
+    const bool verbose
+)
+{
+    const auto& handler = Foam::fileHandler();
+
+    const fileName fName
+    (
+        handler.filePath(runTime.path()/instance/local/name)
+    );
+
+    bool found = handler.isFile(fName);
+
+    // Assume non-collated (as fallback value).
+    // If everyone claims to have the file, use master to verify if
+    // collated is involved.
+
+    bool isCollated = false;
+
+    if (returnReduceAnd(found, UPstream::worldComm))
+    {
+        // Test for collated format.
+        // Note: can test only world-master. Since even host-collated will have
+        // same file format type for all processors
+        if (UPstream::master(UPstream::worldComm))
+        {
+            const bool oldParRun = UPstream::parRun(false);
+
+            if (IFstream is(fName); is.good())
+            {
+                IOobject io(name, instance, local, runTime);
+                io.readHeader(is);
+
+                isCollated = decomposedBlockData::isCollatedType(io);
+            }
+
+            UPstream::parRun(oldParRun);
+        }
+        Pstream::broadcast(isCollated, UPstream::worldComm);
+    }
+
+    // For collated, check that the corresponding blocks exist
+    if (isCollated)
+    {
+        found = checkFileExistenceCollated(handler, fName);
+    }
+
+
+    // Globally consistent information about who has a mesh
+    boolList haveFileOnProc
+    (
+        UPstream::allGatherValues<bool>(found, UPstream::worldComm)
+    );
+
+    if (verbose)
+    {
+        Info<< "Per processor availability of \""
+            << name << "\" file in " << instance/local << nl
+            << "    " << flatOutput(haveFileOnProc) << nl << endl;
+    }
+
+    return haveFileOnProc;
 }
 
 
@@ -135,143 +302,49 @@ Foam::boolList Foam::haveMeshFile
     const bool verbose
 )
 {
-    #if 0
-
-    // Simple directory scanning - too fragile
-    bool found = checkFileExistence(runTime.path()/meshPath/meshFile);
-
-    #else
-
-    // Trimmed-down version of lookupAndCacheProcessorsPath
-    // with Foam::exists() check. No caching.
-
-    // Check for two conditions:
-    // - file has to exist
-    // - if collated the entry has to exist inside the file
-
-    // Note: bypass fileOperation::filePath(IOobject&) since has problems
-    //       with going to a different number of processors
-    //       (in collated format). Use file-based searching instead
-
     const auto& handler = Foam::fileHandler();
-    typedef fileOperation::procRangeType procRangeType;
 
     const fileName fName
     (
         handler.filePath(runTime.path()/meshPath/meshFile)
     );
+
     bool found = handler.isFile(fName);
-    if (returnReduceAnd(found)) // worldComm
+
+    // Assume non-collated (as fallback value).
+    // If everyone claims to have the file, use master to verify if
+    // collated is involved.
+
+    bool isCollated = false;
+
+    if (returnReduceAnd(found, UPstream::worldComm))
     {
-        // Bit tricky: avoid having all slaves open file since this involves
-        // reading it on master and broadcasting it. This fails if file > 2G.
-        // So instead only read on master
-
-        bool isCollated = false;
-
+        // Test for collated format.
         // Note: can test only world-master. Since even host-collated will have
         // same file format type for all processors
         if (UPstream::master(UPstream::worldComm))
         {
             const bool oldParRun = UPstream::parRun(false);
 
-            IFstream is(fName);
-            if (is.good())
+            if (IFstream is(fName); is.good())
             {
                 IOobject io(meshFile, meshPath, runTime);
                 io.readHeader(is);
 
                 isCollated = decomposedBlockData::isCollatedType(io);
             }
+
             UPstream::parRun(oldParRun);
         }
-        Pstream::broadcast(isCollated); //UPstream::worldComm
-
-
-        // Collect block-number in individual filenames (might differ
-        // on different processors)
-        if (isCollated)
-        {
-            const label nProcs = UPstream::nProcs(fileHandler().comm());
-            const label myProcNo = UPstream::myProcNo(fileHandler().comm());
-
-            // Collect file names on master of local communicator
-            const fileNameList fNames
-            (
-                Pstream::listGatherValues
-                (
-                    fName,
-                    fileHandler().comm(),
-                    UPstream::msgType()
-                )
-            );
-
-            // Collect local block number
-            label myBlockNumber = -1;
-            {
-                procRangeType group;
-                label proci = fileOperation::detectProcessorPath(fName, group);
-
-                if (proci == -1 && group.empty())
-                {
-                    // 'processorsXXX' format so contains all ranks
-                    // according to worldComm
-                    myBlockNumber = UPstream::myProcNo(UPstream::worldComm);
-                }
-                else
-                {
-                    // 'processorsXXX_n-m' format so check for the
-                    // relative rank
-                    myBlockNumber = myProcNo;
-                }
-            }
-            const labelList myBlockNumbers
-            (
-                Pstream::listGatherValues
-                (
-                    myBlockNumber,
-                    fileHandler().comm(),
-                    UPstream::msgType()
-                )
-            );
-
-
-
-            // Determine for all whether the filename exists in the collated
-            // file.
-            boolList allFound(nProcs, false);
-
-            if (UPstream::master(fileHandler().comm()))
-            {
-                // Store nBlocks and index of file that was used for nBlocks
-                label nBlocks = -1;
-                label blockRanki = -1;
-                forAll(fNames, ranki)
-                {
-                    if
-                    (
-                        blockRanki == -1
-                     || (fNames[ranki] != fNames[blockRanki])
-                    )
-                    {
-                        blockRanki = ranki;
-                        IFstream is(fNames[ranki]);
-                        nBlocks = decomposedBlockData::getNumBlocks(is);
-                    }
-
-                    allFound[ranki] = (myBlockNumbers[ranki] < nBlocks);
-                }
-            }
-
-            found = Pstream::listScatterValues
-            (
-                allFound,
-                fileHandler().comm(),
-                UPstream::msgType()
-            );
-        }
+        Pstream::broadcast(isCollated, UPstream::worldComm);
     }
-    #endif
+
+    // For collated, check that the corresponding blocks exist
+    if (isCollated)
+    {
+        found = checkFileExistenceCollated(handler, fName);
+    }
+
 
     // Globally consistent information about who has a mesh
     boolList haveFileOnProc
