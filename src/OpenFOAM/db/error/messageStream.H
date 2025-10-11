@@ -55,6 +55,8 @@ SourceFiles
 
 #include "label.H"
 #include "word.H"
+
+#include <string_view>
 #include <string>
 #include <iostream>
 

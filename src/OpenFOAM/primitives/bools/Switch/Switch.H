@@ -43,6 +43,9 @@ SourceFiles
 #include "bool.H"
 #include "stdFoam.H"
 
+#include <string_view>
+#include <string>
+
 // Avoid any pre-processor conflicts with enum names
 #undef FALSE
 #undef TRUE

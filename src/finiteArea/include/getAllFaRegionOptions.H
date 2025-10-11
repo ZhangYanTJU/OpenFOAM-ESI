@@ -15,7 +15,7 @@ Description
     (-all-area-regions | -area-regions | -area-region)
 
 Priority
-    1. -all-area-regions
+    1. -all-area-regions (-allAreas)
     2. -area-regions = specify multiple area regions to select,
         or a single area region
     3. -area-region = specify a single area region
@@ -46,12 +46,19 @@ See Also
 
 wordList areaRegionNames;
 {
-    // Local alias
-    auto& names = areaRegionNames;
     // Exit or fallback if nothing matches
     constexpr bool exitOnNoMatches = false;
 
-    if (args.found("all-area-regions"))
+    // Local aliases
+    auto& names = areaRegionNames;
+    const auto& fallback = Foam::polyMesh::defaultRegion;
+
+    if
+    (
+        // Handle both here (independent of which is an alias)
+        args.found("all-area-regions")
+     || args.found("allAreas")
+    )
     {
         names =
         (
@@ -78,16 +85,20 @@ wordList areaRegionNames;
     else if
     (
         wordRes select;
-        args.readListIfPresent<wordRe>("area-regions", select)
+        (
+            // Handle both here (independent of which is an alias)
+            args.readListIfPresent<wordRe>("area-regions", select)
+         || args.readListIfPresent<wordRe>("areaRegions", select)
+        )
     )
     {
         select.uniq();  // Normally a no-op
 
-        if (select.size() == 1 && select.front().isLiteral())
+        if (select.size() == 1 && select[0].isLiteral())
         {
             // Identical to -area-region NAME
             names.resize(1);
-            names.front() = select.front();
+            names[0] = select[0];
         }
         else if (select.size())
         {
@@ -119,12 +130,12 @@ wordList areaRegionNames;
                     }
                     else
                     {
-                        InfoErr<< "... ignoring and using default region"
+                        InfoErr
+                            << "... ignoring and using default region"
                             << nl << endl;
 
-                        // Arbitrary fallback, but can handle this further on
                         names.resize(1);
-                        names.front() = Foam::polyMesh::defaultRegion;
+                        names[0] = fallback;
                     }
                 }
                 else
@@ -162,7 +173,7 @@ wordList areaRegionNames;
                 else
                 {
                     names.resize(1);
-                    names.front() = Foam::polyMesh::defaultRegion;
+                    names[0] = fallback;
 
                     InfoErr
                         << "Warning: No finite-area regionProperties, "
@@ -171,17 +182,32 @@ wordList areaRegionNames;
             }
         }
     }
-    else if (args.found("area-region"))
+    else
     {
+        // Single region option or fallback
         names.resize(1);
-        names.front() = args.get<word>("area-region");
+        auto& name = names[0];
+
+        if
+        (
+            // Handle both here (independent of which is an alias)
+            !args.readIfPresent("area-region", name)
+         && !args.readIfPresent("areaRegion", name)
+        )
+        {
+            name = fallback;
+        }
     }
 
-    // Fallback to defaultRegion
+    // Final sanity checks and/or fallback
     if (names.empty())
     {
         names.resize(1);
-        names.front() = Foam::polyMesh::defaultRegion;
+        names[0] = fallback;
+    }
+    else if (names.size() == 1 && names[0].empty())
+    {
+        names[0] = fallback;
     }
 }
 

@@ -69,6 +69,7 @@ SourceFiles
 #define Foam_regExpCxx_H
 
 #include <regex>
+#include <string_view>
 #include <string>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

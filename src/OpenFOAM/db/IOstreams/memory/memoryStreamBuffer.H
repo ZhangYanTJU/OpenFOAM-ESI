@@ -38,6 +38,7 @@ Description
 #include "DynamicList.H"
 
 #include <memory>
+#include <string_view>
 #include <string>
 #include <type_traits>
 

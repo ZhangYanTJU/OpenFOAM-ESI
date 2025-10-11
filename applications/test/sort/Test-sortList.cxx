@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
             (
                 strings,
                 order,
-                stringOps::natural_sort::less<string>(strings)
+                stringOps::natural_sort::list_less(strings)
             );
             Info<< "natural sortedOrder: " << flatOutput(order) << endl;
         }
@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
             ///  sortable = hashed.toc();
             ///  sortable.sort
             ///  (
-            ///      stringOps::natural_sort::less<string>(sortable)
+            ///      stringOps::natural_sort::list_less(sortable)
             ///  );
             ///  Info<< nl << "natural:" << sortable << endl;
 
@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
             ///  sortable = hashed.toc();
             ///  sortable.sort
             ///  (
-            ///      stringOps::natural_sort::greater<string>(sortable)
+            ///      stringOps::natural_sort::list_greater(sortable)
             ///  );
             ///  Info<< nl << "natural:" << sortable << endl;
         }

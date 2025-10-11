@@ -40,6 +40,7 @@ SourceFiles
 
 #include "Dictionary.H"
 #include "simpleRegIOobject.H"
+#include <string_view>
 #include <string>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

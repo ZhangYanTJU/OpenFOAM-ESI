@@ -60,6 +60,7 @@ Description
 #include <utility>    // std::initializer_list
 #include <vector>
 #include <string_view>
+#include <string>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

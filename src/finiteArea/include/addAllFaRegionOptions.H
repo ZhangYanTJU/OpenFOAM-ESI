@@ -12,7 +12,9 @@ License
 
 Description
     Add multi-region command-line options:
-    -all-area-regions, -area-regions, -area-region
+      -allAreas | -all-area-regions
+      -area-regions
+      -area-region
 
 Required Classes
     - Foam::argList
@@ -25,9 +27,10 @@ See Also
 {
     Foam::argList::addBoolOption
     (
-        "all-area-regions",
+        "allAreas",
         "Use all regions in finite-area regionProperties"
     );
+    Foam::argList::addOptionCompat("allAreas", { "all-area-regions", 0 });
 
     Foam::argList::addOption
     (
@@ -41,8 +44,11 @@ See Also
     (
         "area-region",
         "name",
-        "Specify area-mesh region. Eg, -region shell"
+        "Specify area-mesh region. Eg, -area-region shell"
     );
+
+    // TBD:
+    //? Foam::argList::addOptionCompat("area-region", { "areaRegion", 0 });
 }
 
 

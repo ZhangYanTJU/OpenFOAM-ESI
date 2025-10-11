@@ -45,12 +45,19 @@ See Also
 
 wordList regionNames;
 {
-    // Local alias
-    auto& names = regionNames;
     // Exit or fallback if nothing matches
     constexpr bool exitOnNoMatches = true;
 
-    if (args.found("all-regions"))
+    // Local aliases
+    auto& names = regionNames;
+    const auto& fallback = Foam::polyMesh::defaultRegion;
+
+    if
+    (
+        // Handle both here (independent of which is an alias)
+        args.found("all-regions")
+     || args.found("allRegions")
+    )
     {
         names =
         (
@@ -81,11 +88,11 @@ wordList regionNames;
     {
         select.uniq();  // Normally a no-op
 
-        if (select.size() == 1 && select.front().isLiteral())
+        if (select.size() == 1 && select[0].isLiteral())
         {
             // Identical to -region NAME
             names.resize(1);
-            names.front() = select.front();
+            names[0] = select[0];
         }
         else if (select.size())
         {
@@ -116,12 +123,12 @@ wordList regionNames;
                     }
                     else
                     {
-                        InfoErr<< "... ignoring and using default region"
+                        InfoErr
+                            << "... ignoring and using default region"
                             << nl << endl;
 
-                        // Arbitrary fallback, but can handle this further on
                         names.resize(1);
-                        names.front() = Foam::polyMesh::defaultRegion;
+                        names[0] = fallback;
                     }
                 }
                 else
@@ -160,7 +167,7 @@ wordList regionNames;
                 else
                 {
                     names.resize(1);
-                    names.front() = Foam::polyMesh::defaultRegion;
+                    names[0] = fallback;
 
                     InfoErr
                         << "Warning: No regionProperties, "
@@ -169,17 +176,30 @@ wordList regionNames;
             }
         }
     }
-    else if (args.found("region"))
+    else
     {
+        // Single region option or fallback
         names.resize(1);
-        names.front() = args.get<word>("region");
+        auto& name = names[0];
+
+        if
+        (
+            !args.readIfPresent("region", name)
+        )
+        {
+            name = fallback;
+        }
     }
 
-    // Fallback to defaultRegion
+    // Final sanity checks and/or fallback
     if (names.empty())
     {
         names.resize(1);
-        names.front() = Foam::polyMesh::defaultRegion;
+        names[0] = fallback;
+    }
+    else if (names.size() == 1 && names[0].empty())
+    {
+        names[0] = fallback;
     }
 }
 

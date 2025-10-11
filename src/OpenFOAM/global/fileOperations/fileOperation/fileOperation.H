@@ -198,8 +198,10 @@ protected:
         //- Merge two times
         static void mergeTimes
         (
-            const instantList& extraTimes,
+            const UList<instant>& extraTimes,
+            //! The "constant" name
             const word& constantName,
+            //! [in,out] Updated with any extra times
             instantList& times
         );
 
@@ -870,7 +872,13 @@ public:
             ) const;
 
             //- Get sorted list of times
-            virtual instantList findTimes(const fileName&, const word&) const;
+            virtual instantList findTimes
+            (
+                //! The directory to search
+                const fileName& directory,
+                //! The "constant" name
+                const word& constantName = "constant"
+            ) const;
 
             //- Find time instance where IOobject is located.
             //- The name of the IOobject can be empty, in which case only the

@@ -54,6 +54,7 @@ SourceFiles
 #include "Hasher.H"
 #include <cstdlib>
 #include <cstring>
+#include <string_view>
 #include <string>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

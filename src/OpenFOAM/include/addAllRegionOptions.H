@@ -11,7 +11,10 @@ License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
 
 Description
-    Add multi-region command-line options: -allRegions, -regions, -region
+    Add multi-region command-line options:
+      -allRegions | -all-regions
+      -regions
+      -region
 
 Required Classes
     - Foam::argList
@@ -24,10 +27,10 @@ See Also
 {
     Foam::argList::addBoolOption
     (
-        "all-regions",
+        "allRegions",
         "Use all regions in regionProperties"
     );
-    Foam::argList::addOptionCompat("all-regions", { "allRegions", -2506 });
+    Foam::argList::addOptionCompat("allRegions", { "all-regions", 0 });
 
     Foam::argList::addOption
     (

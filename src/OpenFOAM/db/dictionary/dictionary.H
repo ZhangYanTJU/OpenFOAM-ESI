@@ -113,6 +113,7 @@ SeeAlso
 #include "label.H"
 #include "scalar.H"
 #include "regExpFwd.H"
+#include "Switch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

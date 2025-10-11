@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,84 +46,105 @@ namespace Foam
 namespace stringOps
 {
 
-    //- 'Natural' compare for C-strings
-    //  Uses algorithm and code from Jan-Marten Spit <jmspit@euronet.nl>
-    //
-    //  In the 'natural' comparison, strings are compared alphabetically
-    //  and numerically. Thus 'file010.txt' sorts after 'file2.txt'
-    //
-    //  \param s1 left string
-    //  \param s2 right string
+//- 'Natural' compare for C-strings
+//  Uses algorithm and code from Jan-Marten Spit <jmspit@euronet.nl>
+//
+//  In the 'natural' comparison, strings are compared alphabetically
+//  and numerically. Thus 'file010.txt' sorts after 'file2.txt'
+//
+//  \param s1 left string
+//  \param s2 right string
+//  \return -1 when s1 < s2, 0 when s1 == s2, 1 when s1 > s2
+int natstrcmp(const char* s1, const char* s2);
+
+
+//- Encapsulation of natural order sorting for algorithms
+struct natural_sort
+{
+    //- Natural compare for std::string
     //  \return -1 when s1 < s2, 0 when s1 == s2, 1 when s1 > s2
-    int natstrcmp(const char* s1, const char* s2);
-
-
-    //- Encapsulation of natural order sorting for algorithms
-    struct natural_sort
+    static inline int compare
+    (
+        const std::string& s1,
+        const std::string& s2
+    )
     {
-        //- Natural compare for std::string
-        //  \return -1 when s1 < s2, 0 when s1 == s2, 1 when s1 > s2
-        static inline int compare
-        (
-            const std::string& s1,
-            const std::string& s2
-        )
-        {
-            return natstrcmp(s1.data(), s2.data());
-        }
+        return stringOps::natstrcmp(s1.data(), s2.data());
+    }
 
-        //- Default (forward) natural sorting
+    //- Natural compare two strings for a less-than relationship
+    static inline bool less
+    (
+        const std::string& s1,
+        const std::string& s2
+    )
+    {
+        return (natural_sort::compare(s1, s2) < 0);
+    }
+
+    //- Natural compare two strings for a greater-than relationship
+    static inline bool greater
+    (
+        const std::string& s1,
+        const std::string& s2
+    )
+    {
+        return (natural_sort::compare(s1, s2) > 0);
+    }
+
+    //- Default (forward) natural sorting
+    bool operator()(const std::string& s1, const std::string& s2) const
+    {
+        return (natural_sort::compare(s1, s2) < 0);
+    }
+
+    //- Reverse natural sorting
+    struct reverse
+    {
+        //- Reverse natural sorting
         bool operator()(const std::string& s1, const std::string& s2) const
         {
-            return natural_sort::compare(s1, s2) < 0;
+            return (natural_sort::compare(s1, s2) > 0);
         }
-
-        //- Reverse natural sorting
-        struct reverse
-        {
-            //- Reverse natural sorting
-            bool operator()(const std::string& s1, const std::string& s2) const
-            {
-                return natural_sort::compare(s1, s2) > 0;
-            }
-        };
-
-
-        //- A list compare binary predicate for natural sort
-        template<class T>
-        struct less
-        {
-            const UList<T>& values;
-
-            less(const UList<T>& list)
-            :
-                values(list)
-            {}
-
-            bool operator()(const label a, const label b) const
-            {
-                return natural_sort::compare(values[a], values[b]) < 0;
-            }
-        };
-
-
-        //- A list compare binary predicate for reverse natural sort
-        template<class T>
-        struct greater
-        {
-            const UList<T>& values;
-
-            greater(const UList<T>& list)
-            :
-                values(list)
-            {}
-
-            bool operator()(const label a, const label b) const
-            {
-                return natural_sort::compare(values[a], values[b]) > 0;
-            }
-        };
     };
+
+
+    //- A UList compare binary predicate for natural sort
+    template<class T>
+    struct list_less
+    {
+        const UList<T>& values;
+
+        list_less(const UList<T>& list) noexcept
+        :
+            values(list)
+        {}
+
+        bool operator()(label a, label b) const
+        {
+            return (natural_sort::compare(values[a], values[b]) < 0);
+        }
+    };
+
+
+    //- A Ulist compare binary predicate for reverse natural sort
+    template<class T>
+    struct list_greater
+    {
+        const UList<T>& values;
+
+        list_greater(const UList<T>& list) noexcept
+        :
+            values(list)
+        {}
+
+        bool operator()(label a, label b) const
+        {
+            return (natural_sort::compare(values[a], values[b]) > 0);
+        }
+    };
+};
+
 
 } // End namespace stringOps
 } // End namespace Foam

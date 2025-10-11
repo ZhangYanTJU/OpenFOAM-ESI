@@ -333,7 +333,7 @@ Foam::fileMonitor& Foam::fileOperation::monitor() const
 
 void Foam::fileOperation::mergeTimes
 (
-    const instantList& extraTimes,
+    const UList<instant>& extraTimes,
     const word& constantName,
     instantList& times
 )

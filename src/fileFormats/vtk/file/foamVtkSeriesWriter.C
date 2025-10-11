@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,13 +64,17 @@ namespace Foam
     //   2. natural sort (name)
     struct seriesLess
     {
-        bool operator()(const fileNameInstant a, const fileNameInstant b) const
+        template<class StringType>
+        bool operator()
+        (
+            const Instant<StringType>& a,
+            const Instant<StringType>& b
+        ) const
         {
             scalar val = compareOp<scalar>()(a.value(), b.value());
             if (val == 0)
             {
-                return
-                    stringOps::natural_sort::compare(a.name(), b.name()) < 0;
+                return stringOps::natural_sort::less(a.name(), b.name());
             }
             return val < 0;
         }
@@ -78,7 +82,7 @@ namespace Foam
 
 
     // Check if value is less than upper, with some tolerance.
-    static inline bool lessThan(const scalar& val, const scalar& upper)
+    static inline bool lessThan(scalar val, scalar upper)
     {
         return (val < upper && Foam::mag(val - upper) > ROOTVSMALL);
     }

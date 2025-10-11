@@ -37,6 +37,7 @@ Description
 
 #include <regex>    // For std::ssub_match
 #include <memory>
+#include <string_view>
 #include <string>
 #include <vector>
 
