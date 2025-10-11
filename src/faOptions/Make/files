@@ -9,7 +9,7 @@ faceSetOption/faceSetOption.C
 derivedSources=sources/derived
 
 $(derivedSources)/externalHeatFluxSource/externalHeatFluxSource.C
-$(derivedSources)/jouleHeatingSource/jouleHeatingSource.C
+$(derivedSources)/jouleHeatingSource/jouleHeatingSource.cxx
 $(derivedSources)/contactHeatFluxSource/contactHeatFluxSource.C
 $(derivedSources)/externalFileSource/externalFileSource.C
 

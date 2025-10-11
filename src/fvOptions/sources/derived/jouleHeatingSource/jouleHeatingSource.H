@@ -137,25 +137,28 @@ Note
   anisotropic (vectorial) electrical conductivity.
   - \c anisotropicElectricalConductivity=false enables
   isotropic (scalar) electrical conductivity.
-  - The electrical conductivity can be specified using either:
+
+  The electrical conductivity can be specified using either:
     - If the \c sigma entry is present the electrical conductivity is specified
     as a function of temperature using a \c Function1 type.
     - If not present the \c sigma field will be read from file.
     - If the \c anisotropicElectricalConductivity flag is set to \c true,
     \c sigma should be specified as a vector quantity.
+  .
 
 See also
   - Foam::Function1
   - Foam::coordSystem
+  - Foam::fa::jouleHeatingSource
 
 SourceFiles
-    jouleHeatingSource.C
-    jouleHeatingSourceTemplates.C
+    jouleHeatingSource.cxx
+    jouleHeatingSourceImpl.cxx
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fv_jouleHeatingSource_H
-#define fv_jouleHeatingSource_H
+#ifndef Foam_fv_jouleHeatingSource_H
+#define Foam_fv_jouleHeatingSource_H
 
 #include "fvOption.H"
 #include "Function1.H"
@@ -185,9 +188,6 @@ class jouleHeatingSource
         //- Electrical potential field / [V]
         volScalarField V_;
 
-        //- Flag to indicate that the electrical conductivity is anisotropic
-        bool anisotropicElectricalConductivity_;
-
         //- Electrical conductivity as a scalar function of temperature
         autoPtr<Function1<scalar>> scalarSigmaVsTPtr_;
 
@@ -199,6 +199,9 @@ class jouleHeatingSource
 
         //- Current time index (used for updating)
         label curTimeIndex_;
+
+        //- Flag to indicate that the electrical conductivity is anisotropic
+        bool anisotropicElectricalConductivity_;
 
 
     // Private Member Functions
@@ -214,13 +217,13 @@ class jouleHeatingSource
         void initialiseSigma
         (
             const dictionary& dict,
-            autoPtr<Function1<Type>>& sigmaVsTPtr
+            autoPtr<Function1<Type>>& sigmaFunctionPtr
         );
 
         //- Update the electrical conductivity field
         template<class Type>
         const GeometricField<Type, fvPatchField, volMesh>&
-        updateSigma(const autoPtr<Function1<Type>>& sigmaVsTPtr) const;
+        updateSigma(const autoPtr<Function1<Type>>& sigmaFunctionPtr) const;
 
 
 public:
@@ -253,21 +256,21 @@ public:
 
     // Member Functions
 
-        // Evaluation
+    // Evaluation
 
-            //- Add explicit contribution to compressible momentum equation
-            virtual void addSup
-            (
-                const volScalarField& rho,
-                fvMatrix<scalar>& eqn,
-                const label fieldi
-            );
+        //- Add explicit contribution to energy equation
+        virtual void addSup
+        (
+            const volScalarField& rho,
+            fvMatrix<scalar>& eqn,
+            const label fieldi
+        );
 
 
-        // IO
+    // IO
 
-            //- Read source dictionary
-            virtual bool read(const dictionary& dict);
+        //- Read source dictionary
+        virtual bool read(const dictionary& dict);
 };
 
 
@@ -275,12 +278,6 @@ public:
 
 } // End namespace fv
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "jouleHeatingSourceTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

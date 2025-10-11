@@ -61,4 +61,18 @@ inline const Foam::volSurfaceMapping& Foam::fa::option::vsm() const
 }
 
 
+inline Foam::word
+Foam::fa::option::suffixed(const char* base) const
+{
+    return word(base + suffixHint_);
+}
+
+
+inline Foam::word
+Foam::fa::option::suffixed(const std::string& base) const
+{
+    return word(base + suffixHint_);
+}
+
+
 // ************************************************************************* //

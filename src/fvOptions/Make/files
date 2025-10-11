@@ -14,7 +14,7 @@ $(derivedSources)/buoyancyEnergy/buoyancyEnergy.C
 $(derivedSources)/buoyancyForce/buoyancyForce.C
 $(derivedSources)/directionalPressureGradientExplicitSource/directionalPressureGradientExplicitSource.C
 $(derivedSources)/explicitPorositySource/explicitPorositySource.C
-$(derivedSources)/jouleHeatingSource/jouleHeatingSource.C
+$(derivedSources)/jouleHeatingSource/jouleHeatingSource.cxx
 $(derivedSources)/meanVelocityForce/meanVelocityForce.C
 $(derivedSources)/meanVelocityForce/patchMeanVelocityForce/patchMeanVelocityForce.C
 $(derivedSources)/multiphaseStabilizedTurbulence/multiphaseStabilizedTurbulence.C

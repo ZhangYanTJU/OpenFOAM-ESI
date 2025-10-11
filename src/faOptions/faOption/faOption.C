@@ -81,6 +81,33 @@ Foam::fa::option::option
     active_(dict.getOrDefault("active", true)),
     log(true)
 {
+    // Suffix hint for variable names
+    if
+    (
+        coeffs_.readIfPresent("suffixing", suffixHint_)
+     || dict.readIfPresent("suffixing", suffixHint_)
+    )
+    {
+        Switch sw = Switch::find(suffixHint_);
+
+        if (sw.good())
+        {
+            if (!sw)  // No suffix
+            {
+                suffixHint_.clear();
+            }
+        }
+        else if (suffixHint_ == "default")
+        {
+            sw = true;
+        }
+
+        if (sw)  // Default suffix
+        {
+            suffixHint_ = '_' + regionName_;
+        }
+    }
+
     if (dict.readIfPresent("area", areaName_))
     {
         if (!sameRegionNames(areaName_, defaultAreaName))
@@ -95,9 +122,14 @@ Foam::fa::option::option
         }
     }
 
-    Log << incrIndent << indent << "Source: " << name_
-        << " [" << polyMesh::regionName(areaName_) << ']' << endl
-        << decrIndent;
+    Log << incrIndent << indent << "Source: " << name_;
+
+    if (!polyMesh::regionName(areaName_).empty())
+    {
+        Log<< " [" << areaName_ << ']';
+    }
+
+    Info<< decrIndent << endl;
 }
 
 
@@ -117,13 +149,20 @@ Foam::autoPtr<Foam::fa::option> Foam::fa::option::New
     coeffs.readIfPresent("area", areaName);
 
     Info<< indent
-        << "Selecting finite-area option, type " << modelType
-        << " [" << polyMesh::regionName(areaName) << ']';
+        << "Selecting finite-area option, type " << modelType;
 
-    if (!sameRegionNames(areaName, defaultAreaName))
+    if (sameRegionNames(areaName, defaultAreaName))
     {
-        Info<< " != " << defaultAreaName << nl;
+        if (!polyMesh::regionName(areaName).empty())
+        {
+            Info<< " [" << areaName << ']';
+        }
     }
+    else
+    {
+        Info<< " [" << areaName << "] != [" << defaultAreaName << ']';
+    }
+
     Info<< endl;
 
     mesh.time().libs().open

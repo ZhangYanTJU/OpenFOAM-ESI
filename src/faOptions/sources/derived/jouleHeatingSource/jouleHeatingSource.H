@@ -115,23 +115,30 @@ Usage
      - \link faceSetOption.H \endlink
 
 Note
-  - \c anisotropicElectricalConductivity=true enables
-  anisotropic (tensorial) electrical conductivity.
-  - \c anisotropicElectricalConductivity=false enables
-  isotropic (scalar) electrical conductivity.
-  - The electrical conductivity can be specified using either:
-    - If the \c sigma entry is present the electrical conductivity is specified
-    as a function of temperature using a \c Function1 type.
-    - If not present the \c sigma field will be read from file.
-    - If the \c anisotropicElectricalConductivity flag is set to \c true,
-    \c sigma should be specified as a tensor quantity.
+   If the \c sigma entry is present, the electrical conductivity is specified
+   as a function of temperature using a \c Function1 type, otherwise
+   the \c sigma field will be read from file.
+   When the \c anisotropicElectricalConductivity flag is set to \c true,
+   \c sigma should be specified as a \em tensor quantity instead of as
+   an isotropic \em scalar quantity.
+
+   BREAKING Naming changes from 2056 and earlier for the fields:
+   \table
+     Field   | Scoped names              | Scoped names (old)
+     V       | \<scope\>:V (suffix)      | \<scope\>:V_ + regionName
+     sigma   | \<scope\>:sigma (suffix)  | \<scope\>:sigma_ + regionName
+   \endtable
+
+   It is possible to replicate the older naming by specifying
+   the \c suffixing to ('_' + regionName).
 
 See also
   - Foam::Function1
+  - Foam::fv::jouleHeatingSource
 
 SourceFiles
-    jouleHeatingSource.C
-    jouleHeatingSourceTemplates.C
+    jouleHeatingSource.cxx
+    jouleHeatingSourceImpl.cxx
 
 \*---------------------------------------------------------------------------*/
 
@@ -188,13 +195,13 @@ class jouleHeatingSource
         void initialiseSigma
         (
             const dictionary& dict,
-            autoPtr<Function1<Type>>& sigmaVsTPtr
+            autoPtr<Function1<Type>>& sigmaFunctionPtr
         );
 
         //- Update the electrical conductivity field
         template<class Type>
         const GeometricField<Type, faPatchField, areaMesh>&
-        updateSigma(const autoPtr<Function1<Type>>& sigmaVsTPtr) const;
+        updateSigma(const autoPtr<Function1<Type>>& sigmaFunctionPtr) const;
 
 
 public:
@@ -229,22 +236,22 @@ public:
 
     // Member Functions
 
-        // Evaluation
+    // Evaluation
 
-            //- Add explicit contribution to compressible momentum equation
-            virtual void addSup
-            (
-                const areaScalarField& h,
-                const areaScalarField& rho,
-                faMatrix<scalar>& eqn,
-                const label fieldi
-            );
+        //- Add explicit contribution to energy equation
+        virtual void addSup
+        (
+            const areaScalarField& h,
+            const areaScalarField& rho,
+            faMatrix<scalar>& eqn,
+            const label fieldi
+        );
 
 
-        // IO
+    // IO
 
-            //- Read source dictionary
-            virtual bool read(const dictionary& dict);
+        //- Read source dictionary
+        virtual bool read(const dictionary& dict);
 };
 
 
@@ -252,12 +259,6 @@ public:
 
 } // End namespace fa
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "jouleHeatingSourceTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

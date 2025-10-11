@@ -27,7 +27,7 @@ License
 
 #include "regionFaModel.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 inline const Foam::faMesh& Foam::regionModels::regionFaModel::regionMesh() const
 {
@@ -103,6 +103,20 @@ inline bool Foam::regionModels::regionFaModel::isRegionPatch
 ) const
 {
     return primaryPatchIDs().contains(patchi);
+}
+
+
+inline Foam::word
+Foam::regionModels::regionFaModel::suffixed(const char* base) const
+{
+    return word(base + suffixHint_);
+}
+
+
+inline Foam::word
+Foam::regionModels::regionFaModel::suffixed(const std::string& base) const
+{
+    return word(base + suffixHint_);
 }
 
 

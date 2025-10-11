@@ -65,10 +65,13 @@ Usage
                     --> the selected faOption settings | dictionary | no | -
       active   | Flag to (de)activate faOption         | bool  | no   | true
       log      | Flag to log faOption-related info     | bool  | no   | true
+      suffixing | Suffix hint for option variables     | word  | no   | -
     \endtable
 
 Note
   - Source/sink options are to be added to the right-hand side of equations.
+  - Suffixing (true|false|none|default|...) currently selects between
+    no suffix and ('_'+region).
 
 SourceFiles
     faOption.C
@@ -135,6 +138,9 @@ protected:
 
         //- The model region name (finite-area)
         word regionName_;
+
+        //- Suffix hint for variable names (default: "")
+        word suffixHint_;
 
 
     // Protected Member Functions
@@ -273,7 +279,7 @@ public:
         //- The source name
         const word& name() const noexcept { return name_; }
 
-        //- Return const access to the mesh database
+        //- Return const access to the volume mesh
         const fvMesh& mesh() const noexcept { return mesh_; }
 
         //- Return dictionary
@@ -302,6 +308,18 @@ public:
 
         //- Change source active flag, return previous value
         inline bool active(bool on) noexcept;
+
+
+    // Helper Functions
+
+        //- The suffix hint when generating variable names
+        const word& suffixHint() const noexcept { return suffixHint_; }
+
+        //- Return the concatenation of \p base and the suffix hint
+        inline word suffixed(const char* base) const;
+
+        //- Return the concatenation of \p base and the suffix hint
+        inline word suffixed(const std::string& base) const;
 
 
     // Checks

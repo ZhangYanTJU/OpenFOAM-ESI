@@ -29,7 +29,6 @@ License
 #include "fvMatrices.H"
 #include "fvmLaplacian.H"
 #include "fvcGrad.H"
-#include "zeroGradientFvPatchField.H"
 #include "basicThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -43,6 +42,12 @@ namespace fv
     addToRunTimeSelectionTable(option, jouleHeatingSource, dictionary);
 }
 }
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Implementation
+#include "jouleHeatingSourceImpl.cxx"
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -115,11 +120,8 @@ Foam::fv::jouleHeatingSource::jouleHeatingSource
         ),
         mesh
     ),
-    anisotropicElectricalConductivity_(false),
-    scalarSigmaVsTPtr_(nullptr),
-    vectorSigmaVsTPtr_(nullptr),
-    csysPtr_(nullptr),
-    curTimeIndex_(-1)
+    curTimeIndex_(-1),
+    anisotropicElectricalConductivity_(false)
 {
     // Set the field name to that of the energy
     // field from which the temperature is obtained
@@ -162,7 +164,7 @@ void Foam::fv::jouleHeatingSource::addSup
         else
         {
             // Update sigma as a function of T if required
-            const volScalarField& sigma = updateSigma(scalarSigmaVsTPtr_);
+            const auto& sigma = updateSigma(scalarSigmaVsTPtr_);
 
             // Solve the electrical potential equation
             fvScalarMatrix VEqn(fvm::laplacian(sigma, V_));
@@ -226,7 +228,7 @@ bool Foam::fv::jouleHeatingSource::read(const dictionary& dict)
 
             initialiseSigma(coeffs_, scalarSigmaVsTPtr_);
 
-            csysPtr_.clear();  // Do not need coordinate system
+            csysPtr_.reset(nullptr);  // Do not need coordinate system
         }
 
         return true;

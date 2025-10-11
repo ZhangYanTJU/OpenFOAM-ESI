@@ -57,8 +57,19 @@ Usage
       region     | Name of operand region              | word  | yes  | -
       area       | Name of the finite-area mesh        | word  | no   | region0
       active     | Flag to activate the model          | bool  | yes  | -
+      suffixing  | Suffix hint for model variables     | word  | no   | -
       infoOutput | Flag to activate information output | bool  | no   | false
     \endtable
+
+Note
+    The \c suffixing parameter is a hint that individual models may use
+    when automatically generating variable names internally. For example,
+    a model \em may provide ("T" + suffixing) and ("q" + suffixing)
+    as its default names temperature and flux fields, respectively.
+    If the user specifies \c suffixing = "_foo", those \em default names
+    would then become "T_foo" and "q_foo", respectively.
+    Suffixing (true|false|none|default|...) currently selects between
+    no suffix and ('_'+region).
 
 SourceFiles
     regionFaModelI.H
@@ -118,17 +129,20 @@ protected:
         //- Model name
         const word modelName_;
 
-        //- The finite-area mesh name
+        //- Suffix hint for automatic model variable names (default: "")
+        word suffixHint_;
+
+        //- The finite-area mesh name (default: region0)
         word areaName_;
 
         //- Region name
         word regionName_;
 
-        //- Pointer to the region mesh database
-        autoPtr<faMesh> regionMeshPtr_;
-
         //- Model coefficients dictionary
         dictionary coeffs_;
+
+        //- Pointer to the region mesh database
+        autoPtr<faMesh> regionMeshPtr_;
 
         //- Dictionary of output properties
         autoPtr<IOdictionary> outputPropertiesPtr_;
@@ -223,6 +237,15 @@ public:
 
         //- Return mapping between surface and volume fields
         const volSurfaceMapping& vsm() const;
+
+        //- The suffix hint for automatic model variable names
+        const word& suffixHint() const noexcept { return suffixHint_; }
+
+        //- Return the concatenation of \p base and the suffix hint
+        inline word suffixed(const char* base) const;
+
+        //- Return the concatenation of \p base and the suffix hint
+        inline word suffixed(const std::string& base) const;
 
 
     // Evolution

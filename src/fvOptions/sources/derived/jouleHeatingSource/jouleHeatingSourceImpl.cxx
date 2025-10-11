@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,26 +25,29 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "emptyFaPatch.H"
+#include "emptyFvPatchField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::fa::jouleHeatingSource::initialiseSigma
+void Foam::fv::jouleHeatingSource::initialiseSigma
 (
     const dictionary& dict,
-    autoPtr<Function1<Type>>& sigmaVsTPtr
+    autoPtr<Function1<Type>>& sigmaFunctionPtr
 )
 {
-    typedef GeometricField<Type, faPatchField, areaMesh> FieldType;
+    typedef GeometricField<Type, fvPatchField, volMesh> FieldType;
 
-    auto& obr = regionMesh().thisDb();
+    const word sigmaName
+    (
+        IOobject::scopedName(typeName, "sigma")
+    );
 
     IOobject io
     (
-        IOobject::scopedName(typeName, "sigma_" + regionName_),
-        obr.time().timeName(),
-        obr,
+        sigmaName,
+        mesh_.time().timeName(),
+        mesh_.thisDb(),
         IOobject::NO_READ,
         IOobject::AUTO_WRITE,
         IOobject::REGISTER
@@ -52,17 +55,17 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
 
     autoPtr<FieldType> tsigma;
 
-    if (dict.found("sigma"))
-    {
-        // Sigma to be defined using a Function1 type
-        sigmaVsTPtr = Function1<Type>::New("sigma", dict, &mesh_);
+    // Is sigma defined using a Function1 ?
+    sigmaFunctionPtr = Function1<Type>::NewIfPresent("sigma", dict, &mesh_);
 
+    if (sigmaFunctionPtr)
+    {
         tsigma.reset
         (
             new FieldType
             (
                 io,
-                regionMesh(),
+                mesh_,
                 Foam::zero{},  // value
                 sqr(dimCurrent)/dimPower/dimLength
             )
@@ -76,7 +79,7 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
         // Sigma to be defined by user input
         io.readOpt(IOobject::MUST_READ);
 
-        tsigma.reset(new FieldType(io, regionMesh()));
+        tsigma.reset(new FieldType(io, mesh_));
 
         Info<< "    Conductivity 'sigma' read from file" << nl << endl;
     }
@@ -86,34 +89,35 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
 
 
 template<class Type>
-const Foam::GeometricField<Type, Foam::faPatchField, Foam::areaMesh>&
-Foam::fa::jouleHeatingSource::updateSigma
+const Foam::GeometricField<Type, Foam::fvPatchField, Foam::volMesh>&
+Foam::fv::jouleHeatingSource::updateSigma
 (
-    const autoPtr<Function1<Type>>& sigmaVsTPtr
+    const autoPtr<Function1<Type>>& sigmaFunctionPtr
 ) const
 {
-    typedef GeometricField<Type, faPatchField, areaMesh> FieldType;
+    typedef GeometricField<Type, fvPatchField, volMesh> FieldType;
 
-    const auto& obr = regionMesh().thisDb();
+    const word sigmaName
+    (
+        IOobject::scopedName(typeName, "sigma")
+    );
 
-    auto& sigma =
-        obr.lookupObjectRef<FieldType>
-        (
-            IOobject::scopedName(typeName, "sigma_" + regionName_)
-        );
+    auto& sigma = mesh_.lookupObjectRef<FieldType>(sigmaName);
 
-    if (!sigmaVsTPtr)
+    if (!sigmaFunctionPtr)
     {
         // Electrical conductivity field, sigma, was specified by the user
         return sigma;
     }
 
-    const auto& T = obr.lookupObject<areaScalarField>(TName_);
+    const auto& sigmaFunction = sigmaFunctionPtr();
+
+    const auto& T = mesh_.lookupObject<volScalarField>(TName_);
 
     // Internal field
     forAll(sigma, i)
     {
-        sigma[i] = sigmaVsTPtr->value(T[i]);
+        sigma[i] = sigmaFunction.value(T[i]);
     }
 
 
@@ -121,13 +125,13 @@ Foam::fa::jouleHeatingSource::updateSigma
     auto& bf = sigma.boundaryFieldRef();
     forAll(bf, patchi)
     {
-        faPatchField<Type>& pf = bf[patchi];
-        if (!isA<emptyFaPatch>(pf))
+        fvPatchField<Type>& pf = bf[patchi];
+        if (!isA<emptyFvPatchField<Type>>(pf))
         {
             const scalarField& Tbf = T.boundaryField()[patchi];
             forAll(pf, facei)
             {
-                pf[facei] = sigmaVsTPtr->value(Tbf[facei]);
+                pf[facei] = sigmaFunction.value(Tbf[facei]);
             }
         }
     }

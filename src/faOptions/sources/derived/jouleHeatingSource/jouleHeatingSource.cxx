@@ -42,6 +42,12 @@ namespace fa
 }
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Implementation
+#include "jouleHeatingSourceImpl.cxx"
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::fa::jouleHeatingSource::jouleHeatingSource
@@ -59,7 +65,7 @@ Foam::fa::jouleHeatingSource::jouleHeatingSource
     (
         IOobject
         (
-            IOobject::scopedName(typeName, "V_" + regionName_),
+            suffixed(IOobject::scopedName(typeName, "V")),
             regionMesh().thisDb().time().timeName(),
             regionMesh().thisDb(),
             IOobject::MUST_READ,
@@ -68,8 +74,6 @@ Foam::fa::jouleHeatingSource::jouleHeatingSource
         ),
         regionMesh()
     ),
-    scalarSigmaVsTPtr_(nullptr),
-    tensorSigmaVsTPtr_(nullptr),
     curTimeIndex_(-1),
     nIter_(1),
     anisotropicElectricalConductivity_(false)
@@ -77,6 +81,8 @@ Foam::fa::jouleHeatingSource::jouleHeatingSource
     fieldNames_.resize(1, TName_);
 
     fa::option::resetApplied();
+
+    read(dict);
 
     if (anisotropicElectricalConductivity_)
     {
@@ -90,8 +96,6 @@ Foam::fa::jouleHeatingSource::jouleHeatingSource
 
         initialiseSigma(coeffs_, scalarSigmaVsTPtr_);
     }
-
-    read(dict);
 }
 
 
@@ -105,12 +109,14 @@ void Foam::fa::jouleHeatingSource::addSup
     const label fieldi
 )
 {
-    if (isActive())
+    if (!isActive())
     {
-        DebugInfo
-            << name() << ": applying source to "
-            << eqn.psi().name() << endl;
+        return;
+    }
 
+    DebugInfo<< name() << ": applying source to " << eqn.psi().name() << endl;
+
+    {
         if (curTimeIndex_ != mesh().time().timeIndex())
         {
             for (label i = 0; i < nIter_; ++i)
@@ -118,8 +124,7 @@ void Foam::fa::jouleHeatingSource::addSup
                 if (anisotropicElectricalConductivity_)
                 {
                     // Update sigma as a function of T if required
-                    const areaTensorField& sigma =
-                        updateSigma(tensorSigmaVsTPtr_);
+                    const auto& sigma = updateSigma(tensorSigmaVsTPtr_);
 
                     // Solve the electrical potential equation
                     faScalarMatrix VEqn(fam::laplacian(h*sigma, V_));
@@ -129,8 +134,7 @@ void Foam::fa::jouleHeatingSource::addSup
                 else
                 {
                     // Update sigma as a function of T if required
-                    const areaScalarField& sigma =
-                        updateSigma(scalarSigmaVsTPtr_);
+                    const auto& sigma = updateSigma(scalarSigmaVsTPtr_);
 
                     // Solve the electrical potential equation
                     faScalarMatrix VEqn(fam::laplacian(h*sigma, V_));
@@ -145,7 +149,7 @@ void Foam::fa::jouleHeatingSource::addSup
         // Add the Joule heating contribution
         const word sigmaName
         (
-            IOobject::scopedName(typeName, "sigma_" + regionName_)
+            IOobject::scopedName(typeName, "sigma") + suffixHint()
         );
 
         areaVectorField gradV("gradV", fac::grad(V_));
@@ -162,15 +166,13 @@ void Foam::fa::jouleHeatingSource::addSup
 
         if (anisotropicElectricalConductivity_)
         {
-            const auto& sigma =
-                obr.lookupObject<areaTensorField>(sigmaName);
+            const auto& sigma = obr.lookupObject<areaTensorField>(sigmaName);
 
             tsource = (h*sigma & gradV) & gradV;
         }
         else
         {
-            const auto& sigma =
-                obr.lookupObject<areaScalarField>(sigmaName);
+            const auto& sigma = obr.lookupObject<areaScalarField>(sigmaName);
 
             tsource = (h*sigma*gradV) & gradV;
         }
