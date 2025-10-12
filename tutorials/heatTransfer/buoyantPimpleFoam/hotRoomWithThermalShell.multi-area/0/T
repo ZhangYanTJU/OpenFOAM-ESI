@@ -1,0 +1,80 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2512                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      T;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 1 0 0 0];
+
+internalField   uniform 300;
+
+boundaryField
+{
+    "floor.*"
+    {
+        type            fixedValue;
+
+        type            compressible::thermalShell;
+        active          true;
+
+        area                floor;
+        region              lower;
+        thermalShellModel   thermalShell;
+
+        thermo
+        {
+            // Thermal properties
+            rho             1000;
+            kappa           200;
+            Cp              600;
+            emissivity      0;
+        }
+
+        qr                  qr;
+        thickness           1e-3;
+
+        value   uniform 700;
+    }
+
+    "ceiling.*"
+    {
+        type            compressible::thermalShell;
+        active          true;
+
+        area                ceiling;
+        region              upper;
+        thermalShellModel   thermalShell;
+
+        thermo
+        {
+            // Thermal properties
+            rho             1000;
+            kappa           200;
+            Cp              600;
+            emissivity      0;
+        }
+
+        qr                  qr;
+        thickness           1e-3;
+
+        value   uniform 300;
+    }
+
+    "fixedWall.*"
+    {
+        type            zeroGradient;
+    }
+}
+
+
+// ************************************************************************* //

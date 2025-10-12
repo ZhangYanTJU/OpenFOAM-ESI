@@ -1,0 +1,15 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/CleanFunctions      # Tutorial clean functions
+#------------------------------------------------------------------------------
+
+cleanCase
+
+## foamListRegions -finite-area
+for region in ceiling floor
+do
+    cleanFaMesh -region "$region"
+    rmdir "constant/finite-area/$region" 2>/dev/null
+done
+
+#------------------------------------------------------------------------------
