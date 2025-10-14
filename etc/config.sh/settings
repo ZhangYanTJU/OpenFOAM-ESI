@@ -81,8 +81,8 @@ Darwin)
         case "$WM_COMPILE_CONTROL" in
         (*version=*) ;;
         (*)
-            WM_COMPILER=Clang
-            echo "openfoam (darwin): using clang instead of gcc" 1>&2
+            #WM_COMPILER=Clang
+            #echo "openfoam (darwin): using clang instead of gcc" 1>&2
             ;;
         esac
     fi

@@ -1,6 +1,11 @@
 EXE_INC = \
+    -O0 \
     -I$(FOAM_SRC)/meshTools/lnInclude \
     -I$(FOAM_SRC)/finiteVolume/lnInclude \
 
 EXE_LIBS = \
+/*    -rpath /Volumes/case_sensitive/OpenFOAM/work/feature-et/platforms */ \
+/*    -rpath /Volumes/case_sensitive/OpenFOAM/work/feature-et/platforms/darwin64GccDPInt32Opt/lib */ \
+/*    -rpath /Volumes/case_sensitive/OpenFOAM/work/feature-et/platforms/darwin64GccDPInt32Opt/lib/$(FOAM_MPI)  */\
+    -L/Volumes/case_sensitive/OpenFOAM/work/feature-et/platforms/darwin64GccDPInt32Opt/lib \
     -lfiniteVolume

@@ -162,8 +162,8 @@ public:
         fld.oriented() = this->oriented();
 
         assert(fld.size() == this->size());
-
-        ListRefWrap<Type> wfld(fld.internalFieldRef(), internalField());
+        using ActualType = typename IntExpr::value_type;
+        ListRefWrap<ActualType> wfld(fld.internalFieldRef(), internalField());
 
         // Do boundary field
         auto& bfld = fld.boundaryFieldRef();
@@ -1515,6 +1515,8 @@ EXPRESSION_GF_FUNCTION1_DIMLESS(tanh, ::tanh, List_tanh, GF_tanh)
 EXPRESSION_GF_FUNCTION1(sqr, Foam::sqr, List_sqr, GF_sqr)
 EXPRESSION_GF_FUNCTION1(sqrt, Foam::sqrt, List_sqrt, GF_sqrt)
 EXPRESSION_GF_FUNCTION1(magSqr, Foam::magSqr, List_magSqr, GF_magSqr)
+
+EXPRESSION_GF_FUNCTION1(mag, Foam::mag, List_mag, GF_mag)
 EXPRESSION_GF_FUNCTION1(symm, Foam::symm, List_symm, GF_symm)
 EXPRESSION_GF_FUNCTION1(pow2, Foam::pow2, List_pow2, GF_pow2)
 EXPRESSION_GF_FUNCTION1(pow3, Foam::pow3, List_pow3, GF_pow3)

@@ -31,9 +31,9 @@ Application
 #include "Time.H"
 #include "argList.H"
 #include "fvMesh.H"
+#include "ListExpression.H"
+#include "GeometricFieldExpression.H"
 #include "fvCFD.H"
-//#include "ListExpression.H"
-//#include "GeometricFieldExpression.H"
 #include "fvMatrixExpression.H"
 #include <ratio>
 #include <chrono>
@@ -168,6 +168,49 @@ int main(int argc, char *argv[])
         ),
         mesh
     );
+    
+    {
+        volScalarField p2("p2", p);
+        DebugVar(p2.boundaryFieldRef());
+    
+        for (auto& pf : p.boundaryFieldRef())
+        {
+            scalarField newVals(pf.size());
+            forAll(pf, i)
+            {
+                newVals[i] = scalar(i);
+            }
+            pf == newVals;
+        }
+
+        //std::vector<const scalarField*> ptrs;
+        // List<const scalarField*> ptrs;
+        // for (const auto& pp : p.boundaryField())
+        // {
+        //     ptrs.push_back(&pp);
+        // }
+        DebugVar(sizeof(long));
+        DebugVar(p.boundaryField());
+        Expression::ListsConstRefWrap<scalarField> expr(p.boundaryField());
+
+        const auto twoA = expr + expr;
+        Expression::ListsRefWrap<scalarField> expr2(p2.boundaryFieldRef());
+        Pout<< "**before assignment twoA:" << twoA.size()
+            << " expr2:" << expr2.size() << endl;
+        expr2 = twoA;
+        Pout<< "**after assignment twoA:" << twoA.size()
+            << " expr2:" << expr2.size() << endl;
+        DebugVar(p2.boundaryField());
+        // forAll(expr, i)
+        // {
+        //     Pout<< "i:" << i
+        //         //<< " expr:" << expr[i]
+        //         //<< " twoA:" << twoA[i]
+        //         << " expr2:" << expr2[i]
+        //         << endl;
+        // }
+        return 0;
+    }
 
     {
         //DebugVar(linearInterpolate(p));

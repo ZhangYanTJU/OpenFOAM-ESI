@@ -72,13 +72,29 @@ public:
     Container& evaluate(Container& lst) const
     {
         lst.resize_nocopy(this->size());
-        std::copy
-        (
-            std::execution::par_unseq,
-            static_cast<E const&>(*this).cbegin(),
-            static_cast<E const&>(*this).cend(),
-            lst.begin()
-        );
+
+#ifdef _OPENMP
+        int loopLen = this->size();
+        _Pragma("omp target teams distribute parallel for if(loopLen > 1000)")
+        for(int i = 0; i < loopLen; ++i)
+        {
+            auto src = static_cast<E const&>(*this).cbegin() + i;
+            lst[i] = *src;
+        }
+#else
+    std::copy
+    (
+        #if defined(__APPLE__) && defined(__clang__)
+        // Currently not working (2025-10-06) with par_unseq. Works with
+        // sequential.
+        #else
+        std::execution::par_unseq,
+        #endif
+        static_cast<E const&>(*this).cbegin(),
+        static_cast<E const&>(*this).cend(),
+        lst.begin()
+    );
+#endif
         return lst;
     }
 };
@@ -342,9 +358,10 @@ public:
 
         const_iterator(ConstIter it) : base_(it) {}
         const_iterator() : base_() {}
-        void operator=(ConstIter it)
+        ConstIter& operator=(ConstIter it)
         {
             base_ = it;
+            return base_;
         }
 
     // Indexing operators
@@ -886,11 +903,11 @@ public:                                                                        \
         ConstIter base_;                                                       \
                                                                                \
         const_iterator(ConstIter it) : base_(it) {}                            \
-        value_type operator*() const                                           \
+        auto operator*() const                                           \
         {                                                                      \
             return BaseFunc(*base_);                                           \
         }                                                                      \
-        value_type operator[](const difference_type i) const                   \
+        auto operator[](const difference_type i) const                   \
         {                                                                      \
             return BaseFunc(base_[i]);                                         \
         }                                                                      \
@@ -1167,7 +1184,7 @@ public:                                                                        \
             uIter_(uIter),                                                     \
             vIter_(vIter)                                                      \
         {}                                                                     \
-        value_type operator*() const                                           \
+        auto operator*() const                                                   \
         {                                                                      \
             return BaseFunc(*uIter_, *vIter_);                                 \
         }                                                                      \
@@ -1408,6 +1425,7 @@ EXPRESSION_FUNCTION1(tanh, ::tanh, List_tanh)
 EXPRESSION_FUNCTION1(sqr, Foam::sqr, List_sqr)
 EXPRESSION_FUNCTION1(sqrt, Foam::sqrt, List_sqrt)
 EXPRESSION_FUNCTION1(magSqr, Foam::magSqr, List_magSqr)
+EXPRESSION_FUNCTION1(mag, Foam::mag, List_mag)
 EXPRESSION_FUNCTION1(symm, Foam::symm, List_symm)
 //EXPRESSION_FUNCTION1(-, -, List_negate)
 EXPRESSION_FUNCTION1(pow2, Foam::pow2, List_pow2)
@@ -1761,6 +1779,621 @@ public:
     auto cend() const
     {
         return const_iterator(size_, val_);
+    }
+};
+
+
+//- Wrapper of multiple lists (e.g. FieldField)
+template <class V>
+class ListsConstRefWrap
+:
+    public ListExpression<ListsConstRefWrap<V>, typename V::value_type>
+{
+    List<const V*> data;
+    List<size_t> offsets;
+    size_t total_size = 0;
+
+    void init()
+    {
+        offsets.resize_nocopy(data.size());
+        total_size = 0;
+        for (label i = 0; i < data.size(); ++i)
+        {
+            offsets[i] = total_size;
+            total_size += data[i]->size();
+        }
+    }
+
+public:
+    static constexpr bool is_leaf = false;  //true;
+
+    using value_type = typename V::value_type;  //T;
+    typedef ListsConstRefWrap<V> this_type;
+
+    ListsConstRefWrap() = delete;
+
+    ListsConstRefWrap(const UList<const V*>& d)
+    :
+        data(d)
+    {
+        init();
+    }
+    ListsConstRefWrap(List<const V*>&& d)
+    :
+        data(d)
+    {
+        init();
+    }
+    template<class Container>
+    ListsConstRefWrap(const Container& ds)
+    {
+        data.resize_nocopy(ds.size());
+        forAll(ds, i)
+        {
+            const V& vals = static_cast<const V&>(ds[i]);
+            data[i] = &vals;
+        }
+        init();
+    }
+    template<class Container>
+    ListsConstRefWrap(const Container& ds, const labelUList& elems)
+    {
+        data.resize_nocopy(elems.size());
+        forAll(ds, i)
+        {
+            const V& vals = static_cast<const V&>(ds[elems[i]]);
+            data[i] = &vals;
+        }
+        init();
+    }
+
+    void push_back(const V* vec)
+    {
+        data.push_back(vec);
+        offsets.push_back(total_size);
+        total_size += vec->size();
+    }
+
+    value_type operator[](label i) const
+    {    
+        const label vec_index =
+            std::upper_bound
+            (
+                offsets.begin(),
+                offsets.end(),
+                i
+            )
+         - offsets.begin() - 1;
+        const label elem_index = i - offsets[vec_index];
+        return (*data[vec_index])[elem_index];
+    }
+    label size() const { return total_size; }
+
+
+    typedef value_type* pointer;
+    typedef value_type& reference;
+    typedef const value_type* const_pointer;
+    typedef const value_type& const_reference;
+    typedef label difference_type;
+
+    struct const_iterator
+    {
+        using iterator_category = std::random_access_iterator_tag;
+        using difference_type   = this_type::difference_type;
+        using value_type  = this_type::value_type;
+        using pointer     = this_type::const_pointer;
+        using reference   = this_type::const_reference;
+
+        const this_type& base_; 
+        label index_;
+
+        const_iterator(const this_type& base, const label index)
+        :
+            base_(base),
+            index_(index)
+        {}
+        const_iterator(const const_iterator& it)
+        :
+            base_(it.base_),
+            index_(it.index_)
+        {}
+        const_iterator() = delete;  //: base_(0) {}
+        const_iterator& operator=(const_iterator& it) = default;
+
+    // Indexing operators
+
+        value_type operator*() const
+        {
+            return base_[index_];
+        }
+        //value_type operator->() const
+        //{
+        //    return *base_;
+        //}
+        value_type operator[](const difference_type i) const
+        {
+           return base_[index_];
+        }
+
+    // Increment/Decrement
+
+        const_iterator& operator++()
+        {
+            ++index_;
+            return *this;
+        }
+        const_iterator operator++(int)
+        {
+            const_iterator old(*this);
+            ++index_;
+            return old;
+        }
+        const_iterator& operator--()
+        {
+            --index_;
+            return *this;
+        }
+        const_iterator operator--(int)
+        {
+            const_iterator old(*this);
+            --index_;
+            return old;
+        }
+
+    // Arithmetic operators
+
+        const_iterator operator+(const difference_type i) const
+        {
+            return const_iterator(base_, index_+i);
+        }
+        const_iterator operator-(const difference_type i) const
+        {
+            return const_iterator(base_, index_-i);
+        }
+        difference_type operator-(const const_iterator& it) const
+        {
+            return (index_ - it.index_);
+        }
+
+    // Comparison operators
+
+        bool operator==(const const_iterator& it) const
+        {
+            return (index_ == it.index_);
+        }
+        bool operator!=(const const_iterator& it) const
+        {
+            return (index_ != it.index_);
+        }
+        bool operator<(const const_iterator& it) const
+        {
+            return (index_ < it.index_);
+        }
+        bool operator<=(const const_iterator& it) const
+        {
+            return (index_ <= it.index_);
+        }
+        bool operator>(const const_iterator& it) const
+        {
+            return (index_ > it.index_);
+        }
+        bool operator>=(const const_iterator& it) const
+        {
+            return (index_ >= it.index_);
+        }
+
+    // Compound assignment 
+
+        const_iterator& operator+=(const difference_type n)
+        {
+            index_ += n;
+            return *this;
+        }
+        const_iterator& operator-=(const difference_type n)
+        {
+            index_ -= n;
+            return *this;
+        }
+    };
+    auto cbegin() const
+    {
+        return const_iterator(*this, 0);
+    }
+    auto cend() const
+    {
+        return const_iterator(*this, this->size());
+    }
+};
+
+
+template <class V>
+class ListsRefWrap
+:
+    public ListExpression<ListsRefWrap<V>, typename V::value_type>//,T>, T>
+{
+    List<V*> data;
+    List<size_t> offsets;
+    size_t total_size = 0;
+
+    void init()
+    {
+        offsets.resize_nocopy(data.size());
+        total_size = 0;
+        for (label i = 0; i < data.size(); ++i)
+        {
+            offsets[i] = total_size;
+            total_size += data[i]->size();
+        }
+    }
+    labelPair whichVecElem(const label i) const
+    {
+        const label vec_index =
+        std::upper_bound
+        (
+            offsets.begin(),
+            offsets.end(),
+            i
+        )
+        - offsets.begin() - 1;
+        const label elem_index = i - offsets[vec_index];
+        return labelPair(vec_index, elem_index);
+    }
+
+public:
+    static constexpr bool is_leaf = false;  //true;
+    
+    using value_type = typename V::value_type;  //T;
+    typedef ListsRefWrap<V> this_type;
+
+    ListsRefWrap() = delete;
+    
+    ListsRefWrap(UList<V*>& d)
+    :
+        data(d)
+    {
+        init();
+    }
+    ListsRefWrap(List<V*>&& d)
+    :
+        data(d)
+    {
+        init();
+    }
+    template<class Container>
+    ListsRefWrap(Container& ds)
+    {
+        data.resize_nocopy(ds.size());
+        forAll(ds, i)
+        {
+            V& vals = static_cast<V&>(ds[i]);
+            data[i] = &vals;
+        }
+        init();
+    }
+    template<class Container>
+    ListsRefWrap(Container& ds, const labelUList& elems)
+    {
+        data.resize_nocopy(elems.size());
+        forAll(ds, i)
+        {
+            V& vals = static_cast<V&>(ds[i]);
+            data[i] = &vals;
+        }
+        init();
+    }
+
+    void push_back(V* vec)
+    {
+        data.push_back(vec);
+        offsets.push_back(total_size);
+        total_size += vec->size();
+    }
+
+    //- Dummy resizing so we can pass *this to
+    //- ListExpression::evaluate. Maybe do resizing externally?
+    void resize_nocopy(const label)
+    {}
+    //- Assignment
+    template<typename E>
+    void operator=(const ListExpression<E, typename E::value_type>& expr)
+    {
+        expr.evaluate(*this);
+    }
+
+    value_type operator[](const label i) const
+    {
+        const auto ve(whichVecElem(i));
+        return (*data[ve.first()])[ve.second()];
+    }
+    value_type& operator[](const label i)
+    {    
+        const auto ve(whichVecElem(i));
+        auto& elems = *data[ve.first()];
+        return elems[ve.second()];
+    }
+    label size() const { return total_size; }
+
+
+    typedef value_type* pointer;
+    typedef value_type& reference;
+    typedef const value_type* const_pointer;
+    typedef const value_type& const_reference;
+    typedef label difference_type;
+
+    struct const_iterator
+    {
+        using iterator_category = std::random_access_iterator_tag;
+        using difference_type   = this_type::difference_type;
+        using value_type  = this_type::value_type;
+        using pointer     = this_type::const_pointer;
+        using reference   = this_type::const_reference;
+
+        const this_type& base_; 
+        label index_;
+
+        const_iterator(const this_type& base, const label index)
+        :
+            base_(base),
+            index_(index)
+        {}
+        const_iterator(const const_iterator& it)
+        :
+            base_(it.base_),
+            index_(it.index_)
+        {}
+        const_iterator(const_iterator& it)
+        :
+            base_(it.base_),
+            index_(it.index_)
+        {}
+        const_iterator() = delete;  //: base_(0) {}
+        const_iterator& operator=(const_iterator& it) = default;
+
+    // Indexing operators
+
+        value_type operator*() const
+        {
+             return base_[index_];
+        }
+        //value_type operator->() const
+        //{
+        //    return *base_;
+        //}
+        value_type operator[](const difference_type i) const
+        {
+           return base_[index_+i];
+        }
+
+    // Increment/Decrement
+
+        const_iterator& operator++()
+        {
+            ++index_;
+            return *this;
+        }
+        const_iterator operator++(int)
+        {
+            const_iterator old(*this);
+            ++index_;
+            return old;
+        }
+        const_iterator& operator--()
+        {
+            --index_;
+            return *this;
+        }
+        const_iterator operator--(int)
+        {
+            const_iterator old(*this);
+            --index_;
+            return old;
+        }
+
+    // Arithmetic operators
+
+        const_iterator operator+(const difference_type i) const
+        {
+            return const_iterator(base_, index_+i);
+        }
+        const_iterator operator-(const difference_type i) const
+        {
+            return const_iterator(base_, index_-i);
+        }
+        difference_type operator-(const const_iterator& it) const
+        {
+            return (index_ - it.index_);
+        }
+
+    // Comparison operators
+
+        bool operator==(const const_iterator& it) const
+        {
+            return (index_ == it.index_);
+        }
+        bool operator!=(const const_iterator& it) const
+        {
+            return (index_ != it.index_);
+        }
+        bool operator<(const const_iterator& it) const
+        {
+            return (index_ < it.index_);
+        }
+        bool operator<=(const const_iterator& it) const
+        {
+            return (index_ <= it.index_);
+        }
+        bool operator>(const const_iterator& it) const
+        {
+            return (index_ > it.index_);
+        }
+        bool operator>=(const const_iterator& it) const
+        {
+            return (index_ >= it.index_);
+        }
+
+    // Compound assignment 
+
+        const_iterator& operator+=(const difference_type n)
+        {
+            index_ += n;
+            return *this;
+        }
+        const_iterator& operator-=(const difference_type n)
+        {
+            index_ -= n;
+            return *this;
+        }
+    };
+    auto cbegin() const
+    {
+        return const_iterator(*this, 0);
+    }
+    auto cend() const
+    {
+        return const_iterator(*this, this->size());
+    }
+
+    struct iterator
+    {
+        using iterator_category = std::random_access_iterator_tag;
+        using difference_type   = this_type::difference_type;
+        using value_type  = this_type::value_type;
+        using pointer     = this_type::pointer;
+        using reference   = this_type::reference;
+
+        this_type& base_; 
+        label index_;
+
+        iterator(this_type& base, const label index)
+        :
+            base_(base),
+            index_(index)
+        {}
+        iterator(const iterator& it) = default;
+        iterator() = delete;
+        iterator& operator=(const iterator& it)
+        {
+            base_ = it.base_;
+            index_ = it.index_;
+            return *this;
+        };
+
+    // Indexing operators
+
+        value_type& operator*()
+        {
+            return base_[index_];
+        }
+        value_type operator*() const
+        {
+            return base_[index_];
+        }
+        value_type operator->() const
+        {
+            return base_[index_];
+        }
+        value_type& operator->()
+        {
+            return base_[index_];
+        }
+        value_type operator[](const difference_type i) const
+        {
+           return base_[index_+i];
+        }
+        value_type& operator[](const difference_type i)
+        {
+           return base_[index_+i];
+        }
+
+    // Increment/Decrement
+
+        iterator& operator++()
+        {
+            ++index_;
+            return *this;
+        }
+        iterator operator++(int)
+        {
+            iterator old(*this);
+            ++index_;
+            return old;
+        }
+        iterator& operator--()
+        {
+            --index_;
+            return *this;
+        }
+        iterator operator--(int)
+        {
+            iterator old(*this);
+            --index_;
+            return old;
+        }
+
+    // Arithmetic operators
+
+        iterator operator+(const difference_type i) const
+        {
+            return iterator(base_, index_+i);
+        }
+        iterator operator-(const difference_type i) const
+        {
+            return iterator(base_, index_-i);
+        }
+        difference_type operator-(const iterator& it) const
+        {
+            return (index_ - it.index_);
+        }
+
+    // Comparison operators
+
+        bool operator==(const iterator& it) const
+        {
+            return (index_ == it.index_);
+        }
+        bool operator!=(const iterator& it) const
+        {
+            return (index_ != it.index_);
+        }
+        bool operator<(const iterator& it) const
+        {
+            return (index_ < it.index_);
+        }
+        bool operator<=(const iterator& it) const
+        {
+            return (index_ <= it.index_);
+        }
+        bool operator>(const iterator& it) const
+        {
+            return (index_ > it.index_);
+        }
+        bool operator>=(const iterator& it) const
+        {
+            return (index_ >= it.index_);
+        }
+
+    // Compound assignment 
+
+        iterator& operator+=(const difference_type n)
+        {
+            index_ += n;
+            return *this;
+        }
+        iterator& operator-=(const difference_type n)
+        {
+            index_ -= n;
+            return *this;
+        }
+    };
+    auto begin()
+    {
+        auto& this_vals = *this;
+        return iterator(this_vals, 0);
+    }
+    auto end()
+    {
+        auto& this_vals = *this;
+        return iterator(this_vals, this->size());
     }
 };
 
