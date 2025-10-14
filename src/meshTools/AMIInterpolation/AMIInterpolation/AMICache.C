@@ -362,6 +362,7 @@ void Foam::AMICache::addToCache
     {
         for (const scalar angle : theta_)
         {
+            // Check against null value; if any are present, cache is incomplete
             if (angle > constant::mathematical::twoPi)
             {
                 complete_ = false;
@@ -378,6 +379,7 @@ void Foam::AMICache::addToCache
 
         DebugPout<< "  -- bini:" << bini << " for theta:" << theta << endl;
 
+        // Check if already have entry for this bin
         if (theta_[bini] > constant::mathematical::twoPi)
         {
             DebugPout<< "  -- setting cache at index " << bini << endl;
@@ -439,6 +441,7 @@ bool Foam::AMICache::restoreCache(const point& globalPoint)
         if (mag(theta - theta_[bini]) < cacheThetaTolerance_)
         {
             // Hit cached value - no interpolation needed
+            // index1_ = -1 indicates no interpolation
             index0_ = bini;
             interpWeight_ = 0;
             cacheValid = true;

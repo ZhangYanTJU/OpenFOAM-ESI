@@ -195,6 +195,8 @@ void Foam::cyclicAMIPolyPatch::initInterpolateUntransformed
 
         if (cache.index0() == -1 && cache.index1() == -1)
         {
+            // No caching
+
             const auto& map = (owner() ? AMI.tgtMap() : AMI.srcMap());
 
             // Insert send/receive requests (non-blocking)
@@ -210,6 +212,8 @@ void Foam::cyclicAMIPolyPatch::initInterpolateUntransformed
         }
         else
         {
+            // Caching is active
+
             cache.setDirection(owner());
 
             if (cache.index0() != -1)
@@ -331,7 +335,7 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     const UList<Type>& defaultValues
 ) const
 {
-    // Note: cannot be localFld.size() -> might have been set to null
+    // Note: cannot be localFld.size() -> is set to null for distributed AMI
     auto tresult = tmp<Field<Type>>::New(this->size(), Zero);
 
     const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());

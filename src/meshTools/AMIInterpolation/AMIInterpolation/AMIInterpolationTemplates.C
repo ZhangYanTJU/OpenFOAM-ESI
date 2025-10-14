@@ -130,14 +130,12 @@ void Foam::AMIInterpolation::interpolate
         const UList<Type>& defVals
     )
     {
-        const word srcName = toSource ? "source" : "target";
-        const word tgtName = toSource ? "target" : "source";
 
         if (fld.size() != tgtAddr.size())
         {
             FatalErrorInFunction
                 << "Supplied field size is not equal to "
-                << tgtName << " patch size" << nl
+                << (toSource ? "target" : "source") << " patch size" << nl
                 << "    source patch   = " << srcAddr.size() << nl
                 << "    target patch   = " << tgtAddr.size() << nl
                 << "    supplied field = " << fld.size()
@@ -152,7 +150,7 @@ void Foam::AMIInterpolation::interpolate
                 << "Employing default values when sum of weights falls below "
                 << lowWeightCorrection_
                 << " but number of default values is not equal to "
-                << srcName << " patch size" << nl
+                << (toSource ? "source" : "target") << " patch size" << nl
                 << "    default values = " << defVals.size() << nl
                 << "    source patch   = " << srcAddr.size() << nl
                 << abort(FatalError);
