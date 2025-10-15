@@ -1,3 +1,6 @@
+probes/probers/prober.C
+probes/probers/internalProber/internalProber.C
+probes/probers/patchProber/patchProber.C
 probes/probes.C
 probes/patchProbes.C
 

@@ -76,7 +76,7 @@ Foam::functionObjects::thermoCoupleProbes::thermoCoupleProbes
     }
     else
     {
-        Ttc_ = probes::sample(thermo_.T());
+        Ttc_ = prober().sample(thermo_.T());
     }
 
     // Note: can only create the solver once all samples have been found
@@ -89,7 +89,7 @@ Foam::functionObjects::thermoCoupleProbes::thermoCoupleProbes
 
 Foam::label Foam::functionObjects::thermoCoupleProbes::nEqns() const
 {
-    return this->size();
+    return prober().size();
 }
 
 
@@ -108,19 +108,21 @@ void Foam::functionObjects::thermoCoupleProbes::derivatives
     scalarField Cpc(y.size(), Zero);
     scalarField kappac(y.size(), Zero);
 
+    const auto& p = prober();
+
     if (radiationFieldName_ != "none")
     {
-        G = sample(mesh_.lookupObject<volScalarField>(radiationFieldName_));
+        G = p.sample(mesh_.lookupObject<volScalarField>(radiationFieldName_));
     }
 
-    Tc = probes::sample(thermo_.T());
+    Tc = p.sample(thermo_.T());
 
-    Uc = mag(this->sample(mesh_.lookupObject<volVectorField>(UName_)));
+    Uc = mag(p.sample(mesh_.lookupObject<volVectorField>(UName_)));
 
-    rhoc = this->sample(thermo_.rho()());
-    kappac = this->sample(thermo_.kappa()());
-    muc = this->sample(thermo_.mu()());
-    Cpc = this->sample(thermo_.Cp()());
+    rhoc = p.sample(thermo_.rho()());
+    kappac = p.sample(thermo_.kappa()());
+    muc = p.sample(thermo_.mu()());
+    Cpc = p.sample(thermo_.Cp()());
 
     scalarField Re(rhoc*Uc*d_/muc);
     scalarField Pr(Cpc*muc/kappac);
@@ -163,7 +165,7 @@ void Foam::functionObjects::thermoCoupleProbes::jacobian
 
 bool Foam::functionObjects::thermoCoupleProbes::write()
 {
-    if (!pointField::empty())
+    if (!prober().empty())
     {
         (void) prepare(ACTION_WRITE);
 
@@ -182,7 +184,7 @@ bool Foam::functionObjects::thermoCoupleProbes::write()
 
 bool Foam::functionObjects::thermoCoupleProbes::execute()
 {
-    if (!pointField::empty())
+    if (!prober().empty())
     {
         scalar dt = mesh_.time().deltaTValue();
         scalar t = mesh_.time().value();
