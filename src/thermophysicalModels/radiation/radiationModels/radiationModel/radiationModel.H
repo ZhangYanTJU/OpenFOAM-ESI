@@ -243,6 +243,9 @@ public:
             //- Return access to the temperature field
             const volScalarField& T() const noexcept { return T_; }
 
+            //- Return the radiation solver frequency
+            label solverFreq() const noexcept { return solverFreq_; }
+
             //- Source term component (for power of T^4)
             virtual tmp<volScalarField> Rp() const = 0;
 
