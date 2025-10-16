@@ -57,6 +57,7 @@ writeDictionary/writeDictionary.C
 writeObjects/writeObjects.C
 
 thermoCoupleProbes/thermoCoupleProbes.C
+radiometerProbes/radiometerProbes.C
 
 syncObjects/syncObjects.C
 
