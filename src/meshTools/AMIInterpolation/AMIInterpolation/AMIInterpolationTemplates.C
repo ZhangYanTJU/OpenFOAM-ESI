@@ -115,7 +115,10 @@ void Foam::AMIInterpolation::interpolate
     const UList<Type>& defaultValues
 ) const
 {
-    // Note: behaves as old AMIInterpolation::interpolateToSource if toSource=true
+    // Note
+    // - behaves as old AMIInterpolation::interpolateToSource if toSource=true
+    // - `result` should be preallocated to correct size and initialized to
+    //   an appropriate value (e.g. Zero)
 
     // Get data locally and do a weighted sum
 
@@ -187,10 +190,10 @@ void Foam::AMIInterpolation::interpolate
             map.distribute(work);
         }
 
-        if constexpr (is_contiguous_scalar<Type>::value)
-        {
-            result0 = Zero;
-        }
+        // if constexpr (is_contiguous_scalar<Type>::value)
+        // {
+        //     result0 = Zero;
+        // }
 
         weightedSum
         (
@@ -231,10 +234,10 @@ void Foam::AMIInterpolation::interpolate
             map.distribute(work);
         }
 
-        if constexpr (is_contiguous_scalar<Type>::value)
-        {
-            result1 = Zero;
-        }
+        // if constexpr (is_contiguous_scalar<Type>::value)
+        // {
+        //     result1 = Zero;
+        // }
 
         weightedSum
         (
@@ -295,12 +298,12 @@ void Foam::AMIInterpolation::interpolate
             map.distribute(work);
         }
 
-        result.resize_nocopy(srcAddress.size());
+        // result.resize_nocopy(srcAddress.size());
 
-        if constexpr (is_contiguous_scalar<Type>::value)
-        {
-            result = Zero;
-        }
+        // if constexpr (is_contiguous_scalar<Type>::value)
+        // {
+        //     result = Zero;
+        // }
 
         weightedSum
         (
