@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,9 +26,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "dynamicContactAngleForce.H"
-#include "addToRunTimeSelectionTable.H"
 #include "Function1.H"
 #include "distributionModel.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,6 +59,7 @@ dynamicContactAngleForce::dynamicContactAngleForce
 )
 :
     contactAngleForce(typeName, film, dict),
+    thetaPtr_(nullptr),
     U_vs_thetaPtr_
     (
         Function1<scalar>::NewIfPresent
@@ -80,45 +81,55 @@ dynamicContactAngleForce::dynamicContactAngleForce
         )
     ),
     rndGen_(label(0)),
-    distribution_
-    (
-        distributionModel::New
-        (
-            coeffDict_.subDict("distribution"),
-            rndGen_
-        )
-    )
+    distributionPtr_(nullptr)
 {
     if (U_vs_thetaPtr_ && T_vs_thetaPtr_)
     {
         FatalIOErrorInFunction(dict)
-            << "Entries Utheta and Ttheta could not be used together"
+            << "Only one of Utheta or Ttheta should be provided; "
+            << "both inputs cannot be used together."
             << abort(FatalIOError);
     }
+
+
+    thetaPtr_.emplace
+    (
+        IOobject
+        (
+            IOobject::scopedName(typeName, "theta"),
+            film.regionMesh().time().timeName(),
+            film.regionMesh().thisDb(),
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        film.regionMesh(),
+        dimensionedScalar(dimless, Zero)
+    );
+
+
+    if (coeffDict_.findEntry("distribution"))
+    {
+        distributionPtr_ = distributionModel::New
+        (
+            coeffDict_.subDict("distribution"),
+            rndGen_
+        );
+    }
 }
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::dynamicContactAngleForce::~dynamicContactAngleForce()
+{}  // distributionModel was forward declared
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 tmp<areaScalarField> dynamicContactAngleForce::theta() const
 {
-    auto ttheta = tmp<areaScalarField>::New
-    (
-        IOobject
-        (
-            IOobject::scopedName(typeName, "theta"),
-            film().regionMesh().time().timeName(),
-            film().regionMesh().thisDb(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
-        film().regionMesh(),
-        dimensionedScalar(dimless, Zero)
-    );
-    areaScalarField& theta = ttheta.ref();
+    areaScalarField& theta = thetaPtr_.ref();
     scalarField& thetai = theta.ref();
-
 
     if (U_vs_thetaPtr_)
     {
@@ -136,13 +147,16 @@ tmp<areaScalarField> dynamicContactAngleForce::theta() const
         thetai = T_vs_thetaPtr_->value(T());
     }
 
-    // Add the stochastic perturbation
-    forAll(thetai, facei)
+    if (distributionPtr_)
     {
-        thetai[facei] += distribution_->sample();
+        // Add the stochastic perturbation
+        forAll(thetai, facei)
+        {
+            thetai[facei] += distributionPtr_->sample();
+        }
     }
 
-    return ttheta;
+    return thetaPtr_();
 }
 
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -112,6 +112,9 @@ class dynamicContactAngleForce
 {
     // Private Data
 
+        //- Contact-angle field in degrees
+        mutable autoPtr<areaScalarField> thetaPtr_;
+
         //- Contact angle as a function of film speed
         autoPtr<Function1<scalar>> U_vs_thetaPtr_;
 
@@ -121,17 +124,8 @@ class dynamicContactAngleForce
         //- Random number generator
         Random rndGen_;
 
-        //- Parcel size PDF model
-        const autoPtr<distributionModel> distribution_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        dynamicContactAngleForce(const dynamicContactAngleForce&) = delete;
-
-        //- No copy assignment
-        void operator=(const dynamicContactAngleForce&) = delete;
+        //- Stochastic perturbation model for contact angle
+        autoPtr<distributionModel> distributionPtr_;
 
 
 protected:
@@ -148,7 +142,7 @@ public:
 
     // Constructors
 
-        //- Construct from surface film model
+        //- Construct from surface film model and dictionary
         dynamicContactAngleForce
         (
             liquidFilmBase& film,
@@ -157,7 +151,7 @@ public:
 
 
     //- Destructor
-    virtual ~dynamicContactAngleForce() = default;
+    virtual ~dynamicContactAngleForce();
 };
 
 
