@@ -25,11 +25,20 @@ $(kinematic)/injectionModel/injectionModelList/injectionModelList.C
 $(kinematic)/injectionModel/injectionModel/injectionModel.C
 $(kinematic)/injectionModel/injectionModel/injectionModelNew.C
 
-$(kinematic)/injectionModel/filmSeparation/filmSeparation.C
-$(kinematic)/injectionModel/filmSeparation/filmSeparationModels/filmSeparationModel/filmSeparationModel.C
-$(kinematic)/injectionModel/filmSeparation/filmSeparationModels/filmSeparationModel/filmSeparationModelNew.C
-$(kinematic)/injectionModel/filmSeparation/filmSeparationModels/OwenRyleyModel/OwenRyleyModel.C
-$(kinematic)/injectionModel/filmSeparation/filmSeparationModels/FriedrichModel/FriedrichModel.C
+/* Film separation models */
+
+filmSeparation=$(kinematic)/injectionModel/filmSeparation
+filmSeparationModels=$(filmSeparation)/filmSeparationModels
+$(filmSeparation)/filmSeparation.C
+$(filmSeparationModels)/filmSeparationModel/filmSeparationModel.C
+$(filmSeparationModels)/filmSeparationModel/filmSeparationModelNew.C
+$(filmSeparationModels)/OwenRyleyModel/OwenRyleyModel.C
+$(filmSeparationModels)/FriedrichModel/FriedrichModel.C
+cornerDetectionModels=$(filmSeparation)/cornerDetectionModels
+$(cornerDetectionModels)/cornerDetectionModel/cornerDetectionModel.C
+$(cornerDetectionModels)/cornerDetectionModel/cornerDetectionModelNew.C
+$(cornerDetectionModels)/fluxBased/fluxBased.C
+$(cornerDetectionModels)/geometryBased/geometryBased.C
 
 $(kinematic)/injectionModel/BrunDrippingInjection/BrunDrippingInjection.C
 
