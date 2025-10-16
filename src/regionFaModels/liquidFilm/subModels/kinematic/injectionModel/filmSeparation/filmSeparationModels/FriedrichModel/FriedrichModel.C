@@ -26,6 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "FriedrichModel.H"
+#include "cornerDetectionModel.H"
 #include "processorFaPatch.H"
 #include "unitConversion.H"
 #include "addToRunTimeSelectionTable.H"
@@ -53,321 +54,6 @@ FriedrichModel::separationTypeNames
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-bitSet FriedrichModel::calcCornerEdges() const
-{
-    bitSet cornerEdges(mesh().nEdges(), false);
-
-    const areaVectorField& faceCentres = mesh().areaCentres();
-    const areaVectorField& faceNormals = mesh().faceAreaNormals();
-
-    const labelUList& own = mesh().edgeOwner();
-    const labelUList& nbr = mesh().edgeNeighbour();
-
-    // Check if internal face-normal vectors diverge (no separation)
-    // or converge (separation may occur)
-    forAll(nbr, edgei)
-    {
-        const label faceO = own[edgei];
-        const label faceN = nbr[edgei];
-
-        cornerEdges[edgei] = isCornerEdgeSharp
-        (
-            faceCentres[faceO],
-            faceCentres[faceN],
-            faceNormals[faceO],
-            faceNormals[faceN]
-        );
-    }
-
-
-    // Skip the rest of the routine if the simulation is a serial run
-    if (!Pstream::parRun()) return cornerEdges;
-
-    // Check if processor face-normal vectors diverge (no separation)
-    // or converge (separation may occur)
-    const faBoundaryMesh& patches = mesh().boundary();
-
-    for (const faPatch& fap : patches)
-    {
-        if (isA<processorFaPatch>(fap))
-        {
-            const label patchi = fap.index();
-            const auto& edgeFaces = fap.edgeFaces();
-            const label internalEdgei = fap.start();
-
-            const auto& faceCentresp = faceCentres.boundaryField()[patchi];
-            const auto& faceNormalsp = faceNormals.boundaryField()[patchi];
-
-            forAll(faceNormalsp, bndEdgei)
-            {
-                const label faceO = edgeFaces[bndEdgei];
-                const label meshEdgei = internalEdgei + bndEdgei;
-
-                cornerEdges[meshEdgei] = isCornerEdgeSharp
-                (
-                    faceCentres[faceO],
-                    faceCentresp[bndEdgei],
-                    faceNormals[faceO],
-                    faceNormalsp[bndEdgei]
-                );
-            }
-        }
-    }
-
-    return cornerEdges;
-}
-
-
-bool FriedrichModel::isCornerEdgeSharp
-(
-    const vector& faceCentreO,
-    const vector& faceCentreN,
-    const vector& faceNormalO,
-    const vector& faceNormalN
-) const
-{
-    // Calculate the relative position of centres of faces sharing an edge
-    const vector relativePosition(faceCentreN - faceCentreO);
-
-    // Calculate the relative normal of faces sharing an edge
-    const vector relativeNormal(faceNormalN - faceNormalO);
-
-    // Return true if the face normals converge, meaning that the edge is sharp
-    return ((relativeNormal & relativePosition) < -1e-8);
-}
-
-
-scalarList FriedrichModel::calcCornerAngles() const
-{
-    scalarList cornerAngles(mesh().nEdges(), Zero);
-
-    const areaVectorField& faceNormals = mesh().faceAreaNormals();
-
-    const labelUList& own = mesh().edgeOwner();
-    const labelUList& nbr = mesh().edgeNeighbour();
-
-    // Process internal edges
-    forAll(nbr, edgei)
-    {
-        if (!cornerEdges_[edgei]) continue;
-
-        const label faceO = own[edgei];
-        const label faceN = nbr[edgei];
-
-        cornerAngles[edgei] = calcCornerAngle
-        (
-            faceNormals[faceO],
-            faceNormals[faceN]
-        );
-    }
-
-
-    // Skip the rest of the routine if the simulation is a serial run
-    if (!Pstream::parRun()) return cornerAngles;
-
-    // Process processor edges
-    const faBoundaryMesh& patches = mesh().boundary();
-
-    for (const faPatch& fap : patches)
-    {
-        if (isA<processorFaPatch>(fap))
-        {
-            const label patchi = fap.index();
-            const auto& edgeFaces = fap.edgeFaces();
-            const label internalEdgei = fap.start();
-
-            const auto& faceNormalsp = faceNormals.boundaryField()[patchi];
-
-            forAll(faceNormalsp, bndEdgei)
-            {
-                const label faceO = edgeFaces[bndEdgei];
-                const label meshEdgei = internalEdgei + bndEdgei;
-
-                if (!cornerEdges_[meshEdgei]) continue;
-
-                cornerAngles[meshEdgei] = calcCornerAngle
-                (
-                    faceNormals[faceO],
-                    faceNormalsp[bndEdgei]
-                );
-            }
-        }
-    }
-
-    return cornerAngles;
-}
-
-
-scalar FriedrichModel::calcCornerAngle
-(
-    const vector& faceNormalO,
-    const vector& faceNormalN
-) const
-{
-    const scalar magFaceNormal = mag(faceNormalO)*mag(faceNormalN);
-
-    // Avoid any potential exceptions during the cosine calculations
-    if (magFaceNormal < SMALL) return 0;
-
-    scalar cosAngle = (faceNormalO & faceNormalN)/magFaceNormal;
-    cosAngle = clamp(cosAngle, -1, 1);
-
-    return std::acos(cosAngle);
-}
-
-
-bitSet FriedrichModel::calcSeparationFaces() const
-{
-    bitSet separationFaces(mesh().faces().size(), false);
-
-    const edgeScalarField& phis = film().phi2s();
-
-    const labelUList& own = mesh().edgeOwner();
-    const labelUList& nbr = mesh().edgeNeighbour();
-
-    // Process internal faces
-    forAll(nbr, edgei)
-    {
-        if (!cornerEdges_[edgei]) continue;
-
-        const label faceO = own[edgei];
-        const label faceN = nbr[edgei];
-
-        isSeparationFace
-        (
-            separationFaces,
-            phis[edgei],
-            faceO,
-            faceN
-        );
-    }
-
-
-    // Skip the rest of the routine if the simulation is a serial run
-    if (!Pstream::parRun()) return separationFaces;
-
-    // Process processor faces
-    const faBoundaryMesh& patches = mesh().boundary();
-
-    for (const faPatch& fap : patches)
-    {
-        if (isA<processorFaPatch>(fap))
-        {
-            const label patchi = fap.index();
-            const auto& edgeFaces = fap.edgeFaces();
-            const label internalEdgei = fap.start();
-
-            const auto& phisp = phis.boundaryField()[patchi];
-
-            forAll(phisp, bndEdgei)
-            {
-                const label faceO = edgeFaces[bndEdgei];
-                const label meshEdgei(internalEdgei + bndEdgei);
-
-                if (!cornerEdges_[meshEdgei]) continue;
-
-                isSeparationFace
-                (
-                    separationFaces,
-                    phisp[bndEdgei],
-                    faceO
-                );
-            }
-        }
-    }
-
-    return separationFaces;
-}
-
-
-void FriedrichModel::isSeparationFace
-(
-    bitSet& separationFaces,
-    const scalar phiEdge,
-    const label faceO,
-    const label faceN
-) const
-{
-    const scalar tol = 1e-8;
-
-    // Assuming there are no sources/sinks at the edge
-    if (phiEdge > tol)  // From owner to neighbour
-    {
-        separationFaces[faceO] = true;
-    }
-    else if ((phiEdge < -tol) && (faceN != -1))  // From neighbour to owner
-    {
-        separationFaces[faceN] = true;
-    }
-}
-
-
-scalarList FriedrichModel::calcSeparationAngles
-(
-    const bitSet& separationFaces
-) const
-{
-    scalarList separationAngles(mesh().faces().size(), Zero);
-
-    const labelUList& own = mesh().edgeOwner();
-    const labelUList& nbr = mesh().edgeNeighbour();
-
-    // Process internal faces
-    forAll(nbr, edgei)
-    {
-        if (!cornerEdges_[edgei]) continue;
-
-        const label faceO = own[edgei];
-        const label faceN = nbr[edgei];
-
-        if (separationFaces[faceO])
-        {
-            separationAngles[faceO] = cornerAngles_[edgei];
-        }
-
-        if (separationFaces[faceN])
-        {
-            separationAngles[faceN] = cornerAngles_[edgei];
-        }
-    }
-
-
-    // Skip the rest of the routine if the simulation is a serial run
-    if (!Pstream::parRun()) return separationAngles;
-
-    // Process processor faces
-    const edgeScalarField& phis = film().phi2s();
-    const faBoundaryMesh& patches = mesh().boundary();
-
-    for (const faPatch& fap : patches)
-    {
-        if (isA<processorFaPatch>(fap))
-        {
-            const label patchi = fap.index();
-            const auto& edgeFaces = fap.edgeFaces();
-            const label internalEdgei = fap.start();
-
-            const auto& phisp = phis.boundaryField()[patchi];
-
-            forAll(phisp, bndEdgei)
-            {
-                const label faceO = edgeFaces[bndEdgei];
-                const label meshEdgei(internalEdgei + bndEdgei);
-
-                if (!cornerEdges_[meshEdgei]) continue;
-
-                if (separationFaces[faceO])
-                {
-                    separationAngles[faceO] = cornerAngles_[meshEdgei];
-                }
-            }
-        }
-    }
-
-    return separationAngles;
-}
-
-
 tmp<scalarField> FriedrichModel::Fratio() const
 {
     const areaVectorField Up(film().Up());
@@ -378,10 +64,11 @@ tmp<scalarField> FriedrichModel::Fratio() const
     const areaScalarField& sigma = film().sigma();
 
     // Identify the faces where separation may occur
-    const bitSet separationFaces(calcSeparationFaces());
+    const bitSet& separationFaces = cornerDetectorPtr_->getCornerFaces();
 
     // Calculate the corner angles corresponding to the separation faces
-    const scalarList separationAngles(calcSeparationAngles(separationFaces));
+    const scalarList& separationAngles = cornerDetectorPtr_->getCornerAngles();
+
 
     // Initialize the force ratio
     auto tFratio = tmp<scalarField>::New(mesh().faces().size(), Zero);
@@ -431,7 +118,7 @@ tmp<scalarField> FriedrichModel::Fratio() const
         if (isA<processorFaPatch>(fap))
         {
             const label patchi = fap.index();
-            const label internalEdgei = fap.start();
+            const auto& edgeFaces = fap.edgeFaces();
 
             const auto& hp = h.boundaryField()[patchi];
             const auto& Ufp = Uf.boundaryField()[patchi];
@@ -445,18 +132,18 @@ tmp<scalarField> FriedrichModel::Fratio() const
                 // Skip the routine if the face is not a candidate for separation
                 if (!separationFaces[i]) continue;
 
-                const label meshEdgei = internalEdgei + i;
+                const label faceO = edgeFaces[i];
 
                 // Calculate the corner-angle trigonometric values
-                const scalar sinAngle = std::sin(cornerAngles_[meshEdgei]);
-                const scalar cosAngle = std::cos(cornerAngles_[meshEdgei]);
+                const scalar sinAngle = std::sin(separationAngles[faceO]);
+                const scalar cosAngle = std::cos(separationAngles[faceO]);
 
                 // Reynolds number (FLW:Eq. 16)
                 const scalar Re = hp[i]*mag(Ufp[i])*rhop[i]/mup[i];
 
                 // Weber number (FLW:Eq. 17)
-                const vector Urelp(Upp[i] - Ufp[i]);
-                const scalar We = hp[i]*rhop_*sqr(mag(Urelp))/(2.0*sigmap[i]);
+                const vector Urel(Upp[i] - Ufp[i]);
+                const scalar We = hp[i]*rhop_*sqr(mag(Urel))/(2.0*sigmap[i]);
 
                 // Characteristic breakup length (FLW:Eq. 15)
                 const scalar Lb =
@@ -499,13 +186,12 @@ FriedrichModel::FriedrichModel
             separationType::FULL
         )
     ),
+    cornerDetectorPtr_(cornerDetectionModel::New(mesh(), film, dict)),
     rhop_(dict.getScalar("rhop")),
     magG_(mag(film.g().value())),
     C0_(dict.getOrDefault<scalar>("C0", 0.882)),
     C1_(dict.getOrDefault<scalar>("C1", -1.908)),
-    C2_(dict.getOrDefault<scalar>("C2", 1.264)),
-    cornerEdges_(calcCornerEdges()),
-    cornerAngles_(calcCornerAngles())
+    C2_(dict.getOrDefault<scalar>("C2", 1.264))
 {
     if (rhop_ < VSMALL)
     {
@@ -523,10 +209,18 @@ FriedrichModel::FriedrichModel
 }
 
 
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+FriedrichModel::~FriedrichModel()
+{}  // cornerDetectionModel was forward declared
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 tmp<scalarField> FriedrichModel::separatedMassRatio() const
 {
+    cornerDetectorPtr_->detectCorners();
+
     tmp<scalarField> tFratio = Fratio();
     const auto& Fratio = tFratio.cref();
 
@@ -576,12 +270,41 @@ tmp<scalarField> FriedrichModel::separatedMassRatio() const
             areaFratio.primitiveFieldRef() = Fratio;
             areaFratio.write();
         }
+
+        {
+            areaScalarField cornerAngles
+            (
+                mesh().newIOobject("cornerAngles"),
+                mesh(),
+                dimensionedScalar(dimless, Zero)
+            );
+
+            const bitSet& cornerFaces = cornerDetectorPtr_->getCornerFaces();
+            const scalarList& angles = cornerDetectorPtr_->getCornerAngles();
+
+            forAll(cornerFaces, i)
+            {
+                if (!cornerFaces[i]) continue;
+                cornerAngles[i] = radToDeg(angles[i]);
+            }
+            cornerAngles.write();
+        }
     }
 
 
     return tseparated;
 }
 
+
+/*
+bool FriedrichModel::read(const dictionary& dict) const
+{
+    // Add the base-class reading later
+    // Read the film separation model dictionary
+
+    return true;
+}
+*/
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

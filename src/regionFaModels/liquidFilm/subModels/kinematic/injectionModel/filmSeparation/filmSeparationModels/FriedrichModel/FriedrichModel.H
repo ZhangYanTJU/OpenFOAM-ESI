@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -116,11 +116,14 @@ Usage
     filmSeparationCoeffs
     {
         // Mandatory entries
-        model               Friedrich;
-        rhop                <scalar>;
+        model                 Friedrich;
+        rhop                  <scalar>;
 
         // Optional entries
-        separationType      <word>;
+        separationType        <word>;
+
+        // Inherited entries
+        cornerDetectionModel  <word>;
     }
     \endverbatim
 
@@ -130,12 +133,21 @@ Usage
       model        | Model name: Friedrich              | word | yes  | -
       rhop         | Primary-phase density            | scalar | yes  | -
       separationType | Film separation type             | word | no   | full
+      cornerDetectionModel | Corner detector model      | word | no   | flux
     \endtable
+
+    The inherited entries are elaborated in:
+      - \link cornerDetectionModel.H \endlink
 
     Options for the \c separationType entry:
     \verbatim
       full          | Full film separation (Friedrich et al., 2008)
       partial       | Partial film separation (Zhang et al., 2018)
+    \endverbatim
+
+    Options for the \c cornerDetectionModel entry:
+    \verbatim
+      flux          | Flux-based corner detection algorithm
     \endverbatim
 
 SourceFiles
@@ -152,6 +164,10 @@ SourceFiles
 
 namespace Foam
 {
+
+// Forward Declarations
+class cornerDetectionModel;
+
 namespace filmSeparationModels
 {
 
@@ -181,6 +197,9 @@ class FriedrichModel
         //- Film separation type
         enum separationType separation_;
 
+        //- Corner-detection model
+        mutable autoPtr<cornerDetectionModel> cornerDetectorPtr_;
+
         //- Approximate uniform mass density of primary phase
         scalar rhop_;
 
@@ -196,52 +215,8 @@ class FriedrichModel
         //- Empirical constant for the partial separation model
         scalar C2_;
 
-        //- List of flags identifying sharp-corner edges where separation
-        //- may occur
-        bitSet cornerEdges_;
-
-        //- Corner angles of sharp-corner edges where separation may occur
-        scalarList cornerAngles_;
-
 
     // Private Member Functions
-
-        //- Return Boolean list of identified sharp-corner edges
-        bitSet calcCornerEdges() const;
-
-        //- Return true if the given edge is identified as sharp
-        bool isCornerEdgeSharp
-        (
-            const vector& faceCentreO,
-            const vector& faceCentreN,
-            const vector& faceNormalO,
-            const vector& faceNormalN
-        ) const;
-
-        //- Return the list of sharp-corner angles for each edge
-        scalarList calcCornerAngles() const;
-
-        //- Return the sharp-corner angle for a given edge
-        scalar calcCornerAngle
-        (
-            const vector& faceNormalO,
-            const vector& faceNormalN
-        ) const;
-
-        //- Return Boolean list of identified separation faces
-        bitSet calcSeparationFaces() const;
-
-        //- Return true if the given face is identified as a separation face
-        void isSeparationFace
-        (
-            bitSet& separationFaces,
-            const scalar phiEdge,
-            const label faceO,
-            const label faceN = -1
-        ) const;
-
-        //- Return the list of sharp-corner angles for each face
-        scalarList calcSeparationAngles(const bitSet& separationFaces) const;
 
         //- Return the film-separation force ratio per face
         tmp<scalarField> Fratio() const;
@@ -264,7 +239,7 @@ public:
 
 
     // Destructor
-    virtual ~FriedrichModel() = default;
+    virtual ~FriedrichModel();
 
 
     // Member Functions
