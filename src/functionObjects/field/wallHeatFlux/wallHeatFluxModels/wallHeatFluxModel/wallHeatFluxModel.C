@@ -25,71 +25,48 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "wallHeatFlux.H"
 #include "wallHeatFluxModel.H"
+#include "fvMesh.H"
+#include "wallPolyPatch.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace functionObjects
-{
-    defineTypeNameAndDebug(wallHeatFlux, 0);
-    addToRunTimeSelectionTable(functionObject, wallHeatFlux, dictionary);
+    defineTypeNameAndDebug(wallHeatFluxModel, 0);
+    defineRunTimeSelectionTable(wallHeatFluxModel, dictionary);
 }
-}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::functionObjects::wallHeatFlux::wallHeatFlux
+Foam::wallHeatFluxModel::wallHeatFluxModel
 (
+    const dictionary& dict,
+    const fvMesh& mesh,
     const word& name,
-    const Time& runTime,
-    const dictionary& dict
+    const word objName,
+    functionObjects::stateFunctionObject& state
 )
 :
-    fvMeshFunctionObject(name, runTime, dict),
-    qModelPtr_
-    (
-        wallHeatFluxModel::New
-        (
-            dict,
-            mesh_,
-            name,
-            scopedName(typeName),
-            *this
-        )
-    )
-{
-    read(dict);
-}
+    functionObjects::writeFile(mesh, name, objName, dict),
+    mesh_(mesh),
+    state_(state),
+    objName_(objName)
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::functionObjects::wallHeatFlux::read(const dictionary& dict)
+bool Foam::wallHeatFluxModel::read(const dictionary& dict)
 {
-    Log << type() << ' ' << name() << " read:" << endl;
-    if (!fvMeshFunctionObject::read(dict) || !qModelPtr_->read(dict))
+    if (!writeFile::read(dict))
     {
         return false;
     }
+
     return true;
-}
-
-
-bool Foam::functionObjects::wallHeatFlux::execute()
-{
-    Log << type() << ' ' << name() << " execute:" << endl;
-    return qModelPtr_->execute();
-}
-
-
-bool Foam::functionObjects::wallHeatFlux::write()
-{
-    Log << type() << ' ' << name() << " write:" << endl;
-    return qModelPtr_->write();
 }
 
 

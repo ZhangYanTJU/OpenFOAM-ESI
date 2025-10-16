@@ -23,73 +23,44 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+
 \*---------------------------------------------------------------------------*/
 
-#include "wallHeatFlux.H"
 #include "wallHeatFluxModel.H"
-#include "addToRunTimeSelectionTable.H"
+#include "fvMesh.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-namespace Foam
-{
-namespace functionObjects
-{
-    defineTypeNameAndDebug(wallHeatFlux, 0);
-    addToRunTimeSelectionTable(functionObject, wallHeatFlux, dictionary);
-}
-}
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::functionObjects::wallHeatFlux::wallHeatFlux
+Foam::autoPtr<Foam::wallHeatFluxModel> Foam::wallHeatFluxModel::New
 (
+    const dictionary& dict,
+    const fvMesh& mesh,
     const word& name,
-    const Time& runTime,
-    const dictionary& dict
+    const word objName,
+    functionObjects::stateFunctionObject& state
 )
-:
-    fvMeshFunctionObject(name, runTime, dict),
-    qModelPtr_
-    (
-        wallHeatFluxModel::New
+{
+    const word modelType(dict.getOrDefault<word>("model", "wall"));
+
+    Info<< "Selecting heat-flux model: " << modelType << endl;
+
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
+
+    if (!ctorPtr)
+    {
+        FatalIOErrorInLookup
         (
             dict,
-            mesh_,
-            name,
-            scopedName(typeName),
-            *this
-        )
-    )
-{
-    read(dict);
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::functionObjects::wallHeatFlux::read(const dictionary& dict)
-{
-    Log << type() << ' ' << name() << " read:" << endl;
-    if (!fvMeshFunctionObject::read(dict) || !qModelPtr_->read(dict))
-    {
-        return false;
+            "wallHeatFluxModel",
+            modelType,
+            *dictionaryConstructorTablePtr_
+        ) << exit(FatalIOError);
     }
-    return true;
-}
 
-
-bool Foam::functionObjects::wallHeatFlux::execute()
-{
-    Log << type() << ' ' << name() << " execute:" << endl;
-    return qModelPtr_->execute();
-}
-
-
-bool Foam::functionObjects::wallHeatFlux::write()
-{
-    Log << type() << ' ' << name() << " write:" << endl;
-    return qModelPtr_->write();
+    return autoPtr<wallHeatFluxModel>
+    (
+        ctorPtr(dict, mesh, name, objName, state)
+    );
 }
 
 

@@ -108,6 +108,10 @@ turbulenceFields/turbulenceFields.C
 yPlus/yPlus.C
 wallShearStress/wallShearStress.C
 wallHeatFlux/wallHeatFlux.C
+wallHeatFlux/wallHeatFluxModels/wallHeatFluxModel/wallHeatFluxModel.C
+wallHeatFlux/wallHeatFluxModels/wallHeatFluxModel/wallHeatFluxModelNew.C
+wallHeatFlux/wallHeatFluxModels/wall/wall.C
+wallHeatFlux/wallHeatFluxModels/gauge/gauge.C
 
 writeCellCentres/writeCellCentres.C
 writeCellVolumes/writeCellVolumes.C

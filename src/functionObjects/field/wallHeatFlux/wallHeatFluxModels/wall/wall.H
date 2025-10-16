@@ -24,14 +24,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::wallHeatFlux
-
-Group
+    Foam::wallHeatFluxModels::wall
 
 Description
-    This function object calculates the wall heat flux based on a custom model
-    defined in the dictionary. The model can be specified to compute the heat
-    flux according to user-defined criteria or equations.
+    This model computes the wall-heat flux at selected wall patches.
 
 Usage
     Minimal example by using \c system/controlDict.functions:
@@ -42,32 +38,11 @@ Usage
         type        wallHeatFlux;
         libs        (fieldFunctionObjects);
 
+        model       wall;
+
         // Optional entries
-        model       <word>;
-
-        // Conditional entries
-
-            // Option-1: when 'model' is 'wall' - previous 'wallHeatFlux' state
-
-            // Optional entries
-            patches     (<patch1> ... <patchN>); // (wall1 "(wall2|wall3)");
-            qr          <word>;
-
-
-            // Option-2: when 'model' is 'gauge'
-            // Mandatory entries
-            patch       <word>;
-            Tgauge      <scalar>;
-
-            // Optional entries
-            absorptivity  <scalar>;
-            emissivity    <scalar>;
-            T             <word>;
-            qin           <word>;
-            alphat        <word>;
-            convective    <bool>;
-            radiative     <bool>;
-            writeFields   <bool>;
+        patches     (<patch1> ... <patchN>); // (wall1 "(wall2|wall3)");
+        qr          <word>;
 
         // Inherited entries
         ...
@@ -79,84 +54,104 @@ Usage
       Property     | Description                           | Type | Reqd | Deflt
       type         | Type name: wallHeatFlux               | word |  yes  | -
       libs         | Library name: fieldFunctionObjects    | word |  yes  | -
-      model      | Model name                              | word |  no  | wall
       patches    | Names of operand patches   | wordList | no | all wall patches
       qr         | Name of radiative heat flux field       | word | no | qr
-      patch      | Name of the patch to probe              | word | yes  | -
-      Tgauge     | Gauge temperature (K)                  | scalar | yes | -
-      absorptivity | Absorptivity of the gauge              | scalar | no | 1
-      emissivity   | Emissivity of the gauge                | scalar | no | 1
-      T           | Name of the temperature field          | word | no  | T
-      qin | Name of the incident radiative heat flux field | word | no | qin
-      alphat | Name of turbulent thermal diffusivity field | word | no | alphat
-      convective  | Write convective heat flux into file   | bool | no | true
-      radiative   | Write radiative heat flux into file    | bool | no | true
-      writeFields | Write the fields 'qConv' and 'qRad'    | bool | no | true
     \endtable
 
     The inherited entries are elaborated in:
      - \link fvMeshFunctionObject.H \endlink
      - \link writeFile.H \endlink
-     - \link pointProberBase.H \endlink
-     - \link patchProber.H \endlink
+
+Note
+  - The model \c wall corresponds to \c wallHeatFlux in OpenFOAM v2506 and
+    earlier versions.
 
 SourceFiles
-    wallHeatFlux.C
+    wall.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_wallHeatFlux_H
-#define functionObjects_wallHeatFlux_H
+#ifndef wallHeatFluxModels_wall_H
+#define wallHeatFluxModels_wall_H
 
-#include "fvMeshFunctionObject.H"
+#include "wallHeatFluxModel.H"
+#include "writeFile.H"
+#include "volFieldsFwd.H"
+#include "HashSet.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// Forward Declarations
-class wallHeatFluxModel;
-
-namespace functionObjects
+namespace wallHeatFluxModels
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class wallHeatFlux Declaration
+                   Class wall Declaration
 \*---------------------------------------------------------------------------*/
 
-class wallHeatFlux
+class wall
 :
-    public fvMeshFunctionObject
+    public wallHeatFluxModel
 {
     // Private Data
 
-        //- Heat-flux model
-        autoPtr<wallHeatFluxModel> qModelPtr_;
+        //- Name of the radiative heat-flux field
+        word qrName_;
+
+        //- List of names of wall patches to process
+        labelHashSet patchSet_;
+
+
+    // Private Member Functions
+
+        //- Write file-header information
+        void writeFileHeader(Ostream& os);
+
+        //- Calculate the wall heat-flux
+        void calcHeatFlux
+        (
+            const volScalarField& alpha,
+            const volScalarField& he,
+            volScalarField& wallHeatFlux
+        );
 
 
 public:
 
     //- Runtime type information
-    TypeName("wallHeatFlux");
+    TypeName("wall");
 
 
     // Constructors
 
-        //- Construct from name, Time and dictionary
-        wallHeatFlux
+        //- Construct from components
+        wall
         (
+            const dictionary& dict,
+            const fvMesh& mesh,
             const word& name,
-            const Time& runTime,
-            const dictionary& dict
+            const word objName,
+            functionObjects::stateFunctionObject& state
         );
 
 
     //- Destructor
-    virtual ~wallHeatFlux() = default;
+    virtual ~wall() = default;
 
 
     // Member Functions
+
+    // Access
+
+        //- Return const reference to name of radiative heat-flux field
+        const word& qrName() const noexcept { return qrName_; }
+
+        //- Return const reference to patches to process
+        const labelHashSet& patchSet() const noexcept { return patchSet_; }
+
+
+    // Evaluation
 
         //- Read the settings
         virtual bool read(const dictionary& dict);
@@ -171,7 +166,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace functionObjects
+} // End namespace wallHeatFluxModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
