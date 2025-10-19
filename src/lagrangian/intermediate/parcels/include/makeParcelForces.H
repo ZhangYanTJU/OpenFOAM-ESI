@@ -49,6 +49,7 @@ License
 #include "VirtualMassForce.H"
 #include "InterfaceForce.H"
 #include "CoulombForce.H"
+#include "HelicalForce.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -70,7 +71,8 @@ License
     makeParticleForceModelType(SRFForce, CloudType);                           \
     makeParticleForceModelType(VirtualMassForce, CloudType);                   \
     makeParticleForceModelType(InterfaceForce, CloudType);                     \
-    makeParticleForceModelType(CoulombForce, CloudType);
+    makeParticleForceModelType(CoulombForce, CloudType);                       \
+    makeParticleForceModelType(HelicalForce, CloudType);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
