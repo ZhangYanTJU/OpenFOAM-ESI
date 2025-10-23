@@ -70,6 +70,7 @@ Foam::AMICache::AMICache(const dictionary& dict, const bool toSource)
     size_(dict.getOrDefault<label>("cacheSize", 0)),
     rotationAxis_(dict.getOrDefault<vector>("rotationAxis", Zero)),
     rotationCentre_(dict.getOrDefault<point>("rotationCentre", Zero)),
+    maxThetaDeg_(dict.getOrDefault<scalar>("maxThetaDeg", 5)),
     complete_(false),
     index0_(-1),
     index1_(-1),
@@ -263,6 +264,7 @@ Foam::AMICache::AMICache(Istream& is)
 
     rotationAxis_(is),
     rotationCentre_(is),
+    maxThetaDeg_(readScalar(is)),
 
     complete_(readBool(is)),
 
@@ -423,7 +425,8 @@ bool Foam::AMICache::restoreCache(const point& globalPoint)
     }
 
     const scalar theta = getRotationAngle(globalPoint);
-    const label bini = theta/constant::mathematical::twoPi*size_;
+    const scalar twoPi = constant::mathematical::twoPi;
+    const label bini = theta/twoPi*size_;
 
     DebugPout<< "  -- bini:" << bini << " for theta:" << theta << endl;
 
@@ -432,76 +435,152 @@ bool Foam::AMICache::restoreCache(const point& globalPoint)
         return theta_[bini] < constant::mathematical::twoPi;
     };
 
-    bool cacheValid = false;
+    // Maximum angle in degrees for which to search for cached bins
+    const scalar maxThetaStencil = maxThetaDeg_*constant::mathematical::pi/180.0;
 
-    if (validIndex(bini))
+    if
+    (
+        validIndex(bini)
+     && (
+            mag(theta - theta_[bini]) < cacheThetaTolerance_
+         || mag(theta - twoPi - theta_[bini]) < cacheThetaTolerance_
+        )
+    )
     {
-        // Find participating bins
-        // TODO: allow skipping of bins according to user-defined max dTheta
-        if (mag(theta - theta_[bini]) < cacheThetaTolerance_)
+        // Hit cached value - no interpolation needed
+        // index1_ = -1 indicates no interpolation
+        index0_ = bini;
+        index1_ = -1;
+        interpWeight_ = 0;
+
+        DebugInfo
+            << "  -- t0:" << theta_[index0_] << " theta:" << theta
+            << " i0:" << index0_ << " i1:" << index1_
+            << " w:" << interpWeight_ << endl;
+        return true;
+    }
+    else
+    {
+        // Find indices and values bracketing theta
+        const label nBin = theta_.size();
+
+        // Participating theta values and bin addresses
+        // - Note we add wrap-around values at start and end
+        DynamicList<scalar> thetap(nBin+2);
+        DynamicList<label> binAddresses(nBin+2);
+
+        // Initialise wrap-around values
+        thetap.push_back(0);
+        binAddresses.push_back(-1);
+        forAll(theta_, thetai)
         {
-            // Hit cached value - no interpolation needed
-            // index1_ = -1 indicates no interpolation
-            index0_ = bini;
-            interpWeight_ = 0;
-            cacheValid = true;
-        }
-        else if (theta > theta_[bini])
-        {
-            // Check that next bin is valid
-            const label i1 = theta_.fcIndex(bini);
-            if (validIndex(i1))
+            if (validIndex(thetai))
             {
-                index0_ = bini;
-                index1_ = i1;
-                cacheValid = true;
-            }
-        }
-        else // (theta < theta_[bini])
-        {
-            // Check that previous bin is valid
-            const label i1 = theta_.rcIndex(bini);
-            if (validIndex(i1))
-            {
-                index0_ = i1;
-                index1_ = bini;
-                cacheValid = true;
+                thetap.push_back(theta_[thetai]);
+                binAddresses.push_back(thetai);
             }
         }
 
-        if (!cacheValid)
+        // Check that we have enough data points for interpolation
+        // - We added storage for lower wrap-around value, and we then need
+        //   at least 2 additional values for the interpolation
+        if (thetap.size() < 3)
         {
             DebugPout<< "  -- no cache available" << endl;
             return false;
         }
 
+        // Set wrap-around values if we have sufficient data
+        thetap[0] = thetap.last() - twoPi;
+        binAddresses[0] = binAddresses.last();
+        thetap.push_back(thetap[1] + twoPi);
+        binAddresses.push_back(binAddresses[1]);
 
-        // Calculate weighting factor
-        if (index1_ != -1)
+        // Find interpolation indices
+        label loweri = labelMax;
+        label i = 0;
+        while (i < thetap.size())
         {
-            const scalar t0 = theta_[index0_];
-            scalar t1 = theta_[index1_];
-
-            if (index1_ < index0_)
+            if (thetap[i] < theta)
             {
-                t1 += constant::mathematical::twoPi;
+                loweri = i;
             }
-
-            // Set time-based weighting factor
-            interpWeight_ = (theta - t0)/(t1 - t0);
-
-            DebugInfo
-                << "  -- t0:" << t0 << " theta:" << theta << " t1:" << t1
-                << " i0:" << index0_ << " i1:" << index1_
-                << " w:" << interpWeight_ << endl;
+            else
+            {
+                break;
+            }
+            ++i;
         }
-    }
-    else
-    {
-        DebugPout<< "  -- no cache available" << endl;
+
+        if (loweri == labelMax)
+        {
+            DebugPout<< "  -- no cache available" << endl;
+            return false;
+        }
+
+        label upperi = labelMax;
+        i = thetap.size() - 1;
+        while (i >= 0)
+        {
+            if (thetap[i] > theta)
+            {
+                upperi = i;
+            }
+            else
+            {
+                break;
+            }
+            --i;
+        }
+
+        if (upperi == labelMax)
+        {
+            DebugPout<< "  -- no cache available" << endl;
+            return false;
+        }
+
+        // Ensure distances are valid
+        if (upperi == loweri)
+        {
+            DebugPout
+                << "  -- no cache available: theta:" << theta
+                << " lower:" << loweri << " upper:" << upperi << endl;
+            return false;
+        }
+        if (mag(theta - thetap[loweri]) > maxThetaStencil)
+        {
+            DebugPout
+                << "  -- no cache available: theta:" << theta
+                << " lower:" << thetap[loweri] << endl;
+            return false;
+        }
+        if (mag(theta - thetap[upperi]) > maxThetaStencil)
+        {
+            DebugPout
+                << "  -- no cache available: theta:" << theta
+                << " upper:" << thetap[upperi] << endl;
+            return false;
+        }
+
+        index0_ = binAddresses[loweri];
+        index1_ = binAddresses[upperi];
+        interpWeight_ =
+            (theta - theta_[index0_])/(theta_[index1_] - theta_[index0_]);
+
+        DebugInfo
+            << theta_.size()
+            << "  -- t0:" << theta_[index0_] << " theta:" << theta
+            << " t1:" << theta_[index1_]
+            << " i0:" << index0_ << " i1:" << index1_
+            << " w:" << interpWeight_ << endl;
+
+
+        return true;
     }
 
-    return cacheValid;
+    // If we get here then no valid cache found within stencil
+    DebugPout<< "  -- no cache available" << endl;
+    return false;
 }
 
 
@@ -512,6 +591,7 @@ void Foam::AMICache::write(Ostream& os) const
         os.writeEntry("cacheSize", size_);
         os.writeEntry("rotationAxis", rotationAxis_);
         os.writeEntry("rotationCentre", rotationCentre_);
+        os.writeEntry("maxThetaDeg", maxThetaDeg_);
     }
 }
 
@@ -521,6 +601,7 @@ bool Foam::AMICache::writeData(Ostream& os) const
     os  << token::SPACE<< size_
         << token::SPACE<< rotationAxis_
         << token::SPACE<< rotationCentre_
+        << token::SPACE<< maxThetaDeg_
         << token::SPACE<< complete_;
 
     bitSet goodMap(cachedSrcMapPtr_.size());

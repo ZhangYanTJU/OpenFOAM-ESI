@@ -79,6 +79,9 @@ private:
         //- Point on axis of rotation for rotational cyclics
         point rotationCentre_;
 
+        //- Maximum angle in degrees for which to search for cached bins
+        scalar maxThetaDeg_;
+
         //- Flag to indicate that the cache is complete
         bool complete_;
 
