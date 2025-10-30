@@ -469,7 +469,7 @@ Foam::directions::directions
         FatalErrorInFunction
             << "Unknown coordinate system "
             << coordSystem << endl
-            << "Known types are global, patchLocal and fieldBased"
+            << "Known types are global, user, patchLocal and fieldBased"
             << exit(FatalError);
     }
 }
